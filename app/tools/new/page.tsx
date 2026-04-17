@@ -1,0 +1,139 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function NewToolPage() {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    endpoint_url: "",
+    http_method: "POST",
+    auth_type: "none",
+    timeout_ms: 30000,
+  });
+
+  const set = (key: string, value: string | number) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+
+    const payload = {
+      ...form,
+      endpoint_url: form.endpoint_url || undefined,
+    };
+
+    const res = await fetch("/api/tools", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+
+    if (!json.ok) {
+      setError(json.error ?? "Erreur inconnue");
+      setSaving(false);
+      return;
+    }
+    router.push("/tools");
+  };
+
+  return (
+    <div className="px-8 py-10">
+      <h1 className="mb-8 text-2xl font-semibold text-white">Nouveau tool</h1>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={submit} className="max-w-xl space-y-5">
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-zinc-400">Nom</span>
+          <input
+            required
+            value={form.name}
+            onChange={(e) => set("name", e.target.value)}
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-zinc-400">Description</span>
+          <input
+            value={form.description}
+            onChange={(e) => set("description", e.target.value)}
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-zinc-400">Endpoint URL</span>
+          <input
+            type="url"
+            value={form.endpoint_url}
+            onChange={(e) => set("endpoint_url", e.target.value)}
+            placeholder="https://api.example.com/action"
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-zinc-600"
+          />
+        </label>
+
+        <div className="grid grid-cols-3 gap-4">
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-zinc-400">Méthode</span>
+            <select
+              value={form.http_method}
+              onChange={(e) => set("http_method", e.target.value)}
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none"
+            >
+              {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-zinc-400">Auth</span>
+            <select
+              value={form.auth_type}
+              onChange={(e) => set("auth_type", e.target.value)}
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none"
+            >
+              {["none", "api_key", "oauth"].map((a) => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-zinc-400">Timeout (ms)</span>
+            <input
+              type="number"
+              min={100}
+              max={300000}
+              value={form.timeout_ms}
+              onChange={(e) => set("timeout_ms", parseInt(e.target.value, 10))}
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none"
+            />
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-zinc-200 disabled:opacity-50"
+        >
+          {saving ? "Création..." : "Créer le tool"}
+        </button>
+      </form>
+    </div>
+  );
+}
