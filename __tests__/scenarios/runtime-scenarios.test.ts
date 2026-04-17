@@ -17,7 +17,7 @@ import {
 } from "../../lib/analytics/failure-classifier";
 import { scoreTools, detectDrift, type ToolScore } from "../../lib/analytics/tool-ranking";
 import type { ToolMetrics } from "../../lib/analytics/metrics";
-import { selectTool, buildFallbackChain } from "../../lib/decisions/tool-selector";
+import { selectTool } from "../../lib/decisions/tool-selector";
 import { selectModel, type ModelScore } from "../../lib/decisions/model-selector";
 import { generateToolFeedback } from "../../lib/analytics/feedback";
 import type { AgentGuardPolicy } from "../../lib/runtime/prompt-guard";
@@ -31,15 +31,14 @@ describe("Scenario 1: Tool failure + smart fallback", () => {
     const sb = createMockSupabase();
     const tracer = new RunTracer(sb);
 
-    const runId = await tracer.startRun({
+    await tracer.startRun({
       kind: "workflow",
       input: { message: "Fetch data from external API" },
     });
 
     // --- Tool A call: fails ---
-    let toolATraceId: string | null = null;
     try {
-      const result = await tracer.trace({
+      await tracer.trace({
         kind: "tool_call",
         name: "tool:api_fetcher_v1",
         input: { tool_id: "tool-a", endpoint: "https://broken.api/data" },
@@ -47,7 +46,6 @@ describe("Scenario 1: Tool failure + smart fallback", () => {
           throw new Error('Tool "api_fetcher_v1" returned HTTP 500');
         },
       });
-      toolATraceId = result.trace_id;
     } catch (e) {
       // expected — tool A failed
       expect(e).toBeInstanceOf(Error);
@@ -131,7 +129,7 @@ describe("Scenario 2: Cost limit hard stop", () => {
     const sb = createMockSupabase();
     const tracer = new RunTracer(sb);
 
-    const runId = await tracer.startRun({
+    await tracer.startRun({
       kind: "chat",
       input: { message: "Do a multi-step reasoning task" },
       cost_budget_usd: 0.001,
@@ -458,7 +456,7 @@ describe("Scenario 5: Full workflow end-to-end", () => {
     const sb = createMockSupabase();
     const tracer = new RunTracer(sb);
 
-    const runId = await tracer.startRun({
+    await tracer.startRun({
       kind: "workflow",
       workflow_id: "wf-1",
       input: { query: "Get GitHub repo data and summarize" },

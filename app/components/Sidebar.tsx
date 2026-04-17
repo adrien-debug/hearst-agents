@@ -85,7 +85,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <p className="mt-auto text-[10px] text-zinc-600">v0.2.0</p>
+      <p className="mt-auto text-[10px] text-zinc-600">v1.0.0</p>
     </aside>
   );
 }
