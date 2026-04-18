@@ -1,6 +1,24 @@
-# Hearst Agents v1.0.0
+# Hearst v1.2.0
 
-Plateforme d'orchestration d'agents IA. Création, exécution, observation, évaluation, replay, décision.
+Assistant intelligent avec orchestration d'agents IA en arrière-plan.
+
+## Architecture UX
+
+- **Chat global** — Input fixe en bas de toutes les pages, context-aware (surface active, item sélectionné, services connectés). Sur `/`, affichage pleine page avec quick actions. Sur les autres surfaces, mode compact avec overlay.
+- **`/`** — Chat pleine page (point d'entrée, suggestions, quick actions, détection d'intention, lancement de missions)
+- **`/inbox`** — Boîte de réception (vue globale, priorités, actions recommandées, détail message, "Répondre avec Hearst")
+- **`/admin`** — Console d'administration (agents, runs, workflows, reports, tools, skills...)
+- Layout user : sidebar icon-only (60px) + zone centrale + chat global fixe en bas + panneau droit (résultat → mission → étapes → services)
+- Layout admin : sidebar classique avec navigation complète
+
+## Comportement produit (Phase 2)
+
+- **Agent global "Hearst"** : agent unique auto-provisionné (slug `hearst`), aucune configuration requise. Le chat fonctionne immédiatement via `POST /api/chat`. Les données utilisateur sont injectées via `lib/agent/data-functions.ts` — résumés compacts (max 5 messages, 3 événements, 3 fichiers) adaptés à la surface active. Préparé pour migration vers tool-calls (function calling).
+- **Mission Engine** : le chat détecte si une requête est une réponse simple, une navigation, ou une mission exécutable
+- **Panneau droit** : affiche en temps réel le résultat, la mission active, la timeline d'étapes, et les services utilisés
+- **Inbox V1** : vue globale avec urgences, actions recommandées, liste filtrée (tous/importants/non lus), vue détail, "Répondre avec Hearst" qui crée une mission visible
+- **États simplifiés** : En cours / En attente / Terminé / Erreur / En attente de validation
+- **Langage utilisateur** : aucun jargon technique, tout est orienté compréhension utilisateur
 
 ## Stack
 
@@ -129,6 +147,33 @@ lib/
 | `/api/reports` | GET | Liste des rapports (filtre `type`, `status`) |
 | `/api/reports/today` | GET | Statut du rapport du jour par type |
 | `/api/reports/health` | GET | Health dashboard par type (streak, taux 14j) |
+
+## Connectors (User Integrations)
+
+Services connectés via OAuth, données réelles uniquement (zéro mock).
+
+| Service | Provider | Scopes | Surface | Status |
+|---------|----------|--------|---------|--------|
+| Gmail | `google` | `gmail.readonly` | Inbox | Active |
+| Google Calendar | `google` | `calendar.readonly` | Calendar | Active |
+| Google Drive | `google` | `drive.readonly` | Files | Active |
+| Slack | `slack` | `channels:read`, `channels:history`, `im:read`, `im:history`, `users:read`, `groups:*`, `mpim:*` | Inbox | Active (V1, lecture seule) |
+| Tasks | — | — | Tasks | Non connecté |
+
+Architecture : `lib/connectors/` (un connector par service), tokens chiffrés AES-256-GCM dans `user_tokens` (Supabase, RLS).
+
+État de connexion centralisé : `GET /api/connectors/status` interroge `user_tokens` et retourne l'état réel de chaque provider. Le hook `useConnectedServices()` (`app/hooks/use-connected-services.ts`) est la source unique de vérité côté client — utilisé par Apps, ControlPanel, et ChatContext. Zéro état hardcodé.
+
+| Route | Description |
+|-------|-------------|
+| `/api/chat` | Chat unifié context-aware (agent Hearst auto-provisionné) |
+| `/api/connectors/status` | État de connexion réel des services |
+| `/api/gmail/messages` | Emails Gmail (lecture) |
+| `/api/calendar/events` | Événements calendrier |
+| `/api/files/list` | Fichiers Drive |
+| `/api/slack/messages` | Messages Slack (lecture) |
+| `/api/auth/slack` | OAuth Slack (redirect) |
+| `/api/auth/callback/slack` | Callback OAuth Slack |
 
 ## Auth
 

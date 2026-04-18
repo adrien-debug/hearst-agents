@@ -7,41 +7,41 @@ const sections = [
   {
     title: null,
     links: [
-      { href: "/", label: "Dashboard" },
+      { href: "/admin", label: "Dashboard" },
     ],
   },
   {
     title: "Agents",
     links: [
-      { href: "/agents", label: "Tous les agents" },
-      { href: "/runs", label: "Runs & traces" },
+      { href: "/admin/agents", label: "Tous les agents" },
+      { href: "/admin/runs", label: "Runs & traces" },
     ],
   },
   {
     title: "Composants",
     links: [
-      { href: "/skills", label: "Skills" },
-      { href: "/tools", label: "Tools" },
+      { href: "/admin/skills", label: "Skills" },
+      { href: "/admin/tools", label: "Tools" },
     ],
   },
   {
     title: "Orchestration",
     links: [
-      { href: "/workflows", label: "Workflows" },
-      { href: "/datasets", label: "Datasets" },
+      { href: "/admin/workflows", label: "Workflows" },
+      { href: "/admin/datasets", label: "Datasets" },
     ],
   },
   {
     title: "Opérations",
     links: [
-      { href: "/reports", label: "Reports" },
+      { href: "/admin/reports", label: "Reports" },
     ],
   },
   {
     title: "Décisions",
     links: [
-      { href: "/signals", label: "Signaux" },
-      { href: "/changes", label: "Historique" },
+      { href: "/admin/signals", label: "Signaux" },
+      { href: "/admin/changes", label: "Historique" },
     ],
   },
 ];
@@ -71,7 +71,7 @@ export default function Sidebar() {
             <div className="flex flex-col gap-0.5">
               {section.links.map((l) => {
                 const active =
-                  l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+                  l.href === "/admin" ? pathname === "/admin" : pathname.startsWith(l.href);
                 return (
                   <Link
                     key={l.href}
@@ -91,7 +91,10 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <p className="mt-auto text-[10px] text-zinc-600">v1.0.0</p>
+      <Link href="/" className="mt-auto mb-2 rounded-lg px-3 py-2 text-xs text-zinc-600 transition-colors hover:bg-zinc-900 hover:text-zinc-400">
+        ← Retour à l&apos;app
+      </Link>
+      <p className="text-[10px] text-zinc-600">v1.0.0</p>
     </aside>
   );
 }

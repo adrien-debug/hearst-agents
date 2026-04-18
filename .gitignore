@@ -22,6 +22,9 @@
 
 # misc
 .DS_Store
+
+# local dev output (Next/Turbopack cache must not be committed)
+/tmp/
 *.pem
 
 # debug

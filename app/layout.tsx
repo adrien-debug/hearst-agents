@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "./components/Sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hearst Agents",
-  description: "Hearst Agents — console Next.js + Supabase",
+  title: "Hearst",
+  description: "Hearst — votre assistant intelligent",
 };
 
 export default function RootLayout({
@@ -28,10 +27,7 @@ export default function RootLayout({
       lang="fr"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex bg-black">
-        <Sidebar />
-        <main className="ml-56 flex-1 min-h-screen">{children}</main>
-      </body>
+      <body className="h-full bg-black">{children}</body>
     </html>
   );
 }
