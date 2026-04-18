@@ -33,7 +33,7 @@ npx supabase gen types typescript --project-id <ref> > lib/database.types.ts
 npm run dev  # http://localhost:9000
 
 # 6. Tests
-npm test     # 194 tests
+npm test     # 200 tests
 ```
 
 ## Architecture
@@ -123,6 +123,9 @@ lib/
 | `/api/signals` | GET | Liste signals (filtrable) |
 | `/api/signals/[id]/resolve` | POST | Apply/dismiss/acknowledge + change tracking |
 | `/api/changes` | GET | Audit trail des changements |
+| `/api/cron/daily-report` | GET/POST | Cron daily report (auth CRON_SECRET) |
+| `/api/reports` | GET | Liste des rapports quotidiens |
+| `/api/reports/today` | GET | Statut du rapport du jour |
 
 ## Auth
 
@@ -132,7 +135,7 @@ API key via `HEARST_API_KEY`. Toutes les routes (sauf `/api/health`) sont proté
 curl -H "x-api-key: YOUR_KEY" http://localhost:9000/api/agents
 ```
 
-## Database (29 tables, 9 migrations)
+## Database (30 tables, 10 migrations)
 
 **Core** : agents, agent_versions, skills, skill_versions, tools, agent_skills, agent_tools
 **Prompts** : prompt_artifacts (versioned, checksummed)
@@ -145,6 +148,7 @@ curl -H "x-api-key: YOUR_KEY" http://localhost:9000/api/agents
 **Memory** : agent_memory
 **Integrations** : integration_connections
 **Decisions** : improvement_signals, applied_changes
+**Reports** : daily_reports (registry produit, idempotent)
 **Legacy** : usage_logs, workflow_runs
 
 ## Runtime
@@ -195,7 +199,7 @@ Chaque décision est tracée : `model_selection` (score, reason, was_overridden)
 ## Tests
 
 ```bash
-npm test  # 194 tests, 16 fichiers
+npm test  # 200 tests, 17 fichiers
 ```
 
 Couverture : lifecycle, cost sentinel, prompt guards, output validator, tracer integration, adapters, executor, failure classifier, tool ranking, feedback, tool selector, signal manager, model selector, change tracker, smart router, 6 scénarios end-to-end.
@@ -210,6 +214,70 @@ Couverture : lifecycle, cost sentinel, prompt guards, output validator, tracer i
 | Model routing + fallback | Sélection, was_overridden, traces decision + fallback |
 | Full workflow E2E | Multi-step, cost accumulation, stub replay zero cost |
 | Drift detection | success_rate drop, latency spike, signal tool_replacement |
+
+## Daily Reports (Cron Production)
+
+### Déclenchement
+
+Le cron Vercel appelle `GET /api/cron/daily-report` chaque jour à **7h UTC**.
+Railway est aussi configuré via `DAILY_REPORT_WORKFLOW_ID`.
+
+### Authentification
+
+**Obligatoire.** Tout appel sans secret valide est rejeté (401).
+
+```bash
+# Lancement manuel sécurisé
+curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+
+Variables requises : `CRON_SECRET`, `DAILY_REPORT_WORKFLOW_ID`.
+
+### Idempotence
+
+Un seul rapport `completed` par date UTC + type. Règles :
+- Si un rapport `completed` existe → `already_ran` (skip)
+- Si un rapport `running` existe → skip
+- Si un rapport `failed` existe → retry autorisé (nouveau run)
+- Décision tracée dans `idempotency_decision`
+
+### Registry (`daily_reports`)
+
+Chaque rapport est un **objet produit** séparé du run technique :
+
+| Champ | Description |
+|-------|-------------|
+| `report_date` | Date UTC du rapport |
+| `report_type` | `crypto_daily` |
+| `run_id` | Lien vers le run source |
+| `status` | `pending` / `running` / `completed` / `failed` |
+| `content_markdown` | Rapport complet |
+| `summary` | Résumé 500 chars |
+| `highlights` | Points clés (JSON array) |
+| `error_message` | Cause d'échec |
+| `triggered_by` | `cron` / `manual` |
+
+### Alerting
+
+En cas d'échec :
+- Log `console.error` avec report_id, run_id, date, cause
+- Webhook vers `ALERT_WEBHOOK_URL` (Slack/Discord/custom) si configuré
+
+### Visibilité opérateur
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/reports` | Liste paginée (filtre `type`, `status`) |
+| `GET /api/reports/today` | Statut du rapport du jour |
+| `/reports` | Console opérateur (UI) |
+
+### Investigation d'un échec
+
+1. `GET /api/reports/today` → voir `error_message`
+2. `GET /api/runs/{run_id}` → traces complètes du run
+3. Logs Railway/Vercel : chercher `[cron/daily-report]`
+4. Relancer : `POST /api/cron/daily-report` avec auth (retry autorisé si failed)
 
 ## Deploy
 

@@ -32,6 +32,12 @@ const sections = [
     ],
   },
   {
+    title: "Opérations",
+    links: [
+      { href: "/reports", label: "Reports" },
+    ],
+  },
+  {
     title: "Décisions",
     links: [
       { href: "/signals", label: "Signaux" },

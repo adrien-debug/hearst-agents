@@ -311,6 +311,53 @@ export type Database = {
           },
         ]
       }
+      applied_changes: {
+        Row: {
+          actor: string
+          after_value: Json
+          before_value: Json
+          change_type: string
+          created_at: string
+          id: string
+          reason: string | null
+          signal_id: string | null
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          actor?: string
+          after_value?: Json
+          before_value?: Json
+          change_type: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          signal_id?: string | null
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          actor?: string
+          after_value?: Json
+          before_value?: Json
+          change_type?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          signal_id?: string | null
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applied_changes_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "improvement_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           agent_id: string
@@ -345,6 +392,72 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_reports: {
+        Row: {
+          content_markdown: string | null
+          created_at: string
+          error_message: string | null
+          highlights: Json | null
+          id: string
+          idempotency_decision: string | null
+          report_date: string
+          report_type: string
+          run_id: string | null
+          status: string
+          summary: string | null
+          triggered_by: string
+          updated_at: string
+          workflow_id: string | null
+        }
+        Insert: {
+          content_markdown?: string | null
+          created_at?: string
+          error_message?: string | null
+          highlights?: Json | null
+          id?: string
+          idempotency_decision?: string | null
+          report_date: string
+          report_type?: string
+          run_id?: string | null
+          status?: string
+          summary?: string | null
+          triggered_by?: string
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Update: {
+          content_markdown?: string | null
+          created_at?: string
+          error_message?: string | null
+          highlights?: Json | null
+          id?: string
+          idempotency_decision?: string | null
+          report_date?: string
+          report_type?: string
+          run_id?: string | null
+          status?: string
+          summary?: string | null
+          triggered_by?: string
+          updated_at?: string
+          workflow_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_reports_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_reports_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
             referencedColumns: ["id"]
           },
         ]
@@ -485,6 +598,105 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      improvement_signals: {
+        Row: {
+          applied_at: string | null
+          applied_by: string | null
+          created_at: string
+          data: Json
+          description: string
+          id: string
+          kind: string
+          priority: string
+          resolution: string | null
+          status: string
+          suggestion: string
+          target_id: string
+          target_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string | null
+          applied_by?: string | null
+          created_at?: string
+          data?: Json
+          description?: string
+          id?: string
+          kind: string
+          priority?: string
+          resolution?: string | null
+          status?: string
+          suggestion?: string
+          target_id: string
+          target_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string | null
+          applied_by?: string | null
+          created_at?: string
+          data?: Json
+          description?: string
+          id?: string
+          kind?: string
+          priority?: string
+          resolution?: string | null
+          status?: string
+          suggestion?: string
+          target_id?: string
+          target_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      integration_connections: {
+        Row: {
+          auth_type: string
+          config: Json
+          created_at: string
+          credentials: Json
+          health: string
+          id: string
+          last_health_check: string | null
+          name: string
+          provider: string
+          scopes: string[]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auth_type?: string
+          config?: Json
+          created_at?: string
+          credentials?: Json
+          health?: string
+          id?: string
+          last_health_check?: string | null
+          name: string
+          provider: string
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auth_type?: string
+          config?: Json
+          created_at?: string
+          credentials?: Json
+          health?: string
+          id?: string
+          last_health_check?: string | null
+          name?: string
+          provider?: string
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       knowledge_bases: {
         Row: {
@@ -704,55 +916,55 @@ export type Database = {
       }
       prompt_artifacts: {
         Row: {
+          agent_id: string | null
+          content: string
+          content_hash: string
+          created_at: string
+          created_by: string | null
+          description: string | null
           id: string
+          kind: string
+          metadata: Json
+          parent_id: string | null
+          scope: string
+          skill_id: string | null
           slug: string
           version: number
-          kind: string
-          scope: string
-          content: string
-          content_hash: string
-          description: string | null
-          agent_id: string | null
-          skill_id: string | null
           workflow_id: string | null
-          parent_id: string | null
-          metadata: Json
-          created_by: string | null
-          created_at: string
         }
         Insert: {
-          id?: string
-          slug: string
-          version?: number
-          kind: string
-          scope?: string
+          agent_id?: string | null
           content: string
           content_hash: string
-          description?: string | null
-          agent_id?: string | null
-          skill_id?: string | null
-          workflow_id?: string | null
-          parent_id?: string | null
-          metadata?: Json
-          created_by?: string | null
           created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind: string
+          metadata?: Json
+          parent_id?: string | null
+          scope?: string
+          skill_id?: string | null
+          slug: string
+          version?: number
+          workflow_id?: string | null
         }
         Update: {
-          id?: string
-          slug?: string
-          version?: number
-          kind?: string
-          scope?: string
+          agent_id?: string | null
           content?: string
           content_hash?: string
-          description?: string | null
-          agent_id?: string | null
-          skill_id?: string | null
-          workflow_id?: string | null
-          parent_id?: string | null
-          metadata?: Json
-          created_by?: string | null
           created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          metadata?: Json
+          parent_id?: string | null
+          scope?: string
+          skill_id?: string | null
+          slug?: string
+          version?: number
+          workflow_id?: string | null
         }
         Relationships: [
           {
@@ -760,6 +972,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prompt_artifacts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_artifacts"
             referencedColumns: ["id"]
           },
           {
@@ -774,13 +993,6 @@ export type Database = {
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "workflows"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "prompt_artifacts_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "prompt_artifacts"
             referencedColumns: ["id"]
           },
         ]
@@ -916,10 +1128,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "runs_prompt_artifact_id_fkey"
+            columns: ["prompt_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "runs_replay_of_run_id_fkey"
+            columns: ["replay_of_run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "runs_workflow_id_fkey"
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "runs_workflow_version_id_fkey"
+            columns: ["workflow_version_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_versions"
             referencedColumns: ["id"]
           },
         ]
@@ -1004,144 +1237,6 @@ export type Database = {
         }
         Relationships: []
       }
-      applied_changes: {
-        Row: {
-          id: string
-          signal_id: string | null
-          change_type: string
-          target_id: string
-          target_type: string
-          before_value: Json
-          after_value: Json
-          actor: string
-          reason: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          signal_id?: string | null
-          change_type: string
-          target_id: string
-          target_type: string
-          before_value?: Json
-          after_value?: Json
-          actor?: string
-          reason?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          signal_id?: string | null
-          change_type?: string
-          target_id?: string
-          target_type?: string
-          before_value?: Json
-          after_value?: Json
-          actor?: string
-          reason?: string | null
-          created_at?: string
-        }
-        Relationships: []
-      }
-      improvement_signals: {
-        Row: {
-          id: string
-          kind: string
-          priority: string
-          status: string
-          target_id: string
-          target_type: string
-          title: string
-          description: string
-          suggestion: string
-          data: Json
-          applied_at: string | null
-          applied_by: string | null
-          resolution: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          kind: string
-          priority?: string
-          status?: string
-          target_id: string
-          target_type: string
-          title: string
-          description?: string
-          suggestion?: string
-          data?: Json
-          applied_at?: string | null
-          applied_by?: string | null
-          resolution?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          kind?: string
-          priority?: string
-          status?: string
-          target_id?: string
-          target_type?: string
-          title?: string
-          description?: string
-          suggestion?: string
-          data?: Json
-          applied_at?: string | null
-          applied_by?: string | null
-          resolution?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      integration_connections: {
-        Row: {
-          id: string
-          provider: string
-          name: string
-          auth_type: string
-          credentials: Json
-          scopes: string[]
-          status: string
-          health: string
-          last_health_check: string | null
-          config: Json
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          provider: string
-          name: string
-          auth_type?: string
-          credentials?: Json
-          scopes?: string[]
-          status?: string
-          health?: string
-          last_health_check?: string | null
-          config?: Json
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          provider?: string
-          name?: string
-          auth_type?: string
-          credentials?: Json
-          scopes?: string[]
-          status?: string
-          health?: string
-          last_health_check?: string | null
-          config?: Json
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       tools: {
         Row: {
           auth_config: Json
@@ -1206,7 +1301,15 @@ export type Database = {
           slug?: string
           timeout_ms?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tools_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integration_connections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       traces: {
         Row: {
@@ -1446,39 +1549,6 @@ export type Database = {
           },
         ]
       }
-      workflows: {
-        Row: {
-          active_version_id: string | null
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          status: string
-          trigger_type: string
-          version: number
-        }
-        Insert: {
-          active_version_id?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          status?: string
-          trigger_type?: string
-          version?: number
-        }
-        Update: {
-          active_version_id?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          status?: string
-          trigger_type?: string
-          version?: number
-        }
-        Relationships: []
-      }
       workflow_versions: {
         Row: {
           changelog: string | null
@@ -1516,6 +1586,47 @@ export type Database = {
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflows: {
+        Row: {
+          active_version_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          trigger_type: string
+          version: number
+        }
+        Insert: {
+          active_version_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          trigger_type?: string
+          version?: number
+        }
+        Update: {
+          active_version_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          trigger_type?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflows_active_version_id_fkey"
+            columns: ["active_version_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_versions"
             referencedColumns: ["id"]
           },
         ]
