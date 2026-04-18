@@ -456,7 +456,9 @@ async function executeTransform(
     case "template": {
       const tpl = config.template as string | undefined;
       if (tpl) {
-        result = tpl.replace(/\{\{steps\}\}/g, JSON.stringify(ctx.steps, null, 2))
+        const maxChars = (config.max_chars as number) ?? 80000;
+        const stepsStr = truncateJson(ctx.steps, maxChars);
+        result = tpl.replace(/\{\{steps\}\}/g, stepsStr)
           .replace(/\{\{input\}\}/g, JSON.stringify(ctx.input, null, 2));
       }
       break;
@@ -476,4 +478,28 @@ async function executeTransform(
   });
 
   return result;
+}
+
+function truncateJson(data: unknown, maxChars: number): string {
+  const full = JSON.stringify(data, null, 2);
+  if (full.length <= maxChars) return full;
+
+  if (typeof data === "object" && data !== null && !Array.isArray(data)) {
+    const obj = data as Record<string, unknown>;
+    const parts: string[] = [];
+    let totalLen = 0;
+    for (const [key, val] of Object.entries(obj)) {
+      const valStr = JSON.stringify(val, null, 2);
+      const entryLen = key.length + valStr.length + 10;
+      if (totalLen + entryLen > maxChars) {
+        parts.push(`"${key}": "[truncated — ${valStr.length} chars]"`);
+      } else {
+        parts.push(`"${key}": ${valStr}`);
+        totalLen += entryLen;
+      }
+    }
+    return `{\n${parts.join(",\n")}\n}`;
+  }
+
+  return full.slice(0, maxChars) + "\n... [truncated]";
 }
