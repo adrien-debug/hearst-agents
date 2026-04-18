@@ -16,10 +16,12 @@ export interface ChatContextValue {
   surface: Surface;
   selectedItem: SelectedItem | null;
   connectedServices: string[];
+  servicesLoaded: boolean;
   expanded: boolean;
   setSurface: (s: Surface) => void;
   setSelectedItem: (item: SelectedItem | null) => void;
   setConnectedServices: (services: string[]) => void;
+  setServicesLoaded: (v: boolean) => void;
   setExpanded: (v: boolean) => void;
   toggleExpanded: () => void;
   getContextHint: () => string;
@@ -40,6 +42,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [surface, setSurface] = useState<Surface>("home");
   const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
   const [connectedServices, setConnectedServices] = useState<string[]>([]);
+  const [servicesLoaded, setServicesLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const toggleExpanded = useCallback(() => setExpanded((v) => !v), []);
@@ -62,15 +65,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       surface,
       selectedItem,
       connectedServices,
+      servicesLoaded,
       expanded,
       setSurface,
       setSelectedItem,
       setConnectedServices,
+      setServicesLoaded,
       setExpanded,
       toggleExpanded,
       getContextHint,
     }),
-    [surface, selectedItem, connectedServices, expanded, toggleExpanded, getContextHint],
+    [surface, selectedItem, connectedServices, servicesLoaded, expanded, toggleExpanded, getContextHint],
   );
 
   return <ChatCtx.Provider value={value}>{children}</ChatCtx.Provider>;

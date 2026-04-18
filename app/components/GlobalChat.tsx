@@ -26,14 +26,31 @@ const SURFACE_ROUTES: Record<string, string> = {
 };
 
 const QUICK_ACTIONS = [
-  { label: "Résume mes emails", cmd: "Résume mes emails du jour" },
-  { label: "Mon attention ?", cmd: "Qu'est-ce qui nécessite mon attention ?" },
-  { label: "Agenda", cmd: "Montre mon agenda de la semaine" },
-  { label: "Tâches", cmd: "Quelles sont mes tâches en cours ?" },
+  { label: "Emails urgents", cmd: "Qu'est-ce qui nécessite mon attention ?", primary: true },
+  { label: "Résumer mes emails", cmd: "Résume mes emails du jour" },
+  { label: "Agenda du jour", cmd: "Montre mon agenda du jour" },
+  { label: "Mes tâches", cmd: "Quelles sont mes tâches en cours ?" },
 ] as const;
 
+const SERVICE_TO_PROVIDER: Record<string, string> = {
+  Gmail: "Google",
+  Calendar: "Google",
+  Drive: "Google",
+  Slack: "Slack",
+};
+
+function checkMissionServices(missionServices: string[], connected: string[], loaded: boolean): string | null {
+  if (!loaded || missionServices.length === 0) return null;
+  const missing = missionServices
+    .map((s) => SERVICE_TO_PROVIDER[s] ?? s)
+    .filter((p, i, arr) => arr.indexOf(p) === i)
+    .filter((p) => !connected.includes(p));
+  if (missing.length === 0) return null;
+  return missing.join(", ");
+}
+
 export default function GlobalChat() {
-  const { surface, selectedItem, connectedServices, expanded, setExpanded, getContextHint } = useChatContext();
+  const { surface, selectedItem, connectedServices, servicesLoaded, expanded, setExpanded, getContextHint } = useChatContext();
   const { setActiveSurface, activeMission } = useMission();
   const router = useRouter();
   const pathname = usePathname();
@@ -56,12 +73,19 @@ export default function GlobalChat() {
     acceptSuggestion();
     if (action.type === "mission") {
       const { mission } = action;
+      const missingProvider = checkMissionServices(mission.services, connectedServices, servicesLoaded);
+      if (missingProvider) {
+        setMessages((prev) => [...prev, { role: "assistant", content: `${missingProvider} non connecté.` }]);
+        if (!expanded) setExpanded(true);
+        router.push("/apps");
+        return;
+      }
       setMessages((prev) => [...prev, { role: "assistant", content: `${mission.title}…` }]);
       if (!expanded) setExpanded(true);
       setActiveSurface(mission.surface);
       executeMission(mission);
     }
-  }, [suggestion, acceptSuggestion, expanded, setExpanded, setActiveSurface]);
+  }, [suggestion, acceptSuggestion, expanded, setExpanded, setActiveSurface, connectedServices]);
 
   useEffect(() => {
     if (activeMission?.status === "awaiting_approval" && activeMission.result) {
@@ -99,6 +123,13 @@ export default function GlobalChat() {
       const outcome = detectIntent(trimmed);
 
       if (outcome.type === "mission") {
+        const missingProvider = checkMissionServices(outcome.mission.services, connectedServices, servicesLoaded);
+        if (missingProvider) {
+          setMessages((prev) => [...prev, { role: "assistant", content: `${missingProvider} non connecté.` }]);
+          setStreaming(false);
+          router.push("/apps");
+          return;
+        }
         setMessages((prev) => [...prev, { role: "assistant", content: `${outcome.mission.title}…` }]);
         setStreaming(false);
         setActiveSurface(outcome.mission.surface);
@@ -165,6 +196,7 @@ export default function GlobalChat() {
         let assistantContent = "";
 
         if (reader) {
+          let streamError = false;
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -173,6 +205,16 @@ export default function GlobalChat() {
               if (!line.startsWith("data: ")) continue;
               try {
                 const payload = JSON.parse(line.slice(6));
+                if (payload.error) {
+                  clearTimeout(fallbackTimer);
+                  setMessages((prev) => {
+                    const copy = [...prev];
+                    copy[copy.length - 1] = { role: "assistant", content: "Service indisponible. Réessayez." };
+                    return copy;
+                  });
+                  streamError = true;
+                  break;
+                }
                 if (payload.delta) {
                   if (!receivedFirstToken) {
                     receivedFirstToken = true;
@@ -186,6 +228,10 @@ export default function GlobalChat() {
                   });
                 }
               } catch { /* skip */ }
+            }
+            if (streamError) {
+              reader.cancel();
+              break;
             }
           }
         }
@@ -201,7 +247,7 @@ export default function GlobalChat() {
         setStreaming(false);
       }
     },
-    [conversationId, streaming, surface, selectedItem, connectedServices, expanded, setExpanded, setActiveSurface, router],
+    [conversationId, streaming, surface, selectedItem, connectedServices, servicesLoaded, expanded, setExpanded, setActiveSurface, router],
   );
 
   const handleApproval = useCallback((idx: number) => {
@@ -224,7 +270,8 @@ export default function GlobalChat() {
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center px-6">
-              <h1 className="mb-6 text-2xl font-semibold text-white">Bonjour</h1>
+              <p className="mb-1 text-sm text-zinc-500">Hearst</p>
+              <h1 className="mb-6 text-xl font-medium text-white">Que dois-je traiter ?</h1>
 
               {/* Suggestion */}
               {suggestion && !streaming && (
@@ -243,7 +290,11 @@ export default function GlobalChat() {
                   <button
                     key={qa.label}
                     onClick={() => sendMessage(qa.cmd)}
-                    className="rounded-lg border border-zinc-800/50 bg-zinc-900/40 px-3 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-700 hover:text-white active:scale-[0.98]"
+                    className={`rounded-lg px-3 py-2 text-xs transition-colors active:scale-[0.98] ${
+                      "primary" in qa && qa.primary
+                        ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/25"
+                        : "border border-zinc-800/50 bg-zinc-900/40 text-zinc-400 hover:border-zinc-700 hover:text-white"
+                    }`}
                   >
                     {qa.label}
                   </button>

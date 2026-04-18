@@ -17,8 +17,8 @@ const PATH_TO_SURFACE: Record<string, Surface> = {
 
 export default function SurfaceTracker() {
   const pathname = usePathname();
-  const { setSurface, setSelectedItem, setConnectedServices } = useChatContext();
-  const { connectedProviders } = useConnectedServices();
+  const { setSurface, setSelectedItem, setConnectedServices, setServicesLoaded } = useChatContext();
+  const { connectedProviders, loading } = useConnectedServices();
 
   useEffect(() => {
     const surface = PATH_TO_SURFACE[pathname] ?? "home";
@@ -28,7 +28,8 @@ export default function SurfaceTracker() {
 
   useEffect(() => {
     setConnectedServices(connectedProviders);
-  }, [connectedProviders, setConnectedServices]);
+    if (!loading) setServicesLoaded(true);
+  }, [connectedProviders, loading, setConnectedServices, setServicesLoaded]);
 
   return null;
 }

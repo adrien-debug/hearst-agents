@@ -75,6 +75,20 @@ const RECENT_STATUS: Record<string, { label: string; icon: string; color: string
   awaiting_approval: { label: "Validation", icon: "⏸", color: "text-amber-400" },
 };
 
+function humanizeError(raw: string): string {
+  if (raw.includes("Could not resolve authentication")) return "Service non configuré. Vérifiez vos connexions.";
+  if (raw.includes("API not enabled") || raw.includes("API has not been used")) return "Service non activé. Configurez-le dans Applications.";
+  if (raw.includes("invalid_grant") || raw.includes("Token has been expired")) return "Connexion expirée. Reconnectez le service.";
+  if (raw.includes("ECONNREFUSED") || raw.includes("fetch failed")) return "Service injoignable. Réessayez.";
+  if (raw.includes("rate limit") || raw.includes("429")) return "Trop de requêtes. Réessayez dans quelques instants.";
+  if (raw.includes("Étape") && raw.includes("a échoué")) {
+    const match = raw.match(/Étape "([^"]+)"/);
+    return match ? `Échec : ${match[1]}. Réessayez.` : "Une étape a échoué. Réessayez.";
+  }
+  if (raw.length > 80) return "Une erreur est survenue. Réessayez.";
+  return raw;
+}
+
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -161,7 +175,7 @@ export default function ControlPanel() {
               Erreur
             </h3>
             <div className="rounded-lg border border-red-900/40 bg-red-950/20 p-3">
-              <p className="text-xs text-red-300">{mission.error}</p>
+              <p className="text-xs text-red-300">{humanizeError(mission.error)}</p>
             </div>
             <button
               onClick={() => dismissMission(mission.id)}
@@ -250,7 +264,7 @@ export default function ControlPanel() {
                       <p className="mt-0.5 truncate text-[10px] text-zinc-500">{action.preview}</p>
                     )}
                     {action.error && action.status === "error" && (
-                      <p className="mt-0.5 truncate text-[10px] text-red-400/60">{action.error}</p>
+                      <p className="mt-0.5 truncate text-[10px] text-red-400/60">{humanizeError(action.error)}</p>
                     )}
                   </div>
                 </div>
@@ -332,7 +346,7 @@ export default function ControlPanel() {
                       )}
                       {m.status === "failed" && m.error && (
                         <p className="mt-0.5 truncate text-[10px] text-red-400/60">
-                          {m.error}
+                          {humanizeError(m.error)}
                         </p>
                       )}
                     </div>
