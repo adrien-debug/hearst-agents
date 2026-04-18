@@ -75,17 +75,26 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+const REPORT_TYPES = [
+  { value: "all", label: "Tous" },
+  { value: "crypto_daily", label: "Daily Crypto" },
+  { value: "market_watch", label: "Market Watch" },
+] as const;
+
 export default function ReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [activeType, setActiveType] = useState<string>("all");
 
   const load = useCallback(async () => {
     setLoading(true);
+    const typeParam = activeType !== "all" ? `&type=${activeType}` : "";
+    const healthType = activeType !== "all" ? activeType : "crypto_daily";
     const [reportsRes, healthRes] = await Promise.all([
-      fetch("/api/reports?limit=30"),
-      fetch("/api/reports/health"),
+      fetch(`/api/reports?limit=30${typeParam}`),
+      fetch(`/api/reports/health?type=${healthType}`),
     ]);
     const reportsJson = await reportsRes.json();
     const healthJson = await healthRes.json();
@@ -93,7 +102,7 @@ export default function ReportsPage() {
     setReports(reportsJson.reports ?? []);
     setHealth(healthJson);
     setLoading(false);
-  }, []);
+  }, [activeType]);
 
   useEffect(() => {
     load();
@@ -113,12 +122,29 @@ export default function ReportsPage() {
             Surveillance et historique des rapports quotidiens.
           </p>
         </div>
-        <button
-          onClick={load}
-          className="rounded-lg border border-zinc-700 px-4 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-white"
-        >
-          Rafraîchir
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-lg border border-zinc-800 p-0.5">
+            {REPORT_TYPES.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => setActiveType(t.value)}
+                className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
+                  activeType === t.value
+                    ? "bg-zinc-800 text-white"
+                    : "text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={load}
+            className="rounded-lg border border-zinc-700 px-4 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-white"
+          >
+            Rafraîchir
+          </button>
+        </div>
       </div>
 
       {/* ─── Health dashboard ─── */}

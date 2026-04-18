@@ -6,6 +6,10 @@
     {
       "path": "/api/cron/daily-report",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/market-watch",
+      "schedule": "0 8 * * *"
     }
   ]
 }

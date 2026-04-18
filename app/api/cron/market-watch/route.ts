@@ -6,17 +6,17 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const CONFIG: ReportConfig = {
-  reportType: "crypto_daily",
-  label: "Daily Crypto Report",
-  workflowIdEnvVar: "DAILY_REPORT_WORKFLOW_ID",
-  workflowNamePattern: "daily%report",
-  missionLabel: "Daily Crypto Market Report",
+  reportType: "market_watch",
+  label: "Market Watch Report",
+  workflowIdEnvVar: "MARKET_WATCH_WORKFLOW_ID",
+  workflowNamePattern: "market%watch",
+  missionLabel: "Market Watch Intelligence Report",
 };
 
 export async function GET(req: NextRequest) {
   const auth = authenticateCron(
     req.headers.get("authorization"),
-    "cron/crypto_daily",
+    "cron/market_watch",
     req.headers.get("x-forwarded-for") ?? "unknown",
   );
   if (!auth.ok) return err(auth.reason, 401);
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const auth = authenticateCron(
     req.headers.get("authorization"),
-    "cron/crypto_daily",
+    "cron/market_watch",
     req.headers.get("x-forwarded-for") ?? "unknown",
   );
   if (!auth.ok) return err(auth.reason, 401);

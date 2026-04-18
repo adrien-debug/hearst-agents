@@ -1,24 +1,26 @@
+import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { ok, err } from "@/lib/domain";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const sb = requireServerSupabase();
   const todayUTC = new Date().toISOString().slice(0, 10);
+  const type = req.nextUrl.searchParams.get("type") ?? "crypto_daily";
 
   const [todayResult, lastSuccessResult, lastFailureResult, recentResult] = await Promise.all([
     sb.from("daily_reports")
       .select("id, status, created_at")
       .eq("report_date", todayUTC)
-      .eq("report_type", "crypto_daily")
+      .eq("report_type", type)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
 
     sb.from("daily_reports")
       .select("id, report_date, created_at")
-      .eq("report_type", "crypto_daily")
+      .eq("report_type", type)
       .eq("status", "completed")
       .order("report_date", { ascending: false })
       .limit(1)
@@ -26,7 +28,7 @@ export async function GET() {
 
     sb.from("daily_reports")
       .select("id, report_date, error_message, created_at")
-      .eq("report_type", "crypto_daily")
+      .eq("report_type", type)
       .eq("status", "failed")
       .order("report_date", { ascending: false })
       .limit(1)
@@ -34,7 +36,7 @@ export async function GET() {
 
     sb.from("daily_reports")
       .select("report_date, status")
-      .eq("report_type", "crypto_daily")
+      .eq("report_type", type)
       .in("status", ["completed", "failed"])
       .order("report_date", { ascending: false })
       .limit(14),
@@ -59,6 +61,7 @@ export async function GET() {
   const successCount = recent.filter((r) => r.status === "completed").length;
 
   return ok({
+    report_type: type,
     report_date: todayUTC,
     today: today
       ? { status: today.status, report_id: today.id, generated_at: today.created_at }

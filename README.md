@@ -124,6 +124,7 @@ lib/
 | `/api/signals/[id]/resolve` | POST | Apply/dismiss/acknowledge + change tracking |
 | `/api/changes` | GET | Audit trail des changements |
 | `/api/cron/daily-report` | GET/POST | Cron daily report (auth CRON_SECRET, idempotent) |
+| `/api/cron/market-watch` | GET/POST | Cron market watch (auth CRON_SECRET, idempotent) |
 | `/api/reports` | GET | Liste des rapports quotidiens (filtre type, status) |
 | `/api/reports/today` | GET | Statut du rapport du jour + dernier succès |
 | `/api/reports/health` | GET | Health dashboard (streak, taux 14j, dernier échec) |
@@ -216,12 +217,21 @@ Couverture : lifecycle, cost sentinel, prompt guards, output validator, tracer i
 | Full workflow E2E | Multi-step, cost accumulation, stub replay zero cost |
 | Drift detection | success_rate drop, latency spike, signal tool_replacement |
 
-## Daily Reports (Cron Production)
+## Report Capabilities (Cron Production)
+
+Infrastructure partagée (`lib/runtime/report-runner.ts`) pour toutes les capabilities de reporting.
+
+### Reports actifs
+
+| Report | Type | Cron | Endpoint | Env var |
+|--------|------|------|----------|---------|
+| Daily Crypto Report | `crypto_daily` | 7h UTC | `/api/cron/daily-report` | `DAILY_REPORT_WORKFLOW_ID` |
+| Market Watch Report | `market_watch` | 8h UTC | `/api/cron/market-watch` | `MARKET_WATCH_WORKFLOW_ID` |
 
 ### Déclenchement
 
-Le cron Vercel appelle `GET /api/cron/daily-report` chaque jour à **7h UTC**.
-Railway exécute le même workflow via `DAILY_REPORT_WORKFLOW_ID`.
+Vercel cron appelle `GET /api/cron/{type}` chaque jour.
+Chaque report a son workflow dédié et son `report_type` dans le registry partagé `daily_reports`.
 
 ### Authentification
 
@@ -318,14 +328,33 @@ En cas d'échec :
 ### Vérification rapide de l'état
 
 ```bash
-# Le rapport du jour a-t-il tourné ?
-curl -s https://hearst-agents-production.up.railway.app/api/reports/today \
+# Daily Crypto — rapport du jour
+curl -s https://hearst-agents-production.up.railway.app/api/reports/today?type=crypto_daily \
   -H "x-api-key: $HEARST_API_KEY" | jq '{exists, status: .report.status}'
 
-# Santé globale
-curl -s https://hearst-agents-production.up.railway.app/api/reports/health \
+# Market Watch — rapport du jour
+curl -s https://hearst-agents-production.up.railway.app/api/reports/today?type=market_watch \
+  -H "x-api-key: $HEARST_API_KEY" | jq '{exists, status: .report.status}'
+
+# Santé d'un type de report
+curl -s https://hearst-agents-production.up.railway.app/api/reports/health?type=market_watch \
   -H "x-api-key: $HEARST_API_KEY" | jq '{today: .today.status, streak: .streak_consecutive_success, rate: .recent_14d.success_rate}'
+
+# Relance manuelle Market Watch
+curl -X POST https://hearst-agents-production.up.railway.app/api/cron/market-watch \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"triggered_by": "manual", "reason": "Test initial"}'
 ```
+
+### Ajouter un nouveau type de report
+
+1. Créer un agent dédié (via API ou UI)
+2. Créer un workflow avec les tools nécessaires + collect + template + chat
+3. Créer un endpoint cron dans `app/api/cron/{name}/route.ts` avec `ReportConfig`
+4. Ajouter le cron dans `vercel.json`
+5. Configurer `{NAME}_WORKFLOW_ID` sur Railway/Vercel
+6. Le registry, l'idempotence, l'alerting et la surface opérateur sont automatiques
 
 ## Deploy
 
