@@ -8,15 +8,17 @@ export const maxDuration = 120;
 
 const WORKFLOW_ID = process.env.DAILY_REPORT_WORKFLOW_ID ?? null;
 
-export async function POST(req: NextRequest) {
+function checkAuth(req: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${cronSecret}`) {
-      return err("unauthorized", 401);
-    }
-  }
+  if (!cronSecret) return true;
 
+  const auth = req.headers.get("authorization");
+  if (auth === `Bearer ${cronSecret}`) return true;
+
+  return false;
+}
+
+async function runReport() {
   const workflowId = WORKFLOW_ID ?? (await getActiveReportWorkflow());
   if (!workflowId) return err("no_daily_report_workflow_configured", 404);
 
@@ -36,12 +38,25 @@ export async function POST(req: NextRequest) {
     return ok({
       run_id: result.run_id,
       status: result.status,
-      output_length: typeof result.output === "string" ? result.output.length : JSON.stringify(result.output).length,
+      output_length:
+        typeof result.output === "string"
+          ? result.output.length
+          : JSON.stringify(result.output).length,
     });
   } catch (e) {
     console.error("daily-report cron uncaught:", e);
     return err("internal_error", 500);
   }
+}
+
+export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) return err("unauthorized", 401);
+  return runReport();
+}
+
+export async function POST(req: NextRequest) {
+  if (!checkAuth(req)) return err("unauthorized", 401);
+  return runReport();
 }
 
 async function getActiveReportWorkflow(): Promise<string | null> {
@@ -54,8 +69,4 @@ async function getActiveReportWorkflow(): Promise<string | null> {
     .limit(1)
     .single();
   return data?.id ?? null;
-}
-
-export async function GET() {
-  return ok({ endpoint: "daily-report-cron", method: "POST" });
 }
