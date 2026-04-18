@@ -14,8 +14,8 @@ Assistant intelligent avec orchestration d'agents IA en arrière-plan.
 ## Comportement produit (Phase 2)
 
 - **Agent global "Hearst"** : agent unique auto-provisionné (slug `hearst`), aucune configuration requise. Le chat fonctionne immédiatement via `POST /api/chat`. Les données utilisateur sont injectées via `lib/agent/data-functions.ts` — résumés compacts (max 5 messages, 3 événements, 3 fichiers) adaptés à la surface active. Préparé pour migration vers tool-calls (function calling).
-- **Mission Engine** : le chat détecte si une requête est une réponse simple, une navigation, ou une mission exécutable
-- **Panneau droit** : affiche en temps réel le résultat, la mission active, la timeline d'étapes, et les services utilisés
+- **Mission Engine** : le chat détecte si une requête est une réponse simple, une navigation, ou une mission exécutable. Les missions sont persistées en DB (`missions` + `mission_runs`) et exécutées via l'agent Hearst (`POST /api/missions/execute`, SSE). Chaque étape est tracée avec status, latency, input/output. Historique consultable via `GET /api/missions/recent`.
+- **Panneau droit** : affiche en temps réel le résultat, la mission active, la timeline d'étapes, les services utilisés, et les dernières missions exécutées (historique DB)
 - **Inbox V1** : vue globale avec urgences, actions recommandées, liste filtrée (tous/importants/non lus), vue détail, "Répondre avec Hearst" qui crée une mission visible
 - **États simplifiés** : En cours / En attente / Terminé / Erreur / En attente de validation
 - **Langage utilisateur** : aucun jargon technique, tout est orienté compréhension utilisateur
@@ -174,6 +174,8 @@ Architecture : `lib/connectors/` (un connector par service), tokens chiffrés AE
 | `/api/slack/messages` | Messages Slack (lecture) |
 | `/api/auth/slack` | OAuth Slack (redirect) |
 | `/api/auth/callback/slack` | Callback OAuth Slack |
+| `/api/missions/execute` | Exécution réelle d'une mission via agent Hearst (SSE) |
+| `/api/missions/recent` | Dernières missions de l'utilisateur |
 
 ## Auth
 
@@ -183,7 +185,7 @@ API key via `HEARST_API_KEY`. Toutes les routes (sauf `/api/health`) sont proté
 curl -H "x-api-key: YOUR_KEY" http://localhost:9000/api/agents
 ```
 
-## Database (30 tables, 10 migrations)
+## Database (32 tables, 14 migrations)
 
 **Core** : agents, agent_versions, skills, skill_versions, tools, agent_skills, agent_tools
 **Prompts** : prompt_artifacts (versioned, checksummed)
@@ -197,6 +199,7 @@ curl -H "x-api-key: YOUR_KEY" http://localhost:9000/api/agents
 **Integrations** : integration_connections
 **Decisions** : improvement_signals, applied_changes
 **Reports** : daily_reports (registry produit, idempotent)
+**Missions** : missions, mission_runs (persistance des missions utilisateur + exécutions)
 **Legacy** : usage_logs, workflow_runs
 
 ## Runtime

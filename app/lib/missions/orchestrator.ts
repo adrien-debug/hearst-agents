@@ -12,77 +12,130 @@ export async function executeMission(mission: Mission): Promise<void> {
   registry.dispatch({ type: "mission_started", missionId: mission.id });
 
   try {
-    for (let i = 0; i < mission.actions.length; i++) {
+    const res = await fetch("/api/missions/execute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mission_id: mission.id,
+        title: mission.title,
+        surface: mission.surface,
+        actions: mission.actions.map((a) => ({
+          id: a.id,
+          label: a.label,
+          service: a.service,
+        })),
+        services: mission.services,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Erreur serveur" }));
+      registry.dispatch({
+        type: "mission_failed",
+        missionId: mission.id,
+        error: (err as Record<string, string>).error ?? "Erreur serveur",
+      });
+      return;
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) {
+      registry.dispatch({
+        type: "mission_failed",
+        missionId: mission.id,
+        error: "Connexion interrompue",
+      });
+      return;
+    }
+
+    const decoder = new TextDecoder();
+
+    while (true) {
       if (controller.signal.aborted) {
+        reader.cancel();
         registry.dispatch({ type: "mission_cancelled", missionId: mission.id });
         return;
       }
 
-      const action = mission.actions[i];
-      registry.dispatch({ type: "step_started", missionId: mission.id, actionId: action.id });
+      const { done, value } = await reader.read();
+      if (done) break;
 
-      try {
-        await simulateStep(controller.signal);
-      } catch (err) {
-        if (controller.signal.aborted) {
-          registry.dispatch({ type: "mission_cancelled", missionId: mission.id });
-          return;
+      const text = decoder.decode(value, { stream: true });
+      for (const line of text.split("\n")) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const event = JSON.parse(line.slice(6)) as Record<string, unknown>;
+          handleServerEvent(mission.id, event, registry);
+        } catch {
+          /* skip malformed */
         }
-        registry.dispatch({
-          type: "step_failed",
-          missionId: mission.id,
-          actionId: action.id,
-          error: err instanceof Error ? err.message : "Erreur inattendue",
-        });
-        registry.dispatch({
-          type: "mission_failed",
-          missionId: mission.id,
-          error: `Étape "${action.label}" a échoué`,
-        });
-        return;
-      }
-
-      const isLast = i === mission.actions.length - 1;
-      if (isLast) {
-        registry.dispatch({
-          type: "step_needs_approval",
-          missionId: mission.id,
-          actionId: action.id,
-        });
-        registry.dispatch({
-          type: "mission_awaiting_approval",
-          missionId: mission.id,
-        });
-
-        await delay(1200, controller.signal);
-        if (controller.signal.aborted) {
-          registry.dispatch({ type: "mission_cancelled", missionId: mission.id });
-          return;
-        }
-
-        registry.dispatch({
-          type: "step_completed",
-          missionId: mission.id,
-          actionId: action.id,
-          preview: "Vérifié",
-        });
-      } else {
-        registry.dispatch({
-          type: "step_completed",
-          missionId: mission.id,
-          actionId: action.id,
-          preview: action.label,
-        });
       }
     }
-
+  } catch (err) {
+    if (controller.signal.aborted) {
+      registry.dispatch({ type: "mission_cancelled", missionId: mission.id });
+      return;
+    }
     registry.dispatch({
-      type: "mission_completed",
+      type: "mission_failed",
       missionId: mission.id,
-      result: `${mission.title} — terminé avec succès.`,
+      error: err instanceof Error ? err.message : "Erreur de connexion",
     });
   } finally {
     activeCancellers.delete(mission.id);
+  }
+}
+
+function handleServerEvent(
+  missionId: string,
+  event: Record<string, unknown>,
+  registry: ReturnType<typeof getMissionRegistry>,
+) {
+  const type = event.type as string;
+
+  switch (type) {
+    case "step_started":
+      registry.dispatch({
+        type: "step_started",
+        missionId,
+        actionId: event.action_id as string,
+      });
+      break;
+
+    case "step_completed":
+      registry.dispatch({
+        type: "step_completed",
+        missionId,
+        actionId: event.action_id as string,
+        preview: (event.preview as string) ?? undefined,
+      });
+      break;
+
+    case "step_failed":
+      registry.dispatch({
+        type: "step_failed",
+        missionId,
+        actionId: event.action_id as string,
+        error: (event.error as string) ?? "Erreur",
+      });
+      break;
+
+    case "mission_completed":
+      registry.dispatch({
+        type: "mission_completed",
+        missionId,
+        result: (event.result as string) ?? "Terminé",
+      });
+      break;
+
+    case "mission_failed":
+      registry.dispatch({
+        type: "mission_failed",
+        missionId,
+        error: (event.error as string) ?? "Erreur",
+      });
+      break;
   }
 }
 
@@ -107,77 +160,10 @@ export async function executeReplyMission(
     updatedAt: Date.now(),
   };
 
-  const registry = getMissionRegistry();
-  const controller = new AbortController();
-  activeCancellers.set(missionId, controller);
-
-  registry.dispatch({ type: "mission_created", mission });
-  registry.dispatch({ type: "mission_started", missionId });
-  registry.setActiveSurface("inbox");
-
-  try {
-    for (let i = 0; i < mission.actions.length; i++) {
-      if (controller.signal.aborted) {
-        registry.dispatch({ type: "mission_cancelled", missionId });
-        return;
-      }
-
-      const action = mission.actions[i];
-      registry.dispatch({ type: "step_started", missionId, actionId: action.id });
-
-      await delay(600 + Math.random() * 800, controller.signal);
-      if (controller.signal.aborted) {
-        registry.dispatch({ type: "mission_cancelled", missionId });
-        return;
-      }
-
-      const isLast = i === mission.actions.length - 1;
-      if (isLast) {
-        registry.dispatch({ type: "step_needs_approval", missionId, actionId: action.id });
-        registry.dispatch({ type: "mission_awaiting_approval", missionId });
-
-        await delay(1200, controller.signal);
-        if (controller.signal.aborted) {
-          registry.dispatch({ type: "mission_cancelled", missionId });
-          return;
-        }
-
-        registry.dispatch({ type: "step_completed", missionId, actionId: action.id, preview: "Vérifié" });
-      } else {
-        registry.dispatch({
-          type: "step_completed",
-          missionId,
-          actionId: action.id,
-          preview: action.label,
-        });
-      }
-    }
-
-    registry.dispatch({
-      type: "mission_completed",
-      missionId,
-      result: `Réponse préparée pour ${fromName}.\n\nSujet : ${subject}`,
-    });
-  } finally {
-    activeCancellers.delete(missionId);
-  }
+  return executeMission(mission);
 }
 
 export function cancelMission(missionId: string): void {
   const controller = activeCancellers.get(missionId);
   if (controller) controller.abort();
-}
-
-function simulateStep(signal: AbortSignal): Promise<void> {
-  return delay(800 + Math.random() * 1200, signal);
-}
-
-function delay(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, ms);
-    signal?.addEventListener("abort", () => {
-      clearTimeout(timer);
-      reject(new DOMException("Aborted", "AbortError"));
-    }, { once: true });
-  });
 }
