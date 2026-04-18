@@ -14,27 +14,18 @@ const CONFIG: ReportConfig = {
 };
 
 export async function GET(req: NextRequest) {
-  const auth = authenticateCron(
-    req.headers.get("authorization"),
-    "cron/market_watch",
-    req.headers.get("x-forwarded-for") ?? "unknown",
-  );
+  const auth = authenticateCron(req.headers.get("authorization"), `cron/${CONFIG.reportType}`, req.headers.get("x-forwarded-for") ?? "unknown");
   if (!auth.ok) return err(auth.reason, 401);
   return runReport(CONFIG, "cron");
 }
 
 export async function POST(req: NextRequest) {
-  const auth = authenticateCron(
-    req.headers.get("authorization"),
-    "cron/market_watch",
-    req.headers.get("x-forwarded-for") ?? "unknown",
-  );
+  const auth = authenticateCron(req.headers.get("authorization"), `cron/${CONFIG.reportType}`, req.headers.get("x-forwarded-for") ?? "unknown");
   if (!auth.ok) return err(auth.reason, 401);
 
-  const defaults = { triggeredBy: "manual", forceRerun: false, dateOverride: undefined as string | undefined, rerunReason: undefined as string | undefined };
   let body: unknown = null;
-  try { body = await req.json(); } catch { /* no body is fine */ }
-  const params = body ? parseCronBody(body) : defaults;
+  try { body = await req.json(); } catch { /* ok */ }
+  const p = body ? parseCronBody(body) : { triggeredBy: "manual", forceRerun: false };
 
-  return runReport(CONFIG, params.triggeredBy, params.dateOverride, params.rerunReason, params.forceRerun);
+  return runReport(CONFIG, p.triggeredBy, p.dateOverride, p.rerunReason, p.forceRerun);
 }

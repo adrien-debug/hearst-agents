@@ -123,11 +123,12 @@ lib/
 | `/api/signals` | GET | Liste signals (filtrable) |
 | `/api/signals/[id]/resolve` | POST | Apply/dismiss/acknowledge + change tracking |
 | `/api/changes` | GET | Audit trail des changements |
-| `/api/cron/daily-report` | GET/POST | Cron daily report (auth CRON_SECRET, idempotent) |
-| `/api/cron/market-watch` | GET/POST | Cron market watch (auth CRON_SECRET, idempotent) |
-| `/api/reports` | GET | Liste des rapports quotidiens (filtre type, status) |
-| `/api/reports/today` | GET | Statut du rapport du jour + dernier succès |
-| `/api/reports/health` | GET | Health dashboard (streak, taux 14j, dernier échec) |
+| `/api/cron/daily-report` | GET/POST | Cron daily crypto (scheduled, idempotent) |
+| `/api/cron/market-watch` | GET/POST | Cron market watch (scheduled, idempotent) |
+| `/api/cron/market-alert` | GET/POST | Cron market alert (conditional, 8h cooldown) |
+| `/api/reports` | GET | Liste des rapports (filtre `type`, `status`) |
+| `/api/reports/today` | GET | Statut du rapport du jour par type |
+| `/api/reports/health` | GET | Health dashboard par type (streak, taux 14j) |
 
 ## Auth
 
