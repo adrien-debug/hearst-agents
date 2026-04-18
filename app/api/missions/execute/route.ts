@@ -174,27 +174,31 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        const lastRun = await raw.from("mission_runs")
-          .select("output")
+        const { data: allRuns } = await raw.from("mission_runs")
+          .select("action_id, output")
           .eq("mission_id", mission_id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+          .order("created_at", { ascending: true });
 
-        const finalResult = (lastRun.data?.output as Record<string, string>)?.result
-          ?? `${title} — terminé.`;
+        const stepResults: Record<string, string> = {};
+        for (const run of allRuns ?? []) {
+          const out = (run.output as Record<string, string>)?.result;
+          if (out) stepResults[run.action_id as string] = out;
+        }
+
+        const lastResult = Object.values(stepResults).pop() ?? `${title} — terminé.`;
 
         await raw.from("missions")
           .update({
-            status: "completed",
-            result: finalResult.slice(0, 2000),
+            status: "awaiting_approval",
+            result: lastResult.slice(0, 2000),
             updated_at: new Date().toISOString(),
           })
           .eq("id", mission_id);
 
         send({
-          type: "mission_completed",
-          result: finalResult.slice(0, 500),
+          type: "mission_awaiting_approval",
+          result: lastResult.slice(0, 500),
+          result_data: stepResults,
         });
 
       } catch (err) {

@@ -14,38 +14,32 @@ export const runtime = "nodejs";
 
 const HEARST_SLUG = "hearst";
 
-const HEARST_SYSTEM_PROMPT = `Tu es Hearst, l'assistant intelligent de l'utilisateur.
+const HEARST_SYSTEM_PROMPT = `Tu es Hearst. Système d'action.
 
-Tu réponds toujours en français, de manière concise et utile.
-Tu ne mens jamais. Si tu ne sais pas, tu le dis.
-Tu ne mentionnes jamais de termes techniques (API, token, provider, connector, function call).
+RÈGLE : 1 info + 1 CTA. Rien d'autre. Jamais.
 
-## Données disponibles
+PRIORITÉ (messages) :
+IF urgents > 0 → "X urgents" + [Répondre]
+ELSE IF slack > 0 → "X Slack" + [Répondre]
+ELSE → "X messages" + [Répondre]
 
-Un aperçu des données de l'utilisateur est fourni dans le contexte ci-dessous.
-Ces données sont un résumé — elles ne contiennent pas tous les détails.
-Utilise-les pour répondre aux questions simples (résumé, priorités, vue d'ensemble).
+PRIORITÉ (autres) :
+événements → "X événements" + [Répondre]
+fichiers → "X fichiers" + [Répondre]
+rien → "Aucun urgent"
 
-Si l'utilisateur demande un détail spécifique qui n'est pas dans l'aperçu,
-dis-lui que tu n'as pas assez de détails et propose de consulter la surface correspondante.
+CTA : toujours [Répondre]. Second optionnel discret : [Voir].
 
-## Comportement par surface
+INTERDIT : "dont", multi métriques, 2 CTA égaux, phrases > 4 mots, listes, "Bonjour", questions, explications, termes techniques.
 
-- Inbox : focus messages, non lus d'abord, expéditeurs, sujets importants
-- Calendar : focus événements, horaires, conflits potentiels
-- Files : focus documents récents, fichiers partagés
-- Home : vue d'ensemble concise, propose une action utile
+MAUVAIS : "15 messages dont 3 urgents" / "Bonjour, comment puis-je" / "Voici un résumé"
+BON : "3 urgents\\n[Répondre]"
 
-## Règles strictes
-
-- Base-toi uniquement sur les données réelles fournies
-- N'invente jamais de messages, événements ou fichiers
-- Si aucune donnée n'est disponible, dis-le simplement
-- Si un élément est sélectionné, il est ton contexte principal`;
+Données réelles uniquement. Jamais inventer. Français.`;
 
 const requestSchema = z.object({
   message: z.string().min(1).max(100000),
-  conversation_id: z.string().uuid().optional(),
+  conversation_id: z.string().uuid().nullish(),
   context: z.object({
     surface: z.string().optional(),
     selectedItem: z.object({
@@ -112,7 +106,13 @@ async function resolveHearstAgent(sb: ReturnType<typeof requireServerSupabase>) 
     .eq("slug", HEARST_SLUG)
     .single();
 
-  if (existing) return existing;
+  if (existing) {
+    if (existing.system_prompt !== HEARST_SYSTEM_PROMPT) {
+      await sb.from("agents").update({ system_prompt: HEARST_SYSTEM_PROMPT }).eq("id", existing.id);
+      existing.system_prompt = HEARST_SYSTEM_PROMPT;
+    }
+    return existing;
+  }
 
   const { data: created, error } = await sb
     .from("agents")
@@ -122,6 +122,8 @@ async function resolveHearstAgent(sb: ReturnType<typeof requireServerSupabase>) 
       description: "Assistant global Hearst OS",
       model_provider: "anthropic",
       model_name: "claude-sonnet-4-20250514",
+      // NOTE: agent already created in DB uses this model.
+      // If deprecated, update the row in Supabase: UPDATE agents SET model_name='claude-sonnet-4-latest' WHERE slug='hearst';
       system_prompt: HEARST_SYSTEM_PROMPT,
       temperature: 0.7,
       max_tokens: 4096,
@@ -152,29 +154,40 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
+    console.error("[Chat] JSON parse failed");
     return jsonErr("Invalid JSON body", 400);
   }
 
+  console.log("[Chat] RAW BODY", JSON.stringify(body));
+
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
-    return jsonErr("invalid_request", 400);
+    console.error("[Chat] ZOD ERROR", JSON.stringify(parsed.error.issues));
+    return jsonErr(`invalid_request: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`, 400);
   }
 
+  try {
   const sb = requireServerSupabase();
   const { message: userMessage, conversation_id, context } = parsed.data;
   const userId = await getUserId();
+  console.log("[Chat] userId:", userId, "| surface:", context?.surface ?? "home", "| msg:", userMessage.slice(0, 50));
 
   const agent = await resolveHearstAgent(sb);
-  if (!agent) return jsonErr("agent_unavailable", 503);
+  if (!agent) {
+    console.error("[Chat] Agent not found");
+    return jsonErr("agent_unavailable", 503);
+  }
+  console.log("[Chat] agent:", agent.id, agent.slug);
 
   let conversationId = conversation_id ?? null;
 
   if (!conversationId) {
-    const { data: convo } = await sb
+    const { data: convo, error: convoErr } = await sb
       .from("conversations")
       .insert({ agent_id: agent.id, title: userMessage.slice(0, 80) })
       .select("id")
       .single();
+    if (convoErr) console.error("[Chat] Conversation create failed:", convoErr.message);
     conversationId = convo?.id ?? null;
   }
 
@@ -347,4 +360,10 @@ export async function POST(req: NextRequest) {
       "X-Run-Id": runId,
     },
   });
+
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[Chat] INTERNAL ERROR:", msg);
+    return jsonErr(`internal_error: ${msg}`, 500);
+  }
 }

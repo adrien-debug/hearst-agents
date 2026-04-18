@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 9000",
+    "dev": "mkdir -p .next && xattr -w com.apple.fileprovider.ignore#P 1 .next 2>/dev/null; next dev -p 9000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -11,5 +11,5 @@ export type {
 
 export { MissionRegistry, getMissionRegistry } from "./registry";
 export { detectIntent, detectIntentWithFallback } from "./intent";
-export { executeMission, executeReplyMission, cancelMission } from "./orchestrator";
+export { executeMission, executeReplyMission, cancelMission, approveMission } from "./orchestrator";
 export { MissionProvider, useMission } from "./use-mission";

@@ -23,7 +23,7 @@ export interface UnifiedMessage {
   body: string;
   timestamp: number;
   read: boolean;
-  priority: "high" | "normal" | "low";
+  priority: "urgent" | "normal" | "low";
   context?: string;
   canReply: boolean;
 }
@@ -101,7 +101,7 @@ export function slackToUnifiedMessage(raw: SlackMessage): UnifiedMessage {
     body: raw.text,
     timestamp: ts,
     read: !raw.isMention,
-    priority: raw.isMention ? "high" : "normal",
+    priority: raw.isMention ? "urgent" : "normal",
     context: `#${raw.channelName}`,
     canReply: false,
   };

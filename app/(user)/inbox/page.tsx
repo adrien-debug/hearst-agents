@@ -5,10 +5,12 @@ import { signIn, useSession } from "next-auth/react";
 import { executeReplyMission } from "../../lib/missions";
 import { useChatContext } from "../../lib/chat-context";
 import MessageDetail from "./MessageDetail";
+import InboxSummary from "./InboxSummary";
 import type { UnifiedMessage } from "@/lib/connectors/unified-types";
 import { gmailToUnifiedMessage, slackToUnifiedMessage } from "@/lib/connectors/unified-types";
+import { applyPriorities, sortByPriority } from "@/lib/connectors/priority";
 
-type Tab = "all" | "unread";
+type Tab = "all" | "unread" | "urgent";
 
 function formatDate(ts: number): string {
   if (!ts) return "";
@@ -69,9 +71,8 @@ export default function InboxPage() {
 
     Promise.all([fetchGmail, fetchSlack])
       .then(([gmail, slack]) => {
-        const combined = [...gmail, ...slack];
-        combined.sort((a, b) => b.timestamp - a.timestamp);
-        setMessages(combined);
+        const combined = applyPriorities([...gmail, ...slack]);
+        setMessages(sortByPriority(combined));
       })
       .catch(() => {
         setError("Impossible de charger vos messages. Réessayez plus tard.");
@@ -80,6 +81,7 @@ export default function InboxPage() {
   }, [session]);
 
   const unreadCount = messages.filter((m) => !m.read).length;
+  const urgentCount = messages.filter((m) => m.priority === "urgent").length;
 
   const sources = useMemo(() => {
     const map = new Map<string, number>();
@@ -92,6 +94,7 @@ export default function InboxPage() {
 
   const filtered = messages.filter((m) => {
     if (tab === "unread") return !m.read;
+    if (tab === "urgent") return m.priority === "urgent";
     return true;
   });
 
@@ -162,9 +165,11 @@ export default function InboxPage() {
               ? "Erreur de chargement"
               : messages.length === 0
                 ? "Aucun message"
-                : unreadCount > 0
-                  ? `${unreadCount} message${unreadCount > 1 ? "s" : ""} non lu${unreadCount > 1 ? "s" : ""}`
-                  : "Tout est à jour"}
+                : urgentCount > 0
+                  ? `${urgentCount} urgent${urgentCount > 1 ? "s" : ""} · ${unreadCount} non lu${unreadCount > 1 ? "s" : ""}`
+                  : unreadCount > 0
+                    ? `${unreadCount} message${unreadCount > 1 ? "s" : ""} non lu${unreadCount > 1 ? "s" : ""}`
+                    : "Tout est à jour"}
         </p>
       </div>
 
@@ -221,10 +226,18 @@ export default function InboxPage() {
         {/* Message list */}
         {!loading && !error && messages.length > 0 && (
           <>
+            {/* Summary */}
+            <InboxSummary
+              messages={messages}
+              onSelectMessage={selectMessage}
+              onFilterUrgent={() => setTab("urgent")}
+            />
+
             {/* Tabs */}
             <div className="flex gap-1 border-b border-zinc-800/40 px-6 pt-3">
               {([
                 { key: "all" as const, label: "Tous", count: messages.length },
+                { key: "urgent" as const, label: "Urgents", count: urgentCount },
                 { key: "unread" as const, label: "Non lus", count: unreadCount },
               ]).map((t) => (
                 <button
@@ -237,7 +250,7 @@ export default function InboxPage() {
                   }`}
                 >
                   {t.label}
-                  {t.key === "unread" && t.count > 0 && (
+                  {(t.key === "unread" || t.key === "urgent") && t.count > 0 && (
                     <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${
                       tab === t.key ? "bg-zinc-700 text-zinc-300" : "bg-zinc-800/60 text-zinc-600"
                     }`}>
@@ -253,10 +266,14 @@ export default function InboxPage() {
                 <button
                   key={msg.id}
                   onClick={() => selectMessage(msg)}
-                  className="flex w-full items-start gap-3 px-6 py-3.5 text-left transition-colors hover:bg-zinc-900/40"
+                  className={`flex w-full items-start gap-3 px-6 py-3.5 text-left transition-colors hover:bg-zinc-900/40 ${
+                    msg.priority === "urgent" ? "border-l-2 border-red-500/40" : ""
+                  } ${msg.priority === "low" ? "opacity-50" : ""}`}
                 >
                   {!msg.read && (
-                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                      msg.priority === "urgent" ? "bg-red-500" : "bg-blue-500"
+                    }`} />
                   )}
                   {msg.read && <span className="mt-1.5 h-2 w-2 shrink-0" />}
                   <div className="min-w-0 flex-1">

@@ -6,7 +6,11 @@ export class AnthropicProvider implements LLMProvider {
   private client: Anthropic;
 
   constructor() {
-    this.client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      throw new Error("ANTHROPIC_API_KEY is not set — add it to .env.local");
+    }
+    this.client = new Anthropic({ apiKey });
   }
 
   async chat(req: ChatRequest): Promise<ChatResponse> {

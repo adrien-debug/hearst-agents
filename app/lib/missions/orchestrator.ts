@@ -121,11 +121,19 @@ function handleServerEvent(
       });
       break;
 
+    case "mission_awaiting_approval":
+      registry.dispatch({
+        type: "mission_awaiting_approval",
+        missionId,
+      });
+      break;
+
     case "mission_completed":
       registry.dispatch({
         type: "mission_completed",
         missionId,
         result: (event.result as string) ?? "Terminé",
+        resultData: (event.result_data as Record<string, unknown>) ?? undefined,
       });
       break;
 
@@ -136,6 +144,22 @@ function handleServerEvent(
         error: (event.error as string) ?? "Erreur",
       });
       break;
+  }
+}
+
+export async function approveMission(missionId: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/missions/approve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mission_id: missionId }),
+    });
+    if (!res.ok) return false;
+    const registry = getMissionRegistry();
+    registry.dispatch({ type: "mission_completed", missionId, result: "Validé et exécuté." });
+    return true;
+  } catch {
+    return false;
   }
 }
 

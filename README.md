@@ -16,7 +16,7 @@ Assistant intelligent avec orchestration d'agents IA en arrière-plan.
 - **Agent global "Hearst"** : agent unique auto-provisionné (slug `hearst`), aucune configuration requise. Le chat fonctionne immédiatement via `POST /api/chat`. Les données utilisateur sont injectées via `lib/agent/data-functions.ts` — résumés compacts (max 5 messages, 3 événements, 3 fichiers) adaptés à la surface active. Préparé pour migration vers tool-calls (function calling).
 - **Mission Engine** : le chat détecte si une requête est une réponse simple, une navigation, ou une mission exécutable. Les missions sont persistées en DB (`missions` + `mission_runs`) et exécutées via l'agent Hearst (`POST /api/missions/execute`, SSE). Chaque étape est tracée avec status, latency, input/output. Historique consultable via `GET /api/missions/recent`.
 - **Panneau droit** : affiche en temps réel le résultat, la mission active, la timeline d'étapes, les services utilisés, et les dernières missions exécutées (historique DB)
-- **Inbox V1** : vue globale avec urgences, actions recommandées, liste filtrée (tous/importants/non lus), vue détail, "Répondre avec Hearst" qui crée une mission visible
+- **Inbox V2** : priorisation automatique (urgent/normal/low) via classifieur rule-based (`lib/connectors/priority.ts`). InboxSummary en haut (urgents, résumé 24h, actions). Tabs : Tous / Urgents / Non lus. Tri par priorité. Indicateurs visuels (bordure rouge, opacité réduite pour newsletters). Zéro LLM.
 - **États simplifiés** : En cours / En attente / Terminé / Erreur / En attente de validation
 - **Langage utilisateur** : aucun jargon technique, tout est orienté compréhension utilisateur
 
