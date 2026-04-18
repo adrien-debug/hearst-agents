@@ -449,6 +449,18 @@ async function executeTransform(
       result = { ...(ctx.current as Record<string, unknown>), ...mergeWith };
       break;
     }
+    case "collect": {
+      result = { ...ctx.steps };
+      break;
+    }
+    case "template": {
+      const tpl = config.template as string | undefined;
+      if (tpl) {
+        result = tpl.replace(/\{\{steps\}\}/g, JSON.stringify(ctx.steps, null, 2))
+          .replace(/\{\{input\}\}/g, JSON.stringify(ctx.input, null, 2));
+      }
+      break;
+    }
     default:
       break;
   }
