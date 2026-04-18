@@ -79,7 +79,32 @@ const REPORT_TYPES = [
   { value: "all", label: "Tous" },
   { value: "crypto_daily", label: "Daily Crypto" },
   { value: "market_watch", label: "Market Watch" },
+  { value: "market_alert", label: "Market Alert" },
 ] as const;
+
+const TYPE_STYLE: Record<string, { label: string; color: string }> = {
+  crypto_daily: { label: "Daily Crypto", color: "text-amber-400 bg-amber-950/30 border-amber-900/40" },
+  market_watch: { label: "Market Watch", color: "text-indigo-400 bg-indigo-950/30 border-indigo-900/40" },
+  market_alert: { label: "Market Alert", color: "text-rose-400 bg-rose-950/30 border-rose-900/40" },
+};
+
+const SEVERITY_STYLE: Record<string, { label: string; color: string }> = {
+  critical: { label: "Critical", color: "text-red-300 bg-red-950/50 border-red-800/50" },
+  warning: { label: "Warning", color: "text-yellow-300 bg-yellow-950/40 border-yellow-800/40" },
+  info: { label: "Info", color: "text-blue-300 bg-blue-950/40 border-blue-800/40" },
+};
+
+function extractSeverity(highlights: string[] | null): string | null {
+  if (!highlights) return null;
+  const sevLine = highlights.find((h) => h.startsWith("severity: "));
+  return sevLine ? sevLine.replace("severity: ", "") : null;
+}
+
+function extractSignalTypes(highlights: string[] | null): string[] {
+  if (!highlights) return [];
+  const sigLine = highlights.find((h) => h.startsWith("signal_types: "));
+  return sigLine ? sigLine.replace("signal_types: ", "").split(", ").filter(Boolean) : [];
+}
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
@@ -88,19 +113,38 @@ export default function ReportsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<string>("all");
 
+  const [healthAll, setHealthAll] = useState<Record<string, HealthData>>({});
+
   const load = useCallback(async () => {
     setLoading(true);
     const typeParam = activeType !== "all" ? `&type=${activeType}` : "";
     const healthType = activeType !== "all" ? activeType : "crypto_daily";
-    const [reportsRes, healthRes] = await Promise.all([
+
+    const fetches: Promise<Response>[] = [
       fetch(`/api/reports?limit=30${typeParam}`),
       fetch(`/api/reports/health?type=${healthType}`),
-    ]);
-    const reportsJson = await reportsRes.json();
-    const healthJson = await healthRes.json();
+    ];
+
+    if (activeType === "all") {
+      fetches.push(fetch("/api/reports/health?type=market_watch"));
+      fetches.push(fetch("/api/reports/health?type=market_alert"));
+    }
+
+    const results = await Promise.all(fetches);
+    const reportsJson = await results[0].json();
+    const healthJson = await results[1].json();
 
     setReports(reportsJson.reports ?? []);
     setHealth(healthJson);
+
+    if (activeType === "all" && results.length >= 4) {
+      const mwHealth = await results[2].json();
+      const maHealth = await results[3].json();
+      setHealthAll({ crypto_daily: healthJson, market_watch: mwHealth, market_alert: maHealth });
+    } else {
+      setHealthAll({});
+    }
+
     setLoading(false);
   }, [activeType]);
 
@@ -116,10 +160,10 @@ export default function ReportsPage() {
             Opérations
           </p>
           <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Daily Reports
+            Reports
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Surveillance et historique des rapports quotidiens.
+            Surveillance et historique des capabilities de reporting.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -147,8 +191,39 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* ─── Health dashboard ─── */}
-      {health && (
+      {/* ─── Multi-type overview ─── */}
+      {activeType === "all" && Object.keys(healthAll).length > 0 && (
+        <div className="mb-6 grid grid-cols-3 gap-4">
+          {Object.entries(healthAll).map(([type, h]) => {
+            const ts = TYPE_STYLE[type] ?? { label: type, color: "text-zinc-400 bg-zinc-900 border-zinc-800" };
+            return (
+              <div key={type} className={`rounded-xl border px-5 py-4 ${
+                h.today.status === "completed" ? "border-green-900/30 bg-green-950/10"
+                  : h.today.status === "failed" ? "border-red-900/30 bg-red-950/10"
+                  : "border-zinc-800 bg-zinc-950/60"
+              }`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${ts.color}`}>
+                    {ts.label}
+                  </span>
+                  <StatusDot status={h.today.status} />
+                  <span className="text-xs text-white">
+                    {STATUS_CONFIG[h.today.status]?.label ?? h.today.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-4 text-[10px] text-zinc-500">
+                  <span>Streak: <strong className="text-zinc-300">{h.streak_consecutive_success}</strong></span>
+                  <span>14j: <strong className="text-zinc-300">{h.recent_14d.success_rate ?? "—"}%</strong></span>
+                  <span>{h.recent_14d.success}/{h.recent_14d.total} ok</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ─── Health dashboard (single type) ─── */}
+      {health && activeType !== "all" && (
         <div className="mb-8 grid grid-cols-4 gap-4">
           {/* Today */}
           <div className={`rounded-xl border px-4 py-4 ${
@@ -237,11 +312,26 @@ export default function ReportsPage() {
                 <span className="min-w-[90px] text-sm font-medium text-white">
                   {r.report_date}
                 </span>
+                <span className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${
+                  TYPE_STYLE[r.report_type]?.color ?? "text-zinc-400 bg-zinc-900 border-zinc-800"
+                }`}>
+                  {TYPE_STYLE[r.report_type]?.label ?? r.report_type}
+                </span>
                 <StatusBadge status={r.status} />
+                {(() => {
+                  const sev = extractSeverity(r.highlights);
+                  if (!sev) return null;
+                  const s = SEVERITY_STYLE[sev];
+                  return s ? (
+                    <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase border ${s.color}`}>
+                      {s.label}
+                    </span>
+                  ) : null;
+                })()}
                 <span className="rounded bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500">
                   {r.triggered_by}
                 </span>
-                {r.idempotency_decision && r.idempotency_decision !== "run" && (
+                {r.idempotency_decision && !["run", "cooldown_passed"].includes(r.idempotency_decision) && (
                   <span className="rounded bg-yellow-950/30 px-2 py-0.5 text-[10px] text-yellow-500 border border-yellow-900/30">
                     {r.idempotency_decision}
                   </span>
@@ -296,16 +386,22 @@ export default function ReportsPage() {
                     <MetaField label="Créé" value={new Date(r.created_at).toLocaleString()} />
                     <MetaField label="MAJ" value={new Date(r.updated_at).toLocaleString()} />
                     <MetaField label="Type" value={r.report_type} />
+                    {extractSeverity(r.highlights) && (
+                      <MetaField label="Sévérité" value={extractSeverity(r.highlights)} />
+                    )}
+                    {extractSignalTypes(r.highlights).length > 0 && (
+                      <MetaField label="Signaux" value={extractSignalTypes(r.highlights).join(", ")} />
+                    )}
                   </div>
 
                   {/* Highlights */}
-                  {r.highlights && r.highlights.length > 0 && (
+                  {r.highlights && r.highlights.filter((h) => !h.startsWith("severity: ") && !h.startsWith("signal_types: ")).length > 0 && (
                     <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
                       <p className="text-[10px] font-semibold uppercase text-zinc-500 mb-2">
                         Points clés
                       </p>
                       <ul className="space-y-1.5">
-                        {r.highlights.map((h, i) => (
+                        {r.highlights.filter((h) => !h.startsWith("severity: ") && !h.startsWith("signal_types: ")).map((h, i) => (
                           <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">
                             <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                             {h}

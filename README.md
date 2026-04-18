@@ -221,67 +221,120 @@ Couverture : lifecycle, cost sentinel, prompt guards, output validator, tracer i
 
 Infrastructure partagée (`lib/runtime/report-runner.ts`) pour toutes les capabilities de reporting.
 
+### Architecture d'exécution
+
+| Rôle | Responsable | Notes |
+|------|-------------|-------|
+| Runtime + Cron | **Railway** | Source unique d'exécution des reports |
+| Frontend / UI | **Vercel** | Console opérateur et API lecture |
+
+**Railway est le cron owner.** Pas de crons définis dans `vercel.json`.
+Un seul runtime exécute les workflows pour éviter doublons et fragmentation.
+
 ### Reports actifs
 
-| Report | Type | Cron | Endpoint | Env var |
-|--------|------|------|----------|---------|
-| Daily Crypto Report | `crypto_daily` | 7h UTC | `/api/cron/daily-report` | `DAILY_REPORT_WORKFLOW_ID` |
-| Market Watch Report | `market_watch` | 8h UTC | `/api/cron/market-watch` | `MARKET_WATCH_WORKFLOW_ID` |
-
-### Déclenchement
-
-Vercel cron appelle `GET /api/cron/{type}` chaque jour.
-Chaque report a son workflow dédié et son `report_type` dans le registry partagé `daily_reports`.
+| Report | Type | Cron Railway | Endpoint | Env var | Mode |
+|--------|------|-------------|----------|---------|------|
+| Daily Crypto Report | `crypto_daily` | 7h UTC | `/api/cron/daily-report` | `DAILY_REPORT_WORKFLOW_ID` | Scheduled |
+| Market Watch Report | `market_watch` | 8h UTC | `/api/cron/market-watch` | `MARKET_WATCH_WORKFLOW_ID` | Scheduled |
+| Market Alert | `market_alert` | `*/4h` UTC | `/api/cron/market-alert` | `MARKET_ALERT_WORKFLOW_ID` | Conditional |
 
 ### Authentification
 
 **Obligatoire.** Tout appel sans `CRON_SECRET` est rejeté (401).
-Si `CRON_SECRET` n'est pas configuré, toutes les requêtes sont rejetées.
 
 ```bash
-# Lancement cron (Vercel/Railway)
 curl -X GET https://hearst-agents-production.up.railway.app/api/cron/daily-report \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
 
-Variables requises : `CRON_SECRET`, `DAILY_REPORT_WORKFLOW_ID`.
+Variables requises : `CRON_SECRET`, `DAILY_REPORT_WORKFLOW_ID`, `MARKET_WATCH_WORKFLOW_ID`, `MARKET_ALERT_WORKFLOW_ID`.
 Variable optionnelle : `ALERT_WEBHOOK_URL` (Discord/Slack webhook pour alertes échec).
 
-### Idempotence
+### Idempotence (reports programmés)
 
-Un seul rapport `completed` par date UTC + type (index unique conditionnel).
+Un seul rapport `completed` par date UTC + type (index unique conditionnel sur `daily_reports`).
+S'applique à `crypto_daily` et `market_watch`.
 
 | Situation | Comportement |
 |-----------|-------------|
 | Aucun rapport pour la date | Exécution normale |
-| Rapport `completed` | Skip → `already_ran` |
+| Rapport `completed` | Skip (`already_ran`) |
 | Rapport `running` | Skip |
 | Rapport `failed` | Retry automatique |
 | Rapport `completed` + `force: true` | Force rerun |
 
-Chaque décision est enregistrée dans `idempotency_decision`.
-
-### Relance manuelle opérateur
+### Relance manuelle
 
 ```bash
-# Relancer le rapport du jour (retry si failed, skip si completed)
+# Retry du jour
 curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
   -H "Authorization: Bearer $CRON_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"triggered_by": "manual", "reason": "Relance après fix CoinGecko"}'
+  -d '{"triggered_by": "manual", "reason": "Relance après fix"}'
 
-# Relancer pour une date spécifique
-curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
+# Date spécifique
+curl -X POST https://hearst-agents-production.up.railway.app/api/cron/market-watch \
   -H "Authorization: Bearer $CRON_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"date": "2026-04-17", "triggered_by": "manual", "reason": "Rapport manqué"}'
 
-# Forcer un rerun même si completed
+# Force rerun
 curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
   -H "Authorization: Bearer $CRON_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"force": true, "triggered_by": "manual", "reason": "Données corrigées"}'
 ```
+
+### Market Alert — Exécution conditionnelle
+
+Le Market Alert est différent des reports programmés :
+- **Fréquence** : toutes les 4h (6x/jour)
+- **Conditionnel** : ne produit un rapport que si des signaux significatifs sont détectés
+- **Cooldown** : 8h entre deux reports `completed` (pas de spam)
+- **No signal** : si rien de notable → `status = skipped`, `idempotency_decision = no_signal`
+
+#### Signal types
+
+| Signal | Condition déclenchante | Sévérité |
+|--------|----------------------|----------|
+| `flash_move` | Variation 24h > ±10% sur un top-50 coin | `critical` |
+| `volume_spike` | Volume exchange significativement au-dessus de la normale | `warning` |
+| `new_trending` | Coin trending qui n'apparaissait pas récemment | `info` |
+| `defi_stress` | Variation TVL DeFi > ±8% en 24h | `warning` |
+
+#### Sévérité
+
+Déterminée par les signaux détectés, pas par le LLM :
+- `critical` : `flash_move` présent
+- `warning` : `defi_stress` ou `volume_spike` présent
+- `info` : `new_trending` uniquement
+
+#### Cooldown
+
+- Fenêtre de 8h : pas de nouveau report `completed` ou `running` dans la fenêtre
+- Si un report a été produit il y a < 8h → `cooldown_blocked`
+- `force: true` permet de bypasser le cooldown
+
+#### Test manuel
+
+```bash
+# Déclencher un scan
+curl -X GET https://hearst-agents-production.up.railway.app/api/cron/market-alert \
+  -H "Authorization: Bearer $CRON_SECRET"
+
+# Force rerun (bypass cooldown)
+curl -X POST https://hearst-agents-production.up.railway.app/api/cron/market-alert \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"force": true, "triggered_by": "manual", "reason": "Test signal detection"}'
+```
+
+#### Webhook
+
+L'alerting webhook est envoyé **uniquement quand un signal réel est détecté** (report `completed`).
+Aucune notification pour `no_signal` ou `cooldown_blocked`.
+Le message inclut la sévérité et les signal types détectés.
 
 ### Registry (`daily_reports`)
 
@@ -290,71 +343,104 @@ Chaque rapport est un **objet produit** séparé du run technique :
 | Champ | Description |
 |-------|-------------|
 | `report_date` | Date UTC du rapport |
-| `report_type` | `crypto_daily` |
+| `report_type` | `crypto_daily` / `market_watch` / `market_alert` |
 | `run_id` | Lien vers le run source |
-| `status` | `pending` / `running` / `completed` / `failed` |
-| `content_markdown` | Rapport complet |
-| `summary` | Résumé 500 chars |
-| `highlights` | Points clés (JSON array) |
+| `status` | `pending` / `running` / `completed` / `failed` / `skipped` |
+| `content_markdown` | Rapport complet (null si `skipped`) |
+| `summary` | Résumé (préfixé `[SEVERITY]` pour alertes) |
+| `highlights` | Points clés + métadonnées (`severity: X`, `signal_types: Y`) |
 | `error_message` | Cause d'échec / raison rerun |
 | `triggered_by` | `cron` / `manual` |
-| `idempotency_decision` | `run` / `retry` / `skip` |
+| `idempotency_decision` | `run` / `retry` / `skip` / `no_signal` / `cooldown_passed` |
 
 ### Alerting
 
-En cas d'échec :
-1. Log structuré `[cron/daily-report] [ALERT]` avec report_id, run_id, date, cause
-2. Webhook POST vers `ALERT_WEBHOOK_URL` si configuré (auto-détecte Discord vs Slack)
+**Échecs** : Log structuré `[cron/{type}] [ALERT]` + webhook si configuré.
+**Alertes marché** : Webhook avec sévérité + signaux détectés (uniquement si signal réel).
+Aucune notification pour `no_signal`.
 
 ### Visibilité opérateur
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/reports` | Liste paginée (filtre `type`, `status`) |
-| `GET /api/reports/today` | Statut du rapport du jour + dernier succès |
-| `GET /api/reports/health` | Dashboard santé (streak, taux 14j, dernier échec) |
-| `/reports` | Console opérateur (UI avec health dashboard) |
+| `GET /api/reports?type=X` | Liste paginée (filtre `type`, `status`) |
+| `GET /api/reports/today?type=X` | Statut du jour + dernier succès |
+| `GET /api/reports/health?type=X` | Dashboard santé (streak, taux 14j, dernier échec) |
+| `/reports` | Console opérateur (health multi-type, filtre, détails) |
 
 ### Investigation d'un échec
 
 | Étape | Action |
 |-------|--------|
-| 1 | `GET /api/reports/today` → voir `status` et `error_message` |
-| 2 | `GET /api/reports/health` → streak cassé ? taux en baisse ? |
-| 3 | `GET /api/runs/{run_id}` → traces complètes (tool calls, LLM, erreurs) |
-| 4 | Logs Railway/Vercel → chercher `[cron/daily-report]` |
-| 5 | Relancer → `POST /api/cron/daily-report` avec auth + reason |
+| 1 | `GET /api/reports/today?type=X` → `status` + `error_message` |
+| 2 | `GET /api/reports/health?type=X` → streak cassé ? taux en baisse ? |
+| 3 | `GET /api/runs/{run_id}` → traces (tool calls, LLM, erreurs) |
+| 4 | Logs Railway → chercher `[cron/{type}]` |
+| 5 | Relancer → `POST /api/cron/{name}` avec auth + reason |
 
-### Vérification rapide de l'état
+### Ajouter un nouveau type de report (spec canonique)
 
-```bash
-# Daily Crypto — rapport du jour
-curl -s https://hearst-agents-production.up.railway.app/api/reports/today?type=crypto_daily \
-  -H "x-api-key: $HEARST_API_KEY" | jq '{exists, status: .report.status}'
+Toute nouvelle capability doit suivre ce pattern exact. Un 3e report est **un fichier de ~30 lignes**.
 
-# Market Watch — rapport du jour
-curl -s https://hearst-agents-production.up.railway.app/api/reports/today?type=market_watch \
-  -H "x-api-key: $HEARST_API_KEY" | jq '{exists, status: .report.status}'
+**Prérequis obligatoires** :
 
-# Santé d'un type de report
-curl -s https://hearst-agents-production.up.railway.app/api/reports/health?type=market_watch \
-  -H "x-api-key: $HEARST_API_KEY" | jq '{today: .today.status, streak: .streak_consecutive_success, rate: .recent_14d.success_rate}'
+| Élément | Obligatoire | Fourni par |
+|---------|:-----------:|------------|
+| Agent dédié (system prompt spécifique) | Oui | Créer via `/api/agents` |
+| Workflow (tools → collect → template → chat) | Oui | Créer via `/api/workflows` + steps Supabase |
+| Endpoint cron `app/api/cron/{name}/route.ts` | Oui | ~30 lignes, wrapper `report-runner.ts` |
+| `ReportConfig` dans l'endpoint | Oui | `reportType`, `label`, `workflowIdEnvVar`, `workflowNamePattern`, `missionLabel` |
+| Env var `{NAME}_WORKFLOW_ID` sur Railway | Oui | Dashboard Railway |
+| Entrée dans le README (table "Reports actifs") | Oui | Manuel |
 
-# Relance manuelle Market Watch
-curl -X POST https://hearst-agents-production.up.railway.app/api/cron/market-watch \
-  -H "Authorization: Bearer $CRON_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"triggered_by": "manual", "reason": "Test initial"}'
+**Ce qui est automatique** (hérité de `report-runner.ts`) :
+- Auth cron (`CRON_SECRET`)
+- Idempotence quotidienne (registry `daily_reports`)
+- Alerting webhook
+- Report extraction (content, summary, highlights)
+- Visibilité opérateur (APIs + UI `/reports`)
+
+**Checklist de validation** :
+
+1. `GET /api/cron/{name}` avec auth → `completed`
+2. 2e appel → `already_ran` (idempotence)
+3. `GET /api/reports/today?type={type}` → rapport visible
+4. `GET /api/reports/health?type={type}` → streak = 1
+5. UI `/reports` → rapport visible avec badge type + détails
+
+**Template endpoint cron** :
+
+```typescript
+import { NextRequest } from "next/server";
+import { err } from "@/lib/domain";
+import { authenticateCron, runReport, parseCronBody, type ReportConfig } from "@/lib/runtime/report-runner";
+
+export const dynamic = "force-dynamic";
+export const maxDuration = 120;
+
+const CONFIG: ReportConfig = {
+  reportType: "your_type",
+  label: "Your Report Label",
+  workflowIdEnvVar: "YOUR_TYPE_WORKFLOW_ID",
+  workflowNamePattern: "your%pattern",
+  missionLabel: "Your Mission Label",
+};
+
+export async function GET(req: NextRequest) {
+  const auth = authenticateCron(req.headers.get("authorization"), `cron/${CONFIG.reportType}`, req.headers.get("x-forwarded-for") ?? "unknown");
+  if (!auth.ok) return err(auth.reason, 401);
+  return runReport(CONFIG, "cron");
+}
+
+export async function POST(req: NextRequest) {
+  const auth = authenticateCron(req.headers.get("authorization"), `cron/${CONFIG.reportType}`, req.headers.get("x-forwarded-for") ?? "unknown");
+  if (!auth.ok) return err(auth.reason, 401);
+  let body: unknown = null;
+  try { body = await req.json(); } catch { /* ok */ }
+  const p = body ? parseCronBody(body) : { triggeredBy: "manual", forceRerun: false };
+  return runReport(CONFIG, p.triggeredBy, p.dateOverride, p.rerunReason, p.forceRerun);
+}
 ```
-
-### Ajouter un nouveau type de report
-
-1. Créer un agent dédié (via API ou UI)
-2. Créer un workflow avec les tools nécessaires + collect + template + chat
-3. Créer un endpoint cron dans `app/api/cron/{name}/route.ts` avec `ReportConfig`
-4. Ajouter le cron dans `vercel.json`
-5. Configurer `{NAME}_WORKFLOW_ID` sur Railway/Vercel
-6. Le registry, l'idempotence, l'alerting et la surface opérateur sont automatiques
 
 ## Deploy
 

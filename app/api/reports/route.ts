@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   let query = sb
     .from("daily_reports")
-    .select("id, report_date, report_type, status, summary, triggered_by, run_id, workflow_id, error_message, idempotency_decision, created_at, updated_at")
+    .select("id, report_date, report_type, status, summary, highlights, content_markdown, triggered_by, run_id, workflow_id, error_message, idempotency_decision, created_at, updated_at")
     .order("report_date", { ascending: false })
     .range(offset, offset + limit - 1);
 
