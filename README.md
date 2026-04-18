@@ -123,9 +123,10 @@ lib/
 | `/api/signals` | GET | Liste signals (filtrable) |
 | `/api/signals/[id]/resolve` | POST | Apply/dismiss/acknowledge + change tracking |
 | `/api/changes` | GET | Audit trail des changements |
-| `/api/cron/daily-report` | GET/POST | Cron daily report (auth CRON_SECRET) |
-| `/api/reports` | GET | Liste des rapports quotidiens |
-| `/api/reports/today` | GET | Statut du rapport du jour |
+| `/api/cron/daily-report` | GET/POST | Cron daily report (auth CRON_SECRET, idempotent) |
+| `/api/reports` | GET | Liste des rapports quotidiens (filtre type, status) |
+| `/api/reports/today` | GET | Statut du rapport du jour + dernier succès |
+| `/api/reports/health` | GET | Health dashboard (streak, taux 14j, dernier échec) |
 
 ## Auth
 
@@ -220,27 +221,57 @@ Couverture : lifecycle, cost sentinel, prompt guards, output validator, tracer i
 ### Déclenchement
 
 Le cron Vercel appelle `GET /api/cron/daily-report` chaque jour à **7h UTC**.
-Railway est aussi configuré via `DAILY_REPORT_WORKFLOW_ID`.
+Railway exécute le même workflow via `DAILY_REPORT_WORKFLOW_ID`.
 
 ### Authentification
 
-**Obligatoire.** Tout appel sans secret valide est rejeté (401).
+**Obligatoire.** Tout appel sans `CRON_SECRET` est rejeté (401).
+Si `CRON_SECRET` n'est pas configuré, toutes les requêtes sont rejetées.
 
 ```bash
-# Lancement manuel sécurisé
-curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
+# Lancement cron (Vercel/Railway)
+curl -X GET https://hearst-agents-production.up.railway.app/api/cron/daily-report \
   -H "Authorization: Bearer $CRON_SECRET"
 ```
 
 Variables requises : `CRON_SECRET`, `DAILY_REPORT_WORKFLOW_ID`.
+Variable optionnelle : `ALERT_WEBHOOK_URL` (Discord/Slack webhook pour alertes échec).
 
 ### Idempotence
 
-Un seul rapport `completed` par date UTC + type. Règles :
-- Si un rapport `completed` existe → `already_ran` (skip)
-- Si un rapport `running` existe → skip
-- Si un rapport `failed` existe → retry autorisé (nouveau run)
-- Décision tracée dans `idempotency_decision`
+Un seul rapport `completed` par date UTC + type (index unique conditionnel).
+
+| Situation | Comportement |
+|-----------|-------------|
+| Aucun rapport pour la date | Exécution normale |
+| Rapport `completed` | Skip → `already_ran` |
+| Rapport `running` | Skip |
+| Rapport `failed` | Retry automatique |
+| Rapport `completed` + `force: true` | Force rerun |
+
+Chaque décision est enregistrée dans `idempotency_decision`.
+
+### Relance manuelle opérateur
+
+```bash
+# Relancer le rapport du jour (retry si failed, skip si completed)
+curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"triggered_by": "manual", "reason": "Relance après fix CoinGecko"}'
+
+# Relancer pour une date spécifique
+curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"date": "2026-04-17", "triggered_by": "manual", "reason": "Rapport manqué"}'
+
+# Forcer un rerun même si completed
+curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
+  -H "Authorization: Bearer $CRON_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"force": true, "triggered_by": "manual", "reason": "Données corrigées"}'
+```
 
 ### Registry (`daily_reports`)
 
@@ -255,29 +286,46 @@ Chaque rapport est un **objet produit** séparé du run technique :
 | `content_markdown` | Rapport complet |
 | `summary` | Résumé 500 chars |
 | `highlights` | Points clés (JSON array) |
-| `error_message` | Cause d'échec |
+| `error_message` | Cause d'échec / raison rerun |
 | `triggered_by` | `cron` / `manual` |
+| `idempotency_decision` | `run` / `retry` / `skip` |
 
 ### Alerting
 
 En cas d'échec :
-- Log `console.error` avec report_id, run_id, date, cause
-- Webhook vers `ALERT_WEBHOOK_URL` (Slack/Discord/custom) si configuré
+1. Log structuré `[cron/daily-report] [ALERT]` avec report_id, run_id, date, cause
+2. Webhook POST vers `ALERT_WEBHOOK_URL` si configuré (auto-détecte Discord vs Slack)
 
 ### Visibilité opérateur
 
 | Endpoint | Description |
 |----------|-------------|
 | `GET /api/reports` | Liste paginée (filtre `type`, `status`) |
-| `GET /api/reports/today` | Statut du rapport du jour |
-| `/reports` | Console opérateur (UI) |
+| `GET /api/reports/today` | Statut du rapport du jour + dernier succès |
+| `GET /api/reports/health` | Dashboard santé (streak, taux 14j, dernier échec) |
+| `/reports` | Console opérateur (UI avec health dashboard) |
 
 ### Investigation d'un échec
 
-1. `GET /api/reports/today` → voir `error_message`
-2. `GET /api/runs/{run_id}` → traces complètes du run
-3. Logs Railway/Vercel : chercher `[cron/daily-report]`
-4. Relancer : `POST /api/cron/daily-report` avec auth (retry autorisé si failed)
+| Étape | Action |
+|-------|--------|
+| 1 | `GET /api/reports/today` → voir `status` et `error_message` |
+| 2 | `GET /api/reports/health` → streak cassé ? taux en baisse ? |
+| 3 | `GET /api/runs/{run_id}` → traces complètes (tool calls, LLM, erreurs) |
+| 4 | Logs Railway/Vercel → chercher `[cron/daily-report]` |
+| 5 | Relancer → `POST /api/cron/daily-report` avec auth + reason |
+
+### Vérification rapide de l'état
+
+```bash
+# Le rapport du jour a-t-il tourné ?
+curl -s https://hearst-agents-production.up.railway.app/api/reports/today \
+  -H "x-api-key: $HEARST_API_KEY" | jq '{exists, status: .report.status}'
+
+# Santé globale
+curl -s https://hearst-agents-production.up.railway.app/api/reports/health \
+  -H "x-api-key: $HEARST_API_KEY" | jq '{today: .today.status, streak: .streak_consecutive_success, rate: .recent_14d.success_rate}'
+```
 
 ## Deploy
 

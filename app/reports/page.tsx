@@ -19,35 +19,79 @@ interface Report {
   updated_at: string;
 }
 
-const statusStyle: Record<string, string> = {
-  completed: "text-green-400 bg-green-950/40 border-green-900/50",
-  failed: "text-red-400 bg-red-950/40 border-red-900/50",
-  running: "text-blue-400 bg-blue-950/40 border-blue-900/50",
-  pending: "text-yellow-400 bg-yellow-950/40 border-yellow-900/50",
-  skipped: "text-zinc-400 bg-zinc-900 border-zinc-800",
+interface HealthData {
+  report_date: string;
+  today: { status: string; report_id?: string; generated_at?: string };
+  last_success: { report_date: string; report_id: string } | null;
+  last_failure: { report_date: string; report_id: string; error: string | null } | null;
+  streak_consecutive_success: number;
+  recent_14d: { total: number; success: number; failed: number; success_rate: number | null };
+}
+
+const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string }> = {
+  completed: {
+    label: "Succès",
+    dot: "bg-green-400",
+    badge: "text-green-400 bg-green-950/40 border-green-900/50",
+  },
+  failed: {
+    label: "Échoué",
+    dot: "bg-red-400",
+    badge: "text-red-400 bg-red-950/40 border-red-900/50",
+  },
+  running: {
+    label: "En cours",
+    dot: "bg-blue-400 animate-pulse",
+    badge: "text-blue-400 bg-blue-950/40 border-blue-900/50",
+  },
+  pending: {
+    label: "En attente",
+    dot: "bg-yellow-400",
+    badge: "text-yellow-400 bg-yellow-950/40 border-yellow-900/50",
+  },
+  skipped: {
+    label: "Ignoré",
+    dot: "bg-zinc-500",
+    badge: "text-zinc-400 bg-zinc-900 border-zinc-800",
+  },
+  not_generated: {
+    label: "Non généré",
+    dot: "bg-zinc-600",
+    badge: "text-zinc-500 bg-zinc-900 border-zinc-800",
+  },
 };
+
+function StatusDot({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
+  return <span className={`inline-block h-2 w-2 rounded-full ${cfg.dot}`} />;
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
+  return (
+    <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase border ${cfg.badge}`}>
+      {cfg.label}
+    </span>
+  );
+}
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<Report[]>([]);
+  const [health, setHealth] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [todayStatus, setTodayStatus] = useState<{
-    exists: boolean;
-    status?: string;
-    report_date: string;
-  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [reportsRes, todayRes] = await Promise.all([
+    const [reportsRes, healthRes] = await Promise.all([
       fetch("/api/reports?limit=30"),
-      fetch("/api/reports/today"),
+      fetch("/api/reports/health"),
     ]);
     const reportsJson = await reportsRes.json();
-    const todayJson = await todayRes.json();
+    const healthJson = await healthRes.json();
 
     setReports(reportsJson.reports ?? []);
-    setTodayStatus(todayJson);
+    setHealth(healthJson);
     setLoading(false);
   }, []);
 
@@ -57,55 +101,101 @@ export default function ReportsPage() {
 
   return (
     <div className="px-8 py-10">
-      <div className="mb-8">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">
-          Opérations
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
-          Daily Reports
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Historique et statut des rapports quotidiens.
-        </p>
+      <div className="mb-8 flex items-end justify-between">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">
+            Opérations
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
+            Daily Reports
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Surveillance et historique des rapports quotidiens.
+          </p>
+        </div>
+        <button
+          onClick={load}
+          className="rounded-lg border border-zinc-700 px-4 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-white"
+        >
+          Rafraîchir
+        </button>
       </div>
 
-      {/* Today banner */}
-      {todayStatus && (
-        <div
-          className={`mb-6 rounded-xl border px-5 py-4 ${
-            !todayStatus.exists
-              ? "border-zinc-800 bg-zinc-950/60"
-              : todayStatus.status === "completed"
-                ? "border-green-900/50 bg-green-950/20"
-                : "border-red-900/50 bg-red-950/20"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-lg">
-              {!todayStatus.exists ? "⏳" : todayStatus.status === "completed" ? "✅" : "❌"}
-            </span>
-            <div>
-              <p className="text-sm font-medium text-white">
-                Rapport du {todayStatus.report_date}
-              </p>
-              <p className="text-xs text-zinc-400">
-                {!todayStatus.exists
-                  ? "Pas encore généré"
-                  : todayStatus.status === "completed"
-                    ? "Généré avec succès"
-                    : `Statut : ${todayStatus.status}`}
-              </p>
+      {/* ─── Health dashboard ─── */}
+      {health && (
+        <div className="mb-8 grid grid-cols-4 gap-4">
+          {/* Today */}
+          <div className={`rounded-xl border px-4 py-4 ${
+            health.today.status === "completed"
+              ? "border-green-900/40 bg-green-950/10"
+              : health.today.status === "failed"
+                ? "border-red-900/40 bg-red-950/10"
+                : "border-zinc-800 bg-zinc-950/60"
+          }`}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Aujourd'hui
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <StatusDot status={health.today.status} />
+              <span className="text-sm font-medium text-white">
+                {STATUS_CONFIG[health.today.status]?.label ?? health.today.status}
+              </span>
             </div>
-            <button
-              onClick={load}
-              className="ml-auto rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-white"
-            >
-              Rafraîchir
-            </button>
+            {health.today.generated_at && (
+              <p className="mt-1 text-[10px] text-zinc-600">
+                {new Date(health.today.generated_at).toLocaleTimeString()}
+              </p>
+            )}
+          </div>
+
+          {/* Streak */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Streak succès
+            </p>
+            <p className="mt-2 text-2xl font-bold text-white">
+              {health.streak_consecutive_success}
+              <span className="ml-1 text-sm font-normal text-zinc-500">jours</span>
+            </p>
+          </div>
+
+          {/* Success rate */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Taux 14j
+            </p>
+            <p className="mt-2 text-2xl font-bold text-white">
+              {health.recent_14d.success_rate !== null
+                ? `${health.recent_14d.success_rate}%`
+                : "—"}
+            </p>
+            <p className="mt-1 text-[10px] text-zinc-600">
+              {health.recent_14d.success}/{health.recent_14d.total} réussis
+            </p>
+          </div>
+
+          {/* Last failure */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Dernier échec
+            </p>
+            {health.last_failure ? (
+              <>
+                <p className="mt-2 text-sm font-medium text-red-400">
+                  {health.last_failure.report_date}
+                </p>
+                <p className="mt-1 truncate text-[10px] text-zinc-500" title={health.last_failure.error ?? ""}>
+                  {health.last_failure.error?.slice(0, 60) ?? "—"}
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm text-green-400">Aucun</p>
+            )}
           </div>
         </div>
       )}
 
+      {/* ─── Report list ─── */}
       {loading ? (
         <p className="text-sm text-zinc-500">Chargement…</p>
       ) : reports.length === 0 ? (
@@ -113,99 +203,86 @@ export default function ReportsPage() {
       ) : (
         <div className="flex flex-col gap-2">
           {reports.map((r) => (
-            <div
-              key={r.id}
-              className="rounded-xl border border-zinc-800 bg-zinc-950/80"
-            >
+            <div key={r.id} className="rounded-xl border border-zinc-800 bg-zinc-950/80">
               <button
                 onClick={() => setExpanded(expanded === r.id ? null : r.id)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left"
               >
-                <span className="text-sm font-medium text-white">
+                <span className="min-w-[90px] text-sm font-medium text-white">
                   {r.report_date}
                 </span>
-                <span
-                  className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase border ${
-                    statusStyle[r.status] ?? statusStyle.pending
-                  }`}
-                >
-                  {r.status}
+                <StatusBadge status={r.status} />
+                <span className="rounded bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500">
+                  {r.triggered_by}
                 </span>
-                <span className="text-xs text-zinc-600">{r.triggered_by}</span>
                 {r.idempotency_decision && r.idempotency_decision !== "run" && (
-                  <span className="rounded bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500">
+                  <span className="rounded bg-yellow-950/30 px-2 py-0.5 text-[10px] text-yellow-500 border border-yellow-900/30">
                     {r.idempotency_decision}
                   </span>
                 )}
                 <span className="flex-1 truncate text-xs text-zinc-500">
-                  {r.summary?.slice(0, 100) ?? "—"}
+                  {r.status === "failed"
+                    ? r.error_message?.slice(0, 80) ?? "—"
+                    : r.summary?.slice(0, 100) ?? "—"}
                 </span>
+                {r.run_id && (
+                  <span className="font-mono text-[10px] text-zinc-700">
+                    run:{r.run_id.slice(0, 8)}
+                  </span>
+                )}
                 <span className="text-[10px] text-zinc-700">
                   {new Date(r.created_at).toLocaleTimeString()}
                 </span>
+                <svg
+                  className={`h-4 w-4 text-zinc-600 transition-transform ${expanded === r.id ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               </button>
 
               {expanded === r.id && (
                 <div className="border-t border-zinc-800 px-4 py-4">
-                  {/* Metadata */}
-                  <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
-                    <div>
-                      <span className="text-zinc-600">Report ID</span>
-                      <p className="font-mono text-zinc-400">{r.id}</p>
-                    </div>
-                    <div>
-                      <span className="text-zinc-600">Run ID</span>
-                      <p className="font-mono text-zinc-400">
-                        {r.run_id ? (
-                          <a
-                            href={`/api/runs/${r.run_id}`}
-                            className="text-blue-400 hover:underline"
-                            target="_blank"
-                          >
-                            {r.run_id.slice(0, 12)}…
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-zinc-600">Workflow</span>
-                      <p className="font-mono text-zinc-400">
-                        {r.workflow_id?.slice(0, 12) ?? "—"}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-zinc-600">Dernière MAJ</span>
-                      <p className="text-zinc-400">
-                        {new Date(r.updated_at).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Error */}
+                  {/* Error - prominent */}
                   {r.error_message && (
-                    <div className="mb-4 rounded-lg border border-red-900/30 bg-red-950/20 p-3">
-                      <p className="text-[10px] font-semibold uppercase text-red-500">
+                    <div className="mb-4 rounded-lg border border-red-900/30 bg-red-950/20 p-4">
+                      <p className="text-[10px] font-semibold uppercase text-red-500 mb-1">
                         Erreur
                       </p>
-                      <p className="text-sm text-red-300">{r.error_message}</p>
+                      <p className="text-sm text-red-300 font-mono break-all">
+                        {r.error_message}
+                      </p>
                     </div>
                   )}
 
+                  {/* Metadata grid */}
+                  <div className="mb-4 grid grid-cols-2 gap-x-6 gap-y-3 text-xs md:grid-cols-4">
+                    <MetaField label="Report ID" value={r.id} mono />
+                    <MetaField
+                      label="Run ID"
+                      value={r.run_id}
+                      mono
+                      link={r.run_id ? `/runs` : undefined}
+                    />
+                    <MetaField label="Workflow" value={r.workflow_id?.slice(0, 12)} mono />
+                    <MetaField label="Décision" value={r.idempotency_decision ?? "run"} />
+                    <MetaField label="Trigger" value={r.triggered_by} />
+                    <MetaField label="Créé" value={new Date(r.created_at).toLocaleString()} />
+                    <MetaField label="MAJ" value={new Date(r.updated_at).toLocaleString()} />
+                    <MetaField label="Type" value={r.report_type} />
+                  </div>
+
                   {/* Highlights */}
                   {r.highlights && r.highlights.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-[10px] font-semibold uppercase text-zinc-600">
+                    <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                      <p className="text-[10px] font-semibold uppercase text-zinc-500 mb-2">
                         Points clés
                       </p>
-                      <ul className="mt-1 space-y-1">
+                      <ul className="space-y-1.5">
                         {r.highlights.map((h, i) => (
-                          <li
-                            key={i}
-                            className="text-xs text-zinc-300"
-                          >
-                            • {h}
+                          <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">
+                            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                            {h}
                           </li>
                         ))}
                       </ul>
@@ -215,12 +292,14 @@ export default function ReportsPage() {
                   {/* Content */}
                   {r.content_markdown && (
                     <div>
-                      <p className="text-[10px] font-semibold uppercase text-zinc-600">
+                      <p className="text-[10px] font-semibold uppercase text-zinc-500 mb-2">
                         Rapport complet
                       </p>
-                      <pre className="mt-1 max-h-96 overflow-auto whitespace-pre-wrap rounded-lg bg-zinc-900 p-4 text-xs leading-relaxed text-zinc-300">
-                        {r.content_markdown}
-                      </pre>
+                      <div className="max-h-[500px] overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+                        <pre className="whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">
+                          {r.content_markdown}
+                        </pre>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -228,6 +307,34 @@ export default function ReportsPage() {
             </div>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+function MetaField({
+  label,
+  value,
+  mono,
+  link,
+}: {
+  label: string;
+  value: string | null | undefined;
+  mono?: boolean;
+  link?: string;
+}) {
+  const display = value ?? "—";
+  return (
+    <div>
+      <p className="text-[10px] font-semibold uppercase text-zinc-600">{label}</p>
+      {link ? (
+        <a href={link} className={`text-blue-400 hover:underline ${mono ? "font-mono" : ""}`}>
+          {display.length > 16 ? `${display.slice(0, 12)}…` : display}
+        </a>
+      ) : (
+        <p className={`text-zinc-400 break-all ${mono ? "font-mono" : ""}`}>
+          {display.length > 36 ? `${display.slice(0, 12)}…` : display}
+        </p>
       )}
     </div>
   );

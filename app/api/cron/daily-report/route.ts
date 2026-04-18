@@ -47,13 +47,16 @@ type IdempotencyResult =
   | { action: "skip"; reason: string; existing_report_id: string }
   | { action: "retry"; reason: string; failed_report_id: string };
 
-async function checkIdempotency(todayUTC: string): Promise<IdempotencyResult> {
+async function checkIdempotency(
+  dateUTC: string,
+  forceRerun: boolean,
+): Promise<IdempotencyResult> {
   const sb = requireServerSupabase();
 
   const { data: existing } = await sb
     .from("daily_reports")
     .select("id, status, error_message")
-    .eq("report_date", todayUTC)
+    .eq("report_date", dateUTC)
     .eq("report_type", REPORT_TYPE)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -61,11 +64,19 @@ async function checkIdempotency(todayUTC: string): Promise<IdempotencyResult> {
 
   if (!existing) return { action: "run" };
 
-  if (existing.status === "completed") {
+  if (existing.status === "completed" && !forceRerun) {
     return {
       action: "skip",
-      reason: `Report already completed for ${todayUTC}`,
+      reason: `Report already completed for ${dateUTC}`,
       existing_report_id: existing.id,
+    };
+  }
+
+  if (existing.status === "completed" && forceRerun) {
+    return {
+      action: "retry",
+      reason: `Force rerun requested for ${dateUTC} (previous: completed)`,
+      failed_report_id: existing.id,
     };
   }
 
@@ -80,7 +91,7 @@ async function checkIdempotency(todayUTC: string): Promise<IdempotencyResult> {
   if (existing.status === "running") {
     return {
       action: "skip",
-      reason: `Report already running for ${todayUTC}`,
+      reason: `Report already running for ${dateUTC}`,
       existing_report_id: existing.id,
     };
   }
@@ -97,19 +108,31 @@ async function sendAlert(payload: {
   workflow_id: string;
   error: string;
 }) {
-  console.error("[cron/daily-report] ALERT:", JSON.stringify(payload));
+  const logLine = `[ALERT] Daily Report FAILED | date=${payload.report_date} report=${payload.report_id} run=${payload.run_id ?? "none"} error=${payload.error}`;
+  console.error(`[cron/daily-report] ${logLine}`);
 
   if (!ALERT_WEBHOOK_URL) return;
 
+  const message = `**[Hearst] Daily Report FAILED**\n` +
+    `Date: \`${payload.report_date}\`\n` +
+    `Report: \`${payload.report_id}\`\n` +
+    `Run: \`${payload.run_id ?? "none"}\`\n` +
+    `Workflow: \`${payload.workflow_id}\`\n` +
+    `Error: ${payload.error}`;
+
   try {
+    const isDiscord = ALERT_WEBHOOK_URL.includes("discord.com/api/webhooks");
+
     await fetch(ALERT_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: `[Hearst] Daily Report FAILED\nDate: ${payload.report_date}\nReport: ${payload.report_id}\nRun: ${payload.run_id ?? "none"}\nWorkflow: ${payload.workflow_id}\nError: ${payload.error}`,
-        ...payload,
-      }),
+      body: JSON.stringify(
+        isDiscord
+          ? { content: message }
+          : { text: message, ...payload },
+      ),
     });
+    console.info("[cron/daily-report] alert sent to webhook");
   } catch (e) {
     console.error("[cron/daily-report] alert webhook failed:", e);
   }
@@ -146,15 +169,19 @@ function extractReport(output: unknown): {
 
 // ─── MAIN ────────────────────────────────────────────────────────────
 
-async function runDailyReport(triggeredBy: string) {
+async function runDailyReport(
+  triggeredBy: string,
+  dateOverride?: string,
+  rerunReason?: string,
+  forceRerun = false,
+) {
   const sb = requireServerSupabase();
-  const todayUTC = new Date().toISOString().slice(0, 10);
+  const dateUTC = dateOverride ?? new Date().toISOString().slice(0, 10);
 
   const workflowId = WORKFLOW_ID ?? (await getActiveReportWorkflow());
   if (!workflowId) return err("no_daily_report_workflow_configured", 404);
 
-  // ── Idempotency check
-  const idempotency = await checkIdempotency(todayUTC);
+  const idempotency = await checkIdempotency(dateUTC, forceRerun);
 
   if (idempotency.action === "skip") {
     console.info("[cron/daily-report] idempotency:skip", idempotency.reason);
@@ -162,7 +189,7 @@ async function runDailyReport(triggeredBy: string) {
       status: "already_ran",
       reason: idempotency.reason,
       report_id: idempotency.existing_report_id,
-      report_date: todayUTC,
+      report_date: dateUTC,
     });
   }
 
@@ -170,16 +197,16 @@ async function runDailyReport(triggeredBy: string) {
     console.info("[cron/daily-report] idempotency:retry", idempotency.reason);
   }
 
-  // ── Create report record (pending)
   const { data: report, error: insertError } = await sb
     .from("daily_reports")
     .insert({
-      report_date: todayUTC,
+      report_date: dateUTC,
       report_type: REPORT_TYPE,
       workflow_id: workflowId,
       status: "running",
       triggered_by: triggeredBy,
       idempotency_decision: idempotency.action,
+      error_message: rerunReason ? `rerun_reason: ${rerunReason}` : null,
     })
     .select("id")
     .single();
@@ -194,12 +221,12 @@ async function runDailyReport(triggeredBy: string) {
   try {
     const result = await executeWorkflow(sb, workflowId, {
       mission: "Daily Crypto Market Report",
-      date: todayUTC,
+      date: dateUTC,
       triggered_by: triggeredBy,
       report_id: reportId,
+      ...(rerunReason ? { rerun_reason: rerunReason } : {}),
     });
 
-    // ── Update report with run_id
     await sb.from("daily_reports").update({ run_id: result.run_id }).eq("id", reportId);
 
     if (result.status === "failed") {
@@ -210,7 +237,7 @@ async function runDailyReport(triggeredBy: string) {
       }).eq("id", reportId);
 
       await sendAlert({
-        report_date: todayUTC,
+        report_date: dateUTC,
         report_id: reportId,
         run_id: result.run_id,
         workflow_id: workflowId,
@@ -220,7 +247,6 @@ async function runDailyReport(triggeredBy: string) {
       return err(result.error ?? "workflow_failed", 500);
     }
 
-    // ── Extract content and save
     const { content_markdown, summary, highlights } = extractReport(result.output);
 
     await sb.from("daily_reports").update({
@@ -228,13 +254,14 @@ async function runDailyReport(triggeredBy: string) {
       content_markdown,
       summary,
       highlights: highlights as Json,
+      error_message: null,
       updated_at: new Date().toISOString(),
     }).eq("id", reportId);
 
     console.info("[cron/daily-report] completed", {
       report_id: reportId,
       run_id: result.run_id,
-      date: todayUTC,
+      date: dateUTC,
       content_length: content_markdown.length,
     });
 
@@ -242,7 +269,7 @@ async function runDailyReport(triggeredBy: string) {
       status: "completed",
       report_id: reportId,
       run_id: result.run_id,
-      report_date: todayUTC,
+      report_date: dateUTC,
       content_length: content_markdown.length,
       summary,
     });
@@ -257,7 +284,7 @@ async function runDailyReport(triggeredBy: string) {
     }).eq("id", reportId);
 
     await sendAlert({
-      report_date: todayUTC,
+      report_date: dateUTC,
       report_id: reportId,
       run_id: null,
       workflow_id: workflowId,
@@ -281,14 +308,27 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return err(auth.reason, 401);
 
   let triggeredBy = "manual";
+  let dateOverride: string | undefined;
+  let rerunReason: string | undefined;
+  let forceRerun = false;
+
   try {
     const body = await req.json();
     triggeredBy = (body.triggered_by as string) ?? "manual";
+    if (body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date as string)) {
+      dateOverride = body.date as string;
+    }
+    if (body.reason) {
+      rerunReason = String(body.reason);
+    }
+    if (body.force === true) {
+      forceRerun = true;
+    }
   } catch {
-    // no body is fine
+    // no body is fine — default cron behavior
   }
 
-  return runDailyReport(triggeredBy);
+  return runDailyReport(triggeredBy, dateOverride, rerunReason, forceRerun);
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────
