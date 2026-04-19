@@ -195,9 +195,19 @@ export class MissionRegistry {
             }
           }
         }
+        if (m.status === "awaiting_approval") {
+          m.status = "cancelled";
+          m.error = "Expirée";
+        }
         this.missions.set(m.id, m);
       }
       this.activeMissionId = snap.activeMissionId;
+      if (this.activeMissionId) {
+        const active = this.missions.get(this.activeMissionId);
+        if (active && (active.status === "cancelled" || active.status === "failed")) {
+          this.activeMissionId = null;
+        }
+      }
       this.activeSurface = snap.activeSurface;
     } catch {
       /* corrupted data */

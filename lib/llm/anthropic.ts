@@ -1,6 +1,26 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { LLMProvider, ChatRequest, ChatResponse, StreamChunk } from "./types";
 
+export interface ToolUseRequest {
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+export interface AnthropicToolMessage {
+  role: "user" | "assistant";
+  content: Anthropic.MessageParam["content"];
+}
+
+export interface ToolChatResult {
+  text: string;
+  toolCalls: ToolUseRequest[];
+  stopReason: string;
+  tokensIn: number;
+  tokensOut: number;
+  rawResponse: Anthropic.Message;
+}
+
 export class AnthropicProvider implements LLMProvider {
   readonly name = "anthropic";
   private client: Anthropic;
@@ -13,58 +33,70 @@ export class AnthropicProvider implements LLMProvider {
     this.client = new Anthropic({ apiKey });
   }
 
-  async chat(req: ChatRequest): Promise<ChatResponse> {
-    const start = Date.now();
+  /**
+   * Single-turn chat with optional tool definitions.
+   * Returns tool_use blocks if the model wants to call tools.
+   */
+  async chatWithTools(
+    req: ChatRequest,
+    tools?: Anthropic.Tool[],
+  ): Promise<ToolChatResult> {
     const systemMsg = req.messages.find((m) => m.role === "system");
-    const userMessages = req.messages
-      .filter((m) => m.role !== "system")
-      .map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      }));
+    const userMessages = this.buildMessages(req);
 
-    const res = await this.client.messages.create({
-      model: req.model,
-      max_tokens: req.max_tokens ?? 4096,
-      temperature: req.temperature,
-      top_p: req.top_p,
-      system: systemMsg?.content,
-      messages: userMessages,
-    });
+    const params = this.buildParams(req, systemMsg?.content, userMessages);
+
+    if (tools && tools.length > 0) {
+      params.tools = tools;
+    }
+
+    const res = await this.client.messages.create({ ...params, stream: false });
 
     const text = res.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
       .map((b) => b.text)
       .join("");
 
+    const toolCalls = res.content
+      .filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use")
+      .map((b) => ({ id: b.id, name: b.name, input: b.input as Record<string, unknown> }));
+
     return {
-      content: text,
-      model: res.model,
+      text,
+      toolCalls,
+      stopReason: res.stop_reason ?? "end_turn",
+      tokensIn: res.usage.input_tokens,
+      tokensOut: res.usage.output_tokens,
+      rawResponse: res,
+    };
+  }
+
+  async chat(req: ChatRequest): Promise<ChatResponse> {
+    const start = Date.now();
+    const result = await this.chatWithTools(req);
+
+    return {
+      content: result.text,
+      model: req.model,
       provider: this.name,
-      tokens_in: res.usage.input_tokens,
-      tokens_out: res.usage.output_tokens,
+      tokens_in: result.tokensIn,
+      tokens_out: result.tokensOut,
       cost_usd: 0,
       latency_ms: Date.now() - start,
     };
   }
 
-  async *streamChat(req: ChatRequest): AsyncGenerator<StreamChunk> {
+  async *streamChat(req: ChatRequest, tools?: Anthropic.Tool[]): AsyncGenerator<StreamChunk> {
     const systemMsg = req.messages.find((m) => m.role === "system");
-    const userMessages = req.messages
-      .filter((m) => m.role !== "system")
-      .map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      }));
+    const userMessages = this.buildMessages(req);
 
-    const stream = this.client.messages.stream({
-      model: req.model,
-      max_tokens: req.max_tokens ?? 4096,
-      temperature: req.temperature,
-      top_p: req.top_p,
-      system: systemMsg?.content,
-      messages: userMessages,
-    });
+    const params = this.buildParams(req, systemMsg?.content, userMessages);
+
+    if (tools && tools.length > 0) {
+      params.tools = tools;
+    }
+
+    const stream = this.client.messages.stream(params as Anthropic.MessageStreamParams);
 
     for await (const event of stream) {
       if (
@@ -77,5 +109,34 @@ export class AnthropicProvider implements LLMProvider {
         yield { delta: "", done: true };
       }
     }
+  }
+
+  private buildParams(
+    req: ChatRequest,
+    system: string | undefined,
+    messages: Anthropic.MessageParam[],
+  ): Anthropic.MessageCreateParams {
+    const params: Anthropic.MessageCreateParams = {
+      model: req.model,
+      max_tokens: req.max_tokens ?? 4096,
+      system,
+      messages,
+    };
+    // Anthropic newer models reject temperature + top_p together
+    if (req.temperature != null) {
+      params.temperature = req.temperature;
+    } else if (req.top_p != null) {
+      params.top_p = req.top_p;
+    }
+    return params;
+  }
+
+  private buildMessages(req: ChatRequest): Anthropic.MessageParam[] {
+    return req.messages
+      .filter((m) => m.role !== "system")
+      .map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
   }
 }

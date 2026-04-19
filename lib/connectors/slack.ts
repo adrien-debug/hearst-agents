@@ -4,9 +4,35 @@ import type { SlackConnector, ConnectorResult, SlackMessage } from "./types";
 
 const PROVIDER = "slack";
 
+export class SlackApiError extends Error {
+  constructor(
+    public readonly slackCode: string,
+    message?: string,
+  ) {
+    super(message ?? slackCode);
+    this.name = "SlackApiError";
+  }
+}
+
+function extractSlackCode(err: unknown): string | null {
+  if (err && typeof err === "object" && "data" in err) {
+    const data = (err as Record<string, unknown>).data;
+    if (data && typeof data === "object" && "error" in data) {
+      return String((data as Record<string, unknown>).error);
+    }
+  }
+  const msg = err instanceof Error ? err.message : String(err);
+  const match = msg.match(/An API error occurred: (\S+)/);
+  return match ? match[1] : null;
+}
+
 async function getSlackClient(userId: string): Promise<WebClient> {
   const { accessToken } = await getTokens(userId, PROVIDER);
-  if (!accessToken) throw new Error("not_authenticated");
+  if (!accessToken) {
+    console.warn("[Slack] No token found for userId:", userId);
+    throw new SlackApiError("not_authed", "No Slack token stored");
+  }
+  console.log("[Slack] Token found for userId:", userId, "| prefix:", accessToken.slice(0, 8) + "…");
   touchLastUsed(userId, PROVIDER).catch(() => {});
   return new WebClient(accessToken);
 }
@@ -16,11 +42,13 @@ export const slackConnector: SlackConnector = {
     let client: WebClient;
     try {
       client = await getSlackClient(userId);
-    } catch {
-      throw new Error("not_authenticated");
+    } catch (e) {
+      if (e instanceof SlackApiError) throw e;
+      throw new SlackApiError("not_authed");
     }
 
     try {
+      console.log("[Slack] conversations.list — scopes needed: channels:read,groups:read,im:read,mpim:read");
       const channelsRes = await client.conversations.list({
         types: "public_channel,private_channel,im,mpim",
         exclude_archived: true,
@@ -29,6 +57,7 @@ export const slackConnector: SlackConnector = {
 
       const channels = channelsRes.channels ?? [];
       const memberChannels = channels.filter((c) => c.is_member || c.is_im);
+      console.log("[Slack] channels total:", channels.length, "| member/im:", memberChannels.length);
 
       const usersCache = new Map<string, string>();
       async function resolveUser(uid: string): Promise<string> {
@@ -45,7 +74,6 @@ export const slackConnector: SlackConnector = {
       }
 
       const allMessages: SlackMessage[] = [];
-
       const channelsToFetch = memberChannels.slice(0, 10);
 
       for (const ch of channelsToFetch) {
@@ -72,8 +100,9 @@ export const slackConnector: SlackConnector = {
               isMention: (msg.text ?? "").includes(`<@`),
             });
           }
-        } catch {
-          // channel access error, skip
+        } catch (chErr) {
+          const code = extractSlackCode(chErr);
+          console.warn(`[Slack] channel ${ch.id} (${ch.name}) skipped — code: ${code ?? "unknown"}`);
         }
       }
 
@@ -81,12 +110,16 @@ export const slackConnector: SlackConnector = {
 
       return { data: allMessages.slice(0, limit), provider: "slack" };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
-      if (message.includes("invalid_auth") || message.includes("token_revoked") || message.includes("not_authed")) {
+      const code = extractSlackCode(err) ?? (err instanceof Error ? err.message : "unknown");
+      console.error("[Slack] API error — code:", code);
+
+      const AUTH_ERRORS = ["invalid_auth", "token_revoked", "not_authed", "account_inactive"];
+      if (AUTH_ERRORS.includes(code)) {
         await recordAuthFailure(userId, PROVIDER);
-        throw new Error("not_authenticated");
+        throw new SlackApiError(code);
       }
-      throw err;
+
+      throw new SlackApiError(code);
     }
   },
 };

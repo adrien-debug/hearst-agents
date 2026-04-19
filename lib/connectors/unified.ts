@@ -18,6 +18,7 @@ import {
   driveToUnifiedFile,
 } from "./unified-types";
 import type { UnifiedMessage, UnifiedEvent, UnifiedFile } from "./unified-types";
+import { applyPriorities } from "./priority";
 
 /* ─── Helpers ─── */
 
@@ -66,7 +67,7 @@ export async function getUnifiedMessages(
   }
 
   const results = await Promise.all(sources);
-  const all = results.flat();
+  const all = applyPriorities(results.flat());
   all.sort((a, b) => b.timestamp - a.timestamp);
   return all;
 }

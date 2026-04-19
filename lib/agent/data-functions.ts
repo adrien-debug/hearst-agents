@@ -27,6 +27,7 @@ export interface MessageSummary {
   preview: string;
   date: string;
   unread: boolean;
+  priority: "urgent" | "normal" | "low";
 }
 
 export interface EventSummary {
@@ -44,8 +45,16 @@ export interface FileSummary {
   shared: boolean;
 }
 
+export interface MessageStats {
+  total: number;
+  unread: number;
+  urgent: number;
+  slack: number;
+  low: number;
+}
+
 export interface DataSnapshot {
-  messages?: { items: MessageSummary[]; total: number };
+  messages?: { items: MessageSummary[]; total: number; stats: MessageStats };
   events?: { items: EventSummary[]; total: number };
   files?: { items: FileSummary[]; total: number };
 }
@@ -63,6 +72,7 @@ function summarizeMessage(m: UnifiedMessage): MessageSummary {
       day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
     }),
     unread: !m.read,
+    priority: m.priority,
   };
 }
 
@@ -88,12 +98,31 @@ function summarizeFile(f: UnifiedFile): FileSummary {
 
 /* ─── Public API ─── */
 
-export async function getMessages(userId: string): Promise<{ items: MessageSummary[]; total: number }> {
+const PRIORITY_ORDER: Record<string, number> = { urgent: 0, normal: 1, low: 2 };
+
+export async function getMessages(userId: string): Promise<{ items: MessageSummary[]; total: number; stats: MessageStats }> {
   const raw = await getUnifiedMessages(userId);
-  return {
-    items: raw.slice(0, MAX_MESSAGES).map(summarizeMessage),
+  const stats: MessageStats = {
     total: raw.length,
+    unread: raw.filter((m) => !m.read).length,
+    urgent: raw.filter((m) => m.priority === "urgent").length,
+    slack: raw.filter((m) => m.source.provider === "slack").length,
+    low: raw.filter((m) => m.priority === "low").length,
   };
+
+  const sorted = [...raw].sort((a, b) => {
+    const pDiff = (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1);
+    if (pDiff !== 0) return pDiff;
+    return b.timestamp - a.timestamp;
+  });
+
+  const items = sorted.slice(0, MAX_MESSAGES).map(summarizeMessage);
+
+  if (stats.urgent > 0 && !items.some((m) => m.priority === "urgent")) {
+    console.warn(`[Agent/Data] Coherence issue: stats.urgent=${stats.urgent} but no urgent item in top ${MAX_MESSAGES}`);
+  }
+
+  return { items, total: raw.length, stats };
 }
 
 export async function getEvents(userId: string): Promise<{ items: EventSummary[]; total: number }> {
@@ -144,15 +173,17 @@ export function snapshotToText(snapshot: DataSnapshot): string {
   const sections: string[] = [];
 
   if (snapshot.messages) {
-    const { items, total } = snapshot.messages;
+    const { items, total, stats } = snapshot.messages;
     if (items.length === 0) {
-      sections.push("Messages : aucun message récent.");
+      sections.push("Messages : aucun message récent.\nurgents=0 non_lus=0 slack=0 ignorables=0");
     } else {
-      const lines = items.map((m) =>
-        `${m.unread ? "•" : " "} [${m.source}] ${m.from} — ${m.subject} (${m.date})`,
-      );
+      const metricsLine = `urgents=${stats.urgent} non_lus=${stats.unread} slack=${stats.slack} ignorables=${stats.low}`;
+      const lines = items.map((m) => {
+        const tag = m.priority === "urgent" ? " [URGENT]" : m.priority === "low" ? " [low]" : "";
+        return `${m.unread ? "•" : " "} [${m.source}] ${m.from} — ${m.subject}${tag} (${m.date})`;
+      });
       const more = total > items.length ? `  (+${total - items.length} autres)` : "";
-      sections.push(`Messages (${total}) :\n${lines.join("\n")}${more}`);
+      sections.push(`Messages (${total}) — ${metricsLine} :\n${lines.join("\n")}${more}`);
     }
   }
 

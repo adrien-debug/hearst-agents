@@ -1,41 +1,76 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
-import { getProvider } from "@/lib/llm";
+import { AnthropicProvider } from "@/lib/llm/anthropic";
 import { RunTracer } from "@/lib/runtime";
 import type { ChatMessage } from "@/lib/llm";
 import type { Json } from "@/lib/database.types";
 import type { AgentGuardPolicy } from "@/lib/runtime/prompt-guard";
 import { getUserId } from "@/lib/get-user-id";
-import { getDataSnapshot, snapshotToText } from "@/lib/agent/data-functions";
+import { runOrchestrator } from "@/lib/orchestrator";
+import { AGENT_TOOLS } from "@/lib/agent/tools";
+import { executeToolCall } from "@/lib/agent/tool-handlers";
+import { runManagedSession } from "@/lib/managed-agent/session-runner";
 import { z } from "zod";
+import type Anthropic from "@anthropic-ai/sdk";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const HEARST_SLUG = "hearst";
 
-const HEARST_SYSTEM_PROMPT = `Tu es Hearst. Système d'action.
+const HEARST_SYSTEM_PROMPT = `Tu es Hearst — assistant intelligent et système d'action.
+Tu gères les emails, l'agenda et les fichiers de l'utilisateur.
 
-RÈGLE : 1 info + 1 CTA. Rien d'autre. Jamais.
+CHAQUE RÉPONSE EST DANS UN SEUL MODE :
 
-PRIORITÉ (messages) :
-IF urgents > 0 → "X urgents" + [Répondre]
-ELSE IF slack > 0 → "X Slack" + [Répondre]
-ELSE → "X messages" + [Répondre]
+MODE CONVERSATION (si message vague, social, exploratoire, ou doute)
+→ Répondre naturellement, comme un humain.
+→ Proposer ce que tu peux faire si pertinent.
+→ Pas d'action. Pas de bouton obligatoire.
+→ Exemple : "Salut — tu veux voir tes emails ou ton agenda ?"
 
-PRIORITÉ (autres) :
-événements → "X événements" + [Répondre]
-fichiers → "X fichiers" + [Répondre]
-rien → "Aucun urgent"
+MODE INFORMATIF (si question sur les données)
+→ Utiliser les données réelles du contexte.
+→ Donner une vue claire : totaux, urgents, points clés.
+→ Structurer simplement. Action optionnelle.
+→ Exemple : "15 messages, 3 urgents, 2 Slack. Tu veux les traiter ?"
 
-CTA : toujours [Répondre]. Second optionnel discret : [Voir].
+MODE ACTION (si intention claire et tâche exécutable)
+→ Résultat direct, urgents en premier.
+→ Action proposée, pas de blabla.
+→ Exemple :
+  "3 urgents :
+  — Client X — deadline demain
+  — Slack — mention facture
+  — RH — validation contrat
+  [Répondre]"
 
-INTERDIT : "dont", multi métriques, 2 CTA égaux, phrases > 4 mots, listes, "Bonjour", questions, explications, termes techniques.
+PRIORITÉ SI DOUTE : conversation > informatif > action.
+Ne jamais mélanger 2 modes dans une même réponse.
 
-MAUVAIS : "15 messages dont 3 urgents" / "Bonjour, comment puis-je" / "Voici un résumé"
-BON : "3 urgents\\n[Répondre]"
+DONNÉES DU CONTEXTE :
+- Les métriques (urgents=X, non_lus=Y, slack=Z, ignorables=W) sont exactes.
+- S'appuyer dessus. Ne jamais inventer de chiffres.
+- Si urgents > 0, toujours les mentionner en priorité.
+- Si aucune donnée fournie, ne pas inventer.
+- Ne jamais répondre "aucun urgent" ou "rien à signaler" sans données.
 
-Données réelles uniquement. Jamais inventer. Français.`;
+BLOCAGE (service non connecté, erreur) :
+→ Expliquer simplement. Proposer la solution.
+→ "Gmail non connecté. Connectez-le dans Applications."
+
+HORS SCOPE :
+→ "Je gère tes emails, agenda et fichiers. Que veux-tu traiter ?"
+
+STYLE : naturel, direct, intelligent. Pas de jargon. Pas robotique.
+Court quand suffisant, détaillé quand utile. Toujours en français.
+
+INTERDIT :
+- Inventer des données.
+- Naviguer automatiquement.
+- Lancer une action sans contexte.
+- Proposer un bouton sans intention claire.
+- Répondre vide sans explication.`;
 
 const requestSchema = z.object({
   message: z.string().min(1).max(100000),
@@ -54,50 +89,7 @@ const requestSchema = z.object({
   }).optional(),
 });
 
-const SURFACE_LABELS: Record<string, string> = {
-  inbox: "la boîte de réception",
-  calendar: "l'agenda",
-  files: "les fichiers",
-  tasks: "les tâches",
-  apps: "les applications",
-};
-
-async function buildContextBlock(
-  context: z.infer<typeof requestSchema>["context"] | undefined,
-  userId: string | null,
-): Promise<string> {
-  const parts: string[] = [];
-  const surface = context?.surface ?? "home";
-
-  if (surface !== "home") {
-    parts.push(`Surface active : ${SURFACE_LABELS[surface] ?? surface}`);
-  }
-
-  if (context?.selectedItem) {
-    const item = context.selectedItem;
-    let desc = `Élément sélectionné : ${item.title}`;
-    if (item.from) desc += ` (de ${item.from})`;
-    if (item.preview) desc += `\nAperçu : ${item.preview.slice(0, 200)}`;
-    parts.push(desc);
-  }
-
-  if (context?.connectedServices && context.connectedServices.length > 0) {
-    parts.push(`Services connectés : ${context.connectedServices.join(", ")}`);
-  }
-
-  if (userId) {
-    try {
-      const snapshot = await getDataSnapshot(userId, surface);
-      const dataText = snapshotToText(snapshot);
-      if (dataText) parts.push(`\n${dataText}`);
-    } catch (err) {
-      console.error("[Chat] Data fetch failed:", err instanceof Error ? err.message : err);
-    }
-  }
-
-  if (parts.length === 0) return "";
-  return `\n\n## Contexte\n${parts.join("\n")}`;
-}
+/* buildContextBlock moved to lib/orchestrator.ts */
 
 async function resolveHearstAgent(sb: ReturnType<typeof requireServerSupabase>) {
   const { data: existing } = await sb
@@ -107,9 +99,16 @@ async function resolveHearstAgent(sb: ReturnType<typeof requireServerSupabase>) 
     .single();
 
   if (existing) {
-    if (existing.system_prompt !== HEARST_SYSTEM_PROMPT) {
-      await sb.from("agents").update({ system_prompt: HEARST_SYSTEM_PROMPT }).eq("id", existing.id);
+    const needsUpdate =
+      existing.system_prompt !== HEARST_SYSTEM_PROMPT ||
+      existing.model_name !== "claude-sonnet-4-6";
+    if (needsUpdate) {
+      await sb.from("agents").update({
+        system_prompt: HEARST_SYSTEM_PROMPT,
+        model_name: "claude-sonnet-4-6",
+      }).eq("id", existing.id);
       existing.system_prompt = HEARST_SYSTEM_PROMPT;
+      existing.model_name = "claude-sonnet-4-6";
     }
     return existing;
   }
@@ -121,9 +120,7 @@ async function resolveHearstAgent(sb: ReturnType<typeof requireServerSupabase>) 
       slug: HEARST_SLUG,
       description: "Assistant global Hearst OS",
       model_provider: "anthropic",
-      model_name: "claude-sonnet-4-20250514",
-      // NOTE: agent already created in DB uses this model.
-      // If deprecated, update the row in Supabase: UPDATE agents SET model_name='claude-sonnet-4-latest' WHERE slug='hearst';
+      model_name: "claude-sonnet-4-6",
       system_prompt: HEARST_SYSTEM_PROMPT,
       temperature: 0.7,
       max_tokens: 4096,
@@ -158,8 +155,6 @@ export async function POST(req: NextRequest) {
     return jsonErr("Invalid JSON body", 400);
   }
 
-  console.log("[Chat] RAW BODY", JSON.stringify(body));
-
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
     console.error("[Chat] ZOD ERROR", JSON.stringify(parsed.error.issues));
@@ -170,6 +165,9 @@ export async function POST(req: NextRequest) {
   const sb = requireServerSupabase();
   const { message: userMessage, conversation_id, context } = parsed.data;
   const userId = await getUserId();
+  if (!userId) {
+    return jsonErr("not_authenticated", 401);
+  }
   console.log("[Chat] userId:", userId, "| surface:", context?.surface ?? "home", "| msg:", userMessage.slice(0, 50));
 
   const agent = await resolveHearstAgent(sb);
@@ -181,10 +179,20 @@ export async function POST(req: NextRequest) {
 
   let conversationId = conversation_id ?? null;
 
-  if (!conversationId) {
+  if (conversationId) {
+    const { data: existing } = await sb
+      .from("conversations")
+      .select("id")
+      .eq("id", conversationId)
+      .eq("user_identifier", userId)
+      .single();
+    if (!existing) {
+      return jsonErr("conversation_not_found", 404);
+    }
+  } else {
     const { data: convo, error: convoErr } = await sb
       .from("conversations")
-      .insert({ agent_id: agent.id, title: userMessage.slice(0, 80) })
+      .insert({ agent_id: agent.id, title: userMessage.slice(0, 80), user_identifier: userId })
       .select("id")
       .single();
     if (convoErr) console.error("[Chat] Conversation create failed:", convoErr.message);
@@ -231,11 +239,23 @@ export async function POST(req: NextRequest) {
     .map((m) => `- ${m.key}: ${m.value}`)
     .join("\n");
 
-  const contextBlock = await buildContextBlock(context, userId);
+  const orchResult = await runOrchestrator({
+    message: userMessage,
+    surface: context?.surface ?? "home",
+    userId,
+    connectedServices: context?.connectedServices,
+    selectedItem: context?.selectedItem as Record<string, unknown> | null,
+  });
+  const contextBlock = orchResult.contextBlock;
+
+  const missionBlock = orchResult.missionResult
+    ? `\n\n## Résultat de la mission\nUtilise ces données réelles pour formuler ta réponse :\n${orchResult.missionResult}`
+    : "";
 
   const systemPrompt = [
     agent.system_prompt,
     contextBlock,
+    missionBlock,
     skillsBlock ? `\n\n## Skills\n${skillsBlock}` : "",
     memoryBlock ? `\n\n## Memory\n${memoryBlock}` : "",
   ].join("");
@@ -271,39 +291,212 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
   const llmStart = Date.now();
   const actualModelUsed = `${agent.model_provider}/${agent.model_name}`;
+  const MAX_TOOL_ROUNDS = 5;
 
   const readable = new ReadableStream({
     async start(controller) {
+      const emit = (data: Record<string, unknown>) =>
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+
       let fullContent = "";
 
-      try {
-        const provider = getProvider(agent.model_provider);
-        const stream = provider.streamChat({
-          model: agent.model_name,
-          messages,
-          temperature: agent.temperature,
-          max_tokens: agent.max_tokens,
-          top_p: agent.top_p,
-          stream: true,
+      // ── Blocked mode: skip LLM, send final immediately ──
+      if (orchResult.blockedReason) {
+        fullContent = orchResult.blockedReason;
+        emit({ type: "final", content: fullContent, done: true, run_id: runId });
+        console.log("[ORCH] FINAL SENT (blocked)");
+        await tracer.endRun("completed", { content_length: fullContent.length, conversation_id: conversationId });
+        controller.close();
+        return;
+      }
+
+      // ── Managed agent mode: delegate to Anthropic managed session ──
+      if (orchResult.mode === "managed" && orchResult.managedPrompt) {
+        console.log("[ORCH] Delegating to managed agent");
+        emit({ type: "step", tool: "agent", status: "running", run_id: runId });
+
+        try {
+          for await (const event of runManagedSession(orchResult.managedPrompt, userMessage.slice(0, 60))) {
+            switch (event.type) {
+              case "step":
+                emit({ type: "step", tool: event.tool, status: event.status, run_id: runId });
+                break;
+              case "message":
+                if (event.content) {
+                  fullContent += event.content;
+                  emit({ delta: event.content, done: false, run_id: runId });
+                }
+                break;
+              case "idle":
+                fullContent = event.content ?? fullContent;
+                break;
+              case "error":
+                fullContent = event.content ?? "Erreur agent. Réessayez.";
+                break;
+            }
+          }
+
+          emit({ type: "step", tool: "agent", status: "done", run_id: runId });
+        } catch (managedErr) {
+          const msg = managedErr instanceof Error ? managedErr.message : "managed_agent_failed";
+          console.error("[ORCH] Managed agent error:", msg);
+          fullContent = "L'agent autonome n'est pas disponible. Réessayez.";
+        }
+
+        if (!fullContent.trim()) {
+          fullContent = "L'agent n'a pas produit de résultat.";
+        }
+
+        const llmLatency = Date.now() - llmStart;
+        await sb.from("messages").insert({
+          conversation_id: conversationId,
+          role: "assistant",
+          content: fullContent,
+          model_used: "managed-agent",
+          latency_ms: llmLatency,
         });
 
-        for await (const chunk of stream) {
-          fullContent += chunk.delta;
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ delta: chunk.delta, done: chunk.done, run_id: runId })}\n\n`),
+        await tracer.endRun("completed", {
+          content_length: fullContent.length,
+          conversation_id: conversationId,
+          mode: "managed",
+        });
+
+        emit({ type: "final", content: fullContent, done: true, run_id: runId, model_used: "managed-agent" });
+        console.log("[ORCH] FINAL SENT (managed)");
+        controller.close();
+        return;
+      }
+
+      try {
+        const provider = new AnthropicProvider();
+
+        // Build Anthropic-format messages (separate system)
+        const systemContent = systemPrompt;
+        const convMessages: Anthropic.MessageParam[] = messages
+          .filter((m) => m.role !== "system")
+          .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+        let totalTokensIn = 0;
+        let totalTokensOut = 0;
+        let round = 0;
+
+        // ── Tool-calling loop ──
+        while (round < MAX_TOOL_ROUNDS) {
+          round++;
+          console.log(`[ORCH] TOOL ROUND ${round}`);
+
+          const result = await provider.chatWithTools(
+            {
+              model: agent.model_name,
+              messages: [{ role: "system", content: systemContent }, ...convMessages] as ChatMessage[],
+              temperature: agent.temperature,
+              max_tokens: agent.max_tokens,
+              top_p: agent.top_p,
+            },
+            AGENT_TOOLS,
           );
-          if (chunk.done) break;
+
+          totalTokensIn += result.tokensIn;
+          totalTokensOut += result.tokensOut;
+
+          if (result.toolCalls.length === 0 || result.stopReason !== "tool_use") {
+            // No tools — this is the final text response. Stream it.
+            fullContent = result.text;
+            console.log(`[ORCH] No tool calls — final text, len=${fullContent.length}`);
+            break;
+          }
+
+          // LLM wants to call tools
+          // Add the assistant message with tool_use blocks to conversation
+          convMessages.push({
+            role: "assistant",
+            content: result.rawResponse.content,
+          });
+
+          // Execute each tool and collect results
+          const toolResultBlocks: Anthropic.ToolResultBlockParam[] = [];
+
+          for (const tc of result.toolCalls) {
+            emit({ type: "step", tool: tc.name, status: "running", run_id: runId });
+            console.log(`[ORCH] Executing tool: ${tc.name}`);
+
+            await tracer.trace({
+              kind: "tool_call",
+              name: `tool:${tc.name}`,
+              input: { tool: tc.name, input_keys: Object.keys(tc.input) },
+              fn: async () => {
+                const toolResult = await executeToolCall(tc.name, userId, tc.input);
+
+                toolResultBlocks.push({
+                  type: "tool_result",
+                  tool_use_id: tc.id,
+                  content: toolResult.data,
+                });
+
+                emit({
+                  type: "step",
+                  tool: tc.name,
+                  status: toolResult.success ? "done" : "error",
+                  run_id: runId,
+                });
+
+                return {
+                  output: { tool: tc.name, success: toolResult.success, latency_ms: toolResult.latency_ms } as Record<string, Json>,
+                };
+              },
+            });
+          }
+
+          // Add tool results as a user message for next round
+          convMessages.push({
+            role: "user",
+            content: toolResultBlocks,
+          });
         }
+
+        // ── Stream the final text response ──
+        if (!fullContent.trim()) {
+          // If the loop ended without text (e.g. last round was tool calls),
+          // do one more non-tool call to get the final response
+          console.log("[ORCH] Final round — getting text response");
+          const finalResult = await provider.chatWithTools(
+            {
+              model: agent.model_name,
+              messages: [{ role: "system", content: systemContent }, ...convMessages] as ChatMessage[],
+              temperature: agent.temperature,
+              max_tokens: agent.max_tokens,
+              top_p: agent.top_p,
+            },
+          );
+          fullContent = finalResult.text;
+          totalTokensIn += finalResult.tokensIn;
+          totalTokensOut += finalResult.tokensOut;
+        }
+
+        if (!fullContent.trim()) {
+          fullContent = orchResult.missionResult ?? "Je n'ai pas de réponse pour le moment. Réessaie.";
+          console.warn("[ORCH] Empty content — fallback applied");
+        }
+
+        // Stream the final content as deltas for real-time display
+        const CHUNK_SIZE = 20;
+        for (let i = 0; i < fullContent.length; i += CHUNK_SIZE) {
+          const chunk = fullContent.slice(i, i + CHUNK_SIZE);
+          emit({ delta: chunk, done: false, run_id: runId });
+        }
+
       } catch (streamErr) {
         const msg = streamErr instanceof Error ? streamErr.message : "stream_failed";
-        console.error(`[Chat] stream error agent=${agent.id} run=${runId}:`, msg);
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ error: msg, done: true, run_id: runId })}\n\n`),
-        );
+        console.error(`[ORCH] STATE ERROR — agent=${agent.id} run=${runId}:`, msg);
+        emit({ type: "final", content: "Erreur. Réessayez.", error: true, done: true, run_id: runId });
+        console.log("[ORCH] FINAL SENT (error)");
         await tracer.endRun("failed", {}, msg);
         controller.close();
         return;
       }
+
+      console.log("[ORCH] STATE STREAM_RESULT — complete, len=" + fullContent.length);
 
       const llmLatency = Date.now() - llmStart;
 
@@ -339,13 +532,14 @@ export async function POST(req: NextRequest) {
         surface: context?.surface ?? "home",
       });
 
-      controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify({
-          done: true,
-          run_id: runId,
-          model_used: actualModelUsed,
-        })}\n\n`),
-      );
+      emit({
+        type: "final",
+        content: fullContent,
+        done: true,
+        run_id: runId,
+        model_used: actualModelUsed,
+      });
+      console.log("[ORCH] FINAL SENT (complete)");
 
       controller.close();
     },

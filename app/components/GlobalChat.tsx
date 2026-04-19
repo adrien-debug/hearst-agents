@@ -25,11 +25,19 @@ const SURFACE_ROUTES: Record<string, string> = {
   home: "/",
 };
 
+const SURFACE_NAV_LABEL: Record<string, string> = {
+  inbox: "J'ouvre votre boîte de réception.",
+  calendar: "J'ouvre votre agenda.",
+  files: "J'ouvre vos fichiers.",
+  tasks: "J'ouvre vos tâches.",
+  apps: "J'ouvre les applications.",
+};
+
 const QUICK_ACTIONS = [
-  { label: "Emails urgents", cmd: "Qu'est-ce qui nécessite mon attention ?", primary: true },
-  { label: "Résumer mes emails", cmd: "Résume mes emails du jour" },
-  { label: "Agenda du jour", cmd: "Montre mon agenda du jour" },
-  { label: "Mes tâches", cmd: "Quelles sont mes tâches en cours ?" },
+  { label: "Urgents", cmd: "Qu'est-ce qui nécessite mon attention ?", primary: true },
+  { label: "Résumer emails", cmd: "Résume mes emails du jour" },
+  { label: "Agenda", cmd: "Montre mon agenda du jour" },
+  { label: "Fichiers", cmd: "Montre mes fichiers" },
 ] as const;
 
 const SERVICE_TO_PROVIDER: Record<string, string> = {
@@ -46,7 +54,8 @@ function checkMissionServices(missionServices: string[], connected: string[], lo
     .filter((p, i, arr) => arr.indexOf(p) === i)
     .filter((p) => !connected.includes(p));
   if (missing.length === 0) return null;
-  return missing.join(", ");
+  const names = missing.join(" et ");
+  return `${names} n'est pas connecté. Connectez-le dans Applications pour continuer.`;
 }
 
 export default function GlobalChat() {
@@ -73,9 +82,9 @@ export default function GlobalChat() {
     acceptSuggestion();
     if (action.type === "mission") {
       const { mission } = action;
-      const missingProvider = checkMissionServices(mission.services, connectedServices, servicesLoaded);
-      if (missingProvider) {
-        setMessages((prev) => [...prev, { role: "assistant", content: `${missingProvider} non connecté.` }]);
+      const blockedMsg = checkMissionServices(mission.services, connectedServices, servicesLoaded);
+      if (blockedMsg) {
+        setMessages((prev) => [...prev, { role: "assistant", content: blockedMsg }]);
         if (!expanded) setExpanded(true);
         router.push("/apps");
         return;
@@ -120,33 +129,19 @@ export default function GlobalChat() {
       setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
       setStreaming(true);
 
+      // Navigation only — explicit "ouvre", "va sur" etc.
       const outcome = detectIntent(trimmed);
-
-      if (outcome.type === "mission") {
-        const missingProvider = checkMissionServices(outcome.mission.services, connectedServices, servicesLoaded);
-        if (missingProvider) {
-          setMessages((prev) => [...prev, { role: "assistant", content: `${missingProvider} non connecté.` }]);
-          setStreaming(false);
-          router.push("/apps");
-          return;
-        }
-        setMessages((prev) => [...prev, { role: "assistant", content: `${outcome.mission.title}…` }]);
-        setStreaming(false);
-        setActiveSurface(outcome.mission.surface);
-        if (SURFACE_ROUTES[outcome.mission.surface] && outcome.mission.surface !== "home") {
-          router.push(SURFACE_ROUTES[outcome.mission.surface]);
-        }
-        executeMission(outcome.mission);
-        return;
-      }
-
       if (outcome.type === "navigate") {
+        const navLabel = SURFACE_NAV_LABEL[outcome.surface] ?? `J'ouvre ${outcome.surface}.`;
+        setMessages((prev) => [...prev, { role: "assistant", content: navLabel }]);
         setActiveSurface(outcome.surface);
         setStreaming(false);
         const route = SURFACE_ROUTES[outcome.surface];
         if (route) router.push(route);
         return;
       }
+
+      // Everything else → /api/chat (orchestrator decides: tools, managed agent, or LLM)
 
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
@@ -207,15 +202,53 @@ export default function GlobalChat() {
                 const payload = JSON.parse(line.slice(6));
                 if (payload.error) {
                   clearTimeout(fallbackTimer);
+                  const errContent = payload.content ?? "Service indisponible. Réessayez.";
                   setMessages((prev) => {
                     const copy = [...prev];
-                    copy[copy.length - 1] = { role: "assistant", content: "Service indisponible. Réessayez." };
+                    copy[copy.length - 1] = { role: "assistant", content: errContent };
                     return copy;
                   });
                   streamError = true;
                   break;
                 }
-                if (payload.delta) {
+                if (payload.type === "step") {
+                  clearTimeout(fallbackTimer);
+                  if (!receivedFirstToken) receivedFirstToken = true;
+                  const TOOL_LABELS: Record<string, string> = {
+                    get_emails: "Emails",
+                    get_calendar_events: "Agenda",
+                    get_files: "Fichiers",
+                    get_slack_messages: "Slack",
+                    agent: "Agent autonome",
+                    bash: "Exécution",
+                    write: "Écriture",
+                    read: "Lecture",
+                    web_search: "Recherche web",
+                  };
+                  const label = TOOL_LABELS[payload.tool] ?? payload.tool;
+                  const icon = payload.status === "done" ? "✓" : payload.status === "error" ? "✗" : "⟳";
+                  const stepLine = `${icon} ${label}`;
+                  setMessages((prev) => {
+                    const copy = [...prev];
+                    const last = copy[copy.length - 1];
+                    const existing = last.content;
+                    if (payload.status === "running") {
+                      copy[copy.length - 1] = { role: "assistant", content: existing ? `${existing}\n${stepLine}…` : `${stepLine}…` };
+                    } else {
+                      const updated = existing.replace(`⟳ ${label}…`, stepLine);
+                      copy[copy.length - 1] = { role: "assistant", content: updated };
+                    }
+                    return copy;
+                  });
+                } else if (payload.type === "final" && payload.content) {
+                  clearTimeout(fallbackTimer);
+                  assistantContent = payload.content;
+                  setMessages((prev) => {
+                    const copy = [...prev];
+                    copy[copy.length - 1] = { role: "assistant", content: payload.content };
+                    return copy;
+                  });
+                } else if (payload.delta) {
                   if (!receivedFirstToken) {
                     receivedFirstToken = true;
                     clearTimeout(fallbackTimer);
@@ -271,7 +304,8 @@ export default function GlobalChat() {
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center px-6">
               <p className="mb-1 text-sm text-zinc-500">Hearst</p>
-              <h1 className="mb-6 text-xl font-medium text-white">Que dois-je traiter ?</h1>
+              <h1 className="mb-1.5 text-xl font-medium text-white">Que dois-je traiter ?</h1>
+              <p className="mb-6 text-xs text-zinc-500">Emails, agenda, fichiers — en une commande.</p>
 
               {/* Suggestion */}
               {suggestion && !streaming && (

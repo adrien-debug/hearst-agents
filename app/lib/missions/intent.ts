@@ -1,5 +1,15 @@
 import type { ChatOutcome, Mission, ActionStatus, Surface } from "./types";
 
+/* ─── Classification result (internal) ─── */
+
+interface Classification {
+  mode: "chat" | "action" | "navigation";
+  intent: string;
+  confidence: number;
+  surface?: Surface;
+  patternIndex?: number;
+}
+
 /* ─── Intent pattern definition ─── */
 
 interface IntentPattern {
@@ -11,9 +21,14 @@ interface IntentPattern {
   services: string[];
 }
 
-const INTENT_PATTERNS: IntentPattern[] = [
+/*
+ * Order: missions (actions) first, then navigation targets.
+ * Missions require action keywords.
+ * Navigation requires explicit nav verbs + target keywords.
+ */
+const ACTION_PATTERNS: IntentPattern[] = [
   {
-    keywords: ["résume", "emails", "mail", "mails"],
+    keywords: ["résume", "résumer", "résumé"],
     surface: "inbox",
     isMission: true,
     missionTitle: "Résumer vos emails",
@@ -26,7 +41,7 @@ const INTENT_PATTERNS: IntentPattern[] = [
     services: ["Gmail"],
   },
   {
-    keywords: ["réponds", "répondre", "urgents", "urgent", "réponse"],
+    keywords: ["réponds", "répondre", "réponse"],
     surface: "inbox",
     isMission: true,
     missionTitle: "Répondre aux emails urgents",
@@ -39,44 +54,17 @@ const INTENT_PATTERNS: IntentPattern[] = [
     services: ["Gmail"],
   },
   {
-    keywords: ["montre", "voir", "affiche", "boîte", "inbox", "email", "emails"],
+    keywords: ["attention", "urgent", "urgents", "important", "priorité"],
     surface: "inbox",
-    isMission: false,
-    missionTitle: "",
-    actions: [],
-    services: [],
-  },
-  {
-    keywords: ["agenda", "calendrier", "planning", "rendez-vous", "réunion", "demain"],
-    surface: "calendar",
-    isMission: false,
-    missionTitle: "",
-    actions: [],
-    services: [],
-  },
-  {
-    keywords: ["fichier", "fichiers", "document", "documents", "récents"],
-    surface: "files",
-    isMission: false,
-    missionTitle: "",
-    actions: [],
-    services: [],
-  },
-  {
-    keywords: ["tâche", "tâches", "todo", "todos", "à faire"],
-    surface: "tasks",
-    isMission: false,
-    missionTitle: "",
-    actions: [],
-    services: [],
-  },
-  {
-    keywords: ["application", "applications", "apps", "services", "connecter", "intégration", "intégrations"],
-    surface: "apps",
-    isMission: false,
-    missionTitle: "",
-    actions: [],
-    services: [],
+    isMission: true,
+    missionTitle: "Vérifier ce qui nécessite votre attention",
+    actions: [
+      { label: "Vérification de vos emails", service: "Gmail" },
+      { label: "Vérification de vos messages", service: "Slack" },
+      { label: "Analyse des priorités" },
+      { label: "Préparation du résumé" },
+    ],
+    services: ["Gmail", "Slack"],
   },
   {
     keywords: ["rapport", "crypto", "marché", "signaux", "market"],
@@ -90,20 +78,22 @@ const INTENT_PATTERNS: IntentPattern[] = [
     ],
     services: [],
   },
-  {
-    keywords: ["attention", "urgent", "important", "priorité"],
-    surface: "inbox",
-    isMission: true,
-    missionTitle: "Vérifier ce qui nécessite votre attention",
-    actions: [
-      { label: "Vérification de vos emails", service: "Gmail" },
-      { label: "Vérification de vos messages", service: "Slack" },
-      { label: "Analyse des priorités" },
-      { label: "Préparation du résumé" },
-    ],
-    services: ["Gmail", "Slack"],
-  },
 ];
+
+interface NavTarget {
+  keywords: string[];
+  surface: Surface;
+}
+
+const NAV_TARGETS: NavTarget[] = [
+  { keywords: ["inbox", "email", "emails", "mail", "mails", "boîte de réception"], surface: "inbox" },
+  { keywords: ["agenda", "calendrier", "planning", "rendez-vous", "réunion"], surface: "calendar" },
+  { keywords: ["fichier", "fichiers", "document", "documents"], surface: "files" },
+  { keywords: ["tâche", "tâches", "todo", "todos", "à faire"], surface: "tasks" },
+  { keywords: ["application", "applications", "apps", "services", "connecter", "intégration", "intégrations"], surface: "apps" },
+];
+
+const NAV_VERBS = ["ouvre", "ouvrir", "va", "aller", "montre", "affiche", "voir", "accède", "accéder"];
 
 /* ─── ID generation ─── */
 
@@ -118,49 +108,94 @@ function normalize(text: string): string {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-/* ─── Keyword-based detection ─── */
+/* ─── Vague / social / exploratory message guard ─── */
+
+const VAGUE_PATTERNS = [
+  /^(hello|hi|hey|salut|bonjour|coucou|yo|ok|oui|non|merci|thanks|thank you|test)\b/,
+  /^(aide|help|comment|quoi|que fais[ -]tu|tu fais quoi|c'est quoi|what)\b/,
+  /^(ca va|comment vas|quoi de neuf|sup)\b/,
+];
+
+const MIN_ACTIONABLE_LENGTH = 3;
+
+function isVagueMessage(text: string): boolean {
+  const trimmed = text.trim();
+  if (trimmed.length < MIN_ACTIONABLE_LENGTH) return true;
+  const norm = normalize(trimmed);
+  return VAGUE_PATTERNS.some((p) => p.test(norm));
+}
+
+/* ─── Classification engine ─── */
+
+function classify(text: string): Classification {
+  if (isVagueMessage(text)) {
+    return { mode: "chat", intent: "vague", confidence: 0.9 };
+  }
+
+  const norm = normalize(text);
+
+  for (let i = 0; i < ACTION_PATTERNS.length; i++) {
+    const pattern = ACTION_PATTERNS[i];
+    if (pattern.keywords.some((kw) => norm.includes(normalize(kw)))) {
+      return {
+        mode: "action",
+        intent: pattern.missionTitle,
+        confidence: 0.95,
+        surface: pattern.surface,
+        patternIndex: i,
+      };
+    }
+  }
+
+  const hasNavVerb = NAV_VERBS.some((v) => norm.includes(normalize(v)));
+
+  for (const target of NAV_TARGETS) {
+    if (target.keywords.some((kw) => norm.includes(normalize(kw)))) {
+      if (hasNavVerb) {
+        return { mode: "navigation", intent: `open_${target.surface}`, confidence: 1, surface: target.surface };
+      }
+      return { mode: "chat", intent: `inbox_overview`, confidence: 0.6, surface: target.surface };
+    }
+  }
+
+  return { mode: "chat", intent: "unknown", confidence: 0.5 };
+}
+
+/* ─── Public API (returns ChatOutcome for backward compat) ─── */
 
 export function detectIntent(text: string): ChatOutcome {
-  const lower = normalize(text);
+  const c = classify(text);
 
-  for (const pattern of INTENT_PATTERNS) {
-    const matched = pattern.keywords.some((kw) => lower.includes(normalize(kw)));
-    if (!matched) continue;
+  if (c.mode === "action" && c.patternIndex !== undefined) {
+    const pattern = ACTION_PATTERNS[c.patternIndex];
+    const n = nextId();
+    const mission: Mission = {
+      id: `mission-${n}`,
+      title: pattern.missionTitle,
+      surface: pattern.surface,
+      status: "created",
+      actions: pattern.actions.map((a, i) => ({
+        id: `action-${n}-${i}`,
+        label: a.label,
+        status: "waiting" as ActionStatus,
+        service: a.service,
+      })),
+      services: pattern.services,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    return { type: "mission", mission };
+  }
 
-    if (pattern.isMission) {
-      const n = nextId();
-      const mission: Mission = {
-        id: `mission-${n}`,
-        title: pattern.missionTitle,
-        surface: pattern.surface,
-        status: "created",
-        actions: pattern.actions.map((a, i) => ({
-          id: `action-${n}-${i}`,
-          label: a.label,
-          status: "waiting" as ActionStatus,
-          service: a.service,
-        })),
-        services: pattern.services,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-      return { type: "mission", mission };
-    }
-
-    return { type: "navigate", surface: pattern.surface };
+  if (c.mode === "navigation" && c.surface) {
+    return { type: "navigate", surface: c.surface };
   }
 
   return { type: "reply", content: "" };
 }
 
-/**
- * Placeholder for future LLM-based intent detection.
- * When implemented, this will call the backend to classify the intent
- * and fall back to keyword detection if the LLM call fails.
- */
+export { classify };
+
 export async function detectIntentWithFallback(text: string): Promise<ChatOutcome> {
-  // Future: try LLM classification first
-  // const llmResult = await classifyIntentViaAPI(text);
-  // if (llmResult) return llmResult;
   return detectIntent(text);
 }
