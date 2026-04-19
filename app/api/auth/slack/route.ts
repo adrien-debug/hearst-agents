@@ -1,12 +1,27 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
+import { getUserId } from "@/lib/get-user-id";
+
+function generateCodeVerifier(): string {
+  return crypto.randomBytes(32).toString("base64url");
+}
+
+function generateCodeChallenge(verifier: string): string {
+  return crypto.createHash("sha256").update(verifier).digest("base64url");
+}
 
 export async function GET() {
+  const userId = await getUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  }
+
   const clientId = process.env.SLACK_CLIENT_ID;
   if (!clientId) {
     return NextResponse.json({ error: "SLACK_CLIENT_ID not configured" }, { status: 500 });
   }
 
-  const scopes = [
+  const userScopes = [
     "channels:read",
     "channels:history",
     "im:read",
@@ -18,12 +33,30 @@ export async function GET() {
     "mpim:history",
   ].join(",");
 
-  const redirectUri = process.env.SLACK_REDIRECT_URI ?? `${process.env.NEXTAUTH_URL}/api/auth/callback/slack`;
+  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:9000";
+  const redirectUri = process.env.SLACK_REDIRECT_URI ?? `${baseUrl}/api/auth/callback/slack`;
+
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = generateCodeChallenge(codeVerifier);
 
   const url = new URL("https://slack.com/oauth/v2/authorize");
   url.searchParams.set("client_id", clientId);
-  url.searchParams.set("scope", scopes);
+  url.searchParams.set("user_scope", userScopes);
   url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("code_challenge", codeChallenge);
+  url.searchParams.set("code_challenge_method", "S256");
 
-  return NextResponse.redirect(url.toString());
+  // Encode verifier + userId into the OAuth `state` param so the callback
+  // can read them from the URL — cookies don't survive cross-domain redirects
+  // (localhost → ngrok).
+  const statePayload = Buffer.from(
+    JSON.stringify({ v: codeVerifier, u: userId }),
+  ).toString("base64url");
+
+  url.searchParams.set("state", statePayload);
+
+  return new Response(null, {
+    status: 302,
+    headers: { Location: url.toString() },
+  });
 }

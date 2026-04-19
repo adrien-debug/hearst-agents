@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react";
-import type { Surface } from "./missions/types";
+import type { Surface } from "./missions-v2";
 
 export interface SelectedItem {
   type: "message" | "event" | "file" | "task";

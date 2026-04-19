@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy v1 mission approval.
+ * Canonical replacement: v2 mission pipeline (no separate approval step).
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserId } from "@/lib/get-user-id";

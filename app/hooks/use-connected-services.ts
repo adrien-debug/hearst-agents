@@ -46,7 +46,13 @@ export function useConnectedServices(): UseConnectedServicesResult {
   }, [session]);
 
   useEffect(() => {
-    fetchStatus();
+    void Promise.resolve().then(() => {
+      fetchStatus();
+    });
+
+    const onFocus = () => fetchStatus();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, [fetchStatus]);
 
   const connectedProviders = useMemo(

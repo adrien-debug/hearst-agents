@@ -1,24 +1,23 @@
-# Hearst v1.2.0
+# Hearst OS
 
-Assistant intelligent avec orchestration d'agents IA en arrière-plan.
+Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
 ## Architecture UX
 
-- **Chat global** — Input fixe en bas de toutes les pages, context-aware (surface active, item sélectionné, services connectés). Sur `/`, affichage pleine page avec quick actions. Sur les autres surfaces, mode compact avec overlay.
-- **`/`** — Chat pleine page (point d'entrée, suggestions, quick actions, détection d'intention, lancement de missions)
-- **`/inbox`** — Boîte de réception (vue globale, priorités, actions recommandées, détail message, "Répondre avec Hearst")
-- **`/admin`** — Console d'administration (agents, runs, workflows, reports, tools, skills...)
-- Layout user : sidebar icon-only (60px) + zone centrale + chat global fixe en bas + panneau droit (résultat → mission → étapes → services)
-- Layout admin : sidebar classique avec navigation complète
+- **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. Pipeline v2 SSE par défaut (`/api/orchestrate`).
+- **Right Panel** (`RightPanel`) — Surface de confiance : runs live, timeline, assets, missions, connectors.
+- **Control Panel** (`ControlPanel`) — Sidebar statut compact.
+- **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
+- Layout user : sidebar icon-only (60px) + zone centrale + chat global + right panel
 
-## Comportement produit (Phase 2)
+## Comportement produit
 
-- **Agent global "Hearst"** : agent unique auto-provisionné (slug `hearst`), aucune configuration requise. Le chat fonctionne immédiatement via `POST /api/chat`. Les données utilisateur sont injectées via `lib/agent/data-functions.ts` — résumés compacts (max 5 messages, 3 événements, 3 fichiers) adaptés à la surface active. Préparé pour migration vers tool-calls (function calling).
-- **Mission Engine** : le chat détecte si une requête est une réponse simple, une navigation, ou une mission exécutable. Les missions sont persistées en DB (`missions` + `mission_runs`) et exécutées via l'agent Hearst (`POST /api/missions/execute`, SSE). Chaque étape est tracée avec status, latency, input/output. Historique consultable via `GET /api/missions/recent`.
-- **Panneau droit** : affiche en temps réel le résultat, la mission active, la timeline d'étapes, les services utilisés, et les dernières missions exécutées (historique DB)
-- **Inbox V2** : priorisation automatique (urgent/normal/low) via classifieur rule-based (`lib/connectors/priority.ts`). InboxSummary en haut (urgents, résumé 24h, actions). Tabs : Tous / Urgents / Non lus. Tri par priorité. Indicateurs visuels (bordure rouge, opacité réduite pour newsletters). Zéro LLM.
-- **États simplifiés** : En cours / En attente / Terminé / Erreur / En attente de validation
-- **Langage utilisateur** : aucun jargon technique, tout est orienté compréhension utilisateur
+- **V2 Runtime** par défaut. V1 fallback via `NEXT_PUBLIC_USE_V2=false`.
+- **Missions** : créées depuis le chat (CTA après report réussi) ou Right Panel. Composer inline, schedule presets, Run Now, toggle enable/disable.
+- **Artifacts** : file-backed — PDF (pdfkit), XLSX (exceljs), markdown, JSON, CSV. Download via `/api/v2/assets/{id}/download`.
+- **Connectors** : direct activation OAuth (Google, Slack). Vérité unifiée via `/api/v2/connectors/unified`.
+- **Timeline** : observable dans le Right Panel, événements persistés via `/api/v2/runs/{id}`.
+- **Inbox** : priorisation rule-based (urgent/normal/low), zéro LLM.
 
 ## Stack
 
@@ -162,30 +161,113 @@ Services connectés via OAuth, données réelles uniquement (zéro mock).
 
 Architecture : `lib/connectors/` (un connector par service), tokens chiffrés AES-256-GCM dans `user_tokens` (Supabase, RLS).
 
-État de connexion centralisé : `GET /api/connectors/status` interroge `user_tokens` et retourne l'état réel de chaque provider. Le hook `useConnectedServices()` (`app/hooks/use-connected-services.ts`) est la source unique de vérité côté client — utilisé par Apps, ControlPanel, et ChatContext. Zéro état hardcodé.
+### Canonical APIs (v2)
 
 | Route | Description |
 |-------|-------------|
-| `/api/chat` | Chat unifié context-aware (agent Hearst auto-provisionné) |
-| `/api/connectors/status` | État de connexion réel des services |
+| `/api/orchestrate` | **Chat v2** — Pipeline SSE (Orchestrator → Plan → Agents) |
+| `/api/v2/right-panel` | Agrégat UI (runs, assets, missions, connectors) |
+| `/api/v2/runs`, `/api/v2/runs/{id}` | Runs v2 + timeline events |
+| `/api/v2/assets/{id}`, `.../download` | Asset detail + file download |
+| `/api/v2/missions`, `.../[id]/run` | CRUD missions + Run Now |
+| `/api/v2/connectors/unified` | Reconciled connector view |
+| `/api/v2/architecture` | Architecture map (admin) |
+
+### Data APIs
+
+| Route | Description |
+|-------|-------------|
 | `/api/gmail/messages` | Emails Gmail (lecture) |
 | `/api/calendar/events` | Événements calendrier |
 | `/api/files/list` | Fichiers Drive |
 | `/api/slack/messages` | Messages Slack (lecture) |
 | `/api/auth/slack` | OAuth Slack (redirect) |
 | `/api/auth/callback/slack` | Callback OAuth Slack |
-| `/api/missions/execute` | Exécution réelle d'une mission via agent Hearst (SSE) |
-| `/api/missions/recent` | Dernières missions de l'utilisateur |
+
+### Legacy APIs (kept for fallback, marked @deprecated)
+
+| Route | Canonical replacement |
+|-------|----------------------|
+| `/api/chat` | `/api/orchestrate` |
+| `/api/runs`, `/api/runs/{id}` | `/api/v2/runs` |
+| `/api/connectors/status` | `/api/v2/connectors/unified` |
+| `/api/missions/execute`, `/approve`, `/recent` | `/api/v2/missions` |
+
+## Mission System
+
+Architecture canonique pour les missions planifiées/autonomes.
+
+| Layer | Path | Role |
+|-------|------|------|
+| Runtime (canonical) | `lib/runtime/missions/*` | Scheduler, store, lease, ops, types |
+| Persistence | `lib/runtime/state/adapter.ts` | Supabase read/write (missions.actions jsonb) |
+| APIs (canonical) | `/api/v2/missions`, `.../[id]/run`, `.../ops` | CRUD, Run Now, Ops status |
+| Scheduler | `lib/runtime/missions/scheduler.ts` + `scheduler-init.ts` | Polling loop, leader lease, distributed dedup |
+| UI client (canonical) | `app/lib/missions-v2.ts` | Frontend helpers (fetch, create, toggle, run) |
+| Admin | `/admin/scheduler` | Leadership, ops table, run/toggle actions |
+| Right Panel | `MissionsSection` + `MissionDetailSection` | Live status, schedule, errors |
+| Legacy (deprecated) | `app/lib/missions/*` | Client-side mission engine — used by ControlPanel only |
 
 ## Auth
 
-API key via `HEARST_API_KEY`. Toutes les routes (sauf `/api/health`) sont protégées quand la variable est définie.
+API key via `HEARST_API_KEY`. Quand elle est définie, `proxy.ts` (Next.js 16, équivalent middleware) applique la garde sur `/api/*` avec des exceptions explicites (`/api/health`, `/api/auth/*`). Une requête authentifiée (header `x-api-key` / `Authorization: Bearer`, ou cookie de session NextAuth) est acceptée. Si la variable est vide, la protection est désactivée — utile en dev, à éviter en prod (voir `.env.example`).
 
 ```bash
 curl -H "x-api-key: YOUR_KEY" http://localhost:9000/api/agents
 ```
 
-## Database (32 tables, 14 migrations)
+## Run Engine v2
+
+Architecture multi-agents avec exécution déterministe et observable.
+
+```
+lib/
+├── runtime/engine/
+│   ├── types.ts              # EngineRun, RunStep, RunApproval, RunCost
+│   ├── index.ts              # RunEngine façade (lifecycle, plan attachment)
+│   ├── step-manager.ts       # CRUD + state transitions pour RunSteps
+│   ├── approval-manager.ts   # Approval gates (create, decide, expire)
+│   ├── artifact-manager.ts   # Artifacts CRUD + versioning
+│   └── cost-tracker.ts       # Token/tool usage tracking
+├── runtime/delegate/
+│   ├── types.ts              # DelegateInput, DelegateResult union
+│   ├── queue.ts              # DelegateJobQueue interface + factory
+│   └── queue-memory.ts       # In-memory queue (dev/proto)
+├── events/
+│   ├── types.ts              # 25+ RunEvent types (discriminated union)
+│   ├── bus.ts                # RunEventBus (pub/sub + buffer)
+│   └── consumers/
+│       ├── sse-adapter.ts    # Internal events → SSE for UI
+│       └── log-persister.ts  # Persist errors/warnings to run_logs
+├── plans/
+│   ├── types.ts              # Plan, PlanStep, ActionPlan, ActionStep
+│   └── store.ts              # PlanStore CRUD (dedicated tables)
+├── artifacts/
+│   ├── types.ts              # Artifact, ArtifactSection, ArtifactSourceRef
+│   └── document-session.ts   # DocumentSession state machine (building→review→finalized)
+└── agents/
+    ├── doc-builder.ts        # DocBuilder agent (create_outline → generate_section → finalize)
+    └── operator/
+        ├── index.ts          # Exports publics
+        ├── guard.ts          # Validation runtime tool calls vs ActionPlan
+        └── executor.ts       # Exécution séquentielle + idempotency + action_executions
+```
+
+```
+lib/orchestrator/
+├── system-prompt.ts       # System prompt + tool definitions (create_plan, text_response)
+├── planner.ts             # LLM call → Plan structuré ou réponse directe
+├── executor.ts            # Exécute Plan steps via delegate() séquentiellement
+└── index.ts               # orchestrate() → ReadableStream SSE
+```
+
+Migration : `supabase/migrations/0015_run_engine_v2.sql`
+
+Run lifecycle : `created → running → completed | failed | cancelled | awaiting_approval | awaiting_clarification`
+
+Coexiste avec le legacy `RunTracer` (`lib/runtime/tracer.ts`). Phase 1 utilise les deux.
+
+## Database (32 tables, 15 migrations)
 
 **Core** : agents, agent_versions, skills, skill_versions, tools, agent_skills, agent_tools
 **Prompts** : prompt_artifacts (versioned, checksummed)
@@ -200,6 +282,7 @@ curl -H "x-api-key: YOUR_KEY" http://localhost:9000/api/agents
 **Decisions** : improvement_signals, applied_changes
 **Reports** : daily_reports (registry produit, idempotent)
 **Missions** : missions, mission_runs (persistance des missions utilisateur + exécutions)
+**Engine v2** : run_steps, run_approvals, run_logs, artifacts, artifact_versions, document_sessions, plans, plan_steps, action_plans, action_plan_steps, action_executions
 **Legacy** : usage_logs, workflow_runs
 
 ## Runtime
@@ -509,6 +592,6 @@ docker run -p 9000:3000 --env-file .env.local hearst-agents
 | `npm run dev` | Serveur dev (port 9000) |
 | `npm run build` | Build production |
 | `npm start` | Serveur production |
-| `npm run lint` | ESLint |
+| `npm run lint` | ESLint (0 erreur ; des warnings peuvent rester) |
 | `npm test` | Tests (vitest) |
 | `npm run test:watch` | Tests en watch mode |

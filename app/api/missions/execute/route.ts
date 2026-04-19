@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy v1 mission execution (LLM-driven).
+ * Canonical replacement: /api/v2/missions/[id]/run (v2 orchestrator).
+ */
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { requireServerSupabase } from "@/lib/supabase-server";

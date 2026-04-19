@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy v1 missions list (Supabase direct).
+ * Still used by use-recent-missions.ts / ControlPanel.
+ * Canonical replacement: /api/v2/missions (scheduled missions v2).
+ */
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserId } from "@/lib/get-user-id";

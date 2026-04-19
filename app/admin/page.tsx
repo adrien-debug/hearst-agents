@@ -134,12 +134,13 @@ export default async function DashboardPage() {
 
       {/* Quick actions */}
       <h2 className="mb-4 text-lg font-semibold text-white">Actions rapides</h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
           { href: "/admin/agents/new", label: "Créer un agent" },
           { href: "/admin/runs", label: "Voir les runs" },
           { href: "/admin/workflows", label: "Workflows" },
           { href: "/admin/agents", label: "Tous les agents" },
+          { href: "/admin/scheduler", label: "Scheduler" },
         ].map((action) => (
           <Link
             key={action.href}

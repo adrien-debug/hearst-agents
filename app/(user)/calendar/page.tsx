@@ -37,23 +37,31 @@ export default function CalendarPage() {
 
   useEffect(() => {
     if (!session) return;
-    setLoading(true);
-    setError(null);
-    fetch("/api/calendar/events")
-      .then((r) => {
+    let cancelled = false;
+    void (async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const r = await fetch("/api/calendar/events");
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
+        const data = await r.json();
+        if (cancelled) return;
         if (data.events && Array.isArray(data.events)) {
           setEvents(data.events.map(calendarToUnifiedEvent));
         }
-      })
-      .catch((err) => {
+      } catch (err) {
+        if (cancelled) return;
         console.error("[Calendar] Fetch failed:", err);
         setError("Impossible de charger votre agenda. Réessayez plus tard.");
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [session]);
 
   if (!session) {

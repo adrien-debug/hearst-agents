@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy connector status (OAuth tokens only).
+ * Still used by use-connected-services.ts for lightweight service detection.
+ * Canonical reconciled view: /api/v2/connectors/unified
+ */
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getUserId } from "@/lib/get-user-id";

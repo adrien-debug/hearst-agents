@@ -149,7 +149,9 @@ export default function ReportsPage() {
   }, [activeType]);
 
   useEffect(() => {
-    load();
+    void Promise.resolve().then(() => {
+      void load();
+    });
   }, [load]);
 
   return (
@@ -234,7 +236,7 @@ export default function ReportsPage() {
                 : "border-zinc-800 bg-zinc-950/60"
           }`}>
             <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-              Aujourd'hui
+              {"Aujourd'hui"}
             </p>
             <div className="mt-2 flex items-center gap-2">
               <StatusDot status={health.today.status} />

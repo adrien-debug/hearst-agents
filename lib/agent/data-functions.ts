@@ -49,7 +49,6 @@ export interface MessageStats {
   total: number;
   unread: number;
   urgent: number;
-  slack: number;
   low: number;
 }
 
@@ -64,7 +63,7 @@ export interface DataSnapshot {
 function summarizeMessage(m: UnifiedMessage): MessageSummary {
   return {
     id: m.id,
-    source: m.source.provider === "gmail" ? "Email" : "Slack",
+    source: m.source.provider,
     from: m.from,
     subject: m.subject,
     preview: m.preview.slice(0, PREVIEW_LENGTH),
@@ -106,7 +105,6 @@ export async function getMessages(userId: string): Promise<{ items: MessageSumma
     total: raw.length,
     unread: raw.filter((m) => !m.read).length,
     urgent: raw.filter((m) => m.priority === "urgent").length,
-    slack: raw.filter((m) => m.source.provider === "slack").length,
     low: raw.filter((m) => m.priority === "low").length,
   };
 
@@ -175,9 +173,9 @@ export function snapshotToText(snapshot: DataSnapshot): string {
   if (snapshot.messages) {
     const { items, total, stats } = snapshot.messages;
     if (items.length === 0) {
-      sections.push("Messages : aucun message récent.\nurgents=0 non_lus=0 slack=0 ignorables=0");
+      sections.push("Messages : aucun message récent.\nurgents=0 non_lus=0 ignorables=0");
     } else {
-      const metricsLine = `urgents=${stats.urgent} non_lus=${stats.unread} slack=${stats.slack} ignorables=${stats.low}`;
+      const metricsLine = `urgents=${stats.urgent} non_lus=${stats.unread} ignorables=${stats.low}`;
       const lines = items.map((m) => {
         const tag = m.priority === "urgent" ? " [URGENT]" : m.priority === "low" ? " [low]" : "";
         return `${m.unread ? "•" : " "} [${m.source}] ${m.from} — ${m.subject}${tag} (${m.date})`;

@@ -1,6 +1,7 @@
 import type { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { saveTokens } from "@/lib/token-store";
+import { registerProviderUsage } from "@/lib/connectors/control-plane/register";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -37,6 +38,11 @@ export const authOptions: AuthOptions = {
           accessToken: account.access_token ?? null,
           refreshToken: account.refresh_token ?? null,
           expiresAt: account.expires_at ?? 0,
+        });
+
+        void registerProviderUsage({
+          provider: "google",
+          scope: { tenantId: "dev-tenant", workspaceId: "dev-workspace", userId },
         });
       }
       return token;

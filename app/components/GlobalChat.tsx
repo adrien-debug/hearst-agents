@@ -1,12 +1,32 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useChatContext } from "../lib/chat-context";
 import { useMission, detectIntent, executeMission, approveMission, cancelMission } from "../lib/missions";
 import { useProactiveSuggestion } from "../hooks/use-proactive-suggestion";
+import { useOrchestrate, type V2Event } from "../hooks/use-orchestrate";
+import { useChatActivity } from "../lib/chat-activity";
 import ProactiveSuggestion from "./ProactiveSuggestion";
-import type { Surface } from "../lib/missions/types";
+import { ToolSurface } from "./tool-surface/ToolSurface";
+import { TOOL_INTENTS } from "../lib/tool-intents";
+import type { Surface } from "../lib/missions-v2";
+import { getConnectAction, triggerConnect, sortByConnectPriority } from "../lib/connect-actions";
+import { getMissionSuggestions, type MissionSuggestion } from "../lib/missions-ui";
+import { MissionComposer } from "./missions/MissionComposer";
+import { ServiceLayer } from "./system/ServiceLayer";
+
+const USE_V2 = process.env.NEXT_PUBLIC_USE_V2 !== "false";
+
+if (typeof window !== "undefined") {
+  console.log(`[ChatRuntime] Using ${USE_V2 ? "V2" : "V1"} pipeline`);
+}
+
+interface BlockedInfo {
+  capability: string;
+  requiredProviders: string[];
+  message: string;
+}
 
 interface Message {
   role: "user" | "assistant";
@@ -14,6 +34,7 @@ interface Message {
   awaitingApproval?: { missionId: string };
   approved?: boolean;
   cancelled?: boolean;
+  blocked?: BlockedInfo;
 }
 
 const SURFACE_ROUTES: Record<string, string> = {
@@ -35,46 +56,100 @@ const SURFACE_NAV_LABEL: Record<string, string> = {
 
 const QUICK_ACTIONS = [
   { label: "Urgents", cmd: "Qu'est-ce qui nécessite mon attention ?", primary: true },
-  { label: "Résumer emails", cmd: "Résume mes emails du jour" },
+  { label: "Messages", cmd: "Résume mes messages du jour" },
   { label: "Agenda", cmd: "Montre mon agenda du jour" },
   { label: "Fichiers", cmd: "Montre mes fichiers" },
 ] as const;
-
-const SERVICE_TO_PROVIDER: Record<string, string> = {
-  Gmail: "Google",
-  Calendar: "Google",
-  Drive: "Google",
-  Slack: "Slack",
-};
-
-function checkMissionServices(missionServices: string[], connected: string[], loaded: boolean): string | null {
-  if (!loaded || missionServices.length === 0) return null;
-  const missing = missionServices
-    .map((s) => SERVICE_TO_PROVIDER[s] ?? s)
-    .filter((p, i, arr) => arr.indexOf(p) === i)
-    .filter((p) => !connected.includes(p));
-  if (missing.length === 0) return null;
-  const names = missing.join(" et ");
-  return `${names} n'est pas connecté. Connectez-le dans Applications pour continuer.`;
-}
 
 export default function GlobalChat() {
   const { surface, selectedItem, connectedServices, servicesLoaded, expanded, setExpanded, getContextHint } = useChatContext();
   const { setActiveSurface, activeMission } = useMission();
   const router = useRouter();
-  const pathname = usePathname();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
+  const [v2Streaming, setV2Streaming] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { suggestion, dismiss: dismissSuggestion, accept: acceptSuggestion } = useProactiveSuggestion(surface);
+  const v2 = useOrchestrate();
+  const chatActivity = useChatActivity();
 
-  const isHome = pathname === "/";
   const contextHint = getContextHint();
+  const [missionSuggestion, setMissionSuggestion] = useState<MissionSuggestion | null>(null);
+  const [showMissionComposer, setShowMissionComposer] = useState(false);
+  const lastUserInputRef = useRef<string>("");
+
+  // Sync v2 hook state → messages with real-time streaming
+  useEffect(() => {
+    if (!USE_V2) return;
+    if (v2.status === "idle") return;
+
+    const stepEvents = v2.events.filter(
+      (e) => e.type === "step_started" || e.type === "step_completed" || e.type === "step_failed",
+    );
+    const lines: string[] = [];
+    for (const e of stepEvents) {
+      if (e.type === "step_started") {
+        lines.push(`⟳ ${(e as V2Event).title ?? (e as V2Event).agent ?? "step"}…`);
+      } else if (e.type === "step_completed") {
+        const idx = lines.findLastIndex((l) => l.startsWith("⟳"));
+        if (idx >= 0) lines[idx] = lines[idx].replace("⟳", "✓").replace("…", "");
+      } else if (e.type === "step_failed") {
+        const idx = lines.findLastIndex((l) => l.startsWith("⟳"));
+        if (idx >= 0) lines[idx] = lines[idx].replace("⟳", "✗").replace("…", "");
+      }
+    }
+
+    const stepBlock = lines.length > 0 ? lines.join("\n") : "";
+    const hasText = v2.text.length > 0;
+    const isLive = v2.status === "running" && hasText;
+    const isFailed = v2.status === "failed";
+
+    let content = hasText
+      ? (stepBlock ? `${stepBlock}\n\n${v2.text}` : v2.text)
+      : (stepBlock || (v2.status === "running" ? "Analyse…" : ""));
+
+    if (isFailed && hasText) {
+      content += "\n\n(interrompu)";
+    }
+
+    const blockedEvent = v2.events.find((e) => e.type === "capability_blocked") as
+      | (V2Event & { capability?: string; requiredProviders?: string[]; message?: string })
+      | undefined;
+
+    const blocked: BlockedInfo | undefined = blockedEvent
+      ? {
+          capability: (blockedEvent.capability as string) ?? "",
+          requiredProviders: (blockedEvent.requiredProviders as string[]) ?? [],
+          message: (blockedEvent.message as string) ?? "",
+        }
+      : undefined;
+
+    setV2Streaming(isLive);
+
+    void Promise.resolve().then(() => {
+      setMessages((prev) => {
+        const copy = [...prev];
+        if (copy.length > 0 && copy[copy.length - 1].role === "assistant") {
+          copy[copy.length - 1] = { role: "assistant", content, blocked };
+        }
+        return copy;
+      });
+    });
+
+    // Detect mission suggestion opportunity on completion
+    if (v2.status === "completed" && lastUserInputRef.current) {
+      const hasAsset = v2.events.some((e) => e.type === "asset_generated");
+      const suggestions = getMissionSuggestions(lastUserInputRef.current, hasAsset);
+      if (suggestions.length > 0) {
+        setMissionSuggestion(suggestions[0]);
+      }
+    }
+  }, [v2.events, v2.text, v2.status]);
 
   const handleSuggestionAccept = useCallback(() => {
     if (!suggestion) return;
@@ -82,33 +157,28 @@ export default function GlobalChat() {
     acceptSuggestion();
     if (action.type === "mission") {
       const { mission } = action;
-      const blockedMsg = checkMissionServices(mission.services, connectedServices, servicesLoaded);
-      if (blockedMsg) {
-        setMessages((prev) => [...prev, { role: "assistant", content: blockedMsg }]);
-        if (!expanded) setExpanded(true);
-        router.push("/apps");
-        return;
-      }
       setMessages((prev) => [...prev, { role: "assistant", content: `${mission.title}…` }]);
       if (!expanded) setExpanded(true);
       setActiveSurface(mission.surface);
       executeMission(mission);
     }
-  }, [suggestion, acceptSuggestion, expanded, setExpanded, setActiveSurface, connectedServices]);
+  }, [suggestion, acceptSuggestion, expanded, setExpanded, setActiveSurface]);
 
   useEffect(() => {
     if (activeMission?.status === "awaiting_approval" && activeMission.result) {
-      setMessages((prev) => {
-        const alreadyShown = prev.some((m) => m.awaitingApproval?.missionId === activeMission.id);
-        if (alreadyShown) return prev;
-        const preview = activeMission.result!.slice(0, 200).replace(/\n/g, " ").trim();
-        return [...prev, {
-          role: "assistant",
-          content: `Résultat prêt — ${preview}`,
-          awaitingApproval: { missionId: activeMission.id },
-        }];
+      void Promise.resolve().then(() => {
+        setMessages((prev) => {
+          const alreadyShown = prev.some((m) => m.awaitingApproval?.missionId === activeMission.id);
+          if (alreadyShown) return prev;
+          const preview = activeMission.result!.slice(0, 200).replace(/\n/g, " ").trim();
+          return [...prev, {
+            role: "assistant",
+            content: `Résultat prêt — ${preview}`,
+            awaitingApproval: { missionId: activeMission.id },
+          }];
+        });
+        if (!expanded) setExpanded(true);
       });
-      if (!expanded) setExpanded(true);
     }
   }, [activeMission?.status, activeMission?.id, activeMission?.result, expanded, setExpanded]);
 
@@ -126,8 +196,13 @@ export default function GlobalChat() {
       const trimmed = text.trim();
       setInput("");
       if (!expanded) setExpanded(true);
+      setV2Streaming(false);
+      setMissionSuggestion(null);
+      setShowMissionComposer(false);
+      lastUserInputRef.current = trimmed;
       setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
       setStreaming(true);
+      chatActivity.startQuery(trimmed);
 
       // Navigation only — explicit "ouvre", "va sur" etc.
       const outcome = detectIntent(trimmed);
@@ -136,28 +211,32 @@ export default function GlobalChat() {
         setMessages((prev) => [...prev, { role: "assistant", content: navLabel }]);
         setActiveSurface(outcome.surface);
         setStreaming(false);
+        chatActivity.complete({ type: "summary", title: "Navigation" });
         const route = SURFACE_ROUTES[outcome.surface];
         if (route) router.push(route);
         return;
       }
 
-      // Everything else → /api/chat (orchestrator decides: tools, managed agent, or LLM)
-
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
-
-      let receivedFirstToken = false;
-      const fallbackTimer = setTimeout(() => {
-        if (!receivedFirstToken) {
-          setMessages((prev) => {
-            const copy = [...prev];
-            const last = copy[copy.length - 1];
-            if (last?.role === "assistant" && last.content === "") {
-              copy[copy.length - 1] = { role: "assistant", content: "Analyse…" };
-            }
-            return copy;
-          });
+      // ── V2 pipeline via /api/orchestrate ──────────────────
+      if (USE_V2) {
+        let convId = conversationId;
+        if (!convId) {
+          convId = crypto.randomUUID();
+          setConversationId(convId);
         }
-      }, 1000);
+        setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+        try {
+          await v2.send(trimmed, surface, convId);
+        } finally {
+          setStreaming(false);
+        }
+        return;
+      }
+
+      // ── Legacy v1 pipeline via /api/chat ──────────────────
+      let didFail = false;
+      setMessages((prev) => [...prev, { role: "assistant", content: "Analyse…" }]);
+
 
       try {
         const ctx: Record<string, unknown> = { surface };
@@ -201,7 +280,6 @@ export default function GlobalChat() {
               try {
                 const payload = JSON.parse(line.slice(6));
                 if (payload.error) {
-                  clearTimeout(fallbackTimer);
                   const errContent = payload.content ?? "Service indisponible. Réessayez.";
                   setMessages((prev) => {
                     const copy = [...prev];
@@ -209,16 +287,20 @@ export default function GlobalChat() {
                     return copy;
                   });
                   streamError = true;
+                  didFail = true;
+                  chatActivity.fail();
                   break;
                 }
                 if (payload.type === "step") {
-                  clearTimeout(fallbackTimer);
-                  if (!receivedFirstToken) receivedFirstToken = true;
+                  if (payload.status === "running") {
+                    chatActivity.toolStarted(payload.tool);
+                  } else {
+                    chatActivity.toolDone(payload.tool, payload.status === "done");
+                  }
                   const TOOL_LABELS: Record<string, string> = {
-                    get_emails: "Emails",
+                    get_messages: "Messages",
                     get_calendar_events: "Agenda",
                     get_files: "Fichiers",
-                    get_slack_messages: "Slack",
                     agent: "Agent autonome",
                     bash: "Exécution",
                     write: "Écriture",
@@ -233,7 +315,8 @@ export default function GlobalChat() {
                     const last = copy[copy.length - 1];
                     const existing = last.content;
                     if (payload.status === "running") {
-                      copy[copy.length - 1] = { role: "assistant", content: existing ? `${existing}\n${stepLine}…` : `${stepLine}…` };
+                      const base = existing === "Analyse…" ? "" : existing;
+                      copy[copy.length - 1] = { role: "assistant", content: base ? `${base}\n${stepLine}…` : `${stepLine}…` };
                     } else {
                       const updated = existing.replace(`⟳ ${label}…`, stepLine);
                       copy[copy.length - 1] = { role: "assistant", content: updated };
@@ -241,7 +324,7 @@ export default function GlobalChat() {
                     return copy;
                   });
                 } else if (payload.type === "final" && payload.content) {
-                  clearTimeout(fallbackTimer);
+                  chatActivity.responseStarted();
                   assistantContent = payload.content;
                   setMessages((prev) => {
                     const copy = [...prev];
@@ -249,10 +332,7 @@ export default function GlobalChat() {
                     return copy;
                   });
                 } else if (payload.delta) {
-                  if (!receivedFirstToken) {
-                    receivedFirstToken = true;
-                    clearTimeout(fallbackTimer);
-                  }
+                  if (!assistantContent) chatActivity.responseStarted();
                   assistantContent += payload.delta;
                   setMessages((prev) => {
                     const copy = [...prev];
@@ -269,15 +349,18 @@ export default function GlobalChat() {
           }
         }
       } catch {
-        clearTimeout(fallbackTimer);
         setMessages((prev) => {
           const copy = [...prev];
           copy[copy.length - 1] = { role: "assistant", content: "Connexion impossible." };
           return copy;
         });
+        didFail = true;
+        chatActivity.fail();
       } finally {
-        clearTimeout(fallbackTimer);
         setStreaming(false);
+        if (!didFail) {
+          chatActivity.complete();
+        }
       }
     },
     [conversationId, streaming, surface, selectedItem, connectedServices, servicesLoaded, expanded, setExpanded, setActiveSurface, router],
@@ -291,93 +374,71 @@ export default function GlobalChat() {
     setMessages((prev) => prev.map((m, i) => i === idx ? { ...m, cancelled: true } : m));
   }, []);
 
+  const lastMsg = messages[messages.length - 1];
   const isThinking = streaming && (
-    messages[messages.length - 1]?.content === "" ||
-    messages[messages.length - 1]?.content === "Analyse…"
+    lastMsg?.content === "" || lastMsg?.content === "Analyse…"
   );
+  const showStreamCursor = v2Streaming && lastMsg?.role === "assistant" && lastMsg.content.length > 0 && lastMsg.content !== "Analyse…";
 
-  // Home page — full chat
-  if (isHome) {
-    return (
-      <div className="flex h-full flex-col">
-        <div className="flex-1 overflow-y-auto">
-          {messages.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center px-6">
-              <p className="mb-1 text-sm text-zinc-500">Hearst</p>
-              <h1 className="mb-1.5 text-xl font-medium text-white">Que dois-je traiter ?</h1>
-              <p className="mb-6 text-xs text-zinc-500">Emails, agenda, fichiers — en une commande.</p>
-
-              {/* Suggestion */}
-              {suggestion && !streaming && (
-                <div className="mb-4 w-full max-w-md">
-                  <ProactiveSuggestion
-                    suggestion={suggestion}
-                    onAccept={handleSuggestionAccept}
-                    onDismiss={dismissSuggestion}
-                  />
-                </div>
-              )}
-
-              {/* Quick actions */}
-              <div className="flex flex-wrap justify-center gap-2">
-                {QUICK_ACTIONS.map((qa) => (
-                  <button
-                    key={qa.label}
-                    onClick={() => sendMessage(qa.cmd)}
-                    className={`rounded-lg px-3 py-2 text-xs transition-colors active:scale-[0.98] ${
-                      "primary" in qa && qa.primary
-                        ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 hover:bg-cyan-500/25"
-                        : "border border-zinc-800/50 bg-zinc-900/40 text-zinc-400 hover:border-zinc-700 hover:text-white"
-                    }`}
-                  >
-                    {qa.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="mx-auto max-w-2xl px-4 py-6">
-              {messages.map((m, i) => (
-                <ChatMessage
-                  key={i}
-                  msg={m}
-                  onApproved={() => handleApproval(i)}
-                  onCancelled={() => handleCancellation(i)}
-                />
-              ))}
-              {isThinking && <ThinkingDots />}
-              <div ref={bottomRef} />
-            </div>
-          )}
-        </div>
-
-        <ChatInputBar
-          input={input}
-          setInput={setInput}
-          streaming={streaming}
-          contextHint={contextHint}
-          onSend={sendMessage}
-          inputRef={inputRef}
-        />
-      </div>
-    );
-  }
-
-  // Other pages — bottom overlay
+  // All pages — bottom overlay
   return (
     <div className="relative">
       {expanded && messages.length > 0 && (
-        <div className="absolute bottom-full left-0 right-0 max-h-[50vh] overflow-y-auto border-t border-zinc-800/60 bg-zinc-950/98 backdrop-blur-sm">
+        <div className="absolute bottom-full left-0 right-0 max-h-[50vh] overflow-y-auto border-t border-zinc-800/20 bg-zinc-950/98 backdrop-blur-md">
           <div className="mx-auto max-w-2xl px-4 py-4">
             {messages.map((m, i) => (
               <ChatMessage
                 key={i}
                 msg={m}
+                isLiveStreaming={i === messages.length - 1 && showStreamCursor}
                 onApproved={() => handleApproval(i)}
                 onCancelled={() => handleCancellation(i)}
               />
             ))}
             {isThinking && <ThinkingDots />}
+
+            {/* Mission suggestion CTA */}
+            {missionSuggestion && !showMissionComposer && !streaming && (
+              <div className="mb-3 flex justify-start">
+                <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
+                  <p className="text-[11px] text-zinc-300">{missionSuggestion.label}</p>
+                  <p className="mt-0.5 text-[10px] text-zinc-500">{missionSuggestion.scheduleHint}</p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <button
+                      onClick={() => setShowMissionComposer(true)}
+                      className="rounded-md bg-cyan-500/10 px-2.5 py-1 text-[11px] font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20"
+                    >
+                      Planifier cette tâche
+                    </button>
+                    <button
+                      onClick={() => setMissionSuggestion(null)}
+                      className="text-[10px] text-zinc-600 transition-colors hover:text-zinc-400"
+                    >
+                      Ignorer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Inline mission composer */}
+            {showMissionComposer && missionSuggestion && (
+              <div className="mb-3">
+                <MissionComposer
+                  presetName={missionSuggestion.presetName}
+                  presetPrompt={missionSuggestion.presetPrompt}
+                  presetSchedule={missionSuggestion.presetSchedule}
+                  onSaved={() => {
+                    setShowMissionComposer(false);
+                    setMissionSuggestion(null);
+                  }}
+                  onCancel={() => {
+                    setShowMissionComposer(false);
+                  }}
+                />
+              </div>
+            )}
+
             <div ref={bottomRef} />
           </div>
           <button
@@ -402,6 +463,13 @@ export default function GlobalChat() {
         </div>
       )}
 
+      <ToolSurface onToolClick={(id) => {
+        const intent = TOOL_INTENTS[id];
+        if (intent) sendMessage(intent);
+      }} />
+
+      <ServiceLayer />
+
       <ChatInputBar
         input={input}
         setInput={setInput}
@@ -420,10 +488,12 @@ export default function GlobalChat() {
 
 function ChatMessage({
   msg,
+  isLiveStreaming,
   onApproved,
   onCancelled,
 }: {
   msg: Message;
+  isLiveStreaming?: boolean;
   onApproved?: () => void;
   onCancelled?: () => void;
 }) {
@@ -440,7 +510,10 @@ function ChatMessage({
       <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
         isUser ? "bg-zinc-800 text-zinc-100" : "text-zinc-300"
       }`}>
-        <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+        <pre className="whitespace-pre-wrap font-sans">
+          {msg.content}
+          {isLiveStreaming && <StreamCursor />}
+        </pre>
         {msg.approved && (
           <p className="mt-1 text-[10px] text-emerald-400">Validé</p>
         )}
@@ -453,6 +526,41 @@ function ChatMessage({
             onApproved={onApproved}
             onCancelled={onCancelled}
           />
+        )}
+        {msg.blocked && <BlockedCard info={msg.blocked} />}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Blocked-state card ─── */
+
+function BlockedCard({ info }: { info: BlockedInfo }) {
+  const sorted = sortByConnectPriority(info.requiredProviders);
+  const primary = sorted[0];
+  const secondary = sorted.length > 1 ? sorted[1] : null;
+  const primaryAction = primary ? getConnectAction(primary) : null;
+
+  return (
+    <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+      <p className="text-[11px] font-medium text-amber-400/90">Action bloquée</p>
+      <p className="mt-0.5 text-[11px] text-zinc-400">{info.message}</p>
+      <div className="mt-1.5 flex items-center gap-2">
+        {primaryAction && (
+          <button
+            onClick={primaryAction.execute}
+            className="rounded-md bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-cyan-400 transition-colors hover:bg-zinc-700 hover:text-cyan-300"
+          >
+            Connecter {primaryAction.label}
+          </button>
+        )}
+        {secondary && (
+          <button
+            onClick={() => triggerConnect(secondary)}
+            className="text-[10px] text-zinc-500 transition-colors hover:text-zinc-300"
+          >
+            ou {getConnectAction(secondary).label}
+          </button>
         )}
       </div>
     </div>
@@ -499,6 +607,14 @@ function ApprovalActions({
   );
 }
 
+/* ─── Streaming cursor ─── */
+
+function StreamCursor() {
+  return (
+    <span className="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-px animate-pulse bg-cyan-400" />
+  );
+}
+
 /* ─── Thinking indicator ─── */
 
 function ThinkingDots() {
@@ -538,7 +654,7 @@ function ChatInputBar({
   onFocus?: () => void;
 }) {
   return (
-    <div className={`border-t border-zinc-800/60 bg-zinc-950 ${compact ? "px-3 py-2" : "px-4 py-3"}`}>
+    <div className={`bg-zinc-950 ${compact ? "px-3 py-2" : "px-4 py-3"}`}>
       {contextHint && (
         <p className={`mx-auto max-w-2xl text-[10px] text-zinc-600 ${compact ? "mb-1" : "mb-1.5"}`}>
           {contextHint}
@@ -557,19 +673,19 @@ function ChatInputBar({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(input); }
           }}
-          placeholder="Demandez à Hearst…"
+          placeholder="Ask anything or give a task..."
           rows={1}
-          className={`flex-1 resize-none rounded-xl border border-zinc-800/50 bg-zinc-900/60 text-sm text-zinc-100 placeholder-zinc-600 outline-none transition-colors focus:border-cyan-600/40 ${
-            compact ? "px-3 py-2" : "px-4 py-3"
+          className={`flex-1 resize-none rounded-xl border border-zinc-800/30 bg-zinc-900/50 text-sm text-zinc-100 placeholder-zinc-600 shadow-[0_1px_3px_rgba(0,0,0,0.2)] outline-none transition-all duration-150 focus:border-cyan-600/30 focus:shadow-[0_1px_6px_rgba(0,0,0,0.3)] ${
+            compact ? "px-3 py-2.5" : "px-4 py-3"
           }`}
           disabled={streaming}
-          style={{ minHeight: compact ? "36px" : "44px", maxHeight: "120px" }}
+          style={{ minHeight: compact ? "38px" : "44px", maxHeight: "120px" }}
         />
         <button
           type="submit"
           disabled={streaming || !input.trim()}
-          className={`shrink-0 rounded-xl bg-cyan-500 text-white transition-colors hover:bg-cyan-400 active:scale-[0.97] disabled:opacity-30 ${
-            compact ? "flex h-9 w-9 items-center justify-center" : "flex h-11 w-11 items-center justify-center"
+          className={`shrink-0 rounded-xl bg-cyan-500 text-white shadow-sm transition-all duration-150 hover:bg-cyan-400 active:scale-[0.97] disabled:opacity-20 ${
+            compact ? "flex h-[38px] w-[38px] items-center justify-center" : "flex h-11 w-11 items-center justify-center"
           }`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={compact ? "h-3.5 w-3.5" : "h-4 w-4"}>

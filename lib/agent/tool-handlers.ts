@@ -1,13 +1,14 @@
 /**
- * Tool handlers — execute real connector calls when the LLM invokes a tool.
+ * Tool handlers — capability-based execution.
  *
- * Each handler calls the existing unified layer / connectors
- * and returns a JSON string result for the LLM to interpret.
+ * Each handler uses the unified layer which already resolves
+ * connected providers and merges results. No provider-specific logic here.
  */
 
 import type { ToolName } from "./tools";
 import { getMessages, getEvents, getFiles } from "./data-functions";
-import { getTokens } from "@/lib/token-store";
+import { hasCapability } from "@/lib/capabilities";
+import { searchWeb } from "./web-search";
 
 export interface ToolExecResult {
   success: boolean;
@@ -20,23 +21,16 @@ type ToolHandler = (
   input: Record<string, unknown>,
 ) => Promise<ToolExecResult>;
 
-async function hasToken(userId: string, provider: string): Promise<boolean> {
-  try {
-    const tokens = await getTokens(userId, provider);
-    return !!tokens.accessToken;
-  } catch {
-    return false;
-  }
-}
-
 const handlers: Record<ToolName, ToolHandler> = {
-  async get_emails(userId, input) {
+  async get_messages(userId, input) {
     const start = Date.now();
 
-    if (!(await hasToken(userId, "google"))) {
+    if (!(await hasCapability("messaging", userId))) {
       return {
         success: false,
-        data: JSON.stringify({ error: "Gmail non connecté. L'utilisateur doit le connecter dans Applications." }),
+        data: JSON.stringify({
+          error: "Aucune messagerie connectée. L'utilisateur doit connecter un service dans Applications.",
+        }),
         latency_ms: Date.now() - start,
       };
     }
@@ -56,7 +50,7 @@ const handlers: Record<ToolName, ToolHandler> = {
     } catch (err) {
       return {
         success: false,
-        data: JSON.stringify({ error: err instanceof Error ? err.message : "Erreur lecture emails" }),
+        data: JSON.stringify({ error: err instanceof Error ? err.message : "Erreur lecture messages" }),
         latency_ms: Date.now() - start,
       };
     }
@@ -65,16 +59,15 @@ const handlers: Record<ToolName, ToolHandler> = {
   async get_calendar_events(userId, input) {
     const start = Date.now();
 
-    if (!(await hasToken(userId, "google"))) {
+    if (!(await hasCapability("calendar", userId))) {
       return {
         success: false,
-        data: JSON.stringify({ error: "Google Calendar non connecté." }),
+        data: JSON.stringify({ error: "Agenda non connecté. L'utilisateur doit le connecter dans Applications." }),
         latency_ms: Date.now() - start,
       };
     }
 
     try {
-      const _days = (input.days as number) ?? 7;
       const result = await getEvents(userId);
       return {
         success: true,
@@ -93,16 +86,15 @@ const handlers: Record<ToolName, ToolHandler> = {
   async get_files(userId, input) {
     const start = Date.now();
 
-    if (!(await hasToken(userId, "google"))) {
+    if (!(await hasCapability("files", userId))) {
       return {
         success: false,
-        data: JSON.stringify({ error: "Google Drive non connecté." }),
+        data: JSON.stringify({ error: "Fichiers non connectés. L'utilisateur doit connecter un service dans Applications." }),
         latency_ms: Date.now() - start,
       };
     }
 
     try {
-      const _limit = (input.limit as number) ?? 5;
       const result = await getFiles(userId);
       return {
         success: true,
@@ -118,33 +110,39 @@ const handlers: Record<ToolName, ToolHandler> = {
     }
   },
 
-  async get_slack_messages(userId, input) {
+  async search_web(_userId, input) {
     const start = Date.now();
+    const query = (input.query as string) ?? "";
 
-    if (!(await hasToken(userId, "slack"))) {
+    if (!query.trim()) {
       return {
         success: false,
-        data: JSON.stringify({ error: "Slack non connecté." }),
+        data: JSON.stringify({ error: "Query is required for web search" }),
+        latency_ms: Date.now() - start,
+      };
+    }
+
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return {
+        success: false,
+        data: JSON.stringify({ error: "Web search provider unavailable — ANTHROPIC_API_KEY not configured" }),
         latency_ms: Date.now() - start,
       };
     }
 
     try {
-      const result = await getMessages(userId);
-      const limit = (input.limit as number) ?? 10;
-      const slackOnly = result.items.filter((m) => m.source === "Slack");
+      const result = await searchWeb(query);
       return {
         success: true,
-        data: JSON.stringify({
-          total: slackOnly.length,
-          messages: slackOnly.slice(0, limit),
-        }),
+        data: JSON.stringify(result),
         latency_ms: Date.now() - start,
       };
     } catch (err) {
+      const msg = err instanceof Error ? err.message : "Web search failed";
+      console.error("[Tools] search_web error:", msg);
       return {
         success: false,
-        data: JSON.stringify({ error: err instanceof Error ? err.message : "Erreur lecture Slack" }),
+        data: JSON.stringify({ error: msg }),
         latency_ms: Date.now() - start,
       };
     }

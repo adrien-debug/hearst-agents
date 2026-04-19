@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy client mission orchestrator (calls /api/missions/execute).
+ * Canonical mission execution: scheduler → orchestrate() or /api/v2/missions/[id]/run.
+ * Still used by GlobalChat (proactive suggestion executeMission) and ControlPanel (approveMission).
+ */
 import type { Mission } from "./types";
 import { getMissionRegistry } from "./registry";
 

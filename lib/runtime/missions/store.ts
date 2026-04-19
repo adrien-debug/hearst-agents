@@ -1,0 +1,40 @@
+/**
+ * @deprecated In-memory fallback/cache only.
+ * Canonical runtime state is persisted via lib/runtime/state/adapter.ts.
+ *
+ * Scheduled Mission Store — in-memory store for scheduled missions.
+ * Kept as fallback and for scheduler hot-path reads.
+ */
+
+import type { ScheduledMission } from "./types";
+
+const missions: Map<string, ScheduledMission> = new Map();
+
+export function addMission(mission: ScheduledMission): void {
+  missions.set(mission.id, mission);
+}
+
+export function getMission(id: string): ScheduledMission | undefined {
+  return missions.get(id);
+}
+
+export function getAllMissions(): ScheduledMission[] {
+  return Array.from(missions.values());
+}
+
+export function getEnabledMissions(): ScheduledMission[] {
+  return Array.from(missions.values()).filter((m) => m.enabled);
+}
+
+export function updateMissionLastRun(id: string, runId: string): void {
+  const m = missions.get(id);
+  if (m) {
+    m.lastRunAt = Date.now();
+    m.lastRunId = runId;
+  }
+}
+
+export function disableMission(id: string): void {
+  const m = missions.get(id);
+  if (m) m.enabled = false;
+}

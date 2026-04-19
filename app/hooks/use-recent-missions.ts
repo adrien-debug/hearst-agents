@@ -38,7 +38,9 @@ export function useRecentMissions() {
   }, [session]);
 
   useEffect(() => {
-    refresh();
+    void Promise.resolve().then(() => {
+      refresh();
+    });
   }, [refresh]);
 
   return { missions, loading, refresh };

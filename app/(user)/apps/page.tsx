@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useMemo, Suspense, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { CORE_CONNECTORS, EXTERNAL_CONNECTORS } from "@/lib/connectors/registry";
 import type { ConnectorMeta } from "@/lib/connectors/types";
-import { useConnectedServices } from "../../hooks/use-connected-services";
+import { useConnectorsPanel, type PanelConnection } from "@/app/hooks/use-connectors-panel";
+import { PROVIDER_CAPABILITIES } from "@/lib/connectors/control-plane/provider-capabilities";
+import { canDirectConnect, triggerConnect } from "@/app/lib/connect-actions";
 
 const CATEGORIES: Record<string, string> = {
   communication: "Communication",
@@ -17,27 +19,85 @@ const CATEGORIES: Record<string, string> = {
   other: "Autre",
 };
 
+const CAPABILITY_LABELS: Record<string, string> = {
+  messaging: "Messaging",
+  calendar: "Calendar",
+  files: "Files",
+  research: "Research",
+  crm: "CRM",
+  finance: "Finance",
+  support: "Support",
+  design: "Design",
+  commerce: "Commerce",
+  developer_tools: "Dev Tools",
+  automation: "Automation",
+};
+
 type CategoryFilter = "all" | ConnectorMeta["category"];
 
+function matchesTarget(c: ConnectorMeta, provider?: string, capability?: string): boolean {
+  if (provider && c.provider === provider) return true;
+  if (provider && c.id === provider) return true;
+  if (capability && c.provider) {
+    const caps = PROVIDER_CAPABILITIES[c.provider] ?? [];
+    return caps.includes(capability as never);
+  }
+  return false;
+}
+
 function AppsContent() {
-  const { isConnected: isProviderConnected, loading: servicesLoading } = useConnectedServices();
+  const { connections: unifiedConns, loading: servicesLoading } = useConnectorsPanel();
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
   const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const highlightRef = useRef<HTMLDivElement>(null);
+
+  const targetProvider = searchParams.get("provider") ?? undefined;
+  const targetCapability = searchParams.get("capability") ?? undefined;
+  const hasTarget = !!(targetProvider || targetCapability);
+
+  const unifiedMap = useMemo(() => {
+    const m = new Map<string, PanelConnection>();
+    for (const c of unifiedConns) m.set(c.provider, c);
+    return m;
+  }, [unifiedConns]);
+
+  useEffect(() => {
+    if (hasTarget && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [hasTarget, servicesLoading]);
 
   function isConnected(c: ConnectorMeta): boolean {
     if (!c.provider) return false;
-    return isProviderConnected(c.provider);
+    const u = unifiedMap.get(c.provider);
+    return u?.status === "connected";
   }
 
   function getConnectAction(c: ConnectorMeta): (() => void) | undefined {
     if (isConnected(c)) return undefined;
-    if (c.connectAction === "google") return () => signIn("google");
-    if (c.connectAction === "slack") return () => { window.location.href = "/api/auth/slack"; };
+    if (c.provider && canDirectConnect(c.provider)) {
+      return () => triggerConnect(c.provider!);
+    }
     return undefined;
+  }
+
+  function getCapabilities(c: ConnectorMeta): string[] {
+    if (!c.provider) return [];
+    return (PROVIDER_CAPABILITIES[c.provider] ?? []).map((cap) => CAPABILITY_LABELS[cap] ?? cap);
   }
 
   const connectedCore = CORE_CONNECTORS.filter(isConnected);
   const availableCore = CORE_CONNECTORS.filter((c) => !isConnected(c));
+
+  const sortedAvailableCore = useMemo(() => {
+    if (!hasTarget) return availableCore;
+    return [...availableCore].sort((a, b) => {
+      const am = matchesTarget(a, targetProvider, targetCapability) ? 0 : 1;
+      const bm = matchesTarget(b, targetProvider, targetCapability) ? 0 : 1;
+      return am - bm;
+    });
+  }, [availableCore, hasTarget, targetProvider, targetCapability]);
 
   const filteredExternal = useMemo(() => {
     let list = EXTERNAL_CONNECTORS;
@@ -70,6 +130,13 @@ function AppsContent() {
               ? `${connectedCore.length} service${connectedCore.length > 1 ? "s" : ""} connecté${connectedCore.length > 1 ? "s" : ""} · ${EXTERNAL_CONNECTORS.length}+ disponibles`
               : `${EXTERNAL_CONNECTORS.length}+ services disponibles`}
         </p>
+        {hasTarget && (
+          <p className="mt-1.5 text-xs text-cyan-400/80">
+            {targetProvider
+              ? `Connectez ${targetProvider.charAt(0).toUpperCase() + targetProvider.slice(1)} pour débloquer cette fonctionnalité`
+              : `Connectez un service pour : ${CAPABILITY_LABELS[targetCapability!] ?? targetCapability}`}
+          </p>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -105,11 +172,16 @@ function AppsContent() {
                   <span className="text-lg">{app.icon}</span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-white">{app.name}</p>
-                    <p className="text-xs text-zinc-500">{app.description}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs text-zinc-500">{app.description}</p>
+                      {getCapabilities(app).map((cap) => (
+                        <span key={cap} className="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-zinc-500">{cap}</span>
+                      ))}
+                    </div>
                   </div>
                   <span className="flex items-center gap-1.5 text-xs text-emerald-500">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    Actif
+                    {app.provider && unifiedMap.get(app.provider)?.isDiverged ? "Syncing…" : "Actif"}
                   </span>
                 </div>
               ))}
@@ -118,28 +190,43 @@ function AppsContent() {
         )}
 
         {/* Core — Essentiels */}
-        {!servicesLoading && availableCore.length > 0 && (
+        {!servicesLoading && sortedAvailableCore.length > 0 && (
           <div className="border-b border-zinc-800/40 px-6 py-4">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
               Essentiels
             </h2>
             <div className="space-y-2">
-              {availableCore.map((app) => {
+              {sortedAvailableCore.map((app, idx) => {
                 const action = getConnectAction(app);
+                const isHighlighted = hasTarget && matchesTarget(app, targetProvider, targetCapability);
                 return (
                   <div
                     key={app.id}
-                    className="flex items-center gap-3 rounded-lg border border-zinc-800/50 bg-zinc-900/30 px-4 py-3 transition-all duration-200 hover:bg-zinc-800/50"
+                    ref={isHighlighted && idx === 0 ? highlightRef : undefined}
+                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 transition-all duration-200 hover:bg-zinc-800/50 ${
+                      isHighlighted
+                        ? "border-cyan-500/40 bg-cyan-500/5 ring-1 ring-cyan-500/20"
+                        : "border-zinc-800/50 bg-zinc-900/30"
+                    }`}
                   >
                     <span className="text-lg">{app.icon}</span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-zinc-300">{app.name}</p>
-                      <p className="text-xs text-zinc-600">{app.description}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs text-zinc-600">{app.description}</p>
+                        {getCapabilities(app).map((cap) => (
+                          <span key={cap} className="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-zinc-500">{cap}</span>
+                        ))}
+                      </div>
                     </div>
                     <button
                       onClick={action}
                       disabled={!action}
-                      className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 transition-all duration-200 hover:border-zinc-500 hover:text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+                      className={`rounded-lg border px-3 py-1.5 text-xs transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
+                        isHighlighted
+                          ? "border-cyan-500/50 text-cyan-400 hover:border-cyan-400 hover:text-cyan-300"
+                          : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white"
+                      }`}
                     >
                       {action ? "Connecter" : "Bientôt"}
                     </button>

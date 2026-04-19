@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy v1 runs endpoint (Supabase).
+ * Use /api/v2/runs for the unified run history.
+ */
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { ok, err, dbErr } from "@/lib/domain";

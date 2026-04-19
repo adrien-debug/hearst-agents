@@ -47,23 +47,31 @@ export default function FilesPage() {
 
   useEffect(() => {
     if (!session) return;
-    setLoading(true);
-    setError(null);
-    fetch("/api/files/list")
-      .then((r) => {
+    let cancelled = false;
+    void (async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const r = await fetch("/api/files/list");
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data) => {
+        const data = await r.json();
+        if (cancelled) return;
         if (data.files && Array.isArray(data.files)) {
           setFiles(data.files.map(driveToUnifiedFile));
         }
-      })
-      .catch((err) => {
+      } catch (err) {
+        if (cancelled) return;
         console.error("[Files] Fetch failed:", err);
         setError("Impossible de charger vos fichiers. Réessayez plus tard.");
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [session]);
 
   if (!session) {

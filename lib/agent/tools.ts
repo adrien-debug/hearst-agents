@@ -1,30 +1,30 @@
 /**
  * Tool definitions for Anthropic function calling.
  *
- * Each tool maps to a real connector action.
- * The LLM decides when to call them based on user intent.
+ * Tools are capability-based, not provider-based.
+ * The LLM never knows which provider is used behind the scenes.
  */
 
 import type Anthropic from "@anthropic-ai/sdk";
 
 export type ToolName =
-  | "get_emails"
+  | "get_messages"
   | "get_calendar_events"
   | "get_files"
-  | "get_slack_messages";
+  | "search_web";
 
 export const AGENT_TOOLS: Anthropic.Tool[] = [
   {
-    name: "get_emails",
+    name: "get_messages",
     description:
-      "Récupère les emails récents de l'utilisateur (Gmail). " +
-      "Retourne un résumé avec expéditeur, sujet, priorité, et stats (urgents, non lus, etc.).",
+      "Récupère les messages récents de l'utilisateur depuis toutes les sources connectées (email, messagerie). " +
+      "Retourne un résumé unifié avec expéditeur, sujet, source, priorité, et stats (urgents, non lus, etc.).",
     input_schema: {
       type: "object" as const,
       properties: {
         limit: {
           type: "number",
-          description: "Nombre max d'emails à retourner (défaut: 10)",
+          description: "Nombre max de messages à retourner (défaut: 10)",
         },
       },
       required: [],
@@ -33,7 +33,7 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
   {
     name: "get_calendar_events",
     description:
-      "Récupère les événements à venir de l'agenda (Google Calendar). " +
+      "Récupère les événements à venir de l'agenda de l'utilisateur. " +
       "Retourne titre, date, heure, lieu.",
     input_schema: {
       type: "object" as const,
@@ -49,7 +49,7 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
   {
     name: "get_files",
     description:
-      "Récupère les fichiers récents (Google Drive). " +
+      "Récupère les fichiers récents de l'utilisateur. " +
       "Retourne nom, date de modification, statut partagé.",
     input_schema: {
       type: "object" as const,
@@ -63,19 +63,19 @@ export const AGENT_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
-    name: "get_slack_messages",
+    name: "search_web",
     description:
-      "Récupère les messages Slack récents de l'utilisateur. " +
-      "Retourne expéditeur, canal, contenu, mentions.",
+      "Recherche sur le web pour trouver des informations actuelles et pertinentes. " +
+      "Utiliser pour les questions nécessitant des données récentes, des actualités, ou des recherches factuelles.",
     input_schema: {
       type: "object" as const,
       properties: {
-        limit: {
-          type: "number",
-          description: "Nombre max de messages (défaut: 10)",
+        query: {
+          type: "string",
+          description: "La requête de recherche web",
         },
       },
-      required: [],
+      required: ["query"],
     },
   },
 ];

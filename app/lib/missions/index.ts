@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy client mission barrel export.
+ * Canonical mission system: lib/runtime/missions/*, /api/v2/missions*, app/lib/missions-v2.ts.
+ * Still used by ControlPanel (v1 mission panel) and GlobalChat (detectIntent, executeMission).
+ */
 export type {
   Surface,
   ActionStatus,

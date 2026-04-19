@@ -1,3 +1,9 @@
+/**
+ * @deprecated Legacy client mission types.
+ * Surface type is now canonical in app/lib/missions-v2.ts.
+ * Other types are only used by the legacy ControlPanel mission panel.
+ */
+
 /* ─── Surfaces ─── */
 
 export type Surface = "home" | "inbox" | "calendar" | "files" | "tasks" | "apps";

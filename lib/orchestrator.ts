@@ -1,29 +1,31 @@
 /**
+ * @deprecated Legacy v1 orchestrator — will be removed after full migration to v2.
+ * Use lib/orchestrator/entry.ts (orchestrateV2) for new integrations.
+ *
  * Orchestrator — minimal backend state machine for /api/chat.
  *
  * Guarantees: every request ends with either
  *   { type: "final", content: "..." }  or
  *   { type: "final", content: "Erreur. Réessayez.", error: true }
  *
- * States: CLASSIFY → FETCH_CONTEXT → DECIDE → EXECUTE | STREAM_RESULT → COMPLETE | ERROR
+ * States: CLASSIFY → DECIDE → STREAM_RESULT → COMPLETE | ERROR
+ *
+ * The orchestrator does NOT fetch data. Data retrieval is delegated
+ * to the LLM via capability-driven tools (get_messages, etc.).
  *
  * DECIDE transitions:
  *   mode=chat        → STREAM_RESULT (LLM only)
- *   mode=informative → EXECUTE → STREAM_RESULT
- *   mode=action      → EXECUTE → STREAM_RESULT
+ *   mode=informative → STREAM_RESULT (LLM + tools)
+ *   mode=action      → STREAM_RESULT (LLM + tools)
  *   mode=navigation  → STREAM_RESULT (LLM describes, no auto-nav)
  *   mode=blocked     → ERROR (blockedReason sent as final, no LLM)
  */
 
-import { getDataSnapshot, snapshotToText } from "@/lib/agent/data-functions";
-import type { DataSnapshot } from "@/lib/agent/data-functions";
 import { checkRequiredServices, buildBlockedMessage } from "@/lib/services/check-required-services";
 
 export type OrchestratorState =
   | "CLASSIFY"
-  | "FETCH_CONTEXT"
   | "DECIDE"
-  | "EXECUTE"
   | "STREAM_RESULT"
   | "COMPLETE"
   | "ERROR";
@@ -42,8 +44,6 @@ export interface OrchestratorResult {
   mode: OrchestratorMode;
   contextBlock: string;
   finalState: OrchestratorState;
-  /** Pre-executed mission result to inject into system prompt. */
-  missionResult?: string;
   /** If set, skip LLM and send this as { type: "final" } immediately. */
   blockedReason?: string;
   /** Prompt to send to managed agent (only when mode=managed). */
@@ -68,6 +68,14 @@ const SURFACE_LABELS: Record<string, string> = {
 
 const DATA_SURFACES = new Set(["home", "inbox", "calendar", "files"]);
 
+const MSG_KEYWORDS = [
+  "email", "emails", "mail", "mails", "message", "messages",
+  "inbox", "boîte", "non lus", "urgents", "courrier",
+  "résume", "résumer", "lis mes", "slack",
+];
+const CAL_KEYWORDS = ["agenda", "réunion", "rendez-vous", "événement", "calendrier", "planning"];
+const FILE_KEYWORDS = ["fichier", "fichiers", "document", "documents", "drive"];
+
 /**
  * Patterns that indicate a complex/autonomous task best handled by a managed agent.
  * These tasks need a sandbox (bash, file ops, web search) rather than our data tools.
@@ -85,10 +93,8 @@ const MANAGED_PATTERNS = [
 function classify(
   message: string,
   surface: string,
-  connectedServices?: string[],
 ): { mode: OrchestratorMode; blockedReason?: string } {
   const lower = message.toLowerCase();
-  const cs = (connectedServices ?? []).map((s) => s.toLowerCase());
 
   // Navigation — explicit keywords only (spec: never auto-navigate)
   const NAV_KW = ["va dans", "va sur", "ouvre", "navigue vers", "aller sur", "aller dans"];
@@ -99,59 +105,9 @@ function classify(
     return { mode: "managed" };
   }
 
-  // Email / Gmail actions
-  const EMAIL_KW = [
-    "email", "emails", "mail", "mails", "message", "messages",
-    "inbox", "boîte", "non lus", "urgents", "courrier",
-    "résume", "résumer", "lis mes",
-  ];
-  const hasGoogle = cs.includes("google") || cs.includes("gmail");
-  const hasSlack = cs.includes("slack");
-
-  if (EMAIL_KW.some((k) => lower.includes(k))) {
-    if (!hasGoogle) {
-      return {
-        mode: "blocked",
-        blockedReason: "Gmail n'est pas connecté. Connecte-le dans Applications pour voir tes emails.",
-      };
-    }
-    return { mode: "action" };
-  }
-
-  // Slack actions
-  if (lower.includes("slack")) {
-    if (!hasSlack) {
-      return {
-        mode: "blocked",
-        blockedReason: "Slack n'est pas connecté. Connecte-le dans Applications.",
-      };
-    }
-    return { mode: "action" };
-  }
-
-  // Calendar actions
-  const CAL_KW = ["agenda", "réunion", "rendez-vous", "événement", "calendrier", "planning"];
-  if (CAL_KW.some((k) => lower.includes(k))) {
-    if (!hasGoogle) {
-      return {
-        mode: "blocked",
-        blockedReason: "Google Calendar n'est pas connecté. Connecte-le dans Applications.",
-      };
-    }
-    return { mode: "action" };
-  }
-
-  // Files actions
-  const FILE_KW = ["fichier", "fichiers", "document", "documents", "drive"];
-  if (FILE_KW.some((k) => lower.includes(k))) {
-    if (!hasGoogle) {
-      return {
-        mode: "blocked",
-        blockedReason: "Google Drive n'est pas connecté. Connecte-le dans Applications.",
-      };
-    }
-    return { mode: "action" };
-  }
+  if (MSG_KEYWORDS.some((k) => lower.includes(k))) return { mode: "action" };
+  if (CAL_KEYWORDS.some((k) => lower.includes(k))) return { mode: "action" };
+  if (FILE_KEYWORDS.some((k) => lower.includes(k))) return { mode: "action" };
 
   // Informative on data surfaces (user is on a surface with data)
   if (DATA_SURFACES.has(surface)) return { mode: "informative" };
@@ -171,18 +127,9 @@ function inferIntent(message: string, surface: string, mode: OrchestratorMode): 
 
   const lower = message.toLowerCase();
 
-  // Keyword-driven intents (action mode)
-  const EMAIL_KW = ["email", "emails", "mail", "mails", "message", "messages",
-    "inbox", "boîte", "non lus", "urgents", "courrier", "résume", "résumer", "lis mes"];
-  if (EMAIL_KW.some((k) => lower.includes(k))) return "summarize_emails";
-
-  if (lower.includes("slack")) return "slack_messages";
-
-  const CAL_KW = ["agenda", "réunion", "rendez-vous", "événement", "calendrier", "planning"];
-  if (CAL_KW.some((k) => lower.includes(k))) return "calendar_events";
-
-  const FILE_KW = ["fichier", "fichiers", "document", "documents", "drive"];
-  if (FILE_KW.some((k) => lower.includes(k))) return "drive_files";
+  if (MSG_KEYWORDS.some((k) => lower.includes(k))) return "inbox_summary";
+  if (CAL_KEYWORDS.some((k) => lower.includes(k))) return "calendar_events";
+  if (FILE_KEYWORDS.some((k) => lower.includes(k))) return "drive_files";
 
   // Surface-driven intents (informative mode, no home — home is multi-service)
   if (mode === "informative") {
@@ -194,71 +141,20 @@ function inferIntent(message: string, surface: string, mode: OrchestratorMode): 
   return null;
 }
 
-/* ─── EXECUTE ─── */
-
-async function executeMission(snapshot: DataSnapshot, message: string): Promise<string | null> {
-  const lower = message.toLowerCase();
-
-  // Email mission
-  const wantsEmail = ["email", "mail", "message", "inbox", "résume", "urgents", "non lus", "courrier", "boîte"].some(
-    (k) => lower.includes(k),
-  );
-  if (snapshot.messages && wantsEmail) {
-    const { items, stats } = snapshot.messages;
-    if (items.length === 0) return "Aucun message récent.";
-    const lines = items.map((m) => {
-      const tag = m.priority === "urgent" ? " ⚠️ URGENT" : "";
-      return `- [${m.source}] ${m.from} — ${m.subject}${tag} (${m.date})`;
-    });
-    return [
-      `${stats.urgent} urgent(s) · ${stats.unread} non lu(s) · ${stats.total} au total`,
-      "",
-      ...lines,
-    ].join("\n");
-  }
-
-  // Calendar mission
-  const wantsCal = ["agenda", "réunion", "rendez-vous", "événement", "calendrier", "planning"].some((k) =>
-    lower.includes(k),
-  );
-  if (snapshot.events && wantsCal) {
-    const { items, total } = snapshot.events;
-    if (items.length === 0) return "Aucun événement à venir cette semaine.";
-    const lines = items.map(
-      (e) => `- ${e.day} ${e.time} : ${e.title}${e.location ? ` (${e.location})` : ""}`,
-    );
-    return [`${total} événement(s) à venir :`, "", ...lines].join("\n");
-  }
-
-  // Files mission
-  const wantsFiles = ["fichier", "document", "drive"].some((k) => lower.includes(k));
-  if (snapshot.files && wantsFiles) {
-    const { items, total } = snapshot.files;
-    if (items.length === 0) return "Aucun fichier récent.";
-    const lines = items.map(
-      (f) => `- ${f.name}${f.shared ? " [partagé]" : ""} (${f.modified})`,
-    );
-    return [`${total} fichier(s) récent(s) :`, "", ...lines].join("\n");
-  }
-
-  return null;
-}
-
 /* ─── Main pipeline ─── */
 
 /**
  * Run the orchestrator pipeline (pre-LLM).
  *
  * - Returns blockedReason  → caller skips LLM, sends final immediately.
- * - Returns missionResult  → caller injects it into system prompt.
- * - Always returns finalState="STREAM_RESULT" or "ERROR".
+ * - Otherwise returns finalState="STREAM_RESULT" → LLM handles via tools.
  */
 export async function runOrchestrator(input: OrchestratorInput): Promise<OrchestratorResult> {
   const { message, surface, userId, connectedServices, selectedItem } = input;
 
   // ── CLASSIFY ──
   log("CLASSIFY", `surface=${surface} services=[${(connectedServices ?? []).join(",")}] msg="${message.slice(0, 40)}"`);
-  const { mode, blockedReason } = classify(message, surface, connectedServices);
+  const { mode, blockedReason } = classify(message, surface);
 
   // ── DECIDE early-exit: blocked ──
   if (mode === "blocked") {
@@ -273,14 +169,12 @@ export async function runOrchestrator(input: OrchestratorInput): Promise<Orchest
     return {
       mode,
       contextBlock: "",
-      finalState: "EXECUTE",
+      finalState: "STREAM_RESULT",
       managedPrompt: message,
     };
   }
 
-  // ── FETCH_CONTEXT ──
-  log("FETCH_CONTEXT", `mode=${mode}`);
-
+  // ── CONTEXT (lightweight, no data fetch) ──
   const parts: string[] = [];
 
   if (surface !== "home") {
@@ -295,25 +189,10 @@ export async function runOrchestrator(input: OrchestratorInput): Promise<Orchest
     parts.push(desc);
   }
 
-  if (connectedServices && connectedServices.length > 0) {
-    parts.push(`Services connectés : ${connectedServices.join(", ")}`);
-  }
-
-  let snapshot: DataSnapshot = {};
-  if (userId) {
-    try {
-      snapshot = await getDataSnapshot(userId, surface);
-      const dataText = snapshotToText(snapshot);
-      if (dataText) parts.push(`\n${dataText}`);
-    } catch (err) {
-      console.error("[ORCH] Data fetch failed:", err instanceof Error ? err.message : err);
-    }
-  }
-
   const contextBlock = parts.length > 0 ? `\n\n## Contexte\n${parts.join("\n")}` : "";
 
   // ── DECIDE ──
-  log("DECIDE", `mode=${mode} contextLen=${contextBlock.length}`);
+  log("DECIDE", `mode=${mode}`);
 
   // Server-side service gate — authoritative check via token-store
   // (independent of frontend-reported connectedServices)
@@ -329,27 +208,12 @@ export async function runOrchestrator(input: OrchestratorInput): Promise<Orchest
     }
   }
 
-  // ── EXECUTE (action + informative with data) ──
-  let missionResult: string | undefined;
-  if (mode === "action" || mode === "informative") {
-    log("EXECUTE", `mode=${mode}`);
-    try {
-      const result = await executeMission(snapshot, message);
-      if (result) {
-        missionResult = result;
-        console.log(`[ORCH] EXECUTE done — resultLen=${result.length}`);
-      }
-    } catch (err) {
-      console.error("[ORCH] EXECUTE failed:", err instanceof Error ? err.message : err);
-    }
-  }
-
-  log("STREAM_RESULT", `mode=${mode} hasMission=${!!missionResult}`);
+  console.log(`[ORCH] NO_PREFETCH — data retrieval delegated to LLM tools`);
+  log("STREAM_RESULT", `mode=${mode}`);
 
   return {
     mode,
     contextBlock,
     finalState: "STREAM_RESULT",
-    missionResult,
   };
 }

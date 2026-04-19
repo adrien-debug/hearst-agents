@@ -17,10 +17,15 @@ function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 }
 
+const SOURCE_ICON: Record<string, string> = {
+  gmail: "✉",
+  slack: "💬",
+};
+
 function SourceBadge({ provider }: { provider: string }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded bg-zinc-800/50 px-1.5 py-0.5 text-[9px] font-medium capitalize text-zinc-500">
-      {provider === "gmail" ? "Email" : provider}
+    <span className="inline-flex shrink-0 items-center rounded bg-zinc-800/50 px-1.5 py-0.5 text-[9px] text-zinc-600">
+      {SOURCE_ICON[provider] ?? "●"}
     </span>
   );
 }
@@ -52,32 +57,43 @@ export default function InboxPage() {
 
   useEffect(() => {
     if (!session) return;
-    setLoading(true);
-    setError(null);
+    let cancelled = false;
+    void (async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
 
-    const fetchGmail = fetch("/api/gmail/messages")
-      .then((r) => (r.ok ? r.json() : { emails: [] }))
-      .then((data) =>
-        Array.isArray(data.emails) ? data.emails.map(gmailToUnifiedMessage) : [],
-      )
-      .catch(() => [] as UnifiedMessage[]);
+      const fetchGmail = fetch("/api/gmail/messages")
+        .then((r) => (r.ok ? r.json() : { emails: [] }))
+        .then((data) =>
+          Array.isArray(data.emails) ? data.emails.map(gmailToUnifiedMessage) : [],
+        )
+        .catch(() => [] as UnifiedMessage[]);
 
-    const fetchSlack = fetch("/api/slack/messages")
-      .then((r) => (r.ok ? r.json() : { messages: [] }))
-      .then((data) =>
-        Array.isArray(data.messages) ? data.messages.map(slackToUnifiedMessage) : [],
-      )
-      .catch(() => [] as UnifiedMessage[]);
+      const fetchSlack = fetch("/api/slack/messages")
+        .then((r) => (r.ok ? r.json() : { messages: [] }))
+        .then((data) =>
+          Array.isArray(data.messages) ? data.messages.map(slackToUnifiedMessage) : [],
+        )
+        .catch(() => [] as UnifiedMessage[]);
 
-    Promise.all([fetchGmail, fetchSlack])
-      .then(([gmail, slack]) => {
+      try {
+        const [gmail, slack] = await Promise.all([fetchGmail, fetchSlack]);
+        if (cancelled) return;
         const combined = applyPriorities([...gmail, ...slack]);
         setMessages(sortByPriority(combined));
-      })
-      .catch(() => {
-        setError("Impossible de charger vos messages. Réessayez plus tard.");
-      })
-      .finally(() => setLoading(false));
+      } catch {
+        if (!cancelled) {
+          setError("Impossible de charger vos messages. Réessayez plus tard.");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [session]);
 
   const unreadCount = messages.filter((m) => !m.read).length;
@@ -148,15 +164,10 @@ export default function InboxPage() {
       {/* Header */}
       <div className="border-b border-zinc-800/60 px-6 py-5">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold text-white">Boîte de réception</h1>
-          {Array.from(sources.keys()).map((src) => (
-            <span
-              key={src}
-              className="rounded-full bg-emerald-950/40 px-2 py-0.5 text-[9px] font-medium capitalize text-emerald-400"
-            >
-              {src === "gmail" ? "Email" : src}
-            </span>
-          ))}
+          <h1 className="text-xl font-semibold text-white">Messages</h1>
+          <span className="rounded-full bg-emerald-950/40 px-2 py-0.5 text-[9px] font-medium text-emerald-400">
+            {sources.size} source{sources.size > 1 ? "s" : ""}
+          </span>
         </div>
         <p className="mt-1 text-sm text-zinc-500">
           {loading
@@ -302,10 +313,7 @@ export default function InboxPage() {
               <div className="flex items-center gap-2">
                 {Array.from(sources.entries()).map(([provider, count]) => (
                   <div key={provider} className="flex items-center gap-2 rounded-lg border border-zinc-800 px-3 py-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-xs capitalize text-zinc-400">
-                      {provider === "gmail" ? "Email" : provider}
-                    </span>
+                    <span className="text-xs">{SOURCE_ICON[provider] ?? "●"}</span>
                     <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-500">
                       {count}
                     </span>

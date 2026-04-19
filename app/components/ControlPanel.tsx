@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMission, cancelMission, approveMission } from "../lib/missions";
 import { useConnectedServices } from "../hooks/use-connected-services";
 import { useRecentMissions, type RecentMission } from "../hooks/use-recent-missions";
+import { useChatActivity, type ChatPhase, type StepStatus, type SessionEntry } from "../lib/chat-activity";
 
 function StepIcon({ status }: { status: string }) {
   switch (status) {
@@ -100,10 +101,85 @@ function timeAgo(dateStr: string): string {
   return `Il y a ${days}j`;
 }
 
+const ARTIFACT_ICON: Record<string, string> = {
+  summary: "📄",
+  list: "📋",
+  report: "📊",
+};
+
+function PipelineStepRow({ agent, label, status, isLast }: {
+  agent: string;
+  label: string;
+  status: StepStatus;
+  isLast: boolean;
+}) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <div className="flex flex-col items-center">
+        <StepIcon status={status === "running" ? "in_progress" : status === "done" ? "done" : status === "error" ? "error" : "waiting"} />
+        {!isLast && (
+          <div className={`h-5 w-px ${status === "done" ? "bg-emerald-500/20" : "bg-zinc-800/60"}`} />
+        )}
+      </div>
+      <div className="min-w-0 flex-1 pb-2">
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[10px] font-medium ${
+            status === "running" ? "text-cyan-400" :
+            status === "done" ? "text-zinc-500" :
+            status === "error" ? "text-red-400" :
+            "text-zinc-700"
+          }`}>
+            {agent}
+          </span>
+        </div>
+        <p className={`text-xs leading-5 ${
+          status === "running" ? "font-medium text-white" :
+          status === "done" ? "text-zinc-400" :
+          status === "error" ? "text-red-400" :
+          "text-zinc-600"
+        }`}>
+          {label}
+        </p>
+        {status === "running" && (
+          <p className="text-[10px] text-cyan-400">En cours…</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SessionHistoryItem({ entry }: { entry: SessionEntry }) {
+  const icon = entry.status === "completed" ? "✓" : "✗";
+  const color = entry.status === "completed" ? "text-emerald-400" : "text-red-400";
+  const ago = timeAgo(new Date(entry.timestamp).toISOString());
+  return (
+    <div className="flex items-start gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-zinc-900/40">
+      <span className={`mt-0.5 text-xs ${color}`}>{icon}</span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs text-zinc-300">
+          {entry.query.length > 40 ? entry.query.slice(0, 40) + "…" : entry.query}
+        </p>
+        <div className="flex items-center gap-2">
+          <span className={`text-[10px] ${color}`}>
+            {entry.status === "completed" ? "Terminé" : "Erreur"}
+          </span>
+          <span className="text-[10px] text-zinc-700">{ago}</span>
+        </div>
+        {entry.artifacts.length > 0 && (
+          <p className="mt-0.5 text-[10px] text-zinc-500">
+            {entry.artifacts.map((a) => `${ARTIFACT_ICON[a.type] ?? "📄"} ${a.title}`).join(" · ")}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ControlPanel() {
   const { activeMission: mission, backgroundMissions, dismissMission, setActiveMission } = useMission();
   const { isConnected, loading: servicesLoading } = useConnectedServices();
   const { missions: recentMissions, loading: missionsLoading } = useRecentMissions();
+  const { activity, history } = useChatActivity();
   const [approving, setApproving] = useState(false);
 
   const hasMission = !!mission;
@@ -353,6 +429,57 @@ export default function ControlPanel() {
                   </div>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {/* ─── Chat activity pipeline ─── */}
+        {activity.phase !== "idle" && (
+          <section className="mb-5">
+            <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Pipeline
+            </h3>
+            <div className="rounded-lg border border-zinc-800/50 bg-zinc-900/40 p-3">
+              {activity.query && (
+                <p className="mb-2.5 truncate text-xs font-medium text-white">
+                  {activity.query.length > 50 ? activity.query.slice(0, 50) + "…" : activity.query}
+                </p>
+              )}
+              <div className="space-y-0">
+                {activity.steps.map((step, i) => (
+                  <PipelineStepRow
+                    key={step.id}
+                    agent={step.agent}
+                    label={step.label}
+                    status={step.status}
+                    isLast={i === activity.steps.length - 1}
+                  />
+                ))}
+              </div>
+              {activity.artifacts.length > 0 && (
+                <div className="mt-3 border-t border-zinc-800/40 pt-2.5">
+                  {activity.artifacts.map((art) => (
+                    <div key={art.id} className="flex items-center gap-2 py-1">
+                      <span className="text-sm">{ARTIFACT_ICON[art.type] ?? "📄"}</span>
+                      <span className="text-xs text-zinc-300">{art.title}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ─── Session history ─── */}
+        {history.length > 0 && activity.phase === "idle" && !hasMission && (
+          <section className="mb-5">
+            <h3 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Historique
+            </h3>
+            <div className="space-y-1">
+              {history.slice(0, 5).map((entry) => (
+                <SessionHistoryItem key={entry.id} entry={entry} />
+              ))}
             </div>
           </section>
         )}

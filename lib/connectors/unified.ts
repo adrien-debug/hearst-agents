@@ -52,10 +52,13 @@ export async function getUnifiedMessages(
 ): Promise<UnifiedMessage[]> {
   const sources: Promise<UnifiedMessage[]>[] = [];
 
-  sources.push(
-    fetchSafe(() => gmailConnector.getEmails(userId, 15), "gmail")
-      .then((emails) => emails.map(gmailToUnifiedMessage)),
-  );
+  const googleTokens = await getTokens(userId, "google").catch(() => null);
+  if (googleTokens?.accessToken) {
+    sources.push(
+      fetchSafe(() => gmailConnector.getEmails(userId, 15), "gmail")
+        .then((emails) => emails.map(gmailToUnifiedMessage)),
+    );
+  }
 
   const suid = slackUserId ?? userId;
   const slackTokens = await getTokens(suid, "slack").catch(() => null);
@@ -80,10 +83,13 @@ export async function getUnifiedEvents(
 ): Promise<UnifiedEvent[]> {
   const sources: Promise<UnifiedEvent[]>[] = [];
 
-  sources.push(
-    fetchSafe(() => calendarConnector.getEvents(userId, daysAhead), "calendar")
-      .then((events) => events.map(calendarToUnifiedEvent)),
-  );
+  const googleTokens = await getTokens(userId, "google").catch(() => null);
+  if (googleTokens?.accessToken) {
+    sources.push(
+      fetchSafe(() => calendarConnector.getEvents(userId, daysAhead), "calendar")
+        .then((events) => events.map(calendarToUnifiedEvent)),
+    );
+  }
 
   const results = await Promise.all(sources);
   const all = results.flat();
@@ -99,10 +105,13 @@ export async function getUnifiedFiles(
 ): Promise<UnifiedFile[]> {
   const sources: Promise<UnifiedFile[]>[] = [];
 
-  sources.push(
-    fetchSafe(() => driveConnector.getFiles(userId, limit), "drive")
-      .then((files) => files.map(driveToUnifiedFile)),
-  );
+  const googleTokens = await getTokens(userId, "google").catch(() => null);
+  if (googleTokens?.accessToken) {
+    sources.push(
+      fetchSafe(() => driveConnector.getFiles(userId, limit), "drive")
+        .then((files) => files.map(driveToUnifiedFile)),
+    );
+  }
 
   const results = await Promise.all(sources);
   const all = results.flat();

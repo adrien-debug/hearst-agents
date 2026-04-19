@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useChatContext } from "../lib/chat-context";
 import { useConnectedServices } from "../hooks/use-connected-services";
-import type { Surface } from "../lib/missions/types";
+import type { Surface } from "../lib/missions-v2";
 
 const PATH_TO_SURFACE: Record<string, Surface> = {
   "/": "home",

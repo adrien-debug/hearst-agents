@@ -14,10 +14,12 @@
     "@anthropic-ai/sdk": "^0.90.0",
     "@slack/web-api": "^7.15.1",
     "@supabase/supabase-js": "^2.103.3",
+    "exceljs": "^4.4.0",
     "googleapis": "^171.4.0",
     "next": "16.2.4",
     "next-auth": "^4.24.14",
     "openai": "^6.34.0",
+    "pdfkit": "^0.18.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "zod": "^4.3.6"
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdfkit": "^0.17.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

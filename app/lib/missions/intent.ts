@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy client intent detection (keyword-based navigation/mission routing).
+ * Used only by GlobalChat for "ouvre mon agenda" style navigation shortcuts.
+ * All real mission execution goes through the v2 orchestrator.
+ */
 import type { ChatOutcome, Mission, ActionStatus, Surface } from "./types";
 
 /* ─── Classification result (internal) ─── */

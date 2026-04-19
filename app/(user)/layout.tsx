@@ -3,10 +3,14 @@
 import { SessionProvider } from "next-auth/react";
 import AppNav from "../components/AppNav";
 import ControlPanel from "../components/ControlPanel";
+import RightPanel from "../components/right-panel/RightPanel";
 import GlobalChat from "../components/GlobalChat";
 import { MissionProvider } from "../lib/missions";
 import { ChatProvider } from "../lib/chat-context";
+import { ChatActivityProvider } from "../lib/chat-activity";
+import { RunStreamProvider } from "../lib/run-stream-context";
 import SurfaceTracker from "../components/SurfaceTracker";
+import { TopContextBar } from "../components/system/TopContextBar";
 
 export default function UserLayout({
   children,
@@ -17,17 +21,23 @@ export default function UserLayout({
     <SessionProvider>
       <MissionProvider>
         <ChatProvider>
-          <div className="flex h-screen overflow-hidden">
-            <AppNav />
-            <main className="flex min-w-0 flex-1 md:ml-[60px]">
-              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
-                <GlobalChat />
-              </div>
-              <ControlPanel />
-            </main>
-          </div>
-          <SurfaceTracker />
+          <ChatActivityProvider>
+            <RunStreamProvider>
+            <div className="flex h-screen overflow-hidden">
+              <AppNav />
+              <main className="flex min-w-0 flex-1 md:ml-[60px]">
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                  <TopContextBar />
+                  <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
+                  <GlobalChat />
+                </div>
+                <ControlPanel />
+                <RightPanel />
+              </main>
+            </div>
+            <SurfaceTracker />
+            </RunStreamProvider>
+          </ChatActivityProvider>
         </ChatProvider>
       </MissionProvider>
     </SessionProvider>

@@ -1,0 +1,351 @@
+{
+  "meta": {
+    "title": "HEARST OS Architecture Map",
+    "version": "1.0.0",
+    "updated": "2026-04-19",
+    "description": "Source-of-truth architecture map. Edit this file to update the living system graph."
+  },
+
+  "ui_surfaces": [
+    {
+      "id": "chat_core",
+      "label": "Chat Core",
+      "role": "Primary conversational entry point — sends messages to orchestrator, renders streaming responses",
+      "status": "active",
+      "critical": true,
+      "connects_to": ["tool_surface", "right_panel", "orchestrator_v2"]
+    },
+    {
+      "id": "tool_surface",
+      "label": "Tool Surface",
+      "role": "Context-aware toolbar above chat input — maps tool clicks to intent strings",
+      "status": "active",
+      "connects_to": ["chat_core"]
+    },
+    {
+      "id": "right_panel",
+      "label": "Right Panel",
+      "role": "Live activity, assets, missions, and connector health sidebar",
+      "status": "active",
+      "connects_to": ["event_bus", "connector_control_plane"]
+    },
+    {
+      "id": "left_nav",
+      "label": "Left Navigation",
+      "role": "Primary navigation sidebar — surfaces, admin, settings",
+      "status": "active",
+      "connects_to": ["chat_core"]
+    },
+    {
+      "id": "admin_architecture",
+      "label": "Architecture Map",
+      "role": "Living visual system graph for debugging and alignment",
+      "status": "active",
+      "connects_to": []
+    },
+    {
+      "id": "admin_reports",
+      "label": "Admin Reports",
+      "role": "Daily report viewer and health dashboard",
+      "status": "active",
+      "connects_to": ["supabase_runtime_state"]
+    },
+    {
+      "id": "connectors_section",
+      "label": "Connectors Section",
+      "role": "Right Panel section showing connector health and status",
+      "status": "active",
+      "connects_to": ["connector_control_plane"]
+    }
+  ],
+
+  "agents": [
+    {
+      "id": "inbox_agent",
+      "label": "Inbox Agent",
+      "role": "Manages emails and messaging",
+      "group": "operational",
+      "context": "inbox",
+      "backends": ["hearst_runtime"],
+      "tools": ["get_messages", "schedule_task"],
+      "status": "active",
+      "connects_to": ["execution_mode_selector", "run_engine"]
+    },
+    {
+      "id": "calendar_agent",
+      "label": "Calendar Agent",
+      "role": "Manages calendar and scheduling",
+      "group": "operational",
+      "context": "calendar",
+      "backends": ["hearst_runtime"],
+      "tools": ["get_calendar_events", "schedule_task"],
+      "status": "active",
+      "connects_to": ["execution_mode_selector", "run_engine"]
+    },
+    {
+      "id": "research_agent",
+      "label": "Research Agent",
+      "role": "External research and report generation",
+      "group": "research",
+      "context": "research",
+      "backends": ["hearst_runtime", "anthropic_managed"],
+      "tools": ["search_web", "generate_report", "analyze_data"],
+      "status": "active",
+      "connects_to": ["agent_backend_selector", "asset_system"]
+    },
+    {
+      "id": "finance_agent",
+      "label": "Finance Agent",
+      "role": "Financial analysis and exports",
+      "group": "research",
+      "context": "finance",
+      "backends": ["hearst_runtime"],
+      "tools": ["export_excel", "analyze_data", "generate_report"],
+      "status": "active",
+      "connects_to": ["execution_mode_selector", "asset_system"]
+    },
+    {
+      "id": "files_agent",
+      "label": "Files Agent",
+      "role": "Manages documents and files",
+      "group": "operational",
+      "context": "files",
+      "backends": ["hearst_runtime"],
+      "tools": ["get_files", "generate_report"],
+      "status": "active",
+      "connects_to": ["execution_mode_selector"]
+    },
+    {
+      "id": "general_agent",
+      "label": "General Agent",
+      "role": "Handles general requests across all contexts",
+      "group": "general",
+      "context": "general",
+      "backends": ["hearst_runtime"],
+      "tools": ["get_messages", "get_calendar_events", "get_files", "search_web", "generate_report", "schedule_task"],
+      "status": "active",
+      "connects_to": ["execution_mode_selector", "run_engine"]
+    },
+    {
+      "id": "doc_builder_agent",
+      "label": "Doc Builder",
+      "role": "Produces structured documents, reports, memos",
+      "group": "research",
+      "context": "documents",
+      "backends": ["hearst_runtime"],
+      "tools": ["generate_report"],
+      "status": "active",
+      "connects_to": ["asset_system"]
+    }
+  ],
+
+  "runtime_components": [
+    {
+      "id": "orchestrator_v2",
+      "label": "Orchestrator V2",
+      "role": "Canonical execution pipeline — routes intent to agents via execution modes",
+      "status": "active",
+      "critical": true,
+      "connects_to": ["execution_mode_selector", "run_engine", "event_bus", "memory_store", "connector_control_plane"]
+    },
+    {
+      "id": "execution_mode_selector",
+      "label": "Execution Mode Selector",
+      "role": "Routes requests to DIRECT_ANSWER, TOOL_CALL, WORKFLOW, CUSTOM_AGENT, or MANAGED_AGENT",
+      "status": "active",
+      "critical": true,
+      "connects_to": ["agent_backend_selector"]
+    },
+    {
+      "id": "agent_backend_selector",
+      "label": "Agent Backend Selector",
+      "role": "Chooses hearst_runtime or anthropic_managed for agent execution",
+      "status": "active",
+      "connects_to": ["run_engine", "anthropic_managed"]
+    },
+    {
+      "id": "run_engine",
+      "label": "Run Engine",
+      "role": "Manages run lifecycle — create, start, complete, fail, cost tracking",
+      "status": "active",
+      "critical": true,
+      "connects_to": ["event_bus", "supabase_runtime_state"]
+    },
+    {
+      "id": "event_bus",
+      "label": "Event Bus",
+      "role": "Central pub/sub for all run events — powers SSE streaming",
+      "status": "active",
+      "critical": true,
+      "connects_to": ["sse_adapter", "log_persister", "right_panel"]
+    },
+    {
+      "id": "sse_adapter",
+      "label": "SSE Adapter",
+      "role": "Transforms event bus events into Server-Sent Events for the UI",
+      "status": "active",
+      "connects_to": ["chat_core", "right_panel"]
+    },
+    {
+      "id": "log_persister",
+      "label": "Log Persister",
+      "role": "Persists run events to Supabase traces table",
+      "status": "active",
+      "connects_to": ["supabase_runtime_state"]
+    },
+    {
+      "id": "planner",
+      "label": "Planner",
+      "role": "Transforms user intent into structured execution plans via Claude",
+      "status": "active",
+      "critical": true,
+      "connects_to": ["orchestrator_v2"]
+    },
+    {
+      "id": "executor",
+      "label": "Executor",
+      "role": "Executes plan steps sequentially, invoking tools and agents",
+      "status": "active",
+      "connects_to": ["run_engine", "event_bus"]
+    },
+    {
+      "id": "asset_system",
+      "label": "Asset System",
+      "role": "Creates and tracks generated documents/outputs",
+      "status": "active",
+      "connects_to": ["event_bus", "supabase_runtime_state"]
+    },
+    {
+      "id": "mission_scheduler",
+      "label": "Mission Scheduler",
+      "role": "Cron-based recurring automations — detects schedules, triggers runs",
+      "status": "active",
+      "connects_to": ["orchestrator_v2", "supabase_runtime_state"]
+    },
+    {
+      "id": "memory_store",
+      "label": "Conversation Memory",
+      "role": "Stores recent messages per conversation for multi-turn context",
+      "status": "active",
+      "connects_to": ["orchestrator_v2"]
+    },
+    {
+      "id": "connector_control_plane",
+      "label": "Connector Control Plane",
+      "role": "Canonical runtime surface for 200+ tenant-scoped services — preflight, health, registration",
+      "status": "active",
+      "critical": true,
+      "connects_to": ["supabase_runtime_state", "right_panel"]
+    },
+    {
+      "id": "multi_tenant_guards",
+      "label": "Multi-Tenant Guards",
+      "role": "Enforces tenant/workspace scope on all runtime entities",
+      "status": "active",
+      "critical": true,
+      "connects_to": ["orchestrator_v2", "connector_control_plane"]
+    },
+    {
+      "id": "runtime_state_adapter",
+      "label": "Runtime State Adapter",
+      "role": "Thin persistence layer mapping runtime records to Supabase tables",
+      "status": "active",
+      "connects_to": ["supabase_runtime_state"]
+    },
+    {
+      "id": "orchestrator_v1",
+      "label": "Orchestrator V1",
+      "role": "Legacy pipeline — pre-classification, sequential tool calls",
+      "status": "deprecated",
+      "critical": false,
+      "connects_to": []
+    },
+    {
+      "id": "api_runs_legacy",
+      "label": "API Runs Legacy",
+      "role": "Legacy /api/runs endpoint",
+      "status": "deprecated",
+      "connects_to": []
+    }
+  ],
+
+  "persistence": [
+    {
+      "id": "supabase_runtime_state",
+      "label": "Supabase Runtime State",
+      "role": "Durable storage for runs, missions, assets, connectors, traces",
+      "status": "active",
+      "critical": true,
+      "connects_to": []
+    },
+    {
+      "id": "run_history",
+      "label": "Run History Store",
+      "role": "In-memory run record store (deprecated — fallback/cache)",
+      "status": "deprecated",
+      "connects_to": ["supabase_runtime_state"]
+    },
+    {
+      "id": "mission_store",
+      "label": "Mission Store",
+      "role": "In-memory mission store (deprecated — fallback/cache)",
+      "status": "deprecated",
+      "connects_to": ["supabase_runtime_state"]
+    },
+    {
+      "id": "plan_store",
+      "label": "Plan Store",
+      "role": "Persists execution plans to Supabase",
+      "status": "active",
+      "connects_to": ["supabase_runtime_state"]
+    }
+  ],
+
+  "connectors": [
+    { "id": "google", "label": "Google", "role": "Messaging / Calendar / Files", "status": "active", "connects_to": ["connector_control_plane"] },
+    { "id": "slack", "label": "Slack", "role": "Messaging", "status": "active", "connects_to": ["connector_control_plane"] },
+    { "id": "web", "label": "Web Search", "role": "Research", "status": "active", "connects_to": ["connector_control_plane"] },
+    { "id": "anthropic_managed", "label": "Anthropic Managed", "role": "Research / Automation (external agent)", "status": "active", "connects_to": ["connector_control_plane", "agent_backend_selector"] },
+    { "id": "notion", "label": "Notion", "role": "Documents", "status": "beta", "connects_to": ["connector_control_plane"] },
+    { "id": "github", "label": "GitHub", "role": "Developer Tools", "status": "beta", "connects_to": ["connector_control_plane"] },
+    { "id": "stripe", "label": "Stripe", "role": "Finance / Commerce", "status": "planned", "connects_to": ["connector_control_plane"] },
+    { "id": "jira", "label": "Jira", "role": "Developer Tools", "status": "planned", "connects_to": ["connector_control_plane"] },
+    { "id": "hubspot", "label": "HubSpot", "role": "CRM", "status": "planned", "connects_to": ["connector_control_plane"] },
+    { "id": "airtable", "label": "Airtable", "role": "Documents / Automation", "status": "planned", "connects_to": ["connector_control_plane"] },
+    { "id": "figma", "label": "Figma", "role": "Design", "status": "planned", "connects_to": ["connector_control_plane"] },
+    { "id": "zapier", "label": "Zapier", "role": "Automation", "status": "planned", "connects_to": ["connector_control_plane"] }
+  ],
+
+  "flows": [
+    {
+      "id": "user_request_flow",
+      "label": "User Request Flow",
+      "description": "End-to-end path from user message to streamed response",
+      "steps": ["chat_core", "orchestrator_v2", "execution_mode_selector", "agent_backend_selector", "planner", "run_engine", "executor", "event_bus", "sse_adapter", "right_panel"]
+    },
+    {
+      "id": "scheduled_mission_flow",
+      "label": "Scheduled Mission Flow",
+      "description": "Cron-triggered mission execution",
+      "steps": ["mission_scheduler", "orchestrator_v2", "run_engine", "executor", "event_bus", "supabase_runtime_state"]
+    },
+    {
+      "id": "managed_agent_flow",
+      "label": "Managed Agent Flow",
+      "description": "Delegation to Anthropic managed agent with fallback",
+      "steps": ["orchestrator_v2", "agent_backend_selector", "anthropic_managed", "event_bus", "asset_system", "run_engine"]
+    },
+    {
+      "id": "right_panel_live_flow",
+      "label": "Right Panel Live Flow",
+      "description": "Real-time UI updates via SSE event stream",
+      "steps": ["event_bus", "sse_adapter", "right_panel", "connectors_section"]
+    },
+    {
+      "id": "connector_preflight_flow",
+      "label": "Connector Preflight Flow",
+      "description": "Pre-execution check for provider readiness",
+      "steps": ["orchestrator_v2", "connector_control_plane", "supabase_runtime_state"]
+    }
+  ]
+}

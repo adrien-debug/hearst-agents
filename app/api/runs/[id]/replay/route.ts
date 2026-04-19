@@ -1,3 +1,7 @@
+/**
+ * @deprecated Replay endpoint — no UI consumer.
+ * Kept for potential future replay/debug features.
+ */
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { ok, err } from "@/lib/domain";

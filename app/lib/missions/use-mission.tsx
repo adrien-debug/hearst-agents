@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy client mission React context + hooks.
+ * Canonical mission system: lib/runtime/missions/*, /api/v2/missions*.
+ * Still used by ControlPanel (v1 mission panel) and layout.tsx (MissionProvider).
+ */
 "use client";
 
 import { createContext, useContext, useSyncExternalStore, useCallback, useMemo, type ReactNode } from "react";
