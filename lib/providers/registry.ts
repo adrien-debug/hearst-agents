@@ -9,6 +9,16 @@
 import type { ConnectorCapability } from "@/lib/connectors/platform/types";
 import type { ProviderDefinition, ProviderId } from "./types";
 
+/**
+ * Canonical list of provider IDs — single source of truth.
+ * ProviderId type in types.ts is derived from this array.
+ */
+export const PROVIDER_IDS = [
+  "google", "slack", "web", "anthropic_managed", "notion",
+  "github", "stripe", "jira", "hubspot", "airtable",
+  "figma", "zapier", "system",
+] as const;
+
 const PROVIDERS: ProviderDefinition[] = [
   {
     id: "google",

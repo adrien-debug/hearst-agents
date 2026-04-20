@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRightPanel } from "@/app/hooks/use-right-panel";
 import { useRunStreamOptional } from "@/app/lib/run-stream-context";
+import { useSurfaceOptional } from "@/app/hooks/use-surface";
 import type { RightPanelRun, RightPanelMission } from "@/lib/ui/right-panel/types";
 import { ActivitySection } from "./ActivitySection";
 import { AssetsSection } from "./AssetsSection";
@@ -27,6 +28,30 @@ export default function RightPanel() {
   const [selectedMission, setSelectedMission] = useState<RightPanelMission | null>(null);
   const [showComposer, setShowComposer] = useState(false);
   const [connectorsOpen, setConnectorsOpen] = useState(false);
+
+  // ── Surface state integration ──────────────────────────────
+  const surfaceCtx = useSurfaceOptional();
+
+  useEffect(() => {
+    if (!surfaceCtx) return;
+    const mode = surfaceCtx.panelMode;
+    if (mode === "idle") return;
+
+    if (mode === "artifact") {
+      const assetId = surfaceCtx.state.surface.context?.assetId as string | undefined;
+      if (assetId) {
+        setActiveTab("artifacts");
+        setSelectedAssetId(assetId);
+      }
+    } else if (mode === "inspect") {
+      setActiveTab("live");
+    }
+
+    if (surfaceCtx.isConnectionInterrupted) {
+      setConnectorsOpen(true);
+      setActiveTab("live");
+    }
+  }, [surfaceCtx?.panelMode, surfaceCtx?.state.surface.context, surfaceCtx?.isConnectionInterrupted]);
 
   const hasBlocked = useMemo(
     () => liveEvents.some((e) => e.type === "capability_blocked"),

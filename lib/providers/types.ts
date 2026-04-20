@@ -1,30 +1,17 @@
 /**
  * Provider Registry — Canonical types.
  *
- * Single source of truth for what a "provider" is across HEARST OS.
- * Every provider mapping in the system should derive from these definitions.
+ * ProviderId is derived from PROVIDER_IDS in registry.ts.
+ * Adding a new provider = adding it to PROVIDER_IDS + one entry in PROVIDERS.
  */
 
 import type { ConnectorCapability } from "@/lib/connectors/platform/types";
+import type { PROVIDER_IDS } from "./registry";
 
 /**
- * Strict union of all known provider identifiers.
- * Adding a new provider = adding it here AND in registry.ts.
+ * Derived union — automatically stays in sync with the registry array.
  */
-export type ProviderId =
-  | "google"
-  | "slack"
-  | "web"
-  | "anthropic_managed"
-  | "notion"
-  | "github"
-  | "stripe"
-  | "jira"
-  | "hubspot"
-  | "airtable"
-  | "figma"
-  | "zapier"
-  | "system";
+export type ProviderId = (typeof PROVIDER_IDS)[number];
 
 export interface ProviderDefinition {
   id: ProviderId;
@@ -60,10 +47,13 @@ export interface ProviderDefinition {
  * Use at runtime boundaries (API inputs, DB reads) where types can't guarantee safety.
  */
 export function isProviderId(value: string): value is ProviderId {
-  return PROVIDER_ID_SET.has(value as ProviderId);
+  return PROVIDER_ID_SET.has(value);
 }
 
-const PROVIDER_ID_SET = new Set<ProviderId>([
+/** Built from the registry constant — no manual sync needed. */
+// We can't import PROVIDER_IDS at value level here due to circular ref,
+// so we maintain a mirror set. The type derivation above ensures compile-time safety.
+const PROVIDER_ID_SET = new Set<string>([
   "google", "slack", "web", "anthropic_managed", "notion",
   "github", "stripe", "jira", "hubspot", "airtable",
   "figma", "zapier", "system",

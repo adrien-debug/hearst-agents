@@ -8,6 +8,7 @@ import { MissionProvider } from "../lib/missions";
 import { ChatProvider } from "../lib/chat-context";
 import { ChatActivityProvider } from "../lib/chat-activity";
 import { RunStreamProvider } from "../lib/run-stream-context";
+import { SurfaceProvider } from "@/app/hooks/use-surface";
 import SurfaceTracker from "../components/SurfaceTracker";
 import { TopContextBar } from "../components/system/TopContextBar";
 
@@ -22,6 +23,7 @@ export default function UserLayout({
         <ChatProvider>
           <ChatActivityProvider>
             <RunStreamProvider>
+            <SurfaceProvider>
             <div className="flex h-screen overflow-hidden">
               <AppNav />
               <main className="flex min-w-0 flex-1 md:ml-[60px]">
@@ -34,6 +36,7 @@ export default function UserLayout({
               </main>
             </div>
             <SurfaceTracker />
+            </SurfaceProvider>
             </RunStreamProvider>
           </ChatActivityProvider>
         </ChatProvider>

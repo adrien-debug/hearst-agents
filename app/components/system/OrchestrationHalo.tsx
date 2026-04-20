@@ -1,177 +1,199 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useConnectorsPanel, type PanelConnection } from "@/app/hooks/use-connectors-panel";
-import { useRunStreamOptional } from "@/app/lib/run-stream-context";
-import { getProviderForTool } from "@/lib/providers/registry";
+import { memo, useMemo } from "react";
+import { useHalo, getCachedProviderUi } from "@/app/hooks/use-halo";
+import type {
+  HaloCoreState,
+  HaloProviderNode,
+  HaloArtifactSignal,
+  HaloFlowLabel,
+} from "@/app/lib/halo-state";
 
-type SystemState = "idle" | "thinking" | "executing" | "error" | "success";
+// ── Core visual mapping ─────────────────────────────────────
 
-const ServiceIcon = memo(function ServiceIcon({
-  connection,
-  isActive,
-  cascadeDelay,
+const CORE_VISUALS: Record<HaloCoreState, { color: string; glow: string; anim: string }> = {
+  idle: {
+    color: "bg-white/15",
+    glow: "bg-white/3",
+    anim: "animate-[pulse_4s_ease-in-out_infinite]",
+  },
+  thinking: {
+    color: "bg-cyan-400/80",
+    glow: "bg-cyan-400/10",
+    anim: "animate-pulse",
+  },
+  executing: {
+    color: "bg-cyan-400",
+    glow: "bg-cyan-400/15",
+    anim: "",
+  },
+  waiting_approval: {
+    color: "bg-amber-400/80",
+    glow: "bg-amber-400/10",
+    anim: "animate-pulse",
+  },
+  degraded: {
+    color: "bg-amber-400/60",
+    glow: "bg-amber-400/8",
+    anim: "",
+  },
+  success: {
+    color: "bg-emerald-400/80",
+    glow: "bg-emerald-400/10",
+    anim: "",
+  },
+};
+
+// ── Provider Node ───────────────────────────────────────────
+
+const ProviderNode = memo(function ProviderNode({
+  node,
+  isBg,
 }: {
-  connection: PanelConnection;
-  isActive: boolean;
-  cascadeDelay: string;
+  node: HaloProviderNode;
+  isBg: boolean;
 }) {
-  const connected = connection.status === "connected";
+  const ui = getCachedProviderUi(node.providerId);
+  const isActive = node.status === "active";
+  const isFading = node.status === "fading";
+
   return (
     <div
-      className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.04] text-[9px] transition-all duration-300 ${
-        isActive
-          ? "scale-[1.08] -translate-y-px opacity-100 ring-1 ring-cyan-400/20 shadow-[0_0_6px_rgba(34,211,238,0.1)]"
-          : connected
-            ? "opacity-70"
-            : "opacity-25 grayscale"
+      className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/4 text-[9px] transition-all duration-700 ${
+        isActive && !isBg
+          ? "scale-[1.06] opacity-100 ring-1 ring-cyan-400/15 shadow-[0_0_4px_rgba(34,211,238,0.08)]"
+          : isActive && isBg
+            ? "opacity-60"
+            : isFading
+              ? "opacity-40"
+              : "opacity-30"
       }`}
-      style={{ animationDelay: cascadeDelay }}
     >
-      <span className={isActive ? "text-cyan-400" : "text-white/80"}>
-        {connection.provider.charAt(0).toUpperCase()}
+      <span
+        className={`font-semibold leading-none transition-colors duration-500 ${
+          isActive ? (isBg ? "text-cyan-400/50" : "text-cyan-400/80") : "text-white/40"
+        }`}
+      >
+        {ui.initial}
       </span>
-      {isActive && (
-        <div className="absolute inset-0 rounded-full border border-cyan-400/20 animate-[ping_1.5s_cubic-bezier(0,0,0.2,1)_infinite]" />
+      {isActive && !isBg && (
+        <div className="absolute inset-0 rounded-full border border-cyan-400/10 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
       )}
     </div>
   );
 });
 
+// ── Flow label ──────────────────────────────────────────────
+
+const FlowLabel = memo(function FlowLabel({
+  label,
+  isBg,
+}: {
+  label: HaloFlowLabel;
+  isBg: boolean;
+}) {
+  if (!label) return <div className="min-w-[80px]" />;
+
+  return (
+    <div className="min-w-[80px] flex items-center">
+      <span
+        className={`font-mono text-[8px] uppercase tracking-[0.15em] transition-all duration-500 animate-[fadeIn_300ms_ease-out] ${
+          isBg ? "text-zinc-500/60" : "text-cyan-400/50"
+        }`}
+      >
+        {label}
+      </span>
+    </div>
+  );
+});
+
+// ── Artifact signal ─────────────────────────────────────────
+
+const ArtifactSignal = memo(function ArtifactSignal({
+  signal,
+}: {
+  signal: HaloArtifactSignal;
+}) {
+  const isEmerging = signal.status === "emerging";
+  const isHandoff = signal.status === "handoff";
+  const isSettled = signal.status === "settled";
+
+  return (
+    <div
+      className={`flex items-center gap-1.5 transition-all duration-700 ${
+        isEmerging
+          ? "opacity-50"
+          : isHandoff
+            ? "opacity-90"
+            : isSettled
+              ? "opacity-40"
+              : "opacity-0"
+      }`}
+    >
+      <div
+        className={`h-1.5 w-1.5 rounded-full transition-all duration-500 ${
+          isHandoff
+            ? "bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.2)]"
+            : isEmerging
+              ? "bg-cyan-400/40 animate-pulse"
+              : "bg-emerald-400/30"
+        }`}
+      />
+      {isHandoff && (
+        <span className="font-mono text-[7px] text-emerald-400/50 uppercase tracking-wider">
+          {signal.kind}
+        </span>
+      )}
+    </div>
+  );
+});
+
+// ── Main component ──────────────────────────────────────────
+
 export function OrchestrationHalo() {
-  const { connections, health } = useConnectorsPanel();
-  const stream = useRunStreamOptional();
+  const { state, motion } = useHalo();
 
-  const [activeProvider, setActiveProvider] = useState<string | null>(null);
-  const [executionFlow, setExecutionFlow] = useState<string[]>([]);
-  const [systemState, setSystemState] = useState<SystemState>("idle");
-  const [successCascade, setSuccessCascade] = useState(false);
-  const [neuralStreak, setNeuralStreak] = useState(false);
-
-  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
-  const safeTimeout = useCallback((fn: () => void, ms: number) => {
-    const id = setTimeout(() => {
-      timersRef.current.delete(id);
-      fn();
-    }, ms);
-    timersRef.current.add(id);
-    return id;
-  }, []);
-
-  useEffect(() => {
-    const timers = timersRef.current;
-    return () => {
-      timers.forEach(clearTimeout);
-      timers.clear();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!stream) return;
-
-    const unsub = stream.subscribe((event) => {
-      if (event.type === "run_started") {
-        setSystemState("thinking");
-        setExecutionFlow([]);
-        setSuccessCascade(false);
-      } else if (event.type === "tool_call_started") {
-        setSystemState("executing");
-        setNeuralStreak(true);
-        safeTimeout(() => setNeuralStreak(false), 600);
-
-        const provider =
-          (event.providerId as string)
-          || getProviderForTool((event.tool as string) || "")?.id
-          || "system";
-        setActiveProvider(provider);
-
-        setExecutionFlow((prev) => {
-          const label = provider.toUpperCase();
-          if (prev[prev.length - 1] === label) return prev;
-          const next = [...prev, label];
-          return next.length > 4 ? next.slice(-4) : next;
-        });
-      } else if (event.type === "tool_call_completed") {
-        safeTimeout(() => setActiveProvider(null), 1500);
-      } else if (event.type === "asset_generated") {
-        setExecutionFlow((prev) => {
-          if (prev[prev.length - 1] === "ASSET") return prev;
-          const next = [...prev, "ASSET"];
-          return next.length > 4 ? next.slice(-4) : next;
-        });
-      } else if (event.type === "run_completed") {
-        setSystemState("success");
-        setSuccessCascade(true);
-        safeTimeout(() => {
-          setSuccessCascade(false);
-          setSystemState("idle");
-          setExecutionFlow([]);
-        }, 2000);
-      } else if (event.type === "run_failed") {
-        setSystemState("error");
-        safeTimeout(() => setSystemState("idle"), 4000);
-      }
-    });
-
-    return unsub;
-  }, [stream, safeTimeout]);
-
-  const visibleConnections = useMemo(() => connections.slice(0, 5), [connections]);
-
-  const hasDegraded = health ? health.degraded > 0 : false;
-
-  const { coreColor, coreGlow, coreAnim } = useMemo(() => {
-    if (systemState === "error" || hasDegraded) {
-      return { coreColor: "bg-amber-400/80", coreGlow: "bg-amber-400/10", coreAnim: "" };
-    }
-    if (systemState === "thinking") {
-      return { coreColor: "bg-cyan-400/80", coreGlow: "bg-cyan-400/10", coreAnim: "animate-pulse" };
-    }
-    if (systemState === "executing") {
-      return { coreColor: "bg-cyan-400", coreGlow: "bg-cyan-400/15", coreAnim: "" };
-    }
-    if (systemState === "success") {
-      return { coreColor: "bg-emerald-400/80", coreGlow: "bg-emerald-400/10", coreAnim: "" };
-    }
-    return { coreColor: "bg-white/15", coreGlow: "bg-white/[0.03]", coreAnim: "animate-[pulse_4s_ease-in-out_infinite]" };
-  }, [systemState, hasDegraded]);
+  const core = useMemo(() => CORE_VISUALS[state.coreState], [state.coreState]);
+  const isBg = state.intensity === "background";
 
   return (
     <div className="flex h-10 w-full items-center justify-center relative shrink-0">
-      {neuralStreak && (
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent" />
+      {/* Neural streak */}
+      {motion.shouldShowNeuralStreak && (
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-linear-to-r from-transparent via-cyan-400/8 to-transparent transition-opacity duration-700" />
       )}
 
-      <div className="flex items-center gap-6 rounded-full bg-white/[0.02] px-6 py-2 backdrop-blur-xl">
+      <div className="flex items-center gap-5 rounded-full bg-white/2 px-5 py-2 backdrop-blur-xl">
         {/* System Core */}
         <div className="relative flex h-4 w-4 shrink-0 items-center justify-center">
-          <div className={`absolute inset-0 rounded-full blur-sm transition-colors duration-500 ${coreGlow} ${coreAnim}`} />
-          <div className={`h-1.5 w-1.5 rounded-full transition-colors duration-500 ${coreColor}`} />
+          <div
+            className={`absolute inset-0 rounded-full blur-sm transition-all duration-700 ${core.glow} ${
+              motion.shouldPulseCore ? core.anim : ""
+            } ${isBg ? "opacity-50" : ""}`}
+          />
+          <div
+            className={`h-1.5 w-1.5 rounded-full transition-all duration-700 ${core.color} ${
+              motion.shouldIgniteCore ? "scale-125" : ""
+            } ${isBg ? "opacity-60" : ""}`}
+          />
         </div>
 
-        {/* Service Orbit */}
-        {visibleConnections.length > 0 && (
-          <div className="flex items-center gap-3">
-            {visibleConnections.map((c, i) => (
-              <ServiceIcon
-                key={c.provider}
-                connection={c}
-                isActive={activeProvider === c.provider}
-                cascadeDelay={successCascade ? `${i * 70}ms` : "0ms"}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Execution Flow — fixed min-w prevents layout jump */}
-        <div className="flex items-center gap-1.5 font-mono text-[9px] shrink-0 min-w-[60px]">
-          {executionFlow.map((step, i) => (
-            <span key={`${step}-${i}`} className="flex items-center gap-1.5 animate-[fadeIn_200ms_ease-out]">
-              {i > 0 && <span className="text-white/10">→</span>}
-              <span className="text-cyan-400/70">{step}</span>
-            </span>
+        {/* Provider orbit — fixed 3-slot layout */}
+        <div className="flex items-center gap-2.5 min-w-[84px]">
+          {state.activeProviders.map((node) => (
+            <ProviderNode key={node.providerId} node={node} isBg={isBg} />
           ))}
         </div>
+
+        {/* Semantic flow label */}
+        {motion.shouldShowFlowLabel && (
+          <FlowLabel label={state.flowLabel} isBg={isBg} />
+        )}
+
+        {/* Artifact emergence */}
+        {motion.shouldShowArtifactHandoff && state.emergingArtifact && (
+          <ArtifactSignal signal={state.emergingArtifact} />
+        )}
       </div>
     </div>
   );

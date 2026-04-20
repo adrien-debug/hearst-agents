@@ -1,23 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 
-const NAV_ITEMS = [
-  { href: "/", icon: "chat", label: "Chat" },
-  { href: "/inbox", icon: "inbox", label: "Boîte de réception" },
+/**
+ * AppNav — Chat is the operating system. Legacy routes exist but
+ * are collapsed behind a subtle expansion affordance.
+ */
+
+const LEGACY_ITEMS = [
+  { href: "/inbox", icon: "inbox", label: "Messages" },
   { href: "/calendar", icon: "calendar", label: "Agenda" },
   { href: "/files", icon: "files", label: "Fichiers" },
   { href: "/tasks", icon: "tasks", label: "Tâches" },
-  { href: "/apps", icon: "apps", label: "Applications" },
 ] as const;
 
 const ICONS: Record<string, React.ReactNode> = {
-  home: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-    </svg>
-  ),
   chat: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
       <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
@@ -43,9 +42,9 @@ const ICONS: Record<string, React.ReactNode> = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   ),
-  apps: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-5 w-5">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+  more: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-4 w-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
     </svg>
   ),
   admin: (
@@ -58,6 +57,8 @@ const ICONS: Record<string, React.ReactNode> = {
 
 export default function AppNav() {
   const pathname = usePathname();
+  const [legacyExpanded, setLegacyExpanded] = useState(false);
+  const legacyActive = LEGACY_ITEMS.some((item) => pathname.startsWith(item.href));
 
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-full w-[60px] flex-col items-center border-r border-zinc-800/50 bg-zinc-950 py-4 md:flex">
@@ -66,28 +67,64 @@ export default function AppNav() {
       </Link>
 
       <nav className="flex flex-1 flex-col items-center gap-1">
-        {NAV_ITEMS.map((item) => {
-          const active = item.href === "/"
-            ? pathname === "/"
-            : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={item.label}
-              className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${
-                active
-                  ? "bg-cyan-500/10 text-cyan-400"
-                  : "text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-300 active:scale-[0.98]"
-              }`}
-            >
-              {active && (
-                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-cyan-400" />
-              )}
-              {ICONS[item.icon]}
-            </Link>
-          );
-        })}
+        {/* Chat — sole primary entry point */}
+        <Link
+          href="/"
+          title="Chat"
+          className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 ${
+            pathname === "/"
+              ? "bg-cyan-500/10 text-cyan-400"
+              : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200 active:scale-[0.98]"
+          }`}
+        >
+          {pathname === "/" && (
+            <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-cyan-400" />
+          )}
+          {ICONS.chat}
+        </Link>
+
+        {/* Legacy routes — collapsed, expandable */}
+        <button
+          onClick={() => setLegacyExpanded((v) => !v)}
+          title="Surfaces classiques"
+          className={`relative mt-3 flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 ${
+            legacyActive && !legacyExpanded
+              ? "text-zinc-400"
+              : "text-zinc-700 hover:text-zinc-500"
+          }`}
+        >
+          {legacyActive && !legacyExpanded && (
+            <span className="absolute left-0 top-1/2 h-3 w-[2px] -translate-y-1/2 rounded-r-full bg-zinc-600" />
+          )}
+          {ICONS.more}
+        </button>
+
+        <div
+          className={`flex flex-col items-center gap-1 overflow-hidden transition-all duration-300 ${
+            legacyExpanded ? "max-h-48 opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          {LEGACY_ITEMS.map((item) => {
+            const active = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.label}
+                className={`relative flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200 ${
+                  active
+                    ? "bg-zinc-800/50 text-zinc-400"
+                    : "text-zinc-700 hover:bg-zinc-800/30 hover:text-zinc-500 active:scale-[0.98]"
+                }`}
+              >
+                {active && (
+                  <span className="absolute left-0 top-1/2 h-3 w-[2px] -translate-y-1/2 rounded-r-full bg-zinc-600" />
+                )}
+                {ICONS[item.icon]}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
 
       <Link
