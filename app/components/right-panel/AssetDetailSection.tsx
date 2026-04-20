@@ -103,9 +103,6 @@ export function AssetDetailSection({
 
   useEffect(() => {
     if (!assetId) {
-      setAsset(null);
-      setNotFound(false);
-      fetchedRef.current = null;
       return;
     }
 

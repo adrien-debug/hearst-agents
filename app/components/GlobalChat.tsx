@@ -126,9 +126,8 @@ export default function GlobalChat() {
         }
       : undefined;
 
-    setV2Streaming(isLive);
-
     void Promise.resolve().then(() => {
+      setV2Streaming(isLive);
       setMessages((prev) => {
         const copy = [...prev];
         if (copy.length > 0 && copy[copy.length - 1].role === "assistant") {

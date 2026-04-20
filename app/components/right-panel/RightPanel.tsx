@@ -172,14 +172,14 @@ export default function RightPanel() {
               onCreateMission={handleCreateMission}
             />
             {effectiveConnectorsOpen && (
-              <div className="mt-6">
+              <div className="mt-8">
                 <ConnectorsSection />
               </div>
             )}
             {!effectiveConnectorsOpen && (
               <button
                 onClick={() => setConnectorsOpen(true)}
-                className="mt-6 text-[9px] font-mono text-white/20 hover:text-white/40 transition-colors duration-200"
+                className="mt-8 text-left text-[9px] font-mono text-white/20 hover:text-white/40 transition-colors duration-200"
               >
                 Connections →
               </button>

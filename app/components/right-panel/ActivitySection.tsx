@@ -57,8 +57,8 @@ function LiveEventRow({ event, idx }: { event: StreamEvent; idx: number }) {
       <div className={`flex items-start gap-3 py-1 transition-opacity duration-300 ${idx === 0 ? "opacity-100" : idx === 1 ? "opacity-60" : "opacity-30"}`}>
         <span className="text-[9px] font-mono text-amber-400/60 shrink-0 mt-0.5">{ts}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-mono leading-relaxed text-amber-400">
-            {providers.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" / ")}
+          <p className="text-[10px] font-mono leading-relaxed text-amber-400/80">
+            blocked — {providers.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
           </p>
           <Link href={deepLink} className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300">
             Connect →
@@ -109,7 +109,7 @@ export function ActivitySection({
 
   return (
     <section className="relative min-h-[80px] overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-linear-to-b from-[#080808] to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-gradient-to-b from-[#080808] to-transparent" />
 
       {loading ? (
         <SkeletonRows />
@@ -143,7 +143,7 @@ export function ActivitySection({
             <button
               key={run.id}
               onClick={() => onRunSelect?.(run)}
-              className={`flex w-full items-start gap-3 py-1 text-left transition-opacity duration-300 hover:opacity-100 ${opClass} ${selectedRunId === run.id ? "opacity-100! text-white/90" : ""}`}
+              className={`flex w-full items-start gap-3 py-1 text-left transition-opacity duration-300 hover:opacity-100 ${selectedRunId === run.id ? "opacity-100 text-white/90" : opClass}`}
             >
               <span className={`text-[9px] font-mono shrink-0 mt-0.5 ${timeClass}`}>
                 {new Date(run.createdAt).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })}

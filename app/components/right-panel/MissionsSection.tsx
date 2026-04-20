@@ -81,7 +81,7 @@ export function MissionsSection({
             const isBlocked = mission.opsStatus === "blocked" || mission.opsStatus === "failed";
             const isUpcoming = mission.enabled && !isRunning && !isBlocked;
 
-            const opClass = isRunning ? "opacity-100" : isBlocked ? "opacity-100" : isUpcoming ? "opacity-60" : "opacity-30";
+            const opClass = isRunning ? "opacity-100" : isBlocked ? "opacity-90" : isUpcoming ? "opacity-60" : "opacity-30";
             const dotCls = isRunning ? "bg-cyan-400 animate-pulse" : isBlocked ? "bg-amber-400" : "bg-white/20";
             const textCls = isRunning ? "text-cyan-400" : isBlocked ? "text-amber-400" : "text-white/60";
 
@@ -89,7 +89,7 @@ export function MissionsSection({
               <button
                 key={mission.id}
                 onClick={() => onMissionSelect?.(mission)}
-                className={`flex w-full items-center justify-between py-1.5 text-left transition-opacity duration-300 hover:opacity-100 ${opClass} ${selectedMissionId === mission.id ? "opacity-100!" : ""}`}
+                className={`flex w-full items-center justify-between py-1.5 text-left transition-opacity duration-300 hover:opacity-100 ${selectedMissionId === mission.id ? "opacity-100" : opClass}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotCls}`} />
@@ -97,9 +97,9 @@ export function MissionsSection({
                     {mission.name}
                   </span>
                 </div>
-                {isUpcoming && (
-                  <span className="shrink-0 text-[9px] font-mono text-white/30 ml-4">
-                    {getRelativeTime(mission.schedule)}
+                {(isUpcoming || (!isRunning && !isBlocked && !mission.enabled)) && (
+                  <span className="shrink-0 text-[9px] font-mono text-white/20 ml-4">
+                    {isUpcoming ? getRelativeTime(mission.schedule) : "off"}
                   </span>
                 )}
               </button>
@@ -107,7 +107,7 @@ export function MissionsSection({
           })}
 
           {onCreateMission && (
-            <div className="mt-2 flex justify-end">
+            <div className="mt-1.5 flex justify-end">
               <button onClick={onCreateMission} className="text-[9px] font-mono text-white/20 hover:text-cyan-400 transition-colors duration-200">
                 + Add
               </button>

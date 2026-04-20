@@ -162,8 +162,6 @@ export function RunTimelineSection({
   // Fetch timeline when a run is selected
   useEffect(() => {
     if (!selectedRun) {
-      setTimeline([]);
-      fetchedRef.current = null;
       return;
     }
 
