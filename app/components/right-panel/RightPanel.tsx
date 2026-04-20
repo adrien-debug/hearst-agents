@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRightPanel } from "@/app/hooks/use-right-panel";
 import { useRunStreamOptional } from "@/app/lib/run-stream-context";
 import type { RightPanelRun, RightPanelMission } from "@/lib/ui/right-panel/types";
@@ -9,20 +9,30 @@ import { AssetsSection } from "./AssetsSection";
 import { AssetDetailSection } from "./AssetDetailSection";
 import { MissionsSection } from "./MissionsSection";
 import { MissionDetailSection } from "./MissionDetailSection";
-import { ConnectorsSection } from "./ConnectorsSection";
 import { RunTimelineSection, type SelectedRun } from "./RunTimelineSection";
 import { MissionComposer } from "../missions/MissionComposer";
+
+type ContextPane = "none" | "timeline" | "mission" | "composer";
 
 export default function RightPanel() {
   const { data, loading, error, refresh } = useRightPanel();
   const stream = useRunStreamOptional();
   const connected = stream?.connected ?? false;
-  const liveEvents = stream?.liveEvents ?? [];
+  const liveEvents = useMemo(() => stream?.liveEvents ?? [], [stream?.liveEvents]);
 
+  const [activeTab, setActiveTab] = useState<"live" | "artifacts">("live");
   const [selectedRun, setSelectedRun] = useState<SelectedRun | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [selectedMission, setSelectedMission] = useState<RightPanelMission | null>(null);
   const [showComposer, setShowComposer] = useState(false);
+
+  const contextPane: ContextPane = selectedRun
+    ? "timeline"
+    : showComposer
+      ? "composer"
+      : selectedMission
+        ? "mission"
+        : "none";
 
   const handleRunSelect = useCallback(
     (run: RightPanelRun) => {
@@ -30,6 +40,8 @@ export default function RightPanel() {
         setSelectedRun(null);
         return;
       }
+      setSelectedMission(null);
+      setShowComposer(false);
       setSelectedRun({
         id: run.id,
         input: run.input,
@@ -41,159 +53,176 @@ export default function RightPanel() {
     [selectedRun],
   );
 
-  const handleDeselect = useCallback(() => setSelectedRun(null), []);
-
   const handleAssetSelect = useCallback(
     (assetId: string) => {
       setSelectedAssetId(selectedAssetId === assetId ? null : assetId);
+      if (selectedAssetId !== assetId) setActiveTab("artifacts");
     },
     [selectedAssetId],
   );
-
-  const handleAssetClose = useCallback(() => setSelectedAssetId(null), []);
 
   const handleOpenSourceRun = useCallback(
     (runId: string) => {
       const run = data.recentRuns.find((r) => r.id === runId);
       if (run) {
-        setSelectedRun({
-          id: run.id,
-          input: run.input,
-          status: run.status,
-          executionMode: run.executionMode,
-          agentId: run.agentId,
-        });
+        handleRunSelect(run);
+        setActiveTab("live");
       }
     },
-    [data.recentRuns],
+    [data.recentRuns, handleRunSelect],
   );
 
   const handleMissionSelect = useCallback(
     (mission: RightPanelMission) => {
-      setSelectedMission(selectedMission?.id === mission.id ? null : mission);
+      if (selectedMission?.id === mission.id) {
+        setSelectedMission(null);
+        return;
+      }
+      setSelectedRun(null);
+      setShowComposer(false);
+      setSelectedMission(mission);
     },
     [selectedMission],
   );
 
-  const handleMissionClose = useCallback(() => setSelectedMission(null), []);
-
   const handleMissionSaved = useCallback(() => {
     setShowComposer(false);
+    setSelectedMission(null);
     refresh();
   }, [refresh]);
 
-  const handleCreateMission = useCallback(() => {
-    setShowComposer(true);
-    setSelectedMission(null);
-  }, []);
-
   const handleToggleEnabled = useCallback(
-    (_id: string, _enabled: boolean) => {
-      refresh();
-    },
+    (_id: string, _enabled: boolean) => { refresh(); },
     [refresh],
   );
 
-  // Linked data for mission detail
-  const missionLinkedRuns = selectedMission
-    ? data.recentRuns.filter((r) => {
-        // Match by missionId would be ideal, but we match on input similarity
-        return r.input.slice(0, 60) === selectedMission.input?.slice(0, 60);
-      }).slice(0, 5)
-    : [];
+  const handleCreateMission = useCallback(() => {
+    setSelectedRun(null);
+    setSelectedMission(null);
+    setShowComposer(true);
+  }, []);
 
-  const missionLinkedRunIds = new Set(missionLinkedRuns.map((r) => r.id));
-  const missionLinkedAssets = selectedMission
-    ? data.assets.filter((a) => missionLinkedRunIds.has(a.runId)).slice(0, 5)
-    : [];
+  const missionLinkedRuns = useMemo(() => {
+    if (!selectedMission) return [];
+    return data.recentRuns
+      .filter((r) => r.input.slice(0, 60) === selectedMission.input?.slice(0, 60))
+      .slice(0, 5);
+  }, [selectedMission, data.recentRuns]);
+
+  const missionLinkedAssets = useMemo(() => {
+    if (!selectedMission || missionLinkedRuns.length === 0) return [];
+    const ids = new Set(missionLinkedRuns.map((r) => r.id));
+    return data.assets.filter((a) => ids.has(a.runId)).slice(0, 5);
+  }, [selectedMission, missionLinkedRuns, data.assets]);
 
   return (
-    <aside className="hidden h-full w-[300px] shrink-0 flex-col border-l border-zinc-800/30 bg-zinc-950/95 xl:flex">
-      <div className="flex h-10 items-center justify-between border-b border-zinc-800/20 px-4">
-        <h2 className="text-[11px] font-medium tracking-wide text-zinc-500">
-          Cockpit
-        </h2>
-        <div className="flex items-center gap-1.5">
-          <span
-            className={`h-[5px] w-[5px] rounded-full ${
-              connected ? "bg-emerald-400" : "bg-zinc-700"
-            }`}
-          />
-          <span className="text-[10px] text-zinc-600">
-            {connected ? "Live" : "Offline"}
-          </span>
-        </div>
+    <aside className="hidden h-full w-[380px] shrink-0 flex-col bg-white/2 backdrop-blur-3xl xl:flex relative">
+      {/* Tab header */}
+      <div className="flex h-12 items-center gap-6 px-6 shrink-0 z-20">
+        <button
+          onClick={() => { setActiveTab("live"); setSelectedAssetId(null); }}
+          className={`text-[10px] font-mono tracking-widest transition-colors duration-300 ${activeTab === "live" ? "text-white" : "text-white/30 hover:text-white/60"}`}
+        >
+          LIVE
+        </button>
+        <button
+          onClick={() => { setActiveTab("artifacts"); setSelectedRun(null); setSelectedMission(null); setShowComposer(false); }}
+          className={`text-[10px] font-mono tracking-widest transition-colors duration-300 ${activeTab === "artifacts" ? "text-white" : "text-white/30 hover:text-white/60"}`}
+        >
+          ARTIFACTS
+        </button>
+        <span
+          className={`ml-auto h-[5px] w-[5px] rounded-full transition-colors duration-500 ${
+            connected ? "bg-emerald-400/80" : "bg-white/10"
+          }`}
+        />
       </div>
-      <div className="flex-1 overflow-y-auto p-4">
-        <ActivitySection
-          currentRun={data.currentRun}
-          runs={data.recentRuns}
-          liveEvents={liveEvents}
-          loading={loading}
-          error={error}
-          selectedRunId={selectedRun?.id}
-          onRunSelect={handleRunSelect}
-        />
 
-        {selectedRun && (
-          <RunTimelineSection
-            selectedRun={selectedRun}
-            onDeselect={handleDeselect}
-            onAssetSelect={handleAssetSelect}
-          />
-        )}
+      {/* Content area */}
+      <div className="flex-1 overflow-hidden relative">
 
-        <AssetsSection
-          assets={data.assets}
-          loading={loading}
-          error={error}
-          selectedAssetId={selectedAssetId ?? undefined}
-          onAssetSelect={handleAssetSelect}
-        />
+        {/* ── LIVE TAB ── */}
+        <div className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${activeTab === "live" ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}>
 
-        {selectedAssetId && (
-          <AssetDetailSection
-            assetId={selectedAssetId}
-            onClose={handleAssetClose}
-            onOpenSourceRun={handleOpenSourceRun}
-          />
-        )}
+          {/* Master view — fades out when detail is active */}
+          <div className={`absolute inset-0 flex flex-col px-6 transition-all duration-300 ease-in-out ${contextPane === "none" ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}>
+            <ActivitySection
+              currentRun={data.currentRun}
+              runs={data.recentRuns}
+              liveEvents={liveEvents}
+              loading={loading}
+              error={error}
+              selectedRunId={selectedRun?.id}
+              onRunSelect={handleRunSelect}
+            />
+            <MissionsSection
+              missions={data.missions}
+              loading={loading}
+              error={error}
+              selectedMissionId={selectedMission?.id}
+              onMissionSelect={handleMissionSelect}
+              onCreateMission={handleCreateMission}
+            />
+          </div>
 
-        <MissionsSection
-          missions={data.missions}
-          loading={loading}
-          error={error}
-          selectedMissionId={selectedMission?.id}
-          onMissionSelect={handleMissionSelect}
-          onCreateMission={handleCreateMission}
-          scheduler={data.scheduler}
-          missionOpsSummary={data.missionOpsSummary}
-        />
+          {/* Detail view — fades in over master */}
+          <div className={`absolute inset-0 flex flex-col px-6 overflow-y-auto scrollbar-hide transition-all duration-300 ease-in-out ${contextPane !== "none" ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-105 pointer-events-none"}`}>
+            {contextPane === "timeline" && selectedRun && (
+              <RunTimelineSection
+                selectedRun={selectedRun}
+                onDeselect={() => setSelectedRun(null)}
+                onAssetSelect={handleAssetSelect}
+              />
+            )}
+            {contextPane === "composer" && (
+              <MissionComposer
+                onSaved={handleMissionSaved}
+                onCancel={() => setShowComposer(false)}
+              />
+            )}
+            {contextPane === "mission" && selectedMission && (
+              <MissionDetailSection
+                mission={selectedMission}
+                linkedRuns={missionLinkedRuns}
+                linkedAssets={missionLinkedAssets}
+                onClose={() => setSelectedMission(null)}
+                onRunSelect={(runId) => {
+                  const run = data.recentRuns.find((r) => r.id === runId);
+                  if (run) handleRunSelect(run);
+                }}
+                onAssetSelect={handleAssetSelect}
+                onToggleEnabled={handleToggleEnabled}
+                onRefresh={refresh}
+              />
+            )}
+          </div>
+        </div>
 
-        {showComposer && (
-          <MissionComposer
-            onSaved={handleMissionSaved}
-            onCancel={() => setShowComposer(false)}
-          />
-        )}
+        {/* ── ARTIFACTS TAB ── */}
+        <div className={`absolute inset-0 flex flex-col transition-all duration-300 ease-in-out ${activeTab === "artifacts" ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}>
 
-        {selectedMission && !showComposer && (
-          <MissionDetailSection
-            mission={selectedMission}
-            linkedRuns={missionLinkedRuns}
-            linkedAssets={missionLinkedAssets}
-            onClose={handleMissionClose}
-            onRunSelect={(runId) => {
-              const run = data.recentRuns.find((r) => r.id === runId);
-              if (run) handleRunSelect(run);
-            }}
-            onAssetSelect={handleAssetSelect}
-            onToggleEnabled={handleToggleEnabled}
-            onRefresh={refresh}
-          />
-        )}
+          {/* Master — asset list */}
+          <div className={`absolute inset-0 flex flex-col px-6 overflow-y-auto scrollbar-hide transition-all duration-300 ease-in-out ${!selectedAssetId ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}>
+            <AssetsSection
+              assets={data.assets}
+              loading={loading}
+              error={error}
+              selectedAssetId={selectedAssetId ?? undefined}
+              onAssetSelect={handleAssetSelect}
+            />
+          </div>
 
-        <ConnectorsSection />
+          {/* Detail — asset detail */}
+          <div className={`absolute inset-0 flex flex-col px-6 overflow-y-auto scrollbar-hide transition-all duration-300 ease-in-out ${selectedAssetId ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-105 pointer-events-none"}`}>
+            {selectedAssetId && (
+              <AssetDetailSection
+                assetId={selectedAssetId}
+                onClose={() => setSelectedAssetId(null)}
+                onOpenSourceRun={handleOpenSourceRun}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </aside>
   );

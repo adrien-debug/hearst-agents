@@ -7,14 +7,11 @@ import { useMission, detectIntent, executeMission, approveMission, cancelMission
 import { useProactiveSuggestion } from "../hooks/use-proactive-suggestion";
 import { useOrchestrate, type V2Event } from "../hooks/use-orchestrate";
 import { useChatActivity } from "../lib/chat-activity";
-import ProactiveSuggestion from "./ProactiveSuggestion";
-import { ToolSurface } from "./tool-surface/ToolSurface";
-import { TOOL_INTENTS } from "../lib/tool-intents";
 import type { Surface } from "../lib/missions-v2";
 import { getConnectAction, triggerConnect, sortByConnectPriority } from "../lib/connect-actions";
 import { getMissionSuggestions, type MissionSuggestion } from "../lib/missions-ui";
 import { MissionComposer } from "./missions/MissionComposer";
-import { ServiceLayer } from "./system/ServiceLayer";
+import { OrchestrationHalo } from "./system/OrchestrationHalo";
 
 const USE_V2 = process.env.NEXT_PUBLIC_USE_V2 !== "false";
 
@@ -382,10 +379,11 @@ export default function GlobalChat() {
 
   // All pages — bottom overlay
   return (
-    <div className="relative">
+    <div className="relative w-full max-w-3xl mx-auto px-4 pb-6">
+      {/* Messages Area - The Void */}
       {expanded && messages.length > 0 && (
-        <div className="absolute bottom-full left-0 right-0 max-h-[50vh] overflow-y-auto border-t border-zinc-800/20 bg-zinc-950/98 backdrop-blur-md">
-          <div className="mx-auto max-w-2xl px-4 py-4">
+        <div className="max-h-[60vh] overflow-y-auto mb-6 scrollbar-hide">
+          <div className="flex flex-col gap-6 py-4">
             {messages.map((m, i) => (
               <ChatMessage
                 key={i}
@@ -396,90 +394,41 @@ export default function GlobalChat() {
               />
             ))}
             {isThinking && <ThinkingDots />}
-
-            {/* Mission suggestion CTA */}
-            {missionSuggestion && !showMissionComposer && !streaming && (
-              <div className="mb-3 flex justify-start">
-                <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-3 py-2">
-                  <p className="text-[11px] text-zinc-300">{missionSuggestion.label}</p>
-                  <p className="mt-0.5 text-[10px] text-zinc-500">{missionSuggestion.scheduleHint}</p>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <button
-                      onClick={() => setShowMissionComposer(true)}
-                      className="rounded-md bg-cyan-500/10 px-2.5 py-1 text-[11px] font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20"
-                    >
-                      Planifier cette tâche
-                    </button>
-                    <button
-                      onClick={() => setMissionSuggestion(null)}
-                      className="text-[10px] text-zinc-600 transition-colors hover:text-zinc-400"
-                    >
-                      Ignorer
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Inline mission composer */}
-            {showMissionComposer && missionSuggestion && (
-              <div className="mb-3">
-                <MissionComposer
-                  presetName={missionSuggestion.presetName}
-                  presetPrompt={missionSuggestion.presetPrompt}
-                  presetSchedule={missionSuggestion.presetSchedule}
-                  onSaved={() => {
-                    setShowMissionComposer(false);
-                    setMissionSuggestion(null);
-                  }}
-                  onCancel={() => {
-                    setShowMissionComposer(false);
-                  }}
-                />
-              </div>
-            )}
-
             <div ref={bottomRef} />
           </div>
-          <button
-            onClick={() => setExpanded(false)}
-            className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </div>
+      )}
+
+      {/* Orchestration Halo */}
+      <div className="mb-4">
+        <OrchestrationHalo />
+      </div>
+
+      {/* Input Bar */}
+      <div className="relative group">
+        <div className="absolute inset-0 bg-white/5 rounded-2xl blur-xl transition-opacity duration-500 opacity-0 group-focus-within:opacity-100" />
+        <form
+          onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
+          className="relative flex items-center bg-white/3 backdrop-blur-2xl rounded-2xl overflow-hidden transition-all duration-300 focus-within:bg-white/5"
+        >
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onFocus={() => { if (messages.length > 0) setExpanded(true); }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
+            placeholder="Ask anything..."
+            rows={1}
+            className="flex-1 bg-transparent border-none text-sm text-white/90 placeholder-white/30 px-6 py-4 outline-none resize-none min-h-[52px]"
+            disabled={streaming}
+          />
+          <button type="submit" disabled={streaming || !input.trim()} className="flex items-center justify-center w-12 h-12 mr-2 rounded-xl text-white/50 hover:text-white transition-colors disabled:opacity-20">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
             </svg>
           </button>
-        </div>
-      )}
-
-      {/* Suggestion — inline above input */}
-      {suggestion && !streaming && !expanded && (
-        <div className="px-3 py-1.5">
-          <ProactiveSuggestion
-            suggestion={suggestion}
-            onAccept={handleSuggestionAccept}
-            onDismiss={dismissSuggestion}
-          />
-        </div>
-      )}
-
-      <ToolSurface onToolClick={(id) => {
-        const intent = TOOL_INTENTS[id];
-        if (intent) sendMessage(intent);
-      }} />
-
-      <ServiceLayer />
-
-      <ChatInputBar
-        input={input}
-        setInput={setInput}
-        streaming={streaming}
-        contextHint={contextHint}
-        onSend={sendMessage}
-        inputRef={inputRef}
-        compact
-        onFocus={() => { if (messages.length > 0) setExpanded(true); }}
-      />
+        </form>
+      </div>
     </div>
   );
 }
@@ -501,24 +450,17 @@ function ChatMessage({
   const showApproval = msg.awaitingApproval && !msg.approved && !msg.cancelled;
 
   return (
-    <div className={`mb-3 flex ${isUser ? "justify-end" : "justify-start"}`}>
-      {!isUser && (
-        <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-800">
-          <span className="text-[9px] font-bold text-zinc-300">H</span>
-        </div>
-      )}
-      <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
-        isUser ? "bg-zinc-800 text-zinc-100" : "text-zinc-300"
-      }`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+      <div className={`max-w-[85%] text-sm leading-relaxed tracking-wide ${isUser ? "text-white/60" : "text-white/90 font-light"}`}>
         <pre className="whitespace-pre-wrap font-sans">
           {msg.content}
           {isLiveStreaming && <StreamCursor />}
         </pre>
         {msg.approved && (
-          <p className="mt-1 text-[10px] text-emerald-400">Validé</p>
+          <p className="mt-2 text-[10px] font-mono text-emerald-400">Validé</p>
         )}
         {msg.cancelled && (
-          <p className="mt-1 text-[10px] text-zinc-500">Annulé</p>
+          <p className="mt-2 text-[10px] font-mono text-white/30">Annulé</p>
         )}
         {showApproval && onApproved && onCancelled && (
           <ApprovalActions
@@ -533,8 +475,6 @@ function ChatMessage({
   );
 }
 
-/* ─── Blocked-state card ─── */
-
 function BlockedCard({ info }: { info: BlockedInfo }) {
   const sorted = sortByConnectPriority(info.requiredProviders);
   const primary = sorted[0];
@@ -542,14 +482,14 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
   const primaryAction = primary ? getConnectAction(primary) : null;
 
   return (
-    <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-      <p className="text-[11px] font-medium text-amber-400/90">Action bloquée</p>
-      <p className="mt-0.5 text-[11px] text-zinc-400">{info.message}</p>
-      <div className="mt-1.5 flex items-center gap-2">
+    <div className="mt-4 rounded-xl bg-amber-500/5 px-4 py-3">
+      <p className="text-[11px] font-mono text-amber-400/90">Action bloquée</p>
+      <p className="mt-1 text-[11px] font-mono text-white/60">{info.message}</p>
+      <div className="mt-3 flex items-center gap-3">
         {primaryAction && (
           <button
             onClick={primaryAction.execute}
-            className="rounded-md bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-cyan-400 transition-colors hover:bg-zinc-700 hover:text-cyan-300"
+            className="rounded-lg bg-white/5 px-3 py-1.5 text-[11px] font-mono text-cyan-400 transition-colors hover:bg-white/10 hover:text-cyan-300"
           >
             Connecter {primaryAction.label}
           </button>
@@ -557,7 +497,7 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
         {secondary && (
           <button
             onClick={() => triggerConnect(secondary)}
-            className="text-[10px] text-zinc-500 transition-colors hover:text-zinc-300"
+            className="text-[10px] font-mono text-white/30 transition-colors hover:text-white/60"
           >
             ou {getConnectAction(secondary).label}
           </button>
@@ -566,8 +506,6 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
     </div>
   );
 }
-
-/* ─── Approval inline buttons ─── */
 
 function ApprovalActions({
   missionId,
@@ -581,7 +519,7 @@ function ApprovalActions({
   const [busy, setBusy] = useState(false);
 
   return (
-    <div className="mt-2 flex items-center gap-2">
+    <div className="mt-3 flex items-center gap-3">
       <button
         onClick={async () => {
           setBusy(true);
@@ -590,7 +528,7 @@ function ApprovalActions({
           if (ok) onApproved();
         }}
         disabled={busy}
-        className="rounded-md bg-cyan-500 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-cyan-400 active:scale-[0.97] disabled:opacity-50"
+        className="rounded-lg bg-cyan-500/10 px-3 py-1.5 text-[11px] font-mono text-cyan-400 transition-colors hover:bg-cyan-500/20 active:scale-[0.97] disabled:opacity-50"
       >
         {busy ? "Envoi…" : "Envoyer"}
       </button>
@@ -599,15 +537,13 @@ function ApprovalActions({
           cancelMission(missionId);
           onCancelled();
         }}
-        className="text-[11px] text-zinc-500 transition-colors hover:text-zinc-300"
+        className="text-[11px] font-mono text-white/30 transition-colors hover:text-white/60"
       >
         Annuler
       </button>
     </div>
   );
 }
-
-/* ─── Streaming cursor ─── */
 
 function StreamCursor() {
   return (
@@ -619,80 +555,13 @@ function StreamCursor() {
 
 function ThinkingDots() {
   return (
-    <div className="mb-3 flex justify-start">
-      <div className="mr-2 mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-800">
-        <span className="text-[9px] font-bold text-zinc-300">H</span>
-      </div>
-      <div className="flex items-center gap-1 px-3 py-2">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-500" />
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-500 [animation-delay:0.15s]" />
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-500 [animation-delay:0.3s]" />
+    <div className="flex justify-start">
+      <div className="flex items-center gap-1.5 opacity-50">
+        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" style={{ animationDelay: '150ms' }} />
+        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" style={{ animationDelay: '300ms' }} />
       </div>
     </div>
   );
 }
 
-/* ─── Input bar ─── */
-
-function ChatInputBar({
-  input,
-  setInput,
-  streaming,
-  contextHint,
-  onSend,
-  inputRef,
-  compact,
-  onFocus,
-}: {
-  input: string;
-  setInput: (v: string) => void;
-  streaming: boolean;
-  contextHint: string;
-  onSend: (text: string) => void;
-  inputRef: React.RefObject<HTMLTextAreaElement | null>;
-  compact?: boolean;
-  onFocus?: () => void;
-}) {
-  return (
-    <div className={`bg-zinc-950 ${compact ? "px-3 py-2" : "px-4 py-3"}`}>
-      {contextHint && (
-        <p className={`mx-auto max-w-2xl text-[10px] text-zinc-600 ${compact ? "mb-1" : "mb-1.5"}`}>
-          {contextHint}
-        </p>
-      )}
-
-      <form
-        onSubmit={(e) => { e.preventDefault(); onSend(input); }}
-        className={`mx-auto flex items-end gap-2 ${compact ? "max-w-none" : "max-w-2xl"}`}
-      >
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onFocus={onFocus}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(input); }
-          }}
-          placeholder="Ask anything or give a task..."
-          rows={1}
-          className={`flex-1 resize-none rounded-xl border border-zinc-800/30 bg-zinc-900/50 text-sm text-zinc-100 placeholder-zinc-600 shadow-[0_1px_3px_rgba(0,0,0,0.2)] outline-none transition-all duration-150 focus:border-cyan-600/30 focus:shadow-[0_1px_6px_rgba(0,0,0,0.3)] ${
-            compact ? "px-3 py-2.5" : "px-4 py-3"
-          }`}
-          disabled={streaming}
-          style={{ minHeight: compact ? "38px" : "44px", maxHeight: "120px" }}
-        />
-        <button
-          type="submit"
-          disabled={streaming || !input.trim()}
-          className={`shrink-0 rounded-xl bg-cyan-500 text-white shadow-sm transition-all duration-150 hover:bg-cyan-400 active:scale-[0.97] disabled:opacity-20 ${
-            compact ? "flex h-[38px] w-[38px] items-center justify-center" : "flex h-11 w-11 items-center justify-center"
-          }`}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={compact ? "h-3.5 w-3.5" : "h-4 w-4"}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-          </svg>
-        </button>
-      </form>
-    </div>
-  );
-}

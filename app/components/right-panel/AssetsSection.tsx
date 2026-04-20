@@ -13,12 +13,9 @@ const ASSET_ICON: Record<string, string> = {
 
 function SkeletonAssets() {
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2 pt-2">
       {[1, 2].map((i) => (
-        <div key={i} className="flex animate-pulse items-center gap-2 rounded-lg px-2 py-2">
-          <span className="h-4 w-4 rounded bg-zinc-800/60" />
-          <span className="h-3 flex-1 rounded bg-zinc-800/60" />
-        </div>
+        <div key={i} className="h-12 animate-pulse rounded-xl bg-white/3" />
       ))}
     </div>
   );
@@ -38,29 +35,30 @@ export function AssetsSection({
   onAssetSelect?: (assetId: string) => void;
 }) {
   return (
-    <section className="mb-4">
-      <h3 className="mb-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-        Outputs
-      </h3>
-
+    <section className="pt-2">
       {loading ? (
         <SkeletonAssets />
       ) : error ? (
-        <p className="px-2 text-xs text-zinc-600">Sign in to activate</p>
+        <p className="text-[10px] font-mono text-white/20">Sign in to activate</p>
       ) : assets.length === 0 ? (
-        <p className="px-2 text-xs text-zinc-600">No assets generated</p>
+        <p className="text-[10px] font-mono text-white/15">No assets generated</p>
       ) : (
-        <div className="space-y-0.5">
+        <div className="flex flex-col gap-2">
           {assets.slice(0, 10).map((asset) => (
             <button
               key={asset.id}
               onClick={() => onAssetSelect?.(asset.id)}
-              className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-all duration-150 ${
-                selectedAssetId === asset.id ? "bg-zinc-800/50 ring-1 ring-emerald-500/15" : "hover:bg-zinc-900/30"
+              className={`group relative cursor-pointer rounded-xl bg-white/3 px-3 py-2.5 text-left transition-all duration-300 hover:bg-white/6 hover:scale-[1.02] hover:-translate-y-1 ${
+                selectedAssetId === asset.id ? "bg-white/6 ring-1 ring-cyan-500/10" : ""
               }`}
             >
-              <span className="text-xs">{ASSET_ICON[asset.type] ?? "📄"}</span>
-              <p className="min-w-0 flex-1 truncate text-xs text-zinc-300">{asset.name}</p>
+              <div className="pointer-events-none absolute inset-0 rounded-xl shadow-[inset_0_0_20px_rgba(255,255,255,0.02)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="relative flex items-center gap-3">
+                <span className="text-sm">{ASSET_ICON[asset.type] ?? "📄"}</span>
+                <p className="min-w-0 flex-1 truncate text-[11px] font-mono text-white/60 group-hover:text-white/80 transition-colors duration-300">
+                  {asset.name}
+                </p>
+              </div>
             </button>
           ))}
         </div>

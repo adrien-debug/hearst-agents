@@ -4,12 +4,6 @@ import Link from "next/link";
 import type { RightPanelRun, RightPanelCurrentRun } from "@/lib/ui/right-panel/types";
 import type { StreamEvent } from "@/app/lib/run-stream-context";
 
-const STATUS_DOT: Record<string, string> = {
-  running: "bg-cyan-400 animate-pulse",
-  completed: "bg-emerald-500",
-  failed: "bg-red-500",
-};
-
 const EVENT_LABEL: Record<string, string> = {
   run_started: "Execution started",
   execution_mode_selected: "Mode selected",
@@ -27,31 +21,31 @@ const EVENT_LABEL: Record<string, string> = {
   capability_blocked: "Blocked",
 };
 
-function timeAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "À l'instant";
-  if (mins < 60) return `${mins}min`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}j`;
-}
+const OPACITY_BY_INDEX = [
+  "opacity-100 text-cyan-400",
+  "opacity-60 text-white/60",
+  "opacity-30 text-white/30",
+] as const;
 
 function SkeletonRows() {
   return (
-    <div className="space-y-2">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex animate-pulse items-center gap-2 rounded-lg px-2 py-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-zinc-800" />
-          <span className="h-3 flex-1 rounded bg-zinc-800/60" />
-          <span className="h-3 w-10 rounded bg-zinc-800/40" />
+    <div className="flex flex-col-reverse gap-0">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className={`flex items-start gap-3 py-1 ${OPACITY_BY_INDEX[i]}`}>
+          <span className="h-2 w-10 rounded bg-white/10 mt-0.5" />
+          <span className="h-2 flex-1 rounded bg-white/5 mt-0.5" />
         </div>
       ))}
     </div>
   );
 }
 
-function LiveEventRow({ event }: { event: StreamEvent }) {
+function LiveEventRow({ event, idx }: { event: StreamEvent; idx: number }) {
+  const opClass = OPACITY_BY_INDEX[idx] ?? "opacity-30 text-white/30";
+  const ts = new Date(event.timestamp).toLocaleTimeString("en-US", {
+    hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit",
+  });
+
   if (event.type === "capability_blocked") {
     const providers = (event.requiredProviders as string[]) ?? [];
     const primary = providers[0];
@@ -60,16 +54,13 @@ function LiveEventRow({ event }: { event: StreamEvent }) {
       : `/apps?capability=${event.capability as string}`;
 
     return (
-      <div className="mx-1 my-0.5 flex items-start gap-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1.5">
-        <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+      <div className={`flex items-start gap-3 py-1 transition-opacity duration-300 ${idx === 0 ? "opacity-100" : idx === 1 ? "opacity-90" : "opacity-30"}`}>
+        <span className="text-[9px] font-mono text-amber-400/60 shrink-0 mt-0.5">{ts}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-medium text-amber-400/90">
-            Blocked — {providers.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" / ")} required
+          <p className="text-[10px] font-mono leading-relaxed text-amber-400/90">
+            Blocked — {providers.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" / ")}
           </p>
-          <Link
-            href={deepLink}
-            className="text-[10px] text-cyan-400/70 hover:text-cyan-300"
-          >
+          <Link href={deepLink} className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300">
             Connect →
           </Link>
         </div>
@@ -79,22 +70,17 @@ function LiveEventRow({ event }: { event: StreamEvent }) {
 
   const label = EVENT_LABEL[event.type] ?? event.type;
   const detail =
-    event.type === "orchestrator_log"
-      ? (event.message as string)
-      : event.type === "execution_mode_selected"
-        ? (event.mode as string)
-        : event.type === "agent_selected"
-          ? (event.agent_name as string)
-          : null;
+    event.type === "orchestrator_log" ? (event.message as string)
+      : event.type === "execution_mode_selected" ? (event.mode as string)
+      : event.type === "agent_selected" ? (event.agent_name as string)
+      : null;
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1">
-      <span className="h-1 w-1 shrink-0 rounded-full bg-cyan-400" />
-      <span className="min-w-0 flex-1 truncate text-[11px] text-cyan-300/80">
+    <div className={`flex items-start gap-3 py-1 transition-opacity duration-300 ${opClass}`}>
+      <span className={`text-[9px] font-mono shrink-0 mt-0.5 ${idx === 0 ? "text-cyan-400/60" : "text-white/20"}`}>{ts}</span>
+      <span className="text-[10px] font-mono leading-relaxed">
         {label}
-        {detail && (
-          <span className="ml-1 text-zinc-500">— {detail}</span>
-        )}
+        {detail && <span className="ml-1 text-white/20">— {detail}</span>}
       </span>
     </div>
   );
@@ -118,63 +104,54 @@ export function ActivitySection({
   onRunSelect?: (run: RightPanelRun) => void;
 }) {
   const visibleLiveEvents = liveEvents
-    .filter((e) => EVENT_LABEL[e.type])
-    .slice(0, 6);
+    .filter((e) => EVENT_LABEL[e.type] || e.type === "capability_blocked")
+    .slice(0, 3);
 
   return (
-    <section className="mb-4">
-      <h3 className="mb-2 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-        Execution
-      </h3>
+    <section className="relative min-h-[80px] overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-linear-to-b from-[#080808] to-transparent" />
 
       {loading ? (
         <SkeletonRows />
       ) : error ? (
-        <p className="px-2 text-xs text-zinc-600">Sign in to activate</p>
+        <p className="text-[10px] font-mono text-white/20">Sign in to activate</p>
       ) : runs.length === 0 && !currentRun && visibleLiveEvents.length === 0 ? (
-        <p className="px-2 text-xs text-zinc-600">No activity yet</p>
+        <p className="text-[10px] font-mono text-white/15">System idle</p>
       ) : (
-        <div className="space-y-0.5">
+        <div className="flex flex-col-reverse gap-0 pt-6">
           {currentRun && (
-            <div className="flex items-center gap-2 rounded-lg bg-cyan-500/5 px-2 py-2 ring-1 ring-cyan-500/10">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
-              <span className="flex-1 truncate text-xs font-medium text-white">
+            <div className="flex items-center gap-3 py-1 opacity-100">
+              <span className="text-[9px] font-mono text-cyan-400/60 shrink-0">LIVE</span>
+              <span className="text-[10px] font-mono text-cyan-400 truncate">
                 Running…
+                {currentRun.executionMode && (
+                  <span className="ml-1 text-cyan-400/40">— {currentRun.executionMode}</span>
+                )}
               </span>
-              {currentRun.executionMode && (
-                <span className="text-[10px] text-cyan-400/70">
-                  {currentRun.executionMode}
-                </span>
-              )}
             </div>
           )}
 
-          {visibleLiveEvents.length > 0 && (
-            <div className="mb-1 rounded-lg bg-zinc-900/30 py-1">
-              {visibleLiveEvents.map((event, i) => (
-                <LiveEventRow key={`${event.type}-${event.timestamp}-${i}`} event={event} />
-              ))}
-            </div>
-          )}
+          {visibleLiveEvents.map((event, i) => (
+            <LiveEventRow
+              key={`${event.type}-${event.timestamp}-${i}`}
+              event={event}
+              idx={currentRun ? i + 1 : i}
+            />
+          ))}
 
-          {runs.length > 0 && visibleLiveEvents.length > 0 && (
-            <div className="my-1.5 border-t border-zinc-800/40" />
-          )}
-
-          {runs.slice(0, 6).map((run) => (
+          {!currentRun && visibleLiveEvents.length === 0 && runs.slice(0, 3).map((run, i) => (
             <button
               key={run.id}
               onClick={() => onRunSelect?.(run)}
-              className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-all duration-150 ${
-                selectedRunId === run.id ? "bg-zinc-800/50 ring-1 ring-cyan-500/15" : "hover:bg-zinc-900/30"
-              }`}
+              className={`flex w-full items-start gap-3 py-1 text-left transition-opacity duration-150 hover:opacity-100 ${
+                i === 0 ? "opacity-60" : i === 1 ? "opacity-30" : "opacity-10"
+              } ${selectedRunId === run.id ? "opacity-100" : ""}`}
             >
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[run.status] ?? "bg-zinc-700"}`} />
-              <span className="min-w-0 flex-1 truncate text-xs text-zinc-400">
-                {run.input.length > 40 ? run.input.slice(0, 40) + "…" : run.input}
+              <span className="text-[9px] font-mono text-white/20 shrink-0 mt-0.5">
+                {new Date(run.createdAt).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })}
               </span>
-              <span className="shrink-0 text-[10px] text-zinc-700">
-                {timeAgo(run.createdAt)}
+              <span className="text-[10px] font-mono truncate flex-1 text-white/60">
+                {run.input}
               </span>
             </button>
           ))}

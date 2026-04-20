@@ -15,7 +15,7 @@ const SEVERITY_DOT: Record<TimelineSeverity, string> = {
 };
 
 const SEVERITY_TEXT: Record<TimelineSeverity, string> = {
-  info: "text-zinc-400",
+  info: "text-white/60",
   success: "text-emerald-400/90",
   warning: "text-amber-400/90",
   error: "text-red-400/90",
@@ -32,11 +32,11 @@ function SkeletonTimeline() {
   return (
     <div className="space-y-2 pt-1">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="flex animate-pulse items-start gap-2 px-1">
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-800" />
+        <div key={i} className="flex animate-pulse items-start gap-3 py-1.5">
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/10" />
           <div className="flex-1 space-y-1">
-            <span className="block h-3 w-3/4 rounded bg-zinc-800/60" />
-            <span className="block h-2 w-1/2 rounded bg-zinc-800/40" />
+            <span className="block h-2 w-3/4 rounded bg-white/10" />
+            <span className="block h-1.5 w-1/2 rounded bg-white/5" />
           </div>
         </div>
       ))}
@@ -54,7 +54,7 @@ function RunSummary({ run }: { run: SelectedRun }) {
         ? "text-red-400"
         : run.status === "running"
           ? "text-cyan-400"
-          : "text-zinc-500";
+          : "text-white/60";
 
   const parts = [
     run.executionMode,
@@ -63,16 +63,16 @@ function RunSummary({ run }: { run: SelectedRun }) {
   ].filter(Boolean);
 
   return (
-    <div className="mb-2 rounded-lg bg-zinc-900/50 px-2.5 py-2">
-      <p className="truncate text-xs font-medium text-zinc-200">
+    <div className="mb-4 rounded-xl bg-white/3 px-4 py-3">
+      <p className="truncate text-[11px] font-mono text-white/90">
         {run.input.length > 80 ? run.input.slice(0, 80) + "…" : run.input}
       </p>
       {parts.length > 0 && (
-        <p className="mt-0.5 truncate text-[10px] text-zinc-600">
+        <p className="mt-1 truncate text-[9px] font-mono text-white/30">
           {parts.join(" · ")}
         </p>
       )}
-      <p className={`mt-0.5 text-[10px] font-medium ${statusColor}`}>
+      <p className={`mt-1 text-[9px] font-mono ${statusColor}`}>
         {run.status.charAt(0).toUpperCase() + run.status.slice(1)}
       </p>
     </div>
@@ -93,22 +93,27 @@ function TimelineRow({
 
   return (
     <div
-      className={`flex items-start gap-2 rounded px-1.5 py-1 ${
-        isBlockedOrFailed ? "bg-red-500/5" : ""
+      className={`flex items-start gap-3 py-1.5 transition-opacity duration-300 ${
+        isBlockedOrFailed ? "opacity-100" : "opacity-60 hover:opacity-100"
       }`}
     >
       <span
         className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${SEVERITY_DOT[item.severity]}`}
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-1">
-          <p className={`truncate text-[11px] font-medium ${SEVERITY_TEXT[item.severity]}`}>
+        <div className="flex items-center justify-between gap-2">
+          <p className={`truncate text-[10px] font-mono leading-relaxed ${
+            item.severity === "info" ? "text-white/60" :
+            item.severity === "success" ? "text-emerald-400" :
+            item.severity === "warning" ? "text-amber-400" :
+            "text-red-400"
+          }`}>
             {item.title}
           </p>
-          <span className="shrink-0 text-[9px] text-zinc-700">{formatTime(item.ts)}</span>
+          <span className="shrink-0 text-[9px] font-mono text-white/20">{formatTime(item.ts)}</span>
         </div>
         {item.description && (
-          <p className="truncate text-[10px] text-zinc-600">
+          <p className="truncate text-[10px] font-mono text-white/30 mt-0.5">
             {item.description.length > 100
               ? item.description.slice(0, 100) + "…"
               : item.description}
@@ -117,7 +122,7 @@ function TimelineRow({
         {item.assetName && item.assetId && (
           <button
             onClick={() => onAssetSelect?.(item.assetId!)}
-            className="mt-0.5 inline-block rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] text-emerald-400/90 hover:bg-emerald-500/20"
+            className="mt-1 inline-block rounded-md bg-cyan-500/10 px-2 py-1 text-[9px] font-mono text-cyan-400 hover:bg-cyan-500/20 transition-colors"
           >
             {item.assetName}
           </button>
@@ -197,37 +202,29 @@ export function RunTimelineSection({
 
   if (!selectedRun) {
     return (
-      <section className="mb-4">
-        <h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-          Timeline
-        </h3>
-        <p className="px-2 text-xs text-zinc-600">Select a run to inspect</p>
+      <section className="py-4">
+        <p className="text-[10px] font-mono text-white/15">Select a run to inspect</p>
       </section>
     );
   }
 
   return (
-    <section className="mb-4">
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-          Timeline
-        </h3>
-        <button
-          onClick={onDeselect}
-          className="text-[10px] text-zinc-600 transition-colors hover:text-zinc-400"
-        >
-          Close
-        </button>
-      </div>
+    <section className="py-2">
+      <button
+        onClick={onDeselect}
+        className="mb-3 flex items-center gap-2 text-[10px] font-mono text-white/30 transition-colors duration-200 hover:text-white/60"
+      >
+        <span>←</span> RUN {selectedRun.id.slice(0, 4).toUpperCase()}
+      </button>
 
       <RunSummary run={selectedRun} />
 
       {loading ? (
         <SkeletonTimeline />
       ) : sortedTimeline.length === 0 ? (
-        <p className="px-2 text-xs text-zinc-600">No timeline data for this run</p>
+        <p className="text-[10px] font-mono text-white/15">No timeline data</p>
       ) : (
-        <div className="space-y-0.5">
+        <div className="flex flex-col gap-0">
           {sortedTimeline.map((item) => (
             <TimelineRow key={item.id} item={item} onAssetSelect={onAssetSelect} />
           ))}
