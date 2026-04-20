@@ -3,28 +3,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useConnectorsPanel, type PanelConnection } from "@/app/hooks/use-connectors-panel";
 import { useRunStreamOptional } from "@/app/lib/run-stream-context";
-
-/**
- * FUTURE BACKEND CONTRACT — do not expand this map on the frontend.
- *
- * The orchestrator should emit these fields on every tool_call_started event:
- *   providerId   — canonical provider key (e.g. "google", "slack", "notion", "web", "system")
- *   providerLabel — human-readable step label for execution flow (e.g. "WEB", "GOOGLE", "SLACK")
- *   outputKind   — when the tool produces an artifact: "pdf" | "xlsx" | "file" | null
- *
- * Once the backend emits these, this static map can be deleted entirely.
- * Until then, it is the single source of tool→provider resolution on the frontend.
- */
-const TOOL_TO_PROVIDER: Record<string, string> = {
-  search_web: "web",
-  get_messages: "google",
-  get_calendar_events: "google",
-  get_files: "google",
-  post_message: "slack",
-  query_database: "notion",
-  generate_pdf: "system",
-  generate_xlsx: "system",
-};
+import { getProviderForTool } from "@/lib/providers/registry";
 
 type SystemState = "idle" | "thinking" | "executing" | "error" | "success";
 
@@ -100,8 +79,10 @@ export function OrchestrationHalo() {
         setNeuralStreak(true);
         safeTimeout(() => setNeuralStreak(false), 600);
 
-        const toolName = (event.tool_name as string) || "";
-        const provider = TOOL_TO_PROVIDER[toolName] || "system";
+        const provider =
+          (event.providerId as string)
+          || getProviderForTool((event.tool as string) || "")?.id
+          || "system";
         setActiveProvider(provider);
 
         setExecutionFlow((prev) => {

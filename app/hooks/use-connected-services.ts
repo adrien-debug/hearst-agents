@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { getProviderLabel } from "@/lib/providers/registry";
 
 export interface ServiceStatus {
   provider: string;
@@ -15,11 +16,6 @@ interface UseConnectedServicesResult {
   isConnected: (provider: string) => boolean;
   refresh: () => void;
 }
-
-const PROVIDER_LABELS: Record<string, string> = {
-  google: "Google",
-  slack: "Slack",
-};
 
 export function useConnectedServices(): UseConnectedServicesResult {
   const { data: session } = useSession();
@@ -65,7 +61,7 @@ export function useConnectedServices(): UseConnectedServicesResult {
     () =>
       services
         .filter((s) => s.connected)
-        .map((s) => PROVIDER_LABELS[s.provider] ?? s.provider),
+        .map((s) => getProviderLabel(s.provider)),
     [services],
   );
 

@@ -1,14 +1,19 @@
 /**
  * Capability Layer — Maps intents to capabilities, capabilities to providers.
  *
- * This is the abstraction that decouples "what the user wants" from
- * "which provider handles it". Adding a new provider means adding
- * one entry to CAPABILITY_PROVIDERS, not modifying 7 files.
+ * Delegates provider knowledge to the canonical Provider Registry.
+ * This file keeps the intent→capability mapping (domain-specific)
+ * and the runtime resolution functions (token-dependent).
  */
 
 import { getTokens } from "@/lib/token-store";
+import {
+  getProvidersByCapability,
+  getProviderTokenBucket,
+} from "@/lib/providers/registry";
+import type { ConnectorCapability } from "@/lib/connectors/platform/types";
 
-export type Capability = "messaging" | "calendar" | "files";
+export type Capability = ConnectorCapability;
 
 /**
  * Intent → Capability.
@@ -30,9 +35,14 @@ export const INTENT_CAPABILITY: Record<string, Capability> = {
 
 /**
  * Capability → all possible providers (ordered by priority).
- * To add Outlook, just append "outlook" to messaging.
+ * Now derived from the Provider Registry.
  */
-export const CAPABILITY_PROVIDERS: Record<Capability, string[]> = {
+export function getCapabilityProviders(capability: Capability): string[] {
+  return getProvidersByCapability(capability).map((p) => p.id);
+}
+
+/** @deprecated Use getCapabilityProviders() instead */
+export const CAPABILITY_PROVIDERS: Record<string, string[]> = {
   messaging: ["gmail", "slack"],
   calendar: ["google_calendar"],
   files: ["google_drive"],
@@ -40,8 +50,13 @@ export const CAPABILITY_PROVIDERS: Record<Capability, string[]> = {
 
 /**
  * Provider → token-store key.
- * Multiple logical providers can share one OAuth token.
+ * Now derived from the Provider Registry.
  */
+export function getTokenBucket(provider: string): string {
+  return getProviderTokenBucket(provider);
+}
+
+/** @deprecated Use getTokenBucket() instead */
 export const PROVIDER_TO_TOKEN: Record<string, string> = {
   gmail: "google",
   google_calendar: "google",
@@ -52,10 +67,18 @@ export const PROVIDER_TO_TOKEN: Record<string, string> = {
 /**
  * Human-readable labels for capabilities (used in blocked messages).
  */
-export const CAPABILITY_LABEL: Record<Capability, string> = {
+export const CAPABILITY_LABEL: Record<string, string> = {
   messaging: "Messagerie (Gmail ou Slack)",
   calendar: "Agenda",
   files: "Fichiers",
+  research: "Recherche",
+  crm: "CRM",
+  finance: "Finance",
+  support: "Support",
+  design: "Design",
+  commerce: "Commerce",
+  developer_tools: "Outils développeur",
+  automation: "Automatisation",
 };
 
 /**
@@ -66,16 +89,15 @@ export async function resolveProviders(
   capability: Capability,
   userId: string,
 ): Promise<string[]> {
-  const allProviders = CAPABILITY_PROVIDERS[capability] ?? [];
+  const registryProviders = getProvidersByCapability(capability);
   const connected: string[] = [];
 
   await Promise.all(
-    allProviders.map(async (provider) => {
-      const tokenKey = PROVIDER_TO_TOKEN[provider] ?? provider;
+    registryProviders.map(async (provider) => {
       try {
-        const tokens = await getTokens(userId, tokenKey);
+        const tokens = await getTokens(userId, provider.auth.tokenBucket);
         if (tokens.accessToken) {
-          connected.push(provider);
+          connected.push(provider.id);
         }
       } catch {
         // Token read failed → not connected
@@ -84,7 +106,7 @@ export async function resolveProviders(
   );
 
   console.log(
-    `[Capabilities] resolve ${capability} → candidates=[${allProviders}] connected=[${connected}]`,
+    `[Capabilities] resolve ${capability} → candidates=[${registryProviders.map((p) => p.id)}] connected=[${connected}]`,
   );
 
   return connected;
@@ -100,4 +122,3 @@ export async function hasCapability(
   const providers = await resolveProviders(capability, userId);
   return providers.length > 0;
 }
-

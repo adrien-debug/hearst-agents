@@ -112,12 +112,15 @@ export class SSEAdapter {
           type: "tool_call_started",
           step_id: event.step_id,
           tool: event.tool,
+          providerId: event.providerId,
+          providerLabel: event.providerLabel,
         };
       case "tool_call_completed":
         return {
           type: "tool_call_completed",
           step_id: event.step_id,
           tool: event.tool,
+          providerId: event.providerId,
         };
 
       // ── Text streaming ───────────────────────────────────

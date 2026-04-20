@@ -13,6 +13,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RunEngine } from "../../runtime/engine";
+import { getProviderForTool } from "@/lib/providers/registry";
 import type { ActionPlan, ActionStep } from "../../plans/types";
 import { PlanStore } from "../../plans/store";
 import { validateToolCall, type ToolCallAttempt } from "./guard";
@@ -146,11 +147,14 @@ export async function executeActionPlan(
     // ── Execute ────────────────────────────────────────────
     await updateActionStep(db, action.id, "running");
 
+    const toolProvider = getProviderForTool(action.tool);
     engine.events.emit({
       type: "tool_call_started",
       run_id: engine.id,
       step_id: action.id,
       tool: action.tool,
+      providerId: toolProvider?.id,
+      providerLabel: toolProvider?.label,
     });
 
     try {
@@ -165,6 +169,7 @@ export async function executeActionPlan(
         run_id: engine.id,
         step_id: action.id,
         tool: action.tool,
+        providerId: toolProvider?.id,
       });
 
       results.push({

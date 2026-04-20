@@ -159,11 +159,14 @@ export interface ToolCallStartedEvent extends BaseEvent {
   type: "tool_call_started";
   step_id: string;
   tool: string;
+  providerId?: string;
+  providerLabel?: string;
 }
 export interface ToolCallCompletedEvent extends BaseEvent {
   type: "tool_call_completed";
   step_id: string;
   tool: string;
+  providerId?: string;
 }
 
 // ── Approvals ────────────────────────────────────────────

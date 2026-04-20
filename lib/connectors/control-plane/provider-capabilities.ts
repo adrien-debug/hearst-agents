@@ -1,27 +1,27 @@
 /**
  * Provider → Capability mapping.
  *
- * Canonical source of what each provider can do.
- * Used to auto-populate connection capabilities on registration.
+ * Now delegates to the canonical Provider Registry.
+ * This file re-exports for backward compatibility with existing consumers.
  */
 
 import type { ConnectorCapability } from "@/lib/connectors/platform/types";
+import {
+  getAllProviders,
+  getProviderCapabilitiesFromRegistry,
+} from "@/lib/providers/registry";
 
-export const PROVIDER_CAPABILITIES: Record<string, ConnectorCapability[]> = {
-  google: ["messaging", "calendar", "files"],
-  slack: ["messaging"],
-  web: ["research"],
-  anthropic_managed: ["research", "automation"],
-  notion: ["files", "automation"],
-  github: ["developer_tools"],
-  stripe: ["finance", "commerce"],
-  jira: ["developer_tools"],
-  hubspot: ["crm"],
-  airtable: ["files", "automation"],
-  figma: ["design"],
-  zapier: ["automation"],
-};
+/**
+ * Derived from the Provider Registry at import time.
+ * Consumers that iterate PROVIDER_CAPABILITIES keys will still work.
+ */
+export const PROVIDER_CAPABILITIES: Record<string, ConnectorCapability[]> =
+  Object.fromEntries(
+    getAllProviders()
+      .filter((p) => p.capabilities.length > 0)
+      .map((p) => [p.id, p.capabilities]),
+  );
 
 export function getProviderCapabilities(provider: string): ConnectorCapability[] {
-  return PROVIDER_CAPABILITIES[provider] ?? [];
+  return getProviderCapabilitiesFromRegistry(provider);
 }

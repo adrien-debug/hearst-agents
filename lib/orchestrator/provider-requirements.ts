@@ -1,45 +1,15 @@
 /**
  * Provider Requirements — maps user intent to required external providers.
  *
+ * Now derives keyword matching from the Provider Registry.
  * Used by the orchestrator to preflight provider readiness before execution.
- * Returns empty array when no external provider is needed.
+ * Returns null when no external provider is needed.
  */
 
-interface ProviderRequirement {
-  capability: string;
-  providers: string[];
-  keywords: string[];
-  userMessage: string;
-}
-
-const REQUIREMENTS: ProviderRequirement[] = [
-  {
-    capability: "messaging",
-    providers: ["google", "slack"],
-    keywords: [
-      "email", "emails", "mail", "mails", "inbox", "boîte", "boite",
-      "message", "messages", "courrier", "slack",
-    ],
-    userMessage: "Aucun service de messagerie connecté. Connectez Gmail ou Slack dans Applications pour accéder à vos messages.",
-  },
-  {
-    capability: "calendar",
-    providers: ["google"],
-    keywords: [
-      "agenda", "calendrier", "réunion", "reunion", "événement", "evenement",
-      "planning", "rendez-vous", "rdv", "meeting",
-    ],
-    userMessage: "Google n'est pas connecté. Connectez votre compte Google dans Applications pour accéder à votre agenda.",
-  },
-  {
-    capability: "files",
-    providers: ["google"],
-    keywords: [
-      "fichier", "fichiers", "document", "documents", "drive", "dossier",
-    ],
-    userMessage: "Google n'est pas connecté. Connectez votre compte Google dans Applications pour accéder à vos fichiers.",
-  },
-];
+import {
+  getAllProviders,
+  getProviderLabel,
+} from "@/lib/providers/registry";
 
 export interface ProviderRequirementResult {
   capability: string;
@@ -50,12 +20,24 @@ export interface ProviderRequirementResult {
 export function getRequiredProvidersForInput(input: string): ProviderRequirementResult | null {
   const lower = input.toLowerCase();
 
-  for (const req of REQUIREMENTS) {
-    if (req.keywords.some((k) => lower.includes(k))) {
+  const allProviders = getAllProviders();
+
+  for (const provider of allProviders) {
+    if (!provider.auth.connectable) continue;
+    if (provider.keywords.fr.length === 0 && provider.keywords.en.length === 0) continue;
+
+    const allKeywords = [...provider.keywords.fr, ...provider.keywords.en];
+    const matched = allKeywords.some((k) => lower.includes(k));
+
+    if (matched && provider.capabilities.length > 0) {
+      const relevantProviders = allProviders
+        .filter((p) => p.auth.connectable && p.capabilities.some((c) => provider.capabilities.includes(c)))
+        .map((p) => p.id);
+
       return {
-        capability: req.capability,
-        providers: req.providers,
-        userMessage: req.userMessage,
+        capability: provider.capabilities[0],
+        providers: relevantProviders.length > 0 ? relevantProviders : [provider.id],
+        userMessage: provider.blockedMessage,
       };
     }
   }
@@ -64,7 +46,7 @@ export function getRequiredProvidersForInput(input: string): ProviderRequirement
 }
 
 export function getBlockedReasonForProviders(providers: string[]): string {
-  const names = providers.map((p) => p.charAt(0).toUpperCase() + p.slice(1));
+  const names = providers.map((p) => getProviderLabel(p));
   if (names.length === 1) {
     return `${names[0]} is not connected`;
   }

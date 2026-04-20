@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Hearst</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .logo-container {
+            text-align: center;
+        }
+        .logo-subtitle {
+            color: #71717a;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4em;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <!-- Logo H de Hearst -->
+        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Fond avec dégradé subtil -->
+            <rect width="120" height="120" rx="24" fill="url(#gradient)"/>
+            
+            <!-- Le "H" stylisé -->
+            <path d="M35 35 L35 85 M35 60 L85 60 M85 35 L85 85" 
+                  stroke="white" 
+                  stroke-width="8" 
+                  stroke-linecap="round" 
+                  stroke-linejoin="round"/>
+            
+            <!-- Définition du dégradé -->
+            <defs>
+                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#18181b;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#27272a;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+        </svg>
+        
+        <div class="logo-subtitle">Hearst</div>
+    </div>
+</body>
+</html>

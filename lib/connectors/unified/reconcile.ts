@@ -14,25 +14,13 @@
 import { createClient } from "@supabase/supabase-js";
 import type { UnifiedConnectorRecord, UnifiedConnectorStatus } from "./types";
 import { getConnectionsByScope } from "../control-plane/store";
-import { getProviderCapabilities, PROVIDER_CAPABILITIES } from "../control-plane/provider-capabilities";
 import { registerProviderUsage } from "../control-plane/register";
-
-const CONNECTABLE_PROVIDERS = new Set(["google", "slack"]);
-
-const PROVIDER_LABELS: Record<string, string> = {
-  google: "Google",
-  slack: "Slack",
-  web: "Web",
-  anthropic_managed: "Anthropic",
-  notion: "Notion",
-  github: "GitHub",
-  stripe: "Stripe",
-  jira: "Jira",
-  hubspot: "HubSpot",
-  airtable: "Airtable",
-  figma: "Figma",
-  zapier: "Zapier",
-};
+import {
+  getAllProviders,
+  getConnectableProviders,
+  getProviderLabel,
+  getProviderCapabilitiesFromRegistry,
+} from "@/lib/providers/registry";
 
 interface AuthRecord {
   provider: string;
@@ -89,15 +77,16 @@ export async function getUnifiedConnectors(input: {
     cpMap.set(r.provider, r);
   }
 
-  const allProviders = new Set([
+  const allProviderIds = new Set<string>([
     ...authMap.keys(),
     ...cpMap.keys(),
-    ...Object.keys(PROVIDER_CAPABILITIES),
+    ...getAllProviders().map((p) => p.id),
   ]);
+  const connectableSet = getConnectableProviders() as Set<string>;
 
   const results: UnifiedConnectorRecord[] = [];
 
-  for (const provider of allProviders) {
+  for (const provider of allProviderIds) {
     const auth = authMap.get(provider);
     const cp = cpMap.get(provider);
 
@@ -106,7 +95,7 @@ export async function getUnifiedConnectors(input: {
     const cpExists = !!cp;
     const authExists = !!auth;
 
-    const canConnect = CONNECTABLE_PROVIDERS.has(provider);
+    const canConnect = connectableSet.has(provider);
 
     let status: UnifiedConnectorStatus;
     let isDiverged = false;
@@ -146,14 +135,14 @@ export async function getUnifiedConnectors(input: {
 
     results.push({
       provider,
-      label: PROVIDER_LABELS[provider] ?? provider.charAt(0).toUpperCase() + provider.slice(1),
+      label: getProviderLabel(provider),
       tenantId: input.tenantId,
       workspaceId: input.workspaceId,
       userId: input.userId,
       authConnected,
       controlPlaneConnected: cpConnected,
       status,
-      capabilities: cp?.capabilities ?? getProviderCapabilities(provider),
+      capabilities: cp?.capabilities ?? getProviderCapabilitiesFromRegistry(provider),
       canConnect,
       lastCheckedAt: cp?.lastCheckedAt,
       lastError: cp?.lastError,
