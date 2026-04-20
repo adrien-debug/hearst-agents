@@ -81,9 +81,9 @@ export function MissionsSection({
             const isBlocked = mission.opsStatus === "blocked" || mission.opsStatus === "failed";
             const isUpcoming = mission.enabled && !isRunning && !isBlocked;
 
-            const opClass = isRunning ? "opacity-100" : isBlocked ? "opacity-90" : isUpcoming ? "opacity-60" : "opacity-30";
+            const opClass = isRunning ? "opacity-100" : isBlocked ? "opacity-100" : isUpcoming ? "opacity-60" : "opacity-30";
             const dotCls = isRunning ? "bg-cyan-400 animate-pulse" : isBlocked ? "bg-amber-400" : "bg-white/20";
-            const textCls = isRunning ? "text-cyan-400" : isBlocked ? "text-amber-400/90" : "text-white/60";
+            const textCls = isRunning ? "text-cyan-400" : isBlocked ? "text-amber-400" : "text-white/60";
 
             return (
               <button
@@ -97,9 +97,11 @@ export function MissionsSection({
                     {mission.name}
                   </span>
                 </div>
-                <span className="shrink-0 text-[9px] font-mono text-white/30 ml-4">
-                  {isRunning ? "active" : isBlocked ? "halted" : getRelativeTime(mission.schedule)}
-                </span>
+                {isUpcoming && (
+                  <span className="shrink-0 text-[9px] font-mono text-white/30 ml-4">
+                    {getRelativeTime(mission.schedule)}
+                  </span>
+                )}
               </button>
             );
           })}

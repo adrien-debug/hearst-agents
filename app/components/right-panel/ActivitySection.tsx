@@ -5,20 +5,20 @@ import type { RightPanelRun, RightPanelCurrentRun } from "@/lib/ui/right-panel/t
 import type { StreamEvent } from "@/app/lib/run-stream-context";
 
 const EVENT_LABEL: Record<string, string> = {
-  run_started: "Execution started",
-  execution_mode_selected: "Mode selected",
-  agent_selected: "Agent assigned",
-  step_started: "Step started",
-  step_completed: "Step completed",
-  tool_call_started: "Tool called",
-  tool_call_completed: "Tool done",
-  asset_generated: "Asset created",
-  run_completed: "Run completed",
-  run_failed: "Run failed",
-  orchestrator_log: "Log",
-  plan_attached: "Plan created",
-  tool_surface: "Tools loaded",
-  capability_blocked: "Blocked",
+  run_started: "init",
+  execution_mode_selected: "mode",
+  agent_selected: "agent",
+  step_started: "step",
+  step_completed: "step_ok",
+  tool_call_started: "call",
+  tool_call_completed: "call_ok",
+  asset_generated: "asset",
+  run_completed: "done",
+  run_failed: "fail",
+  orchestrator_log: "log",
+  plan_attached: "plan",
+  tool_surface: "tools",
+  capability_blocked: "blocked",
 };
 
 const OPACITY_BY_INDEX = [
@@ -54,11 +54,11 @@ function LiveEventRow({ event, idx }: { event: StreamEvent; idx: number }) {
       : `/apps?capability=${event.capability as string}`;
 
     return (
-      <div className={`flex items-start gap-3 py-1 transition-opacity duration-300 ${idx === 0 ? "opacity-100" : idx === 1 ? "opacity-90" : "opacity-30"}`}>
+      <div className={`flex items-start gap-3 py-1 transition-opacity duration-300 ${idx === 0 ? "opacity-100" : idx === 1 ? "opacity-60" : "opacity-30"}`}>
         <span className="text-[9px] font-mono text-amber-400/60 shrink-0 mt-0.5">{ts}</span>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-mono leading-relaxed text-amber-400/90">
-            Blocked — {providers.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" / ")}
+          <p className="text-[10px] font-mono leading-relaxed text-amber-400">
+            {providers.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" / ")}
           </p>
           <Link href={deepLink} className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300">
             Connect →
@@ -121,12 +121,9 @@ export function ActivitySection({
         <div className="flex flex-col-reverse gap-0 pt-6">
           {currentRun && (
             <div className="flex items-center gap-3 py-1 opacity-100">
-              <span className="text-[9px] font-mono text-cyan-400/60 shrink-0">LIVE</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0 mt-0.5 ml-1" />
               <span className="text-[10px] font-mono text-cyan-400 truncate">
                 Running…
-                {currentRun.executionMode && (
-                  <span className="ml-1 text-cyan-400/40">— {currentRun.executionMode}</span>
-                )}
               </span>
             </div>
           )}
@@ -139,22 +136,23 @@ export function ActivitySection({
             />
           ))}
 
-          {!currentRun && visibleLiveEvents.length === 0 && runs.slice(0, 3).map((run, i) => (
+          {!currentRun && visibleLiveEvents.length === 0 && runs.slice(0, 3).map((run, i) => {
+            const opClass = i === 0 ? "opacity-100 text-white/90" : i === 1 ? "opacity-60 text-white/60" : "opacity-30 text-white/30";
+            const timeClass = i === 0 ? "text-white/60" : "text-white/20";
+            return (
             <button
               key={run.id}
               onClick={() => onRunSelect?.(run)}
-              className={`flex w-full items-start gap-3 py-1 text-left transition-opacity duration-150 hover:opacity-100 ${
-                i === 0 ? "opacity-60" : i === 1 ? "opacity-30" : "opacity-10"
-              } ${selectedRunId === run.id ? "opacity-100" : ""}`}
+              className={`flex w-full items-start gap-3 py-1 text-left transition-opacity duration-300 hover:opacity-100 ${opClass} ${selectedRunId === run.id ? "opacity-100! text-white/90" : ""}`}
             >
-              <span className="text-[9px] font-mono text-white/20 shrink-0 mt-0.5">
+              <span className={`text-[9px] font-mono shrink-0 mt-0.5 ${timeClass}`}>
                 {new Date(run.createdAt).toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })}
               </span>
-              <span className="text-[10px] font-mono truncate flex-1 text-white/60">
+              <span className="text-[10px] font-mono truncate flex-1">
                 {run.input}
               </span>
             </button>
-          ))}
+          )})}
         </div>
       )}
     </section>

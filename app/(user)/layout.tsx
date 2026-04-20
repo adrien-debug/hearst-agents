@@ -2,7 +2,6 @@
 
 import { SessionProvider } from "next-auth/react";
 import AppNav from "../components/AppNav";
-import ControlPanel from "../components/ControlPanel";
 import RightPanel from "../components/right-panel/RightPanel";
 import GlobalChat from "../components/GlobalChat";
 import { MissionProvider } from "../lib/missions";
@@ -31,7 +30,6 @@ export default function UserLayout({
                   <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
                   <GlobalChat />
                 </div>
-                <ControlPanel />
                 <RightPanel />
               </main>
             </div>
