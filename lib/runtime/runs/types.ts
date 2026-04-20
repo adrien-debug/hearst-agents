@@ -13,6 +13,10 @@ export interface RunAssetRef {
   id: string;
   name: string;
   type: string;
+  _filePath?: string;
+  _fileName?: string;
+  _mimeType?: string;
+  _sizeBytes?: number;
 }
 
 export interface RunRecord {

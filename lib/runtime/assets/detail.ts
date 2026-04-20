@@ -143,7 +143,29 @@ export async function getAssetDetail(input: {
     const assetRef = run.assets.find((a) => a.id === input.assetId);
     if (!assetRef) continue;
 
-    return assetToDetail(assetRef, run.id);
+    // Reconstruct file info from persisted asset metadata if available
+    const ref = assetRef as Record<string, unknown>;
+    let fullAsset: Asset | undefined;
+    if (ref._filePath) {
+      fullAsset = {
+        id: assetRef.id,
+        type: assetRef.type as Asset["type"],
+        name: assetRef.name,
+        run_id: run.id,
+        tenantId: run.tenantId,
+        workspaceId: run.workspaceId,
+        created_at: run.createdAt,
+        file: {
+          storageKind: "file",
+          filePath: ref._filePath as string,
+          fileName: (ref._fileName as string) ?? `${assetRef.name}.pdf`,
+          mimeType: (ref._mimeType as string) ?? "application/pdf",
+          sizeBytes: (ref._sizeBytes as number) ?? 0,
+        },
+      };
+    }
+
+    return assetToDetail(assetRef, run.id, fullAsset);
   }
 
   return null;

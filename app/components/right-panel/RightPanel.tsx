@@ -9,6 +9,7 @@ import { AssetsSection } from "./AssetsSection";
 import { AssetDetailSection } from "./AssetDetailSection";
 import { MissionsSection } from "./MissionsSection";
 import { MissionDetailSection } from "./MissionDetailSection";
+import { ConnectorsSection } from "./ConnectorsSection";
 import { RunTimelineSection, type SelectedRun } from "./RunTimelineSection";
 import { MissionComposer } from "../missions/MissionComposer";
 
@@ -25,6 +26,13 @@ export default function RightPanel() {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [selectedMission, setSelectedMission] = useState<RightPanelMission | null>(null);
   const [showComposer, setShowComposer] = useState(false);
+  const [connectorsOpen, setConnectorsOpen] = useState(false);
+
+  const hasBlocked = useMemo(
+    () => liveEvents.some((e) => e.type === "capability_blocked"),
+    [liveEvents],
+  );
+  const effectiveConnectorsOpen = connectorsOpen || hasBlocked;
 
   const contextPane: ContextPane = selectedRun
     ? "timeline"
@@ -163,6 +171,19 @@ export default function RightPanel() {
               onMissionSelect={handleMissionSelect}
               onCreateMission={handleCreateMission}
             />
+            {effectiveConnectorsOpen && (
+              <div className="mt-6">
+                <ConnectorsSection />
+              </div>
+            )}
+            {!effectiveConnectorsOpen && (
+              <button
+                onClick={() => setConnectorsOpen(true)}
+                className="mt-6 text-[9px] font-mono text-white/20 hover:text-white/40 transition-colors duration-200"
+              >
+                Connections →
+              </button>
+            )}
           </div>
 
           {/* Detail view — fades in over master */}

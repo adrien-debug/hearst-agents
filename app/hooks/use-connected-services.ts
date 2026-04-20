@@ -34,12 +34,18 @@ export function useConnectedServices(): UseConnectedServicesResult {
     }
 
     setLoading(true);
-    fetch("/api/connectors/status")
-      .then((r) => (r.ok ? r.json() : { connectors: [] }))
+    fetch("/api/v2/connectors/unified")
+      .then((r) => (r.ok ? r.json() : { connections: [] }))
       .then((data) => {
-        if (Array.isArray(data.connectors)) {
-          setServices(data.connectors);
-        }
+        const connections = data.connections ?? data.connectors ?? [];
+        const mapped: ServiceStatus[] = connections.map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (c: any) => ({
+            provider: c.provider,
+            connected: c.status === "connected" || c.authConnected === true,
+          }),
+        );
+        setServices(mapped);
       })
       .catch(() => setServices([]))
       .finally(() => setLoading(false));

@@ -672,10 +672,17 @@ async function runPipeline(
     }
 
     if (event.type === "asset_generated") {
+      const ev = event as unknown as Record<string, unknown>;
       runRecord.assets.push({
         id: event.asset_id,
         name: event.name,
         type: event.asset_type,
+        ...(ev.filePath ? {
+          _filePath: ev.filePath as string,
+          _fileName: ev.fileName as string,
+          _mimeType: ev.mimeType as string,
+          _sizeBytes: ev.sizeBytes as number,
+        } : {}),
       });
     }
     if (event.type === "run_completed") {

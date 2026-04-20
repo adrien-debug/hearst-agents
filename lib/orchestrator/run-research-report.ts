@@ -182,6 +182,12 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
       asset_id: asset.id,
       asset_type: asset.type,
       name: asset.name,
+      ...(asset.file ? {
+        filePath: asset.file.filePath,
+        fileName: asset.file.fileName,
+        mimeType: asset.file.mimeType,
+        sizeBytes: asset.file.sizeBytes,
+      } : {}),
     });
 
     eventBus.emit({
