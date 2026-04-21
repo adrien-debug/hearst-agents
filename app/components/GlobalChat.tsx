@@ -333,7 +333,7 @@ export default function GlobalChat() {
   }, [sendMessage]);
 
   return (
-    <div className="shrink-0 w-full max-w-2xl mx-auto px-6 pb-6">
+    <div className="shrink-0 w-full max-w-2xl mx-auto px-6 pb-6 relative">
       {/* Messages */}
       {expanded && messages.length > 0 && (
         <div className="max-h-[40vh] overflow-y-auto scrollbar-hide mb-4">

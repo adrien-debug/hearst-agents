@@ -236,6 +236,22 @@ export function manifestMission(mission: MissionDefinition): MissionActiveObject
 
 // ── Asset → Focal Object ───────────────────────────────────
 
+/**
+ * An asset is "ready" (inspectable, can auto-materialize) when it has at least
+ * a title and either a summary or rendered sections. "delivered" is reserved for
+ * assets that are confirmed terminal (message sent, no further inspection expected).
+ */
+function resolveAssetStatus(
+  asset: Asset,
+  formatted?: FormattedOutput,
+): import("./objects").FocalObjectStatus {
+  const hasMeaningfulContent =
+    (formatted?.summary && formatted.summary.length > 0) ||
+    (formatted?.sections && formatted.sections.length > 0) ||
+    (asset.summary && asset.summary.length > 0);
+  return hasMeaningfulContent ? "ready" : "delivered";
+}
+
 export function manifestAsset(asset: Asset, formatted?: FormattedOutput): FocalObject | null {
   switch (asset.kind) {
     case "message": {
@@ -260,12 +276,13 @@ export function manifestAsset(asset: Asset, formatted?: FormattedOutput): FocalO
     }
 
     case "report": {
+      const status = resolveAssetStatus(asset, formatted);
       const report: ReportObject = {
         objectType: "report",
         id: `fo_asset_${asset.id}`,
         threadId: asset.threadId,
         title: (formatted?.title || asset.title) || "Rapport",
-        status: "delivered",
+        status,
         createdAt: asset.createdAt,
         updatedAt: asset.createdAt,
         sourceAssetId: asset.id,
@@ -275,18 +292,19 @@ export function manifestAsset(asset: Asset, formatted?: FormattedOutput): FocalO
         tier: "report",
         tone: formatted?.tone ?? "executive",
         wordCount: formatted?.wordCount ?? 0,
-        downloadRef: asset.contentRef,
+        downloadRef: undefined,
       };
       return report;
     }
 
     case "brief": {
+      const status = resolveAssetStatus(asset, formatted);
       const brief: BriefObject = {
         objectType: "brief",
         id: `fo_asset_${asset.id}`,
         threadId: asset.threadId,
         title: (formatted?.title || asset.title) || "Synthèse",
-        status: "delivered",
+        status,
         createdAt: asset.createdAt,
         updatedAt: asset.createdAt,
         sourceAssetId: asset.id,
@@ -301,12 +319,13 @@ export function manifestAsset(asset: Asset, formatted?: FormattedOutput): FocalO
     }
 
     case "document": {
+      const status = resolveAssetStatus(asset, formatted);
       const doc: DocObject = {
         objectType: "doc",
         id: `fo_asset_${asset.id}`,
         threadId: asset.threadId,
         title: (formatted?.title || asset.title) || "Document",
-        status: "delivered",
+        status,
         createdAt: asset.createdAt,
         updatedAt: asset.createdAt,
         sourceAssetId: asset.id,

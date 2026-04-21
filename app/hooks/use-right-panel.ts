@@ -25,6 +25,19 @@ export function useRightPanel() {
   const pollRef = useRef<(() => Promise<void>) | null>(null);
   const sidebarCtx = useSidebarOptional();
   const activeThreadId = sidebarCtx?.state.activeThreadId;
+  const prevThreadIdRef = useRef(activeThreadId);
+
+  // ── Thread-scope guard: clear stale SSE focal object on thread switch ─
+  useEffect(() => {
+    if (prevThreadIdRef.current !== activeThreadId) {
+      prevThreadIdRef.current = activeThreadId;
+      setData((prev) => ({
+        ...prev,
+        focalObject: undefined,
+        secondaryObjects: undefined,
+      }));
+    }
+  }, [activeThreadId]);
 
   // ── Polling fallback ───────────────────────────────────────
   useEffect(() => {

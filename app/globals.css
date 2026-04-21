@@ -266,10 +266,6 @@ body {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
 }
-.chat-bar:focus-within {
-  border-color: rgba(0, 229, 255, 0.4);
-}
-
 /* ── Ghost Core keyframes ──────────────────────────────────── */
 
 @keyframes ghost-float {

@@ -41,10 +41,10 @@ const SERVICE_ICONS: { id: string; label: string }[] = [
 ];
 
 const DEMO_MISSIONS: RightPanelMission[] = [
-  { id: "demo-1", name: "Veille concurrentielle", input: "", schedule: "every day", enabled: true, opsStatus: "running" },
-  { id: "demo-2", name: "Résumé emails du matin", input: "", schedule: "every day", enabled: true, opsStatus: "success" },
-  { id: "demo-3", name: "Rapport hebdo KPIs", input: "", schedule: "every week", enabled: true, opsStatus: "idle" },
-  { id: "demo-4", name: "Alertes mentions presse", input: "", schedule: "every hour", enabled: false, opsStatus: "idle" },
+  { id: "demo-1", name: "Veille concurrentielle", input: "Surveiller les signaux concurrentiels et produire une synthèse exploitable", schedule: "every day", enabled: true, opsStatus: "running" },
+  { id: "demo-2", name: "Résumé emails du matin", input: "Analyser les emails entrants et remonter les éléments significatifs", schedule: "every day", enabled: true, opsStatus: "success" },
+  { id: "demo-3", name: "Rapport hebdo KPIs", input: "Agréger les métriques clés et générer un point de situation clair", schedule: "every week", enabled: true, opsStatus: "idle" },
+  { id: "demo-4", name: "Alertes mentions presse", input: "Observer les mentions presse et préparer un résumé décisionnel", schedule: "every hour", enabled: false, opsStatus: "idle" },
 ];
 
 function ServiceIcon({ text }: { text: string }) {
@@ -189,28 +189,44 @@ function KpiCell({ value, label, active }: { value: number; label: string; activ
   );
 }
 
-function MissionRow({ mission }: { mission: RightPanelMission }) {
+function missionToFocalObject(mission: RightPanelMission): import("@/lib/right-panel/objects").FocalObject {
+  const now = Date.now();
+  const isRunning = mission.opsStatus === "running";
+  return {
+    objectType: "mission_active",
+    id: `fo_mission_${mission.id}`,
+    threadId: "",
+    title: mission.name,
+    status: isRunning ? "active" : mission.enabled ? "active" : "paused",
+    createdAt: mission.lastRunAt ?? now,
+    updatedAt: mission.lastRunAt ?? now,
+    morphTarget: null,
+    intent: mission.input || mission.name,
+    schedule: mission.schedule,
+    lastRunAt: mission.lastRunAt,
+    runCount: 0,
+    primaryAction: mission.enabled
+      ? { kind: "pause", label: "Pause" }
+      : { kind: "resume", label: "Reprendre" },
+  };
+}
+
+function MissionRow({ mission, onInspect }: { mission: RightPanelMission; onInspect: () => void }) {
   const isRunning = mission.opsStatus === "running";
 
   return (
-    <div className="flex items-center gap-2 w-full min-w-0 py-1.5 px-2 rounded hover:bg-white/3 transition-colors group">
+    <button
+      onClick={onInspect}
+      className="flex items-center gap-2 w-full min-w-0 py-1.5 px-2 rounded hover:bg-white/3 transition-colors group text-left"
+    >
       <ServiceIcon text={mission.name} />
-      <span className={`text-xs truncate flex-1 min-w-0 transition-colors cursor-pointer ${isRunning ? "text-cyan-accent" : "text-white/70 group-hover:text-white/90"}`}>
+      <span className={`text-xs truncate flex-1 min-w-0 transition-colors ${isRunning ? "text-cyan-accent" : "text-white/70 group-hover:text-white/90"}`}>
         {mission.name}
       </span>
-      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        {isRunning ? (
-          <button className="text-white/40 hover:text-amber-400 transition-colors p-0.5" title="Pause"><PauseIcon /></button>
-        ) : (
-          <button className="text-white/40 hover:text-cyan-accent transition-colors p-0.5" title="Lancer"><PlayIcon /></button>
-        )}
-        <button className="text-white/40 hover:text-red-400 transition-colors p-0.5" title="Arrêter"><StopIcon /></button>
-        <button className="text-white/30 hover:text-red-400 transition-colors p-0.5" title="Supprimer"><DeleteIcon /></button>
-      </div>
-      <span className={`text-[9px] font-mono shrink-0 group-hover:hidden ${isRunning ? "text-cyan-accent/60" : "text-white/35"}`}>
+      <span className={`text-[9px] font-mono shrink-0 ${isRunning ? "text-cyan-accent/60" : "text-white/35"}`}>
         {isRunning ? "en cours" : mission.enabled ? "actif" : "inactif"}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -250,10 +266,14 @@ function RightPanelInner() {
   const actionLockRef = useRef(false);
   const prevFocalIdRef = useRef(focal?.id);
   const prevThreadIdRef = useRef(sidebarCtx?.state.activeThreadId);
+  // Tracks the focal object ID the user explicitly dismissed (Escape).
+  // Auto-materialize will not re-open the same object until a new one arrives.
+  const dismissedFocalIdRef = useRef<string | null>(null);
 
-  // When thread changes, reset focal state completely
+  // When thread changes, reset focal state and dismissed guard completely
   if (sidebarCtx?.state.activeThreadId !== prevThreadIdRef.current) {
     prevThreadIdRef.current = sidebarCtx?.state.activeThreadId;
+    dismissedFocalIdRef.current = null;
     setPanelState("INDEX");
     setDocumentObject(null);
   }
@@ -273,9 +293,12 @@ function RightPanelInner() {
   }, []);
 
   const closeDocument = useCallback(() => {
+    if (documentObject) {
+      dismissedFocalIdRef.current = documentObject.id;
+    }
     setPanelState("INDEX");
     setDocumentObject(null);
-  }, []);
+  }, [documentObject]);
 
   // Keyboard: Escape closes Document → INDEX
   useEffect(() => {
@@ -286,6 +309,26 @@ function RightPanelInner() {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [panelState, closeDocument]);
+
+  // Auto-materialize: when focal becomes ready, open it automatically.
+  // Respects explicit dismissal: will not re-open the same object the user closed.
+  // Clears dismissal guard when a genuinely new focal object arrives.
+  useEffect(() => {
+    if (!focal) return;
+
+    // New focal object arrived — clear the dismissed guard
+    if (focal.id !== dismissedFocalIdRef.current && dismissedFocalIdRef.current !== null) {
+      dismissedFocalIdRef.current = null;
+    }
+
+    if (
+      (focal.status === "ready" || focal.status === "awaiting_approval") &&
+      panelState === "INDEX" &&
+      focal.id !== dismissedFocalIdRef.current
+    ) {
+      openDocument(focal);
+    }
+  }, [focal?.id, focal?.status, panelState, openDocument]);
 
   // Navigate between objects while in DOCUMENT state
   const allObjects = useMemo(
@@ -333,7 +376,7 @@ function RightPanelInner() {
     <aside
       className="hidden h-full shrink-0 flex-col border-l border-white/5 bg-transparent lg:flex relative overflow-hidden"
       style={{
-        width: isDocument ? "42%" : 280,
+        width: isDocument ? "48%" : 280,
         minWidth: 280,
         maxWidth: 760,
         transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)",
@@ -392,145 +435,58 @@ function RightPanelInner() {
 
       {/* ── STATE A: INDEX ── */}
       {!isDocument && (
-        <div className="flex-1 flex flex-col gap-2 px-3 pb-3 min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 
-          {/* ── 1. KPIs — fixed height, no scroll ── */}
-          <div className="boxed-panel p-3! shrink-0 h-16">
-            <div className="flex items-center gap-0 h-full">
-              <KpiCell
-                value={currentRun ? 1 : 0}
-                label="agent"
-                active={!!currentRun}
-              />
-              <div className="w-px h-4 bg-white/5 shrink-0" />
-              <KpiCell
-                value={missions.filter((m) => m.enabled).length}
-                label="missions"
-                active={missions.some((m) => m.opsStatus === "running")}
-              />
-              <div className="w-px h-4 bg-white/5 shrink-0" />
-              <KpiCell
-                value={allObjects.length}
-                label="objets"
-                active={isFocused}
-              />
+          {/* SYSTEM STATE */}
+          <div className="px-4 py-3 border-b border-white/5">
+            <div className="font-mono text-[9px] tracking-[0.2em] uppercase text-cyan-accent/50">
+              system
+            </div>
+            <div className="mt-2 text-xs text-white/60">
+              {focal?.status === "ready"
+                ? "active"
+                : halo.coreState !== "idle"
+                ? "thinking"
+                : "idle"}{" "}
+              · {missions?.length ?? 0} missions
             </div>
           </div>
 
-          {/* ── 2. Missions — flex-1 share, scroll interne ── */}
-          <div className="boxed-panel p-3! flex flex-col min-h-0 flex-1 basis-0">
-            <h3 className="font-mono text-[10px] font-normal tracking-[0.2em] uppercase text-cyan-accent/70 mb-2 shrink-0">
-              Missions
-            </h3>
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
-              {missions.length === 0 ? (
-                <p className="text-xs font-mono text-white/30">Aucune mission</p>
-              ) : (
-                <div className="space-y-0.5">
-                  {[...missions]
-                    .sort((a, b) => {
-                      const w = (m: RightPanelMission) =>
-                        m.opsStatus === "running" ? 3
-                          : m.opsStatus === "blocked" || m.opsStatus === "failed" ? 2
-                          : m.enabled ? 1 : 0;
-                      return w(b) - w(a);
-                    })
-                    .map((mission) => (
-                      <MissionRow key={mission.id} mission={mission} />
-                    ))}
-                </div>
-              )}
+          {/* MISSIONS */}
+          <div className="px-4 py-4 space-y-3">
+            <div className="font-mono text-[9px] tracking-[0.2em] uppercase text-cyan-accent/50">
+              missions
+            </div>
+
+            <div className="space-y-2">
+              {(missions ?? []).slice(0, 4).map((mission) => (
+                <MissionRow
+                  key={mission.id}
+                  mission={mission}
+                  onInspect={() => openDocument(missionToFocalObject(mission))}
+                />
+              ))}
             </div>
           </div>
 
-          {/* ── 3. Activité agents — flux d'exécutions, pas de chat ── */}
-          <div className="boxed-panel p-3! flex flex-col min-h-0 flex-2 basis-0">
-            <h3 className="font-mono text-[10px] font-normal tracking-[0.2em] uppercase text-cyan-accent/70 mb-2 shrink-0">
-              Activit&eacute;
-            </h3>
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
-              {secondary.length === 0 && recentRuns.length === 0 ? (
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`transition-all duration-500 ${
-                      halo.coreState !== "idle" ? "status-dot animate-pulse" : "w-1.5 h-1.5 rounded-full bg-white/10"
-                    }`}
-                  />
-                  <span className="font-mono text-xs text-white/50 uppercase">
-                    {sublineForFlow(halo.flowLabel) ?? "En veille"}
-                  </span>
+          {/* ASSETS */}
+          <div className="px-4 py-4 border-t border-white/5 space-y-3">
+            <div className="font-mono text-[9px] tracking-[0.2em] uppercase text-cyan-accent/50">
+              assets
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {(assets ?? []).slice(0, 6).map((asset: any) => (
+                <div
+                  key={asset.id}
+                  className="px-3 py-1 rounded-md border border-white/5 bg-white/[0.02] text-[10px] text-white/60 font-mono uppercase tracking-[0.15em]"
+                >
+                  {asset.type}
                 </div>
-              ) : (
-                <div className="space-y-0.5">
-                  {secondary.map((obj) => {
-                    const timeStr = obj.createdAt
-                      ? new Date(obj.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                      : "";
-                    const label = stripEmoji(obj.title || TYPE_LABELS[obj.objectType] || obj.objectType);
-                    return (
-                      <button
-                        key={obj.id}
-                        className="flex items-center gap-2.5 w-full min-w-0 text-left py-1.5 px-2 rounded hover:bg-white/3 transition-colors group"
-                        onClick={() => openDocument(obj)}
-                      >
-                        <ServiceIcon text={label} />
-                        <span className="text-xs text-white/70 group-hover:text-white/90 truncate flex-1 min-w-0 transition-colors">
-                          {label}
-                        </span>
-                        <span className="text-[9px] font-mono text-white/35 shrink-0">{timeStr}</span>
-                      </button>
-                    );
-                  })}
-                  {recentRuns.slice(0, 20).map((run) => {
-                    const ts = new Date(run.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                    const execType = run.executionMode ?? run.status ?? "run";
-                    const runLabel = RUN_LABELS[execType]
-                      ?? (run.executionMode ? `${run.executionMode}${run.agentId ? ` — ${run.agentId}` : ""}` : "Exécution");
-                    return (
-                      <div key={run.id} className="flex items-center gap-2.5 py-1.5 px-2 min-w-0 rounded hover:bg-white/3 transition-colors cursor-pointer">
-                        <ActivityIcon type={execType} />
-                        <span className="text-xs text-white/60 truncate flex-1 min-w-0">{runLabel}</span>
-                        <span className={`text-[9px] font-mono shrink-0 ${run.status === "completed" ? "text-white/35" : run.status === "running" ? "text-cyan-accent/60" : "text-amber-400/50"}`}>{ts}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              ))}
             </div>
           </div>
 
-          {/* ── 4. Assets & Services — flex-1 share, scroll interne ── */}
-          <div className="boxed-panel p-3! flex flex-col min-h-0 flex-1 basis-0">
-            <h3 className="font-mono text-[10px] font-normal tracking-[0.2em] uppercase text-cyan-accent/70 mb-2 shrink-0">
-              Assets
-            </h3>
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
-              {assets.length === 0 ? (
-                <p className="text-xs font-mono text-white/30">Aucun fichier</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-1.5">
-                  {assets.map((asset) => (
-                    <AssetChip key={asset.id} asset={asset} />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3 mt-auto pt-2 border-t border-white/5 shrink-0">
-              <span className="text-[9px] font-mono tracking-widest uppercase text-white/40 shrink-0">Services</span>
-              <div className="flex gap-1.5 flex-1 justify-end">
-                {SERVICE_ICONS.map((svc) => (
-                  <div
-                    key={svc.id}
-                    className="w-6 h-6 rounded bg-white/3 border border-white/5 flex items-center justify-center text-[8px] font-mono text-white/40 hover:text-white/60 hover:border-white/10 transition-colors cursor-default"
-                    title={svc.id}
-                  >
-                    {svc.label}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </aside>

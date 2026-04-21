@@ -188,8 +188,17 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
             runId: (row.run_id as string | undefined) ?? undefined,
           };
 
-          const formatted = asset.contentRef
-            ? formatOutput(asset.contentRef, (asset.outputTier ?? asset.kind) as OutputTier)
+          // contentRef is "raw content or reference URL" (see Asset type docs).
+          // Only call formatOutput when contentRef is plaintext content (not a URL/key).
+          // A ref is a short opaque string (URL, UUID, or storage key); actual content
+          // is typically multi-word prose. Heuristic: treat it as content only when it
+          // contains whitespace (i.e. is not a single token ref).
+          const contentIsInline =
+            asset.contentRef &&
+            asset.contentRef.length > 0 &&
+            /\s/.test(asset.contentRef);
+          const formatted = contentIsInline
+            ? formatOutput(asset.contentRef!, (asset.outputTier ?? asset.kind) as OutputTier)
             : undefined;
           const fo = manifestAsset(asset, formatted);
           if (!fo) continue;
