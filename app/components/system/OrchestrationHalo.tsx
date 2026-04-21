@@ -13,8 +13,8 @@ import type {
 
 const CORE_VISUALS: Record<HaloCoreState, { color: string; border: string }> = {
   idle: { color: "bg-white/30", border: "border-white/20" },
-  thinking: { color: "bg-cyan-accent/80 shadow-[0_0_8px_rgba(0,229,255,0.5)]", border: "border-cyan-accent/50" },
-  executing: { color: "bg-cyan-accent shadow-[0_0_12px_rgba(0,229,255,0.8)]", border: "border-cyan-accent/60" },
+  thinking: { color: "bg-cyan-accent/80 shadow-[var(--glow-cyan-sm)]", border: "border-cyan-accent/50" },
+  executing: { color: "bg-cyan-accent shadow-[var(--glow-cyan-md)]", border: "border-cyan-accent/60" },
   waiting_approval: { color: "bg-amber-400/80", border: "border-amber-500/60" },
   degraded: { color: "bg-amber-400/50", border: "border-amber-500/40" },
   success: { color: "bg-white/70", border: "border-white/30" },
@@ -93,7 +93,7 @@ const ArtifactSignal = memo(function ArtifactSignal({
     >
       <div
         className={`h-1.5 w-1.5 rounded-full transition-[opacity,background-color,box-shadow] duration-450 ease-out ${
-          isHandoff ? "bg-cyan-accent shadow-[0_0_6px_rgba(0,229,255,0.6)]" : isEmerging ? "bg-cyan-accent/50 animate-pulse" : "bg-white/30"
+          isHandoff ? "bg-cyan-accent shadow-[var(--glow-cyan-dot)]" : isEmerging ? "bg-cyan-accent/50 animate-pulse" : "bg-white/30"
         }`}
       />
       {isHandoff && (

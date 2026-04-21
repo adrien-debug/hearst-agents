@@ -124,7 +124,7 @@ function RightPanelInner() {
 
   return (
     <aside
-      className="hidden h-full shrink-0 flex-col border-l border-white/[0.05] lg:flex relative overflow-hidden"
+      className="hidden h-full shrink-0 flex-col border-l border-white/5 bg-transparent lg:flex relative overflow-hidden"
       style={{
         width: isDocument ? "100%" : "36%",
         minWidth: 360,
@@ -132,7 +132,6 @@ function RightPanelInner() {
         transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)",
         contain: "strict",
         willChange: "width",
-        background: "#000000",
       }}
     >
       {/* Status indicator */}
@@ -146,8 +145,8 @@ function RightPanelInner() {
           </button>
         )}
         <span
-          className={`ml-auto h-[5px] w-[5px] rounded-full transition-colors duration-500 ${
-            connected ? "bg-cyan-accent/60" : "bg-white/10"
+          className={`ml-auto transition-all duration-500 ${
+            connected ? "status-dot" : "h-[5px] w-[5px] rounded-full bg-white/10"
           }`}
         />
       </div>
@@ -164,7 +163,7 @@ function RightPanelInner() {
 
           {/* Document navigation */}
           {allObjects.length > 1 && (
-            <div className="flex justify-between items-center text-sm text-white/50 mt-10 pt-6 border-t border-white/[0.03]">
+            <div className="flex justify-between items-center text-sm text-white/50 mt-10 pt-6 border-t border-white/3">
               <button
                 onClick={() => hasPrev && navigateDocument(allObjects[currentDocIndex - 1])}
                 disabled={!hasPrev}
@@ -191,17 +190,14 @@ function RightPanelInner() {
           {/* Focal Context (max 25% height) */}
           {isFocused && focal && (
             <div
-              className="group max-h-[25%] overflow-hidden cursor-pointer shrink-0 transition-[opacity,border-color] duration-150 ease-out hover:opacity-90 rounded-md relative"
+              className="boxed-panel group max-h-[25%] overflow-hidden cursor-pointer shrink-0"
               style={{
                 maskImage: "linear-gradient(to bottom, black 80%, transparent 100%)",
                 WebkitMaskImage: "linear-gradient(to bottom, black 80%, transparent 100%)",
               }}
               onClick={() => openDocument(focal)}
             >
-              <div className="absolute left-0 top-3 bottom-3 w-[2px] rounded-full bg-cyan-accent opacity-60" />
-              <div className="pl-4">
-                <FocalObjectRenderer object={focal} onAction={handleFocalAction} isPending={isPending} mode="preview" />
-              </div>
+              <FocalObjectRenderer object={focal} onAction={handleFocalAction} isPending={isPending} mode="preview" />
             </div>
           )}
 
@@ -221,33 +217,31 @@ function RightPanelInner() {
                 return (
                   <button
                     key={obj.id}
-                    className="w-full group text-left"
+                    className="menu-item w-full text-left text-white/40"
                     onClick={() => openDocument(obj)}
                   >
-                    <div className="flex items-center h-10 px-2 border border-transparent rounded-md transition-colors group-hover:border-white/10 cursor-pointer gap-3">
-                      <span className="h-[5px] w-[5px] rounded-full bg-cyan-accent/25 group-hover:bg-cyan-accent/50 transition-colors shrink-0" />
-                      <span className="text-[12px] text-white/55 group-hover:text-white/80 transition-colors truncate flex-1">
-                        {obj.title || TYPE_LABELS[obj.objectType] || obj.objectType}
-                      </span>
-                      <span className="text-[11px] text-white/30 font-mono shrink-0 group-hover:text-white/45 transition-colors">
-                        {timeStr}
-                      </span>
-                    </div>
+                    <span className="h-[5px] w-[5px] rounded-full bg-cyan-accent/25 shrink-0" />
+                    <span className="text-[11px] font-medium uppercase tracking-widest truncate flex-1">
+                      {obj.title || TYPE_LABELS[obj.objectType] || obj.objectType}
+                    </span>
+                    <span className="text-[10px] font-mono shrink-0 text-white/20">
+                      {timeStr}
+                    </span>
                   </button>
                 );
               })}
             </div>
           )}
 
-          {/* Empty state — persistent structure, Halo-aware */}
+          {/* Empty state */}
           {!isFocused && !loading && (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
               <div
-                className={`h-[5px] w-[5px] rounded-full transition-colors duration-500 ${
-                  halo.coreState !== "idle" ? "bg-white/40" : "bg-white/10"
+                className={`transition-all duration-500 ${
+                  halo.coreState !== "idle" ? "status-dot animate-pulse" : "h-[5px] w-[5px] rounded-full bg-white/10"
                 }`}
               />
-              <p className="text-[10px] text-white/30 font-mono tracking-wide max-w-[20ch] text-center">
+              <p className="font-mono text-[10px] text-white/30 tracking-widest uppercase max-w-[20ch] text-center">
                 {sublineForFlow(halo.flowLabel) ?? "En veille"}
               </p>
             </div>

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "mkdir -p .next && xattr -w com.apple.fileprovider.ignore#P 1 .next 2>/dev/null; next dev -p 9000",
+    "dev:fresh": "lsof -ti tcp:9000 | xargs -r kill -9 2>/dev/null; rm -rf .next && npm run dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

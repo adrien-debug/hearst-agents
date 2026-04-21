@@ -30,6 +30,7 @@ import type {
   BriefObject,
   OutlineObject,
   ReportObject,
+  DocObject,
   WatcherDraftObject,
   WatcherActiveObject,
   MissionDraftObject,
@@ -297,6 +298,26 @@ export function manifestAsset(asset: Asset, formatted?: FormattedOutput): FocalO
         wordCount: formatted?.wordCount ?? 0,
       };
       return brief;
+    }
+
+    case "document": {
+      const doc: DocObject = {
+        objectType: "doc",
+        id: `fo_asset_${asset.id}`,
+        threadId: asset.threadId,
+        title: (formatted?.title || asset.title) || "Document",
+        status: "delivered",
+        createdAt: asset.createdAt,
+        updatedAt: asset.createdAt,
+        sourceAssetId: asset.id,
+        morphTarget: null,
+        summary: formatted?.summary ?? asset.summary ?? "",
+        sections: formatted?.sections ?? [],
+        tier: "doc",
+        tone: formatted?.tone ?? "executive",
+        wordCount: formatted?.wordCount ?? 0,
+      };
+      return doc;
     }
 
     default:

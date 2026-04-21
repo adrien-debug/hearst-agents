@@ -7,11 +7,11 @@ import type {
 } from "@/lib/ui/right-panel/types";
 
 function getRelativeTime(schedule: string): string {
-  if (schedule.includes("every day")) return "tomorrow";
-  if (schedule.includes("every hour")) return "in 45m";
-  if (schedule.includes("every week")) return "in 3d";
-  if (schedule.includes("* * * * *")) return "in 1m";
-  return "scheduled";
+  if (schedule.includes("every day")) return "demain";
+  if (schedule.includes("every hour")) return "dans 45min";
+  if (schedule.includes("every week")) return "dans 3j";
+  if (schedule.includes("* * * * *")) return "dans 1min";
+  return "planifié";
 }
 
 function SkeletonMissions() {
@@ -64,13 +64,13 @@ export function MissionsSection({
       {loading ? (
         <SkeletonMissions />
       ) : error ? (
-        <p className="text-[10px] font-mono text-white/20">Sign in to activate</p>
+        <p className="text-[10px] font-mono text-white/20">Connexion requise</p>
       ) : missions.length === 0 ? (
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-mono text-white/15">No temporal events</p>
+          <p className="text-[10px] font-mono text-white/15">Aucune mission planifiée</p>
           {onCreateMission && (
             <button onClick={onCreateMission} className="text-[10px] font-mono text-cyan-400/60 hover:text-cyan-400 transition-colors duration-200">
-              + Add
+              + Créer
             </button>
           )}
         </div>
@@ -99,7 +99,7 @@ export function MissionsSection({
                 </div>
                 {(isUpcoming || (!isRunning && !isBlocked && !mission.enabled)) && (
                   <span className="shrink-0 text-[9px] font-mono text-white/20 ml-4">
-                    {isUpcoming ? getRelativeTime(mission.schedule) : "off"}
+                    {isUpcoming ? getRelativeTime(mission.schedule) : "inactif"}
                   </span>
                 )}
               </button>
@@ -109,7 +109,7 @@ export function MissionsSection({
           {onCreateMission && (
             <div className="mt-1.5 flex justify-end">
               <button onClick={onCreateMission} className="text-[9px] font-mono text-white/20 hover:text-cyan-400 transition-colors duration-200">
-                + Add
+                + Créer
               </button>
             </div>
           )}

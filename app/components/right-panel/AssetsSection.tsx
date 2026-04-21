@@ -39,9 +39,9 @@ export function AssetsSection({
       {loading ? (
         <SkeletonAssets />
       ) : error ? (
-        <p className="text-[10px] font-mono text-white/20">Sign in to activate</p>
+        <p className="text-[10px] font-mono text-white/20">Connexion requise</p>
       ) : assets.length === 0 ? (
-        <p className="text-[10px] font-mono text-white/15">No assets generated</p>
+        <p className="text-[10px] font-mono text-white/15">Aucun fichier généré</p>
       ) : (
         <div className="flex flex-col gap-1.5">
           {assets.slice(0, 10).map((asset) => (
@@ -56,7 +56,7 @@ export function AssetsSection({
             >
               <div className="flex items-center gap-3">
                 <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 text-[8px] font-mono text-white/35 tracking-wide">
-                  {ASSET_LABEL[asset.type] ?? "FILE"}
+                  {ASSET_LABEL[asset.type] ?? "FIC"}
                 </span>
                 <p className="min-w-0 flex-1 truncate text-[10px] font-mono text-white/50 group-hover:text-white/65 transition-colors duration-200">
                   {asset.name}

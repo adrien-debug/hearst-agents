@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hearst OS — Ghost Core</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            background: "#000",
+            "cyan-accent": "#00e5ff",
+          },
+          fontFamily: {
+            geist: ["Geist", "sans-serif"],
+            mono: ["Geist Mono", "monospace"],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Geist:wght@100;300;400;700&family=Geist+Mono&display=swap');
+    
+    body { 
+      background: #000; 
+      color: #fff; 
+      font-family: 'Geist', sans-serif; 
+      overflow: hidden; 
+      cursor: none; /* CONCEPT 3: Custom Cursor */
+    }
+    
+    /* --- CONCEPT 3: TECHNICAL CURSOR --- */
+    #custom-cursor {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #00e5ff;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: difference;
+      transition: transform 0.1s ease;
+    }
+    #cursor-label {
+      position: fixed;
+      font-family: 'Geist Mono', monospace;
+      font-size: 8px;
+      color: #00e5ff;
+      pointer-events: none;
+      z-index: 9999;
+      white-space: nowrap;
+      margin-left: 15px;
+      margin-top: -5px;
+      opacity: 0.5;
+    }
+
+    /* --- CONCEPT 2: Z-DEPTH FOCUS --- */
+    .depth-focus {
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    body.is-chatting .side-panel {
+      transform: scale(0.95) translateZ(-100px);
+      filter: blur(4px);
+      opacity: 0.3;
+    }
+    body.is-chatting .ghost-main {
+      transform: scale(1.1) translateZ(50px);
+      filter: drop-shadow(0 0 40px rgba(0,229,255,0.6));
+    }
+
+    /* --- CONCEPT 1: DATA RESONANCE --- */
+    .resonance-active {
+      animation: resonance-vibe 0.5s infinite alternate ease-in-out;
+    }
+    @keyframes resonance-vibe {
+      from { border-color: rgba(0, 229, 255, 0.1); box-shadow: 0 0 0 rgba(0, 229, 255, 0); }
+      to { border-color: rgba(0, 229, 255, 0.4); box-shadow: 0 0 15px rgba(0, 229, 255, 0.1); }
+    }
+
+    /* --- CONCEPT 4: LIQUID MASKING & NOISE --- */
+    .ghost-main {
+      filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.4));
+      z-index: 10;
+      animation: ghost-float 6s infinite ease-in-out;
+      mask-image: linear-gradient(to bottom, black 50%, transparent);
+      mask-size: 100% 200%;
+      animation: ghost-float 6s infinite ease-in-out, mask-flow 10s infinite linear;
+    }
+    @keyframes mask-flow {
+      from { mask-position: 0% 0%; }
+      to { mask-position: 0% 200%; }
+    }
+
+    /* --- RE-CENTERING ON GHOST CORE (Less Future, More Soul) --- */
+    .boxed-panel {
+      position: relative;
+      background: transparent; /* Remove solid backgrounds */
+      border: none; /* Remove harsh borders */
+      padding: 2rem;
+      transition: all 0.8s ease;
+    }
+    .boxed-panel::before, .boxed-panel::after {
+      content: "";
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-color: rgba(255, 255, 255, 0.05); /* Very subtle corners */
+      border-style: solid;
+      pointer-events: none;
+      transition: all 0.8s ease;
+    }
+    /* Top-left corner */
+    .boxed-panel::before {
+      top: 0;
+      left: 0;
+      border-width: 0.5px 0 0 0.5px;
+    }
+    /* Bottom-right corner */
+    .boxed-panel::after {
+      bottom: 0;
+      right: 0;
+      border-width: 0 0.5px 0.5px 0;
+    }
+    .boxed-panel:hover {
+      background: rgba(255, 255, 255, 0.01);
+    }
+    .boxed-panel:hover::before, .boxed-panel:hover::after {
+      border-color: rgba(0, 229, 255, 0.2);
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Soften Typography */
+    h1 { font-size: 2.5rem; font-weight: 100; letter-spacing: 1.2em; text-transform: uppercase; color: rgba(255, 255, 255, 0.2); margin-bottom: 1.5rem; filter: blur(1px); }
+    h2 { font-size: 1.2rem; font-weight: 300; letter-spacing: 0.4em; text-transform: uppercase; color: rgba(255, 255, 255, 0.4); margin-bottom: 1rem; }
+    h3 { font-family: 'Geist Mono', monospace; font-size: 9px; font-weight: 400; letter-spacing: 0.6em; text-transform: uppercase; color: rgba(0, 229, 255, 0.2); margin-bottom: 0.5rem; }
+
+    /* Ghost Core Dominance */
+    .ghost-main {
+      filter: blur(2px) drop-shadow(0 0 30px rgba(0, 229, 255, 0.2));
+      opacity: 0.6;
+      animation: ghost-breathing 8s infinite ease-in-out;
+    }
+    @keyframes ghost-breathing {
+      0%, 100% { filter: blur(2px); opacity: 0.4; transform: scale(1); }
+      50% { filter: blur(0px); opacity: 0.8; transform: scale(1.05); }
+    }
+
+    /* Minimalist Grid */
+    .grid-point {
+      opacity: 0.05 !important; /* Make the grid almost invisible */
+    }
+
+    /* CONCEPT 6: MAGNETIC GRID (Mouse attraction) */
+    .grid-point {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 229, 255, 0.2);
+      border-radius: 50%;
+      transition: transform 0.2s ease-out, opacity 0.2s;
+    }
+
+    /* --- TYPOGRAPHY & COMPONENTS --- */
+    h1 { font-size: 3rem; font-weight: 100; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(255, 255, 255, 0.9); margin-bottom: 1.5rem; }
+    h2 { font-size: 1.5rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); margin-bottom: 1rem; }
+    h3 { font-family: 'Geist Mono', monospace; font-size: 0.875rem; font-weight: 400; letter-spacing: 0.4em; text-transform: uppercase; color: rgba(0, 229, 255, 0.6); margin-bottom: 0.5rem; }
+
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 0.125rem;
+      padding: 1.5rem;
+      transition: all 0.5s ease;
+    }
+    .glass-panel:hover {
+      border-color: rgba(0, 229, 255, 0.3);
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: 'Geist Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .status-dot {
+      width: 0.375rem;
+      height: 0.375rem;
+      border-radius: 9999px;
+      background: #00e5ff;
+      box-shadow: 0 0 8px #00e5ff;
+    }
+
+    .action-button {
+      padding: 0.5rem 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background: transparent;
+    }
+    .action-button:hover {
+      background: #00e5ff;
+      color: #000;
+      border-color: #00e5ff;
+    }
+
+    .icon-container {
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 0.125rem;
+      color: rgba(255, 255, 255, 0.4);
+      transition: all 0.3s ease;
+      background: transparent;
+    }
+    .icon-container:hover {
+      color: #00e5ff;
+      border-color: rgba(0, 229, 255, 0.2);
+    }
+
+    /* --- ADDITIONAL COMPONENTS --- */
+    .data-table {
+      width: 100%;
+      text-align: left;
+      border-collapse: collapse;
+    }
+    .data-table th {
+      padding: 0.75rem 1rem;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .data-table td {
+      padding: 1rem;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      transition: background 0.3s ease;
+    }
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.125rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .menu-item:hover {
+      background: rgba(0, 229, 255, 0.05);
+      transform: translateX(4px);
+    }
+    .menu-item.active {
+      background: rgba(0, 229, 255, 0.1);
+      border-left: 2px solid #00e5ff;
+    }
+
+    .input-field {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.125rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.8);
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    .input-field::placeholder {
+      color: rgba(255, 255, 255, 0.1);
+    }
+    .input-field:focus {
+      border-color: rgba(0, 229, 255, 0.5);
+    }
+
+    .tag {
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: -0.025em;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* --- CHAT BAR & LOGOS --- */
+    .chat-container {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 42rem;
+      z-index: 100;
+      padding: 0 1rem;
+    }
+    .chat-bar {
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(24px);
+      border-radius: 9999px;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+    }
+    .chat-bar:focus-within {
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+
+    .logo-grid {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 1rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 0.125rem;
+      margin-top: 2rem;
+    }
+    .brand-logo {
+      width: 1.5rem;
+      height: 1.5rem;
+      filter: grayscale(100%);
+      opacity: 0.3;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .brand-logo:hover {
+      filter: grayscale(0%);
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      position: absolute;
+      height: 100%;
+      background: #00e5ff;
+      box-shadow: 0 0 10px #00e5ff;
+    }
+
+    /* --- GHOST CORE ANIMATIONS --- */
+    .dotted-logo {
+      mask-image: radial-gradient(circle, white 1px, transparent 1.5px);
+      mask-size: 4px 4px;
+      mask-repeat: repeat;
+      fill: #00e5ff;
+    }
+
+    .bg-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0.5px, transparent 0.5px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    /* --- GHOST CORE ANIMATIONS --- */
+    .ghost-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ghost-main {
+      filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.4));
+      z-index: 10;
+      animation: ghost-float 6s infinite ease-in-out;
+    }
+
+    .ghost-aura {
+      position: absolute;
+      inset: 0;
+      opacity: 0.2;
+      filter: blur(15px);
+      animation: aura-pulse 4s infinite ease-in-out;
+    }
+
+    @keyframes ghost-float {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.8; }
+      50% { transform: translateY(-10px) scale(1.02); opacity: 1; }
+    }
+
+    @keyframes aura-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.1; }
+      50% { transform: scale(1.3); opacity: 0.3; }
+    }
+
+    /* --- AGENT STATES (INTEGRATED) --- */
+    .state-thinking .ghost-main {
+      animation: thinking-vibe 2s infinite ease-in-out;
+    }
+    @keyframes thinking-vibe {
+      0%, 100% { filter: blur(0px) brightness(1); }
+      50% { filter: blur(4px) brightness(1.5); }
+    }
+
+    .state-step .ghost-main {
+      animation: step-flash 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes step-flash {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); filter: brightness(2); }
+      100% { transform: scale(1); }
+    }
+
+    .state-fetch .ghost-main {
+      animation: fetch-jitter 0.1s infinite;
+    }
+    @keyframes fetch-jitter {
+      0% { transform: translate(1px, 0); }
+      50% { transform: translate(-1px, 1px); }
+      100% { transform: translate(0, -1px); }
+    }
+  </style>
+</head>
+<body class="state-thinking min-h-screen">
+
+  <div class="bg-pattern"></div>
+  <div class="hologram-line"></div>
+  <div id="magnetic-grid" class="fixed inset-0 pointer-events-none opacity-20"></div>
+
+  <!-- NAVIGATION -->
+  <nav class="fixed top-0 left-0 w-full z-50 border-b border-white/5 bg-black/50 backdrop-blur-xl px-12 h-20 flex items-center justify-between">
+    <div class="flex items-center gap-6">
+      <svg class="dotted-logo w-8 h-8" viewBox="560 455 155 170">
+        <polygon points="601.74 466.87 572.6 466.87 572.6 609.73 601.74 609.73 601.74 549.07 633.11 579.43 665.76 579.43 601.74 517.46 601.74 466.87"/>
+        <polygon points="672.72 466.87 672.72 528.12 644.63 500.93 611.98 500.93 672.72 559.72 672.72 609.73 701.86 609.73 701.86 466.87 672.72 466.87"/>
+      </svg>
+      <div class="h-4 w-[1px] bg-white/10"></div>
+      <span class="text-[10px] tracking-[0.4em] uppercase text-white/40 font-bold">Hearst OS</span>
+    </div>
+    <div class="flex gap-8">
+      <div class="icon-container"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+      <div class="icon-container"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg></div>
+    </div>
+  </nav>
+
+  <main class="pt-32 px-12 grid grid-cols-12 gap-12 max-w-[1600px] mx-auto pb-32">
+    
+    <!-- LEFT PANEL: SYSTEM NAVIGATION & STATUS -->
+    <div class="col-span-3 space-y-8 side-panel depth-focus">
+      <div class="boxed-panel">
+        <h3>System Navigation</h3>
+        <div class="mt-6 space-y-1">
+          <div class="menu-item active">
+            <svg class="w-4 h-4 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <span class="text-[11px] font-medium uppercase tracking-widest text-white/80">Dashboard</span>
+          </div>
+          <div class="menu-item">
+            <svg class="w-4 h-4 text-white/20 group-hover:text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span class="text-[11px] font-medium uppercase tracking-widest text-white/40 group-hover:text-white/80">Analytics</span>
+          </div>
+          <div class="menu-item">
+            <svg class="w-4 h-4 text-white/20 group-hover:text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span class="text-[11px] font-medium uppercase tracking-widest text-white/40 group-hover:text-white/80">Security</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="boxed-panel">
+        <h3>Synaptic Activity</h3>
+        <div class="space-y-6 mt-6">
+          <div class="status-indicator">
+            <div class="status-dot animate-pulse"></div>
+            <span>Processing Data Stream</span>
+          </div>
+          <div class="space-y-2">
+            <div class="flex justify-between text-[9px] text-white/20 uppercase tracking-tighter">
+              <span>Core Load</span>
+              <span>42%</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" style="width: 42%"></div>
+            </div>
+          </div>
+          <p class="text-xs text-white/30 leading-relaxed italic">Analyzing 14 active agent nodes across the global network.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: THE CORE & DATA TABLE -->
+    <div class="col-span-6 flex flex-col items-center space-y-12">
+      <div class="flex flex-col items-center justify-center min-h-[40vh]">
+        <div class="ghost-container" id="main-container">
+          <div class="ghost-aura">
+            <svg class="dotted-logo w-full h-full" viewBox="560 455 155 170">
+              <polygon points="601.74 466.87 572.6 466.87 572.6 609.73 601.74 609.73 601.74 549.07 633.11 579.43 665.76 579.43 601.74 517.46 601.74 466.87"/>
+              <polygon points="672.72 466.87 672.72 528.12 644.63 500.93 611.98 500.93 672.72 559.72 672.72 609.73 701.86 609.73 701.86 466.87 672.72 466.87"/>
+            </svg>
+          </div>
+          <svg class="ghost-main dotted-logo w-48 h-48" viewBox="560 455 155 170">
+            <polygon points="601.74 466.87 572.6 466.87 572.6 609.73 601.74 609.73 601.74 549.07 633.11 579.43 665.76 579.43 601.74 517.46 601.74 466.87"/>
+            <polygon points="672.72 466.87 672.72 528.12 644.63 500.93 611.98 500.93 672.72 559.72 672.72 609.73 701.86 609.73 701.86 466.87 672.72 466.87"/>
+          </svg>
+        </div>
+        
+        <div class="text-center mt-8">
+          <h1>Perception Core</h1>
+          <p class="font-mono text-[10px] text-cyan-accent/40 tracking-[0.8em]" id="state-label">SYSTEM_THINKING</p>
+        </div>
+      </div>
+
+      <!-- DATA TABLE SECTION -->
+      <div class="glass-panel w-full">
+        <div class="flex justify-between items-center mb-8">
+          <h3>Active Agent Processes</h3>
+          <div class="flex gap-2">
+            <div class="tag">Live</div>
+            <div class="tag text-cyan-accent border-cyan-accent/20">Encrypted</div>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Process ID</th>
+              <th>Status</th>
+              <th>Task</th>
+              <th>Efficiency</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-mono">#AG-001</td>
+              <td><div class="flex items-center gap-2"><span class="w-1 h-1 bg-cyan-accent rounded-full"></span> Active</div></td>
+              <td>Synthesizing Market Data</td>
+              <td class="text-right">94.2%</td>
+            </tr>
+            <tr>
+              <td class="font-mono">#AG-002</td>
+              <td><div class="flex items-center gap-2"><span class="w-1 h-1 bg-white/20 rounded-full"></span> Idle</div></td>
+              <td>Waiting for Input</td>
+              <td class="text-right">--</td>
+            </tr>
+            <tr>
+              <td class="font-mono">#AG-003</td>
+              <td><div class="flex items-center gap-2"><span class="w-1 h-1 bg-cyan-accent rounded-full animate-pulse"></span> Fetching</div></td>
+              <td>Retrieving Q2 Assets</td>
+              <td class="text-right">67.8%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- LOGO GRID (20 LOGOS) -->
+        <div class="mt-12">
+          <h3>Integrated Ecosystem</h3>
+          <div class="logo-grid">
+            <!-- 1. Gmail -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/gmail-icon.svg" title="Gmail">
+            <!-- 2. Notion -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/notion-2.svg" title="Notion">
+            <!-- 3. Vercel -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/vercel.svg" title="Vercel">
+            <!-- 4. Slack -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/slack-new-logo.svg" title="Slack">
+            <!-- 5. GitHub -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/github-icon-1.svg" title="GitHub">
+            <!-- 6. Figma -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/figma-1.svg" title="Figma">
+            <!-- 7. Stripe -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/stripe-4.svg" title="Stripe">
+            <!-- 8. Discord -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/discord-6.svg" title="Discord">
+            <!-- 9. Google Drive -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/google-drive-2.svg" title="Drive">
+            <!-- 10. AWS -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/aws-2.svg" title="AWS">
+            <!-- 11. OpenAI -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/openai-2.svg" title="OpenAI">
+            <!-- 12. Linear -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/linear-1.svg" title="Linear">
+            <!-- 13. Zoom -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/zoom-communications-logo.svg" title="Zoom">
+            <!-- 14. Trello -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/trello.svg" title="Trello">
+            <!-- 15. Shopify -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/shopify.svg" title="Shopify">
+            <!-- 16. LinkedIn -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/linkedin-icon-2.svg" title="LinkedIn">
+            <!-- 17. Twitter/X -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/x-2.svg" title="X">
+            <!-- 18. Adobe -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/adobe-2.svg" title="Adobe">
+            <!-- 19. Microsoft Teams -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/microsoft-teams-1.svg" title="Teams">
+            <!-- 20. Salesforce -->
+            <img class="brand-logo" src="https://cdn.worldvectorlogo.com/logos/salesforce-2.svg" title="Salesforce">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: MANIFESTATION & INPUT -->
+    <div class="col-span-3 space-y-8 side-panel depth-focus">
+      <div class="boxed-panel">
+        <h3>Command Input</h3>
+        <div class="mt-6 space-y-4">
+          <input type="text" class="input-field" placeholder="Enter system directive...">
+          <div class="flex gap-2">
+            <button class="action-button flex-1">Execute</button>
+            <button class="icon-container"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="boxed-panel">
+        <h3>Manifestation</h3>
+        <h2 class="mt-4">Q2 Strategic Briefing</h2>
+        <p class="text-xs text-white/40 font-light leading-relaxed">Synthesizing current market trends with internal performance metrics.</p>
+        <div class="flex gap-4 mt-8">
+          <button class="action-button flex-1">Approve</button>
+          <button class="action-button flex-1">Refine</button>
+        </div>
+      </div>
+
+      <div class="boxed-panel">
+        <h3>Agent Network</h3>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <div class="w-10 h-10 rounded-sm border border-cyan-accent/20 bg-cyan-accent/5 flex items-center justify-center text-[10px] text-cyan-accent font-bold">A1</div>
+          <div class="w-10 h-10 rounded-sm border border-white/5 bg-white/[0.02] flex items-center justify-center text-[10px] text-white/20">A2</div>
+          <div class="w-10 h-10 rounded-sm border border-white/5 bg-white/[0.02] flex items-center justify-center text-[10px] text-white/20">A3</div>
+          <div class="w-10 h-10 rounded-sm border border-white/5 bg-white/[0.02] flex items-center justify-center text-[10px] text-white/20 border-dashed">+</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- CHAT BAR -->
+  <div class="chat-container">
+    <div class="chat-bar">
+      <div class="flex-shrink-0 ml-2">
+        <div class="w-8 h-8 rounded-full bg-cyan-accent/10 flex items-center justify-center">
+          <svg class="w-4 h-4 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+        </div>
+      </div>
+      <input type="text" class="flex-1 bg-transparent border-none outline-none text-sm text-white/80 placeholder:text-white/20" 
+             placeholder="Ask Hearst OS anything..." 
+             onfocus="document.body.classList.add('is-chatting')" 
+             onblur="document.body.classList.remove('is-chatting')">
+      <div class="flex gap-2 mr-2">
+        <button class="w-8 h-8 flex items-center justify-center text-white/20 hover:text-cyan-accent transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+        </button>
+        <button class="w-8 h-8 flex items-center justify-center bg-white text-black rounded-full hover:bg-cyan-accent transition-all">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROL PANEL -->
+  <div class="fixed bottom-10 right-10 z-[100] bg-black/90 border border-white/10 p-6 backdrop-blur-xl rounded-sm w-64 space-y-4 shadow-2xl">
+    <div class="text-[9px] uppercase tracking-[0.3em] text-white/40 font-bold">Agent States</div>
+    <div class="grid grid-cols-1 gap-2">
+      <button onclick="changeState('thinking')" class="px-3 py-2 border border-white/10 text-[9px] uppercase hover:bg-cyan-accent hover:text-black transition-all">Thinking</button>
+      <button onclick="changeState('step')" class="px-3 py-2 border border-white/10 text-[9px] uppercase hover:bg-cyan-accent hover:text-black transition-all">Next Step</button>
+      <button onclick="changeState('fetch')" class="px-3 py-2 border border-white/10 text-[9px] uppercase hover:bg-cyan-accent hover:text-black transition-all">Data Fetch</button>
+    </div>
+  </div>
+
+  <script>
+    // --- CONCEPT 3: CUSTOM CURSOR LOGIC ---
+    const cursor = document.createElement('div');
+    cursor.id = 'custom-cursor';
+    document.body.appendChild(cursor);
+
+    const label = document.createElement('div');
+    label.id = 'cursor-label';
+    document.body.appendChild(label);
+
+    document.addEventListener('mousemove', (e) => {
+      cursor.style.left = e.clientX + 'px';
+      cursor.style.top = e.clientY + 'px';
+      label.style.left = e.clientX + 'px';
+      label.style.top = e.clientY + 'px';
+      
+      // Dynamic coordinate label
+      label.innerText = `X:${e.clientX} Y:${e.clientY} [SYSTEM_ACTIVE]`;
+
+      // CONCEPT 6: MAGNETIC GRID LOGIC
+      const points = document.querySelectorAll('.grid-point');
+      points.forEach(p => {
+        const dx = e.clientX - p.dataset.x;
+        const dy = e.clientY - p.dataset.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 150) {
+          const force = (150 - dist) / 150;
+          p.style.transform = `translate(${dx * force * 0.2}px, ${dy * force * 0.2}px) scale(${1 + force})`;
+          p.style.opacity = 0.5 + force;
+          p.style.background = '#00e5ff';
+        } else {
+          p.style.transform = 'translate(0,0) scale(1)';
+          p.style.opacity = 0.2;
+          p.style.background = 'rgba(0, 229, 255, 0.2)';
+        }
+      });
+    });
+
+    // Initialize Magnetic Grid
+    const gridContainer = document.getElementById('magnetic-grid');
+    const gap = 60;
+    for (let x = 0; x < window.innerWidth; x += gap) {
+      for (let y = 0; y < window.innerHeight; y += gap) {
+        const p = document.createElement('div');
+        p.className = 'grid-point';
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        p.dataset.x = x;
+        p.dataset.y = y;
+        gridContainer.appendChild(p);
+      }
+    }
+
+    // Cursor hover effects
+    document.querySelectorAll('.glass-panel, .action-button, .brand-logo, .menu-item').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.transform = 'scale(2.5)';
+        cursor.style.background = 'white';
+        label.style.color = 'white';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.transform = 'scale(1)';
+        cursor.style.background = '#00e5ff';
+        label.style.color = '#00e5ff';
+      });
+    });
+
+    function changeState(state) {
+      document.body.className = 'state-' + state + ' min-h-screen';
+      document.getElementById('state-label').innerText = 'SYSTEM_' + state.toUpperCase();
+      
+      // CONCEPT 1: Trigger Resonance on Thinking/Fetch
+      const panels = document.querySelectorAll('.glass-panel');
+      if (state === 'thinking' || state === 'fetch') {
+        panels.forEach(p => p.classList.add('resonance-active'));
+      } else {
+        panels.forEach(p => p.classList.remove('resonance-active'));
+      }
+    }
+  </script>
+
+</body>
+</html>

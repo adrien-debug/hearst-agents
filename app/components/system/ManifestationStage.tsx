@@ -1,14 +1,13 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useHaloRuntime } from "@/app/lib/halo-runtime-context";
 import { useFocalObject } from "@/app/hooks/use-focal-object";
+import { useThoughtStream } from "@/app/hooks/use-thought-stream";
 import {
   deriveManifestationVisualState,
   focalStatusSubline,
   sublineForFlow,
-  type ManifestationVisualState,
 } from "@/app/lib/manifestation-stage-model";
 
 function greetingWord(): string {
@@ -18,95 +17,27 @@ function greetingWord(): string {
   return "Bonsoir";
 }
 
-const OVERSHOOT_MS = 380;
+const GHOST_SVG_VIEWBOX = "560 455 155 170";
+const GHOST_SVG_PATHS = (
+  <>
+    <polygon points="601.74 466.87 572.6 466.87 572.6 609.73 601.74 609.73 601.74 549.07 633.11 579.43 665.76 579.43 601.74 517.46 601.74 466.87" />
+    <polygon points="672.72 466.87 672.72 528.12 644.63 500.93 611.98 500.93 672.72 559.72 672.72 609.73 701.86 609.73 701.86 466.87 672.72 466.87" />
+  </>
+);
 
-function overshootMultiplier(u: number): number {
-  if (u <= 0 || u >= 1) return 1;
-  return 1 + 0.048 * 4 * u * (1 - u);
-}
-
-function phaseBaseScale(phase: ManifestationVisualState): number {
-  if (phase === "active_condensation") return 1.02;
-  return 1;
-}
-
-function useNucleusOvershoot(phase: ManifestationVisualState, sizeKey: string) {
-  const [mult, setMult] = useState(1);
-  const rafRef = useRef<number | null>(null);
-  const prevRef = useRef<string | null>(null);
-  const startRef = useRef<number | null>(null);
-
-  const cancelAnim = useCallback(() => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-    startRef.current = null;
-  }, []);
-
-  useEffect(() => {
-    const key = `${phase}@${sizeKey}`;
-    const prev = prevRef.current;
-
-    if (prev === null) {
-      prevRef.current = key;
-      setMult(1);
-      return;
-    }
-    if (prev === key) return;
-
-    const prevDim = prev.split("@")[1] ?? "0x0";
-    const keyDim = key.split("@")[1] ?? "0x0";
-    const [pw, ph] = prevDim.split("x").map((n) => Number.parseInt(n, 10) || 0);
-    const [kw, kh] = keyDim.split("x").map((n) => Number.parseInt(n, 10) || 0);
-    if (pw === 0 && ph === 0 && kw > 0 && kh > 0) {
-      prevRef.current = key;
-      setMult(1);
-      return;
-    }
-
-    prevRef.current = key;
-    cancelAnim();
-    startRef.current = null;
-
-    const tick = (now: number) => {
-      if (startRef.current === null) startRef.current = now;
-      const u = Math.min(1, (now - startRef.current) / OVERSHOOT_MS);
-      setMult(overshootMultiplier(u));
-      if (u < 1) {
-        rafRef.current = requestAnimationFrame(tick);
-      } else {
-        setMult(1);
-        rafRef.current = null;
-        startRef.current = null;
-      }
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return cancelAnim;
-  }, [phase, sizeKey, cancelAnim]);
-
-  return mult;
-}
+const STATE_ANIM: Record<string, string> = {
+  active_condensation: "ghost-thinking",
+  idle_habited: "",
+  ready_stabilized: "",
+};
 
 export function ManifestationStage() {
   const { data: session } = useSession();
   const { state: halo } = useHaloRuntime();
   const { focal, isFocused } = useFocalObject();
 
-  const shellRef = useRef<HTMLDivElement>(null);
-  const [sizeKey, setSizeKey] = useState("0x0");
-
-  useEffect(() => {
-    const el = shellRef.current;
-    if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver((entries) => {
-      const cr = entries[0]?.contentRect;
-      if (!cr) return;
-      setSizeKey(`${Math.round(cr.width)}x${Math.round(cr.height)}`);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  const isFocalReady = focal?.status === "ready" || focal?.status === "awaiting_approval";
+  const activeThought = useThoughtStream(isFocalReady);
 
   const firstName = session?.user?.name?.split(" ")[0];
 
@@ -119,9 +50,6 @@ export function ManifestationStage() {
       : null,
   });
 
-  const overshootMult = useNucleusOvershoot(phase, sizeKey);
-  const nucleusScale = phaseBaseScale(phase) * overshootMult;
-
   let primaryLine: string;
   if (phase === "idle_habited") {
     primaryLine = `${greetingWord()}${firstName ? `, ${firstName}` : ""}`;
@@ -133,67 +61,71 @@ export function ManifestationStage() {
     primaryLine = "Une réponse prend forme.";
   }
 
-  let secondaryLine: string;
-  if (focal && phase !== "idle_habited") {
-    secondaryLine =
-      focalStatusSubline(focal.status)
-      ?? sublineForFlow(halo.flowLabel)
-      ?? "Visible à droite.";
-  } else {
-    secondaryLine =
-      sublineForFlow(halo.flowLabel)
-      ?? "Tout est en place. Dites ce dont vous avez besoin.";
-  }
+  const secondaryLine: string =
+    activeThought
+    ?? (focal && phase !== "idle_habited"
+      ? (focalStatusSubline(focal.status)
+        ?? sublineForFlow(halo.flowLabel)
+        ?? "Visible à droite.")
+      : (sublineForFlow(halo.flowLabel)
+        ?? "Tout est en place. Dites ce dont vous avez besoin."));
+
+  const stateLabel =
+    phase === "active_condensation" ? "SYSTEM_THINKING" :
+    phase === "ready_stabilized" ? "SYSTEM_READY" :
+    "SYSTEM_IDLE";
+
+  const animClass = STATE_ANIM[phase] ?? "";
 
   return (
-    <div className="relative z-0 flex flex-col items-center justify-center gap-6 px-6 text-center max-w-md">
+    <div className="relative z-0 flex flex-col items-center justify-center gap-8 px-6 text-center">
+      {/* Ghost Core */}
       <div
-        ref={shellRef}
-        className="relative mx-auto aspect-square w-40 shrink-0"
+        className={`relative flex items-center justify-center ${animClass}`}
+        style={{ width: 200, height: 200 }}
         aria-hidden
       >
-        <div
-          className="relative h-full w-full"
-          style={{ transform: `scale(${nucleusScale})`, transformOrigin: "50% 50%" }}
+        {/* Aura */}
+        <svg
+          className="dotted-logo absolute inset-0 w-full h-full"
+          viewBox={GHOST_SVG_VIEWBOX}
+          style={{ opacity: 0.15, filter: "blur(15px)", animation: "aura-pulse 4s infinite ease-in-out" }}
         >
-          {/* Outer shell — visible border on black */}
-          <div
-            className={`absolute inset-0 rounded-sm border transition-[opacity,border-color,box-shadow] duration-480 ease-out ${
-              phase === "idle_habited"
-                ? "border-white/20 opacity-70"
-                : phase === "active_condensation"
-                  ? "border-cyan-accent/40 opacity-90 shadow-[0_0_15px_rgba(0,229,255,0.15)]"
-                  : "border-white/30 opacity-95"
-            }`}
-          />
-          {/* Inner ring */}
-          <div
-            className={`pointer-events-none absolute inset-5 rounded-sm border transition-[opacity,border-color] duration-480 ease-out ${
-              phase === "active_condensation" ? "border-cyan-accent/30 opacity-80" : "border-white/20 opacity-40"
-            }`}
-          />
-          {/* Core dot */}
-          <div
-            className={`pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity duration-480 ease-out ${
-              phase === "idle_habited" ? "opacity-50" : phase === "ready_stabilized" ? "opacity-100" : "opacity-90"
-            }`}
-          >
-            <div className={`h-1.5 w-1.5 rounded-full transition-colors duration-480 ${
-              phase === "active_condensation" ? "bg-cyan-accent shadow-[0_0_8px_rgba(0,229,255,0.8)]" : "bg-white"
-            }`} />
-          </div>
-        </div>
+          {GHOST_SVG_PATHS}
+        </svg>
+        {/* Main */}
+        <svg
+          className="dotted-logo w-24 h-24 relative z-10"
+          viewBox={GHOST_SVG_VIEWBOX}
+          style={{
+            filter: "drop-shadow(0 0 20px rgba(0, 229, 255, 0.15))",
+            opacity: 0.6,
+            animation: phase === "active_condensation"
+              ? "thinking-vibe 2s infinite ease-in-out"
+              : "ghost-float 6s infinite ease-in-out",
+          }}
+        >
+          {GHOST_SVG_PATHS}
+        </svg>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-lg font-light tracking-tight text-white/90 leading-snug">
+      {/* Typography */}
+      <div className="flex flex-col items-center gap-3">
+        <h1 className="text-[2.5rem] font-thin tracking-[1.2em] uppercase text-white/20">
           {primaryLine}
         </h1>
-        <p className="text-[12px] leading-relaxed text-zinc-400 font-light max-w-[30ch] mx-auto">
+        <p className={`font-mono text-[10px] tracking-[0.8em] transition-colors duration-300 ${
+          activeThought ? "text-cyan-accent/80" : "text-cyan-accent/40"
+        }`}>
+          {stateLabel}
+        </p>
+        <p className={`text-xs leading-relaxed font-light max-w-[30ch] transition-colors duration-300 ${
+          activeThought ? "text-white/70" : "text-white/40"
+        }`}>
           {secondaryLine}
         </p>
         {phase === "ready_stabilized" && isFocused && focal && (
-          <p className="text-[10px] tracking-wide text-zinc-500 font-light pt-1">
+          <p className="text-[10px] tracking-wide text-white/30 font-light pt-1">
             {"Visible à droite."}
           </p>
         )}

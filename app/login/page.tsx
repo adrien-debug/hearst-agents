@@ -83,7 +83,7 @@ function LoginContent() {
 
   if (status === "loading" || status === "authenticated") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#09090b]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
           <p className="text-[13px] text-white/70">
@@ -95,7 +95,7 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#09090b] px-6 py-8 sm:px-8 md:px-10 md:py-16">
+    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-8 sm:px-8 md:px-10 md:py-16">
       {/* glow removed — invariant: no blur, no shadow */}
 
       <div className="relative w-full max-w-[480px]">
@@ -135,7 +135,7 @@ function LoginContent() {
                   onClick={() => handleSignIn(provider.id)}
                   disabled={isDisabled}
                   aria-label={provider.label}
-                  className="group relative flex h-[50px] w-full items-center justify-center gap-3 rounded-[13px] border border-white/8 bg-white/3 text-[14px] font-medium text-white/80 transition-[color,background-color,border-color,transform,opacity] duration-200 hover:border-white/14 hover:bg-white/6 hover:text-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50"
+                  className="group relative flex h-[50px] w-full items-center justify-center gap-3 rounded-[13px] border border-white/8 bg-white/3 text-[14px] font-medium text-white/80 transition-[color,background-color,border-color,transform,opacity] duration-200 hover:border-white/14 hover:bg-white/6 hover:text-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
@@ -183,7 +183,7 @@ export default function LoginPage() {
     <SessionProvider>
       <Suspense
         fallback={
-          <div className="flex min-h-screen items-center justify-center bg-[#09090b]">
+          <div className="flex min-h-screen items-center justify-center bg-background">
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
           </div>
         }

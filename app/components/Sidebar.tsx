@@ -50,7 +50,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-full w-56 flex-col border-r border-white/[0.05] px-4 py-6" style={{ background: "#020202" }}>
+    <aside className="fixed left-0 top-0 z-40 flex h-full w-56 flex-col border-r border-white/[0.05] bg-rail px-4 py-6">
       <Link href="/" className="mb-8 flex flex-col">
         <span className="text-[10px] font-semibold uppercase tracking-[0.4em] text-white/40">
           Hearst

@@ -35,9 +35,9 @@ import {
 // ── Visual mapping ──────────────────────────────────────────
 
 const THREAD_STYLES: Record<ThreadVisualState, string> = {
-  active: "text-white opacity-100",
-  rest: "text-white/50 opacity-80 hover:opacity-100 hover:text-white/70",
-  faded: "text-white/30 opacity-50 hover:opacity-70 hover:text-white/50",
+  active: "menu-item-active text-white/80",
+  rest: "text-white/40",
+  faded: "text-white/20",
 };
 
 export default function AppNav() {
@@ -63,29 +63,27 @@ export default function AppNav() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 hidden h-full flex-col border-r border-white/5 bg-black transition-[width] duration-300 md:flex ${
+      className={`fixed left-0 top-0 z-40 hidden h-full flex-col border-r border-white/5 transition-[width] duration-300 md:flex ${
         isCollapsed ? "w-[60px]" : "w-[240px]"
       }`}
     >
       {/* ── Workspace header ─────────────────────────────── */}
-      <div className="flex h-14 shrink-0 items-center gap-3 px-4">
+      <div className="flex h-14 shrink-0 items-center gap-3 px-4 relative">
         <Link
           href="/"
           onClick={handleNewThread}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/5 transition-colors duration-200 hover:bg-white/10"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border border-white/5 transition-colors duration-200 hover:border-cyan-accent/20"
           title="Nouveau fil"
         >
-          <span className="text-[10px] font-semibold text-white/70">H</span>
+          <span className="text-[10px] font-semibold text-white/40">H</span>
         </Link>
-        {!isCollapsed && activeWorkspace && (
-          <span className="truncate text-[9px] tracking-[0.14em] text-white/50 uppercase">
-            {activeWorkspace.label}
-          </span>
-        )}
         {!isCollapsed && (
-          <span className="ml-auto rounded border border-green-500/20 bg-green-500/5 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.14em] text-green-500/70">
-            ONLINE
-          </span>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="status-dot w-1 h-1" />
+            <span className="font-mono text-[8px] tracking-[0.2em] uppercase text-white/20">
+              En ligne
+            </span>
+          </div>
         )}
         {isCollapsed && (
           <button
@@ -102,49 +100,40 @@ export default function AppNav() {
 
       {/* ── Live Activity (HUD) ──────────────────────────── */}
       {!isCollapsed && (
-        <div className="shrink-0 px-5 pb-2 pt-4">
-          <span className="text-[9px] tracking-[0.14em] text-white/45 uppercase">
-            Activité en arrière-plan
+        <div className="boxed-panel shrink-0 mx-3 mt-2">
+          <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-cyan-accent/60">
+            Synaptic Activity
           </span>
-          <div className="mt-2 flex flex-col gap-2">
+          <div className="mt-4 space-y-4">
             {haloState.coreState !== "idle" ? (
-              <div className="rounded-md border border-white/10 bg-white/5 p-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-medium text-white/90">
-                    {haloState.flowLabel || "Traitement..."}
-                  </span>
-                  <span className="flex h-2 w-2 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/40 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white/60"></span>
-                  </span>
+              <>
+                <div className="status-indicator">
+                  <div className="status-dot animate-pulse" />
+                  <span>{haloState.flowLabel || "Processing Data Stream"}</span>
                 </div>
-                <div className="mt-1.5 flex items-center gap-2">
-                  <span className="text-[11px] leading-relaxed text-white/50">
-                    {sublineForFlow(haloState.flowLabel) || "L'agent travaille sur votre demande"}
-                  </span>
-                </div>
-              </div>
+                <p className="text-xs text-white/30 leading-relaxed italic">
+                  {sublineForFlow(haloState.flowLabel) || "L'agent travaille sur votre demande"}
+                </p>
+              </>
             ) : (
-              <div className="rounded-md border border-transparent p-2.5 opacity-50">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-medium text-white/90">Système en veille</span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-white/20"></span>
+              <>
+                <div className="status-indicator">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                  <span>Système en veille</span>
                 </div>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-[11px] leading-relaxed text-white/50">Aucune mission active</span>
-                </div>
-              </div>
+                <p className="text-xs text-white/30 leading-relaxed italic">Aucune mission active</p>
+              </>
             )}
           </div>
         </div>
       )}
 
       {!isCollapsed && (
-        <div className="shrink-0 px-5 pb-2 pt-3">
-          <span className="text-[9px] tracking-[0.14em] text-white/45 uppercase">
+        <div className="boxed-panel shrink-0 mx-3">
+          <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-cyan-accent/60">
             Contexte actif
           </span>
-          <div className="mt-2 rounded-md border border-white/8 bg-white/3 px-3 py-3">
+          <div className="mt-3">
             <p className="truncate text-[12px] font-medium leading-tight text-white/85">
               {activeThread?.title ?? "Nouveau fil"}
             </p>
@@ -166,7 +155,7 @@ export default function AppNav() {
         ) : (
           <>
             <div className="px-5 pt-4 pb-1">
-              <span className="text-[9px] tracking-[0.14em] text-white/45 uppercase">
+              <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-cyan-accent/60">
                 Mémoire (Threads)
               </span>
             </div>
@@ -179,7 +168,7 @@ export default function AppNav() {
             {groupedThreads.map((group) => (
               <div key={group.group} className="mb-1">
                 <div className="px-5 pb-1 pt-4">
-                  <span className="text-[9px] tracking-[0.14em] text-white/45 uppercase">
+                  <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-cyan-accent/40">
                     {group.label}
                   </span>
                 </div>
@@ -220,24 +209,23 @@ function ThreadRow({
   return (
     <button
       onClick={onSelect}
-      className={`relative flex w-full flex-col px-5 py-1.5 text-left transition-colors duration-300 ${THREAD_STYLES[visual]}`}
+      className={`menu-item w-full text-left ${THREAD_STYLES[visual]}`}
     >
-      {isActive && (
-        <span className="absolute left-2 top-1/2 h-3 w-[1.5px] -translate-y-1/2 rounded-full bg-white/40" />
-      )}
-      <div className="flex items-baseline gap-2">
-        {thread.pinned && (
-          <span className="text-[7px] text-white/30">●</span>
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <div className="flex items-baseline gap-2">
+          {thread.pinned && (
+            <span className="text-[7px] text-cyan-accent/40">●</span>
+          )}
+          <span className="truncate text-[11px] font-medium uppercase tracking-widest">
+            {thread.title}
+          </span>
+        </div>
+        {showPreview && thread.preview && (
+          <span className="truncate text-[10px] leading-tight text-white/20">
+            {thread.preview}
+          </span>
         )}
-        <span className="truncate text-[12px] leading-tight">
-          {thread.title}
-        </span>
       </div>
-      {showPreview && thread.preview && (
-        <span className="mt-0.5 truncate text-[11px] leading-tight text-white/30">
-          {thread.preview}
-        </span>
-      )}
     </button>
   );
 }

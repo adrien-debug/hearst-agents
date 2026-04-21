@@ -30,6 +30,7 @@ export type FocalObjectType =
   | "brief"
   | "outline"
   | "report"
+  | "doc"
   | "watcher_draft"
   | "watcher_active"
   | "mission_draft"
@@ -137,6 +138,18 @@ export interface ReportObject extends FocalObjectBase {
   morphTarget: null;
 }
 
+// ── Doc (generic multi-step output) ─────────────────────────
+
+export interface DocObject extends FocalObjectBase {
+  objectType: "doc";
+  summary: string;
+  sections: FormattedSection[];
+  tier: "doc";
+  tone: OutputTone;
+  wordCount: number;
+  morphTarget: "report" | null;
+}
+
 // ── Watcher Draft ───────────────────────────────────────────
 
 export interface WatcherDraftObject extends FocalObjectBase {
@@ -187,6 +200,7 @@ export type FocalObject =
   | BriefObject
   | OutlineObject
   | ReportObject
+  | DocObject
   | WatcherDraftObject
   | WatcherActiveObject
   | MissionDraftObject

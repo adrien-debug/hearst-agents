@@ -13,7 +13,7 @@
  * - Title is typographic, not a header bar
  */
 
-import { memo } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import type { FocalObject, FocalAction } from "@/lib/right-panel/objects";
 import { getProviderUi, getProviderLabel } from "@/lib/providers/registry";
 
@@ -23,6 +23,7 @@ export const TYPE_LABELS: Record<string, string> = {
   brief: "SYNTHÈSE",
   outline: "EN COURS",
   report: "RAPPORT",
+  doc: "DOCUMENT",
   watcher_draft: "SURVEILLANCE",
   watcher_active: "SURVEILLANCE ACTIVE",
   mission_draft: "MISSION",
@@ -49,13 +50,13 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
     <div
       key={object.id}
       className={`flex flex-col max-w-[60ch] animate-in fade-in slide-in-from-bottom-3 duration-150 ease-out ${
-        isPreview ? "px-6 pt-6 pb-4 gap-3" : "p-6 gap-6"
+        isPreview ? "gap-3" : "glass-panel gap-6"
       }`}
     >
       {/* Status + type badge */}
         <div className="flex items-center gap-3">
           <StatusDot status={object.status} />
-          <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/50">
+          <span className="tag">
             {TYPE_LABELS[object.objectType] ?? object.objectType}
           </span>
         </div>
@@ -87,7 +88,7 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
           <button
             onClick={() => onAction(object.primaryAction!)}
             disabled={isPending}
-            className="text-[11px] font-mono tracking-wider text-amber-500 border border-amber-500 bg-transparent px-3 py-1.5 hover:bg-amber-500/10 hover:border-amber-500/80 transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            className="action-button"
           >
             {isPending ? "EN COURS..." : object.primaryAction.label}
           </button>
@@ -121,6 +122,73 @@ function ScanBody({ text, large }: { text: string; large?: boolean }) {
           <p className={textClass}>{line}</p>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ── Document V2 Renderer (Editorial + Afterglow) ────────────
+
+function useAfterglow(text: string) {
+  const [glow, setGlow] = useState(false);
+  const prevText = useRef(text);
+
+  useEffect(() => {
+    if (prevText.current !== text) {
+      prevText.current = text;
+      setGlow(true);
+      const t = setTimeout(() => setGlow(false), 3000); // 3s decay
+      return () => clearTimeout(t);
+    }
+  }, [text]);
+
+  return glow;
+}
+
+function DocumentSection({ heading, body, mode }: { heading?: string; body: string; mode: "preview" | "full" }) {
+  const isFull = mode === "full";
+  const glow = useAfterglow(body);
+
+  const lines = body
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="relative group">
+      {/* Gutter Resonance (1px line on the left when updating) */}
+      <div 
+        className={`absolute -left-6 top-0 bottom-0 w-px transition-all duration-3000 ease-out ${
+          glow ? "bg-cyan-accent/80 shadow-(--glow-cyan-sm)" : "bg-transparent"
+        }`} 
+      />
+      
+      <div className={`space-y-4 ${isFull ? "mb-12" : "mb-6"}`}>
+        {heading && (
+          <h3 className={`font-medium tracking-tight transition-colors duration-3000 ease-out ${
+            glow ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "text-white"
+          } ${isFull ? "text-xl" : "text-base"}`}>
+            {heading}
+          </h3>
+        )}
+        
+        <div className="space-y-4">
+          {lines.map((line, i) => {
+            const isList = line.startsWith("-") || line.startsWith("•") || line.startsWith("*");
+            const cleanLine = line.replace(/^[-–•*]\s*/, "");
+            
+            return (
+              <div key={i} className={isList ? "pl-4 relative" : ""}>
+                {isList && <span className="absolute left-0 top-[0.6em] w-1 h-1 rounded-full bg-zinc-500" />}
+                <p className={`transition-colors duration-3000 ease-out ${
+                  glow ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "text-zinc-300"
+                } ${isFull ? "text-[16px] leading-[1.7] max-w-[65ch] antialiased" : "text-[14px] leading-relaxed"}`}>
+                  {cleanLine}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -212,6 +280,17 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
         </div>
       );
 
+    case "doc":
+      return (
+        <div className={large ? "space-y-0 pt-4" : sectionGap}>
+          {object.summary && <DocumentSection body={object.summary} mode={mode} />}
+          {object.sections.map((s, i) => (
+            <DocumentSection key={i} heading={s.heading} body={s.body} mode={mode} />
+          ))}
+          <WordCount count={object.wordCount} />
+        </div>
+      );
+
     case "mission_draft":
       return (
         <div className={sectionGap}>
@@ -272,15 +351,14 @@ function SkeletonBody() {
 // ── Shared atoms ────────────────────────────────────────────
 
 function StatusDot({ status }: { status: string }) {
-  const color =
-    status === "active" || status === "delivered" ? "bg-white/50" :
-    status === "composing" || status === "delivering" ? "bg-white/40 animate-pulse" :
-    status === "awaiting_approval" ? "bg-amber-400/50 animate-pulse" :
-    status === "failed" ? "bg-red-400/50" :
-    status === "paused" ? "bg-white/15" :
-    "bg-white/10";
+  const active = status === "active" || status === "delivered" || status === "composing" || status === "delivering";
+  const amber = status === "awaiting_approval";
+  const red = status === "failed";
 
-  return <span className={`h-[5px] w-[5px] rounded-full ${color}`} />;
+  if (active) return <span className="status-dot animate-pulse" />;
+  if (amber) return <span className="w-1.5 h-1.5 rounded-full bg-amber-400/50 shadow-[0_0_6px_rgba(251,191,36,0.6)] animate-pulse" />;
+  if (red) return <span className="w-1.5 h-1.5 rounded-full bg-red-400/50 shadow-[0_0_6px_rgba(248,113,113,0.6)]" />;
+  return <span className="w-1.5 h-1.5 rounded-full bg-white/10" />;
 }
 
 function DeliveryBadge({ status }: { status: string }) {

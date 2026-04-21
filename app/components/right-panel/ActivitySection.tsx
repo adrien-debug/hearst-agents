@@ -61,7 +61,7 @@ function LiveEventRow({ event, idx }: { event: StreamEvent; idx: number }) {
             blocked — {providers.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
           </p>
           <Link href={deepLink} className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300">
-            Connect →
+            Connecter →
           </Link>
         </div>
       </div>
@@ -114,16 +114,16 @@ export function ActivitySection({
       {loading ? (
         <SkeletonRows />
       ) : error ? (
-        <p className="text-[10px] font-mono text-white/20">Sign in to activate</p>
+        <p className="text-[10px] font-mono text-white/20">Connexion requise</p>
       ) : runs.length === 0 && !currentRun && visibleLiveEvents.length === 0 ? (
-        <p className="text-[10px] font-mono text-white/15">System idle</p>
+        <p className="text-[10px] font-mono text-white/15">Système en veille</p>
       ) : (
         <div className="flex flex-col-reverse gap-0 pt-6">
           {currentRun && (
             <div className="flex items-center gap-3 py-1 opacity-100">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0 mt-0.5 ml-1" />
               <span className="text-[10px] font-mono text-cyan-400 truncate">
-                Running…
+                En cours…
               </span>
             </div>
           )}

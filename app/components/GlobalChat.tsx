@@ -7,7 +7,7 @@ import { useMission, detectIntent, approveMission, cancelMission } from "../lib/
 import { useOrchestrate, type V2Event } from "../hooks/use-orchestrate";
 import { useChatActivity } from "../lib/chat-activity";
 import { getConnectAction, triggerConnect, sortByConnectPriority } from "../lib/connect-actions";
-import { OrchestrationHalo } from "./system/OrchestrationHalo";
+
 import { useThreadSwitchOptional } from "../hooks/use-thread-switch";
 import { resolveConversationId, type ChatMessage } from "../lib/thread-memory";
 import { useSidebarOptional } from "../hooks/use-sidebar";
@@ -334,10 +334,10 @@ export default function GlobalChat() {
 
   // All pages — bottom overlay
   return (
-    <div className="relative w-full max-w-3xl mx-auto px-4 pb-6">
-      {/* Messages Area - The Void */}
+    <>
+      {/* Messages Area */}
       {expanded && messages.length > 0 && (
-        <div className="max-h-[60vh] overflow-y-auto mb-6 scrollbar-hide">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-2xl z-90 max-h-[50vh] overflow-y-auto scrollbar-hide px-4">
           <div className="flex flex-col gap-6 py-4">
             {messages.map((m, i) => (
               <ChatMessage
@@ -353,41 +353,39 @@ export default function GlobalChat() {
         </div>
       )}
 
-      {/* Orchestration Halo */}
-      <div className="mb-4">
-        <OrchestrationHalo restoredState={threadSwitch?.restoredHaloState} />
+      {/* Chat Bar (pill) — fixed bottom center */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl z-100 px-4">
+        <form
+          onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
+          className="chat-bar"
+        >
+          <div className="shrink-0 ml-2">
+            <div className="w-8 h-8 rounded-full bg-cyan-accent/10 flex items-center justify-center">
+              <svg className="w-4 h-4 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+            </div>
+          </div>
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onFocus={() => { if (messages.length > 0) setExpanded(true); }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(input); } }}
+            placeholder="Ask Hearst OS anything..."
+            rows={1}
+            className={`flex-1 bg-transparent border-none outline-none text-sm resize-none py-3 transition-colors duration-75 ${inputFlash ? "text-white" : "text-white/80"} placeholder:text-white/20 ${streaming ? "caret-amber-400" : "caret-white"}`}
+            disabled={streaming}
+          />
+          <div className="flex gap-2 mr-2">
+            <button type="button" className="w-8 h-8 flex items-center justify-center text-white/20 hover:text-cyan-accent transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+            </button>
+            <button type="submit" disabled={streaming || !input.trim()} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-full hover:bg-cyan-accent transition-all disabled:opacity-30">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+            </button>
+          </div>
+        </form>
       </div>
-
-      {/* Input Bar */}
-      <form
-        onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
-        className="relative flex items-center h-[80px] border-t border-white/[0.05] px-12"
-        style={{ background: "#000000" }}
-      >
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onFocus={() => { if (messages.length > 0) setExpanded(true); }}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(input); } }}
-          placeholder="..."
-          rows={1}
-          className={`flex-1 bg-transparent border-none text-sm placeholder-white/20 outline-none resize-none h-full py-6 font-mono transition-colors duration-75 ${inputFlash ? "text-white" : "text-white/90"}`}
-          disabled={streaming}
-          style={{ caretColor: streaming ? "#F59E0B" : "white" }}
-        />
-        {!input && !streaming && (
-          <span className="absolute left-12 top-1/2 -translate-y-1/2 text-white/30 font-mono text-sm" style={{ animation: "blink-caret 1s step-end infinite" }}>
-            █
-          </span>
-        )}
-        <button type="submit" disabled={streaming || !input.trim()} className="flex items-center justify-center w-10 h-10 text-white/30 hover:text-white/60 transition-colors disabled:opacity-10">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-          </svg>
-        </button>
-      </form>
-    </div>
+    </>
   );
 }
 
@@ -408,8 +406,8 @@ function ChatMessage({
   const showApproval = msg.awaitingApproval && !msg.approved && !msg.cancelled;
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[85%] text-sm leading-relaxed tracking-wide ${isUser ? "text-white/70" : "text-white font-light"}`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} relative group`}>
+      <div className={`max-w-[85%] text-sm leading-relaxed tracking-wide ${isUser ? "text-white/50 text-right" : "text-white/70 font-light"}`}>
         <pre className="whitespace-pre-wrap font-sans">
           {msg.content}
           {isLiveStreaming && <StreamCursor />}
@@ -440,7 +438,7 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
   const primaryAction = primary ? getConnectAction(primary) : null;
 
   return (
-    <div className="mt-4 border border-white/[0.05] px-4 py-3">
+    <div className="mt-4 border border-white/5 px-4 py-3">
       <p className="text-[11px] font-mono text-amber-400/70">Action bloquée</p>
       <p className="mt-1 text-[11px] font-mono text-white/50">{info.message}</p>
       <div className="mt-3 flex items-center gap-3">

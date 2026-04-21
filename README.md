@@ -15,6 +15,41 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 - **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
 - Layout user : sidebar icon-only (AppNav) + zone centrale + chat global + right panel
 
+### Tokens (source `app/globals.css`)
+
+Modèle d'élévation (du plus profond au plus clair) : **rail < background < surface**. Les panels sont *lifted* au-dessus du canvas pour être visibles sans OLED.
+
+| Token | Var CSS | Hex | Usage |
+|-------|---------|-----|-------|
+| `bg-rail` | `--rail` | `#0c0c10` | Rail admin — `app/components/Sidebar.tsx` (`/admin/*`) |
+| `bg-background` | `--background` | `#09090b` | Canvas — `body` (`app/layout.tsx`), `/login`, spinner d'`AuthGate` |
+| `bg-surface` | `--surface` | `#14141a` | Panels lifted — `AppNav`, `RightPanel` (`aside`), barre d'input `GlobalChat` |
+| `bg-cyan-accent` / `text-cyan-accent` | `--cyan-accent` | `#00e5ff` | Accent unique (focal, dot connecté, divider) |
+| `--glow-cyan-{sm,md,core,soft,dot}` | — | rgba(0,229,255,…) | Halos centralisés — **ne pas dupliquer en `rgba` dans les composants** |
+
+Garde-fou : `__tests__/ui/design-tokens.test.ts` valide la présence de tous ces tokens dans `app/globals.css` et dans le bloc `@theme inline`.
+
+> Note : la palette `bg-zinc-{800,900,950}` reste utilisée volontairement dans `app/admin/*` et certaines pages `app/(user)/*` pour les **élévations multi-niveaux** (cartes, inputs, hovers, code blocks). Ces niveaux ne sont pas couverts par les 3 tokens canoniques ci-dessus.
+
+#### Piège HMR connu — éditer `app/globals.css`
+
+Next 16 + Turbopack peuvent garder en cache l'ancien contenu de `app/globals.css` après une édition de variables CSS dans `:root` ou `@theme`. Symptôme : le source contient `#050505` mais le navigateur sert encore `#000`. Ni `touch` ni hard reload ne suffisent.
+
+Toujours faire après une édition de tokens :
+
+```bash
+npm run dev:fresh   # kill port 9000 + rm -rf .next + npm run dev
+```
+
+Vérification rapide depuis un terminal :
+
+```bash
+CSS=$(curl -s http://localhost:9000/login | grep -oE '/_next/static[^"]+\.css' | head -1)
+curl -s "http://localhost:9000${CSS}" | grep -oE '\-\-(surface|background|rail|cyan-accent):[^;}]+' | sort -u
+```
+
+Les valeurs retournées doivent matcher exactement la table ci-dessus.
+
 ## Canonical UI Work Map
 
 ### Never Guess The Surface
