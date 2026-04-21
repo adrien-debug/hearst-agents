@@ -9,8 +9,10 @@ import { ChatProvider } from "../lib/chat-context";
 import { ChatActivityProvider } from "../lib/chat-activity";
 import { RunStreamProvider } from "../lib/run-stream-context";
 import { SurfaceProvider } from "@/app/hooks/use-surface";
+import { SidebarProvider } from "@/app/hooks/use-sidebar";
 import SurfaceTracker from "../components/SurfaceTracker";
 import { TopContextBar } from "../components/system/TopContextBar";
+import { SidebarMargin } from "../components/SidebarMargin";
 
 export default function UserLayout({
   children,
@@ -23,20 +25,22 @@ export default function UserLayout({
         <ChatProvider>
           <ChatActivityProvider>
             <RunStreamProvider>
+            <SidebarProvider>
             <SurfaceProvider>
             <div className="flex h-screen overflow-hidden">
               <AppNav />
-              <main className="flex min-w-0 flex-1 md:ml-[60px]">
+              <SidebarMargin>
                 <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                   <TopContextBar />
                   <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
                   <GlobalChat />
                 </div>
                 <RightPanel />
-              </main>
+              </SidebarMargin>
             </div>
             <SurfaceTracker />
             </SurfaceProvider>
+            </SidebarProvider>
             </RunStreamProvider>
           </ChatActivityProvider>
         </ChatProvider>
