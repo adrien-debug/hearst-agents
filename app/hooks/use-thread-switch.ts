@@ -40,6 +40,16 @@ import {
 } from "@/app/lib/thread-memory";
 import { resolveRestoredHaloState, type HaloState } from "@/app/lib/halo-state";
 
+// ── Debug logging (silent by default) ───────────────────────
+
+const DEBUG = typeof window !== "undefined" &&
+  (process.env.NODE_ENV === "development" || (window as unknown as Record<string, unknown>).__HEARST_DEBUG === true);
+
+function logRehydration(stage: string, detail?: Record<string, unknown>) {
+  if (!DEBUG) return;
+  console.log(`[ThreadSwitch] ${stage}`, detail ?? "");
+}
+
 // ── Chat restore callback ───────────────────────────────────
 
 /**
@@ -96,6 +106,8 @@ export function useThreadSwitch(): UseThreadSwitchResult {
     const currentId = sidebar.state.activeThreadId;
     if (currentId === threadId) return;
 
+    logRehydration("switch_start", { from: currentId, to: threadId });
+
     // 1. Save current context
     saveCurrentThread();
 
@@ -104,10 +116,22 @@ export function useThreadSwitch(): UseThreadSwitchResult {
 
     // 3. Restore surface state (mode, intent, mission, panel)
     const session = getThreadSession(threadId);
+    logRehydration("session_snapshot", {
+      hasSession: !!session,
+      stage: session?.intentFlowSnapshot.stage,
+      hasMission: !!session?.missionSnapshot,
+      lastArtifactId: session?.lastArtifactId,
+    });
     surface.restoreSession(session);
 
     // 4. Restore chat messages + draft (immediate layer)
     const chatSnapshot = getChatSnapshot(threadId);
+    logRehydration("chat_snapshot", {
+      hasChatSnapshot: !!chatSnapshot,
+      messageCount: chatSnapshot?.messages.length ?? 0,
+      hasDraft: !!chatSnapshot?.draftInput,
+      hasConversationId: !!chatSnapshot?.conversationId,
+    });
     chatCallbacksRef.current?.restore(chatSnapshot);
 
     // 5. Resolve Halo restoration
@@ -115,17 +139,20 @@ export function useThreadSwitch(): UseThreadSwitchResult {
       session?.intentFlowSnapshot.stage,
       session?.missionSnapshot?.phase,
     );
+    logRehydration("switch_complete", { haloState: restoredHaloRef.current?.coreState });
   }, [sidebar, surface, saveCurrentThread]);
 
   const startNewThread = useCallback(() => {
     if (!sidebar || !surface) return;
 
+    logRehydration("new_thread_start");
     saveCurrentThread();
 
     sidebar.clearActiveThread();
     surface.reset();
     chatCallbacksRef.current?.restore(null);
     restoredHaloRef.current = null;
+    logRehydration("new_thread_complete");
   }, [sidebar, surface, saveCurrentThread]);
 
   return {

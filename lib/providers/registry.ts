@@ -14,7 +14,7 @@ import type { ProviderDefinition, ProviderId } from "./types";
  * ProviderId type in types.ts is derived from this array.
  */
 export const PROVIDER_IDS = [
-  "google", "slack", "web", "anthropic_managed", "notion",
+  "google", "slack", "whatsapp", "web", "anthropic_managed", "notion",
   "github", "stripe", "jira", "hubspot", "airtable",
   "figma", "zapier", "system",
 ] as const;
@@ -46,8 +46,8 @@ const PROVIDERS: ProviderDefinition[] = [
   {
     id: "slack",
     label: "Slack",
-    capabilities: ["messaging"],
-    tools: ["post_message"],
+    capabilities: ["messaging", "messaging_send"],
+    tools: ["post_message", "send_message"],
     ui: { initial: "S", color: "border-purple-400/40 text-purple-400" },
     auth: { tokenBucket: "slack", connectable: true },
     keywords: {
@@ -56,6 +56,20 @@ const PROVIDERS: ProviderDefinition[] = [
     },
     blockedMessage: "Slack n'est pas connecté. Connectez Slack dans Applications.",
     priority: 8,
+  },
+  {
+    id: "whatsapp",
+    label: "WhatsApp",
+    capabilities: ["messaging", "messaging_send"],
+    tools: ["send_message"],
+    ui: { initial: "WA", color: "border-emerald-400/40 text-emerald-400" },
+    auth: { tokenBucket: "whatsapp", connectable: true },
+    keywords: {
+      fr: ["whatsapp", "wa", "message", "messages"],
+      en: ["whatsapp", "wa", "message", "messages"],
+    },
+    blockedMessage: "WhatsApp n'est pas connecté.",
+    priority: 7,
   },
   {
     id: "web",

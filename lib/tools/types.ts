@@ -8,6 +8,7 @@
 
 export type ToolCapability =
   | "messaging"
+  | "messaging_send"
   | "finance"
   | "research"
   | "documents"

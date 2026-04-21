@@ -6,6 +6,7 @@
 
 export type ConnectorCapability =
   | "messaging"
+  | "messaging_send"
   | "calendar"
   | "files"
   | "research"

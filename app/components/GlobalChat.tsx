@@ -12,6 +12,9 @@ import { getConnectAction, triggerConnect, sortByConnectPriority } from "../lib/
 import { getMissionSuggestions, type MissionSuggestion } from "../lib/missions-ui";
 import { MissionComposer } from "./missions/MissionComposer";
 import { OrchestrationHalo } from "./system/OrchestrationHalo";
+import { useThreadSwitchOptional } from "../hooks/use-thread-switch";
+import { linkThreadToConversation, type ChatMessage } from "../lib/thread-memory";
+import { useSidebarOptional } from "../hooks/use-sidebar";
 
 const USE_V2 = process.env.NEXT_PUBLIC_USE_V2 !== "false";
 
@@ -74,11 +77,42 @@ export default function GlobalChat() {
   const { suggestion, dismiss: dismissSuggestion, accept: acceptSuggestion } = useProactiveSuggestion(surface);
   const v2 = useOrchestrate();
   const chatActivity = useChatActivity();
+  const threadSwitch = useThreadSwitchOptional();
+  const sidebarCtx = useSidebarOptional();
 
   const contextHint = getContextHint();
   const [missionSuggestion, setMissionSuggestion] = useState<MissionSuggestion | null>(null);
   const [showMissionComposer, setShowMissionComposer] = useState(false);
   const lastUserInputRef = useRef<string>("");
+  const restoringRef = useRef(false);
+
+  // ── Thread restore callback registration ──────────────────
+  useEffect(() => {
+    if (!threadSwitch) return;
+    threadSwitch.registerChatCallbacks({
+      getMessages: () => messages as ChatMessage[],
+      getDraftInput: () => input,
+      getConversationId: () => conversationId,
+      restore: (snapshot) => {
+        restoringRef.current = true;
+        if (snapshot) {
+          setMessages(snapshot.messages as Message[]);
+          setInput(snapshot.draftInput);
+          setConversationId(snapshot.conversationId);
+          if (snapshot.messages.length > 0) setExpanded(true);
+        } else {
+          setMessages([]);
+          setInput("");
+          setConversationId(null);
+        }
+        setStreaming(false);
+        setV2Streaming(false);
+        setMissionSuggestion(null);
+        setShowMissionComposer(false);
+        requestAnimationFrame(() => { restoringRef.current = false; });
+      },
+    });
+  }, [threadSwitch, messages, input, conversationId, setExpanded]);
 
   // Sync v2 hook state → messages with real-time streaming
   useEffect(() => {
@@ -179,6 +213,7 @@ export default function GlobalChat() {
   }, [activeMission?.status, activeMission?.id, activeMission?.result, expanded, setExpanded]);
 
   useEffect(() => {
+    if (restoringRef.current) return;
     if (expanded) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, expanded]);
 
@@ -219,6 +254,8 @@ export default function GlobalChat() {
         if (!convId) {
           convId = crypto.randomUUID();
           setConversationId(convId);
+          const threadId = sidebarCtx?.state.activeThreadId;
+          if (threadId) linkThreadToConversation(threadId, convId);
         }
         setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
         try {
@@ -258,7 +295,11 @@ export default function GlobalChat() {
 
         if (!conversationId) {
           const cid = res.headers.get("X-Conversation-Id");
-          if (cid) setConversationId(cid);
+          if (cid) {
+            setConversationId(cid);
+            const threadId = sidebarCtx?.state.activeThreadId;
+            if (threadId) linkThreadToConversation(threadId, cid);
+          }
         }
 
         const reader = res.body?.getReader();

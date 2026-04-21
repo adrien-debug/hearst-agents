@@ -31,6 +31,10 @@ export const INTENT_CAPABILITY: Record<string, Capability> = {
 
   drive_files: "files",
   drive_summary: "files",
+
+  send_message: "messaging_send",
+  reply_message: "messaging_send",
+  forward_message: "messaging_send",
 };
 
 /**
@@ -68,7 +72,8 @@ export const PROVIDER_TO_TOKEN: Record<string, string> = {
  * Human-readable labels for capabilities (used in blocked messages).
  */
 export const CAPABILITY_LABEL: Record<string, string> = {
-  messaging: "Messagerie (Gmail ou Slack)",
+  messaging: "Messagerie (Gmail, Slack ou WhatsApp)",
+  messaging_send: "Envoi de messages",
   calendar: "Agenda",
   files: "Fichiers",
   research: "Recherche",

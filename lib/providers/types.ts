@@ -54,7 +54,7 @@ export function isProviderId(value: string): value is ProviderId {
 // We can't import PROVIDER_IDS at value level here due to circular ref,
 // so we maintain a mirror set. The type derivation above ensures compile-time safety.
 const PROVIDER_ID_SET = new Set<string>([
-  "google", "slack", "web", "anthropic_managed", "notion",
+  "google", "slack", "whatsapp", "web", "anthropic_managed", "notion",
   "github", "stripe", "jira", "hubspot", "airtable",
   "figma", "zapier", "system",
 ]);
