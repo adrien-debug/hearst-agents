@@ -10,6 +10,7 @@ import { MissionProvider } from "../lib/missions";
 import { ChatProvider } from "../lib/chat-context";
 import { ChatActivityProvider } from "../lib/chat-activity";
 import { RunStreamProvider } from "../lib/run-stream-context";
+import { HaloRuntimeProvider } from "../lib/halo-runtime-context";
 import { SurfaceProvider } from "@/app/hooks/use-surface";
 import { SidebarProvider } from "@/app/hooks/use-sidebar";
 import SurfaceTracker from "../components/SurfaceTracker";
@@ -49,14 +50,17 @@ export default function UserLayout({
         <ChatProvider>
           <ChatActivityProvider>
             <RunStreamProvider>
+            <HaloRuntimeProvider>
             <SidebarProvider>
             <SurfaceProvider>
             <div className="flex h-screen overflow-hidden">
               <AppNav />
               <SidebarMargin>
-                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                   <TopContextBar />
-                  <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                    {children}
+                  </div>
                   <GlobalChat />
                 </div>
                 <RightPanel />
@@ -65,6 +69,7 @@ export default function UserLayout({
             <SurfaceTracker />
             </SurfaceProvider>
             </SidebarProvider>
+            </HaloRuntimeProvider>
             </RunStreamProvider>
           </ChatActivityProvider>
         </ChatProvider>

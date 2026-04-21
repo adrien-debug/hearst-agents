@@ -17,6 +17,8 @@ export interface UnifiedOrchestrateInput {
   message: string;
   conversationId?: string;
   surface?: string;
+  threadId?: string;
+  focalContext?: { id: string; objectType: string; title: string; status: string };
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
   missionId?: string;
   tenantId?: string;

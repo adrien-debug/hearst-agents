@@ -58,6 +58,20 @@ export function getConversationIdForThread(threadId: string): string | null {
   return threadConversationMap.get(threadId) ?? null;
 }
 
+/**
+ * Resolve or create a stable conversationId for a thread.
+ * If already mapped, returns the existing one. Otherwise creates a new UUID
+ * and links it, ensuring the same thread always reuses the same conversationId.
+ */
+export function resolveConversationId(threadId: string | undefined | null): string {
+  if (!threadId) return crypto.randomUUID();
+  const existing = threadConversationMap.get(threadId);
+  if (existing) return existing;
+  const newId = crypto.randomUUID();
+  threadConversationMap.set(threadId, newId);
+  return newId;
+}
+
 // ── Chat snapshot persistence ───────────────────────────────
 
 /**

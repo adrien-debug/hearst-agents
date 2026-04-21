@@ -316,15 +316,16 @@ function Provenance({ object }: { object: FocalObject }) {
     if (object.objectType === "message_receipt") channelRef = object.channelRef;
   }
 
-  if (!providerId && (object as Record<string, unknown>).sourceProviderId) {
-    providerId = (object as Record<string, unknown>).sourceProviderId as string;
+  const objectRaw = object as unknown as Record<string, unknown>;
+  if (!providerId && objectRaw.sourceProviderId) {
+    providerId = objectRaw.sourceProviderId as string;
   }
 
   if (!providerId) return null;
 
   const ui = getProviderUi(providerId);
   const label = getProviderLabel(providerId);
-  const createdAt = (object as Record<string, unknown>).createdAt as number | undefined;
+  const createdAt = objectRaw.createdAt as number | undefined;
 
   return (
     <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/50 tracking-wide mt-1">

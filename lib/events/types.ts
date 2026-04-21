@@ -57,6 +57,8 @@ export type RunEvent =
   | ScheduledMissionTriggeredEvent
   // Assets
   | AssetGeneratedEvent
+  // Focal object
+  | FocalObjectReadyEvent
   // Agent selection
   | AgentSelectedEvent
   // Tool surface

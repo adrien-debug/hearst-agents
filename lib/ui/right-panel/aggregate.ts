@@ -23,7 +23,7 @@ import type { RightPanelData } from "./types";
 const MAX_RUNS = 20;
 const MAX_ASSETS = 50;
 
-export async function buildRightPanelData(): Promise<RightPanelData> {
+export async function buildRightPanelData(threadId?: string): Promise<RightPanelData> {
   // ── Runs ─────────────────────────────────────────────────
   let runs = await getPersistedRuns({ limit: MAX_RUNS });
   const fromPersistence = runs.length > 0;
@@ -152,32 +152,40 @@ export async function buildRightPanelData(): Promise<RightPanelData> {
     blocked: allOps.filter((o) => o.lastRunStatus === "blocked").length,
   };
 
-  // ── Focal + Secondary Objects from DB (latest 3 assets) ──
+  // ── Focal + Secondary Objects from DB (latest 3 assets, thread-scoped) ──
   let focalObject: Record<string, unknown> | undefined;
   const secondaryObjects: Record<string, unknown>[] = [];
   try {
     const sb = getServerSupabase();
-    if (sb) {
-      const { data: latestAssets } = await sb
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sbRaw = sb as unknown as { from: (table: string) => any } | null;
+    if (sb && sbRaw) {
+      let assetQuery = sbRaw
         .from("assets")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(3);
 
+      if (threadId) {
+        assetQuery = assetQuery.eq("thread_id", threadId);
+      }
+
+      const { data: latestAssets } = await assetQuery;
+
       if (latestAssets && latestAssets.length > 0) {
         for (let i = 0; i < latestAssets.length; i++) {
           const row = latestAssets[i] as Record<string, unknown>;
           const asset: Asset = {
-            id: row.id,
-            threadId: row.thread_id,
+            id: row.id as string,
+            threadId: row.thread_id as string,
             kind: row.kind as AssetKind,
-            title: row.title ?? "",
-            summary: row.summary ?? undefined,
-            outputTier: row.output_tier ?? undefined,
+            title: (row.title as string) ?? "",
+            summary: (row.summary as string | undefined) ?? undefined,
+            outputTier: (row.output_tier as OutputTier | undefined) ?? undefined,
             provenance: (row.provenance ?? {}) as AssetProvenance,
-            createdAt: new Date(row.created_at).getTime(),
-            contentRef: row.content_ref ?? undefined,
-            runId: row.run_id ?? undefined,
+            createdAt: new Date(row.created_at as string).getTime(),
+            contentRef: (row.content_ref as string | undefined) ?? undefined,
+            runId: (row.run_id as string | undefined) ?? undefined,
           };
 
           const formatted = asset.contentRef

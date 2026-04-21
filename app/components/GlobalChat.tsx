@@ -9,7 +9,7 @@ import { useChatActivity } from "../lib/chat-activity";
 import { getConnectAction, triggerConnect, sortByConnectPriority } from "../lib/connect-actions";
 import { OrchestrationHalo } from "./system/OrchestrationHalo";
 import { useThreadSwitchOptional } from "../hooks/use-thread-switch";
-import { linkThreadToConversation, type ChatMessage } from "../lib/thread-memory";
+import { resolveConversationId, type ChatMessage } from "../lib/thread-memory";
 import { useSidebarOptional } from "../hooks/use-sidebar";
 import { useFocalObject } from "../hooks/use-focal-object";
 
@@ -192,17 +192,17 @@ export default function GlobalChat() {
       if (USE_V2) {
         let convId = conversationId;
         if (!convId) {
-          convId = crypto.randomUUID();
-          setConversationId(convId);
           const threadId = sidebarCtx?.state.activeThreadId;
-          if (threadId) linkThreadToConversation(threadId, convId);
+          convId = resolveConversationId(threadId);
+          setConversationId(convId);
         }
         setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
         const focalCtx = focalObject
           ? { id: focalObject.id, objectType: focalObject.objectType, title: focalObject.title, status: focalObject.status }
           : undefined;
+        const activeThreadId = sidebarCtx?.state.activeThreadId;
         try {
-          await v2.send(trimmed, surface, convId, focalCtx);
+          await v2.send(trimmed, surface, convId, focalCtx, activeThreadId ?? undefined);
         } finally {
           setStreaming(false);
         }
@@ -235,8 +235,6 @@ export default function GlobalChat() {
           const cid = res.headers.get("X-Conversation-Id");
           if (cid) {
             setConversationId(cid);
-            const threadId = sidebarCtx?.state.activeThreadId;
-            if (threadId) linkThreadToConversation(threadId, cid);
           }
         }
 

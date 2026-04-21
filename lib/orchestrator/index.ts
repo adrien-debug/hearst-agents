@@ -52,11 +52,20 @@ import { getRequiredProvidersForInput } from "./provider-requirements";
 import { shouldPersistEvent, persistRunEvent } from "../runtime/timeline/persist";
 import type { ProviderId } from "../providers/types";
 
+interface FocalContext {
+  id: string;
+  objectType: string;
+  title: string;
+  status: string;
+}
+
 interface OrchestrateInput {
   userId: string;
   message: string;
   conversationId?: string;
+  threadId?: string;
   surface?: string;
+  focalContext?: FocalContext;
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
   /** Set when triggered by the scheduler for a scheduled mission. */
   missionId?: string;
@@ -130,7 +139,7 @@ const PROVIDER_KEYWORDS: Record<string, string[]> = {
   files: ["fichier", "document", "drive"],
 };
 
-function buildExecutionContext(message: string, surface?: string): ExecutionContext {
+function buildExecutionContext(message: string, surface?: string, focalContext?: FocalContext): ExecutionContext {
   const lower = message.toLowerCase();
 
   const needsAutonomy = AUTONOMOUS_PATTERNS.some((p) => lower.includes(p));
@@ -148,6 +157,7 @@ function buildExecutionContext(message: string, surface?: string): ExecutionCont
   if (needsAutonomy) complexity += 3;
   if (wordCount > 30) complexity += 1;
   if (surface && surface !== "home") complexity += 1;
+  if (focalContext) complexity += 2;
 
   return {
     intent: lower.slice(0, 120),
@@ -391,7 +401,7 @@ async function runSyntheticRetrieval(
           type: "asset_generated",
           run_id: engine.id,
           asset_id: assetId,
-          asset_type: assetKind,
+          asset_type: "report" as const,
           name: asset.title,
         });
 
@@ -416,8 +426,8 @@ async function runSyntheticRetrieval(
         engine.events.emit({
           type: "focal_object_ready",
           run_id: engine.id,
-          focal_object: focalObject,
-        } as { type: "focal_object_ready"; run_id: string; focal_object: Record<string, unknown> });
+          focal_object: focalObject as Record<string, unknown>,
+        });
 
         engine.events.emit({
           type: "orchestrator_log",
@@ -708,6 +718,11 @@ async function runPipeline(
 ): Promise<void> {
   const scope = buildTenantScope(input);
 
+  // ── Memory: resolve conversationId from threadId if absent ──
+  if (!input.conversationId && input.threadId) {
+    input.conversationId = input.threadId;
+  }
+
   // ── Memory: load conversation context ──────────────────────
   if (input.conversationId) {
     appendMessage(input.conversationId, {
@@ -778,7 +793,7 @@ async function runPipeline(
   }
 
   // ── 1. Route: build context → select execution mode ────────
-  const ctx = buildExecutionContext(input.message, input.surface);
+  const ctx = buildExecutionContext(input.message, input.surface, input.focalContext);
   const decision: ExecutionDecision = selectExecutionMode(ctx);
 
   // ── Research intent override ──────────────────────────────
@@ -808,6 +823,7 @@ async function runPipeline(
         ...(decision.agentId ? { agent_id: decision.agentId } : {}),
         ...(decision.backend ? { agent_backend: decision.backend } : {}),
         ...(input.missionId ? { mission_id: input.missionId } : {}),
+        ...(input.focalContext ? { focal_context: input.focalContext } : {}),
       },
     },
   };

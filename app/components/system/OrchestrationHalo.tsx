@@ -1,7 +1,8 @@
 "use client";
 
 import { memo, useMemo, useRef, useEffect } from "react";
-import { useHalo, getCachedProviderUi } from "@/app/hooks/use-halo";
+import { getCachedProviderUi } from "@/app/hooks/use-halo";
+import { useHaloRuntime } from "@/app/lib/halo-runtime-context";
 import type {
   HaloCoreState,
   HaloProviderNode,
@@ -11,12 +12,12 @@ import type {
 } from "@/app/lib/halo-state";
 
 const CORE_VISUALS: Record<HaloCoreState, { color: string; border: string }> = {
-  idle: { color: "bg-white/15", border: "border-white/20" },
-  thinking: { color: "bg-white/40", border: "border-amber-500/60" },
-  executing: { color: "bg-white/60", border: "border-amber-500/60" },
-  waiting_approval: { color: "bg-amber-400/60", border: "border-amber-500/60" },
-  degraded: { color: "bg-amber-400/40", border: "border-amber-500/40" },
-  success: { color: "bg-white/50", border: "border-white/30" },
+  idle: { color: "bg-white/30", border: "border-white/20" },
+  thinking: { color: "bg-cyan-accent/80 shadow-[0_0_8px_rgba(0,229,255,0.5)]", border: "border-cyan-accent/50" },
+  executing: { color: "bg-cyan-accent shadow-[0_0_12px_rgba(0,229,255,0.8)]", border: "border-cyan-accent/60" },
+  waiting_approval: { color: "bg-amber-400/80", border: "border-amber-500/60" },
+  degraded: { color: "bg-amber-400/50", border: "border-amber-500/40" },
+  success: { color: "bg-white/70", border: "border-white/30" },
 };
 
 const ProviderNode = memo(function ProviderNode({
@@ -32,19 +33,19 @@ const ProviderNode = memo(function ProviderNode({
 
   return (
     <div
-      className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/[0.05] text-[9px] transition-[opacity,background-color,border-color,transform] duration-500 ease-out ${
+      className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[9px] transition-[opacity,background-color,border-color,transform] duration-500 ease-out ${
         isActive && !isBg
-          ? "opacity-100 border-white/[0.15]"
+          ? "opacity-100 border-white/30"
           : isActive && isBg
-            ? "opacity-50"
+            ? "opacity-60 border-white/20"
             : isFading
-              ? "opacity-30"
-              : "opacity-20"
+              ? "opacity-40 border-white/15"
+              : "opacity-30 border-white/10"
       }`}
     >
       <span
         className={`font-semibold leading-none transition-colors duration-450 ease-out ${
-          isActive ? "text-white/70" : "text-white/30"
+          isActive ? "text-white/90" : "text-zinc-400"
         }`}
       >
         {ui.initial}
@@ -66,7 +67,7 @@ const FlowLabel = memo(function FlowLabel({
     <div className="min-w-[80px] flex items-center">
       <span
         className={`font-mono text-[8px] uppercase tracking-[0.15em] transition-colors duration-450 ease-out ${
-          isBg ? "text-white/30" : "text-white/50"
+          isBg ? "text-zinc-500" : "text-zinc-300"
         }`}
       >
         {label}
@@ -91,12 +92,12 @@ const ArtifactSignal = memo(function ArtifactSignal({
       }`}
     >
       <div
-        className={`h-1.5 w-1.5 rounded-full transition-[opacity,background-color] duration-450 ease-out ${
-          isHandoff ? "bg-white/60" : isEmerging ? "bg-white/30 animate-pulse" : "bg-white/20"
+        className={`h-1.5 w-1.5 rounded-full transition-[opacity,background-color,box-shadow] duration-450 ease-out ${
+          isHandoff ? "bg-cyan-accent shadow-[0_0_6px_rgba(0,229,255,0.6)]" : isEmerging ? "bg-cyan-accent/50 animate-pulse" : "bg-white/30"
         }`}
       />
       {isHandoff && (
-        <span className="font-mono text-[7px] text-white/30 uppercase tracking-wider">
+        <span className="font-mono text-[7px] text-cyan-accent/70 uppercase tracking-wider">
           {signal.kind}
         </span>
       )}
@@ -105,7 +106,7 @@ const ArtifactSignal = memo(function ArtifactSignal({
 });
 
 export function OrchestrationHalo({ restoredState }: { restoredState?: HaloState | null } = {}) {
-  const { state, motion, restoreState } = useHalo();
+  const { state, motion, restoreState } = useHaloRuntime();
 
   const lastRestoredRef = useRef<HaloState | null>(null);
   useEffect(() => {

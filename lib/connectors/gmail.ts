@@ -81,7 +81,7 @@ export async function searchEmails(
       });
 
       const headers = (detail.data.payload?.headers ?? []) as GmailHeader[];
-      const body = extractBody(detail.data.payload);
+      const body = extractBody(detail.data.payload as GmailPart | null | undefined);
 
       return {
         id: detail.data.id ?? msg.id!,
@@ -118,7 +118,7 @@ function extractBody(payload: GmailPart | null | undefined): string {
     const htmlPart = payload.parts.find(
       (p) => p.mimeType === "text/html" && p.body?.data,
     );
-    if (htmlPart) {
+    if (htmlPart && htmlPart.body?.data) {
       const html = Buffer.from(htmlPart.body.data, "base64url").toString("utf-8");
       return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     }

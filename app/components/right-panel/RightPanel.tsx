@@ -20,6 +20,9 @@ import { useRunStreamOptional } from "@/app/lib/run-stream-context";
 import { useFocalObject } from "@/app/hooks/use-focal-object";
 import { useOrchestrate } from "@/app/hooks/use-orchestrate";
 import { useSidebarOptional } from "@/app/hooks/use-sidebar";
+import { resolveConversationId } from "@/app/lib/thread-memory";
+import { useHaloRuntime } from "@/app/lib/halo-runtime-context";
+import { sublineForFlow } from "@/app/lib/manifestation-stage-model";
 import type { FocalObject, FocalAction } from "@/lib/right-panel/objects";
 import { FocalObjectRenderer, TYPE_LABELS } from "./FocalObjectRenderer";
 
@@ -32,6 +35,7 @@ function RightPanelInner() {
   const { focal, secondary, isFocused } = useFocalObject();
   const v2 = useOrchestrate();
   const sidebarCtx = useSidebarOptional();
+  const { state: halo } = useHaloRuntime();
 
   const [panelState, setPanelState] = useState<PanelState>("INDEX");
   const [documentObject, setDocumentObject] = useState<FocalObject | null>(null);
@@ -99,7 +103,7 @@ function RightPanelInner() {
     actionLockRef.current = true;
     setIsPending(true);
     try {
-      const actionIntent = `${action.kind} ${target.objectType} "${target.title}"`;
+      const actionIntent = `[action:${action.kind}] Exécute l'action "${action.kind}" sur l'objet "${target.title}" (type: ${target.objectType}, statut: ${target.status})`;
       const focalCtx = {
         id: target.id,
         objectType: target.objectType,
@@ -107,9 +111,9 @@ function RightPanelInner() {
         status: target.status,
       };
       const threadId = sidebarCtx?.state.activeThreadId;
-      const convId = threadId ?? crypto.randomUUID();
+      const convId = resolveConversationId(threadId);
 
-      await v2.send(actionIntent, "home", convId, focalCtx);
+      await v2.send(actionIntent, "home", convId, focalCtx, threadId ?? undefined);
     } finally {
       setIsPending(false);
       actionLockRef.current = false;
@@ -120,10 +124,10 @@ function RightPanelInner() {
 
   return (
     <aside
-      className="hidden h-full shrink-0 flex-col border-l border-white/[0.05] xl:flex relative overflow-hidden"
+      className="hidden h-full shrink-0 flex-col border-l border-white/[0.05] lg:flex relative overflow-hidden"
       style={{
         width: isDocument ? "100%" : "36%",
-        minWidth: 520,
+        minWidth: 360,
         maxWidth: isDocument ? undefined : 760,
         transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)",
         contain: "strict",
@@ -218,10 +222,10 @@ function RightPanelInner() {
                     onClick={() => openDocument(obj)}
                   >
                     <div className="flex justify-between items-center h-10 px-2 border border-transparent rounded-md transition-colors group-hover:border-white/10 cursor-pointer">
-                      <span className="text-[12px] text-white/50 group-hover:text-white transition-colors truncate pr-4">
+                      <span className="text-[12px] text-white/55 group-hover:text-white/80 transition-colors truncate pr-4">
                         {obj.title || TYPE_LABELS[obj.objectType] || obj.objectType}
                       </span>
-                      <span className="text-[11px] text-white/30 font-mono shrink-0 group-hover:text-white/50 transition-colors">
+                      <span className="text-[11px] text-white/30 font-mono shrink-0 group-hover:text-white/45 transition-colors">
                         {timeStr}
                       </span>
                     </div>
@@ -231,11 +235,16 @@ function RightPanelInner() {
             </div>
           )}
 
-          {/* Empty state — persistent structure */}
+          {/* Empty state — persistent structure, Halo-aware */}
           {!isFocused && !loading && (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-[10px] text-white/30 font-mono tracking-wide">
-                En attente
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <div
+                className={`h-[5px] w-[5px] rounded-full transition-colors duration-500 ${
+                  halo.coreState !== "idle" ? "bg-white/40" : "bg-white/10"
+                }`}
+              />
+              <p className="text-[10px] text-white/30 font-mono tracking-wide max-w-[20ch] text-center">
+                {sublineForFlow(halo.flowLabel) ?? "En veille"}
               </p>
             </div>
           )}

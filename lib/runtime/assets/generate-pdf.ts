@@ -11,10 +11,18 @@ import { saveAssetFile } from "./file-storage";
 import type { AssetFileInfo } from "./types";
 
 // PDFKit looks for font AFM files relative to its own install.
-// In Next.js standalone mode the resolved path can be wrong (/ROOT/).
-// Force it to the real location at import time.
-const PDFKIT_DIR = path.dirname(require.resolve("pdfkit/package.json"));
-const FONT_DIR = path.join(PDFKIT_DIR, "js", "data");
+// Resolved lazily to avoid Turbopack treating require.resolve as a numeric chunk ID at import time.
+function getFontDir(): string {
+  try {
+    const resolved = require.resolve("pdfkit/package.json");
+    if (typeof resolved === "string") {
+      return path.join(path.dirname(resolved), "js", "data");
+    }
+  } catch {
+    // ignore — fonts will fall back to built-in
+  }
+  return path.join(process.cwd(), "node_modules", "pdfkit", "js", "data");
+}
 
 interface GeneratePdfInput {
   tenantId: string;
@@ -41,6 +49,7 @@ export async function generatePdfArtifact(input: GeneratePdfInput): Promise<Asse
 }
 
 async function renderPdf(title: string, content: string): Promise<Buffer> {
+  const FONT_DIR = getFontDir();
   return new Promise((resolve, reject) => {
     // Patch standard font lookup path for standalone / non-standard CWD
     const origResolve = (PDFDocument as unknown as Record<string, unknown>)._fontpath;

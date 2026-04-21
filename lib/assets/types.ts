@@ -80,6 +80,13 @@ export interface Action {
 // ── Persistent store (Supabase DB + in-memory cache) ────────
 
 import { getServerSupabase } from "@/lib/supabase-server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rawDb(sb: ReturnType<typeof getServerSupabase>): SupabaseClient<any> | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return sb as unknown as SupabaseClient<any> | null;
+}
 
 const assetCache = new Map<string, Asset[]>();
 const actionCache = new Map<string, Action[]>();
@@ -93,7 +100,7 @@ export function storeAsset(asset: Asset): void {
   // DB persistence (fire-and-forget)
   const sb = getServerSupabase();
   if (sb) {
-    sb.from("assets")
+    rawDb(sb)!.from("assets")
       .upsert({
         id: asset.id,
         thread_id: asset.threadId,
@@ -136,7 +143,7 @@ export async function loadAssetsForThread(threadId: string): Promise<Asset[]> {
   const sb = getServerSupabase();
   if (!sb) return [];
 
-  const { data, error } = await sb
+  const { data, error } = await rawDb(sb)!
     .from("assets")
     .select("*")
     .eq("thread_id", threadId)
@@ -146,16 +153,16 @@ export async function loadAssetsForThread(threadId: string): Promise<Asset[]> {
   if (error || !data) return [];
 
   const assets: Asset[] = data.map((row: Record<string, unknown>) => ({
-    id: row.id,
-    threadId: row.thread_id,
+    id: row.id as string,
+    threadId: row.thread_id as string,
     kind: row.kind as AssetKind,
-    title: row.title,
-    summary: row.summary ?? undefined,
-    outputTier: row.output_tier ?? undefined,
+    title: row.title as string,
+    summary: (row.summary as string | undefined) ?? undefined,
+    outputTier: (row.output_tier as OutputTier | undefined) ?? undefined,
     provenance: (row.provenance ?? {}) as AssetProvenance,
-    createdAt: new Date(row.created_at).getTime(),
-    contentRef: row.content_ref ?? undefined,
-    runId: row.run_id ?? undefined,
+    createdAt: new Date(row.created_at as string).getTime(),
+    contentRef: (row.content_ref as string | undefined) ?? undefined,
+    runId: (row.run_id as string | undefined) ?? undefined,
   }));
 
   assetCache.set(threadId, assets);
@@ -169,7 +176,7 @@ export function storeAction(action: Action): void {
 
   const sb = getServerSupabase();
   if (sb) {
-    sb.from("actions")
+    rawDb(sb)!.from("actions")
       .upsert({
         id: action.id,
         thread_id: action.threadId,
@@ -197,7 +204,7 @@ export async function loadActionsForThread(threadId: string): Promise<Action[]> 
   const sb = getServerSupabase();
   if (!sb) return [];
 
-  const { data, error } = await sb
+  const { data, error } = await rawDb(sb)!
     .from("actions")
     .select("*")
     .eq("thread_id", threadId)
@@ -207,14 +214,14 @@ export async function loadActionsForThread(threadId: string): Promise<Action[]> 
   if (error || !data) return [];
 
   const actions: Action[] = data.map((row: Record<string, unknown>) => ({
-    id: row.id,
-    threadId: row.thread_id,
+    id: row.id as string,
+    threadId: row.thread_id as string,
     type: row.type as ActionType,
     provider: row.provider as ProviderId,
     status: row.status as ActionStatus,
-    timestamp: new Date(row.timestamp).getTime(),
+    timestamp: new Date(row.timestamp as string).getTime(),
     metadata: (row.metadata ?? {}) as Record<string, unknown>,
-    assetId: row.asset_id ?? undefined,
+    assetId: (row.asset_id as string | undefined) ?? undefined,
   }));
 
   actionCache.set(threadId, actions);

@@ -2,14 +2,15 @@
  * Canonical UI data source — Right Panel.
  * All new UI components must use this endpoint for runs, assets, and missions.
  */
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { buildRightPanelData } from "@/lib/ui/right-panel/aggregate";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const data = await buildRightPanelData();
+    const threadId = req.nextUrl.searchParams.get("thread_id") ?? undefined;
+    const data = await buildRightPanelData(threadId);
     return NextResponse.json(data);
   } catch (e) {
     console.error("GET /api/v2/right-panel: uncaught", e);

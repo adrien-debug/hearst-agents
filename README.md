@@ -10,6 +10,8 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 
 - **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. Pipeline v2 SSE par défaut (`/api/orchestrate`).
 - **Right Panel** (`RightPanel`) — Surface de confiance : runs live, timeline, assets, missions, connectors. Machine à états INDEX/DOCUMENT.
+- **Manifestation Stage** (`ManifestationStage` sur `/`) — Scène centrale 160×160, dérivation `deriveManifestationVisualState` (focal > artifact > halo core > flowLabel faible). Overshoot React. Pas de CSS animé en boucle.
+- **Halo runtime partagé** (`HaloRuntimeProvider` dans le layout user) — Un seul `useHalo` pour le bandeau d’orchestration et la scène centrale (même réduction SSE).
 - **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
 - Layout user : sidebar icon-only (AppNav) + zone centrale + chat global + right panel
 

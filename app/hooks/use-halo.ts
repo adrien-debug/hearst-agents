@@ -150,15 +150,8 @@ export function useHalo(): UseHaloResult {
       if (action) smootherRef.current?.push(action);
     });
 
-    const unsubDisconnect = stream.onDisconnect?.(() => {
-      timersRef.current.forEach(clearTimeout);
-      timersRef.current.clear();
-      smootherRef.current?.push({ type: "reset_idle", at: Date.now() });
-    });
-
     return () => {
       unsub();
-      unsubDisconnect?.();
     };
   }, [stream]);
 

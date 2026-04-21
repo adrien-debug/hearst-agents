@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
     message: string;
     conversation_id?: string;
     surface?: string;
+    thread_id?: string;
+    focal_context?: { id: string; objectType: string; title: string; status: string };
     history?: Array<{ role: "user" | "assistant"; content: string }>;
   };
 
@@ -50,6 +52,8 @@ export async function POST(req: NextRequest) {
     message: body.message,
     conversationId: body.conversation_id,
     surface: body.surface,
+    threadId: body.thread_id,
+    focalContext: body.focal_context,
     conversationHistory: body.history,
   });
 
