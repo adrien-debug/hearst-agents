@@ -3,7 +3,7 @@
 -- Persistent, historized, actionable feedback
 -- ============================================================
 
-create table public.improvement_signals (
+create table if not exists public.improvement_signals (
   id           uuid primary key default gen_random_uuid(),
   kind         text not null
     check (kind in ('agent_config', 'prompt_tuning', 'guard_policy', 'tool_replacement', 'cost_optimization', 'reliability_alert')),
@@ -25,10 +25,10 @@ create table public.improvement_signals (
   updated_at   timestamptz not null default now()
 );
 
-create index idx_improvement_signals_status on public.improvement_signals(status);
-create index idx_improvement_signals_target on public.improvement_signals(target_type, target_id);
-create index idx_improvement_signals_kind on public.improvement_signals(kind);
-create index idx_improvement_signals_priority on public.improvement_signals(priority);
+create index if not exists idx_improvement_signals_status on public.improvement_signals(status);
+create index if not exists idx_improvement_signals_target on public.improvement_signals(target_type, target_id);
+create index if not exists idx_improvement_signals_kind on public.improvement_signals(kind);
+create index if not exists idx_improvement_signals_priority on public.improvement_signals(priority);
 
 -- RLS
 alter table public.improvement_signals enable row level security;

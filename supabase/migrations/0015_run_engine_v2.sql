@@ -31,7 +31,7 @@ ALTER TABLE public.runs
   ADD COLUMN IF NOT EXISTS current_action_plan_id uuid,
   ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
-CREATE INDEX IF NOT EXISTS idx_runs_user_id ON public.runs(user_id);
+create index IF NOT EXISTS idx_runs_user_id ON public.runs(user_id);
 
 -- ============================================================
 -- 3. run_steps — granular execution steps within a Run
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS public.run_steps (
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_run_steps_run ON public.run_steps(run_id, seq);
+create index IF NOT EXISTS idx_run_steps_run ON public.run_steps(run_id, seq);
 
 -- ============================================================
 -- 4. run_approvals — approval gates for write actions
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS public.run_logs (
   message     text NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_run_logs_run ON public.run_logs(run_id, at);
+create index IF NOT EXISTS idx_run_logs_run ON public.run_logs(run_id, at);
 
 -- ============================================================
 -- 6. artifacts — unified document/output model
@@ -118,8 +118,8 @@ CREATE TABLE IF NOT EXISTS public.artifacts (
   updated_at          timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_artifacts_run ON public.artifacts(run_id);
-CREATE INDEX IF NOT EXISTS idx_artifacts_user ON public.artifacts(user_id);
+create index IF NOT EXISTS idx_artifacts_run ON public.artifacts(run_id);
+create index IF NOT EXISTS idx_artifacts_user ON public.artifacts(user_id);
 
 -- ============================================================
 -- 7. artifact_versions — version history for artifacts
@@ -188,7 +188,7 @@ CREATE TABLE IF NOT EXISTS public.plan_steps (
   completed_at      timestamptz
 );
 
-CREATE INDEX IF NOT EXISTS idx_plan_steps_plan ON public.plan_steps(plan_id, "order");
+create index IF NOT EXISTS idx_plan_steps_plan ON public.plan_steps(plan_id, "order");
 
 -- Add FK from runs to plans (deferred because plans references runs)
 ALTER TABLE public.runs
@@ -235,7 +235,7 @@ CREATE TABLE IF NOT EXISTS public.action_plan_steps (
   executed_at       timestamptz
 );
 
-CREATE INDEX IF NOT EXISTS idx_aps_plan ON public.action_plan_steps(action_plan_id, "order");
+create index IF NOT EXISTS idx_aps_plan ON public.action_plan_steps(action_plan_id, "order");
 
 -- Add FK from runs to action_plans
 ALTER TABLE public.runs
@@ -264,7 +264,7 @@ CREATE TABLE IF NOT EXISTS public.action_executions (
   completed_at    timestamptz
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_action_exec_idemp
+create unique index IF NOT EXISTS idx_action_exec_idemp
   ON public.action_executions(idempotency_key)
   WHERE status = 'completed';
 

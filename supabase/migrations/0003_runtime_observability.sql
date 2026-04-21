@@ -8,7 +8,7 @@
 -- 1. MODEL PROFILES — named provider+model+params configurations
 -- ============================================================
 
-create table public.model_profiles (
+create table if not exists public.model_profiles (
   id             uuid primary key default gen_random_uuid(),
   name           text not null unique,
   provider       text not null,
@@ -25,7 +25,7 @@ create table public.model_profiles (
   created_at     timestamptz not null default now()
 );
 
-create index idx_model_profiles_provider on public.model_profiles(provider);
+create index if not exists idx_model_profiles_provider on public.model_profiles(provider);
 
 -- Link agents to a model profile instead of raw provider/model
 alter table public.agents
@@ -38,7 +38,7 @@ alter table public.agents
 create type public.run_kind as enum ('chat', 'workflow', 'evaluation', 'tool_test');
 create type public.run_status as enum ('pending', 'running', 'completed', 'failed', 'cancelled', 'timeout');
 
-create table public.runs (
+create table if not exists public.runs (
   id                uuid primary key default gen_random_uuid(),
   kind              public.run_kind not null,
   status            public.run_status not null default 'pending',
@@ -61,12 +61,12 @@ create table public.runs (
   created_at        timestamptz not null default now()
 );
 
-create index idx_runs_agent on public.runs(agent_id);
-create index idx_runs_kind on public.runs(kind);
-create index idx_runs_status on public.runs(status);
-create index idx_runs_created on public.runs(created_at);
-create index idx_runs_parent on public.runs(parent_run_id);
-create index idx_runs_conversation on public.runs(conversation_id);
+create index if not exists idx_runs_agent on public.runs(agent_id);
+create index if not exists idx_runs_kind on public.runs(kind);
+create index if not exists idx_runs_status on public.runs(status);
+create index if not exists idx_runs_created on public.runs(created_at);
+create index if not exists idx_runs_parent on public.runs(parent_run_id);
+create index if not exists idx_runs_conversation on public.runs(conversation_id);
 
 -- ============================================================
 -- 3. TRACES — granular record of every operation within a run
@@ -77,7 +77,7 @@ create type public.trace_kind as enum (
   'skill_invoke', 'condition_eval', 'error', 'guard', 'custom'
 );
 
-create table public.traces (
+create table if not exists public.traces (
   id            uuid primary key default gen_random_uuid(),
   run_id        uuid not null references public.runs(id) on delete cascade,
   parent_trace_id uuid references public.traces(id) on delete set null,
@@ -97,15 +97,15 @@ create table public.traces (
   finished_at   timestamptz
 );
 
-create index idx_traces_run on public.traces(run_id);
-create index idx_traces_kind on public.traces(kind);
-create index idx_traces_parent on public.traces(parent_trace_id);
+create index if not exists idx_traces_run on public.traces(run_id);
+create index if not exists idx_traces_kind on public.traces(kind);
+create index if not exists idx_traces_parent on public.traces(parent_trace_id);
 
 -- ============================================================
 -- 4. MEMORY POLICIES — governance rules for agent memory
 -- ============================================================
 
-create table public.memory_policies (
+create table if not exists public.memory_policies (
   id             uuid primary key default gen_random_uuid(),
   name           text not null unique,
   description    text,
@@ -127,7 +127,7 @@ alter table public.agents
 -- 5. DATASETS & EVAL ENTRIES — structured evaluation
 -- ============================================================
 
-create table public.datasets (
+create table if not exists public.datasets (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
   description text,
@@ -135,7 +135,7 @@ create table public.datasets (
   created_at  timestamptz not null default now()
 );
 
-create table public.dataset_entries (
+create table if not exists public.dataset_entries (
   id              uuid primary key default gen_random_uuid(),
   dataset_id      uuid not null references public.datasets(id) on delete cascade,
   input           text not null,
@@ -145,7 +145,7 @@ create table public.dataset_entries (
   created_at      timestamptz not null default now()
 );
 
-create index idx_dataset_entries_dataset on public.dataset_entries(dataset_id);
+create index if not exists idx_dataset_entries_dataset on public.dataset_entries(dataset_id);
 
 -- Evolve evaluations: link to run + dataset_entry for full traceability
 alter table public.evaluations
@@ -167,7 +167,7 @@ alter table public.agent_versions
 -- 7. SKILL VERSIONING
 -- ============================================================
 
-create table public.skill_versions (
+create table if not exists public.skill_versions (
   id              uuid primary key default gen_random_uuid(),
   skill_id        uuid not null references public.skills(id) on delete cascade,
   version         int not null,

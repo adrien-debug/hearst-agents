@@ -15,7 +15,7 @@ drop policy if exists "agents_select_anon" on public.agents;
 drop policy if exists "agents_select_authenticated" on public.agents;
 drop table if exists public.agents cascade;
 
-create table public.agents (
+create table if not exists public.agents (
   id           uuid primary key default gen_random_uuid(),
   name         text not null,
   slug         text not null unique,
@@ -35,7 +35,7 @@ create table public.agents (
   updated_at   timestamptz not null default now()
 );
 
-create table public.skills (
+create table if not exists public.skills (
   id              uuid primary key default gen_random_uuid(),
   name            text not null,
   slug            text not null unique,
@@ -47,7 +47,7 @@ create table public.skills (
   created_at      timestamptz not null default now()
 );
 
-create table public.agent_skills (
+create table if not exists public.agent_skills (
   agent_id uuid not null references public.agents(id) on delete cascade,
   skill_id uuid not null references public.skills(id) on delete cascade,
   priority int not null default 0,
@@ -55,7 +55,7 @@ create table public.agent_skills (
   primary key (agent_id, skill_id)
 );
 
-create table public.tools (
+create table if not exists public.tools (
   id            uuid primary key default gen_random_uuid(),
   name          text not null,
   slug          text not null unique,
@@ -71,7 +71,7 @@ create table public.tools (
   created_at    timestamptz not null default now()
 );
 
-create table public.agent_tools (
+create table if not exists public.agent_tools (
   agent_id uuid not null references public.agents(id) on delete cascade,
   tool_id  uuid not null references public.tools(id) on delete cascade,
   enabled  boolean not null default true,
@@ -83,7 +83,7 @@ create table public.agent_tools (
 -- 2. KNOWLEDGE (RAG)
 -- ============================================================
 
-create table public.knowledge_bases (
+create table if not exists public.knowledge_bases (
   id              uuid primary key default gen_random_uuid(),
   name            text not null,
   description     text,
@@ -93,7 +93,7 @@ create table public.knowledge_bases (
   created_at      timestamptz not null default now()
 );
 
-create table public.knowledge_documents (
+create table if not exists public.knowledge_documents (
   id                uuid primary key default gen_random_uuid(),
   knowledge_base_id uuid not null references public.knowledge_bases(id) on delete cascade,
   title             text not null,
@@ -105,7 +105,7 @@ create table public.knowledge_documents (
   created_at        timestamptz not null default now()
 );
 
-create table public.agent_knowledge (
+create table if not exists public.agent_knowledge (
   agent_id          uuid not null references public.agents(id) on delete cascade,
   knowledge_base_id uuid not null references public.knowledge_bases(id) on delete cascade,
   primary key (agent_id, knowledge_base_id)
@@ -115,7 +115,7 @@ create table public.agent_knowledge (
 -- 3. CONVERSATIONS
 -- ============================================================
 
-create table public.conversations (
+create table if not exists public.conversations (
   id              uuid primary key default gen_random_uuid(),
   agent_id        uuid not null references public.agents(id) on delete cascade,
   title           text,
@@ -126,7 +126,7 @@ create table public.conversations (
   created_at      timestamptz not null default now()
 );
 
-create table public.messages (
+create table if not exists public.messages (
   id              uuid primary key default gen_random_uuid(),
   conversation_id uuid not null references public.conversations(id) on delete cascade,
   role            text not null check (role in ('system','user','assistant','tool')),
@@ -138,7 +138,7 @@ create table public.messages (
   created_at      timestamptz not null default now()
 );
 
-create table public.agent_memory (
+create table if not exists public.agent_memory (
   id             uuid primary key default gen_random_uuid(),
   agent_id       uuid not null references public.agents(id) on delete cascade,
   memory_type    text not null default 'fact'
@@ -156,7 +156,7 @@ create table public.agent_memory (
 -- 4. WORKFLOWS (ORCHESTRATION)
 -- ============================================================
 
-create table public.workflows (
+create table if not exists public.workflows (
   id           uuid primary key default gen_random_uuid(),
   name         text not null,
   description  text,
@@ -167,7 +167,7 @@ create table public.workflows (
   created_at   timestamptz not null default now()
 );
 
-create table public.workflow_steps (
+create table if not exists public.workflow_steps (
   id                uuid primary key default gen_random_uuid(),
   workflow_id       uuid not null references public.workflows(id) on delete cascade,
   step_order        int not null default 0,
@@ -179,7 +179,7 @@ create table public.workflow_steps (
   on_failure_step_id uuid references public.workflow_steps(id) on delete set null
 );
 
-create table public.workflow_runs (
+create table if not exists public.workflow_runs (
   id          uuid primary key default gen_random_uuid(),
   workflow_id uuid not null references public.workflows(id) on delete cascade,
   status      text not null default 'pending'
@@ -196,7 +196,7 @@ create table public.workflow_runs (
 -- 5. METRICS
 -- ============================================================
 
-create table public.evaluations (
+create table if not exists public.evaluations (
   id              uuid primary key default gen_random_uuid(),
   agent_id        uuid not null references public.agents(id) on delete cascade,
   eval_type       text not null default 'accuracy'
@@ -210,7 +210,7 @@ create table public.evaluations (
   created_at      timestamptz not null default now()
 );
 
-create table public.usage_logs (
+create table if not exists public.usage_logs (
   id              uuid primary key default gen_random_uuid(),
   agent_id        uuid not null references public.agents(id) on delete cascade,
   conversation_id uuid references public.conversations(id) on delete set null,
@@ -222,7 +222,7 @@ create table public.usage_logs (
   created_at      timestamptz not null default now()
 );
 
-create table public.agent_versions (
+create table if not exists public.agent_versions (
   id              uuid primary key default gen_random_uuid(),
   agent_id        uuid not null references public.agents(id) on delete cascade,
   version         int not null,
@@ -237,19 +237,19 @@ create table public.agent_versions (
 -- 6. INDEXES
 -- ============================================================
 
-create index idx_agents_status on public.agents(status);
-create index idx_agents_slug on public.agents(slug);
-create index idx_conversations_agent on public.conversations(agent_id);
-create index idx_messages_conversation on public.messages(conversation_id);
-create index idx_messages_created on public.messages(created_at);
-create index idx_agent_memory_agent on public.agent_memory(agent_id);
-create index idx_knowledge_docs_base on public.knowledge_documents(knowledge_base_id);
-create index idx_workflow_steps_workflow on public.workflow_steps(workflow_id);
-create index idx_workflow_runs_workflow on public.workflow_runs(workflow_id);
-create index idx_evaluations_agent on public.evaluations(agent_id);
-create index idx_usage_logs_agent on public.usage_logs(agent_id);
-create index idx_usage_logs_created on public.usage_logs(created_at);
-create index idx_agent_versions_agent on public.agent_versions(agent_id);
+create index if not exists idx_agents_status on public.agents(status);
+create index if not exists idx_agents_slug on public.agents(slug);
+create index if not exists idx_conversations_agent on public.conversations(agent_id);
+create index if not exists idx_messages_conversation on public.messages(conversation_id);
+create index if not exists idx_messages_created on public.messages(created_at);
+create index if not exists idx_agent_memory_agent on public.agent_memory(agent_id);
+create index if not exists idx_knowledge_docs_base on public.knowledge_documents(knowledge_base_id);
+create index if not exists idx_workflow_steps_workflow on public.workflow_steps(workflow_id);
+create index if not exists idx_workflow_runs_workflow on public.workflow_runs(workflow_id);
+create index if not exists idx_evaluations_agent on public.evaluations(agent_id);
+create index if not exists idx_usage_logs_agent on public.usage_logs(agent_id);
+create index if not exists idx_usage_logs_created on public.usage_logs(created_at);
+create index if not exists idx_agent_versions_agent on public.agent_versions(agent_id);
 
 -- ============================================================
 -- 7. RLS

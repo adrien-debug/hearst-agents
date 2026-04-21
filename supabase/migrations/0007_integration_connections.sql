@@ -3,7 +3,7 @@
 -- Secure, traceable connections to external services
 -- ============================================================
 
-create table public.integration_connections (
+create table if not exists public.integration_connections (
   id           uuid primary key default gen_random_uuid(),
   provider     text not null,
   name         text not null,
@@ -22,8 +22,8 @@ create table public.integration_connections (
   unique (provider, name)
 );
 
-create index idx_integration_connections_provider on public.integration_connections(provider);
-create index idx_integration_connections_status on public.integration_connections(status);
+create index if not exists idx_integration_connections_provider on public.integration_connections(provider);
+create index if not exists idx_integration_connections_status on public.integration_connections(status);
 
 comment on column public.integration_connections.credentials is
   'Encrypted/secured auth credentials — never exposed in API responses';

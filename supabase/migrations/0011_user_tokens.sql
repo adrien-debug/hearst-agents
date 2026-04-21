@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS user_tokens (
   UNIQUE (user_id, provider)
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_tokens_user_provider ON user_tokens(user_id, provider);
+create index IF NOT EXISTS idx_user_tokens_user_provider ON user_tokens(user_id, provider);
 
 ALTER TABLE user_tokens ENABLE ROW LEVEL SECURITY;
 

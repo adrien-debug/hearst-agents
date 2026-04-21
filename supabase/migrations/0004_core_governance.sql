@@ -9,7 +9,7 @@
 -- Every critical prompt is an immutable artifact with lineage.
 -- ============================================================
 
-create table public.prompt_artifacts (
+create table if not exists public.prompt_artifacts (
   id           uuid primary key default gen_random_uuid(),
   slug         text not null,
   version      int  not null default 1,
@@ -31,11 +31,11 @@ create table public.prompt_artifacts (
   unique (slug, version)
 );
 
-create index idx_prompt_artifacts_slug on public.prompt_artifacts(slug);
-create index idx_prompt_artifacts_kind on public.prompt_artifacts(kind);
-create index idx_prompt_artifacts_scope on public.prompt_artifacts(scope);
-create index idx_prompt_artifacts_agent on public.prompt_artifacts(agent_id);
-create index idx_prompt_artifacts_skill on public.prompt_artifacts(skill_id);
+create index if not exists idx_prompt_artifacts_slug on public.prompt_artifacts(slug);
+create index if not exists idx_prompt_artifacts_kind on public.prompt_artifacts(kind);
+create index if not exists idx_prompt_artifacts_scope on public.prompt_artifacts(scope);
+create index if not exists idx_prompt_artifacts_agent on public.prompt_artifacts(agent_id);
+create index if not exists idx_prompt_artifacts_skill on public.prompt_artifacts(skill_id);
 
 -- ============================================================
 -- 2. TOOL GOVERNANCE — risk, policies, kill switch
@@ -70,7 +70,7 @@ alter table public.runs
   add column if not exists replay_of_run_id uuid references public.runs(id) on delete set null,
   add column if not exists prompt_artifact_id uuid references public.prompt_artifacts(id) on delete set null;
 
-create index idx_runs_replay on public.runs(replay_of_run_id);
+create index if not exists idx_runs_replay on public.runs(replay_of_run_id);
 
 -- ============================================================
 -- 4. TRACE PAYLOAD — status field for individual trace lifecycle

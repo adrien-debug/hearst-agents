@@ -7,7 +7,7 @@ create type public.mission_status as enum (
   'created', 'running', 'awaiting_approval', 'completed', 'failed', 'cancelled'
 );
 
-create table public.missions (
+create table if not exists public.missions (
   id          uuid primary key default gen_random_uuid(),
   user_id     text not null,
   agent_id    uuid references public.agents(id) on delete set null,
@@ -22,12 +22,12 @@ create table public.missions (
   updated_at  timestamptz not null default now()
 );
 
-create index idx_missions_user on public.missions(user_id);
-create index idx_missions_status on public.missions(status);
-create index idx_missions_created on public.missions(created_at desc);
+create index if not exists idx_missions_user on public.missions(user_id);
+create index if not exists idx_missions_status on public.missions(status);
+create index if not exists idx_missions_created on public.missions(created_at desc);
 
 -- Each execution of a mission step
-create table public.mission_runs (
+create table if not exists public.mission_runs (
   id          uuid primary key default gen_random_uuid(),
   mission_id  uuid not null references public.missions(id) on delete cascade,
   action_id   text not null,
@@ -41,7 +41,7 @@ create table public.mission_runs (
   created_at  timestamptz not null default now()
 );
 
-create index idx_mission_runs_mission on public.mission_runs(mission_id);
+create index if not exists idx_mission_runs_mission on public.mission_runs(mission_id);
 
 -- RLS
 alter table public.missions enable row level security;

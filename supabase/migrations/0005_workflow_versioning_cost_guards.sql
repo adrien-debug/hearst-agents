@@ -6,7 +6,7 @@
 -- 1. WORKFLOW VERSIONS — immutable snapshot of workflow at publication
 -- ============================================================
 
-create table public.workflow_versions (
+create table if not exists public.workflow_versions (
   id           uuid primary key default gen_random_uuid(),
   workflow_id  uuid not null references public.workflows(id) on delete cascade,
   version      int  not null default 1,
@@ -18,7 +18,7 @@ create table public.workflow_versions (
   unique (workflow_id, version)
 );
 
-create index idx_workflow_versions_workflow on public.workflow_versions(workflow_id);
+create index if not exists idx_workflow_versions_workflow on public.workflow_versions(workflow_id);
 
 -- Track active published version on workflows
 alter table public.workflows

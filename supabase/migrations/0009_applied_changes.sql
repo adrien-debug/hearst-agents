@@ -3,7 +3,7 @@
 -- Audit trail for every decision applied to the system
 -- ============================================================
 
-create table public.applied_changes (
+create table if not exists public.applied_changes (
   id           uuid primary key default gen_random_uuid(),
   signal_id    uuid references public.improvement_signals(id) on delete set null,
   change_type  text not null
@@ -18,9 +18,9 @@ create table public.applied_changes (
   created_at   timestamptz not null default now()
 );
 
-create index idx_applied_changes_target on public.applied_changes(target_type, target_id);
-create index idx_applied_changes_signal on public.applied_changes(signal_id);
-create index idx_applied_changes_type on public.applied_changes(change_type);
+create index if not exists idx_applied_changes_target on public.applied_changes(target_type, target_id);
+create index if not exists idx_applied_changes_signal on public.applied_changes(signal_id);
+create index if not exists idx_applied_changes_type on public.applied_changes(change_type);
 
 -- RLS
 alter table public.applied_changes enable row level security;
