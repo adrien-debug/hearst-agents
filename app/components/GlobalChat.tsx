@@ -332,13 +332,12 @@ export default function GlobalChat() {
     sendMessage(text);
   }, [sendMessage]);
 
-  // All pages — bottom overlay
   return (
-    <>
-      {/* Messages Area */}
+    <div className="shrink-0 w-full max-w-2xl mx-auto px-6 pb-6">
+      {/* Messages */}
       {expanded && messages.length > 0 && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-2xl z-90 max-h-[50vh] overflow-y-auto scrollbar-hide px-4">
-          <div className="flex flex-col gap-6 py-4">
+        <div className="max-h-[40vh] overflow-y-auto scrollbar-hide mb-4">
+          <div className="flex flex-col gap-4 py-2">
             {messages.map((m, i) => (
               <ChatMessage
                 key={i}
@@ -353,39 +352,37 @@ export default function GlobalChat() {
         </div>
       )}
 
-      {/* Chat Bar (pill) — fixed bottom center */}
-      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl z-100 px-4">
-        <form
-          onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
-          className="chat-bar"
-        >
-          <div className="shrink-0 ml-2">
-            <div className="w-8 h-8 rounded-full bg-cyan-accent/10 flex items-center justify-center">
-              <svg className="w-4 h-4 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-            </div>
+      {/* Chat Bar */}
+      <form
+        onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
+        className="chat-bar"
+      >
+        <div className="shrink-0 ml-2">
+          <div className="w-7 h-7 rounded-full bg-cyan-accent/10 flex items-center justify-center">
+            <svg className="w-3.5 h-3.5 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
           </div>
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onFocus={() => { if (messages.length > 0) setExpanded(true); }}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(input); } }}
-            placeholder="Ask Hearst OS anything..."
-            rows={1}
-            className={`flex-1 bg-transparent border-none outline-none text-sm resize-none py-3 transition-colors duration-75 ${inputFlash ? "text-white" : "text-white/80"} placeholder:text-white/20 ${streaming ? "caret-amber-400" : "caret-white"}`}
-            disabled={streaming}
-          />
-          <div className="flex gap-2 mr-2">
-            <button type="button" className="w-8 h-8 flex items-center justify-center text-white/20 hover:text-cyan-accent transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-            </button>
-            <button type="submit" disabled={streaming || !input.trim()} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-full hover:bg-cyan-accent transition-all disabled:opacity-30">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-            </button>
-          </div>
-        </form>
-      </div>
-    </>
+        </div>
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onFocus={() => { if (messages.length > 0) setExpanded(true); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(input); } }}
+          placeholder="Ask Hearst OS anything..."
+          rows={1}
+          className={`flex-1 bg-transparent border-none outline-none text-sm resize-none py-2.5 transition-colors duration-75 ${inputFlash ? "text-white" : "text-white/80"} placeholder:text-white/20 ${streaming ? "caret-amber-400" : "caret-white"}`}
+          disabled={streaming}
+        />
+        <div className="flex gap-1.5 mr-1.5">
+          <button type="button" className="w-7 h-7 flex items-center justify-center text-white/20 hover:text-cyan-accent transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+          </button>
+          <button type="submit" disabled={streaming || !input.trim()} className="w-7 h-7 flex items-center justify-center bg-white text-black rounded-full hover:bg-cyan-accent transition-all disabled:opacity-30">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 

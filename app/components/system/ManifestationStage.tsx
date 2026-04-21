@@ -78,28 +78,26 @@ export function ManifestationStage() {
   const animClass = STATE_ANIM[phase] ?? "";
 
   return (
-    <div className="relative z-0 flex flex-col items-center justify-center gap-8 px-6 text-center">
+    <div className="relative z-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
       {/* Ghost Core */}
       <div
-        className={`relative flex items-center justify-center ${animClass}`}
-        style={{ width: 200, height: 200 }}
+        className={`relative flex items-center justify-center shrink-0 ${animClass}`}
+        style={{ width: 80, height: 80 }}
         aria-hidden
       >
-        {/* Aura */}
         <svg
           className="dotted-logo absolute inset-0 w-full h-full"
           viewBox={GHOST_SVG_VIEWBOX}
-          style={{ opacity: 0.15, filter: "blur(15px)", animation: "aura-pulse 4s infinite ease-in-out" }}
+          style={{ opacity: 0.1, filter: "blur(8px)", animation: "aura-pulse 4s infinite ease-in-out" }}
         >
           {GHOST_SVG_PATHS}
         </svg>
-        {/* Main */}
         <svg
-          className="dotted-logo w-24 h-24 relative z-10"
+          className="dotted-logo w-10 h-10 relative z-10"
           viewBox={GHOST_SVG_VIEWBOX}
           style={{
-            filter: "drop-shadow(0 0 20px rgba(0, 229, 255, 0.15))",
-            opacity: 0.6,
+            filter: "drop-shadow(0 0 10px rgba(0, 229, 255, 0.2))",
+            opacity: 0.5,
             animation: phase === "active_condensation"
               ? "thinking-vibe 2s infinite ease-in-out"
               : "ghost-float 6s infinite ease-in-out",
@@ -109,23 +107,22 @@ export function ManifestationStage() {
         </svg>
       </div>
 
-      {/* Typography */}
-      <div className="flex flex-col items-center gap-3">
-        <h1 className="text-[2.5rem] font-thin tracking-[1.2em] uppercase text-white/20">
+      <div className="flex flex-col items-center gap-1.5">
+        <h1 className="text-base font-light tracking-[0.08em] uppercase text-white/70">
           {primaryLine}
         </h1>
-        <p className={`font-mono text-[10px] tracking-[0.8em] transition-colors duration-300 ${
-          activeThought ? "text-cyan-accent/80" : "text-cyan-accent/40"
+        <p className={`font-mono text-[8px] tracking-[0.3em] transition-colors duration-300 ${
+          activeThought ? "text-cyan-accent/60" : "text-cyan-accent/25"
         }`}>
           {stateLabel}
         </p>
-        <p className={`text-xs leading-relaxed font-light max-w-[30ch] transition-colors duration-300 ${
-          activeThought ? "text-white/70" : "text-white/40"
+        <p className={`text-[11px] leading-relaxed font-light max-w-[40ch] transition-colors duration-300 ${
+          activeThought ? "text-white/50" : "text-white/25"
         }`}>
           {secondaryLine}
         </p>
         {phase === "ready_stabilized" && isFocused && focal && (
-          <p className="text-[10px] tracking-wide text-white/30 font-light pt-1">
+          <p className="text-[9px] tracking-wide text-white/20 font-light pt-0.5">
             {"Visible à droite."}
           </p>
         )}

@@ -17,6 +17,21 @@ import { memo, useEffect, useRef, useState } from "react";
 import type { FocalObject, FocalAction } from "@/lib/right-panel/objects";
 import { getProviderUi, getProviderLabel } from "@/lib/providers/registry";
 
+const EMOJI_RE = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+function cleanText(s: string): string {
+  return s
+    .replace(EMOJI_RE, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/^#+\s*/gm, "")
+    .replace(/^\|[-:| ]+\|$/gm, "")
+    .replace(/^\|(.+)\|$/gm, "$1")
+    .replace(/^---+$/gm, "")
+    .replace(/^>\s*/gm, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export const TYPE_LABELS: Record<string, string> = {
   message_draft: "MESSAGE",
   message_receipt: "ENVOYÉ",
@@ -63,10 +78,10 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
 
       {/* Title */}
       {object.title && (
-        <h2 className={`font-medium tracking-tight text-white leading-snug ${
-          isPreview ? "text-lg" : "text-[28px]"
+        <h2 className={`font-light tracking-tight text-white/90 leading-snug ${
+          isPreview ? "text-lg" : "text-2xl"
         }`}>
-          {object.title}
+          {cleanText(object.title)}
         </h2>
       )}
 
@@ -101,14 +116,14 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
 // ── Scannable body renderer ─────────────────────────────────
 
 function ScanBody({ text, large }: { text: string; large?: boolean }) {
-  const lines = text
+  const lines = cleanText(text)
     .split("\n")
-    .map((l) => l.replace(/^[-–•*]\s*/, "").trim())
+    .map((l) => l.replace(/^[-–•*#]\s*/, "").trim())
     .filter(Boolean);
 
   const textClass = large
-    ? "text-[15px] text-white/80 leading-loose max-w-[60ch]"
-    : "text-[14px] text-white/80 leading-relaxed max-w-[60ch]";
+    ? "text-[14px] text-white/60 font-light leading-relaxed max-w-[60ch]"
+    : "text-[13px] text-white/60 leading-relaxed max-w-[60ch]";
 
   if (lines.length <= 1) {
     return <p className={textClass}>{lines[0] ?? text}</p>;
@@ -148,10 +163,10 @@ function DocumentSection({ heading, body, mode }: { heading?: string; body: stri
   const isFull = mode === "full";
   const glow = useAfterglow(body);
 
-  const lines = body
+  const lines = cleanText(body)
     .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
+    .map((l) => l.replace(/^[-–•*#]\s*/, "").trim())
+    .filter((l) => l.length > 0 && !/^[-|:]+$/.test(l));
 
   return (
     <div className="relative group">
@@ -164,9 +179,9 @@ function DocumentSection({ heading, body, mode }: { heading?: string; body: stri
       
       <div className={`space-y-4 ${isFull ? "mb-12" : "mb-6"}`}>
         {heading && (
-          <h3 className={`font-medium tracking-tight transition-colors duration-3000 ease-out ${
-            glow ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "text-white"
-          } ${isFull ? "text-xl" : "text-base"}`}>
+          <h3 className={`font-mono font-normal tracking-[0.4em] uppercase transition-colors duration-3000 ease-out ${
+            glow ? "text-cyan-accent/80" : "text-cyan-accent/60"
+          } ${isFull ? "text-sm" : "text-xs"}`}>
             {heading}
           </h3>
         )}
@@ -198,8 +213,8 @@ function DocumentSection({ heading, body, mode }: { heading?: string; body: stri
 function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "full" }) {
   const large = mode === "full";
   const bodyClass = large
-    ? "text-[15px] text-white/80 leading-loose"
-    : "text-[14px] text-white/80 leading-relaxed";
+    ? "text-[14px] text-white/60 font-light leading-relaxed"
+    : "text-[13px] text-white/60 leading-relaxed";
   const sectionGap = large ? "space-y-8" : "space-y-6";
 
   if (mode === "preview") {
@@ -210,7 +225,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
     else if ("condition" in object && typeof object.condition === "string") summaryText = object.condition;
 
     return summaryText ? (
-      <p className="text-sm text-white/70 leading-relaxed line-clamp-2">{summaryText}</p>
+      <p className="text-sm text-white/70 leading-relaxed line-clamp-2">{cleanText(summaryText)}</p>
     ) : null;
   }
 
@@ -406,7 +421,7 @@ function Provenance({ object }: { object: FocalObject }) {
   const createdAt = objectRaw.createdAt as number | undefined;
 
   return (
-    <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/50 tracking-wide mt-1">
+    <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/40 tracking-wide mt-1">
       <span className={`${ui.color.split(" ")[1] ?? "text-white/50"}`}>
         {ui.initial}
       </span>

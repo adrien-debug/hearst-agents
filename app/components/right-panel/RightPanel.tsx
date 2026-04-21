@@ -126,9 +126,9 @@ function RightPanelInner() {
     <aside
       className="hidden h-full shrink-0 flex-col border-l border-white/5 bg-transparent lg:flex relative overflow-hidden"
       style={{
-        width: isDocument ? "100%" : "36%",
+        width: isDocument ? "42%" : "36%",
         minWidth: 360,
-        maxWidth: isDocument ? undefined : 760,
+        maxWidth: 760,
         transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)",
         contain: "strict",
         willChange: "width",
@@ -208,7 +208,7 @@ function RightPanelInner() {
 
           {/* Timeline Register */}
           {secondary.length > 0 && (
-            <div className="space-y-0.5 shrink-0 overflow-hidden">
+            <div className="space-y-1 shrink-0 overflow-hidden">
               {secondary.map((obj) => {
                 const timeStr = obj.createdAt
                   ? new Date(obj.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -235,13 +235,13 @@ function RightPanelInner() {
 
           {/* Empty state */}
           {!isFocused && !loading && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+            <div className="flex-1 flex items-center justify-center gap-3">
               <div
                 className={`transition-all duration-500 ${
-                  halo.coreState !== "idle" ? "status-dot animate-pulse" : "h-[5px] w-[5px] rounded-full bg-white/10"
+                  halo.coreState !== "idle" ? "status-dot animate-pulse" : "w-1.5 h-1.5 rounded-full bg-white/10"
                 }`}
               />
-              <p className="font-mono text-[10px] text-white/30 tracking-widest uppercase max-w-[20ch] text-center">
+              <p className="font-mono text-[10px] text-white/40 tracking-widest uppercase">
                 {sublineForFlow(halo.flowLabel) ?? "En veille"}
               </p>
             </div>

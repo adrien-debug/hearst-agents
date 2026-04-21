@@ -20,7 +20,7 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import Link from "next/link";
+
 import { useSidebarOptional } from "@/app/hooks/use-sidebar";
 import { useThreadSwitchOptional } from "@/app/hooks/use-thread-switch";
 import { useHaloRuntime } from "@/app/lib/halo-runtime-context";
@@ -68,15 +68,7 @@ export default function AppNav() {
       }`}
     >
       {/* ── Workspace header ─────────────────────────────── */}
-      <div className="flex h-14 shrink-0 items-center gap-3 px-4 relative">
-        <Link
-          href="/"
-          onClick={handleNewThread}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm border border-white/5 transition-colors duration-200 hover:border-cyan-accent/20"
-          title="Nouveau fil"
-        >
-          <span className="text-[10px] font-semibold text-white/40">H</span>
-        </Link>
+      <div className="flex h-14 shrink-0 items-center px-4 relative">
         {!isCollapsed && (
           <div className="flex items-center gap-2 ml-auto">
             <span className="status-dot w-1 h-1" />
@@ -100,11 +92,11 @@ export default function AppNav() {
 
       {/* ── Live Activity (HUD) ──────────────────────────── */}
       {!isCollapsed && (
-        <div className="boxed-panel shrink-0 mx-3 mt-2">
-          <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-cyan-accent/60">
+        <div className="boxed-panel shrink-0 !p-4">
+          <h3 className="font-mono text-[9px] font-normal tracking-[0.2em] uppercase text-cyan-accent/50">
             Synaptic Activity
-          </span>
-          <div className="mt-4 space-y-4">
+          </h3>
+          <div className="mt-3 space-y-3">
             {haloState.coreState !== "idle" ? (
               <>
                 <div className="status-indicator">
@@ -129,10 +121,10 @@ export default function AppNav() {
       )}
 
       {!isCollapsed && (
-        <div className="boxed-panel shrink-0 mx-3">
-          <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-cyan-accent/60">
+        <div className="boxed-panel shrink-0 !p-4">
+          <h3 className="font-mono text-[9px] font-normal tracking-[0.2em] uppercase text-cyan-accent/50">
             Contexte actif
-          </span>
+          </h3>
           <div className="mt-3">
             <p className="truncate text-[12px] font-medium leading-tight text-white/85">
               {activeThread?.title ?? "Nouveau fil"}
@@ -155,9 +147,9 @@ export default function AppNav() {
         ) : (
           <>
             <div className="px-5 pt-4 pb-1">
-              <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-cyan-accent/60">
+              <h3 className="font-mono text-[9px] font-normal tracking-[0.2em] uppercase text-cyan-accent/50">
                 Mémoire (Threads)
-              </span>
+              </h3>
             </div>
             {groupedThreads.length === 0 && (
               <p className="px-5 pt-2 text-[11px] text-white/30 italic">
@@ -168,9 +160,9 @@ export default function AppNav() {
             {groupedThreads.map((group) => (
               <div key={group.group} className="mb-1">
                 <div className="px-5 pb-1 pt-4">
-                  <span className="font-mono text-[9px] tracking-[0.4em] uppercase text-cyan-accent/40">
+                  <h3 className="font-mono text-[9px] font-normal tracking-[0.2em] uppercase text-cyan-accent/50">
                     {group.label}
-                  </span>
+                  </h3>
                 </div>
                 {group.threads.map((thread) => (
                   <ThreadRow
