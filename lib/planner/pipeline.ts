@@ -31,7 +31,7 @@ import { recordProviderSuccess, recordProviderFailure } from "@/lib/providers/st
 import { formatOutput, detectOutputTier } from "@/lib/runtime/formatting/pipeline";
 import { storeAsset, storeAction, type Asset } from "@/lib/assets/types";
 import { handleSendMessage } from "@/lib/tools/handlers/send-message";
-import { manifestPlan, manifestAsset, morphObject } from "@/lib/right-panel/manifestation";
+import { manifestPlan, manifestAsset } from "@/lib/right-panel/manifestation";
 import { logPlanEvent } from "./debug";
 
 // ── Types ───────────────────────────────────────────────────
@@ -142,7 +142,7 @@ export async function executeIntent(
         }
 
         return result;
-      } catch (err) {
+      } catch {
         recordProviderFailure(providerId, ctx.userId, ctx.tenantId);
         return {
           success: false,

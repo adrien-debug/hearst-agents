@@ -416,8 +416,6 @@ export async function POST(req: NextRequest) {
           .filter((m) => m.role !== "system")
           .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-        let totalTokensIn = 0;
-        let totalTokensOut = 0;
         let round = 0;
 
         // ── Tool-calling loop ──
@@ -436,8 +434,6 @@ export async function POST(req: NextRequest) {
             AGENT_TOOLS,
           );
 
-          totalTokensIn += result.tokensIn;
-          totalTokensOut += result.tokensOut;
 
           if (result.toolCalls.length === 0 || result.stopReason !== "tool_use") {
             // No tools — this is the final text response. Stream it.
@@ -509,8 +505,6 @@ export async function POST(req: NextRequest) {
             },
           );
           fullContent = finalResult.text;
-          totalTokensIn += finalResult.tokensIn;
-          totalTokensOut += finalResult.tokensOut;
         }
 
         if (!fullContent.trim()) {

@@ -25,7 +25,7 @@
  * - Do NOT re-animate historical Halo success states
  */
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useSidebarOptional } from "@/app/hooks/use-sidebar";
 import { useSurfaceOptional } from "@/app/hooks/use-surface";
 import {
@@ -78,7 +78,7 @@ export function useThreadSwitch(): UseThreadSwitchResult {
   const sidebar = useSidebarOptional();
   const surface = useSurfaceOptional();
   const chatCallbacksRef = useRef<ChatRestoreCallbacks | null>(null);
-  const restoredHaloRef = useRef<HaloState | null>(null);
+  const [restoredHaloState, setRestoredHaloState] = useState<HaloState | null>(null);
 
   const registerChatCallbacks = useCallback((callbacks: ChatRestoreCallbacks) => {
     chatCallbacksRef.current = callbacks;
@@ -135,11 +135,12 @@ export function useThreadSwitch(): UseThreadSwitchResult {
     chatCallbacksRef.current?.restore(chatSnapshot);
 
     // 5. Resolve Halo restoration
-    restoredHaloRef.current = resolveRestoredHaloState(
+    const restored = resolveRestoredHaloState(
       session?.intentFlowSnapshot.stage,
       session?.missionSnapshot?.phase,
     );
-    logRehydration("switch_complete", { haloState: restoredHaloRef.current?.coreState });
+    setRestoredHaloState(restored);
+    logRehydration("switch_complete", { haloState: restored?.coreState });
   }, [sidebar, surface, saveCurrentThread]);
 
   const startNewThread = useCallback(() => {
@@ -151,7 +152,7 @@ export function useThreadSwitch(): UseThreadSwitchResult {
     sidebar.clearActiveThread();
     surface.reset();
     chatCallbacksRef.current?.restore(null);
-    restoredHaloRef.current = null;
+    setRestoredHaloState(null);
     logRehydration("new_thread_complete");
   }, [sidebar, surface, saveCurrentThread]);
 
@@ -159,7 +160,7 @@ export function useThreadSwitch(): UseThreadSwitchResult {
     switchToThread,
     startNewThread,
     registerChatCallbacks,
-    restoredHaloState: restoredHaloRef,
+    restoredHaloState,
   };
 }
 

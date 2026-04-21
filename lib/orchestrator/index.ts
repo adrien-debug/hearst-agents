@@ -50,6 +50,7 @@ import { isResearchIntent, isReportIntent } from "./research-intent";
 import { runResearchReport } from "./run-research-report";
 import { getRequiredProvidersForInput } from "./provider-requirements";
 import { shouldPersistEvent, persistRunEvent } from "../runtime/timeline/persist";
+import type { ProviderId } from "../providers/types";
 
 interface OrchestrateInput {
   userId: string;
@@ -304,14 +305,14 @@ async function runSyntheticRetrieval(
   try {
     const result = await delegate(engine, {
       run_id: engine.id,
-      agent: "KnowledgeRetriever" as any,
+      agent: "KnowledgeRetriever",
       task: input.message,
       context: {
         intent: input.message,
         surface: input.surface ?? "chat",
         retrieval_mode: retrievalMode,
       },
-      expected_output: "summary" as any,
+      expected_output: "summary",
       retrieval_mode: retrievalMode,
     });
 
@@ -334,7 +335,7 @@ async function runSyntheticRetrieval(
           id: `action_read_${engine.id}_${Date.now()}`,
           threadId,
           type: "document_read",
-          provider: providerUsed as any,
+          provider: providerUsed as ProviderId,
           status: "completed",
           timestamp: Date.now(),
           metadata: {
@@ -359,7 +360,7 @@ async function runSyntheticRetrieval(
           summary: formatted.summary,
           outputTier: tier,
           provenance: {
-            providerId: providerUsed as any,
+            providerId: providerUsed as ProviderId,
             sentAt: now,
           },
           createdAt: now,
@@ -375,7 +376,7 @@ async function runSyntheticRetrieval(
           id: `action_gen_${engine.id}_${Date.now()}`,
           threadId,
           type: assetKind === "report" ? "report_generated" : "brief_generated",
-          provider: providerUsed as any,
+          provider: providerUsed as ProviderId,
           status: "completed",
           timestamp: Date.now(),
           metadata: {
@@ -416,7 +417,7 @@ async function runSyntheticRetrieval(
           type: "focal_object_ready",
           run_id: engine.id,
           focal_object: focalObject,
-        } as any);
+        } as { type: "focal_object_ready"; run_id: string; focal_object: Record<string, unknown> });
 
         engine.events.emit({
           type: "orchestrator_log",

@@ -79,7 +79,7 @@ const MAPPINGS: Record<string, Mapping> = {
   step_completed: {
     type: "step_completed",
     severity: "success",
-    title: (e) => `Step completed`,
+    title: () => `Step completed`,
     extract: (e) => ({ agentId: e.agent as string }),
   },
   step_failed: {

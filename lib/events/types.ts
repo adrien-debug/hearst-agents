@@ -6,9 +6,7 @@
  */
 
 import type {
-  EngineRunStatus,
   StepActor,
-  UsageMetrics,
   RunCost,
 } from "../runtime/engine/types";
 import type { ArtifactType } from "../artifacts/types";

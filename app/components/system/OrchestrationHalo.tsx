@@ -1,50 +1,23 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useRef, useEffect } from "react";
 import { useHalo, getCachedProviderUi } from "@/app/hooks/use-halo";
 import type {
   HaloCoreState,
   HaloProviderNode,
   HaloArtifactSignal,
   HaloFlowLabel,
+  HaloState,
 } from "@/app/lib/halo-state";
 
-// ── Core visual mapping ─────────────────────────────────────
-
-const CORE_VISUALS: Record<HaloCoreState, { color: string; glow: string; anim: string }> = {
-  idle: {
-    color: "bg-white/15",
-    glow: "bg-white/3",
-    anim: "animate-[pulse_4s_ease-in-out_infinite]",
-  },
-  thinking: {
-    color: "bg-cyan-400/80",
-    glow: "bg-cyan-400/10",
-    anim: "animate-pulse",
-  },
-  executing: {
-    color: "bg-cyan-400",
-    glow: "bg-cyan-400/15",
-    anim: "",
-  },
-  waiting_approval: {
-    color: "bg-amber-400/80",
-    glow: "bg-amber-400/10",
-    anim: "animate-pulse",
-  },
-  degraded: {
-    color: "bg-amber-400/60",
-    glow: "bg-amber-400/8",
-    anim: "",
-  },
-  success: {
-    color: "bg-emerald-400/80",
-    glow: "bg-emerald-400/10",
-    anim: "",
-  },
+const CORE_VISUALS: Record<HaloCoreState, { color: string; border: string }> = {
+  idle: { color: "bg-white/15", border: "border-white/[0.08]" },
+  thinking: { color: "bg-white/40", border: "border-white/[0.25]" },
+  executing: { color: "bg-white/60", border: "border-white/[0.25]" },
+  waiting_approval: { color: "bg-amber-400/60", border: "border-amber-400/[0.15]" },
+  degraded: { color: "bg-amber-400/40", border: "border-amber-400/[0.1]" },
+  success: { color: "bg-white/50", border: "border-white/[0.2]" },
 };
-
-// ── Provider Node ───────────────────────────────────────────
 
 const ProviderNode = memo(function ProviderNode({
   node,
@@ -59,31 +32,26 @@ const ProviderNode = memo(function ProviderNode({
 
   return (
     <div
-      className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/4 text-[9px] transition-all duration-700 ${
+      className={`relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/[0.05] text-[9px] transition-all duration-700 ${
         isActive && !isBg
-          ? "scale-[1.06] opacity-100 ring-1 ring-cyan-400/15 shadow-[0_0_4px_rgba(34,211,238,0.08)]"
+          ? "opacity-100 border-white/[0.15]"
           : isActive && isBg
-            ? "opacity-60"
+            ? "opacity-50"
             : isFading
-              ? "opacity-40"
-              : "opacity-30"
+              ? "opacity-30"
+              : "opacity-20"
       }`}
     >
       <span
         className={`font-semibold leading-none transition-colors duration-500 ${
-          isActive ? (isBg ? "text-cyan-400/50" : "text-cyan-400/80") : "text-white/40"
+          isActive ? "text-white/70" : "text-white/30"
         }`}
       >
         {ui.initial}
       </span>
-      {isActive && !isBg && (
-        <div className="absolute inset-0 rounded-full border border-cyan-400/10 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
-      )}
     </div>
   );
 });
-
-// ── Flow label ──────────────────────────────────────────────
 
 const FlowLabel = memo(function FlowLabel({
   label,
@@ -97,8 +65,8 @@ const FlowLabel = memo(function FlowLabel({
   return (
     <div className="min-w-[80px] flex items-center">
       <span
-        className={`font-mono text-[8px] uppercase tracking-[0.15em] transition-all duration-500 animate-[fadeIn_300ms_ease-out] ${
-          isBg ? "text-zinc-500/60" : "text-cyan-400/50"
+        className={`font-mono text-[8px] uppercase tracking-[0.15em] transition-all duration-500 ${
+          isBg ? "text-zinc-600" : "text-white/40"
         }`}
       >
         {label}
@@ -106,8 +74,6 @@ const FlowLabel = memo(function FlowLabel({
     </div>
   );
 });
-
-// ── Artifact signal ─────────────────────────────────────────
 
 const ArtifactSignal = memo(function ArtifactSignal({
   signal,
@@ -121,26 +87,16 @@ const ArtifactSignal = memo(function ArtifactSignal({
   return (
     <div
       className={`flex items-center gap-1.5 transition-all duration-700 ${
-        isEmerging
-          ? "opacity-50"
-          : isHandoff
-            ? "opacity-90"
-            : isSettled
-              ? "opacity-40"
-              : "opacity-0"
+        isEmerging ? "opacity-50" : isHandoff ? "opacity-90" : isSettled ? "opacity-30" : "opacity-0"
       }`}
     >
       <div
         className={`h-1.5 w-1.5 rounded-full transition-all duration-500 ${
-          isHandoff
-            ? "bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.2)]"
-            : isEmerging
-              ? "bg-cyan-400/40 animate-pulse"
-              : "bg-emerald-400/30"
+          isHandoff ? "bg-white/60" : isEmerging ? "bg-white/30 animate-pulse" : "bg-white/20"
         }`}
       />
       {isHandoff && (
-        <span className="font-mono text-[7px] text-emerald-400/50 uppercase tracking-wider">
+        <span className="font-mono text-[7px] text-white/30 uppercase tracking-wider">
           {signal.kind}
         </span>
       )}
@@ -148,49 +104,50 @@ const ArtifactSignal = memo(function ArtifactSignal({
   );
 });
 
-// ── Main component ──────────────────────────────────────────
+export function OrchestrationHalo({ restoredState }: { restoredState?: HaloState | null } = {}) {
+  const { state, motion, restoreState } = useHalo();
 
-export function OrchestrationHalo() {
-  const { state, motion } = useHalo();
+  const lastRestoredRef = useRef<HaloState | null>(null);
+  useEffect(() => {
+    if (restoredState && restoredState !== lastRestoredRef.current) {
+      lastRestoredRef.current = restoredState;
+      restoreState(restoredState);
+    }
+  }, [restoredState, restoreState]);
 
   const core = useMemo(() => CORE_VISUALS[state.coreState], [state.coreState]);
   const isBg = state.intensity === "background";
 
   return (
     <div className="flex h-10 w-full items-center justify-center relative shrink-0">
-      {/* Neural streak */}
-      {motion.shouldShowNeuralStreak && (
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-linear-to-r from-transparent via-cyan-400/8 to-transparent transition-opacity duration-700" />
-      )}
-
-      <div className="flex items-center gap-5 rounded-full bg-white/2 px-5 py-2 backdrop-blur-xl">
-        {/* System Core */}
-        <div className="relative flex h-4 w-4 shrink-0 items-center justify-center">
+      <div className="flex items-center gap-5 px-5 py-2">
+        {/* Core Signal — 56px, border only, no fill, no glow */}
+        <div
+          className="relative flex shrink-0 items-center justify-center"
+          style={{ width: 56, height: 56 }}
+        >
           <div
-            className={`absolute inset-0 rounded-full blur-sm transition-all duration-700 ${core.glow} ${
-              motion.shouldPulseCore ? core.anim : ""
-            } ${isBg ? "opacity-50" : ""}`}
+            className={`absolute inset-0 rounded-full border ${core.border} transition-all duration-700 ${isBg ? "opacity-50" : ""}`}
+            style={{ background: "transparent" }}
           />
           <div
-            className={`h-1.5 w-1.5 rounded-full transition-all duration-700 ${core.color} ${
-              motion.shouldIgniteCore ? "scale-125" : ""
-            } ${isBg ? "opacity-60" : ""}`}
+            className={`h-2 w-2 rounded-full transition-all duration-700 ${core.color} ${isBg ? "opacity-60" : ""}`}
           />
         </div>
 
-        {/* Provider orbit — fixed 3-slot layout */}
+        {/* Provider orbit */}
         <div className="flex items-center gap-2.5 min-w-[84px]">
           {state.activeProviders.map((node) => (
             <ProviderNode key={node.providerId} node={node} isBg={isBg} />
           ))}
         </div>
 
-        {/* Semantic flow label */}
+        {/* Flow label */}
         {motion.shouldShowFlowLabel && (
           <FlowLabel label={state.flowLabel} isBg={isBg} />
         )}
 
-        {/* Artifact emergence */}
+        {/* Artifact signal */}
         {motion.shouldShowArtifactHandoff && state.emergingArtifact && (
           <ArtifactSignal signal={state.emergingArtifact} />
         )}
@@ -198,3 +155,5 @@ export function OrchestrationHalo() {
     </div>
   );
 }
+
+export const CoreSignal = OrchestrationHalo;

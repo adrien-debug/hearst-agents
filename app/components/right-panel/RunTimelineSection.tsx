@@ -14,13 +14,6 @@ const SEVERITY_DOT: Record<TimelineSeverity, string> = {
   error: "bg-red-500",
 };
 
-const SEVERITY_TEXT: Record<TimelineSeverity, string> = {
-  info: "text-white/60",
-  success: "text-emerald-400/90",
-  warning: "text-amber-400/90",
-  error: "text-red-400/90",
-};
-
 function formatTime(ts: number): string {
   const d = new Date(ts);
   return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });

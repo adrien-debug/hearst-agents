@@ -95,7 +95,13 @@ export async function searchEmails(
   );
 }
 
-function extractBody(payload: any): string {
+interface GmailPart {
+  mimeType?: string;
+  body?: { data?: string };
+  parts?: GmailPart[];
+}
+
+function extractBody(payload: GmailPart | null | undefined): string {
   if (!payload) return "";
 
   if (payload.body?.data) {
@@ -104,13 +110,13 @@ function extractBody(payload: any): string {
 
   if (payload.parts) {
     const textPart = payload.parts.find(
-      (p: any) => p.mimeType === "text/plain" && p.body?.data,
+      (p) => p.mimeType === "text/plain" && p.body?.data,
     );
     if (textPart) {
-      return Buffer.from(textPart.body.data, "base64url").toString("utf-8");
+      return Buffer.from(textPart.body!.data!, "base64url").toString("utf-8");
     }
     const htmlPart = payload.parts.find(
-      (p: any) => p.mimeType === "text/html" && p.body?.data,
+      (p) => p.mimeType === "text/html" && p.body?.data,
     );
     if (htmlPart) {
       const html = Buffer.from(htmlPart.body.data, "base64url").toString("utf-8");

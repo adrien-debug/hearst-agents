@@ -113,7 +113,6 @@ export async function planFromIntent(
       };
     }
 
-    const stepIds = new Map<number, string>();
     const planSteps: Omit<
       PlanStep,
       "id" | "plan_id" | "status" | "run_step_id" | "completed_at"

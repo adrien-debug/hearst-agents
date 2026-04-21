@@ -17,7 +17,7 @@ export function useOrchestrate() {
   const abortRef = useRef<AbortController | null>(null);
   const runStream = useRunStreamOptional();
 
-  const send = useCallback(async (message: string, surface?: string, conversationId?: string) => {
+  const send = useCallback(async (message: string, surface?: string, conversationId?: string, focalContext?: { id: string; objectType: string; title: string; status: string }) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -31,7 +31,7 @@ export function useOrchestrate() {
       const res = await fetch("/api/orchestrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, surface, conversation_id: conversationId }),
+        body: JSON.stringify({ message, surface, conversation_id: conversationId, focal_context: focalContext }),
         signal: controller.signal,
       });
 

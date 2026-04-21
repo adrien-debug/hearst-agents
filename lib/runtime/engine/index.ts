@@ -14,7 +14,6 @@ import type {
   CreateRunInput,
   RunCost,
 } from "./types";
-import type { ArtifactRef } from "../../artifacts/types";
 import { StepManager } from "./step-manager";
 import { ApprovalManager } from "./approval-manager";
 import { ArtifactManager } from "./artifact-manager";

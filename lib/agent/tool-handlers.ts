@@ -56,7 +56,7 @@ const handlers: Record<ToolName, ToolHandler> = {
     }
   },
 
-  async get_calendar_events(userId, input) {
+  async get_calendar_events(userId, _input) {
     const start = Date.now();
 
     if (!(await hasCapability("calendar", userId))) {
@@ -83,7 +83,7 @@ const handlers: Record<ToolName, ToolHandler> = {
     }
   },
 
-  async get_files(userId, input) {
+  async get_files(userId, _input) {
     const start = Date.now();
 
     if (!(await hasCapability("files", userId))) {

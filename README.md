@@ -2,13 +2,16 @@
 
 Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
+> ✅ **Audit technique complet effectué le 21/04/2026** — Voir [AUDIT-REPORT.md](./AUDIT-REPORT.md)  
+> Code mort supprimé (573 lignes), React hooks optimisés, logs debug nettoyés.  
+> Application validée production-ready.
+
 ## Architecture UX
 
 - **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. Pipeline v2 SSE par défaut (`/api/orchestrate`).
-- **Right Panel** (`RightPanel`) — Surface de confiance : runs live, timeline, assets, missions, connectors.
-- **Control Panel** (`ControlPanel`) — Sidebar statut compact.
+- **Right Panel** (`RightPanel`) — Surface de confiance : runs live, timeline, assets, missions, connectors. Machine à états INDEX/DOCUMENT.
 - **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
-- Layout user : sidebar icon-only (60px) + zone centrale + chat global + right panel
+- Layout user : sidebar icon-only (AppNav) + zone centrale + chat global + right panel
 
 ## Comportement produit
 

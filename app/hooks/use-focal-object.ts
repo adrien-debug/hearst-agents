@@ -13,7 +13,7 @@
  */
 
 import { useMemo } from "react";
-import { useSurfaceOptional } from "@/app/hooks/use-surface";
+
 import { useSidebarOptional } from "@/app/hooks/use-sidebar";
 import { useRightPanel } from "@/app/hooks/use-right-panel";
 import type { FocalObject } from "@/lib/right-panel/objects";
@@ -36,7 +36,6 @@ export interface FocalObjectState {
 }
 
 export function useFocalObject(): FocalObjectState {
-  const surface = useSurfaceOptional();
   const sidebar = useSidebarOptional();
   const { data } = useRightPanel();
   const threadId = sidebar?.state.activeThreadId;
@@ -85,5 +84,5 @@ export function useFocalObject(): FocalObjectState {
       secondary: secondary.slice(0, MAX_SECONDARY),
       isFocused: focal !== null,
     };
-  }, [threadId, surface?.state.surface.mode, surface?.state.surface.context, data.focalObject]);
+  }, [threadId, data.focalObject, data.secondaryObjects]);
 }

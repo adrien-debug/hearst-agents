@@ -3,7 +3,7 @@
  * Canonical mission system: lib/runtime/missions/*, /api/v2/missions*.
  * Still used by ControlPanel (v1 mission panel) and GlobalChat (proactive suggestions).
  */
-import type { Mission, MissionAction, MissionEvent, MissionSnapshot, MissionStatus, ActionStatus, Surface } from "./types";
+import type { Mission, MissionAction, MissionEvent, MissionSnapshot, Surface } from "./types";
 
 const STORAGE_KEY = "hearst_missions";
 

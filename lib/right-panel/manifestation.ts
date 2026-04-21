@@ -21,7 +21,8 @@
 import type { ExecutionPlan } from "@/lib/planner/types";
 import type { MissionDefinition } from "@/lib/planner/types";
 import type { Asset } from "@/lib/assets/types";
-import type { FormattedOutput } from "@/lib/runtime/formatting/pipeline";
+import type { ProviderId } from "@/lib/providers/types";
+import type { FormattedOutput, FormattedSection } from "@/lib/runtime/formatting/pipeline";
 import type {
   FocalObject,
   MessageDraftObject,
@@ -34,7 +35,6 @@ import type {
   MissionDraftObject,
   MissionActiveObject,
   FocalObjectStatus,
-  FocalAction,
 } from "./objects";
 
 // ── Plan → Focal Object ────────────────────────────────────
@@ -149,7 +149,7 @@ function manifestOneShotPlan(plan: ExecutionPlan, now: number): FocalObject | nu
   return null;
 }
 
-function manifestMissionPlan(plan: ExecutionPlan, now: number): MissionDraftObject {
+function manifestMissionPlan(plan: ExecutionPlan, _now: number): MissionDraftObject {
   const status = mapPlanStatus(plan.status);
   return {
     objectType: "mission_draft",
@@ -169,7 +169,7 @@ function manifestMissionPlan(plan: ExecutionPlan, now: number): MissionDraftObje
   };
 }
 
-function manifestMonitoringPlan(plan: ExecutionPlan, now: number): WatcherDraftObject {
+function manifestMonitoringPlan(plan: ExecutionPlan, _now: number): WatcherDraftObject {
   return {
     objectType: "watcher_draft",
     id: `fo_${plan.id}_watcher`,
@@ -332,7 +332,7 @@ export function morphObject(
         morphTarget: null,
         recipient: (current as MessageDraftObject).recipient,
         body: (current as MessageDraftObject).body,
-        providerId: (data.providerId as string) as any ?? (current as MessageDraftObject).providerId!,
+        providerId: ((data.providerId as string) ?? (current as MessageDraftObject).providerId!) as ProviderId,
         channelRef: (data.channelRef as string) ?? "",
         sentAt: Date.now(),
         deliveryStatus: "sent",
@@ -350,7 +350,7 @@ export function morphObject(
         sourcePlanId: current.sourcePlanId,
         morphTarget: null,
         summary: (data.summary as string) ?? "",
-        sections: (data.sections as any[]) ?? [],
+        sections: (data.sections as FormattedSection[]) ?? [],
         tier: "report",
         tone: "executive",
         wordCount: (data.wordCount as number) ?? 0,

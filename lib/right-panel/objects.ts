@@ -20,7 +20,7 @@
  */
 
 import type { ProviderId } from "@/lib/providers/types";
-import type { OutputTier, OutputTone, FormattedSection } from "@/lib/runtime/formatting/pipeline";
+import type { OutputTone, FormattedSection } from "@/lib/runtime/formatting/pipeline";
 
 // ── Base ────────────────────────────────────────────────────
 

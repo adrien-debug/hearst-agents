@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { NoiseLayer } from "./components/system/NoiseLayer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +28,10 @@ export default function RootLayout({
       lang="fr"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="h-full bg-black">{children}</body>
+      <body className="h-full bg-[#020202]">
+        {children}
+        <NoiseLayer />
+      </body>
     </html>
   );
 }

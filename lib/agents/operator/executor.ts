@@ -14,7 +14,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RunEngine } from "../../runtime/engine";
 import { getProviderForTool } from "@/lib/providers/registry";
-import type { ActionPlan, ActionStep } from "../../plans/types";
+import type { ActionPlan } from "../../plans/types";
 import { PlanStore } from "../../plans/store";
 import { validateToolCall, type ToolCallAttempt } from "./guard";
 
@@ -205,14 +205,6 @@ export async function executeActionPlan(
       // Do NOT break on failure — continue to next action
     }
   }
-
-  // ── Final status ─────────────────────────────────────────
-  const finalStatus =
-    failed === 0
-      ? "completed"
-      : executed === 0
-        ? "failed"
-        : "completed"; // partial success → still completed at plan level
 
   await store.transitionActionPlan(
     actionPlan.id,

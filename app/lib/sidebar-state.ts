@@ -185,7 +185,6 @@ export interface GroupedThreads {
 }
 
 export function groupThreadsByTime(threads: ThreadSummary[]): GroupedThreads[] {
-  const now = Date.now();
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const yesterdayStart = new Date(todayStart);

@@ -3,24 +3,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useChatContext } from "../lib/chat-context";
-import { useMission, detectIntent, executeMission, approveMission, cancelMission } from "../lib/missions";
-import { useProactiveSuggestion } from "../hooks/use-proactive-suggestion";
+import { useMission, detectIntent, approveMission, cancelMission } from "../lib/missions";
 import { useOrchestrate, type V2Event } from "../hooks/use-orchestrate";
 import { useChatActivity } from "../lib/chat-activity";
-import type { Surface } from "../lib/missions-v2";
 import { getConnectAction, triggerConnect, sortByConnectPriority } from "../lib/connect-actions";
-import { getMissionSuggestions, type MissionSuggestion } from "../lib/missions-ui";
-import { MissionComposer } from "./missions/MissionComposer";
 import { OrchestrationHalo } from "./system/OrchestrationHalo";
 import { useThreadSwitchOptional } from "../hooks/use-thread-switch";
 import { linkThreadToConversation, type ChatMessage } from "../lib/thread-memory";
 import { useSidebarOptional } from "../hooks/use-sidebar";
+import { useFocalObject } from "../hooks/use-focal-object";
 
 const USE_V2 = process.env.NEXT_PUBLIC_USE_V2 !== "false";
-
-if (typeof window !== "undefined") {
-  console.log(`[ChatRuntime] Using ${USE_V2 ? "V2" : "V1"} pipeline`);
-}
 
 interface BlockedInfo {
   capability: string;
@@ -54,15 +47,9 @@ const SURFACE_NAV_LABEL: Record<string, string> = {
   apps: "J'ouvre les applications.",
 };
 
-const QUICK_ACTIONS = [
-  { label: "Urgents", cmd: "Qu'est-ce qui nécessite mon attention ?", primary: true },
-  { label: "Messages", cmd: "Résume mes messages du jour" },
-  { label: "Agenda", cmd: "Montre mon agenda du jour" },
-  { label: "Fichiers", cmd: "Montre mes fichiers" },
-] as const;
 
 export default function GlobalChat() {
-  const { surface, selectedItem, connectedServices, servicesLoaded, expanded, setExpanded, getContextHint } = useChatContext();
+  const { surface, selectedItem, connectedServices, expanded, setExpanded } = useChatContext();
   const { setActiveSurface, activeMission } = useMission();
   const router = useRouter();
 
@@ -74,15 +61,12 @@ export default function GlobalChat() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { suggestion, dismiss: dismissSuggestion, accept: acceptSuggestion } = useProactiveSuggestion(surface);
   const v2 = useOrchestrate();
   const chatActivity = useChatActivity();
   const threadSwitch = useThreadSwitchOptional();
   const sidebarCtx = useSidebarOptional();
 
-  const contextHint = getContextHint();
-  const [missionSuggestion, setMissionSuggestion] = useState<MissionSuggestion | null>(null);
-  const [showMissionComposer, setShowMissionComposer] = useState(false);
+  const { focal: focalObject } = useFocalObject();
   const lastUserInputRef = useRef<string>("");
   const restoringRef = useRef(false);
 
@@ -107,42 +91,21 @@ export default function GlobalChat() {
         }
         setStreaming(false);
         setV2Streaming(false);
-        setMissionSuggestion(null);
-        setShowMissionComposer(false);
         requestAnimationFrame(() => { restoringRef.current = false; });
       },
     });
   }, [threadSwitch, messages, input, conversationId, setExpanded]);
 
-  // Sync v2 hook state → messages with real-time streaming
+  // Sync v2 hook state → messages (text only, no step events — Halo handles perception)
   useEffect(() => {
     if (!USE_V2) return;
     if (v2.status === "idle") return;
 
-    const stepEvents = v2.events.filter(
-      (e) => e.type === "step_started" || e.type === "step_completed" || e.type === "step_failed",
-    );
-    const lines: string[] = [];
-    for (const e of stepEvents) {
-      if (e.type === "step_started") {
-        lines.push(`⟳ ${(e as V2Event).title ?? (e as V2Event).agent ?? "step"}…`);
-      } else if (e.type === "step_completed") {
-        const idx = lines.findLastIndex((l) => l.startsWith("⟳"));
-        if (idx >= 0) lines[idx] = lines[idx].replace("⟳", "✓").replace("…", "");
-      } else if (e.type === "step_failed") {
-        const idx = lines.findLastIndex((l) => l.startsWith("⟳"));
-        if (idx >= 0) lines[idx] = lines[idx].replace("⟳", "✗").replace("…", "");
-      }
-    }
-
-    const stepBlock = lines.length > 0 ? lines.join("\n") : "";
     const hasText = v2.text.length > 0;
     const isLive = v2.status === "running" && hasText;
     const isFailed = v2.status === "failed";
 
-    let content = hasText
-      ? (stepBlock ? `${stepBlock}\n\n${v2.text}` : v2.text)
-      : (stepBlock || (v2.status === "running" ? "Analyse…" : ""));
+    let content = hasText ? v2.text : (v2.status === "running" ? "" : "");
 
     if (isFailed && hasText) {
       content += "\n\n(interrompu)";
@@ -171,28 +134,7 @@ export default function GlobalChat() {
       });
     });
 
-    // Detect mission suggestion opportunity on completion
-    if (v2.status === "completed" && lastUserInputRef.current) {
-      const hasAsset = v2.events.some((e) => e.type === "asset_generated");
-      const suggestions = getMissionSuggestions(lastUserInputRef.current, hasAsset);
-      if (suggestions.length > 0) {
-        setMissionSuggestion(suggestions[0]);
-      }
-    }
   }, [v2.events, v2.text, v2.status]);
-
-  const handleSuggestionAccept = useCallback(() => {
-    if (!suggestion) return;
-    const action = suggestion.action;
-    acceptSuggestion();
-    if (action.type === "mission") {
-      const { mission } = action;
-      setMessages((prev) => [...prev, { role: "assistant", content: `${mission.title}…` }]);
-      if (!expanded) setExpanded(true);
-      setActiveSurface(mission.surface);
-      executeMission(mission);
-    }
-  }, [suggestion, acceptSuggestion, expanded, setExpanded, setActiveSurface]);
 
   useEffect(() => {
     if (activeMission?.status === "awaiting_approval" && activeMission.result) {
@@ -228,8 +170,6 @@ export default function GlobalChat() {
       setInput("");
       if (!expanded) setExpanded(true);
       setV2Streaming(false);
-      setMissionSuggestion(null);
-      setShowMissionComposer(false);
       lastUserInputRef.current = trimmed;
       setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
       setStreaming(true);
@@ -258,8 +198,11 @@ export default function GlobalChat() {
           if (threadId) linkThreadToConversation(threadId, convId);
         }
         setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+        const focalCtx = focalObject
+          ? { id: focalObject.id, objectType: focalObject.objectType, title: focalObject.title, status: focalObject.status }
+          : undefined;
         try {
-          await v2.send(trimmed, surface, convId);
+          await v2.send(trimmed, surface, convId, focalCtx);
         } finally {
           setStreaming(false);
         }
@@ -270,7 +213,6 @@ export default function GlobalChat() {
       let didFail = false;
       setMessages((prev) => [...prev, { role: "assistant", content: "Analyse…" }]);
 
-
       try {
         const ctx: Record<string, unknown> = { surface };
         if (selectedItem) ctx.selectedItem = selectedItem;
@@ -279,10 +221,6 @@ export default function GlobalChat() {
         const chatBody: Record<string, unknown> = { message: trimmed, context: ctx };
         if (conversationId) chatBody.conversation_id = conversationId;
 
-        if (process.env.NODE_ENV === "development") {
-          console.log("[Chat] REQUEST", { message: trimmed, surface, hasConversation: !!conversationId });
-        }
-
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -290,7 +228,7 @@ export default function GlobalChat() {
         });
 
         if (!res.ok) {
-          console.error("[Chat] RESPONSE", res.status, await res.clone().text().catch(() => ""));
+          await res.clone().text().catch(() => "");
         }
 
         if (!conversationId) {
@@ -334,32 +272,6 @@ export default function GlobalChat() {
                   } else {
                     chatActivity.toolDone(payload.tool, payload.status === "done");
                   }
-                  const TOOL_LABELS: Record<string, string> = {
-                    get_messages: "Messages",
-                    get_calendar_events: "Agenda",
-                    get_files: "Fichiers",
-                    agent: "Agent autonome",
-                    bash: "Exécution",
-                    write: "Écriture",
-                    read: "Lecture",
-                    web_search: "Recherche web",
-                  };
-                  const label = TOOL_LABELS[payload.tool] ?? payload.tool;
-                  const icon = payload.status === "done" ? "✓" : payload.status === "error" ? "✗" : "⟳";
-                  const stepLine = `${icon} ${label}`;
-                  setMessages((prev) => {
-                    const copy = [...prev];
-                    const last = copy[copy.length - 1];
-                    const existing = last.content;
-                    if (payload.status === "running") {
-                      const base = existing === "Analyse…" ? "" : existing;
-                      copy[copy.length - 1] = { role: "assistant", content: base ? `${base}\n${stepLine}…` : `${stepLine}…` };
-                    } else {
-                      const updated = existing.replace(`⟳ ${label}…`, stepLine);
-                      copy[copy.length - 1] = { role: "assistant", content: updated };
-                    }
-                    return copy;
-                  });
                 } else if (payload.type === "final" && payload.content) {
                   chatActivity.responseStarted();
                   assistantContent = payload.content;
@@ -400,7 +312,7 @@ export default function GlobalChat() {
         }
       }
     },
-    [conversationId, streaming, surface, selectedItem, connectedServices, servicesLoaded, expanded, setExpanded, setActiveSurface, router],
+    [conversationId, streaming, surface, selectedItem, connectedServices, expanded, setExpanded, setActiveSurface, router, chatActivity, focalObject, sidebarCtx, v2],
   );
 
   const handleApproval = useCallback((idx: number) => {
@@ -441,34 +353,38 @@ export default function GlobalChat() {
 
       {/* Orchestration Halo */}
       <div className="mb-4">
-        <OrchestrationHalo />
+        <OrchestrationHalo restoredState={threadSwitch?.restoredHaloState} />
       </div>
 
       {/* Input Bar */}
-      <div className="relative group">
-        <div className="absolute inset-0 bg-white/5 rounded-2xl blur-xl transition-opacity duration-500 opacity-0 group-focus-within:opacity-100" />
-        <form
-          onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
-          className="relative flex items-center bg-white/3 backdrop-blur-2xl rounded-2xl overflow-hidden transition-all duration-300 focus-within:bg-white/5"
-        >
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onFocus={() => { if (messages.length > 0) setExpanded(true); }}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
-            placeholder="Ask anything..."
-            rows={1}
-            className="flex-1 bg-transparent border-none text-sm text-white/90 placeholder-white/30 px-6 py-4 outline-none resize-none min-h-[52px]"
-            disabled={streaming}
-          />
-          <button type="submit" disabled={streaming || !input.trim()} className="flex items-center justify-center w-12 h-12 mr-2 rounded-xl text-white/50 hover:text-white transition-colors disabled:opacity-20">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
-            </svg>
-          </button>
-        </form>
-      </div>
+      <form
+        onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
+        className="relative flex items-center h-[80px] border-t border-white/[0.05] px-12"
+        style={{ background: "#020202" }}
+      >
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onFocus={() => { if (messages.length > 0) setExpanded(true); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
+          placeholder="..."
+          rows={1}
+          className="flex-1 bg-transparent border-none text-sm text-white/90 placeholder-white/20 outline-none resize-none h-full py-6 font-mono caret-transparent"
+          disabled={streaming}
+          style={{ caretColor: "transparent" }}
+        />
+        {!input && !streaming && (
+          <span className="absolute left-12 top-1/2 -translate-y-1/2 text-white/30 font-mono text-sm" style={{ animation: "blink-caret 1s step-end infinite" }}>
+            █
+          </span>
+        )}
+        <button type="submit" disabled={streaming || !input.trim()} className="flex items-center justify-center w-10 h-10 text-white/30 hover:text-white/60 transition-colors disabled:opacity-10">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+          </svg>
+        </button>
+      </form>
     </div>
   );
 }
@@ -497,7 +413,7 @@ function ChatMessage({
           {isLiveStreaming && <StreamCursor />}
         </pre>
         {msg.approved && (
-          <p className="mt-2 text-[10px] font-mono text-emerald-400">Validé</p>
+          <p className="mt-2 text-[10px] font-mono text-white/40">Validé</p>
         )}
         {msg.cancelled && (
           <p className="mt-2 text-[10px] font-mono text-white/30">Annulé</p>
@@ -522,14 +438,14 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
   const primaryAction = primary ? getConnectAction(primary) : null;
 
   return (
-    <div className="mt-4 rounded-xl bg-amber-500/5 px-4 py-3">
-      <p className="text-[11px] font-mono text-amber-400/90">Action bloquée</p>
-      <p className="mt-1 text-[11px] font-mono text-white/60">{info.message}</p>
+    <div className="mt-4 border border-white/[0.05] px-4 py-3">
+      <p className="text-[11px] font-mono text-amber-400/70">Action bloquée</p>
+      <p className="mt-1 text-[11px] font-mono text-white/50">{info.message}</p>
       <div className="mt-3 flex items-center gap-3">
         {primaryAction && (
           <button
             onClick={primaryAction.execute}
-            className="rounded-lg bg-white/5 px-3 py-1.5 text-[11px] font-mono text-cyan-400 transition-colors hover:bg-white/10 hover:text-cyan-300"
+            className="border border-white/[0.05] px-3 py-1.5 text-[11px] font-mono text-white/50 transition-colors hover:text-white/80 hover:border-white/[0.1]"
           >
             Connecter {primaryAction.label}
           </button>
@@ -537,7 +453,7 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
         {secondary && (
           <button
             onClick={() => triggerConnect(secondary)}
-            className="text-[10px] font-mono text-white/30 transition-colors hover:text-white/60"
+            className="text-[10px] font-mono text-white/20 transition-colors hover:text-white/50"
           >
             ou {getConnectAction(secondary).label}
           </button>
@@ -568,7 +484,7 @@ function ApprovalActions({
           if (ok) onApproved();
         }}
         disabled={busy}
-        className="rounded-lg bg-cyan-500/10 px-3 py-1.5 text-[11px] font-mono text-cyan-400 transition-colors hover:bg-cyan-500/20 active:scale-[0.97] disabled:opacity-50"
+        className="border border-white/[0.08] px-3 py-1.5 text-[11px] font-mono text-white/50 transition-colors hover:text-white/80 hover:border-white/[0.15] disabled:opacity-30"
       >
         {busy ? "Envoi…" : "Envoyer"}
       </button>
@@ -587,7 +503,7 @@ function ApprovalActions({
 
 function StreamCursor() {
   return (
-    <span className="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-px animate-pulse bg-cyan-400" />
+    <span className="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-px bg-white/40" style={{ animation: "blink-caret 1s step-end infinite" }} />
   );
 }
 

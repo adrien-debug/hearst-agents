@@ -145,7 +145,7 @@ export async function loadAssetsForThread(threadId: string): Promise<Asset[]> {
 
   if (error || !data) return [];
 
-  const assets: Asset[] = data.map((row: any) => ({
+  const assets: Asset[] = data.map((row: Record<string, unknown>) => ({
     id: row.id,
     threadId: row.thread_id,
     kind: row.kind as AssetKind,
@@ -206,7 +206,7 @@ export async function loadActionsForThread(threadId: string): Promise<Action[]> 
 
   if (error || !data) return [];
 
-  const actions: Action[] = data.map((row: any) => ({
+  const actions: Action[] = data.map((row: Record<string, unknown>) => ({
     id: row.id,
     threadId: row.thread_id,
     type: row.type as ActionType,

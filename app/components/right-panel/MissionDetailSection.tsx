@@ -43,7 +43,6 @@ export function MissionDetailSection({
         method: "POST",
       });
       if (res.ok) {
-        console.log("[MissionDetail] Run triggered");
         onRefresh?.();
       }
     } catch (err) {

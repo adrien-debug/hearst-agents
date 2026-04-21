@@ -15,7 +15,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   Artifact,
   ArtifactType,
-  ArtifactFormat,
   ArtifactSection,
   ArtifactSourceRef,
   ArtifactMetadata,

@@ -118,7 +118,8 @@ export type HaloAction =
   | { type: "artifact_handoff" }
   | { type: "artifact_settled" }
   | { type: "clear_artifact" }
-  | { type: "reset_idle"; at: number };
+  | { type: "reset_idle"; at: number }
+  | { type: "restore_state"; state: HaloState };
 
 // ── Initial state ───────────────────────────────────────────
 
@@ -288,6 +289,9 @@ export function haloReducer(state: HaloState, action: HaloAction): HaloState {
         _hasDataTool: false,
         _hasGenerateTool: false,
       };
+
+    case "restore_state":
+      return action.state;
 
     default:
       return state;

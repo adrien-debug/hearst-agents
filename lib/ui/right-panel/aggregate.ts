@@ -16,7 +16,7 @@ import { getAllMissionOps } from "@/lib/runtime/missions/ops-store";
 import { getSchedulerMode } from "@/lib/runtime/missions/scheduler-init";
 import { getServerSupabase } from "@/lib/supabase-server";
 import { manifestAsset } from "@/lib/right-panel/manifestation";
-import { formatOutput } from "@/lib/runtime/formatting/pipeline";
+import { formatOutput, type OutputTier } from "@/lib/runtime/formatting/pipeline";
 import type { Asset, AssetKind, AssetProvenance } from "@/lib/assets/types";
 import type { RightPanelData } from "./types";
 
@@ -166,7 +166,7 @@ export async function buildRightPanelData(): Promise<RightPanelData> {
 
       if (latestAssets && latestAssets.length > 0) {
         for (let i = 0; i < latestAssets.length; i++) {
-          const row = latestAssets[i] as any;
+          const row = latestAssets[i] as Record<string, unknown>;
           const asset: Asset = {
             id: row.id,
             threadId: row.thread_id,
@@ -181,7 +181,7 @@ export async function buildRightPanelData(): Promise<RightPanelData> {
           };
 
           const formatted = asset.contentRef
-            ? formatOutput(asset.contentRef, asset.outputTier as any ?? asset.kind)
+            ? formatOutput(asset.contentRef, (asset.outputTier ?? asset.kind) as OutputTier)
             : undefined;
           const fo = manifestAsset(asset, formatted);
           if (!fo) continue;

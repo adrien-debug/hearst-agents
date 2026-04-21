@@ -45,6 +45,7 @@ export function getCachedProviderUi(providerId: string): HaloProviderUi {
 export interface UseHaloResult {
   state: HaloState;
   motion: HaloMotionFlags;
+  restoreState: (s: HaloState) => void;
 }
 
 // ── Background detection heuristic ──────────────────────────
@@ -147,9 +148,13 @@ export function useHalo(): UseHaloResult {
     return unsub;
   }, [stream]);
 
+  const restoreState = useCallback((s: HaloState) => {
+    dispatch({ type: "restore_state", state: s });
+  }, []);
+
   const motion = deriveMotionFlags(state);
 
-  return { state, motion };
+  return { state, motion, restoreState };
 }
 
 // ── Event → Action mapping ──────────────────────────────────

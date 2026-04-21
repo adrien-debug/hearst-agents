@@ -13,7 +13,7 @@
  * It provides the mission lifecycle management layer above it.
  */
 
-import type { ExecutionPlan, MissionDefinition, MissionMode, MissionStatus } from "./types";
+import type { MissionDefinition, MissionMode } from "./types";
 import { getPlan, saveMission, getMission, getActiveMissions, getDueMissions } from "./store";
 import { logPlanEvent } from "./debug";
 

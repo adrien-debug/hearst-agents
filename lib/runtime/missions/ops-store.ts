@@ -6,7 +6,7 @@
  * Does not replace persistence — this is ephemeral per-process state.
  */
 
-import type { MissionExecutionStatus, MissionOpsRecord } from "./ops-types";
+import type { MissionExecutionStatus } from "./ops-types";
 
 interface OpsEntry {
   status: MissionExecutionStatus;

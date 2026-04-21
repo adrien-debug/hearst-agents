@@ -43,9 +43,14 @@ export function useSchedulerAdmin(): SchedulerAdminData {
   }, []);
 
   useEffect(() => {
-    fetchData();
-    const id = setInterval(fetchData, 15_000);
-    return () => clearInterval(id);
+    let cancelled = false;
+    const load = async () => {
+      await fetchData();
+      if (cancelled) return;
+    };
+    load();
+    const id = setInterval(load, 15_000);
+    return () => { cancelled = true; clearInterval(id); };
   }, [fetchData]);
 
   return { loading, error, scheduler, missions, refresh: fetchData };

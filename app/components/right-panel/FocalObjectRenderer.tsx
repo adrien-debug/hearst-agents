@@ -13,7 +13,7 @@
  * - Title is typographic, not a header bar
  */
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, memo } from "react";
 import type { FocalObject, FocalAction } from "@/lib/right-panel/objects";
 import { getProviderUi, getProviderLabel } from "@/lib/providers/registry";
 
@@ -31,7 +31,7 @@ export const TYPE_LABELS: Record<string, string> = {
 
 // ── Shared shell ────────────────────────────────────────────
 
-export function FocalObjectRenderer({
+export const FocalObjectRenderer = memo(function FocalObjectRenderer({
   object,
   onAction,
   mode = "full",
@@ -41,13 +41,13 @@ export function FocalObjectRenderer({
   mode?: "preview" | "full";
 }) {
   const prevIdRef = useRef(object.id);
-  const [pulse, setPulse] = useState(false);
+  const [emerging, setEmerging] = useState(false);
 
   useEffect(() => {
     if (object.id !== prevIdRef.current) {
       prevIdRef.current = object.id;
-      setPulse(true);
-      const t = setTimeout(() => setPulse(false), 600);
+      setEmerging(true);
+      const t = setTimeout(() => setEmerging(false), 300);
       return () => clearTimeout(t);
     }
   }, [object.id]);
@@ -56,12 +56,13 @@ export function FocalObjectRenderer({
 
   return (
     <div
-      className={`flex flex-col max-w-[60ch] animate-in fade-in duration-300 ${
+      className={`flex flex-col max-w-[60ch] ${
         isPreview ? "px-6 pt-6 pb-4 gap-3" : "p-6 gap-6"
       }`}
       style={{
-        transition: "opacity 600ms cubic-bezier(0.22, 1, 0.36, 1)",
-        opacity: pulse ? 0.6 : 1,
+        opacity: emerging ? 0 : 1,
+        transform: emerging ? "translateY(16px)" : "translateY(0)",
+        transition: "opacity 300ms ease-out, transform 300ms ease-out",
       }}
     >
       {/* Status + type badge */}
@@ -94,7 +95,7 @@ export function FocalObjectRenderer({
         <div className="pt-2">
           <button
             onClick={() => onAction(object.primaryAction!)}
-            className="text-[11px] font-mono tracking-wider text-cyan-400/80 hover:text-cyan-300 transition-colors duration-200"
+            className="text-[11px] font-mono tracking-wider text-white/40 hover:text-white/70 transition-colors duration-200"
           >
             {object.primaryAction.label}
           </button>
@@ -102,7 +103,7 @@ export function FocalObjectRenderer({
       )}
     </div>
   );
-}
+});
 
 // ── Scannable body renderer ─────────────────────────────────
 
@@ -124,7 +125,7 @@ function ScanBody({ text, large }: { text: string; large?: boolean }) {
     <div className="space-y-3">
       {lines.slice(0, 8).map((line, i) => (
         <div key={i} className="flex gap-2.5">
-          <div className="w-1 h-1 mt-2 shrink-0 rounded-full bg-cyan-400" />
+          <div className="w-1 h-1 mt-2 shrink-0 rounded-full bg-white/20" />
           <p className={textClass}>{line}</p>
         </div>
       ))}
@@ -270,11 +271,11 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
 
 function StatusDot({ status }: { status: string }) {
   const color =
-    status === "active" || status === "delivered" ? "bg-emerald-400/60" :
-    status === "composing" || status === "delivering" ? "bg-cyan-400/60 animate-pulse" :
-    status === "awaiting_approval" ? "bg-amber-400/60 animate-pulse" :
-    status === "failed" ? "bg-red-400/60" :
-    status === "paused" ? "bg-white/20" :
+    status === "active" || status === "delivered" ? "bg-white/50" :
+    status === "composing" || status === "delivering" ? "bg-white/40 animate-pulse" :
+    status === "awaiting_approval" ? "bg-amber-400/50 animate-pulse" :
+    status === "failed" ? "bg-red-400/50" :
+    status === "paused" ? "bg-white/15" :
     "bg-white/10";
 
   return <span className={`h-[5px] w-[5px] rounded-full ${color}`} />;
@@ -319,8 +320,8 @@ function Provenance({ object }: { object: FocalObject }) {
 
   if (!providerId) return null;
 
-  const ui = getProviderUi(providerId as any);
-  const label = getProviderLabel(providerId as any);
+  const ui = getProviderUi(providerId);
+  const label = getProviderLabel(providerId);
   const createdAt = (object as Record<string, unknown>).createdAt as number | undefined;
 
   return (

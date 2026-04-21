@@ -85,15 +85,15 @@ export function MissionComposer({
 
   if (success) {
     return (
-      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
-        <p className="text-[11px] font-medium text-emerald-400">Mission créée</p>
-        <p className="mt-0.5 text-[10px] text-zinc-400">
+      <div className="border border-white/[0.05] p-3">
+        <p className="text-[11px] font-mono text-white/50">Mission créée</p>
+        <p className="mt-0.5 text-[10px] text-zinc-500">
           {formatMissionSchedule(effectiveSchedule)}
         </p>
         {onCancel && (
           <button
             onClick={onCancel}
-            className="mt-2 text-[10px] text-zinc-500 transition-colors hover:text-zinc-300"
+            className="mt-2 text-[10px] text-zinc-600 transition-colors hover:text-zinc-400"
           >
             Fermer
           </button>
@@ -103,43 +103,40 @@ export function MissionComposer({
   }
 
   return (
-    <div className="rounded-lg border border-zinc-800/60 bg-zinc-900/60 p-3">
+    <div className="border border-white/[0.05] p-3">
       <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
         Nouvelle mission
       </p>
 
-      {/* Name */}
-      <label className="mb-1 block text-[10px] text-zinc-500">Nom</label>
+      <label className="mb-1 block text-[10px] text-zinc-600">Nom</label>
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Rapport Bitcoin quotidien"
-        className="mb-2 w-full rounded-md border border-zinc-800/50 bg-zinc-950/60 px-2.5 py-1.5 text-[11px] text-zinc-200 placeholder-zinc-600 outline-none focus:border-cyan-600/40"
+        className="mb-2 w-full border border-white/[0.05] bg-transparent px-2.5 py-1.5 text-[11px] text-zinc-200 placeholder-zinc-700 outline-none focus:border-white/[0.1]"
       />
 
-      {/* Prompt */}
-      <label className="mb-1 block text-[10px] text-zinc-500">Prompt</label>
+      <label className="mb-1 block text-[10px] text-zinc-600">Prompt</label>
       <textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
         rows={2}
         placeholder="Fais-moi un rapport sur le bitcoin"
-        className="mb-2 w-full resize-none rounded-md border border-zinc-800/50 bg-zinc-950/60 px-2.5 py-1.5 text-[11px] text-zinc-200 placeholder-zinc-600 outline-none focus:border-cyan-600/40"
+        className="mb-2 w-full resize-none border border-white/[0.05] bg-transparent px-2.5 py-1.5 text-[11px] text-zinc-200 placeholder-zinc-700 outline-none focus:border-white/[0.1]"
       />
 
-      {/* Schedule */}
-      <label className="mb-1 block text-[10px] text-zinc-500">Récurrence</label>
+      <label className="mb-1 block text-[10px] text-zinc-600">Récurrence</label>
       {!useCustom ? (
         <div className="mb-2 flex flex-wrap gap-1">
           {SCHEDULE_PRESETS.map((p) => (
             <button
               key={p.value}
               onClick={() => setSchedule(p.value)}
-              className={`rounded-md px-2 py-1 text-[10px] transition-colors ${
+              className={`px-2 py-1 text-[10px] transition-colors border ${
                 schedule === p.value
-                  ? "bg-cyan-500/15 text-cyan-400"
-                  : "bg-zinc-800/40 text-zinc-400 hover:bg-zinc-800/60"
+                  ? "border-white/[0.15] text-white/60"
+                  : "border-white/[0.05] text-zinc-500 hover:text-zinc-300"
               }`}
             >
               {p.label}
@@ -147,7 +144,7 @@ export function MissionComposer({
           ))}
           <button
             onClick={() => setUseCustom(true)}
-            className="rounded-md bg-zinc-800/40 px-2 py-1 text-[10px] text-zinc-500 transition-colors hover:bg-zinc-800/60"
+            className="border border-white/[0.05] px-2 py-1 text-[10px] text-zinc-600 transition-colors hover:text-zinc-400"
           >
             Personnalisé…
           </button>
@@ -159,45 +156,43 @@ export function MissionComposer({
             value={customSchedule}
             onChange={(e) => setCustomSchedule(e.target.value)}
             placeholder="0 8 * * *"
-            className="w-full rounded-md border border-zinc-800/50 bg-zinc-950/60 px-2.5 py-1.5 font-mono text-[11px] text-zinc-200 placeholder-zinc-600 outline-none focus:border-cyan-600/40"
+            className="w-full border border-white/[0.05] bg-transparent px-2.5 py-1.5 font-mono text-[11px] text-zinc-200 placeholder-zinc-700 outline-none focus:border-white/[0.1]"
           />
           <button
             onClick={() => setUseCustom(false)}
-            className="mt-1 text-[10px] text-zinc-500 transition-colors hover:text-zinc-300"
+            className="mt-1 text-[10px] text-zinc-600 transition-colors hover:text-zinc-400"
           >
             ← Préréglages
           </button>
         </div>
       )}
 
-      {/* Enabled toggle */}
       <label className="mb-3 flex items-center gap-2">
         <input
           type="checkbox"
           checked={enabled}
           onChange={(e) => setEnabled(e.target.checked)}
-          className="h-3 w-3 rounded border-zinc-700 bg-zinc-900 accent-cyan-500"
+          className="h-3 w-3 border-zinc-700 bg-transparent"
         />
-        <span className="text-[10px] text-zinc-400">Activer immédiatement</span>
+        <span className="text-[10px] text-zinc-500">Activer immédiatement</span>
       </label>
 
       {error && (
-        <p className="mb-2 text-[10px] text-red-400">{error}</p>
+        <p className="mb-2 text-[10px] text-red-400/70">{error}</p>
       )}
 
-      {/* Actions */}
       <div className="flex items-center gap-2">
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-md bg-cyan-500 px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-cyan-400 active:scale-[0.97] disabled:opacity-50"
+          className="border border-white/[0.1] px-3 py-1.5 text-[11px] font-mono text-white/60 transition-colors hover:text-white/90 hover:border-white/[0.2] disabled:opacity-30"
         >
           {saving ? "Création…" : "Créer la mission"}
         </button>
         {onCancel && (
           <button
             onClick={onCancel}
-            className="text-[10px] text-zinc-500 transition-colors hover:text-zinc-300"
+            className="text-[10px] text-zinc-600 transition-colors hover:text-zinc-400"
           >
             Annuler
           </button>

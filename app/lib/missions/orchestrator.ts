@@ -171,7 +171,7 @@ export async function approveMission(missionId: string): Promise<boolean> {
 export async function executeReplyMission(
   missionId: string,
   fromName: string,
-  subject: string,
+  _subject: string,
 ): Promise<void> {
   const mission: Mission = {
     id: missionId,
