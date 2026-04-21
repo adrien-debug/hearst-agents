@@ -15,7 +15,7 @@ export function SidebarMargin({ children }: { children: ReactNode }) {
       <style>{`
         :root { --sidebar-w: 0px; }
         @media (min-width: 768px) {
-          :root { --sidebar-w: ${isCollapsed ? "60px" : "240px"}; }
+          :root { --sidebar-w: ${isCollapsed ? "60px" : "280px"}; }
         }
       `}</style>
       {children}

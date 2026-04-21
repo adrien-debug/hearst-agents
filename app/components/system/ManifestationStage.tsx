@@ -88,6 +88,7 @@ export function ManifestationStage() {
         <svg
           className="dotted-logo absolute inset-0 w-full h-full"
           viewBox={GHOST_SVG_VIEWBOX}
+          fill="#2ecfce"
           style={{ opacity: 0.1, filter: "blur(8px)", animation: "aura-pulse 4s infinite ease-in-out" }}
         >
           {GHOST_SVG_PATHS}
@@ -95,9 +96,10 @@ export function ManifestationStage() {
         <svg
           className="dotted-logo w-10 h-10 relative z-10"
           viewBox={GHOST_SVG_VIEWBOX}
+          fill="#2ecfce"
           style={{
-            filter: "drop-shadow(0 0 10px rgba(0, 229, 255, 0.2))",
-            opacity: 0.5,
+            filter: "drop-shadow(0 0 10px rgba(46, 207, 206, 0.3))",
+            opacity: 0.6,
             animation: phase === "active_condensation"
               ? "thinking-vibe 2s infinite ease-in-out"
               : "ghost-float 6s infinite ease-in-out",

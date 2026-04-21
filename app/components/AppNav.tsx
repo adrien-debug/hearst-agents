@@ -64,11 +64,17 @@ export default function AppNav() {
   return (
     <aside
       className={`fixed left-0 top-0 z-40 hidden h-full flex-col border-r border-white/5 transition-[width] duration-300 md:flex ${
-        isCollapsed ? "w-[60px]" : "w-[240px]"
+        isCollapsed ? "w-[60px]" : "w-[280px]"
       }`}
     >
       {/* ── Workspace header ─────────────────────────────── */}
-      <div className="flex h-14 shrink-0 items-center px-4 relative">
+      <div className="flex h-16 shrink-0 items-center px-4 relative gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/hearst-logo.svg"
+          alt="Hearst AI"
+          className={`shrink-0 drop-shadow-[0_0_8px_rgba(46,207,206,0.3)] ${isCollapsed ? "h-5" : "h-7"}`}
+        />
         {!isCollapsed && (
           <div className="flex items-center gap-2 ml-auto">
             <span className="status-dot w-1 h-1" />
@@ -178,7 +184,17 @@ export default function AppNav() {
         )}
       </div>
 
-      <div className="shrink-0 h-3" />
+      {/* ── Bottom logo ── */}
+      <div className="shrink-0 flex items-center justify-center py-4 border-t border-white/5">
+        <svg
+          className="w-5 h-5 opacity-30 hover:opacity-60 transition-opacity"
+          viewBox="560 455 155 170"
+          fill="#2ecfce"
+        >
+          <polygon points="601.7 466.9 572.6 466.9 572.6 609.7 601.7 609.7 601.7 549.1 633.1 579.4 665.8 579.4 601.7 517.5 601.7 466.9" />
+          <polygon points="672.7 466.9 672.7 528.1 644.6 500.9 612 500.9 672.7 559.7 672.7 609.7 701.9 609.7 701.9 466.9 672.7 466.9" />
+        </svg>
+      </div>
     </aside>
   );
 }
