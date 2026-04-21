@@ -190,6 +190,13 @@ export class SSEAdapter {
           url: event.url,
         };
 
+      // ── Focal Object (right panel premium object) ──────────
+      case "focal_object_ready":
+        return {
+          type: "focal_object_ready",
+          focal_object: event.focal_object,
+        };
+
       // ── Agent selection (visible — user sees which agent) ──
       case "agent_selected":
         return {

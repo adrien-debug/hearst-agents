@@ -276,16 +276,22 @@ function WordCount({ count }: { count: number }) {
 }
 
 function Provenance({ object }: { object: FocalObject }) {
-  const providerId =
-    (object.objectType === "message_draft" || object.objectType === "message_receipt")
-      ? object.providerId
-      : undefined;
+  let providerId: string | undefined;
+  let channelRef: string | undefined;
+
+  if (object.objectType === "message_draft" || object.objectType === "message_receipt") {
+    providerId = object.providerId;
+    if (object.objectType === "message_receipt") channelRef = object.channelRef;
+  }
+
+  // For brief/report, check sourceAssetId-derived provenance from the focal object
+  if (!providerId && (object as Record<string, unknown>).sourceProviderId) {
+    providerId = (object as Record<string, unknown>).sourceProviderId as string;
+  }
 
   if (!providerId) return null;
 
-  const ui = getProviderUi(providerId);
-  const channelRef =
-    object.objectType === "message_receipt" ? object.channelRef : undefined;
+  const ui = getProviderUi(providerId as any);
 
   return (
     <div className="flex items-center gap-2 text-[9px] font-mono text-white/15">

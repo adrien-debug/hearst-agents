@@ -41,7 +41,7 @@ export async function saveRun(run: PersistedRunRecord): Promise<boolean> {
   }
 
   try {
-    const { error } = await sb.from("runs").insert({
+    const { error } = await sb.from("runs").upsert({
       id: run.id,
       kind: "chat" as const,
       status: STATUS_MAP[run.status] ?? "running",

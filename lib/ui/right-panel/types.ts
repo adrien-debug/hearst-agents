@@ -67,4 +67,5 @@ export interface RightPanelData {
   connectorHealth?: RightPanelConnectorHealth;
   scheduler?: RightPanelSchedulerSummary;
   missionOpsSummary?: RightPanelMissionOpsSummary;
+  focalObject?: Record<string, unknown>;
 }

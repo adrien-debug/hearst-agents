@@ -6,8 +6,15 @@
  */
 
 import PDFDocument from "pdfkit";
+import path from "path";
 import { saveAssetFile } from "./file-storage";
 import type { AssetFileInfo } from "./types";
+
+// PDFKit looks for font AFM files relative to its own install.
+// In Next.js standalone mode the resolved path can be wrong (/ROOT/).
+// Force it to the real location at import time.
+const PDFKIT_DIR = path.dirname(require.resolve("pdfkit/package.json"));
+const FONT_DIR = path.join(PDFKIT_DIR, "js", "data");
 
 interface GeneratePdfInput {
   tenantId: string;
@@ -35,11 +42,25 @@ export async function generatePdfArtifact(input: GeneratePdfInput): Promise<Asse
 
 async function renderPdf(title: string, content: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
+    // Patch standard font lookup path for standalone / non-standard CWD
+    const origResolve = (PDFDocument as unknown as Record<string, unknown>)._fontpath;
+    if (!origResolve) {
+      (PDFDocument as unknown as Record<string, unknown>)._fontpath = FONT_DIR;
+    }
+
     const doc = new PDFDocument({
       size: "A4",
       margins: { top: 60, bottom: 60, left: 50, right: 50 },
       info: { Title: title, Creator: "HEARST OS" },
     });
+
+    // Register standard fonts with absolute paths as fallback
+    try {
+      doc.registerFont("Helvetica", path.join(FONT_DIR, "Helvetica.afm"));
+      doc.registerFont("Helvetica-Bold", path.join(FONT_DIR, "Helvetica-Bold.afm"));
+    } catch {
+      // Already registered or built-in — continue
+    }
 
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));

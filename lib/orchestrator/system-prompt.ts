@@ -5,7 +5,7 @@
  * It NEVER executes work directly — it decomposes and delegates.
  */
 
-export const ORCHESTRATOR_MODEL = "claude-sonnet-4-20250514";
+export const ORCHESTRATOR_MODEL = "claude-sonnet-4-6";
 
 export const ORCHESTRATOR_SYSTEM_PROMPT = `Tu es le Principal Orchestrator de Hearst OS.
 
@@ -38,10 +38,18 @@ RÈGLES :
 7. Les steps optionnels doivent être marqués optional: true
 8. Prioriser la qualité du plan. Ne pas sur-décomposer les tâches simples.
 
+RÈGLE CRITIQUE — PROVIDERS CONNECTÉS :
+L'utilisateur a Google connecté (Drive + Gmail). Quand il demande :
+- un document, fichier, résumé de fichier → KnowledgeRetriever avec retrieval_mode: "documents"
+- ses emails, messages, résumé d'emails → KnowledgeRetriever avec retrieval_mode: "messages"
+Tu DOIS TOUJOURS créer un plan avec au moins 1 step KnowledgeRetriever dans ces cas.
+Ne réponds JAMAIS directement via text_response si la demande implique des données utilisateur.
+
 HEURISTIQUE DE COMPLEXITÉ :
 - Réponse directe (salut, merci, question simple) → 0 steps, répondre directement via text_response
 - Question factuelle simple (quelle heure, quel jour) → 0 steps, répondre directement
-- Recherche simple → 1 step (KnowledgeRetriever)
+- Recherche de fichier/email → 1 step minimum (KnowledgeRetriever avec retrieval_mode)
+- Recherche simple web → 1 step (KnowledgeRetriever avec retrieval_mode: "broad")
 - Recherche + synthèse → 2 steps
 - Document complet → 2-4 steps (retrieve → analyze → build)
 - Action avec side effects → 2-3 steps (retrieve → propose → execute)

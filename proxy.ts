@@ -21,8 +21,10 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // API routes: check API key OR session cookie
+  // API routes: check bypass, API key, OR session cookie
   if (path.startsWith("/api/")) {
+    if (process.env.HEARST_DEV_AUTH_BYPASS === "1") return NextResponse.next();
+
     const apiKey = process.env.HEARST_API_KEY;
     const token =
       req.headers.get("x-api-key") ??

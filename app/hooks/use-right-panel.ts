@@ -7,7 +7,7 @@ import type {
 } from "@/lib/ui/right-panel/types";
 import { useRunStreamOptional, type StreamEvent } from "@/app/lib/run-stream-context";
 
-const POLL_INTERVAL_MS = 10_000;
+const POLL_INTERVAL_MS = 30_000;
 
 const EMPTY: RightPanelData = {
   recentRuns: [],
@@ -143,6 +143,13 @@ export function useRightPanel() {
               } satisfies RightPanelAsset,
               ...prev.assets,
             ].slice(0, 50),
+          }));
+          break;
+
+        case "focal_object_ready":
+          setData((prev) => ({
+            ...prev,
+            focalObject: event.focal_object as Record<string, unknown>,
           }));
           break;
 

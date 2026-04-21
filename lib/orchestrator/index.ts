@@ -226,10 +226,21 @@ async function handlePlanAndExecute(
   );
 
   switch (planResult.kind) {
-    case "direct_response":
+    case "direct_response": {
+      const retrieval = detectRetrievalMode(input.message);
+      if (retrieval) {
+        engine.events.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: `Planner returned direct response but provider data needed — creating synthetic plan (${retrieval})`,
+        });
+        await runSyntheticRetrieval(engine, input, scope, retrieval, planResult.text);
+        return;
+      }
       engine.events.emit({ type: "text_delta", run_id: engine.id, delta: planResult.text });
       await engine.complete();
       return;
+    }
 
     case "error":
       engine.events.emit({
@@ -241,6 +252,18 @@ async function handlePlanAndExecute(
       return;
 
     case "plan":
+      if (planResult.plan.steps.length === 0) {
+        const retrieval = detectRetrievalMode(input.message);
+        if (retrieval) {
+          engine.events.emit({
+            type: "orchestrator_log",
+            run_id: engine.id,
+            message: `Plan has 0 steps but provider data needed — creating synthetic plan (${retrieval})`,
+          });
+          await runSyntheticRetrieval(engine, input, scope, retrieval);
+          return;
+        }
+      }
       engine.events.emit({
         type: "orchestrator_log",
         run_id: engine.id,
@@ -248,6 +271,139 @@ async function handlePlanAndExecute(
       });
       await runPlanExecution(engine, planResult.plan, scope);
       return;
+  }
+}
+
+function detectRetrievalMode(message: string): string | null {
+  const lower = message.toLowerCase();
+  const docKeywords = ["document", "fichier", "file", "drive", "doc", "rapport", "pdf", "spreadsheet", "slide"];
+  const msgKeywords = ["email", "emails", "mail", "mails", "courrier", "inbox", "gmail", "message"];
+
+  if (docKeywords.some((k) => lower.includes(k))) return "documents";
+  if (msgKeywords.some((k) => lower.includes(k))) return "messages";
+  return null;
+}
+
+async function runSyntheticRetrieval(
+  engine: RunEngine,
+  input: OrchestrateInput,
+  scope: TenantScope,
+  retrievalMode: string,
+  llmFallbackText?: string,
+): Promise<void> {
+  const { delegate } = await import("../runtime/delegate/api");
+  const { detectOutputTier, formatOutput } = await import("../runtime/formatting/pipeline");
+  const { storeAsset } = await import("../assets/types");
+
+  engine.events.emit({
+    type: "orchestrator_log",
+    run_id: engine.id,
+    message: `Executing synthetic retrieval: ${retrievalMode}`,
+  });
+
+  try {
+    const result = await delegate(engine, {
+      run_id: engine.id,
+      agent: "KnowledgeRetriever" as any,
+      task: input.message,
+      context: {
+        intent: input.message,
+        surface: input.surface ?? "chat",
+        retrieval_mode: retrievalMode,
+      },
+      expected_output: "summary" as any,
+      retrieval_mode: retrievalMode,
+    });
+
+    if (result.status === "success") {
+      const data = result.data as Record<string, unknown>;
+      const content = (data.content as string) ?? "";
+      const providerUsed = (data.providerUsed as string) ?? "unknown";
+
+      if (content) {
+        engine.events.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: `Synthetic retrieval completed (${content.length} chars) — creating asset`,
+        });
+
+        const tier = detectOutputTier(input.message);
+        const formatted = formatOutput(content, tier);
+        const assetKind = tier === "report" ? "report" as const : "brief" as const;
+
+        const assetId = `asset_${engine.id}_${Date.now()}`;
+        const now = Date.now();
+
+        const asset = {
+          id: assetId,
+          threadId: input.threadId ?? engine.id,
+          kind: assetKind,
+          title: formatted.title || `Synthèse : ${input.message.slice(0, 50)}`,
+          summary: formatted.summary,
+          outputTier: tier,
+          provenance: {
+            providerId: providerUsed as any,
+            sentAt: now,
+          },
+          createdAt: now,
+          contentRef: content,
+          runId: engine.id,
+        };
+
+        storeAsset(asset);
+
+        engine.events.emit({
+          type: "asset_generated",
+          run_id: engine.id,
+          asset_id: assetId,
+          asset_type: assetKind,
+          name: asset.title,
+        });
+
+        const focalObject = {
+          objectType: assetKind,
+          id: `fo_${assetId}`,
+          threadId: asset.threadId,
+          title: asset.title,
+          status: "delivered",
+          createdAt: now,
+          updatedAt: now,
+          sourceAssetId: assetId,
+          sourceProviderId: providerUsed,
+          morphTarget: null,
+          summary: formatted.summary,
+          sections: formatted.sections,
+          tier: assetKind,
+          tone: formatted.tone,
+          wordCount: formatted.wordCount,
+        };
+
+        engine.events.emit({
+          type: "focal_object_ready",
+          run_id: engine.id,
+          focal_object: focalObject,
+        } as any);
+
+        engine.events.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: `Focal object created: ${assetKind} (${formatted.wordCount} words, provider: ${providerUsed})`,
+        });
+      }
+      await engine.complete();
+    } else {
+      if (llmFallbackText) {
+        engine.events.emit({ type: "text_delta", run_id: engine.id, delta: llmFallbackText });
+      }
+      await engine.complete();
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[Orchestrator] Synthetic retrieval failed:", msg);
+    if (llmFallbackText) {
+      engine.events.emit({ type: "text_delta", run_id: engine.id, delta: llmFallbackText });
+    }
+    await engine.complete();
   }
 }
 

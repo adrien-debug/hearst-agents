@@ -21,7 +21,7 @@ export async function searchWeb(query: string): Promise<WebSearchResult> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
   const response = await client.beta.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 4096,
     tools: [
       {

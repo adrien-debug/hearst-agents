@@ -258,6 +258,13 @@ export interface AssetGeneratedEvent extends BaseEvent {
   url?: string;
 }
 
+// ── Focal Object ─────────────────────────────────────────
+
+export interface FocalObjectReadyEvent extends BaseEvent {
+  type: "focal_object_ready";
+  focal_object: Record<string, unknown>;
+}
+
 // ── Agent selection ──────────────────────────────────────
 
 export interface AgentSelectedEvent extends BaseEvent {
