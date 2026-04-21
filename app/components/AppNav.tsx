@@ -54,9 +54,12 @@ export default function AppNav() {
   };
 
   const activeThreadId = sidebar?.state.activeThreadId;
+  const activeThread = sidebar?.activeThread;
   const activeWorkspace = sidebar?.activeWorkspace;
   const isCollapsed = sidebar?.isCollapsed ?? false;
   const groupedThreads = sidebar?.groupedThreads ?? [];
+  const threadCount = sidebar?.state.threads.length ?? 0;
+  const pinnedCount = sidebar?.state.threads.filter((thread) => thread.pinned).length ?? 0;
 
   return (
     <aside
@@ -75,12 +78,12 @@ export default function AppNav() {
           <span className="text-[10px] font-semibold text-white/70">H</span>
         </Link>
         {!isCollapsed && activeWorkspace && (
-          <span className="truncate text-[10px] tracking-wide text-white/50 uppercase">
+          <span className="truncate text-[9px] tracking-[0.14em] text-white/50 uppercase">
             {activeWorkspace.label}
           </span>
         )}
         {!isCollapsed && (
-          <span className="ml-auto text-[9px] font-mono tracking-widest text-green-500/70 border border-green-500/20 px-1.5 py-0.5 rounded bg-green-500/5">
+          <span className="ml-auto rounded border border-green-500/20 bg-green-500/5 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.14em] text-green-500/70">
             ONLINE
           </span>
         )}
@@ -100,14 +103,14 @@ export default function AppNav() {
       {/* ── Live Activity (HUD) ──────────────────────────── */}
       {!isCollapsed && (
         <div className="shrink-0 px-5 pb-2 pt-4">
-          <span className="text-[9px] tracking-widest text-white/50 uppercase">
+          <span className="text-[9px] tracking-[0.14em] text-white/45 uppercase">
             Activité en arrière-plan
           </span>
           <div className="mt-2 flex flex-col gap-2">
             {haloState.coreState !== "idle" ? (
               <div className="rounded-md border border-white/10 bg-white/5 p-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-white/90">
+                  <span className="text-[12px] font-medium text-white/90">
                     {haloState.flowLabel || "Traitement..."}
                   </span>
                   <span className="flex h-2 w-2 relative">
@@ -116,7 +119,7 @@ export default function AppNav() {
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <span className="text-[10px] text-white/50">
+                  <span className="text-[11px] leading-relaxed text-white/50">
                     {sublineForFlow(haloState.flowLabel) || "L'agent travaille sur votre demande"}
                   </span>
                 </div>
@@ -124,14 +127,30 @@ export default function AppNav() {
             ) : (
               <div className="rounded-md border border-transparent p-2.5 opacity-50">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-white/90">Système en veille</span>
+                  <span className="text-[12px] font-medium text-white/90">Système en veille</span>
                   <span className="h-1.5 w-1.5 rounded-full bg-white/20"></span>
                 </div>
                 <div className="mt-1 flex items-center gap-2">
-                  <span className="text-[10px] text-white/50">Aucune mission active</span>
+                  <span className="text-[11px] leading-relaxed text-white/50">Aucune mission active</span>
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {!isCollapsed && (
+        <div className="shrink-0 px-5 pb-2 pt-3">
+          <span className="text-[9px] tracking-[0.14em] text-white/45 uppercase">
+            Contexte actif
+          </span>
+          <div className="mt-2 rounded-md border border-white/8 bg-white/3 px-3 py-3">
+            <p className="truncate text-[12px] font-medium leading-tight text-white/85">
+              {activeThread?.title ?? "Nouveau fil"}
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-white/45">
+              {threadCount} fils en memoire{pinnedCount > 0 ? ` · ${pinnedCount} epingle${pinnedCount > 1 ? "s" : ""}` : ""}
+            </p>
           </div>
         </div>
       )}
@@ -147,12 +166,12 @@ export default function AppNav() {
         ) : (
           <>
             <div className="px-5 pt-4 pb-1">
-              <span className="text-[9px] tracking-widest text-white/50 uppercase">
+              <span className="text-[9px] tracking-[0.14em] text-white/45 uppercase">
                 Mémoire (Threads)
               </span>
             </div>
             {groupedThreads.length === 0 && (
-              <p className="px-5 pt-2 text-[10px] text-white/30 italic">
+              <p className="px-5 pt-2 text-[11px] text-white/30 italic">
                 Commencez à écrire…
               </p>
             )}
@@ -160,7 +179,7 @@ export default function AppNav() {
             {groupedThreads.map((group) => (
               <div key={group.group} className="mb-1">
                 <div className="px-5 pb-1 pt-4">
-                  <span className="text-[9px] tracking-widest text-white/50 uppercase">
+                  <span className="text-[9px] tracking-[0.14em] text-white/45 uppercase">
                     {group.label}
                   </span>
                 </div>
@@ -210,12 +229,12 @@ function ThreadRow({
         {thread.pinned && (
           <span className="text-[7px] text-white/30">●</span>
         )}
-        <span className="truncate text-[11px] leading-tight">
+        <span className="truncate text-[12px] leading-tight">
           {thread.title}
         </span>
       </div>
       {showPreview && thread.preview && (
-        <span className="mt-0.5 truncate text-[10px] text-white/30 leading-tight">
+        <span className="mt-0.5 truncate text-[11px] leading-tight text-white/30">
           {thread.preview}
         </span>
       )}

@@ -15,6 +15,68 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 - **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
 - Layout user : sidebar icon-only (AppNav) + zone centrale + chat global + right panel
 
+## Canonical UI Work Map
+
+### Never Guess The Surface
+
+Si un agent doit modifier l'UI HEARST OS, il doit partir de la chaîne réelle de rendu, pas d'une maquette statique.
+
+```mermaid
+flowchart TD
+  A["/"] --> B["app/(user)/layout.tsx"]
+  B --> C["AuthGate"]
+  C --> D["TopContextBar"]
+  C --> E["AppNav"]
+  C --> F["app/(user)/page.tsx"]
+  F --> G["ManifestationStage.tsx"]
+  C --> H["GlobalChat.tsx"]
+  C --> I["RightPanel.tsx"]
+  I --> J["useFocalObject()"]
+  J --> K["useRightPanel() + thread state + SSE"]
+```
+
+### Work Here
+
+- Centre home `/` : `app/(user)/page.tsx` + `app/components/system/ManifestationStage.tsx`
+- Shell user réel : `app/(user)/layout.tsx`
+- Sidebar gauche : `app/components/AppNav.tsx`
+- Barre haute : `app/components/system/TopContextBar.tsx`
+- Chat bas : `app/components/GlobalChat.tsx`
+- Panneau droit : `app/components/right-panel/RightPanel.tsx`
+- Rendu d'objet focal : `app/components/right-panel/FocalObjectRenderer.tsx`
+- État du panel/focal :
+  - `app/hooks/use-right-panel.ts`
+  - `app/hooks/use-focal-object.ts`
+  - `app/hooks/use-sidebar.tsx`
+
+### Do Not Work Here Unless Explicitly Asked
+
+- maquettes HTML standalone
+- fichiers de preview non branchés
+- captures, prototypes, snippets jetables
+- code runtime/orchestrator si la demande est purement visuelle
+
+### Why Agents Get Confused
+
+- `ManifestationStage` est réel, mais son rendu dépend du halo et du focal object
+- `RightPanel` dépend d'un thread actif, du polling `/api/v2/right-panel`, et des événements SSE
+- `RightPanel` est masqué sous le breakpoint `lg`
+- l'écran `/` passe d'abord par le shell authentifié, donc modifier un composant hors de cette chaîne ne change rien de visible
+
+### Fast Validation Checklist
+
+Avant toute conclusion du type "ça ne change pas", vérifier:
+
+1. que le fichier modifié est bien dans la chaîne ci-dessus
+2. que l'on teste la vraie route `/`
+3. que la session est authentifiée
+4. que la fenêtre est assez large pour afficher `RightPanel`
+5. qu'on ne travaille pas sur une maquette hors circuit
+
+### Anti-Mistake Rule
+
+Si un agent ne peut pas relier visuellement un changement à `app/(user)/layout.tsx` ou à l'un des composants directement rendus depuis cette chaîne, il doit considérer qu'il est probablement en train d'éditer la mauvaise surface.
+
 ## Comportement produit
 
 - **V2 Runtime** par défaut. V1 fallback via `NEXT_PUBLIC_USE_V2=false`.
