@@ -3,6 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 
 /* ─── Supabase client (untyped, user_tokens isn't in generated types) ─── */
 
+const USE_MEMORY_STORE =
+  !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -10,6 +13,14 @@ function getSupabase() {
   return createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+}
+
+/* ─── In-memory fallback for dev without Supabase ─── */
+
+const memoryTokens = new Map<string, Record<string, unknown>>();
+
+function memKey(userId: string, provider: string) {
+  return `${userId}::${provider}`;
 }
 
 /* ─── Key Provider abstraction (env var now, KMS later) ─── */
@@ -88,6 +99,20 @@ export async function getTokens(userId: string, provider = "google"): Promise<St
 }
 
 export async function getTokenMeta(userId: string, provider = "google"): Promise<TokenMeta> {
+  if (USE_MEMORY_STORE) {
+    const row = memoryTokens.get(memKey(userId, provider));
+    if (!row) return { tokens: EMPTY, revoked: false, authFailureCount: 0, needsRotation: false };
+    return {
+      tokens: {
+        accessToken: (row.accessToken as string) ?? null,
+        refreshToken: (row.refreshToken as string) ?? null,
+        expiresAt: (row.expiresAt as number) ?? 0,
+      },
+      revoked: false,
+      authFailureCount: 0,
+      needsRotation: false,
+    };
+  }
   try {
     const sb = getSupabase();
     const { data, error } = await sb
@@ -133,6 +158,17 @@ export async function saveTokens(
   provider = "google",
   options?: { tenantId?: string },
 ) {
+  if (USE_MEMORY_STORE) {
+    const k = memKey(userId, provider);
+    const existing = memoryTokens.get(k) ?? {};
+    if (tokens.accessToken !== undefined) existing.accessToken = tokens.accessToken;
+    if (tokens.refreshToken !== undefined) existing.refreshToken = tokens.refreshToken;
+    if (tokens.expiresAt !== undefined) existing.expiresAt = tokens.expiresAt;
+    if (options?.tenantId) existing.tenantId = options.tenantId;
+    memoryTokens.set(k, existing);
+    console.log(`[TokenStore] Saved to memory for ${userId}/${provider}`);
+    return;
+  }
   try {
     const sb = getSupabase();
     const row: Record<string, unknown> = {

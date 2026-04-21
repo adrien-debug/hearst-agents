@@ -1,11 +1,21 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+const DEV_BYPASS = process.env.HEARST_DEV_AUTH_BYPASS === "1";
+const DEV_USER = "dev@hearst.local";
+
 /**
  * Extracts the userId (email) from the current NextAuth session.
  * Returns null if not authenticated.
+ *
+ * In dev mode (HEARST_DEV_AUTH_BYPASS=1), returns a fixed dev user
+ * so the app is testable without OAuth credentials.
  */
 export async function getUserId(): Promise<string | null> {
+  if (DEV_BYPASS) {
+    return DEV_USER;
+  }
+
   const session = await getServerSession(authOptions);
   if (!session) return null;
 

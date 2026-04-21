@@ -1,6 +1,8 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import AppNav from "../components/AppNav";
 import RightPanel from "../components/right-panel/RightPanel";
 import GlobalChat from "../components/GlobalChat";
@@ -14,6 +16,27 @@ import SurfaceTracker from "../components/SurfaceTracker";
 import { TopContextBar } from "../components/system/TopContextBar";
 import { SidebarMargin } from "../components/SidebarMargin";
 
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
+
+  if (status !== "authenticated") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-black">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 export default function UserLayout({
   children,
 }: {
@@ -21,6 +44,7 @@ export default function UserLayout({
 }) {
   return (
     <SessionProvider>
+      <AuthGate>
       <MissionProvider>
         <ChatProvider>
           <ChatActivityProvider>
@@ -45,6 +69,7 @@ export default function UserLayout({
           </ChatActivityProvider>
         </ChatProvider>
       </MissionProvider>
+    </AuthGate>
     </SessionProvider>
   );
 }
