@@ -47,18 +47,6 @@ const threadConversationMap = new Map<string, string>();
 const chatSnapshots = new Map<string, ChatSnapshot>();
 
 /**
- * Bi-directional mapping between threadId and conversationId.
- * A thread may not yet have a conversationId (new thread, no API call yet).
- */
-export function linkThreadToConversation(threadId: string, conversationId: string): void {
-  threadConversationMap.set(threadId, conversationId);
-}
-
-export function getConversationIdForThread(threadId: string): string | null {
-  return threadConversationMap.get(threadId) ?? null;
-}
-
-/**
  * Resolve or create a stable conversationId for a thread.
  * If already mapped, returns the existing one. Otherwise creates a new UUID
  * and links it, ensuring the same thread always reuses the same conversationId.
@@ -112,26 +100,3 @@ export function clearChatSnapshot(threadId: string): void {
   threadConversationMap.delete(threadId);
 }
 
-// ── Restoration helpers ─────────────────────────────────────
-
-/**
- * Get restorable messages for a thread.
- * Returns the full snapshot message array for instant swap.
- *
- * Restoration rules:
- * - If snapshot exists, return it immediately (cached local state)
- * - If no snapshot, return empty array (fresh thread)
- * - NEVER return a partial array that would need "filling in"
- */
-export function getRestorableMessagesForThread(threadId: string): ChatMessage[] {
-  const snapshot = chatSnapshots.get(threadId);
-  return snapshot ? [...snapshot.messages] : [];
-}
-
-/**
- * Get the draft input for a thread (unsent text in the input field).
- */
-export function getRestorableDraftForThread(threadId: string): string {
-  const snapshot = chatSnapshots.get(threadId);
-  return snapshot?.draftInput ?? "";
-}

@@ -51,10 +51,10 @@ function RightPanelInner() {
     setDocumentObject(null);
   }
 
-  // When focal object changes externally, reset to INDEX (derived, no effect)
+  // When focal object changes externally, stay in INDEX (user clicks to open DOCUMENT)
   if (focal?.id !== prevFocalIdRef.current) {
     prevFocalIdRef.current = focal?.id;
-    if (panelState === "DOCUMENT") {
+    if (!focal && panelState === "DOCUMENT") {
       setPanelState("INDEX");
       setDocumentObject(null);
     }
@@ -147,7 +147,7 @@ function RightPanelInner() {
         )}
         <span
           className={`ml-auto h-[5px] w-[5px] rounded-full transition-colors duration-500 ${
-            connected ? "bg-white/40" : "bg-white/10"
+            connected ? "bg-cyan-accent/60" : "bg-white/10"
           }`}
         />
       </div>
@@ -191,20 +191,23 @@ function RightPanelInner() {
           {/* Focal Context (max 25% height) */}
           {isFocused && focal && (
             <div
-              className="group max-h-[25%] overflow-hidden cursor-pointer shrink-0 transition-[opacity,border-color] duration-150 ease-out hover:opacity-90 border border-transparent hover:border-white/10 rounded-md"
+              className="group max-h-[25%] overflow-hidden cursor-pointer shrink-0 transition-[opacity,border-color] duration-150 ease-out hover:opacity-90 rounded-md relative"
               style={{
                 maskImage: "linear-gradient(to bottom, black 80%, transparent 100%)",
                 WebkitMaskImage: "linear-gradient(to bottom, black 80%, transparent 100%)",
               }}
               onClick={() => openDocument(focal)}
             >
-              <FocalObjectRenderer object={focal} onAction={handleFocalAction} isPending={isPending} mode="preview" />
+              <div className="absolute left-0 top-3 bottom-3 w-[2px] rounded-full bg-cyan-accent opacity-60" />
+              <div className="pl-4">
+                <FocalObjectRenderer object={focal} onAction={handleFocalAction} isPending={isPending} mode="preview" />
+              </div>
             </div>
           )}
 
           {/* Divider */}
           {isFocused && secondary.length > 0 && (
-            <div className="border-t border-white/5 my-6" />
+            <div className="my-6 h-px bg-linear-to-r from-cyan-accent/15 via-white/5 to-transparent" />
           )}
 
           {/* Timeline Register */}
@@ -221,8 +224,9 @@ function RightPanelInner() {
                     className="w-full group text-left"
                     onClick={() => openDocument(obj)}
                   >
-                    <div className="flex justify-between items-center h-10 px-2 border border-transparent rounded-md transition-colors group-hover:border-white/10 cursor-pointer">
-                      <span className="text-[12px] text-white/55 group-hover:text-white/80 transition-colors truncate pr-4">
+                    <div className="flex items-center h-10 px-2 border border-transparent rounded-md transition-colors group-hover:border-white/10 cursor-pointer gap-3">
+                      <span className="h-[5px] w-[5px] rounded-full bg-cyan-accent/25 group-hover:bg-cyan-accent/50 transition-colors shrink-0" />
+                      <span className="text-[12px] text-white/55 group-hover:text-white/80 transition-colors truncate flex-1">
                         {obj.title || TYPE_LABELS[obj.objectType] || obj.objectType}
                       </span>
                       <span className="text-[11px] text-white/30 font-mono shrink-0 group-hover:text-white/45 transition-colors">

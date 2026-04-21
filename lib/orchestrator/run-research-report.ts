@@ -19,6 +19,7 @@ export interface ResearchReportInput {
   engine: RunEngine;
   eventBus: RunEventBus;
   scope: TenantScope;
+  threadId?: string;
 }
 
 export async function runResearchReport(input: ResearchReportInput): Promise<void> {
@@ -188,6 +189,27 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
         mimeType: asset.file.mimeType,
         sizeBytes: asset.file.sizeBytes,
       } : {}),
+    });
+
+    eventBus.emit({
+      type: "focal_object_ready",
+      run_id: engine.id,
+      focal_object: {
+        objectType: "report",
+        id: `fo_${asset.id}`,
+        threadId: input.threadId ?? engine.id,
+        title: asset.name,
+        status: "delivered",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        sourceAssetId: asset.id,
+        morphTarget: null,
+        summary: reportText.slice(0, 200),
+        sections: [],
+        tier: "report",
+        tone: "executive",
+        wordCount: reportText.split(/\s+/).length,
+      },
     });
 
     eventBus.emit({

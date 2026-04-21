@@ -6,6 +6,7 @@ import type {
   RightPanelAsset,
 } from "@/lib/ui/right-panel/types";
 import { useRunStreamOptional, type StreamEvent } from "@/app/lib/run-stream-context";
+import { useSidebarOptional } from "@/app/hooks/use-sidebar";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -22,6 +23,8 @@ export function useRightPanel() {
   const mountedRef = useRef(true);
   const stream = useRunStreamOptional();
   const pollRef = useRef<(() => Promise<void>) | null>(null);
+  const sidebarCtx = useSidebarOptional();
+  const activeThreadId = sidebarCtx?.state.activeThreadId;
 
   // ── Polling fallback ───────────────────────────────────────
   useEffect(() => {
@@ -29,7 +32,8 @@ export function useRightPanel() {
 
     async function poll() {
       try {
-        const res = await fetch("/api/v2/right-panel");
+        const url = activeThreadId ? `/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}` : "/api/v2/right-panel";
+        const res = await fetch(url);
         if (!mountedRef.current) return;
         if (!res.ok) {
           setError(true);
@@ -63,7 +67,7 @@ export function useRightPanel() {
       mountedRef.current = false;
       clearInterval(id);
     };
-  }, []);
+  }, [activeThreadId]);
 
   // ── SSE live merge ─────────────────────────────────────────
   useEffect(() => {

@@ -213,7 +213,7 @@ async function handleDirectAnswer(
       run_id: engine.id,
       message: `Plan created with ${result.plan.steps.length} step(s)`,
     });
-    await runPlanExecution(engine, result.plan, scope);
+    await runPlanExecution(engine, result.plan, scope, input.threadId);
   }
 }
 
@@ -280,7 +280,7 @@ async function handlePlanAndExecute(
         run_id: engine.id,
         message: `Plan created with ${planResult.plan.steps.length} step(s) — executing`,
       });
-      await runPlanExecution(engine, planResult.plan, scope);
+      await runPlanExecution(engine, planResult.plan, scope, input.threadId);
       return;
   }
 }
@@ -536,6 +536,28 @@ async function handleManagedAgentExecution(
         name: asset.name,
       });
 
+      const now = Date.now();
+      eventBus.emit({
+        type: "focal_object_ready",
+        run_id: engine.id,
+        focal_object: {
+          objectType: asset.type,
+          id: `fo_${asset.id}`,
+          threadId: input.threadId ?? engine.id,
+          title: asset.name,
+          status: "delivered",
+          createdAt: now,
+          updatedAt: now,
+          sourceAssetId: asset.id,
+          morphTarget: null,
+          summary: "",
+          sections: [],
+          tier: asset.type,
+          tone: "executive",
+          wordCount: 0,
+        },
+      });
+
       eventBus.emit({
         type: "orchestrator_log",
         run_id: engine.id,
@@ -578,6 +600,7 @@ async function runPlanExecution(
   engine: RunEngine,
   plan: import("../plans/types").Plan,
   scope: TenantScope,
+  threadId?: string,
 ): Promise<void> {
   const execResult = await executePlan(engine.getDb(), engine, plan);
 
@@ -589,7 +612,7 @@ async function runPlanExecution(
         message: `Execution completed (${execResult.completedSteps.length} step(s) done)`,
       });
 
-      maybeEmitAsset(engine, plan, scope);
+      maybeEmitAsset(engine, plan, scope, threadId);
 
       await engine.complete();
       return;
@@ -620,6 +643,7 @@ function maybeEmitAsset(
   engine: RunEngine,
   plan: import("../plans/types").Plan,
   scope: TenantScope,
+  threadId?: string,
 ): void {
   const hasDocBuilder = plan.steps.some((s) => s.agent === "DocBuilder");
   const isMultiStep = plan.steps.length >= ASSET_STEP_THRESHOLD;
@@ -645,6 +669,28 @@ function maybeEmitAsset(
     asset_id: asset.id,
     asset_type: asset.type,
     name: asset.name,
+  });
+
+  const now = Date.now();
+  engine.events.emit({
+    type: "focal_object_ready",
+    run_id: engine.id,
+    focal_object: {
+      objectType: assetType,
+      id: `fo_${asset.id}`,
+      threadId: threadId ?? engine.id,
+      title: asset.name,
+      status: "delivered",
+      createdAt: now,
+      updatedAt: now,
+      sourceAssetId: asset.id,
+      morphTarget: null,
+      summary: "",
+      sections: [],
+      tier: assetType,
+      tone: "executive",
+      wordCount: 0,
+    },
   });
 
   engine.events.emit({
@@ -1053,7 +1099,7 @@ async function runPipeline(
         run_id: engine.id,
         message: `${pathLabel} intent detected — using deterministic research path`,
       });
-      await runResearchReport({ message: input.message, engine, eventBus, scope });
+      await runResearchReport({ message: input.message, engine, eventBus, scope, threadId: input.threadId });
       return;
     }
 

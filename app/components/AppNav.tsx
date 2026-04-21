@@ -21,9 +21,10 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useSidebarOptional } from "@/app/hooks/use-sidebar";
 import { useThreadSwitchOptional } from "@/app/hooks/use-thread-switch";
+import { useHaloRuntime } from "@/app/lib/halo-runtime-context";
+import { sublineForFlow } from "@/app/lib/manifestation-stage-model";
 import {
   getThreadVisualState,
   shouldShowPreview,
@@ -40,9 +41,9 @@ const THREAD_STYLES: Record<ThreadVisualState, string> = {
 };
 
 export default function AppNav() {
-  const pathname = usePathname();
   const sidebar = useSidebarOptional();
   const threadSwitch = useThreadSwitchOptional();
+  const { state: haloState } = useHaloRuntime();
 
   const handleThreadSelect = (threadId: string) => {
     threadSwitch?.switchToThread(threadId);
@@ -79,15 +80,9 @@ export default function AppNav() {
           </span>
         )}
         {!isCollapsed && (
-          <button
-            onClick={() => sidebar?.toggleCollapsed()}
-            className="ml-auto text-white/30 hover:text-white/50 transition-colors"
-            title="Réduire"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </button>
+          <span className="ml-auto text-[9px] font-mono tracking-widest text-green-500/70 border border-green-500/20 px-1.5 py-0.5 rounded bg-green-500/5">
+            ONLINE
+          </span>
         )}
         {isCollapsed && (
           <button
@@ -102,8 +97,47 @@ export default function AppNav() {
         )}
       </div>
 
+      {/* ── Live Activity (HUD) ──────────────────────────── */}
+      {!isCollapsed && (
+        <div className="shrink-0 px-5 pb-2 pt-4">
+          <span className="text-[9px] tracking-widest text-white/50 uppercase">
+            Activité en arrière-plan
+          </span>
+          <div className="mt-2 flex flex-col gap-2">
+            {haloState.coreState !== "idle" ? (
+              <div className="rounded-md border border-white/10 bg-white/5 p-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-white/90">
+                    {haloState.flowLabel || "Traitement..."}
+                  </span>
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/40 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white/60"></span>
+                  </span>
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="text-[10px] text-white/50">
+                    {sublineForFlow(haloState.flowLabel) || "L'agent travaille sur votre demande"}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-md border border-transparent p-2.5 opacity-50">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-white/90">Système en veille</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/20"></span>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-[10px] text-white/50">Aucune mission active</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Thread memory ────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div className="flex-1 overflow-y-auto scrollbar-hide border-t border-white/5 mt-2">
         {isCollapsed ? (
           <CollapsedThreads
             threads={sidebar?.state.threads ?? []}
@@ -112,8 +146,13 @@ export default function AppNav() {
           />
         ) : (
           <>
+            <div className="px-5 pt-4 pb-1">
+              <span className="text-[9px] tracking-widest text-white/50 uppercase">
+                Mémoire (Threads)
+              </span>
+            </div>
             {groupedThreads.length === 0 && (
-              <p className="px-5 pt-6 text-[10px] text-white/30 italic">
+              <p className="px-5 pt-2 text-[10px] text-white/30 italic">
                 Commencez à écrire…
               </p>
             )}
@@ -139,28 +178,7 @@ export default function AppNav() {
         )}
       </div>
 
-      {/* ── System access (outside memory space) ─────────── */}
-      <div className="shrink-0 px-3 pb-3 pt-2">
-        <Link
-          href="/admin"
-          title="Administration"
-          className={`flex items-center rounded-md transition-colors duration-200 ${
-            isCollapsed ? "h-7 w-7 justify-center mx-auto" : "h-7 gap-2 px-2"
-          } ${
-            pathname.startsWith("/admin")
-              ? "text-white/50"
-              : "text-white/30 hover:text-white/50"
-          }`}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5 shrink-0">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.204-.107-.397.165-.71.505-.78.929l-.15.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          {!isCollapsed && (
-            <span className="text-[9px] tracking-wide uppercase">Ops</span>
-          )}
-        </Link>
-      </div>
+      <div className="shrink-0 h-3" />
     </aside>
   );
 }

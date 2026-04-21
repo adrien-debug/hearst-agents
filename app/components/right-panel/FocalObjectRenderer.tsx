@@ -13,7 +13,7 @@
  * - Title is typographic, not a header bar
  */
 
-import { useRef, useEffect, useState, memo } from "react";
+import { memo } from "react";
 import type { FocalObject, FocalAction } from "@/lib/right-panel/objects";
 import { getProviderUi, getProviderLabel } from "@/lib/providers/registry";
 
