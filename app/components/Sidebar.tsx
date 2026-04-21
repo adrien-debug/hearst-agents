@@ -52,7 +52,7 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-full w-56 flex-col border-r border-zinc-800 bg-zinc-950 px-4 py-6">
       <Link href="/" className="mb-8 flex flex-col">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.4em] text-zinc-500">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.4em] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">
           Hearst
         </span>
         <span className="text-lg font-semibold tracking-tight text-white">

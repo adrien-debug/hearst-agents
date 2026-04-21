@@ -159,7 +159,7 @@ export function useThreadSwitch(): UseThreadSwitchResult {
     switchToThread,
     startNewThread,
     registerChatCallbacks,
-    restoredHaloState: restoredHaloRef.current,
+    restoredHaloState: restoredHaloRef,
   };
 }
 

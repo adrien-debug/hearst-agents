@@ -7,13 +7,9 @@
  * Every object shares the same grammar: title, status, body, provenance, action.
  *
  * Invariants:
- * - NO tabs
- * - NO lists
- * - NO generic cards
- * - NO dashboard stacks
- * - NO admin chrome
+ * - NO tabs, NO lists, NO generic cards, NO dashboard stacks, NO admin chrome
  * - MAX 1 primaryAction per object
- * - Provenance is subtle (text-[9px] mono, white/20)
+ * - Provenance is subtle (text-[9px] mono, zinc-600)
  * - Title is typographic, not a header bar
  */
 
@@ -21,14 +17,28 @@ import { useRef, useEffect, useState } from "react";
 import type { FocalObject, FocalAction } from "@/lib/right-panel/objects";
 import { getProviderUi, getProviderLabel } from "@/lib/providers/registry";
 
+export const TYPE_LABELS: Record<string, string> = {
+  message_draft: "MESSAGE",
+  message_receipt: "ENVOYÉ",
+  brief: "SYNTHÈSE",
+  outline: "EN COURS",
+  report: "RAPPORT",
+  watcher_draft: "SURVEILLANCE",
+  watcher_active: "SURVEILLANCE ACTIVE",
+  mission_draft: "MISSION",
+  mission_active: "MISSION ACTIVE",
+};
+
 // ── Shared shell ────────────────────────────────────────────
 
 export function FocalObjectRenderer({
   object,
   onAction,
+  mode = "full",
 }: {
   object: FocalObject;
   onAction?: (action: FocalAction) => void;
+  mode?: "preview" | "full";
 }) {
   const prevIdRef = useRef(object.id);
   const [pulse, setPulse] = useState(false);
@@ -42,9 +52,13 @@ export function FocalObjectRenderer({
     }
   }, [object.id]);
 
+  const isPreview = mode === "preview";
+
   return (
     <div
-      className="flex flex-col gap-6 py-6 animate-in fade-in duration-300"
+      className={`flex flex-col max-w-[60ch] animate-in fade-in duration-300 ${
+        isPreview ? "px-6 pt-6 pb-4 gap-3" : "p-6 gap-6"
+      }`}
       style={{
         transition: "opacity 600ms cubic-bezier(0.22, 1, 0.36, 1)",
         opacity: pulse ? 0.6 : 1,
@@ -53,21 +67,23 @@ export function FocalObjectRenderer({
       {/* Status + type badge */}
       <div className="flex items-center gap-3">
         <StatusDot status={object.status} />
-        <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/25">
+        <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500">
           {TYPE_LABELS[object.objectType] ?? object.objectType}
         </span>
       </div>
 
       {/* Title */}
       {object.title && (
-        <h2 className="text-[15px] font-light text-white/90 leading-snug tracking-wide">
+        <h2 className={`font-semibold tracking-tight text-white leading-snug ${
+          isPreview ? "text-lg" : "text-2xl"
+        }`}>
           {object.title}
         </h2>
       )}
 
       {/* Type-specific body */}
       <div className="flex-1 min-h-0">
-        <ObjectBody object={object} />
+        <ObjectBody object={object} mode={mode} />
       </div>
 
       {/* Provenance */}
@@ -88,57 +104,85 @@ export function FocalObjectRenderer({
   );
 }
 
+// ── Scannable body renderer ─────────────────────────────────
+
+function ScanBody({ text, large }: { text: string; large?: boolean }) {
+  const lines = text
+    .split("\n")
+    .map((l) => l.replace(/^[-–•*]\s*/, "").trim())
+    .filter(Boolean);
+
+  const textClass = large
+    ? "text-[15px] text-zinc-100 leading-loose max-w-[60ch]"
+    : "text-[14px] text-zinc-100 leading-relaxed max-w-[60ch]";
+
+  if (lines.length <= 1) {
+    return <p className={textClass}>{lines[0] ?? text}</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {lines.slice(0, 8).map((line, i) => (
+        <div key={i} className="flex gap-2.5">
+          <div className="w-1 h-1 mt-2 shrink-0 rounded-full bg-cyan-400" />
+          <p className={textClass}>{line}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Type-specific body renderers ────────────────────────────
 
-function ObjectBody({ object }: { object: FocalObject }) {
+function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "full" }) {
+  const large = mode === "full";
+  const bodyClass = large
+    ? "text-[15px] text-zinc-100 leading-loose"
+    : "text-[14px] text-zinc-100 leading-relaxed";
+  const sectionGap = large ? "space-y-8" : "space-y-6";
+
+  if (mode === "preview") {
+    let summaryText = "";
+    if ("summary" in object && typeof object.summary === "string") summaryText = object.summary;
+    else if ("body" in object && typeof object.body === "string") summaryText = object.body;
+    else if ("intent" in object && typeof object.intent === "string") summaryText = object.intent;
+    else if ("condition" in object && typeof object.condition === "string") summaryText = object.condition;
+
+    return summaryText ? (
+      <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2">{summaryText}</p>
+    ) : null;
+  }
+
   switch (object.objectType) {
     case "message_draft":
       return (
-        <div className="space-y-3">
+        <div className={sectionGap}>
           {object.recipient && (
-            <p className="text-[10px] font-mono text-white/30">
-              → {object.recipient}
-            </p>
+            <p className="text-[10px] font-mono text-zinc-500">→ {object.recipient}</p>
           )}
-          {object.body && (
-            <p className="text-[13px] text-white/70 font-light leading-relaxed">
-              {object.body}
-            </p>
-          )}
+          {object.body && <p className={bodyClass}>{object.body}</p>}
         </div>
       );
 
     case "message_receipt":
       return (
-        <div className="space-y-3">
-          <p className="text-[10px] font-mono text-white/30">
-            → {object.recipient}
-          </p>
-          <p className="text-[13px] text-white/70 font-light leading-relaxed">
-            {object.body}
-          </p>
+        <div className={sectionGap}>
+          <p className="text-[10px] font-mono text-zinc-500">→ {object.recipient}</p>
+          <p className={bodyClass}>{object.body}</p>
           <DeliveryBadge status={object.deliveryStatus} />
         </div>
       );
 
     case "brief":
       return (
-        <div className="space-y-4">
-          {object.summary && (
-            <p className="text-[13px] text-white/70 font-light leading-relaxed">
-              {object.summary}
-            </p>
-          )}
+        <div className={sectionGap}>
+          {object.summary && <ScanBody text={object.summary} large={large} />}
           {object.sections.map((s, i) => (
-            <div key={i} className="space-y-1">
+            <div key={i} className="space-y-2">
               {s.heading && (
-                <p className="text-[10px] font-mono uppercase tracking-wider text-white/30">
-                  {s.heading}
-                </p>
+                <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">{s.heading}</p>
               )}
-              <p className="text-[12px] text-white/60 font-light leading-relaxed">
-                {s.body}
-              </p>
+              <ScanBody text={s.body} large={large} />
             </div>
           ))}
           <WordCount count={object.wordCount} />
@@ -147,18 +191,12 @@ function ObjectBody({ object }: { object: FocalObject }) {
 
     case "outline":
       return (
-        <div className="space-y-3">
-          {object.summary && (
-            <p className="text-[13px] text-white/70 font-light leading-relaxed">
-              {object.summary}
-            </p>
-          )}
+        <div className={sectionGap}>
+          {object.summary && <p className={bodyClass}>{object.summary}</p>}
           {object.sectionTitles.length > 0 && (
-            <div className="space-y-1.5 pl-2 border-l border-white/5">
+            <div className="space-y-2 pl-2 border-l border-white/5">
               {object.sectionTitles.map((t, i) => (
-                <p key={i} className="text-[11px] text-white/40 font-light">
-                  {t}
-                </p>
+                <p key={i} className="text-[13px] text-zinc-300 font-light">{t}</p>
               ))}
             </div>
           )}
@@ -167,22 +205,14 @@ function ObjectBody({ object }: { object: FocalObject }) {
 
     case "report":
       return (
-        <div className="space-y-4">
-          {object.summary && (
-            <p className="text-[13px] text-white/70 font-light leading-relaxed">
-              {object.summary}
-            </p>
-          )}
+        <div className={sectionGap}>
+          {object.summary && <ScanBody text={object.summary} large={large} />}
           {object.sections.map((s, i) => (
-            <div key={i} className="space-y-1">
+            <div key={i} className="space-y-2">
               {s.heading && (
-                <p className="text-[10px] font-mono uppercase tracking-wider text-white/30">
-                  {s.heading}
-                </p>
+                <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">{s.heading}</p>
               )}
-              <p className="text-[12px] text-white/60 font-light leading-relaxed">
-                {s.body}
-              </p>
+              <ScanBody text={s.body} large={large} />
             </div>
           ))}
           <WordCount count={object.wordCount} />
@@ -191,64 +221,44 @@ function ObjectBody({ object }: { object: FocalObject }) {
 
     case "mission_draft":
       return (
-        <div className="space-y-3">
-          <p className="text-[13px] text-white/70 font-light leading-relaxed">
-            {object.intent}
-          </p>
+        <div className={sectionGap}>
+          <p className={bodyClass}>{object.intent}</p>
           {object.schedule && (
-            <p className="text-[10px] font-mono text-white/30">
-              ⟳ {object.schedule}
-            </p>
+            <p className="text-[10px] font-mono text-zinc-500">⟳ {object.schedule}</p>
           )}
         </div>
       );
 
     case "mission_active":
       return (
-        <div className="space-y-3">
-          <p className="text-[13px] text-white/70 font-light leading-relaxed">
-            {object.intent}
-          </p>
+        <div className={sectionGap}>
+          <p className={bodyClass}>{object.intent}</p>
           {object.schedule && (
-            <p className="text-[10px] font-mono text-white/30">
-              ⟳ {object.schedule}
-            </p>
+            <p className="text-[10px] font-mono text-zinc-500">⟳ {object.schedule}</p>
           )}
-          <div className="flex items-center gap-4 text-[9px] font-mono text-white/20">
-            {object.lastRunAt && (
-              <span>Dernier : {formatRelative(object.lastRunAt)}</span>
-            )}
-            {object.nextRunAt && (
-              <span>Prochain : {formatRelative(object.nextRunAt)}</span>
-            )}
+          <div className="flex items-center gap-4 text-[9px] font-mono text-zinc-600">
+            {object.lastRunAt && <span>Dernier : {formatRelative(object.lastRunAt)}</span>}
+            {object.nextRunAt && <span>Prochain : {formatRelative(object.nextRunAt)}</span>}
           </div>
         </div>
       );
 
     case "watcher_draft":
       return (
-        <div className="space-y-3">
-          <p className="text-[13px] text-white/70 font-light leading-relaxed">
-            {object.condition}
-          </p>
+        <div className={sectionGap}>
+          <p className={bodyClass}>{object.condition}</p>
           {object.description && (
-            <p className="text-[11px] text-white/40 font-light">
-              {object.description}
-            </p>
+            <p className="text-[13px] text-zinc-400 font-light">{object.description}</p>
           )}
         </div>
       );
 
     case "watcher_active":
       return (
-        <div className="space-y-3">
-          <p className="text-[13px] text-white/70 font-light leading-relaxed">
-            {object.condition}
-          </p>
-          <div className="flex items-center gap-4 text-[9px] font-mono text-white/20">
-            {object.lastCheckedAt && (
-              <span>Vérifié : {formatRelative(object.lastCheckedAt)}</span>
-            )}
+        <div className={sectionGap}>
+          <p className={bodyClass}>{object.condition}</p>
+          <div className="flex items-center gap-4 text-[9px] font-mono text-zinc-600">
+            {object.lastCheckedAt && <span>Vérifié : {formatRelative(object.lastCheckedAt)}</span>}
             <span>{object.triggerCount} déclenchement{object.triggerCount !== 1 ? "s" : ""}</span>
           </div>
         </div>
@@ -279,7 +289,7 @@ function DeliveryBadge({ status }: { status: string }) {
     status;
 
   return (
-    <span className="text-[9px] font-mono uppercase tracking-wider text-white/20">
+    <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-600">
       {label}
     </span>
   );
@@ -288,7 +298,7 @@ function DeliveryBadge({ status }: { status: string }) {
 function WordCount({ count }: { count: number }) {
   if (!count) return null;
   return (
-    <span className="text-[9px] font-mono text-white/15">
+    <span className="text-[9px] font-mono text-zinc-600">
       {count} mots
     </span>
   );
@@ -314,14 +324,14 @@ function Provenance({ object }: { object: FocalObject }) {
   const createdAt = (object as Record<string, unknown>).createdAt as number | undefined;
 
   return (
-    <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/20 tracking-wide mt-1">
-      <span className={`${ui.color.split(" ")[1] ?? "text-white/30"}`}>
+    <div className="flex items-center gap-1.5 text-[9px] font-mono text-zinc-600 tracking-wide mt-1 opacity-70">
+      <span className={`${ui.color.split(" ")[1] ?? "text-zinc-500"}`}>
         {ui.initial}
       </span>
-      <span className="text-white/15">via {label}</span>
-      {channelRef && <><span className="text-white/10">·</span><span>{channelRef}</span></>}
+      <span>via {label}</span>
+      {channelRef && <><span className="text-zinc-700">·</span><span>{channelRef}</span></>}
       {createdAt && (
-        <><span className="text-white/10">·</span><span className="text-white/12">{formatRelative(createdAt)}</span></>
+        <><span className="text-zinc-700">·</span><span>{formatRelative(createdAt)}</span></>
       )}
     </div>
   );
@@ -329,17 +339,7 @@ function Provenance({ object }: { object: FocalObject }) {
 
 // ── Constants ───────────────────────────────────────────────
 
-const TYPE_LABELS: Record<string, string> = {
-  message_draft: "MESSAGE",
-  message_receipt: "ENVOYÉ",
-  brief: "SYNTHÈSE",
-  outline: "EN COURS",
-  report: "RAPPORT",
-  watcher_draft: "SURVEILLANCE",
-  watcher_active: "SURVEILLANCE ACTIVE",
-  mission_draft: "MISSION",
-  mission_active: "MISSION ACTIVE",
-};
+// TYPE_LABELS moved to top for export
 
 // ── Helpers ─────────────────────────────────────────────────
 
