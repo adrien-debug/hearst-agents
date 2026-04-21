@@ -211,7 +211,7 @@ export default function GlobalChat() {
 
       // ── Legacy v1 pipeline via /api/chat ──────────────────
       let didFail = false;
-      setMessages((prev) => [...prev, { role: "assistant", content: "Analyse…" }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       try {
         const ctx: Record<string, unknown> = { surface };
@@ -324,10 +324,15 @@ export default function GlobalChat() {
   }, []);
 
   const lastMsg = messages[messages.length - 1];
-  const isThinking = streaming && (
-    lastMsg?.content === "" || lastMsg?.content === "Analyse…"
-  );
-  const showStreamCursor = v2Streaming && lastMsg?.role === "assistant" && lastMsg.content.length > 0 && lastMsg.content !== "Analyse…";
+  const showStreamCursor = v2Streaming && lastMsg?.role === "assistant" && lastMsg.content.length > 0;
+  const [inputFlash, setInputFlash] = useState(false);
+
+  const handleSend = useCallback((text: string) => {
+    if (!text.trim()) return;
+    setInputFlash(true);
+    setTimeout(() => setInputFlash(false), 80);
+    sendMessage(text);
+  }, [sendMessage]);
 
   // All pages — bottom overlay
   return (
@@ -345,7 +350,6 @@ export default function GlobalChat() {
                 onCancelled={() => handleCancellation(i)}
               />
             ))}
-            {isThinking && <ThinkingDots />}
             <div ref={bottomRef} />
           </div>
         </div>
@@ -358,21 +362,21 @@ export default function GlobalChat() {
 
       {/* Input Bar */}
       <form
-        onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
+        onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
         className="relative flex items-center h-[80px] border-t border-white/[0.05] px-12"
-        style={{ background: "#020202" }}
+        style={{ background: "#000000" }}
       >
         <textarea
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onFocus={() => { if (messages.length > 0) setExpanded(true); }}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(input); } }}
           placeholder="..."
           rows={1}
-          className="flex-1 bg-transparent border-none text-sm text-white/90 placeholder-white/20 outline-none resize-none h-full py-6 font-mono caret-transparent"
+          className={`flex-1 bg-transparent border-none text-sm placeholder-white/20 outline-none resize-none h-full py-6 font-mono transition-colors duration-75 ${inputFlash ? "text-white" : "text-white/90"}`}
           disabled={streaming}
-          style={{ caretColor: "transparent" }}
+          style={{ caretColor: streaming ? "#F59E0B" : "white" }}
         />
         {!input && !streaming && (
           <span className="absolute left-12 top-1/2 -translate-y-1/2 text-white/30 font-mono text-sm" style={{ animation: "blink-caret 1s step-end infinite" }}>
@@ -407,7 +411,7 @@ function ChatMessage({
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[85%] text-sm leading-relaxed tracking-wide ${isUser ? "text-white/60" : "text-white/90 font-light"}`}>
+      <div className={`max-w-[85%] text-sm leading-relaxed tracking-wide ${isUser ? "text-white/70" : "text-white font-light"}`}>
         <pre className="whitespace-pre-wrap font-sans">
           {msg.content}
           {isLiveStreaming && <StreamCursor />}
@@ -445,7 +449,7 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
         {primaryAction && (
           <button
             onClick={primaryAction.execute}
-            className="border border-white/[0.05] px-3 py-1.5 text-[11px] font-mono text-white/50 transition-colors hover:text-white/80 hover:border-white/[0.1]"
+            className="border border-amber-500 px-3 py-1.5 text-[11px] font-mono text-amber-500 bg-transparent transition-colors hover:bg-amber-500/10 hover:border-amber-500/80 cursor-pointer"
           >
             Connecter {primaryAction.label}
           </button>
@@ -453,7 +457,7 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
         {secondary && (
           <button
             onClick={() => triggerConnect(secondary)}
-            className="text-[10px] font-mono text-white/20 transition-colors hover:text-white/50"
+            className="text-[10px] font-mono text-white/30 transition-colors hover:text-white/50"
           >
             ou {getConnectAction(secondary).label}
           </button>
@@ -484,7 +488,7 @@ function ApprovalActions({
           if (ok) onApproved();
         }}
         disabled={busy}
-        className="border border-white/[0.08] px-3 py-1.5 text-[11px] font-mono text-white/50 transition-colors hover:text-white/80 hover:border-white/[0.15] disabled:opacity-30"
+        className="border border-amber-500 px-3 py-1.5 text-[11px] font-mono text-amber-500 bg-transparent transition-colors hover:bg-amber-500/10 hover:border-amber-500/80 disabled:opacity-30 cursor-pointer"
       >
         {busy ? "Envoi…" : "Envoyer"}
       </button>
@@ -504,20 +508,6 @@ function ApprovalActions({
 function StreamCursor() {
   return (
     <span className="ml-0.5 inline-block h-[1.1em] w-[2px] translate-y-px bg-white/40" style={{ animation: "blink-caret 1s step-end infinite" }} />
-  );
-}
-
-/* ─── Thinking indicator ─── */
-
-function ThinkingDots() {
-  return (
-    <div className="flex justify-start">
-      <div className="flex items-center gap-1.5 opacity-50">
-        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" style={{ animationDelay: '150ms' }} />
-        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" style={{ animationDelay: '300ms' }} />
-      </div>
-    </div>
   );
 }
 

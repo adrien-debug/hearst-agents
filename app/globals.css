@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020202;
+  --background: #000000;
   --foreground: #fafafa;
 }
 
@@ -33,6 +33,11 @@ body {
 
 @keyframes blink-caret {
   50% { opacity: 0; }
+}
+
+@keyframes halo-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }
 
 .scrollbar-hide::-webkit-scrollbar {

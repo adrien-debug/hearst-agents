@@ -28,7 +28,7 @@ export default function RootLayout({
       lang="fr"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="h-full bg-[#020202]">
+      <body className="h-full bg-black">
         {children}
         <NoiseLayer />
       </body>

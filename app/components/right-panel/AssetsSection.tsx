@@ -48,7 +48,7 @@ export function AssetsSection({
             <button
               key={asset.id}
               onClick={() => onAssetSelect?.(asset.id)}
-              className={`group relative cursor-pointer rounded-lg bg-white/[0.03] px-3 py-2 text-left transition-all duration-200 hover:bg-white/[0.05] ${
+              className={`group relative cursor-pointer rounded-lg bg-white/[0.03] px-3 py-2 text-left transition-colors duration-200 hover:bg-white/[0.05] ${
                 selectedAssetId === asset.id
                   ? "bg-white/[0.05] border-l-2 border-cyan-400/30"
                   : "border-l-2 border-transparent"

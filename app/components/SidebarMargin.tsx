@@ -9,7 +9,7 @@ export function SidebarMargin({ children }: { children: ReactNode }) {
 
   return (
     <main
-      className="flex min-w-0 flex-1 transition-all duration-300"
+      className="flex min-w-0 flex-1 transition-[margin-left] duration-300"
       style={{ marginLeft: `var(--sidebar-w)` }}
     >
       <style>{`

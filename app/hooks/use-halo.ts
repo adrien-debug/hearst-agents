@@ -90,6 +90,11 @@ export function useHalo(): UseHaloResult {
 
   const handleBatch = useCallback((actions: HaloAction[]) => {
     for (const action of actions) {
+      if (action.type === "run_started") {
+        timersRef.current.forEach(clearTimeout);
+        timersRef.current.clear();
+      }
+
       dispatch(action);
 
       if (action.type === "tool_call_completed") {
@@ -145,7 +150,16 @@ export function useHalo(): UseHaloResult {
       if (action) smootherRef.current?.push(action);
     });
 
-    return unsub;
+    const unsubDisconnect = stream.onDisconnect?.(() => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current.clear();
+      smootherRef.current?.push({ type: "reset_idle", at: Date.now() });
+    });
+
+    return () => {
+      unsub();
+      unsubDisconnect?.();
+    };
   }, [stream]);
 
   const restoreState = useCallback((s: HaloState) => {

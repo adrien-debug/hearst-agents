@@ -34,9 +34,9 @@ import {
 // ── Visual mapping ──────────────────────────────────────────
 
 const THREAD_STYLES: Record<ThreadVisualState, string> = {
-  active: "text-zinc-300 opacity-100",
-  rest: "text-zinc-500 opacity-80 hover:opacity-100 hover:text-zinc-400",
-  faded: "text-zinc-600 opacity-50 hover:opacity-70 hover:text-zinc-500",
+  active: "text-white opacity-100",
+  rest: "text-white/50 opacity-80 hover:opacity-100 hover:text-white/70",
+  faded: "text-white/30 opacity-50 hover:opacity-70 hover:text-white/50",
 };
 
 export default function AppNav() {
@@ -59,7 +59,7 @@ export default function AppNav() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 hidden h-full flex-col border-r border-zinc-800/30 bg-zinc-950 transition-all duration-300 md:flex ${
+      className={`fixed left-0 top-0 z-40 hidden h-full flex-col border-r border-white/5 bg-black transition-[width] duration-300 md:flex ${
         isCollapsed ? "w-[60px]" : "w-[240px]"
       }`}
     >
@@ -68,20 +68,20 @@ export default function AppNav() {
         <Link
           href="/"
           onClick={handleNewThread}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-900 transition-all duration-200 hover:bg-zinc-800"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white/5 transition-colors duration-200 hover:bg-white/10"
           title="Nouveau fil"
         >
-          <span className="text-[10px] font-semibold text-zinc-400">H</span>
+          <span className="text-[10px] font-semibold text-white/70">H</span>
         </Link>
         {!isCollapsed && activeWorkspace && (
-          <span className="truncate text-[10px] tracking-wide text-zinc-600 uppercase">
+          <span className="truncate text-[10px] tracking-wide text-white/50 uppercase">
             {activeWorkspace.label}
           </span>
         )}
         {!isCollapsed && (
           <button
             onClick={() => sidebar?.toggleCollapsed()}
-            className="ml-auto text-zinc-800 hover:text-zinc-600 transition-colors"
+            className="ml-auto text-white/30 hover:text-white/50 transition-colors"
             title="Réduire"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
@@ -92,7 +92,7 @@ export default function AppNav() {
         {isCollapsed && (
           <button
             onClick={() => sidebar?.toggleCollapsed()}
-            className="absolute right-2 top-5 text-zinc-800 hover:text-zinc-600 transition-colors"
+            className="absolute right-2 top-5 text-white/30 hover:text-white/50 transition-colors"
             title="Étendre"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5">
@@ -113,7 +113,7 @@ export default function AppNav() {
         ) : (
           <>
             {groupedThreads.length === 0 && (
-              <p className="px-5 pt-6 text-[10px] text-zinc-800 italic">
+              <p className="px-5 pt-6 text-[10px] text-white/30 italic">
                 Commencez à écrire…
               </p>
             )}
@@ -121,7 +121,7 @@ export default function AppNav() {
             {groupedThreads.map((group) => (
               <div key={group.group} className="mb-1">
                 <div className="px-5 pb-1 pt-4">
-                  <span className="text-[9px] tracking-widest text-zinc-700 uppercase">
+                  <span className="text-[9px] tracking-widest text-white/50 uppercase">
                     {group.label}
                   </span>
                 </div>
@@ -144,12 +144,12 @@ export default function AppNav() {
         <Link
           href="/admin"
           title="Administration"
-          className={`flex items-center rounded-md transition-all duration-200 ${
+          className={`flex items-center rounded-md transition-colors duration-200 ${
             isCollapsed ? "h-7 w-7 justify-center mx-auto" : "h-7 gap-2 px-2"
           } ${
             pathname.startsWith("/admin")
-              ? "text-zinc-500"
-              : "text-zinc-800 hover:text-zinc-600"
+              ? "text-white/50"
+              : "text-white/30 hover:text-white/50"
           }`}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-3.5 w-3.5 shrink-0">
@@ -183,21 +183,21 @@ function ThreadRow({
   return (
     <button
       onClick={onSelect}
-      className={`relative flex w-full flex-col px-5 py-1.5 text-left transition-all duration-300 ${THREAD_STYLES[visual]}`}
+      className={`relative flex w-full flex-col px-5 py-1.5 text-left transition-colors duration-300 ${THREAD_STYLES[visual]}`}
     >
       {isActive && (
-        <span className="absolute left-2 top-1/2 h-3 w-[1.5px] -translate-y-1/2 rounded-full bg-cyan-500/40" />
+        <span className="absolute left-2 top-1/2 h-3 w-[1.5px] -translate-y-1/2 rounded-full bg-white/40" />
       )}
       <div className="flex items-baseline gap-2">
         {thread.pinned && (
-          <span className="text-[7px] text-cyan-700/60">●</span>
+          <span className="text-[7px] text-white/30">●</span>
         )}
         <span className="truncate text-[11px] leading-tight">
           {thread.title}
         </span>
       </div>
       {showPreview && thread.preview && (
-        <span className="mt-0.5 truncate text-[10px] text-zinc-600/60 leading-tight">
+        <span className="mt-0.5 truncate text-[10px] text-white/30 leading-tight">
           {thread.preview}
         </span>
       )}
@@ -226,10 +226,10 @@ function CollapsedThreads({
             key={t.id}
             onClick={() => onSelect(t.id)}
             title={t.title}
-            className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
+            className={`h-1.5 w-1.5 rounded-full transition-[background-color,transform] duration-300 ${
               isActive
-                ? "bg-cyan-500/50 scale-125"
-                : "bg-zinc-800 hover:bg-zinc-700"
+                ? "bg-white/50 scale-125"
+                : "bg-white/10 hover:bg-white/20"
             }`}
           />
         );

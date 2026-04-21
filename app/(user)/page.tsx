@@ -15,13 +15,13 @@ export default function HomePage() {
 
   return (
     <div className="flex h-full items-center justify-center">
-      <div className="pointer-events-none absolute h-[400px] w-[400px] rounded-full bg-cyan-900/[0.02] blur-[120px]" />
+      {/* glow removed — invariant: no blur, no shadow */}
       <div className="relative flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-light tracking-tight text-white/70">
+        <h1 className="text-2xl font-light tracking-tight text-white">
           {greetingText()}{name ? `, ${name}` : ""}
         </h1>
         <div className="flex items-center gap-2 opacity-30">
-          <div className="h-1 w-1 rounded-full bg-cyan-400/80 animate-[pulse_4s_ease-in-out_infinite]" />
+          <div className="h-1 w-1 rounded-full bg-white/30 animate-[pulse_4s_ease-in-out_infinite]" />
           <span className="text-[8px] font-mono tracking-[0.25em] text-white/50 uppercase">System ready</span>
         </div>
       </div>

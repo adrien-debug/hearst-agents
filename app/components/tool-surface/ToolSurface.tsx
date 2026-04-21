@@ -39,10 +39,10 @@ function ToolButton({
     <button
       onClick={onClick}
       disabled={active}
-      className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-all duration-150 ${
+      className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors duration-150 ${
         active
           ? "bg-cyan-500/10 text-cyan-400"
-          : "text-zinc-500 hover:bg-zinc-800/40 hover:text-zinc-300"
+          : "text-white/50 hover:bg-white/5 hover:text-white/70"
       }`}
     >
       {iconPath && (

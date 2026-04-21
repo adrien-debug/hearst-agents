@@ -123,7 +123,7 @@ function AppsContent() {
       {/* Header */}
       <div className="border-b border-zinc-800/60 px-6 py-5">
         <h1 className="text-xl font-semibold text-white">Applications</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-white/50">
           {servicesLoading
             ? "Vérification des connexions..."
             : connectedCore.length > 0
@@ -160,7 +160,7 @@ function AppsContent() {
         {/* Connected */}
         {!servicesLoading && connectedCore.length > 0 && (
           <div className="border-b border-zinc-800/40 px-6 py-4">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/50">
               Connectés
             </h2>
             <div className="space-y-2">
@@ -173,9 +173,9 @@ function AppsContent() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-white">{app.name}</p>
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs text-zinc-500">{app.description}</p>
+                      <p className="text-xs text-white/50">{app.description}</p>
                       {getCapabilities(app).map((cap) => (
-                        <span key={cap} className="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-zinc-500">{cap}</span>
+                        <span key={cap} className="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-white/50">{cap}</span>
                       ))}
                     </div>
                   </div>
@@ -192,7 +192,7 @@ function AppsContent() {
         {/* Core — Essentiels */}
         {!servicesLoading && sortedAvailableCore.length > 0 && (
           <div className="border-b border-zinc-800/40 px-6 py-4">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/50">
               Essentiels
             </h2>
             <div className="space-y-2">
@@ -203,7 +203,7 @@ function AppsContent() {
                   <div
                     key={app.id}
                     ref={isHighlighted && idx === 0 ? highlightRef : undefined}
-                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 transition-all duration-200 hover:bg-zinc-800/50 ${
+                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors duration-200 hover:bg-zinc-800/50 ${
                       isHighlighted
                         ? "border-cyan-500/40 bg-cyan-500/5 ring-1 ring-cyan-500/20"
                         : "border-zinc-800/50 bg-zinc-900/30"
@@ -211,21 +211,21 @@ function AppsContent() {
                   >
                     <span className="text-lg">{app.icon}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-zinc-300">{app.name}</p>
+                      <p className="text-sm font-medium text-white">{app.name}</p>
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs text-zinc-600">{app.description}</p>
+                        <p className="text-xs text-white/50">{app.description}</p>
                         {getCapabilities(app).map((cap) => (
-                          <span key={cap} className="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-zinc-500">{cap}</span>
+                          <span key={cap} className="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-white/50">{cap}</span>
                         ))}
                       </div>
                     </div>
                     <button
                       onClick={action}
                       disabled={!action}
-                      className={`rounded-lg border px-3 py-1.5 text-xs transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
+                      className={`rounded-lg border px-3 py-1.5 text-xs transition-[color,border-color,transform] duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
                         isHighlighted
                           ? "border-cyan-500/50 text-cyan-400 hover:border-cyan-400 hover:text-cyan-300"
-                          : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-white"
+                          : "border-zinc-700 text-white/70 hover:border-zinc-500 hover:text-white"
                       }`}
                     >
                       {action ? "Connecter" : "Bientôt"}
@@ -240,9 +240,9 @@ function AppsContent() {
         {/* External — Autres services */}
         <div className="px-6 py-4">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-white/50">
               Autres services
-              <span className="ml-1.5 rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] font-normal text-zinc-500">
+              <span className="ml-1.5 rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] font-normal text-white/50">
                 {EXTERNAL_CONNECTORS.length}+
               </span>
             </h2>
@@ -256,7 +256,7 @@ function AppsContent() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
-                className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-600"
+                className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/50"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
@@ -265,7 +265,7 @@ function AppsContent() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Rechercher un service..."
-                className="w-full rounded-lg border border-zinc-800 bg-zinc-900/60 py-2 pl-9 pr-3 text-xs text-zinc-300 placeholder-zinc-600 outline-none transition-colors focus:border-zinc-600"
+                className="w-full rounded-lg border border-zinc-800 bg-zinc-900/60 py-2 pl-9 pr-3 text-xs text-white placeholder-zinc-600 outline-none transition-colors focus:border-zinc-600"
               />
             </div>
           </div>
@@ -277,7 +277,7 @@ function AppsContent() {
               className={`rounded-full px-3 py-1 text-[10px] font-medium transition-colors ${
                 categoryFilter === "all"
                   ? "bg-zinc-700 text-white"
-                  : "bg-zinc-800/50 text-zinc-500 hover:text-zinc-300"
+                  : "bg-zinc-800/50 text-white/50 hover:text-white"
               }`}
             >
               Tous
@@ -289,7 +289,7 @@ function AppsContent() {
                 className={`rounded-full px-3 py-1 text-[10px] font-medium transition-colors ${
                   categoryFilter === cat
                     ? "bg-zinc-700 text-white"
-                    : "bg-zinc-800/50 text-zinc-500 hover:text-zinc-300"
+                    : "bg-zinc-800/50 text-white/50 hover:text-white"
                 }`}
               >
                 {CATEGORIES[cat] ?? cat}
@@ -299,7 +299,7 @@ function AppsContent() {
 
           {/* Grid */}
           {filteredExternal.length === 0 ? (
-            <p className="py-8 text-center text-xs text-zinc-600">
+            <p className="py-8 text-center text-xs text-white/50">
               Aucun service trouvé
             </p>
           ) : (
@@ -311,10 +311,10 @@ function AppsContent() {
                 >
                   <span className="text-base">{app.icon}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-zinc-400">{app.name}</p>
-                    <p className="truncate text-[10px] text-zinc-600">{app.description}</p>
+                    <p className="text-xs font-medium text-white/70">{app.name}</p>
+                    <p className="truncate text-[10px] text-white/50">{app.description}</p>
                   </div>
-                  <span className="shrink-0 text-[9px] text-zinc-700">Bientôt</span>
+                  <span className="shrink-0 text-[9px] text-white/50">Bientôt</span>
                 </div>
               ))}
             </div>
@@ -327,7 +327,7 @@ function AppsContent() {
 
 export default function AppsPage() {
   return (
-    <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-zinc-500">Chargement...</div>}>
+    <Suspense fallback={<div className="flex h-full items-center justify-center text-sm text-white/50">Chargement...</div>}>
       <AppsContent />
     </Suspense>
   );

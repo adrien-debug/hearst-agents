@@ -144,7 +144,7 @@ export function ConnectorsSection() {
           {visible.map((conn) => (
             <div
               key={conn.provider}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-150 hover:bg-zinc-900/30"
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors duration-150 hover:bg-zinc-900/30"
             >
               <span
                 className={`h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[conn.status] ?? "bg-zinc-700"}`}
@@ -158,14 +158,14 @@ export function ConnectorsSection() {
                     canDirectConnect(conn.provider) ? (
                       <button
                         onClick={() => triggerConnect(conn.provider)}
-                        className="ml-2 shrink-0 rounded bg-zinc-800/40 px-1.5 py-0.5 text-[10px] text-zinc-500 transition-all duration-150 hover:bg-zinc-700/50 hover:text-zinc-300"
+                        className="ml-2 shrink-0 rounded bg-zinc-800/40 px-1.5 py-0.5 text-[10px] text-zinc-500 transition-colors duration-150 hover:bg-zinc-700/50 hover:text-zinc-300"
                       >
                         Connect
                       </button>
                     ) : (
                       <Link
                         href={`/apps?provider=${conn.provider}`}
-                        className="ml-2 shrink-0 rounded bg-zinc-800/40 px-1.5 py-0.5 text-[10px] text-zinc-500 transition-all duration-150 hover:bg-zinc-700/50 hover:text-zinc-300"
+                        className="ml-2 shrink-0 rounded bg-zinc-800/40 px-1.5 py-0.5 text-[10px] text-zinc-500 transition-colors duration-150 hover:bg-zinc-700/50 hover:text-zinc-300"
                       >
                         Connect
                       </Link>

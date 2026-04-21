@@ -86,7 +86,7 @@ function LoginContent() {
       <div className="flex min-h-screen items-center justify-center bg-[#09090b]">
         <div className="flex flex-col items-center gap-3">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
-          <p className="text-[13px] text-white/40">
+          <p className="text-[13px] text-white/70">
             {status === "authenticated" ? "Redirecting\u2026" : "Loading\u2026"}
           </p>
         </div>
@@ -96,20 +96,14 @@ function LoginContent() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#09090b] px-6 py-8 sm:px-8 md:px-10 md:py-16">
-      {/* Subtle ambient light */}
-      <div
-        className="pointer-events-none fixed inset-0"
-        aria-hidden="true"
-      >
-        <div className="absolute left-1/2 top-[38%] h-[500px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/1.5 blur-[120px]" />
-      </div>
+      {/* glow removed — invariant: no blur, no shadow */}
 
       <div className="relative w-full max-w-[480px]">
         {/* Login card */}
-        <div className="rounded-[22px] border border-white/6 bg-white/2 px-6 py-8 shadow-2xl shadow-black/40 backdrop-blur-sm sm:px-7 sm:py-9 md:px-8 md:py-10">
+        <div className="rounded-[22px] border border-white/6 bg-white/2 px-6 py-8 sm:px-7 sm:py-9 md:px-8 md:py-10">
           {/* Brand */}
           <div className="flex flex-col items-center">
-            <span className="text-[13px] font-medium uppercase tracking-[0.2em] text-white/50">
+            <span className="text-[13px] font-medium uppercase tracking-[0.2em] text-white/70">
               Hearst OS
             </span>
 
@@ -119,12 +113,12 @@ function LoginContent() {
             </span>
 
             {/* Title */}
-            <h1 className="mt-4 text-center text-[26px] font-semibold leading-[1.15] tracking-tight text-white/90 sm:text-[30px] md:text-[34px]">
+            <h1 className="mt-4 text-center text-[26px] font-semibold leading-[1.15] tracking-tight text-white sm:text-[30px] md:text-[34px]">
               Access your workspace
             </h1>
 
             {/* Description */}
-            <p className="mt-4 max-w-[340px] text-center text-[15px] leading-[1.55] text-white/40 sm:text-[16px]">
+            <p className="mt-4 max-w-[340px] text-center text-[15px] leading-[1.55] text-white/70 sm:text-[16px]">
               Continue to your workspace using your company identity provider.
             </p>
           </div>
@@ -141,7 +135,7 @@ function LoginContent() {
                   onClick={() => handleSignIn(provider.id)}
                   disabled={isDisabled}
                   aria-label={provider.label}
-                  className="group relative flex h-[50px] w-full items-center justify-center gap-3 rounded-[13px] border border-white/8 bg-white/3 text-[14px] font-medium text-white/80 transition-all duration-200 hover:border-white/14 hover:bg-white/6 hover:text-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50"
+                  className="group relative flex h-[50px] w-full items-center justify-center gap-3 rounded-[13px] border border-white/8 bg-white/3 text-[14px] font-medium text-white/80 transition-[color,background-color,border-color,transform,opacity] duration-200 hover:border-white/14 hover:bg-white/6 hover:text-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[#09090b] active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
@@ -164,13 +158,13 @@ function LoginContent() {
           )}
 
           {/* Micro-copy */}
-          <p className="mt-6 text-center text-[12px] leading-[1.6] text-white/20">
+          <p className="mt-6 text-center text-[12px] leading-[1.6] text-white/50">
             By continuing, you authenticate using your organization provider.
           </p>
         </div>
 
         {/* Footer */}
-        <div className="mt-6 flex items-center justify-center gap-4 text-[11px] text-white/15">
+        <div className="mt-6 flex items-center justify-center gap-4 text-[11px] text-white/30">
           <span>Privacy</span>
           <span className="text-white/8">&middot;</span>
           <span>Terms</span>

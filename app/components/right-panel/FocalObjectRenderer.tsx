@@ -34,49 +34,36 @@ export const TYPE_LABELS: Record<string, string> = {
 export const FocalObjectRenderer = memo(function FocalObjectRenderer({
   object,
   onAction,
+  isPending,
   mode = "full",
 }: {
   object: FocalObject;
   onAction?: (action: FocalAction) => void;
+  isPending?: boolean;
   mode?: "preview" | "full";
 }) {
-  const prevIdRef = useRef(object.id);
-  const [emerging, setEmerging] = useState(false);
-
-  useEffect(() => {
-    if (object.id !== prevIdRef.current) {
-      prevIdRef.current = object.id;
-      setEmerging(true);
-      const t = setTimeout(() => setEmerging(false), 300);
-      return () => clearTimeout(t);
-    }
-  }, [object.id]);
-
   const isPreview = mode === "preview";
+  const isEmerging = object.status === "composing" || object.status === "delivering";
 
   return (
     <div
-      className={`flex flex-col max-w-[60ch] ${
+      key={object.id}
+      className={`flex flex-col max-w-[60ch] animate-in fade-in slide-in-from-bottom-3 duration-150 ease-out ${
         isPreview ? "px-6 pt-6 pb-4 gap-3" : "p-6 gap-6"
       }`}
-      style={{
-        opacity: emerging ? 0 : 1,
-        transform: emerging ? "translateY(16px)" : "translateY(0)",
-        transition: "opacity 300ms ease-out, transform 300ms ease-out",
-      }}
     >
       {/* Status + type badge */}
-      <div className="flex items-center gap-3">
-        <StatusDot status={object.status} />
-        <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500">
-          {TYPE_LABELS[object.objectType] ?? object.objectType}
-        </span>
-      </div>
+        <div className="flex items-center gap-3">
+          <StatusDot status={object.status} />
+          <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/50">
+            {TYPE_LABELS[object.objectType] ?? object.objectType}
+          </span>
+        </div>
 
       {/* Title */}
       {object.title && (
-        <h2 className={`font-semibold tracking-tight text-white leading-snug ${
-          isPreview ? "text-lg" : "text-2xl"
+        <h2 className={`font-medium tracking-tight text-white leading-snug ${
+          isPreview ? "text-lg" : "text-[28px]"
         }`}>
           {object.title}
         </h2>
@@ -84,7 +71,11 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
 
       {/* Type-specific body */}
       <div className="flex-1 min-h-0">
-        <ObjectBody object={object} mode={mode} />
+        {isEmerging && !isPreview ? (
+          <SkeletonBody />
+        ) : (
+          <ObjectBody object={object} mode={mode} />
+        )}
       </div>
 
       {/* Provenance */}
@@ -95,9 +86,10 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
         <div className="pt-2">
           <button
             onClick={() => onAction(object.primaryAction!)}
-            className="text-[11px] font-mono tracking-wider text-white/40 hover:text-white/70 transition-colors duration-200"
+            disabled={isPending}
+            className="text-[11px] font-mono tracking-wider text-amber-500 border border-amber-500 bg-transparent px-3 py-1.5 hover:bg-amber-500/10 hover:border-amber-500/80 transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
-            {object.primaryAction.label}
+            {isPending ? "EN COURS..." : object.primaryAction.label}
           </button>
         </div>
       )}
@@ -114,8 +106,8 @@ function ScanBody({ text, large }: { text: string; large?: boolean }) {
     .filter(Boolean);
 
   const textClass = large
-    ? "text-[15px] text-zinc-100 leading-loose max-w-[60ch]"
-    : "text-[14px] text-zinc-100 leading-relaxed max-w-[60ch]";
+    ? "text-[15px] text-white/80 leading-loose max-w-[60ch]"
+    : "text-[14px] text-white/80 leading-relaxed max-w-[60ch]";
 
   if (lines.length <= 1) {
     return <p className={textClass}>{lines[0] ?? text}</p>;
@@ -138,8 +130,8 @@ function ScanBody({ text, large }: { text: string; large?: boolean }) {
 function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "full" }) {
   const large = mode === "full";
   const bodyClass = large
-    ? "text-[15px] text-zinc-100 leading-loose"
-    : "text-[14px] text-zinc-100 leading-relaxed";
+    ? "text-[15px] text-white/80 leading-loose"
+    : "text-[14px] text-white/80 leading-relaxed";
   const sectionGap = large ? "space-y-8" : "space-y-6";
 
   if (mode === "preview") {
@@ -150,7 +142,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
     else if ("condition" in object && typeof object.condition === "string") summaryText = object.condition;
 
     return summaryText ? (
-      <p className="text-sm text-zinc-400 leading-relaxed line-clamp-2">{summaryText}</p>
+      <p className="text-sm text-white/70 leading-relaxed line-clamp-2">{summaryText}</p>
     ) : null;
   }
 
@@ -159,7 +151,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
       return (
         <div className={sectionGap}>
           {object.recipient && (
-            <p className="text-[10px] font-mono text-zinc-500">→ {object.recipient}</p>
+            <p className="text-[10px] font-mono text-white/50">→ {object.recipient}</p>
           )}
           {object.body && <p className={bodyClass}>{object.body}</p>}
         </div>
@@ -168,7 +160,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
     case "message_receipt":
       return (
         <div className={sectionGap}>
-          <p className="text-[10px] font-mono text-zinc-500">→ {object.recipient}</p>
+          <p className="text-[10px] font-mono text-white/50">→ {object.recipient}</p>
           <p className={bodyClass}>{object.body}</p>
           <DeliveryBadge status={object.deliveryStatus} />
         </div>
@@ -181,7 +173,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
           {object.sections.map((s, i) => (
             <div key={i} className="space-y-2">
               {s.heading && (
-                <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">{s.heading}</p>
+                <p className="text-[10px] font-mono uppercase tracking-wider text-white/50">{s.heading}</p>
               )}
               <ScanBody text={s.body} large={large} />
             </div>
@@ -197,7 +189,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
           {object.sectionTitles.length > 0 && (
             <div className="space-y-2 pl-2 border-l border-white/5">
               {object.sectionTitles.map((t, i) => (
-                <p key={i} className="text-[13px] text-zinc-300 font-light">{t}</p>
+                <p key={i} className="text-[13px] text-white font-light">{t}</p>
               ))}
             </div>
           )}
@@ -211,7 +203,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
           {object.sections.map((s, i) => (
             <div key={i} className="space-y-2">
               {s.heading && (
-                <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">{s.heading}</p>
+                <p className="text-[10px] font-mono uppercase tracking-wider text-white/50">{s.heading}</p>
               )}
               <ScanBody text={s.body} large={large} />
             </div>
@@ -225,7 +217,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
         <div className={sectionGap}>
           <p className={bodyClass}>{object.intent}</p>
           {object.schedule && (
-            <p className="text-[10px] font-mono text-zinc-500">⟳ {object.schedule}</p>
+            <p className="text-[10px] font-mono text-white/50">⟳ {object.schedule}</p>
           )}
         </div>
       );
@@ -235,9 +227,9 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
         <div className={sectionGap}>
           <p className={bodyClass}>{object.intent}</p>
           {object.schedule && (
-            <p className="text-[10px] font-mono text-zinc-500">⟳ {object.schedule}</p>
+            <p className="text-[10px] font-mono text-white/50">⟳ {object.schedule}</p>
           )}
-          <div className="flex items-center gap-4 text-[9px] font-mono text-zinc-600">
+          <div className="flex items-center gap-4 text-[9px] font-mono text-white/30">
             {object.lastRunAt && <span>Dernier : {formatRelative(object.lastRunAt)}</span>}
             {object.nextRunAt && <span>Prochain : {formatRelative(object.nextRunAt)}</span>}
           </div>
@@ -249,7 +241,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
         <div className={sectionGap}>
           <p className={bodyClass}>{object.condition}</p>
           {object.description && (
-            <p className="text-[13px] text-zinc-400 font-light">{object.description}</p>
+            <p className="text-[13px] text-white/70 font-light">{object.description}</p>
           )}
         </div>
       );
@@ -258,13 +250,23 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
       return (
         <div className={sectionGap}>
           <p className={bodyClass}>{object.condition}</p>
-          <div className="flex items-center gap-4 text-[9px] font-mono text-zinc-600">
+          <div className="flex items-center gap-4 text-[9px] font-mono text-white/30">
             {object.lastCheckedAt && <span>Vérifié : {formatRelative(object.lastCheckedAt)}</span>}
             <span>{object.triggerCount} déclenchement{object.triggerCount !== 1 ? "s" : ""}</span>
           </div>
         </div>
       );
   }
+}
+
+function SkeletonBody() {
+  return (
+    <div className="space-y-3">
+      <div className="h-3 w-[80%] rounded bg-white/10 animate-pulse" />
+      <div className="h-3 w-[60%] rounded bg-white/10 animate-pulse" />
+      <div className="h-3 w-[70%] rounded bg-white/10 animate-pulse" />
+    </div>
+  );
 }
 
 // ── Shared atoms ────────────────────────────────────────────
@@ -290,7 +292,7 @@ function DeliveryBadge({ status }: { status: string }) {
     status;
 
   return (
-    <span className="text-[9px] font-mono uppercase tracking-wider text-zinc-600">
+    <span className="text-[9px] font-mono uppercase tracking-wider text-white/30">
       {label}
     </span>
   );
@@ -299,7 +301,7 @@ function DeliveryBadge({ status }: { status: string }) {
 function WordCount({ count }: { count: number }) {
   if (!count) return null;
   return (
-    <span className="text-[9px] font-mono text-zinc-600">
+    <span className="text-[9px] font-mono text-white/30">
       {count} mots
     </span>
   );
@@ -325,14 +327,14 @@ function Provenance({ object }: { object: FocalObject }) {
   const createdAt = (object as Record<string, unknown>).createdAt as number | undefined;
 
   return (
-    <div className="flex items-center gap-1.5 text-[9px] font-mono text-zinc-600 tracking-wide mt-1 opacity-70">
-      <span className={`${ui.color.split(" ")[1] ?? "text-zinc-500"}`}>
+    <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/50 tracking-wide mt-1">
+      <span className={`${ui.color.split(" ")[1] ?? "text-white/50"}`}>
         {ui.initial}
       </span>
       <span>via {label}</span>
-      {channelRef && <><span className="text-zinc-700">·</span><span>{channelRef}</span></>}
+      {channelRef && <><span className="text-white/50">·</span><span>{channelRef}</span></>}
       {createdAt && (
-        <><span className="text-zinc-700">·</span><span>{formatRelative(createdAt)}</span></>
+        <><span className="text-white/50">·</span><span>{formatRelative(createdAt)}</span></>
       )}
     </div>
   );

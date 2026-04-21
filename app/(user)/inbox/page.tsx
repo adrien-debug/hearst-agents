@@ -24,7 +24,7 @@ const SOURCE_ICON: Record<string, string> = {
 
 function SourceBadge({ provider }: { provider: string }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded bg-zinc-800/50 px-1.5 py-0.5 text-[9px] text-zinc-600">
+    <span className="inline-flex shrink-0 items-center rounded bg-zinc-800/50 px-1.5 py-0.5 text-[9px] text-white/50">
       {SOURCE_ICON[provider] ?? "●"}
     </span>
   );
@@ -133,18 +133,18 @@ export default function InboxPage() {
       <div className="flex h-full flex-col overflow-hidden">
         <div className="border-b border-zinc-800/60 px-6 py-5">
           <h1 className="text-xl font-semibold text-white">Boîte de réception</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-white/50">
             Connectez vos comptes pour accéder à vos messages
           </p>
         </div>
         <div className="flex flex-1 flex-col items-center justify-center px-6">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800/40">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-8 w-8 text-zinc-500">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-8 w-8 text-white/50">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
             </svg>
           </div>
-          <p className="mt-5 text-sm text-zinc-400">Aucun compte connecté</p>
-          <p className="mt-1 text-xs text-zinc-600">
+          <p className="mt-5 text-sm text-white/70">Aucun compte connecté</p>
+          <p className="mt-1 text-xs text-white/50">
             Connectez vos services depuis les Applications
           </p>
           <button
@@ -153,7 +153,7 @@ export default function InboxPage() {
           >
             Connecter un service
           </button>
-          <p className="mt-2 text-[10px] text-zinc-600">Lecture seule · Vos messages restent privés</p>
+          <p className="mt-2 text-[10px] text-white/50">Lecture seule · Vos messages restent privés</p>
         </div>
       </div>
     );
@@ -169,7 +169,7 @@ export default function InboxPage() {
             {sources.size} source{sources.size > 1 ? "s" : ""}
           </span>
         </div>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-white/50">
           {loading
             ? "Chargement..."
             : error
@@ -190,7 +190,7 @@ export default function InboxPage() {
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 animate-pulse rounded-full bg-zinc-400" />
-              <span className="text-sm text-zinc-400">Récupération de vos messages...</span>
+              <span className="text-sm text-white/70">Récupération de vos messages...</span>
             </div>
             <div className="w-full max-w-md space-y-3">
               {[1, 2, 3].map((i) => (
@@ -211,10 +211,10 @@ export default function InboxPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
             </div>
-            <p className="text-sm text-zinc-400">{error}</p>
+            <p className="text-sm text-white/70">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-white"
+              className="rounded-lg border border-zinc-700 px-4 py-2 text-xs text-white/70 transition-colors hover:border-zinc-500 hover:text-white"
             >
               Réessayer
             </button>
@@ -225,12 +225,12 @@ export default function InboxPage() {
         {!loading && !error && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-16">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-800/40">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-8 w-8 text-zinc-500">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-8 w-8 text-white/50">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
               </svg>
             </div>
-            <p className="text-sm text-zinc-400">Aucun message</p>
-            <p className="text-xs text-zinc-600">Vos messages apparaîtront ici</p>
+            <p className="text-sm text-white/70">Aucun message</p>
+            <p className="text-xs text-white/50">Vos messages apparaîtront ici</p>
           </div>
         )}
 
@@ -257,13 +257,13 @@ export default function InboxPage() {
                   className={`flex items-center gap-1.5 rounded-t-lg px-4 py-2 text-xs font-medium transition-colors ${
                     tab === t.key
                       ? "bg-zinc-800/60 text-white"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      : "text-white/50 hover:text-white"
                   }`}
                 >
                   {t.label}
                   {(t.key === "unread" || t.key === "urgent") && t.count > 0 && (
                     <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${
-                      tab === t.key ? "bg-zinc-700 text-zinc-300" : "bg-zinc-800/60 text-zinc-600"
+                      tab === t.key ? "bg-zinc-700 text-white" : "bg-zinc-800/60 text-white/50"
                     }`}>
                       {t.count}
                     </span>
@@ -290,19 +290,19 @@ export default function InboxPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
-                        <p className={`truncate text-sm ${msg.read ? "text-zinc-400" : "font-medium text-white"}`}>
+                        <p className={`truncate text-sm ${msg.read ? "text-white/70" : "font-medium text-white"}`}>
                           {msg.from}
                         </p>
                         <SourceBadge provider={msg.source.provider} />
                       </div>
-                      <span className="shrink-0 text-[10px] text-zinc-600">
+                      <span className="shrink-0 text-[10px] text-white/50">
                         {formatDate(msg.timestamp)}
                       </span>
                     </div>
-                    <p className={`truncate text-xs ${msg.read ? "text-zinc-500" : "text-zinc-300"}`}>
+                    <p className={`truncate text-xs ${msg.read ? "text-white/50" : "text-white"}`}>
                       {msg.context ?? msg.subject}
                     </p>
-                    <p className="mt-0.5 truncate text-[10px] text-zinc-600">{msg.preview}</p>
+                    <p className="mt-0.5 truncate text-[10px] text-white/50">{msg.preview}</p>
                   </div>
                 </button>
               ))}
@@ -314,7 +314,7 @@ export default function InboxPage() {
                 {Array.from(sources.entries()).map(([provider, count]) => (
                   <div key={provider} className="flex items-center gap-2 rounded-lg border border-zinc-800 px-3 py-2">
                     <span className="text-xs">{SOURCE_ICON[provider] ?? "●"}</span>
-                    <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] text-zinc-500">
+                    <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] text-white/50">
                       {count}
                     </span>
                   </div>

@@ -42,10 +42,10 @@ export default function InboxSummary({ messages, onSelectMessage, onFilterUrgent
             </button>
           )}
           {unread.length > 0 && (
-            <span className="text-zinc-500">{unread.length} non lu{unread.length > 1 ? "s" : ""}</span>
+            <span className="text-white/50">{unread.length} non lu{unread.length > 1 ? "s" : ""}</span>
           )}
           {low.length > 0 && (
-            <span className="text-zinc-600">{low.length} ignorable{low.length > 1 ? "s" : ""}</span>
+            <span className="text-white/50">{low.length} ignorable{low.length > 1 ? "s" : ""}</span>
           )}
         </div>
         <div className="flex gap-1.5">
@@ -59,7 +59,7 @@ export default function InboxSummary({ messages, onSelectMessage, onFilterUrgent
           )}
           <button
             onClick={() => triggerChat("Résume mes messages")}
-            className="rounded-md border border-zinc-800 px-2.5 py-1 text-[11px] text-zinc-400 transition-colors hover:border-zinc-600 hover:text-white"
+            className="rounded-md border border-zinc-800 px-2.5 py-1 text-[11px] text-white/70 transition-colors hover:border-zinc-600 hover:text-white"
           >
             Résumer
           </button>
@@ -77,7 +77,7 @@ export default function InboxSummary({ messages, onSelectMessage, onFilterUrgent
             >
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" />
               <span className="truncate text-xs font-medium text-zinc-200">{msg.from}</span>
-              <span className="truncate text-[10px] text-zinc-500">{msg.context ?? msg.subject}</span>
+              <span className="truncate text-[10px] text-white/50">{msg.context ?? msg.subject}</span>
             </button>
           ))}
         </div>

@@ -35,7 +35,17 @@ function RightPanelInner() {
 
   const [panelState, setPanelState] = useState<PanelState>("INDEX");
   const [documentObject, setDocumentObject] = useState<FocalObject | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const actionLockRef = useRef(false);
   const prevFocalIdRef = useRef(focal?.id);
+  const prevThreadIdRef = useRef(sidebarCtx?.state.activeThreadId);
+
+  // When thread changes, reset focal state completely
+  if (sidebarCtx?.state.activeThreadId !== prevThreadIdRef.current) {
+    prevThreadIdRef.current = sidebarCtx?.state.activeThreadId;
+    setPanelState("INDEX");
+    setDocumentObject(null);
+  }
 
   // When focal object changes externally, reset to INDEX (derived, no effect)
   if (focal?.id !== prevFocalIdRef.current) {
@@ -82,21 +92,28 @@ function RightPanelInner() {
   const hasPrev = currentDocIndex > 0;
   const hasNext = currentDocIndex >= 0 && currentDocIndex < allObjects.length - 1;
 
-  const handleFocalAction = useCallback((action: FocalAction) => {
+  const handleFocalAction = useCallback(async (action: FocalAction) => {
     const target = documentObject ?? focal;
-    if (!target) return;
+    if (!target || actionLockRef.current) return;
 
-    const actionIntent = `${action.kind} ${target.objectType} "${target.title}"`;
-    const focalCtx = {
-      id: target.id,
-      objectType: target.objectType,
-      title: target.title,
-      status: target.status,
-    };
-    const threadId = sidebarCtx?.state.activeThreadId;
-    const convId = threadId ?? crypto.randomUUID();
+    actionLockRef.current = true;
+    setIsPending(true);
+    try {
+      const actionIntent = `${action.kind} ${target.objectType} "${target.title}"`;
+      const focalCtx = {
+        id: target.id,
+        objectType: target.objectType,
+        title: target.title,
+        status: target.status,
+      };
+      const threadId = sidebarCtx?.state.activeThreadId;
+      const convId = threadId ?? crypto.randomUUID();
 
-    v2.send(actionIntent, "home", convId, focalCtx);
+      await v2.send(actionIntent, "home", convId, focalCtx);
+    } finally {
+      setIsPending(false);
+      actionLockRef.current = false;
+    }
   }, [documentObject, focal, v2, sidebarCtx?.state.activeThreadId]);
 
   const isDocument = panelState === "DOCUMENT" && documentObject;
@@ -108,10 +125,10 @@ function RightPanelInner() {
         width: isDocument ? "100%" : "36%",
         minWidth: 520,
         maxWidth: isDocument ? undefined : 760,
-        transition: "width 300ms cubic-bezier(0.8, 0, 0.1, 1)",
+        transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)",
         contain: "strict",
         willChange: "width",
-        background: "#020202",
+        background: "#000000",
       }}
     >
       {/* Status indicator */}
@@ -119,7 +136,7 @@ function RightPanelInner() {
         {isDocument && (
           <button
             onClick={closeDocument}
-            className="text-[9px] font-mono tracking-wider text-zinc-600 hover:text-zinc-400 transition-colors duration-200"
+            className="text-[9px] font-mono tracking-wider text-white/30 hover:text-white border border-transparent hover:border-white/20 px-2 py-1 transition-colors duration-200 cursor-pointer"
           >
             ← INDEX
           </button>
@@ -137,23 +154,24 @@ function RightPanelInner() {
           <FocalObjectRenderer
             object={documentObject}
             onAction={handleFocalAction}
+            isPending={isPending}
             mode="full"
           />
 
           {/* Document navigation */}
           {allObjects.length > 1 && (
-            <div className="flex justify-between items-center text-sm text-zinc-600 mt-10 pt-6 border-t border-white/[0.03]">
+            <div className="flex justify-between items-center text-sm text-white/50 mt-10 pt-6 border-t border-white/[0.03]">
               <button
                 onClick={() => hasPrev && navigateDocument(allObjects[currentDocIndex - 1])}
                 disabled={!hasPrev}
-                className="transition-colors duration-200 hover:text-zinc-300 disabled:opacity-20 disabled:cursor-default text-[11px] font-mono"
+                className="transition-colors duration-200 hover:text-white border border-transparent hover:border-white/20 px-2 py-1 disabled:opacity-20 disabled:cursor-default text-[11px] font-mono cursor-pointer"
               >
                 ← Précédent
               </button>
               <button
                 onClick={() => hasNext && navigateDocument(allObjects[currentDocIndex + 1])}
                 disabled={!hasNext}
-                className="transition-colors duration-200 hover:text-zinc-300 disabled:opacity-20 disabled:cursor-default text-[11px] font-mono"
+                className="transition-colors duration-200 hover:text-white border border-transparent hover:border-white/20 px-2 py-1 disabled:opacity-20 disabled:cursor-default text-[11px] font-mono cursor-pointer"
               >
                 Suivant →
               </button>
@@ -169,25 +187,25 @@ function RightPanelInner() {
           {/* Focal Context (max 25% height) */}
           {isFocused && focal && (
             <div
-              className="group max-h-[25%] overflow-hidden cursor-pointer shrink-0 transition-opacity duration-300 ease-out hover:opacity-80"
+              className="group max-h-[25%] overflow-hidden cursor-pointer shrink-0 transition-[opacity,border-color] duration-150 ease-out hover:opacity-90 border border-transparent hover:border-white/10 rounded-md"
               style={{
                 maskImage: "linear-gradient(to bottom, black 80%, transparent 100%)",
                 WebkitMaskImage: "linear-gradient(to bottom, black 80%, transparent 100%)",
               }}
               onClick={() => openDocument(focal)}
             >
-              <FocalObjectRenderer object={focal} onAction={handleFocalAction} mode="preview" />
+              <FocalObjectRenderer object={focal} onAction={handleFocalAction} isPending={isPending} mode="preview" />
             </div>
           )}
 
           {/* Divider */}
           {isFocused && secondary.length > 0 && (
-            <div className="border-t border-white/[0.02] my-4" />
+            <div className="border-t border-white/5 my-6" />
           )}
 
           {/* Timeline Register */}
           {secondary.length > 0 && (
-            <div className="space-y-1 shrink-0 overflow-hidden">
+            <div className="space-y-0.5 shrink-0 overflow-hidden">
               {secondary.map((obj) => {
                 const timeStr = obj.createdAt
                   ? new Date(obj.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -199,11 +217,11 @@ function RightPanelInner() {
                     className="w-full group text-left"
                     onClick={() => openDocument(obj)}
                   >
-                    <div className="flex justify-between items-center h-10 px-2 rounded-md transition-colors">
-                      <span className="text-[13px] text-zinc-300 group-hover:text-zinc-100 transition-colors truncate pr-4">
+                    <div className="flex justify-between items-center h-10 px-2 border border-transparent rounded-md transition-colors group-hover:border-white/10 cursor-pointer">
+                      <span className="text-[12px] text-white/50 group-hover:text-white transition-colors truncate pr-4">
                         {obj.title || TYPE_LABELS[obj.objectType] || obj.objectType}
                       </span>
-                      <span className="text-[11px] text-zinc-600 font-mono shrink-0 group-hover:text-zinc-400 transition-colors">
+                      <span className="text-[11px] text-white/30 font-mono shrink-0 group-hover:text-white/50 transition-colors">
                         {timeStr}
                       </span>
                     </div>
@@ -216,7 +234,7 @@ function RightPanelInner() {
           {/* Empty state — persistent structure */}
           {!isFocused && !loading && (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-[10px] text-zinc-800 font-mono tracking-wide">
+              <p className="text-[10px] text-white/30 font-mono tracking-wide">
                 En attente
               </p>
             </div>

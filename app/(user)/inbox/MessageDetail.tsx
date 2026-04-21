@@ -29,7 +29,7 @@ export default function MessageDetail({ message, onBack, onReplyWithAI }: Messag
       <div className="flex items-center gap-3 border-b border-zinc-800/60 px-6 py-4">
         <button
           onClick={onBack}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-white"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-zinc-800 hover:text-white"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -40,11 +40,11 @@ export default function MessageDetail({ message, onBack, onReplyWithAI }: Messag
             <h1 className="truncate text-lg font-semibold text-white">
               {message.context ?? message.subject}
             </h1>
-            <span className="shrink-0 rounded bg-zinc-800/50 px-1.5 py-0.5 text-[9px] font-medium capitalize text-zinc-500">
+            <span className="shrink-0 rounded bg-zinc-800/50 px-1.5 py-0.5 text-[9px] font-medium capitalize text-white/50">
               {message.source.provider === "gmail" ? "Email" : message.source.provider}
             </span>
           </div>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-white/50">
             {message.from} · {date}
           </p>
         </div>
@@ -59,10 +59,10 @@ export default function MessageDetail({ message, onBack, onReplyWithAI }: Messag
           <div>
             <p className="text-sm font-medium text-white">{message.from}</p>
             {message.fromDetail && (
-              <p className="text-xs text-zinc-600">{message.fromDetail}</p>
+              <p className="text-xs text-white/50">{message.fromDetail}</p>
             )}
             {message.context && (
-              <p className="text-xs text-zinc-500">{message.context}</p>
+              <p className="text-xs text-white/50">{message.context}</p>
             )}
           </div>
         </div>
@@ -78,7 +78,7 @@ export default function MessageDetail({ message, onBack, onReplyWithAI }: Messag
       <div className="flex items-center gap-3 border-t border-zinc-800/60 px-6 py-4">
         {message.canReply ? (
           <>
-            <button className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400 transition-colors hover:border-zinc-600 hover:text-white">
+            <button className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white/70 transition-colors hover:border-zinc-600 hover:text-white">
               Répondre
             </button>
             {onReplyWithAI && (
@@ -94,9 +94,9 @@ export default function MessageDetail({ message, onBack, onReplyWithAI }: Messag
             )}
           </>
         ) : (
-          <p className="text-xs text-zinc-600">Lecture seule</p>
+          <p className="text-xs text-white/50">Lecture seule</p>
         )}
-        <button className="ml-auto rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-600 transition-colors hover:border-zinc-600 hover:text-zinc-400">
+        <button className="ml-auto rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-sm text-white/50 transition-colors hover:border-zinc-600 hover:text-white/70">
           Archiver
         </button>
       </div>
