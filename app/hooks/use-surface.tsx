@@ -25,6 +25,7 @@ import {
   type SurfaceFullState,
   type OperatingMode,
   type IntentFlowStage,
+  type RestorableSessionState,
 } from "@/app/lib/surface-state";
 import type { ProviderId } from "@/lib/providers/types";
 
@@ -48,6 +49,9 @@ export interface SurfaceContextValue {
   activateMission: (missionId: string) => void;
   adjustMission: (missionId: string) => void;
   closeMission: () => void;
+
+  // Session restoration
+  restoreSession: (session: RestorableSessionState | null) => void;
 
   // Reset
   reset: () => void;
@@ -98,6 +102,10 @@ export function SurfaceProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "close_mission" });
   }, []);
 
+  const restoreSession = useCallback((session: RestorableSessionState | null) => {
+    dispatch({ type: "restore_session", session });
+  }, []);
+
   const reset = useCallback(() => {
     dispatch({ type: "reset" });
   }, []);
@@ -112,6 +120,7 @@ export function SurfaceProvider({ children }: { children: ReactNode }) {
     activateMission,
     adjustMission,
     closeMission,
+    restoreSession,
     reset,
     panelMode: state.rightPanel.mode,
     isConnectionInterrupted: state.intentFlow.connectionInterrupt !== null,
@@ -127,6 +136,7 @@ export function SurfaceProvider({ children }: { children: ReactNode }) {
     activateMission,
     adjustMission,
     closeMission,
+    restoreSession,
     reset,
   ]);
 

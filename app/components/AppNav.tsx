@@ -21,8 +21,11 @@
  */
 
 import Link from "next/link";
+import { useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { useSidebarOptional } from "@/app/hooks/use-sidebar";
+import { useSurfaceOptional } from "@/app/hooks/use-surface";
+import { saveThreadSession, getThreadSession } from "@/app/lib/surface-state";
 import {
   getThreadVisualState,
   shouldShowPreview,
@@ -41,6 +44,30 @@ const THREAD_STYLES: Record<ThreadVisualState, string> = {
 export default function AppNav() {
   const pathname = usePathname();
   const sidebar = useSidebarOptional();
+  const surfaceCtx = useSurfaceOptional();
+
+  const handleThreadSelect = useCallback((threadId: string) => {
+    if (!sidebar) return;
+    const currentId = sidebar.state.activeThreadId;
+    if (currentId && currentId !== threadId && surfaceCtx) {
+      saveThreadSession(currentId, surfaceCtx.state);
+    }
+    sidebar.selectThread(threadId);
+    if (surfaceCtx) {
+      const session = getThreadSession(threadId);
+      surfaceCtx.restoreSession(session);
+    }
+  }, [sidebar, surfaceCtx]);
+
+  const handleNewThread = useCallback(() => {
+    if (!sidebar) return;
+    const currentId = sidebar.state.activeThreadId;
+    if (currentId && surfaceCtx) {
+      saveThreadSession(currentId, surfaceCtx.state);
+    }
+    sidebar.clearActiveThread();
+    surfaceCtx?.reset();
+  }, [sidebar, surfaceCtx]);
 
   const activeThreadId = sidebar?.state.activeThreadId;
   const activeWorkspace = sidebar?.activeWorkspace;
@@ -57,7 +84,7 @@ export default function AppNav() {
       <div className="flex h-14 shrink-0 items-center gap-3 px-4">
         <Link
           href="/"
-          onClick={() => sidebar?.clearActiveThread()}
+          onClick={handleNewThread}
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-900 transition-all duration-200 hover:bg-zinc-800"
           title="Nouveau fil"
         >
@@ -98,7 +125,7 @@ export default function AppNav() {
           <CollapsedThreads
             threads={sidebar?.state.threads ?? []}
             activeThreadId={activeThreadId}
-            onSelect={(id) => sidebar?.selectThread(id)}
+            onSelect={handleThreadSelect}
           />
         ) : (
           <>
@@ -120,7 +147,7 @@ export default function AppNav() {
                     key={thread.id}
                     thread={thread}
                     activeThreadId={activeThreadId}
-                    onSelect={() => sidebar?.selectThread(thread.id)}
+                    onSelect={() => handleThreadSelect(thread.id)}
                   />
                 ))}
               </div>

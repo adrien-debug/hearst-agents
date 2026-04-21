@@ -137,6 +137,7 @@ export type SurfaceAction =
   | { type: "activate_mission"; missionId: string }
   | { type: "adjust_mission"; missionId: string }
   | { type: "close_mission" }
+  | { type: "restore_session"; session: RestorableSessionState | null }
   | { type: "reset" };
 
 export interface SurfaceFullState {
@@ -270,6 +271,9 @@ export function surfaceReducer(state: SurfaceFullState, action: SurfaceAction): 
         rightPanel: { mode: "idle", payload: {} },
       };
 
+    case "restore_session":
+      return restoreFullStateFromSession(action.session);
+
     case "reset":
       return createInitialSurfaceState();
 
@@ -277,6 +281,169 @@ export function surfaceReducer(state: SurfaceFullState, action: SurfaceAction): 
       return state;
   }
 }
+
+// ── Session Restoration ─────────────────────────────────────
+
+/**
+ * Restorable snapshot of the operating context for a thread.
+ * Persisted per-thread so switching threads restores cognitive context.
+ *
+ * Design rules:
+ * - Persist operating context, not transient UI noise
+ * - Allow partial restoration (missing fields = graceful defaults)
+ * - Never store raw message content here (that's in memory/store)
+ */
+export interface RestorableSessionState {
+  threadId: string;
+  surfaceSnapshot: ActiveSurfaceState;
+  intentFlowSnapshot: Omit<IntentFlowState, "connectionInterrupt">;
+  missionSnapshot: MissionContext | null;
+  /** Last artifact surfaced in this thread, if any. */
+  lastArtifactId?: string;
+  /** Last run inspected in this thread, if any. */
+  lastRunId?: string;
+  updatedAt: number;
+}
+
+/**
+ * In-memory session store keyed by threadId.
+ * Future: swap with IndexedDB or server persistence.
+ */
+const sessionStore = new Map<string, RestorableSessionState>();
+
+export function saveThreadSession(threadId: string, state: SurfaceFullState): void {
+  sessionStore.set(threadId, {
+    threadId,
+    surfaceSnapshot: { ...state.surface },
+    intentFlowSnapshot: {
+      stage: state.intentFlow.stage,
+      missionId: state.intentFlow.missionId,
+    },
+    missionSnapshot: state.mission ? { ...state.mission } : null,
+    lastArtifactId: state.surface.context?.assetId as string | undefined,
+    lastRunId: state.surface.context?.runId as string | undefined,
+    updatedAt: Date.now(),
+  });
+}
+
+export function getThreadSession(threadId: string): RestorableSessionState | null {
+  return sessionStore.get(threadId) ?? null;
+}
+
+export function clearThreadSession(threadId: string): void {
+  sessionStore.delete(threadId);
+}
+
+// ── Restoration Priority ────────────────────────────────────
+
+/**
+ * Deterministic priority for what the right panel should show
+ * when restoring a thread's context.
+ *
+ * Priority order:
+ * 1. Approval waiting (highest urgency)
+ * 2. In-progress mission proposal / draft
+ * 3. Latest produced artifact
+ * 4. Active recurring mission
+ * 5. Idle (nothing to show)
+ */
+export function resolveRestoredRightPanelState(
+  session: RestorableSessionState | null,
+): RightPanelState {
+  if (!session) return { mode: "idle", payload: {} };
+
+  const { intentFlowSnapshot, missionSnapshot, lastArtifactId } = session;
+
+  if (intentFlowSnapshot.stage === "awaiting_validation") {
+    return {
+      mode: missionSnapshot ? "mission" : "proposal",
+      payload: { missionId: intentFlowSnapshot.missionId },
+    };
+  }
+
+  if (missionSnapshot?.phase === "proposed") {
+    return { mode: "mission", payload: { intent: missionSnapshot.intent } };
+  }
+
+  if (lastArtifactId) {
+    return { mode: "artifact", payload: { assetId: lastArtifactId } };
+  }
+
+  if (missionSnapshot?.phase === "active" || missionSnapshot?.phase === "adjusting") {
+    return { mode: "mission", payload: { missionId: missionSnapshot.missionId } };
+  }
+
+  if (intentFlowSnapshot.stage === "executing" || intentFlowSnapshot.stage === "adjusting") {
+    return { mode: "inspect", payload: {} };
+  }
+
+  return { mode: "idle", payload: {} };
+}
+
+/**
+ * Rebuild full surface state from a session snapshot.
+ * Gracefully defaults missing fields.
+ */
+export function restoreFullStateFromSession(
+  session: RestorableSessionState | null,
+): SurfaceFullState {
+  if (!session) return createInitialSurfaceState();
+
+  const rightPanel = resolveRestoredRightPanelState(session);
+
+  return {
+    surface: {
+      primary: "chat",
+      mode: rightPanel.mode,
+      context: rightPanel.payload,
+    },
+    intentFlow: {
+      stage: session.intentFlowSnapshot.stage,
+      missionId: session.intentFlowSnapshot.missionId,
+      connectionInterrupt: null,
+    },
+    rightPanel,
+    mission: session.missionSnapshot,
+  };
+}
+
+// ── Inline Edit Guardrails ──────────────────────────────────
+
+/**
+ * Allowed inline-editable fields per operating mode.
+ * The right panel is read-only by default. Only these specific
+ * fields may be edited inline — no forms, no tabbed settings.
+ *
+ * Adding a new editable field is a conscious architectural decision.
+ */
+const INLINE_EDITABLE: Partial<Record<OperatingMode, readonly string[]>> = {
+  mission: ["schedule", "target", "outputKind"] as const,
+};
+
+export function canInlineEditField(mode: OperatingMode, field: string): boolean {
+  const allowed = INLINE_EDITABLE[mode];
+  if (!allowed) return false;
+  return allowed.includes(field);
+}
+
+/**
+ * Primary action for a restored surface.
+ * Same guardrail as getPrimaryAction but works on restored state.
+ */
+export function getPrimaryActionForRestoredSurface(
+  session: RestorableSessionState | null,
+  handlers: {
+    onApprove?: () => void;
+    onActivateMission?: () => void;
+  },
+): PrimaryAction | null {
+  if (!session) return null;
+  const panel = resolveRestoredRightPanelState(session);
+  return getPrimaryAction(panel.mode, handlers);
+}
+
+// ── Restore action ──────────────────────────────────────────
+// Added to SurfaceAction union below via the existing type.
 
 // ── Legacy route mapping ────────────────────────────────────
 
