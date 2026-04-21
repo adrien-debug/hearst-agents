@@ -75,34 +75,148 @@ export interface Action {
   assetId?: string;
 }
 
-// ── Thread-scoped store (in-memory, future: persistence) ────
+// ── Persistent store (Supabase DB + in-memory cache) ────────
 
-const assetsByThread = new Map<string, Asset[]>();
-const actionsByThread = new Map<string, Action[]>();
+import { getServerSupabase } from "@/lib/supabase-server";
+
+const assetCache = new Map<string, Asset[]>();
+const actionCache = new Map<string, Action[]>();
 
 export function storeAsset(asset: Asset): void {
-  const list = assetsByThread.get(asset.threadId) ?? [];
+  // In-memory cache
+  const list = assetCache.get(asset.threadId) ?? [];
   list.push(asset);
-  assetsByThread.set(asset.threadId, list);
+  assetCache.set(asset.threadId, list);
+
+  // DB persistence (fire-and-forget)
+  const sb = getServerSupabase();
+  if (sb) {
+    sb.from("assets")
+      .upsert({
+        id: asset.id,
+        thread_id: asset.threadId,
+        run_id: asset.runId ?? null,
+        kind: asset.kind,
+        title: asset.title,
+        summary: asset.summary ?? null,
+        content_ref: asset.contentRef ?? null,
+        output_tier: asset.outputTier ?? null,
+        provenance: asset.provenance as unknown as Record<string, unknown>,
+        created_at: new Date(asset.createdAt).toISOString(),
+      })
+      .then(({ error }) => {
+        if (error) console.error("[AssetStore] DB write failed:", error.message);
+        else console.log(`[AssetStore] persisted asset ${asset.id}`);
+      });
+  }
 }
 
+/**
+ * Sync accessor — returns cached assets only (for client-side hooks).
+ * On the server, call loadAssetsForThread() first to hydrate from DB.
+ */
 export function getAssetsForThread(threadId: string): Asset[] {
-  return assetsByThread.get(threadId) ?? [];
+  return assetCache.get(threadId) ?? [];
 }
 
 export function getLatestAssetForThread(threadId: string): Asset | null {
-  const list = assetsByThread.get(threadId);
+  const list = assetCache.get(threadId);
   return list && list.length > 0 ? list[list.length - 1] : null;
 }
 
+/**
+ * Async loader — hydrates cache from Supabase. Call from server-side code.
+ */
+export async function loadAssetsForThread(threadId: string): Promise<Asset[]> {
+  const cached = assetCache.get(threadId);
+  if (cached && cached.length > 0) return cached;
+
+  const sb = getServerSupabase();
+  if (!sb) return [];
+
+  const { data, error } = await sb
+    .from("assets")
+    .select("*")
+    .eq("thread_id", threadId)
+    .order("created_at", { ascending: true })
+    .limit(50);
+
+  if (error || !data) return [];
+
+  const assets: Asset[] = data.map((row: any) => ({
+    id: row.id,
+    threadId: row.thread_id,
+    kind: row.kind as AssetKind,
+    title: row.title,
+    summary: row.summary ?? undefined,
+    outputTier: row.output_tier ?? undefined,
+    provenance: (row.provenance ?? {}) as AssetProvenance,
+    createdAt: new Date(row.created_at).getTime(),
+    contentRef: row.content_ref ?? undefined,
+    runId: row.run_id ?? undefined,
+  }));
+
+  assetCache.set(threadId, assets);
+  return assets;
+}
+
 export function storeAction(action: Action): void {
-  const list = actionsByThread.get(action.threadId) ?? [];
+  const list = actionCache.get(action.threadId) ?? [];
   list.push(action);
-  actionsByThread.set(action.threadId, list);
+  actionCache.set(action.threadId, list);
+
+  const sb = getServerSupabase();
+  if (sb) {
+    sb.from("actions")
+      .upsert({
+        id: action.id,
+        thread_id: action.threadId,
+        type: action.type,
+        provider: action.provider,
+        status: action.status,
+        timestamp: new Date(action.timestamp).toISOString(),
+        metadata: action.metadata as unknown as Record<string, unknown>,
+        asset_id: action.assetId ?? null,
+      })
+      .then(({ error }) => {
+        if (error) console.error("[ActionStore] DB write failed:", error.message);
+      });
+  }
 }
 
 export function getActionsForThread(threadId: string): Action[] {
-  return actionsByThread.get(threadId) ?? [];
+  return actionCache.get(threadId) ?? [];
+}
+
+export async function loadActionsForThread(threadId: string): Promise<Action[]> {
+  const cached = actionCache.get(threadId);
+  if (cached && cached.length > 0) return cached;
+
+  const sb = getServerSupabase();
+  if (!sb) return [];
+
+  const { data, error } = await sb
+    .from("actions")
+    .select("*")
+    .eq("thread_id", threadId)
+    .order("timestamp", { ascending: true })
+    .limit(50);
+
+  if (error || !data) return [];
+
+  const actions: Action[] = data.map((row: any) => ({
+    id: row.id,
+    threadId: row.thread_id,
+    type: row.type as ActionType,
+    provider: row.provider as ProviderId,
+    status: row.status as ActionStatus,
+    timestamp: new Date(row.timestamp).getTime(),
+    metadata: (row.metadata ?? {}) as Record<string, unknown>,
+    assetId: row.asset_id ?? undefined,
+  }));
+
+  actionCache.set(threadId, actions);
+  return actions;
 }
 
 // ── Bridge: Asset → Halo artifact kind ──────────────────────

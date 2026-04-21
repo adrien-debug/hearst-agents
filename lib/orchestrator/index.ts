@@ -993,8 +993,9 @@ async function runPipeline(
       }
     }
 
-    // ── Deterministic research path ─────────────────────────
-    if (researchDetected) {
+    // ── Deterministic research path (skip if user data retrieval needed) ──
+    const userDataRetrieval = detectRetrievalMode(input.message);
+    if (researchDetected && !userDataRetrieval) {
       const pathLabel = reportDetected ? "research + report" : "research";
       eventBus.emit({
         type: "orchestrator_log",
