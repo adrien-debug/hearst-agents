@@ -38,7 +38,13 @@ export function useRightPanel() {
         }
         const json = (await res.json()) as RightPanelData;
         if (!mountedRef.current) return;
-        setData(json);
+        setData((prev) => ({
+          ...json,
+          focalObject: prev.focalObject ?? json.focalObject,
+          secondaryObjects: prev.secondaryObjects?.length
+            ? prev.secondaryObjects
+            : json.secondaryObjects,
+        }));
         setError(false);
       } catch {
         if (!mountedRef.current) return;

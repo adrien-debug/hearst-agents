@@ -293,7 +293,7 @@ async function runSyntheticRetrieval(
 ): Promise<void> {
   const { delegate } = await import("../runtime/delegate/api");
   const { detectOutputTier, formatOutput } = await import("../runtime/formatting/pipeline");
-  const { storeAsset } = await import("../assets/types");
+  const { storeAsset, storeAction } = await import("../assets/types");
 
   engine.events.emit({
     type: "orchestrator_log",
@@ -327,6 +327,23 @@ async function runSyntheticRetrieval(
           message: `Synthetic retrieval completed (${content.length} chars) — creating asset`,
         });
 
+        const threadId = input.threadId ?? engine.id;
+
+        // Action: document_read
+        storeAction({
+          id: `action_read_${engine.id}_${Date.now()}`,
+          threadId,
+          type: "document_read",
+          provider: providerUsed as any,
+          status: "completed",
+          timestamp: Date.now(),
+          metadata: {
+            query: input.message.slice(0, 200),
+            sourceChars: content.length,
+            retrievalMode,
+          },
+        });
+
         const tier = detectOutputTier(input.message);
         const formatted = formatOutput(content, tier);
         const assetKind = tier === "report" ? "report" as const : "brief" as const;
@@ -336,7 +353,7 @@ async function runSyntheticRetrieval(
 
         const asset = {
           id: assetId,
-          threadId: input.threadId ?? engine.id,
+          threadId,
           kind: assetKind,
           title: formatted.title || `Synthèse : ${input.message.slice(0, 50)}`,
           summary: formatted.summary,
@@ -351,6 +368,23 @@ async function runSyntheticRetrieval(
         };
 
         storeAsset(asset);
+
+        // Action: brief_generated or report_generated
+        // assetId only in metadata — FK write deferred to avoid race with async storeAsset
+        storeAction({
+          id: `action_gen_${engine.id}_${Date.now()}`,
+          threadId,
+          type: assetKind === "report" ? "report_generated" : "brief_generated",
+          provider: providerUsed as any,
+          status: "completed",
+          timestamp: Date.now(),
+          metadata: {
+            assetId,
+            wordCount: formatted.wordCount,
+            sectionCount: formatted.sections.length,
+            tier,
+          },
+        });
 
         engine.events.emit({
           type: "asset_generated",

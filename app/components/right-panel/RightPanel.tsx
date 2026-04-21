@@ -95,11 +95,20 @@ export default function RightPanel() {
           <FocalObjectRenderer object={focal} onAction={handleFocalAction} />
         )}
 
-        {/* ── Secondary Objects (softened) ── */}
+        {/* ── Secondary Objects (depth stack) ── */}
         {secondary.length > 0 && (
-          <div className="mt-8 space-y-6 opacity-40">
-            {secondary.map((obj) => (
-              <FocalObjectRenderer key={obj.id} object={obj} />
+          <div className="mt-4 space-y-3 pointer-events-none select-none">
+            {secondary.map((obj, i) => (
+              <div
+                key={obj.id}
+                className="origin-top"
+                style={{
+                  opacity: i === 0 ? 0.5 : 0.3,
+                  transform: `scale(0.97) translateY(${(i + 1) * 2}px)`,
+                }}
+              >
+                <FocalObjectRenderer object={obj} />
+              </div>
             ))}
           </div>
         )}

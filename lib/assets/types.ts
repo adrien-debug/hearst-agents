@@ -54,8 +54,10 @@ export interface Asset {
 // ── Action types ────────────────────────────────────────────
 
 export type ActionType =
-  | "message_sent"
+  | "document_read"
+  | "brief_generated"
   | "report_generated"
+  | "message_sent"
   | "document_created"
   | "task_created"
   | "event_created"

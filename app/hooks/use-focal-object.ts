@@ -45,7 +45,11 @@ export function useFocalObject(): FocalObjectState {
     // Live focal object from SSE takes priority
     if (data.focalObject && data.focalObject.objectType) {
       const liveFocal = data.focalObject as unknown as FocalObject;
-      return { focal: liveFocal, secondary: [], isFocused: true };
+      const pollSecondary: FocalObject[] = (data.secondaryObjects ?? [])
+        .filter((o) => o.objectType && o.id !== liveFocal.id)
+        .map((o) => o as unknown as FocalObject)
+        .slice(0, MAX_SECONDARY);
+      return { focal: liveFocal, secondary: pollSecondary, isFocused: true };
     }
 
     if (!threadId) {

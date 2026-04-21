@@ -14,6 +14,10 @@ import {
 import { getConnectionsByScope } from "@/lib/connectors/control-plane/store";
 import { getAllMissionOps } from "@/lib/runtime/missions/ops-store";
 import { getSchedulerMode } from "@/lib/runtime/missions/scheduler-init";
+import { getServerSupabase } from "@/lib/supabase-server";
+import { manifestAsset } from "@/lib/right-panel/manifestation";
+import { formatOutput } from "@/lib/runtime/formatting/pipeline";
+import type { Asset, AssetKind, AssetProvenance } from "@/lib/assets/types";
 import type { RightPanelData } from "./types";
 
 const MAX_RUNS = 20;
@@ -148,5 +152,54 @@ export async function buildRightPanelData(): Promise<RightPanelData> {
     blocked: allOps.filter((o) => o.lastRunStatus === "blocked").length,
   };
 
-  return { currentRun, recentRuns, assets, missions, connectorHealth, scheduler, missionOpsSummary };
+  // ── Focal + Secondary Objects from DB (latest 3 assets) ──
+  let focalObject: Record<string, unknown> | undefined;
+  const secondaryObjects: Record<string, unknown>[] = [];
+  try {
+    const sb = getServerSupabase();
+    if (sb) {
+      const { data: latestAssets } = await sb
+        .from("assets")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(3);
+
+      if (latestAssets && latestAssets.length > 0) {
+        for (let i = 0; i < latestAssets.length; i++) {
+          const row = latestAssets[i] as any;
+          const asset: Asset = {
+            id: row.id,
+            threadId: row.thread_id,
+            kind: row.kind as AssetKind,
+            title: row.title ?? "",
+            summary: row.summary ?? undefined,
+            outputTier: row.output_tier ?? undefined,
+            provenance: (row.provenance ?? {}) as AssetProvenance,
+            createdAt: new Date(row.created_at).getTime(),
+            contentRef: row.content_ref ?? undefined,
+            runId: row.run_id ?? undefined,
+          };
+
+          const formatted = asset.contentRef
+            ? formatOutput(asset.contentRef, asset.outputTier as any ?? asset.kind)
+            : undefined;
+          const fo = manifestAsset(asset, formatted);
+          if (!fo) continue;
+
+          const provId = asset.provenance?.providerId;
+          const obj = { ...fo as unknown as Record<string, unknown>, ...(provId ? { sourceProviderId: provId } : {}) };
+
+          if (i === 0) {
+            focalObject = obj;
+          } else {
+            secondaryObjects.push(obj);
+          }
+        }
+      }
+    }
+  } catch {
+    /* focal object hydration is optional */
+  }
+
+  return { currentRun, recentRuns, assets, missions, connectorHealth, scheduler, missionOpsSummary, focalObject, secondaryObjects };
 }

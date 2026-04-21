@@ -68,4 +68,5 @@ export interface RightPanelData {
   scheduler?: RightPanelSchedulerSummary;
   missionOpsSummary?: RightPanelMissionOpsSummary;
   focalObject?: Record<string, unknown>;
+  secondaryObjects?: Record<string, unknown>[];
 }

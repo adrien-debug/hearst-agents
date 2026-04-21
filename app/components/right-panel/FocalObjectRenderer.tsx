@@ -17,8 +17,9 @@
  * - Title is typographic, not a header bar
  */
 
+import { useRef, useEffect, useState } from "react";
 import type { FocalObject, FocalAction } from "@/lib/right-panel/objects";
-import { getProviderUi } from "@/lib/providers/registry";
+import { getProviderUi, getProviderLabel } from "@/lib/providers/registry";
 
 // ── Shared shell ────────────────────────────────────────────
 
@@ -29,8 +30,26 @@ export function FocalObjectRenderer({
   object: FocalObject;
   onAction?: (action: FocalAction) => void;
 }) {
+  const prevIdRef = useRef(object.id);
+  const [pulse, setPulse] = useState(false);
+
+  useEffect(() => {
+    if (object.id !== prevIdRef.current) {
+      prevIdRef.current = object.id;
+      setPulse(true);
+      const t = setTimeout(() => setPulse(false), 600);
+      return () => clearTimeout(t);
+    }
+  }, [object.id]);
+
   return (
-    <div className="flex flex-col gap-6 py-6 animate-in fade-in duration-300">
+    <div
+      className="flex flex-col gap-6 py-6 animate-in fade-in duration-300"
+      style={{
+        transition: "opacity 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+        opacity: pulse ? 0.6 : 1,
+      }}
+    >
       {/* Status + type badge */}
       <div className="flex items-center gap-3">
         <StatusDot status={object.status} />
@@ -284,7 +303,6 @@ function Provenance({ object }: { object: FocalObject }) {
     if (object.objectType === "message_receipt") channelRef = object.channelRef;
   }
 
-  // For brief/report, check sourceAssetId-derived provenance from the focal object
   if (!providerId && (object as Record<string, unknown>).sourceProviderId) {
     providerId = (object as Record<string, unknown>).sourceProviderId as string;
   }
@@ -292,13 +310,19 @@ function Provenance({ object }: { object: FocalObject }) {
   if (!providerId) return null;
 
   const ui = getProviderUi(providerId as any);
+  const label = getProviderLabel(providerId as any);
+  const createdAt = (object as Record<string, unknown>).createdAt as number | undefined;
 
   return (
-    <div className="flex items-center gap-2 text-[9px] font-mono text-white/15">
+    <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/20 tracking-wide mt-1">
       <span className={`${ui.color.split(" ")[1] ?? "text-white/30"}`}>
         {ui.initial}
       </span>
-      {channelRef && <span>· {channelRef}</span>}
+      <span className="text-white/15">via {label}</span>
+      {channelRef && <><span className="text-white/10">·</span><span>{channelRef}</span></>}
+      {createdAt && (
+        <><span className="text-white/10">·</span><span className="text-white/12">{formatRelative(createdAt)}</span></>
+      )}
     </div>
   );
 }
