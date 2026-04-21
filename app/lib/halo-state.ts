@@ -454,3 +454,54 @@ function deduplicateBatch(actions: HaloAction[]): HaloAction[] {
 
   return result;
 }
+
+// ── Session Restoration ─────────────────────────────────────
+
+/**
+ * Resolve what Halo state to restore when switching to a thread.
+ *
+ * Restoration policy:
+ * - Do NOT replay historical execution (no re-animation)
+ * - Do NOT restore transient states (thinking, executing, success)
+ * - DO restore durable states that need user attention:
+ *   - waiting_approval → still needs action
+ *   - degraded → still unresolved
+ * - Everything else → idle with appropriate flow label
+ *
+ * This prevents stale Halo animations while preserving genuine
+ * pending-attention states.
+ */
+export function resolveRestoredHaloState(
+  intentStage: string | undefined,
+  missionPhase: string | undefined,
+): HaloState {
+  const base = createInitialHaloState();
+
+  if (intentStage === "awaiting_validation") {
+    return {
+      ...base,
+      coreState: "waiting_approval",
+      flowLabel: "AWAITING APPROVAL",
+    };
+  }
+
+  if (intentStage === "executing") {
+    return {
+      ...base,
+      coreState: "idle",
+      flowLabel: "MONITORING",
+      intensity: "background",
+    };
+  }
+
+  if (missionPhase === "active") {
+    return {
+      ...base,
+      coreState: "idle",
+      flowLabel: "MONITORING",
+      intensity: "background",
+    };
+  }
+
+  return base;
+}
