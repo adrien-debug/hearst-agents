@@ -8,14 +8,21 @@
 
 import { useRuntimeStore } from "@/stores/runtime";
 
+// Selectors atomiques pour éviter les re-rendus
+const selectEvents = (s: { events: unknown[] }) => s.events;
+const selectCurrentRunId = (s: { currentRunId: string | null }) => s.currentRunId;
+
 export default function RightPanel() {
-  const { events, currentRunId } = useRuntimeStore((s) => ({
-    events: s.events,
-    currentRunId: s.currentRunId,
-  }));
+  const events = useRuntimeStore(selectEvents);
+  const currentRunId = useRuntimeStore(selectCurrentRunId);
 
   // Get recent missions from events
-  const missions = events
+  interface MissionEvent {
+    type: string;
+    name?: string;
+    [key: string]: unknown;
+  }
+  const missions = (events as MissionEvent[])
     .filter((e) => e.type === "scheduled_mission_created")
     .slice(0, 3);
 
