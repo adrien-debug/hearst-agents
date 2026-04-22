@@ -127,22 +127,32 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
 // ── Scannable body renderer ─────────────────────────────────
 
 function ScanBody({ text, large }: { text: string; large?: boolean }) {
+  // Clean and deduplicate lines
   const lines = cleanText(text)
     .split("\n")
     .map((l) => l.replace(/^[-–•*#]\s*/, "").trim())
-    .filter(Boolean);
+    .filter((l) => l.length > 2 && !/^[-|:=]+$/.test(l)); // Filter out short lines and separators
+
+  // Remove duplicate lines (case insensitive)
+  const seen = new Set<string>();
+  const uniqueLines = lines.filter((line) => {
+    const key = line.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
   const textClass = large
     ? "bounded-anywhere text-[15px] text-white/70 font-light leading-[1.82]"
     : "bounded-anywhere text-[14px] text-white/62 leading-relaxed max-w-[60ch]";
 
-  if (lines.length <= 1) {
-    return <p className={textClass}>{lines[0] ?? text}</p>;
+  if (uniqueLines.length <= 1) {
+    return <p className={textClass}>{uniqueLines[0] ?? text}</p>;
   }
 
   return (
     <div className="space-y-3">
-      {lines.slice(0, 8).map((line, i) => (
+      {uniqueLines.slice(0, 8).map((line, i) => (
         <div key={i} className="flex gap-2.5">
           <div className="w-1 h-1 mt-2 shrink-0 rounded-full bg-white/20" />
           <p className={textClass}>{line}</p>
@@ -174,10 +184,20 @@ function DocumentSection({ heading, body, mode }: { heading?: string; body: stri
   const isFull = mode === "full";
   const glow = useAfterglow(body);
 
+  // Clean, filter, and deduplicate lines
   const lines = cleanText(body)
     .split("\n")
     .map((l) => l.replace(/^[-–•*#]\s*/, "").trim())
-    .filter((l) => l.length > 0 && !/^[-|:]+$/.test(l));
+    .filter((l) => l.length > 2 && !/^[-|:=_]+$/.test(l)); // Filter out short lines and separators
+
+  // Remove duplicates (case insensitive, for body content)
+  const seen = new Set<string>();
+  const uniqueLines = lines.filter((line) => {
+    const key = line.toLowerCase().slice(0, 50); // First 50 chars as fingerprint
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
   return (
     <div className="relative group">
@@ -198,7 +218,7 @@ function DocumentSection({ heading, body, mode }: { heading?: string; body: stri
         )}
         
         <div className="space-y-4">
-          {lines.map((line, i) => {
+          {uniqueLines.map((line, i) => {
             const isList = line.startsWith("-") || line.startsWith("•") || line.startsWith("*");
             const cleanLine = line.replace(/^[-–•*]\s*/, "");
             
