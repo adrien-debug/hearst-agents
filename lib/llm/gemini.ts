@@ -66,11 +66,14 @@ export class GeminiProvider implements LLMProvider {
       throw new Error("GEMINI_API_KEY is not set — add it to .env.local");
     }
     const start = Date.now();
-    const url = `${this.generateUrl(req.model, false)}?key=${encodeURIComponent(apiKey)}`;
+    const url = this.generateUrl(req.model, false);
 
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
       body: JSON.stringify(buildGeminiPayload(req)),
     });
 
@@ -118,11 +121,14 @@ export class GeminiProvider implements LLMProvider {
     if (!apiKey) {
       throw new Error("GEMINI_API_KEY is not set — add it to .env.local");
     }
-    const url = `${this.generateUrl(req.model, true)}?key=${encodeURIComponent(apiKey)}`;
+    const url = this.generateUrl(req.model, true);
 
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
       body: JSON.stringify(buildGeminiPayload(req)),
     });
 

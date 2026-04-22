@@ -10,6 +10,13 @@ import { scoreModels, selectModel, type ModelGoal, type ModelScore, type ModelSe
 
 const providers: Record<string, LLMProvider> = {};
 
+/** Clears cached LLM provider singletons (use in tests between cases / `vi.resetModules` alternative). */
+export function resetLlmProviderCache(): void {
+  for (const k of Object.keys(providers)) {
+    delete providers[k];
+  }
+}
+
 export function getProvider(providerName: string): LLMProvider {
   const key = providerName.toLowerCase();
   if (!providers[key]) {

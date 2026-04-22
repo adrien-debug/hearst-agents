@@ -9,6 +9,7 @@ export type {
 
 export {
   getProvider,
+  resetLlmProviderCache,
   resolveModelProfile,
   loadFallbackChain,
   chatWithProfile,

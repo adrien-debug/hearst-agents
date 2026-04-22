@@ -87,6 +87,7 @@ Hearst is a full-stack agent orchestration platform. It manages the complete lif
 7. **Multi-Provider LLM**: Provider-agnostic with fallback chains
 8. **Type-Safe**: Zod validation at API boundary, TypeScript throughout
 9. **Tested**: 81 unit tests on lifecycle, cost, guards, output validation
+10. **Manifestation-First**: Intent is materialized visually in the central stage with momentum indicators.
 
 ## Key Boundaries
 

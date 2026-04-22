@@ -16,6 +16,20 @@
 | `0003_runtime_observability.sql` | model_profiles, runs, traces, memory_policies, datasets, skill_versions |
 | `0004_core_governance.sql` | prompt_artifacts, tool governance, run lifecycle fields |
 | `0005_workflow_versioning_cost_guards.sql` | workflow_versions, cost sentinel, replay_mode, output_trust |
+| `0018_model_profiles_composer_gemini.sql` | Seed `model_profiles` : chaîne Composer 2 → Gemini 3 Flash |
+
+### `model_profiles` — providers Composer / Gemini
+
+Après `supabase db push`, deux lignes seed (si pas déjà présentes, `ON CONFLICT DO NOTHING` sur `name`) :
+
+| `name` | `id` (fixe) | `provider` | `model` | `fallback_profile_id` |
+|--------|-------------|------------|---------|------------------------|
+| `gemini_3_flash_leaf` | `a1e2f3a4-b5c6-4789-a012-000000000002` | `gemini` | `gemini-3-flash-preview` | `null` |
+| `composer_2_with_gemini_fallback` | `a1e2f3a4-b5c6-4789-a012-000000000001` | `composer` | `cursor-composer-2` | → UUID feuille Gemini ci-dessus |
+
+**Usage applicatif** : côté serveur, `chatWithProfile(supabase, "a1e2f3a4-b5c6-4789-a012-000000000001", messages)` résout la chaîne via `fallback_profile_id` et appelle `getProvider("composer")` puis `getProvider("gemini")` en cas d’échec. Les clés API ne sont **pas** en base : uniquement dans l’environnement d’exécution (voir `README.md` section LLM et `.env.example`).
+
+**Momentum (hors DB)** : pas de table dédiée ; l’UI « momentum » consomme `useRightPanel` + SSE `RunStreamProvider` (voir `README.md`).
 
 ## Table Inventory (26 tables)
 

@@ -8,9 +8,10 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 
 ## Architecture UX
 
-- **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. Pipeline v2 SSE par défaut (`/api/orchestrate`).
+- **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. S'estompe légèrement (`opacity: 0.6`) lors d'une manifestation active pour focaliser l'attention.
 - **Right Panel** (`RightPanel` + `RightPanelDocumentProvider` dans `app/(user)/layout.tsx`) — Surface de confiance : missions, assets, stream. Machine à états INDEX/DOCUMENT (logique dans `RightPanel.tsx`). Quand le **focal** est `ready` ou `awaiting_approval` en mode DOCUMENT, le rendu `FocalObjectRenderer` part au **centre** (`ManifestationStage`) ; le rail reste en INDEX (pas de `<aside>`, fond `bg-background`).
-- **Manifestation Stage** (`ManifestationStage` sur `/`) — Scène centrale (halo + textes) ; héberge aussi le document focal prêt (`FocalObjectRenderer` `surface="center"`). Dérivation `deriveManifestationVisualState` (focal > artifact > halo core > flowLabel faible). Overshoot React. Pas de CSS animé en boucle.
+- **Manifestation Stage** (`ManifestationStage` sur `/`) — Scène centrale de manifestation. L'objet focal s'y condense (transition de flou et d'échelle) au-dessus du Halo Core.
+- **Indicateur de Momentum** — Badge orbital dans la `TopContextBar` et `AppNav`. Signal discret de l'activité de fond des agents (pastille cyan + anneau pulsé).
 - **Halo runtime partagé** (`HaloRuntimeProvider` dans le layout user) — Un seul `useHalo` pour le bandeau d’orchestration et la scène centrale (même réduction SSE).
 - **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
 - Layout user : sidebar icon-only (AppNav) + zone centrale + chat global + right panel
@@ -83,7 +84,7 @@ flowchart TD
 - Centre home `/` : `app/(user)/page.tsx` + `app/components/system/ManifestationStage.tsx`
 - Shell user réel : `app/(user)/layout.tsx`
 - Sidebar gauche : `app/components/AppNav.tsx`
-- Barre haute : `app/components/system/TopContextBar.tsx`
+- Barre haute : `app/components/system/TopContextBar.tsx` + `MomentumIndicator` (`useMomentum()` — flux RunStream / données `useRightPanel`)
 - Chat bas : `app/components/GlobalChat.tsx`
 - Panneau droit : `app/components/right-panel/RightPanel.tsx` (export `RightPanelDocumentProvider`, hook `useRightPanelDocument`)
 - Rendu d'objet focal : `app/components/right-panel/FocalObjectRenderer.tsx` (prop `surface`: `rail` = panneau verre `.ghost-document-surface`, `center` = home sans coque verre)
@@ -160,8 +161,21 @@ npx supabase gen types typescript --project-id <ref> > lib/database.types.ts
 npm run dev  # http://localhost:9000
 
 # 6. Tests
-npm test     # 200 tests
+npm test     # Vitest (LLM, momentum, design tokens, …)
 ```
+
+### LLM — providers `composer` / `gemini`
+
+- **Code** : `lib/llm/composer.ts`, `lib/llm/gemini.ts`, enregistrement dans `lib/llm/router.ts` (`getProvider("composer" | "gemini")`). `resetLlmProviderCache()` vide le cache singleton (tests uniquement, export `lib/llm`).
+- **Config** : variables dans `.env.example` — `COMPOSER_API_KEY`, `COMPOSER_API_BASE_URL` (OpenAI-compatible `…/v1` + `POST …/chat/completions`), `COMPOSER_AUTH_MODE` (`bearer` \| `basic`) ; `GEMINI_API_KEY`, optionnel `GEMINI_API_BASE_URL` (REST Gemini `generateContent`).
+- **Profils Supabase** : migration `supabase/migrations/0018_model_profiles_composer_gemini.sql` — profil tête `composer_2_with_gemini_fallback` (UUID `a1e2f3a4-b5c6-4789-a012-000000000001`) → repli `gemini_3_flash_leaf` (`…000002`). Usage : `chatWithProfile(sb, "<uuid>", messages)` enchaîne les providers selon `fallback_profile_id`.
+- **Tests** : `__tests__/llm/router-providers.test.ts` (getProvider + `loadFallbackChain`), `__tests__/llm/providers-http.test.ts` (réponses HTTP mockées), `__tests__/llm/chat-with-profile-composer-gemini.test.ts` (chaîne `chatWithProfile` composer→gemini).
+
+### Momentum — `useMomentum()` / `MomentumIndicator`
+
+- **Code** : `app/hooks/use-momentum.ts`, modèle pur `app/lib/momentum-model.ts`, UI `app/components/system/MomentumIndicator.tsx` (monté dans `TopContextBar`).
+- **Données** : agrégation `useRightPanel()` (polling `/api/v2/right-panel` + merges SSE identiques à `use-right-panel.ts`) + `useFocalObject()` ; abonnement explicite au bus `RunStreamProvider` pour re-render immédiat sur événement.
+- **Tests** : `__tests__/hooks/use-momentum.test.ts` (`buildMomentumItems` + simulation merge SSE) ; `__tests__/hooks/use-momentum.hook.test.tsx` (jsdom, `run_started` → `hasActive`).
 
 ## Architecture
 
@@ -206,7 +220,7 @@ lib/
 │   └── index.ts
 └── llm/
     ├── types.ts             # LLMProvider, ModelProfileConfig
-    ├── router.ts            # getProvider, loadFallbackChain, smartChat…
+    ├── router.ts            # getProvider, resetLlmProviderCache (tests), loadFallbackChain, chatWithProfile…
     ├── openai.ts
     ├── anthropic.ts
     ├── composer.ts          # Cursor Composer 2 (OpenAI-compatible HTTP)

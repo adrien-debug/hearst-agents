@@ -15,6 +15,7 @@ import { SurfaceProvider } from "@/app/hooks/use-surface";
 import { SidebarProvider } from "@/app/hooks/use-sidebar";
 import SurfaceTracker from "../components/SurfaceTracker";
 import { SidebarMargin } from "../components/SidebarMargin";
+import { TopContextBar } from "../components/system/TopContextBar";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
@@ -57,6 +58,7 @@ export default function UserLayout({
               <SidebarMargin>
                 <RightPanelDocumentProvider>
                   <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                    <TopContextBar />
                     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                       {children}
                     </div>

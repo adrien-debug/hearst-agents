@@ -1,10 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../../lib/database.types";
 import type { ModelProfileConfig } from "../../lib/llm/types";
-import { getProvider, loadFallbackChain } from "../../lib/llm/router";
+import { getProvider, loadFallbackChain, resetLlmProviderCache } from "../../lib/llm/router";
 import { ComposerProvider } from "../../lib/llm/composer";
 import { GeminiProvider } from "../../lib/llm/gemini";
+
+beforeEach(() => {
+  resetLlmProviderCache();
+});
 
 describe("getProvider", () => {
   it('returns ComposerProvider for "composer"', () => {
