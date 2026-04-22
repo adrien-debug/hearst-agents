@@ -1,10 +1,9 @@
 "use client";
 
 /**
- * ChatContainer — Input toujours en bas
+ * ChatContainer — Input system
  *
- * IDLE: Input centré dans la zone
- * FOCAL/RUNNING: Input collé en bas
+ * Coherent spacing, consistent with RightPanel
  */
 
 import { useState, useRef, useEffect } from "react";
@@ -26,7 +25,6 @@ export default function ChatContainer() {
 
   const isIdle = !focal && !isRunning;
 
-  // Auto-focus
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
@@ -36,9 +34,7 @@ export default function ChatContainer() {
 
     const message = input.trim();
     setInput("");
-    if (inputRef.current) {
-      inputRef.current.style.height = "auto";
-    }
+    if (inputRef.current) inputRef.current.style.height = "auto";
 
     const runId = `run-${Date.now()}`;
     startRun(runId);
@@ -78,7 +74,7 @@ export default function ChatContainer() {
             const event = JSON.parse(line.slice(6));
             addEvent({ ...event, run_id: runId });
           } catch {
-            // skip malformed
+            // skip
           }
         }
       }
@@ -106,19 +102,13 @@ export default function ChatContainer() {
   };
 
   const placeholder = focal
-    ? `Que faire avec "${focal.title.slice(0, 30)}..." ?`
-    : "Que puis-je faire pour vous ?";
+    ? `Suite de "${focal.title.slice(0, 24)}..."`
+    : "Parlez-moi de vos emails, fichiers, agenda...";
 
   return (
-    <div className={`border-t border-white/[0.06] bg-black ${isIdle ? "" : "bg-black/95 backdrop-blur-sm"}`}>
-      <div className={`mx-auto px-4 py-4 ${isIdle ? "max-w-[600px]" : "max-w-[720px]"}`}>
-        <div
-          className={`
-            flex items-end gap-3 rounded-xl border bg-surface px-4 py-3
-            transition-all duration-200
-            ${isFocused ? "border-cyan-accent/50 shadow-[0_0_30px_rgba(0,229,255,0.1)]" : "border-white/10"}
-          `}
-        >
+    <div className="border-t border-white/[0.08] bg-black">
+      <div className={`mx-auto px-4 py-4 ${isIdle ? "max-w-[640px]" : "max-w-[720px]"}`}>
+        <div className={`input-container ${isFocused ? "ring-1 ring-cyan-500/20" : ""}`}>
           <textarea
             ref={inputRef}
             value={input}
@@ -128,34 +118,29 @@ export default function ChatContainer() {
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
             rows={1}
-            className={`
-              flex-1 resize-none bg-transparent placeholder:text-white/30 focus:outline-none
-              ${isIdle ? "text-lg font-light" : "text-sm"}
-            `}
-            style={{ lineHeight: "1.4", minHeight: "24px" }}
+            className="input-field"
+            style={{ lineHeight: "1.5" }}
           />
           <button
             onClick={handleSubmit}
             disabled={!input.trim() || isRunning}
-            className={`
-              flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all
-              ${input.trim() && !isRunning
-                ? "bg-cyan-accent text-black hover:bg-cyan-300"
-                : "bg-white/5 text-white/30 cursor-not-allowed"
-              }
-            `}
+            className={`btn-icon ${input.trim() && !isRunning ? "btn-primary" : ""}`}
           >
             {isRunning ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" className="opacity-20" />
+                <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
             ) : (
-              <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
-                <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             )}
           </button>
         </div>
+
         {isIdle && (
-          <p className="mt-3 text-center text-[11px] text-white/20">
+          <p className="text-center text-caption mt-3">
             Entrée pour envoyer · Maj+Entrée pour nouvelle ligne
           </p>
         )}

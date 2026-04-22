@@ -1,10 +1,11 @@
 "use client";
 
 /**
- * User Layout v4 — Clean, minimal
+ * User Layout v5 — Strict coherence
  *
- * Just: content + optional right panel
- * No left rail — chat-first, no explicit navigation
+ * - Main: full width minus right panel
+ * - RightPanel: 240px fixed
+ * - Spacing: 4px base everywhere
  */
 
 import { SessionProvider } from "next-auth/react";
@@ -18,19 +19,19 @@ export default function UserLayout({
 }) {
   return (
     <SessionProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-black text-white">
-        {/* Main content — takes full width minus right panel */}
-        <main className="flex flex-1 flex-col min-w-0 mr-0 xl:mr-[200px]">
+      <div className="flex h-screen w-full bg-black text-white overflow-hidden">
+        {/* Main area — takes remaining space */}
+        <main className="flex flex-col flex-1 min-w-0 mr-0 xl:mr-[240px]">
           {/* Page content */}
           <div className="flex-1 min-h-0 overflow-hidden">
             {children}
           </div>
 
-          {/* Chat input — always at bottom */}
+          {/* Chat input */}
           <ChatContainer />
         </main>
 
-        {/* Right rail — Trust panel (xl only) */}
+        {/* Right panel — fixed */}
         <RightPanel />
       </div>
     </SessionProvider>
