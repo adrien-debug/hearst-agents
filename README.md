@@ -7,6 +7,18 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > Structure V2 créée : `lib/agents/backend-v2/`, `lib/agents/sessions/`  
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
 
+## 📚 Documentation Architecture (HTML)
+
+Documents interactifs ouverts dans le navigateur :
+
+| Document | Contenu | Lien |
+|----------|---------|------|
+| **HEARST-ARCHITECTURE-FINALE.html** | Structure complète `lib/` après audit 100%. Où mettre les assets, services, admin. | [`./HEARST-ARCHITECTURE-FINALE.html`](./HEARST-ARCHITECTURE-FINALE.html) |
+| **HEARST-MASTERPLAN.html** | Vision produit, roadmap 19 semaines, investissements infrastructure | [`./HEARST-MASTERPLAN.html`](./HEARST-MASTERPLAN.html) |
+| **hearst-ui-vision.html** | Interface utilisateur — 2 états (IDLE/ACTIVE), chat-first, assets, missions | [`./hearst-ui-vision.html`](./hearst-ui-vision.html) |
+
+**Ouvrir :** `open HEARST-ARCHITECTURE-FINALE.html` (ou double-clic)
+
 ## Architecture UX
 
 - **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. S'estompe légèrement (`opacity: 0.6`) lors d'une manifestation active pour focaliser l'attention.
