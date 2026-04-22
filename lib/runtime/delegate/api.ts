@@ -94,10 +94,7 @@ async function fetchDriveData(
     const files = await searchDriveFiles(userId, keywords, 5);
     if (files.length === 0) {
       console.log("[Delegate/Drive] no files found");
-      return {
-        providerData: `[Google Drive] Aucun fichier trouvé pour la recherche "${keywords}".`,
-        providerUsed: "google_drive",
-      };
+      return null; // Pas de données = pas d'injection
     }
 
     console.log(`[Delegate/Drive] found ${files.length} file(s), reading first`);
@@ -132,7 +129,7 @@ async function fetchDriveData(
       };
     }
     console.error("[Delegate/Drive] error:", msg);
-    return null;
+    return null; // Error = silent fail
   }
 }
 
@@ -148,10 +145,7 @@ async function fetchGmailData(
 
     const emails = await searchEmails(userId, query, 10);
     if (emails.length === 0) {
-      return {
-        providerData: "[Gmail] Aucun email trouvé.",
-        providerUsed: "gmail",
-      };
+      return null; // Pas de données = pas d'injection dans le prompt
     }
 
     console.log(`[Delegate/Gmail] found ${emails.length} email(s)`);
@@ -168,13 +162,10 @@ async function fetchGmailData(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg === "not_authenticated" || msg === "token_revoked") {
-      return {
-        providerData: "[Gmail] Accès non autorisé — veuillez reconnecter Google.",
-        providerUsed: "gmail",
-      };
+      return null; // Auth error = silent fail, no injection
     }
     console.error("[Delegate/Gmail] error:", msg);
-    return null;
+    return null; // Error = silent fail, no injection
   }
 }
 
