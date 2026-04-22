@@ -333,55 +333,56 @@ export default function GlobalChat() {
   }, [sendMessage]);
 
   return (
-    <div className="shrink-0 w-full max-w-2xl mx-auto px-6 pb-6 relative">
-      {/* Messages */}
-      {expanded && messages.length > 0 && (
-        <div className="max-h-[40vh] overflow-y-auto scrollbar-hide mb-4">
-          <div className="flex flex-col gap-4 py-2">
-            {messages.map((m, i) => (
-              <ChatMessage
-                key={i}
-                msg={m}
-                isLiveStreaming={i === messages.length - 1 && showStreamCursor}
-                onApproved={() => handleApproval(i)}
-                onCancelled={() => handleCancellation(i)}
-              />
-            ))}
-            <div ref={bottomRef} />
-          </div>
-        </div>
-      )}
+    <div className="compact-shell-chat relative w-full shrink-0 px-6 pb-6 lg:px-10 lg:pb-8">
+      <div className="mx-auto w-full max-w-[1080px]">
+        <div className="ghost-chat-frame overflow-hidden">
+          {expanded && messages.length > 0 && (
+            <div className="mb-0 max-h-[34vh] overflow-y-auto border-b border-white/6 px-5 py-4 scrollbar-hide lg:px-6">
+              <div className="ghost-transcript">
+                {messages.map((m, i) => (
+                  <ChatMessage
+                    key={i}
+                    msg={m}
+                    isLiveStreaming={i === messages.length - 1 && showStreamCursor}
+                    onApproved={() => handleApproval(i)}
+                    onCancelled={() => handleCancellation(i)}
+                  />
+                ))}
+                <div ref={bottomRef} />
+              </div>
+            </div>
+          )}
 
-      {/* Chat Bar */}
-      <form
-        onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
-        className="chat-bar"
-      >
-        <div className="shrink-0 ml-2">
-          <div className="w-7 h-7 rounded-full bg-cyan-accent/10 flex items-center justify-center">
-            <svg className="w-3.5 h-3.5 text-cyan-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-          </div>
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleSend(input); }}
+            className="compact-chat-form px-4 py-4 lg:px-5"
+          >
+            <div className="compact-chat-bar chat-bar min-w-0">
+              <div className="compact-chat-kicker hidden shrink-0 pl-1 sm:block">
+                <p className="ghost-kicker">Prompt</p>
+              </div>
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onFocus={() => { if (messages.length > 0) setExpanded(true); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(input); } }}
+                placeholder="Ask Hearst OS anything..."
+                rows={1}
+                className={`compact-chat-input min-h-[48px] min-w-0 flex-1 resize-none border-none bg-transparent py-3 text-[15px] leading-7 outline-none transition-colors duration-75 ${inputFlash ? "text-white" : "text-white/80"} placeholder:text-white/24 ${streaming ? "caret-amber-400" : "caret-white"}`}
+                disabled={streaming}
+              />
+              <button
+                type="submit"
+                disabled={streaming || !input.trim()}
+                className="compact-chat-send shrink-0 rounded-full border border-white/10 bg-white px-4 py-2 font-mono text-[10px] uppercase tracking-[0.18em] text-black transition-colors hover:bg-cyan-accent disabled:opacity-30"
+              >
+                Send
+              </button>
+            </div>
+          </form>
         </div>
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onFocus={() => { if (messages.length > 0) setExpanded(true); }}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(input); } }}
-          placeholder="Ask Hearst OS anything..."
-          rows={1}
-          className={`flex-1 bg-transparent border-none outline-none text-sm resize-none py-2.5 transition-colors duration-75 ${inputFlash ? "text-white" : "text-white/80"} placeholder:text-white/20 ${streaming ? "caret-amber-400" : "caret-white"}`}
-          disabled={streaming}
-        />
-        <div className="flex gap-1.5 mr-1.5">
-          <button type="button" className="w-7 h-7 flex items-center justify-center text-white/20 hover:text-cyan-accent transition-colors">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-          </button>
-          <button type="submit" disabled={streaming || !input.trim()} className="w-7 h-7 flex items-center justify-center bg-white text-black rounded-full hover:bg-cyan-accent transition-all disabled:opacity-30">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }
@@ -401,19 +402,24 @@ function ChatMessage({
 }) {
   const isUser = msg.role === "user";
   const showApproval = msg.awaitingApproval && !msg.approved && !msg.cancelled;
+  const label = isUser ? "Intent" : "System";
+  const toneClass = isUser ? "text-white/78" : "text-white/88";
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} relative group`}>
-      <div className={`max-w-[85%] text-sm leading-relaxed tracking-wide ${isUser ? "text-white/50 text-right" : "text-white/70 font-light"}`}>
-        <pre className="whitespace-pre-wrap font-sans">
+    <div className="transcript-row">
+      <div className="transcript-label-col">
+        <p className="transcript-label">{label}</p>
+      </div>
+      <div className="min-w-0 overflow-hidden">
+        <pre className={`transcript-body ${toneClass}`}>
           {msg.content}
           {isLiveStreaming && <StreamCursor />}
         </pre>
         {msg.approved && (
-          <p className="mt-2 text-[10px] font-mono text-white/40">Validé</p>
+          <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.18em] text-white/42">Validé</p>
         )}
         {msg.cancelled && (
-          <p className="mt-2 text-[10px] font-mono text-white/30">Annulé</p>
+          <p className="mt-3 text-[10px] font-mono uppercase tracking-[0.18em] text-white/32">Annulé</p>
         )}
         {showApproval && onApproved && onCancelled && (
           <ApprovalActions
@@ -435,10 +441,10 @@ function BlockedCard({ info }: { info: BlockedInfo }) {
   const primaryAction = primary ? getConnectAction(primary) : null;
 
   return (
-    <div className="mt-4 border border-white/5 px-4 py-3">
-      <p className="text-[11px] font-mono text-amber-400/70">Action bloquée</p>
-      <p className="mt-1 text-[11px] font-mono text-white/50">{info.message}</p>
-      <div className="mt-3 flex items-center gap-3">
+    <div className="mt-4 rounded-[18px] border border-white/8 bg-white/2 px-4 py-3">
+      <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-amber-400/74">Action bloquée</p>
+      <p className="mt-2 text-[13px] leading-6 text-white/56">{info.message}</p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         {primaryAction && (
           <button
             onClick={primaryAction.execute}
@@ -472,7 +478,7 @@ function ApprovalActions({
   const [busy, setBusy] = useState(false);
 
   return (
-    <div className="mt-3 flex items-center gap-3">
+    <div className="mt-3 flex flex-wrap items-center gap-3">
       <button
         onClick={async () => {
           setBusy(true);
@@ -481,7 +487,7 @@ function ApprovalActions({
           if (ok) onApproved();
         }}
         disabled={busy}
-        className="border border-amber-500 px-3 py-1.5 text-[11px] font-mono text-amber-500 bg-transparent transition-colors hover:bg-amber-500/10 hover:border-amber-500/80 disabled:opacity-30 cursor-pointer"
+        className="rounded-full border border-amber-500 px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.16em] text-amber-500 bg-transparent transition-colors hover:bg-amber-500/10 hover:border-amber-500/80 disabled:opacity-30 cursor-pointer"
       >
         {busy ? "Envoi…" : "Envoyer"}
       </button>

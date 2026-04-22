@@ -75,60 +75,94 @@ export function ManifestationStage() {
     phase === "ready_stabilized" ? "SYSTEM_READY" :
     "SYSTEM_IDLE";
 
+  const manifestationLabel = focal?.title ? "Manifestation active" : "Aucune manifestation";
+  const runtimeLabel = activeThought
+    ?? (halo.flowLabel ? sublineForFlow(halo.flowLabel) : null)
+    ?? "En attente d'une intention.";
+  const focalLabel = focal?.title
+    ? `${focal.title}${focal.status === "ready" || focal.status === "awaiting_approval" ? " · inspectable" : ""}`
+    : "Rien de stabilisé pour le moment";
+
   const animClass = STATE_ANIM[phase] ?? "";
 
   return (
-    <div className="relative z-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
+    <div className="compact-manifestation-stage relative z-0 flex w-full max-w-[920px] min-w-0 flex-col items-center justify-center gap-4 px-4 text-center lg:gap-6 xl:gap-8 lg:px-8">
+      <div className="flex flex-col items-center gap-2 lg:gap-3">
+        <p className="ghost-kicker">Perception core</p>
+        <div className="ghost-divider w-32" />
+      </div>
+
       {/* Ghost Core */}
       <div
-        className={`relative flex items-center justify-center shrink-0 ${animClass}`}
-        style={{ width: 80, height: 80 }}
+        className={`compact-manifestation-halo relative flex items-center justify-center shrink-0 ${animClass}`}
+        style={{ width: 196, height: 196 }}
         aria-hidden
       >
+        <div className="absolute inset-[6%] rounded-full border border-white/6" />
+        <div className="absolute inset-[18%] rounded-full border border-white/5" />
         <svg
           className="dotted-logo absolute inset-0 w-full h-full"
           viewBox={GHOST_SVG_VIEWBOX}
           fill="#2ecfce"
-          style={{ opacity: 0.1, filter: "blur(8px)", animation: "aura-pulse 4s infinite ease-in-out" }}
+          style={{ opacity: 0.08, filter: "blur(16px)", animation: "aura-pulse 4s infinite ease-in-out" }}
         >
           {GHOST_SVG_PATHS}
         </svg>
         <svg
-          className="dotted-logo w-10 h-10 relative z-10"
+          className="compact-manifestation-mark dotted-logo ghost-main relative z-10 h-24 w-24"
           viewBox={GHOST_SVG_VIEWBOX}
           fill="#2ecfce"
           style={{
-            filter: "drop-shadow(0 0 10px rgba(46, 207, 206, 0.3))",
-            opacity: 0.6,
+            filter: "drop-shadow(0 0 18px rgba(46, 207, 206, 0.16))",
+            opacity: 0.58,
             animation: phase === "active_condensation"
               ? "thinking-vibe 2s infinite ease-in-out"
-              : "ghost-float 6s infinite ease-in-out",
+              : "ghost-breathing 8s infinite ease-in-out",
           }}
         >
           {GHOST_SVG_PATHS}
         </svg>
       </div>
 
-      <div className="flex flex-col items-center gap-1.5">
-        <h1 className="text-base font-light tracking-[0.08em] uppercase text-white/70">
+      <div className="flex min-w-0 flex-col items-center gap-3 lg:gap-4">
+        <h1 className="compact-manifestation-title bounded-title-3 max-w-[15ch] font-light tracking-[0.08em] text-white/90" style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.7rem)" }}>
           {primaryLine}
         </h1>
-        <p className={`font-mono text-[8px] tracking-[0.3em] transition-colors duration-300 ${
+        <p className={`font-mono text-[10px] tracking-[0.36em] transition-colors duration-300 lg:text-[11px] lg:tracking-[0.42em] ${
           activeThought ? "text-cyan-accent/60" : "text-cyan-accent/25"
         }`}>
           {stateLabel}
         </p>
-        <p className={`text-[11px] leading-relaxed font-light max-w-[40ch] transition-colors duration-300 ${
-          activeThought ? "text-white/50" : "text-white/25"
+        <p className={`compact-manifestation-secondary bounded-copy-4 max-w-[48ch] text-[13px] leading-[1.75] font-light transition-colors duration-300 lg:text-[15px] lg:leading-[1.85] ${
+          activeThought ? "text-white/60" : "text-white/35"
         }`}>
           {secondaryLine}
         </p>
         {phase === "ready_stabilized" && isFocused && focal && (
-          <p className="text-[9px] tracking-wide text-white/20 font-light pt-0.5">
+          <p className="pt-1 text-[11px] tracking-[0.12em] text-white/22 font-light">
             {"Visible à droite."}
           </p>
         )}
       </div>
+
+      <div className="compact-shell-signal shell-signal-strip w-full max-w-[760px]">
+        <div className="shell-signal-cell">
+          <span className="shell-signal-label">State</span>
+          <span className="shell-signal-value">{stateLabel.replace("SYSTEM_", "").toLowerCase()}</span>
+        </div>
+        <div className="shell-signal-cell">
+          <span className="shell-signal-label">Runtime</span>
+          <span className="shell-signal-value">{runtimeLabel}</span>
+        </div>
+        <div className="shell-signal-cell">
+          <span className="shell-signal-label">Manifestation</span>
+          <span className="shell-signal-value">{focalLabel}</span>
+        </div>
+      </div>
+
+      <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/28">
+        {manifestationLabel}
+      </p>
     </div>
   );
 }

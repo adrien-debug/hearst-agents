@@ -15,7 +15,13 @@ export function SidebarMargin({ children }: { children: ReactNode }) {
       <style>{`
         :root { --sidebar-w: 0px; }
         @media (min-width: 768px) {
-          :root { --sidebar-w: ${isCollapsed ? "60px" : "280px"}; }
+          :root { --sidebar-w: ${isCollapsed ? "68px" : "300px"}; }
+        }
+        @media (min-width: 768px) and (max-width: 1280px) {
+          :root { --sidebar-w: ${isCollapsed ? "68px" : "240px"}; }
+        }
+        @media (min-width: 768px) and (max-width: 1080px) {
+          :root { --sidebar-w: ${isCollapsed ? "68px" : "200px"}; }
         }
       `}</style>
       {children}

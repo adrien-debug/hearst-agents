@@ -55,6 +55,21 @@ export async function POST(req: NextRequest) {
   }
 
   const name = body.name || body.input.slice(0, 80);
+  const existingMissions = await getScheduledMissions();
+  const duplicateMission = existingMissions.find(
+    (mission) =>
+      mission.userId === userId &&
+      mission.name === name &&
+      mission.input === body.input &&
+      mission.schedule === body.schedule,
+  );
+
+  if (duplicateMission) {
+    console.warn(
+      `[MissionsAPI] Duplicate mission prevented: ${duplicateMission.id} — ${duplicateMission.schedule}`,
+    );
+    return NextResponse.json({ mission: duplicateMission, duplicate: true }, { status: 200 });
+  }
 
   const mission = createScheduledMission({
     name,

@@ -8,7 +8,7 @@ import type {
 import { useRunStreamOptional, type StreamEvent } from "@/app/lib/run-stream-context";
 import { useSidebarOptional } from "@/app/hooks/use-sidebar";
 
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 12_000;
 
 const EMPTY: RightPanelData = {
   recentRuns: [],
@@ -23,6 +23,7 @@ export function useRightPanel() {
   const mountedRef = useRef(true);
   const stream = useRunStreamOptional();
   const pollRef = useRef<(() => Promise<void>) | null>(null);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sidebarCtx = useSidebarOptional();
   const activeThreadId = sidebarCtx?.state.activeThreadId;
   const prevThreadIdRef = useRef(activeThreadId);
@@ -86,7 +87,14 @@ export function useRightPanel() {
   useEffect(() => {
     if (!stream) return;
 
-    return stream.subscribe((event: StreamEvent) => {
+    const queueRefresh = (delayMs = 700) => {
+      if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = setTimeout(() => {
+        pollRef.current?.();
+      }, delayMs);
+    };
+
+    const unsubscribe = stream.subscribe((event: StreamEvent) => {
       switch (event.type) {
         case "run_started":
           setData((prev) => ({
@@ -96,6 +104,7 @@ export function useRightPanel() {
               status: "running",
             },
           }));
+          queueRefresh(300);
           break;
 
         case "execution_mode_selected":
@@ -145,6 +154,7 @@ export function useRightPanel() {
                 : prev.recentRuns,
             };
           });
+          queueRefresh(250);
           break;
 
         case "run_failed":
@@ -152,6 +162,7 @@ export function useRightPanel() {
             ...prev,
             currentRun: undefined,
           }));
+          queueRefresh(250);
           break;
 
         case "asset_generated":
@@ -167,6 +178,7 @@ export function useRightPanel() {
               ...prev.assets,
             ].slice(0, 50),
           }));
+          queueRefresh(150);
           break;
 
         case "focal_object_ready":
@@ -174,6 +186,7 @@ export function useRightPanel() {
             ...prev,
             focalObject: event.focal_object as Record<string, unknown>,
           }));
+          queueRefresh(150);
           break;
 
         case "scheduled_mission_created":
@@ -190,9 +203,14 @@ export function useRightPanel() {
               ...prev.missions,
             ],
           }));
+          queueRefresh(150);
           break;
       }
     });
+    return () => {
+      unsubscribe();
+      if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+    };
   }, [stream]);
 
   const refresh = useCallback(() => {

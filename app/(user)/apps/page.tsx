@@ -1,15 +1,23 @@
 "use client";
 
-import { useState, useMemo, Suspense, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { CORE_CONNECTORS, EXTERNAL_CONNECTORS } from "@/lib/connectors/registry";
 import type { ConnectorMeta } from "@/lib/connectors/types";
-import { useConnectorsPanel, type PanelConnection } from "@/app/hooks/use-connectors-panel";
-import { PROVIDER_CAPABILITIES } from "@/lib/connectors/control-plane/provider-capabilities";
-import { canDirectConnect, triggerConnect } from "@/app/lib/connect-actions";
-
+import { useConnectorsPanel } from "@/app/hooks/use-connectors-panel";
 import { BLUEPRINT_REGISTRY } from "@/lib/blueprints/registry";
-import { BlueprintEngine } from "@/lib/blueprints/engine";
+import {
+  BlueprintEngine,
+  type BlueprintActivationResult,
+  type BlueprintConnectionState,
+} from "@/lib/blueprints/engine";
+
+interface ExistingMission {
+  id: string;
+  name: string;
+  input: string;
+  schedule: string;
+  enabled: boolean;
+}
 
 const CATEGORIES: Record<string, string> = {
   communication: "Communication",
@@ -22,44 +30,27 @@ const CATEGORIES: Record<string, string> = {
   other: "Autres",
 };
 
-const BLUEPRINTS = [
-  {
-    title: "Pipeline de Vente Automatisé",
-    description: "Connectez Salesforce + Slack + Gmail pour qualifier vos leads automatiquement.",
-    apps: ["salesforce", "slack", "gmail"],
-    color: "from-blue-500/20 to-cyan-500/20",
-  },
-  {
-    title: "Intelligence Financière",
-    description: "Stripe + QuickBooks + Slack pour des alertes de revenus en temps réel.",
-    apps: ["stripe", "quickbooks", "slack"],
-    color: "from-emerald-500/20 to-teal-500/20",
-  },
-  {
-    title: "DevOps Sentinel",
-    description: "GitHub + Sentry + Vercel pour monitorer vos déploiements sans effort.",
-    apps: ["github", "sentry", "vercel"],
-    color: "from-purple-500/20 to-pink-500/20",
-  },
-];
-
 function AppsContent() {
   const { connections: unifiedConns, loading: servicesLoading } = useConnectorsPanel();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [activatingId, setActivatingId] = useState<string | null>(null);
-  const searchParams = useSearchParams();
+  const [activationResults, setActivationResults] = useState<
+    Record<string, BlueprintActivationResult | undefined>
+  >({});
+  const [existingMissions, setExistingMissions] = useState<ExistingMission[]>([]);
 
-  const unifiedMap = useMemo(() => {
-    const m = new Map<string, PanelConnection>();
-    for (const c of unifiedConns) m.set(c.provider, c);
-    return m;
-  }, [unifiedConns]);
+  const blueprintConnections = useMemo<BlueprintConnectionState[]>(
+    () =>
+      unifiedConns.map((connection) => ({
+        provider: connection.provider,
+        status: connection.status,
+      })),
+    [unifiedConns],
+  );
 
   function isConnected(c: ConnectorMeta): boolean {
-    if (!c.provider) return false;
-    const u = unifiedMap.get(c.provider);
-    return u?.status === "connected";
+    return BlueprintEngine.isConnectorConnected(c.id, blueprintConnections);
   }
 
   const filteredExternal = useMemo(() => {
@@ -79,6 +70,41 @@ function AppsContent() {
   const categories = useMemo(() => {
     const cats = new Set(EXTERNAL_CONNECTORS.map((c) => c.category));
     return Array.from(cats).sort();
+  }, []);
+
+  const allConnectors = useMemo(
+    () => [...CORE_CONNECTORS, ...EXTERNAL_CONNECTORS],
+    [],
+  );
+
+  const connectorNameById = useMemo(
+    () =>
+      new Map(allConnectors.map((connector) => [connector.id, connector.name])),
+    [allConnectors],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMissions() {
+      try {
+        const response = await fetch("/api/v2/missions");
+        if (!response.ok) {
+          return;
+        }
+        const payload = (await response.json()) as { missions?: ExistingMission[] };
+        if (!cancelled) {
+          setExistingMissions(payload.missions ?? []);
+        }
+      } catch {
+        // Keep page usable even if mission inventory is temporarily unavailable.
+      }
+    }
+
+    void loadMissions();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -105,7 +131,20 @@ function AppsContent() {
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {BLUEPRINT_REGISTRY.map((bp) => {
-              const { isValid, missing } = BlueprintEngine.validateSync(bp.id, Array.from(unifiedMap.keys()));
+              const readiness = BlueprintEngine.validateSync(bp.id, blueprintConnections);
+              const activation = activationResults[bp.id];
+              const existingMission =
+                existingMissions.find(
+                  (mission) =>
+                    mission.name === bp.missionTemplate.name &&
+                    mission.input === bp.missionTemplate.input &&
+                    mission.schedule === bp.missionTemplate.schedule,
+                ) ?? activation?.mission;
+              const isAlreadyActivated = Boolean(existingMission);
+              const missingLabels = readiness.missingConnectorIds.map(
+                (connectorId) => connectorNameById.get(connectorId) ?? connectorId,
+              );
+
               return (
                 <div 
                   key={bp.id}
@@ -119,9 +158,9 @@ function AppsContent() {
                   
                   <div className="mt-6 flex items-center gap-2">
                     <div className="flex -space-x-2">
-                      {bp.requiredConnectors.slice(0, 3).map(appId => {
-                        const app = [...CORE_CONNECTORS, ...EXTERNAL_CONNECTORS].find(a => a.id === appId);
-                        const connected = unifiedMap.get(app?.provider || "")?.status === "connected";
+                      {bp.requiredConnectors.slice(0, 3).map((appId) => {
+                        const app = allConnectors.find((connector) => connector.id === appId);
+                        const connected = BlueprintEngine.isConnectorConnected(appId, blueprintConnections);
                         return (
                           <div 
                             key={appId} 
@@ -136,37 +175,80 @@ function AppsContent() {
                     
                     <button 
                       onClick={async () => {
-                        if (!isValid || activatingId) return;
+                        if (!readiness.ready || activatingId || isAlreadyActivated) return;
                         setActivatingId(bp.id);
-                        // Simulation de l'activation neurale
-                        await new Promise(r => setTimeout(r, 2000));
+                        const result = await BlueprintEngine.activate(bp.id, blueprintConnections);
+                        setActivationResults((current) => ({
+                          ...current,
+                          [bp.id]: result,
+                        }));
+                        if (result.mission) {
+                          const mission = result.mission;
+                          setExistingMissions((current) => {
+                            if (current.some((existing) => existing.id === mission.id)) {
+                              return current;
+                            }
+                            return [mission, ...current];
+                          });
+                        }
                         setActivatingId(null);
-                        alert(`Blueprint "${bp.title}" activé avec succès !`);
                       }}
+                      disabled={
+                        !readiness.ready ||
+                        activatingId === bp.id ||
+                        servicesLoading ||
+                        isAlreadyActivated
+                      }
                       className={`ml-auto rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 relative overflow-hidden ${
-                        isValid 
+                        readiness.ready && !isAlreadyActivated
                           ? "bg-cyan-accent text-[#09090b] hover:shadow-[0_0_15px_#00e5ff]" 
                           : "bg-white/10 text-white/40 hover:bg-white/20"
                       }`}
                     >
-                      {activatingId === bp.id ? (
-                        <span className="flex items-center gap-2">
-                          <span className="h-2 w-2 animate-spin rounded-full border-2 border-[#09090b] border-t-transparent" />
-                          Linking...
-                        </span>
-                      ) : (
-                        isValid ? "Activer" : `${missing.length} requis`
-                      )}
-                      {activatingId === bp.id && (
-                        <div className="absolute inset-0 bg-white/20 animate-pulse" />
-                      )}
+                      {activatingId === bp.id
+                        ? "Activation..."
+                        : activation?.success
+                            ? "Activé"
+                          : isAlreadyActivated
+                            ? "Déjà actif"
+                          : readiness.ready
+                            ? "Activer"
+                            : `${readiness.missingConnectorIds.length} requis`}
                     </button>
                   </div>
-                  {activatingId === bp.id && (
-                    <div className="absolute inset-0 pointer-events-none">
-                      <div className="scan-overlay" />
-                    </div>
-                  )}
+                  <div className="mt-4 min-h-9 text-[10px] font-mono uppercase tracking-[0.18em] text-white/35">
+                    {activation?.success && activation.mission ? (
+                      <div className="space-y-1">
+                        <div className="text-cyan-accent/70">Mission créée</div>
+                        <div className="text-white/45 normal-case tracking-normal font-sans">
+                          {activation.mission.name} · {activation.mission.schedule}
+                        </div>
+                      </div>
+                    ) : isAlreadyActivated && existingMission ? (
+                      <div className="space-y-1">
+                        <div className="text-cyan-accent/70">Mission existante</div>
+                        <div className="text-white/45 normal-case tracking-normal font-sans">
+                          {existingMission.name} · {existingMission.schedule}
+                        </div>
+                      </div>
+                    ) : activation?.error ? (
+                      <div className="space-y-1">
+                        <div className="text-white/50">Activation impossible</div>
+                        <div className="text-white/35 normal-case tracking-normal font-sans">
+                          {activation.error}
+                        </div>
+                      </div>
+                    ) : readiness.ready ? (
+                      <div className="text-cyan-accent/70">Ready</div>
+                    ) : (
+                      <div className="space-y-1">
+                        <div>Missing connectors</div>
+                        <div className="text-white/35 normal-case tracking-normal font-sans">
+                          {missingLabels.join(", ")}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}

@@ -14,7 +14,6 @@ import { HaloRuntimeProvider } from "../lib/halo-runtime-context";
 import { SurfaceProvider } from "@/app/hooks/use-surface";
 import { SidebarProvider } from "@/app/hooks/use-sidebar";
 import SurfaceTracker from "../components/SurfaceTracker";
-import { TopContextBar } from "../components/system/TopContextBar";
 import { SidebarMargin } from "../components/SidebarMargin";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
@@ -53,11 +52,10 @@ export default function UserLayout({
             <HaloRuntimeProvider>
             <SidebarProvider>
             <SurfaceProvider>
-            <div className="flex h-screen overflow-hidden">
+            <div className="flex h-screen overflow-hidden bg-background">
               <AppNav />
               <SidebarMargin>
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                  <TopContextBar />
                   <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                     {children}
                   </div>

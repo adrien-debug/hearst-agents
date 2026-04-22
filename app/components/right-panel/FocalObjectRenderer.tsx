@@ -64,8 +64,8 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
   return (
     <div
       key={object.id}
-      className={`flex flex-col max-w-[60ch] animate-in fade-in slide-in-from-bottom-3 duration-150 ease-out ${
-        isPreview ? "gap-3" : "glass-panel gap-6"
+      className={`flex w-full flex-col animate-in fade-in slide-in-from-bottom-3 duration-150 ease-out ${
+        isPreview ? "gap-3" : "ghost-document-surface gap-7 p-6"
       }`}
     >
       {/* Status + type badge */}
@@ -78,8 +78,8 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
 
       {/* Title */}
       {object.title && (
-        <h2 className={`font-light tracking-tight text-white/90 leading-snug ${
-          isPreview ? "text-lg" : "text-2xl"
+        <h2 className={`bounded-title-3 max-w-full font-light tracking-tight text-white/90 leading-snug ${
+          isPreview ? "text-lg" : "text-[1.72rem]"
         }`}>
           {cleanText(object.title)}
         </h2>
@@ -122,8 +122,8 @@ function ScanBody({ text, large }: { text: string; large?: boolean }) {
     .filter(Boolean);
 
   const textClass = large
-    ? "text-[14px] text-white/60 font-light leading-relaxed max-w-[60ch]"
-    : "text-[13px] text-white/60 leading-relaxed max-w-[60ch]";
+    ? "bounded-anywhere text-[15px] text-white/70 font-light leading-[1.82]"
+    : "bounded-anywhere text-[14px] text-white/62 leading-relaxed max-w-[60ch]";
 
   if (lines.length <= 1) {
     return <p className={textClass}>{lines[0] ?? text}</p>;
@@ -173,15 +173,15 @@ function DocumentSection({ heading, body, mode }: { heading?: string; body: stri
       {/* Gutter Resonance (1px line on the left when updating) */}
       <div 
         className={`absolute -left-6 top-0 bottom-0 w-px transition-all duration-3000 ease-out ${
-          glow ? "bg-cyan-accent/80 shadow-(--glow-cyan-sm)" : "bg-transparent"
+          glow ? "bg-cyan-accent/30" : "bg-transparent"
         }`} 
       />
       
       <div className={`space-y-4 ${isFull ? "mb-12" : "mb-6"}`}>
         {heading && (
-          <h3 className={`font-mono font-normal tracking-[0.4em] uppercase transition-colors duration-3000 ease-out ${
-            glow ? "text-cyan-accent/80" : "text-cyan-accent/60"
-          } ${isFull ? "text-sm" : "text-xs"}`}>
+          <h3 className={`bounded-anywhere font-mono font-normal tracking-[0.4em] uppercase transition-colors duration-3000 ease-out ${
+            glow ? "text-cyan-accent/50" : "text-white/30"
+          } ${isFull ? "text-[13px]" : "text-xs"}`}>
             {heading}
           </h3>
         )}
@@ -194,9 +194,9 @@ function DocumentSection({ heading, body, mode }: { heading?: string; body: stri
             return (
               <div key={i} className={isList ? "pl-4 relative" : ""}>
                 {isList && <span className="absolute left-0 top-[0.6em] w-1 h-1 rounded-full bg-zinc-500" />}
-                <p className={`transition-colors duration-3000 ease-out ${
-                  glow ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "text-zinc-300"
-                } ${isFull ? "text-[16px] leading-[1.7] max-w-[65ch] antialiased" : "text-[14px] leading-relaxed"}`}>
+                <p className={`bounded-anywhere transition-colors duration-3000 ease-out ${
+                  glow ? "text-white/90" : "text-zinc-300"
+                } ${isFull ? "text-[15px] leading-[1.85] antialiased" : "text-[14px] leading-relaxed"}`}>
                   {cleanLine}
                 </p>
               </div>
@@ -213,8 +213,8 @@ function DocumentSection({ heading, body, mode }: { heading?: string; body: stri
 function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "full" }) {
   const large = mode === "full";
   const bodyClass = large
-    ? "text-[14px] text-white/60 font-light leading-relaxed"
-    : "text-[13px] text-white/60 leading-relaxed";
+    ? "bounded-anywhere text-[15px] text-white/72 font-light leading-[1.82]"
+    : "bounded-anywhere text-[13px] text-white/62 leading-relaxed";
   const sectionGap = large ? "space-y-8" : "space-y-6";
 
   if (mode === "preview") {
@@ -225,7 +225,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
     else if ("condition" in object && typeof object.condition === "string") summaryText = object.condition;
 
     return summaryText ? (
-      <p className="text-sm text-white/70 leading-relaxed line-clamp-2">{cleanText(summaryText)}</p>
+      <p className="bounded-anywhere text-sm text-white/70 leading-relaxed line-clamp-2">{cleanText(summaryText)}</p>
     ) : null;
   }
 
@@ -234,7 +234,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
       return (
         <div className={sectionGap}>
           {object.recipient && (
-            <p className="text-[10px] font-mono text-white/50">→ {object.recipient}</p>
+            <p className="text-[11px] font-mono text-white/58">→ {object.recipient}</p>
           )}
           {object.body && <p className={bodyClass}>{object.body}</p>}
         </div>
@@ -243,7 +243,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
     case "message_receipt":
       return (
         <div className={sectionGap}>
-          <p className="text-[10px] font-mono text-white/50">→ {object.recipient}</p>
+          <p className="text-[11px] font-mono text-white/58">→ {object.recipient}</p>
           <p className={bodyClass}>{object.body}</p>
           <DeliveryBadge status={object.deliveryStatus} />
         </div>
@@ -256,7 +256,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
           {object.sections.map((s, i) => (
             <div key={i} className="space-y-2">
               {s.heading && (
-                <p className="text-[10px] font-mono uppercase tracking-wider text-white/50">{s.heading}</p>
+                <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-white/56">{s.heading}</p>
               )}
               <ScanBody text={s.body} large={large} />
             </div>
@@ -286,7 +286,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
           {object.sections.map((s, i) => (
             <div key={i} className="space-y-2">
               {s.heading && (
-                <p className="text-[10px] font-mono uppercase tracking-wider text-white/50">{s.heading}</p>
+                <p className="text-[11px] font-mono uppercase tracking-[0.24em] text-white/56">{s.heading}</p>
               )}
               <ScanBody text={s.body} large={large} />
             </div>
@@ -311,7 +311,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
         <div className={sectionGap}>
           <p className={bodyClass}>{object.intent}</p>
           {object.schedule && (
-            <p className="text-[10px] font-mono text-white/50">⟳ {object.schedule}</p>
+            <p className="text-[11px] font-mono text-white/58">⟳ {object.schedule}</p>
           )}
         </div>
       );
@@ -321,9 +321,9 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
         <div className={sectionGap}>
           <p className={bodyClass}>{object.intent}</p>
           {object.schedule && (
-            <p className="text-[10px] font-mono text-white/50">⟳ {object.schedule}</p>
+            <p className="text-[11px] font-mono text-white/58">⟳ {object.schedule}</p>
           )}
-          <div className="flex items-center gap-4 text-[9px] font-mono text-white/30">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-white/40">
             {object.lastRunAt && <span>Dernier : {formatRelative(object.lastRunAt)}</span>}
             {object.nextRunAt && <span>Prochain : {formatRelative(object.nextRunAt)}</span>}
           </div>
@@ -335,7 +335,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
         <div className={sectionGap}>
           <p className={bodyClass}>{object.condition}</p>
           {object.description && (
-            <p className="text-[13px] text-white/70 font-light">{object.description}</p>
+            <p className="text-[15px] text-white/70 font-light leading-relaxed">{object.description}</p>
           )}
         </div>
       );
@@ -344,7 +344,7 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
       return (
         <div className={sectionGap}>
           <p className={bodyClass}>{object.condition}</p>
-          <div className="flex items-center gap-4 text-[9px] font-mono text-white/30">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-white/40">
             {object.lastCheckedAt && <span>Vérifié : {formatRelative(object.lastCheckedAt)}</span>}
             <span>{object.triggerCount} déclenchement{object.triggerCount !== 1 ? "s" : ""}</span>
           </div>
@@ -356,9 +356,10 @@ function ObjectBody({ object, mode }: { object: FocalObject; mode: "preview" | "
 function SkeletonBody() {
   return (
     <div className="space-y-3">
-      <div className="h-3 w-[80%] rounded bg-white/10 animate-pulse" />
-      <div className="h-3 w-[60%] rounded bg-white/10 animate-pulse" />
-      <div className="h-3 w-[70%] rounded bg-white/10 animate-pulse" />
+      <p className="ghost-kicker">Stabilisation</p>
+      <p className="text-[14px] leading-7 text-white/34">
+        Le contenu prend forme.
+      </p>
     </div>
   );
 }
@@ -370,8 +371,8 @@ function StatusDot({ status }: { status: string }) {
   const amber = status === "awaiting_approval";
   const red = status === "failed";
 
-  if (active) return <span className="status-dot animate-pulse" />;
-  if (amber) return <span className="w-1.5 h-1.5 rounded-full bg-amber-400/50 shadow-[0_0_6px_rgba(251,191,36,0.6)] animate-pulse" />;
+  if (active) return <span className="status-dot" />;
+  if (amber) return <span className="h-1.5 w-1.5 rounded-full bg-amber-400/50 shadow-[0_0_6px_rgba(251,191,36,0.45)]" />;
   if (red) return <span className="w-1.5 h-1.5 rounded-full bg-red-400/50 shadow-[0_0_6px_rgba(248,113,113,0.6)]" />;
   return <span className="w-1.5 h-1.5 rounded-full bg-white/10" />;
 }
@@ -394,7 +395,7 @@ function DeliveryBadge({ status }: { status: string }) {
 function WordCount({ count }: { count: number }) {
   if (!count) return null;
   return (
-    <span className="text-[9px] font-mono text-white/30">
+    <span className="text-[10px] font-mono text-white/32 tracking-[0.14em] uppercase">
       {count} mots
     </span>
   );
@@ -421,7 +422,7 @@ function Provenance({ object }: { object: FocalObject }) {
   const createdAt = objectRaw.createdAt as number | undefined;
 
   return (
-    <div className="flex items-center gap-1.5 text-[9px] font-mono text-white/40 tracking-wide mt-1">
+    <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] font-mono text-white/40 tracking-wide">
       <span className={`${ui.color.split(" ")[1] ?? "text-white/50"}`}>
         {ui.initial}
       </span>
