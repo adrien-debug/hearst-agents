@@ -1,6 +1,54 @@
 # Nango Setup Guide — HEARST OS
 
-Guide pour configurer les 6 premiers connecteurs dans le dashboard Nango.
+Architecture hybride : **Google reste natif** (déjà configuré), **les autres vont via Nango**.
+
+## Architecture Connecteurs
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    HEARST OS — CONNECTORS                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   ┌──────────────┐      ┌──────────────┐      ┌──────────────┐   │
+│   │    NATIF     │      │    NANGO     │      │    ROUTER    │   │
+│   │              │      │              │      │              │   │
+│   │ • gmail      │      │ • hubspot    │      │              │   │
+│   │ • calendar   │      │ • stripe     │      │  Décide      │   │
+│   │ • drive      │      │ • jira       │      │  qui fait    │   │
+│   │ • slack      │      │ • airtable   │      │  quoi        │   │
+│   │ • notion     │      │ • figma      │      │              │   │
+│   │ • github     │      │ • zapier     │      │              │   │
+│   │              │      │ • +180...    │      │              │   │
+│   │ (OAuth natif)│      │ (OAuth Nango)│      │              │   │
+│   └──────┬───────┘      └──────┬───────┘      └──────┬───────┘   │
+│          │                     │                    │          │
+│          └─────────────────────┴────────────────────┘          │
+│                            │                                     │
+│              ┌─────────────┴─────────────┐                      │
+│              │   lib/connectors/router.ts │                      │
+│              │   executeConnector()         │                      │
+│              └─────────────────────────────┘                      │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Google — Natif (Déjà Configuré) ✅
+
+**Pourquoi natif ?**
+- Google OAuth déjà fonctionnel dans HEARST
+- `lib/connectors/gmail.ts`, `calendar.ts`, `drive.ts` existent
+- Pas besoin de Nango pour tester
+
+**Test immédiat :**
+```bash
+# 1. Vérifier si Google est connecté
+curl "http://localhost:9000/api/test/connector?provider=gmail&action=getEmails"
+
+# 2. Vérifier Nango
+curl "http://localhost:9000/api/test/nango"
+```
+
+## Les 6 Connecteurs Nango — À Configurer
 
 ## Étape 1 — Dashboard Nango
 
