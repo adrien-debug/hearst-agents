@@ -1,24 +1,18 @@
 "use client";
 
 /**
- * User Layout v2 — Clean rebuild
+ * User Layout v3 — Clean, no overlap
  *
- * Structure: 72px rail | center + right panel | chat
- * State: Zustand (pas de Context Hell)
+ * Structure:
+ * - Left: AppNav (72px fixed)
+ * - Center: Content + Chat (flex column)
+ * - Right: RightPanel (200px, xl only)
  */
 
 import { SessionProvider } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import AppNav from "../components/layout/AppNav";
 import RightPanel from "../components/layout/RightPanel";
 import ChatContainer from "../components/layout/ChatContainer";
-import CenterStage from "../components/layout/CenterStage";
-
-function AuthGate({ children }: { children: React.ReactNode }) {
-  // Simplified auth - rely on middleware
-  return <>{children}</>;
-}
 
 export default function UserLayout({
   children,
@@ -27,26 +21,24 @@ export default function UserLayout({
 }) {
   return (
     <SessionProvider>
-      <AuthGate>
-        <div className="flex h-screen overflow-hidden bg-black">
-          {/* Left rail — 72px fixed */}
-          <AppNav />
+      <div className="flex h-screen w-full overflow-hidden bg-black text-white">
+        {/* Left rail — 72px */}
+        <AppNav />
 
-          {/* Center column */}
-          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ml-[72px]">
-            {/* Main content area */}
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-              {children}
-            </div>
-
-            {/* Chat container */}
-            <ChatContainer />
+        {/* Center — takes remaining space */}
+        <main className="flex flex-1 flex-col min-w-0 ml-[72px] mr-0 xl:mr-[200px]">
+          {/* Page content */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {children}
           </div>
 
-          {/* Right rail — 200px */}
-          <RightPanel />
-        </div>
-      </AuthGate>
+          {/* Chat input — always at bottom */}
+          <ChatContainer />
+        </main>
+
+        {/* Right rail — 200px, hidden below xl */}
+        <RightPanel />
+      </div>
     </SessionProvider>
   );
 }

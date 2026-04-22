@@ -3,12 +3,11 @@
 /**
  * RightPanel — Rail droit Trust
  *
- * 200px fixed, hidden sur petits écrans, z-index base
+ * 200px fixed, visible uniquement sur xl+
  */
 
 import { useRuntimeStore } from "@/stores/runtime";
 
-// Selectors atomiques pour éviter les re-rendus
 const selectEvents = (s: { events: unknown[] }) => s.events;
 const selectCurrentRunId = (s: { currentRunId: string | null }) => s.currentRunId;
 
@@ -16,18 +15,18 @@ export default function RightPanel() {
   const events = useRuntimeStore(selectEvents);
   const currentRunId = useRuntimeStore(selectCurrentRunId);
 
-  // Get recent missions from events
   interface MissionEvent {
     type: string;
     name?: string;
     [key: string]: unknown;
   }
+
   const missions = (events as MissionEvent[])
     .filter((e) => e.type === "scheduled_mission_created")
     .slice(0, 3);
 
   return (
-    <aside className="hidden xl:flex w-[200px] shrink-0 flex-col border-l border-white/[0.06] bg-rail opacity-40 hover:opacity-100 transition-opacity duration-150">
+    <aside className="hidden xl:flex fixed right-0 top-0 bottom-0 w-[200px] flex-col border-l border-white/[0.06] bg-rail z-20">
       {/* Header */}
       <div className="h-[48px] flex items-center px-3 border-b border-white/[0.06]">
         <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-white/40">
@@ -46,7 +45,7 @@ export default function RightPanel() {
               >
                 <div className="h-1.5 w-1.5 rounded-full bg-white/30" />
                 <span className="flex-1 min-w-0 truncate text-[11px] text-white/50 group-hover:text-white/70">
-                  {(m.name as string) || "Mission"}
+                  {m.name || "Mission"}
                 </span>
               </div>
             ))}
