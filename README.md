@@ -2,16 +2,17 @@
 
 Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
-> ✅ **Audit technique complet effectué le 21/04/2026** — Voir [AUDIT-REPORT.md](./AUDIT-REPORT.md)  
-> Code mort supprimé (573 lignes), React hooks optimisés, logs debug nettoyés.  
-> Application validée production-ready.
+> ✅ **Phase 1 — V2 Foundation TERMINÉE (23/04/2026)**  
+> Legacy supprimé : `app/api/chat/route.ts`, `lib/orchestrator.ts`, `app/lib/missions/*`  
+> Structure V2 créée : `lib/agents/backend-v2/`, `lib/agents/sessions/`  
+> **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
 
 ## Architecture UX
 
 - **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. S'estompe légèrement (`opacity: 0.6`) lors d'une manifestation active pour focaliser l'attention.
 - **Right Panel** (`RightPanel` + `RightPanelDocumentProvider` dans `app/(user)/layout.tsx`) — Surface de confiance : missions, assets, stream. Machine à états INDEX/DOCUMENT (logique dans `RightPanel.tsx`). Quand le **focal** est `ready` ou `awaiting_approval` en mode DOCUMENT, le rendu `FocalObjectRenderer` part au **centre** (`ManifestationStage`) ; le rail reste en INDEX (pas de `<aside>`, fond `bg-background`).
 - **Manifestation Stage** (`ManifestationStage` sur `/`) — Scène centrale de manifestation. L'objet focal s'y condense (transition de flou et d'échelle) au-dessus du Halo Core.
-- **Indicateur de Momentum** — Badge orbital dans la `TopContextBar` et `AppNav`. Signal discret de l'activité de fond des agents (pastille cyan + anneau pulsé).
+- **Momentum** (`useMomentum`, `MomentumIndicator` dans `TopContextBar`) — Rappel discret runs / missions actives / focal « en cours » ; données via `useRightPanel` + abonnement au bus `RunStreamProvider` (même SSE que `use-right-panel.ts`). Voir `docs/PRODUCT_SYSTEM_SPEC.md` §4.
 - **Halo runtime partagé** (`HaloRuntimeProvider` dans le layout user) — Un seul `useHalo` pour le bandeau d’orchestration et la scène centrale (même réduction SSE).
 - **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
 - Layout user : sidebar icon-only (AppNav) + zone centrale + chat global + right panel
@@ -227,6 +228,41 @@ lib/
     └── gemini.ts            # Gemini API (gemini-3-flash-preview, …)
 ```
 
+### Agent Backend V2 (Phase 1 — Structure Created)
+
+Multi-provider managed agent architecture. Unifies Anthropic Sessions, OpenAI Assistants/Responses/Computer Use, and Hybrid routing.
+
+```
+lib/agents/
+├── backend-v2/              # NEW — Unified agent backends
+│   ├── types.ts            # AgentBackendV2, BackendCapabilities, Hybrid routing
+│   └── index.ts            # Barrel export
+├── sessions/               # NEW — Cross-provider session management
+│   ├── types.ts            # Session, SessionManager, SessionStore
+│   └── index.ts            # Barrel export
+└── backend/                # EXISTING (v1 — to migrate)
+    ├── types.ts
+    ├── selector.ts
+    └── run-anthropic-managed.ts
+```
+
+**Backends Supported:**
+| Backend | Provider | Capabilities |
+|---------|----------|--------------|
+| `hearst_runtime` | Hearst | Step-by-step controlled execution |
+| `anthropic_sessions` | Anthropic | Managed sessions with tools |
+| `openai_assistants` | OpenAI | Assistants API + Code Interpreter + File Search |
+| `openai_responses` | OpenAI | Responses API (fast, stateless) |
+| `openai_computer_use` | OpenAI | Computer Use API (screenshot + actions) |
+| `hybrid` | Multi | Intelligent routing across providers |
+
+**Key Features:**
+- **Unified Interface** — Same API for all backends (`ManagedSessionConfig` → `ManagedAgentResult`)
+- **Intelligent Routing** — Backend selector based on intent, complexity, cost, capabilities
+- **Cross-Provider Handoff** — Transfer context between Anthropic ↔ OpenAI
+- **Session Management** — Stateful sessions with persistence and recovery
+- **Cost Control** — Budget enforcement per session with `costBudgetUsd`
+
 ## API Routes
 
 | Route | Méthode | Description |
@@ -310,14 +346,14 @@ Architecture : `lib/connectors/` (un connector par service), tokens chiffrés AE
 | `/api/auth/slack` | OAuth Slack (redirect) |
 | `/api/auth/callback/slack` | Callback OAuth Slack |
 
-### Legacy APIs (kept for fallback, marked @deprecated)
+### Legacy APIs (removed in Phase 1)
 
-| Route | Canonical replacement |
-|-------|----------------------|
-| `/api/chat` | `/api/orchestrate` |
-| `/api/runs`, `/api/runs/{id}` | `/api/v2/runs` |
-| `/api/connectors/status` | `/api/v2/connectors/unified` |
-| `/api/missions/execute`, `/approve`, `/recent` | `/api/v2/missions` |
+| Route | Status | Canonical replacement |
+|-------|--------|----------------------|
+| `/api/chat` | ❌ **REMOVED** | `/api/orchestrate` |
+| `/api/runs`, `/api/runs/{id}` | ⚠️ Deprecated | `/api/v2/runs` |
+| `/api/connectors/status` | ⚠️ Deprecated | `/api/v2/connectors/unified` |
+| `/api/missions/execute`, `/approve`, `/recent` | ❌ **REMOVED** | `/api/v2/missions` |
 
 ## Mission System
 
@@ -332,7 +368,7 @@ Architecture canonique pour les missions planifiées/autonomes.
 | UI client (canonical) | `app/lib/missions-v2.ts` | Frontend helpers (fetch, create, toggle, run) |
 | Admin | `/admin/scheduler` | Leadership, ops table, run/toggle actions |
 | Right Panel | `MissionsSection` + `MissionDetailSection` | Live status, schedule, errors |
-| Legacy (deprecated) | `app/lib/missions/*` | Client-side mission engine — used by ControlPanel only |
+| ~~Legacy~~ | ~~`app/lib/missions/*`~~ | ❌ **REMOVED** — migrated to `app/lib/missions-v2.ts` |
 
 ## Auth
 

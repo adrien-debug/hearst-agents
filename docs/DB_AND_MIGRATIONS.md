@@ -1,5 +1,7 @@
 # Database & Migrations — Hearst Managed Agents
 
+Alignement produit / runtime (boucle utilisateur, UI, SSE, hors-DB) : voir aussi [`PRODUCT_SYSTEM_SPEC.md`](./PRODUCT_SYSTEM_SPEC.md).
+
 ## Database: Supabase (PostgreSQL)
 
 - **Instance**: Supabase hosted PostgreSQL

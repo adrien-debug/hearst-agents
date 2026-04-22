@@ -24,22 +24,21 @@ describe("design tokens (app/globals.css)", () => {
     expect(globalsCss).toContain("--color-rail:");
   });
 
-  it("centralise les glows cyan (évite les rgba dupliqués dans les composants)", () => {
-    expect(globalsCss).toContain("--glow-cyan-sm:");
-    expect(globalsCss).toContain("--glow-cyan-md:");
-    expect(globalsCss).toContain("--glow-cyan-core:");
-    expect(globalsCss).toContain("--glow-cyan-soft:");
-    expect(globalsCss).toContain("--glow-cyan-dot:");
+  it("minimalisme: pas de glow tokens (utiliser status-dot)", () => {
+    // Les glows sont maintenant uniquement dans .status-dot
+    // Pas de variables CSS globales pour éviter la duplication
+    expect(globalsCss).toContain(".status-dot");
+    expect(globalsCss).toContain("box-shadow: 0 0 6px");
   });
 
-  it("garde le canvas et l’accent documentés", () => {
+  it("garde le canvas et l'accent documentés", () => {
     expect(globalsCss).toContain("--background:");
     expect(globalsCss).toContain("--cyan-accent:");
     expect(globalsCss).toContain("--color-background:");
     expect(globalsCss).toContain("--color-cyan-accent:");
   });
 
-  it("surface, background et rail sont 3 valeurs distinctes (anti-régression : éviter #000 partout, qui rend la refacto invisible)", () => {
+  it("surface, background et rail sont 3 valeurs distinctes", () => {
     const tokens = parseHexTokens(globalsCss);
     expect(tokens.surface, "--surface absent ou non-hex dans :root").toBeDefined();
     expect(tokens.background, "--background absent ou non-hex dans :root").toBeDefined();
@@ -47,5 +46,10 @@ describe("design tokens (app/globals.css)", () => {
 
     const distinct = new Set([tokens.surface, tokens.background, tokens.rail]);
     expect(distinct.size, `surface/background/rail doivent être 3 valeurs différentes, vu : ${[...distinct].join(", ")}`).toBe(3);
+  });
+
+  it("pas de dégradés décoratifs dans body (anti-régression)", () => {
+    // Le nouveau design est purement noir, sans effets de fond
+    expect(globalsCss).not.toContain("radial-gradient(circle at top");
   });
 });

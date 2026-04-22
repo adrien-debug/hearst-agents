@@ -4,7 +4,27 @@
  */
 
 import type { UnifiedMessage } from "@/lib/connectors/unified-types";
-import type { Mission, ActionStatus } from "./missions/types";
+
+// Types locaux — indépendants du système de missions legacy
+export type ActionStatus = "waiting" | "running" | "completed" | "failed";
+
+export interface MissionAction {
+  id: string;
+  label: string;
+  status: ActionStatus;
+  service?: string;
+}
+
+export interface Mission {
+  id: string;
+  title: string;
+  surface: string;
+  status: "created" | "active" | "completed" | "failed";
+  actions: MissionAction[];
+  services: string[];
+  createdAt: number;
+  updatedAt: number;
+}
 
 export interface Suggestion {
   id: string;

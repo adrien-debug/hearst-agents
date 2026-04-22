@@ -8,11 +8,6 @@ import type { Surface } from "../lib/missions-v2";
 
 const PATH_TO_SURFACE: Record<string, Surface> = {
   "/": "home",
-  "/inbox": "inbox",
-  "/calendar": "calendar",
-  "/files": "files",
-  "/tasks": "tasks",
-  "/apps": "apps",
 };
 
 export default function SurfaceTracker() {
