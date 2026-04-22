@@ -1,27 +1,41 @@
 @import "tailwindcss";
 
 /**
- * HEARST OS — Design Tokens (radical minimalism).
+ * HEARST OS — Design Tokens v2 (clean rebuild).
  *
- * 3 surfaces: rail, background, surface
- * 1 accent: cyan
- * Opacity scale: 90%, 60%, 40%, 25%, 15%
+ * Surfaces: rail < background < surface < overlay
+ * Accent: cyan (#00e5ff)
+ * Opacity scale: 90, 72, 60, 40, 30, 20, 15, 10
  */
 
 :root {
-  --background: #000;
+  /* Core colors */
+  --background: #000000;
   --foreground: #fafafa;
   --surface: #14141a;
-  --cyan-accent: #00e5ff;
   --rail: #0c0c10;
+  --cyan-accent: #00e5ff;
+
+  /* Glow shadows */
+  --glow-cyan-sm: 0 0 4px rgba(0, 229, 255, 0.3);
+  --glow-cyan-md: 0 0 8px rgba(0, 229, 255, 0.4);
+  --glow-cyan-lg: 0 0 12px rgba(0, 229, 255, 0.5);
+  --glow-cyan-xl: 0 0 20px rgba(0, 229, 255, 0.15);
+
+  /* Z-index scale */
+  --z-base: 0;
+  --z-nav: 30;
+  --z-chat: 40;
+  --z-overlay: 50;
+  --z-modal: 60;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
-  --color-cyan-accent: var(--cyan-accent);
   --color-rail: var(--rail);
+  --color-cyan-accent: var(--cyan-accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -46,20 +60,115 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* ── Scrollbar hide ────────────────────────────────────────── */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+/* ── Typography utilities ────────────────────────────────── */
 
-/* ── Status dot (minimal) ──────────────────────────────────── */
-.status-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 9999px;
-  background: var(--cyan-accent);
-  box-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+.bounded-title-3 {
+  max-width: 100%;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.3;
 }
 
-/* ── Menu item (rail threads) ─────────────────────────────── */
+.bounded-anywhere {
+  max-width: 60ch;
+}
+
+/* ── Ghost Document Surface ───────────────────────────────── */
+
+.ghost-document-surface {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(20, 20, 26, 0.8);
+  backdrop-filter: blur(24px);
+}
+
+/* ── Ghost Kicker ─────────────────────────────────────────── */
+
+.ghost-kicker {
+  font-size: 10px;
+  font-family: var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Action Button ────────────────────────────────────────── */
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cyan-accent);
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.action-button:hover {
+  background: rgba(0, 229, 255, 0.15);
+  box-shadow: var(--glow-cyan-md);
+}
+
+.action-button:active {
+  transform: translateY(1px);
+}
+
+.action-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Tag ─────────────────────────────────────────────────── */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 10px;
+  font-family: var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Status Dot ───────────────────────────────────────────── */
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--cyan-accent);
+  box-shadow: var(--glow-cyan-md);
+}
+
+.status-dot-amber {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.45);
+}
+
+.status-dot-red {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(248, 113, 113, 0.5);
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.6);
+}
+
+/* ── Menu Item ────────────────────────────────────────────── */
+
 .menu-item {
   display: flex;
   align-items: center;
@@ -67,31 +176,66 @@ body {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   transition: background-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
 }
+
 .menu-item:hover {
   background: rgba(255, 255, 255, 0.03);
 }
+
 .menu-item-active {
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* ── Focus states ──────────────────────────────────────────── */
+/* ── Scrollbar Hide ───────────────────────────────────────── */
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Focus States ──────────────────────────────────────────── */
+
 :focus-visible {
   outline: 2px solid var(--cyan-accent);
   outline-offset: 2px;
 }
 
-/* ─── Animations ───────────────────────────────────────────── */
+/* ── Animations ────────────────────────────────────────────── */
+
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-pulse {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* ─── Reduced motion ───────────────────────────────────────── */
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.15s ease-out;
+}
+
+/* ── Reduced Motion ────────────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
