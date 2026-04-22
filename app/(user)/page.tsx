@@ -1,7 +1,9 @@
 "use client";
 
 /**
- * HomePage — IDLE state with centered greeting and input
+ * HomePage — Chat-first, no navigation
+ *
+ * Just a greeting. Everything happens via chat.
  */
 
 import { useSession } from "next-auth/react";
@@ -25,21 +27,21 @@ export default function HomePage() {
   const firstName = session?.user?.name?.split(" ")[0];
   const isIdle = !focal && !isRunning;
 
-  // IDLE: Centered greeting (input is in ChatContainer below)
+  // IDLE: Simple greeting
   if (isIdle) {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6">
         <h1 className="text-[clamp(1.75rem,4vw,3rem)] font-light tracking-wide text-white/90 text-center">
           {greetingWord()}{firstName ? `, ${firstName}` : ""}
         </h1>
-        <p className="mt-4 text-[15px] text-white/40 font-light text-center">
-          Quoi de neuf aujourd&apos;hui ?
+        <p className="mt-4 text-[15px] text-white/40 font-light text-center max-w-[400px]">
+          Parlez-mous de vos emails, fichiers, agenda... Je m&apos;occupe du reste.
         </p>
       </div>
     );
   }
 
-  // RUNNING: Status indicator
+  // RUNNING: Status
   if (!focal && isRunning) {
     return (
       <div className="flex h-full flex-col items-center justify-center px-6">
@@ -56,23 +58,20 @@ export default function HomePage() {
     );
   }
 
-  // FOCAL: Content display
+  // FOCAL: Display content
   if (focal) {
     return (
       <div className="h-full overflow-auto px-6 py-8">
         <div className="max-w-[720px] mx-auto">
-          {/* Status + type */}
           <div className="flex items-center gap-3 mb-4">
             <div className="status-dot" />
             <span className="tag">{focal.type}</span>
           </div>
 
-          {/* Title */}
           <h2 className="bounded-title-3 text-[1.72rem] mb-6">
             {focal.title}
           </h2>
 
-          {/* Body */}
           {focal.body && (
             <div className="bounded-anywhere text-[15px] text-white/72 font-light leading-[1.82] whitespace-pre-wrap">
               {focal.body}
