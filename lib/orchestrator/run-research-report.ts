@@ -8,7 +8,7 @@
 import type { RunEngine } from "../runtime/engine";
 import type { RunEventBus } from "../events/bus";
 import type { TenantScope } from "../multi-tenant/types";
-import { searchWeb, type WebSearchResult } from "../agent/web-search";
+import { searchWeb, type WebSearchResult } from "../tools/handlers/web-search";
 import { createAsset } from "../runtime/assets/create-asset";
 import { generatePdfArtifact } from "../runtime/assets/generate-pdf";
 import { extractResearchQuery, isReportIntent } from "./research-intent";
