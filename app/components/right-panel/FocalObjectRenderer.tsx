@@ -1,10 +1,14 @@
 "use client";
 
 /**
- * Focal Object Renderer — Unified rendering surface for all right panel objects.
+ * Focal Object Renderer — Unified rendering surface for focal objects.
  *
  * One shared structural shell. Type-specific content zones.
  * Every object shares the same grammar: title, status, body, provenance, action.
+ *
+ * `surface`:
+ * - `rail` — glass panel (`.ghost-document-surface`), used in the right rail DOCUMENT state.
+ * - `center` — flat layout for `ManifestationStage` when focal is ready / awaiting_approval.
  *
  * Invariants:
  * - NO tabs, NO lists, NO generic cards, NO dashboard stacks, NO admin chrome
@@ -52,21 +56,28 @@ export const FocalObjectRenderer = memo(function FocalObjectRenderer({
   onAction,
   isPending,
   mode = "full",
+  surface = "rail",
 }: {
   object: FocalObject;
   onAction?: (action: FocalAction) => void;
   isPending?: boolean;
   mode?: "preview" | "full";
+  /** `center` = home stage (no glass shell); `rail` = right panel document shell */
+  surface?: "rail" | "center";
 }) {
   const isPreview = mode === "preview";
   const isEmerging = object.status === "composing" || object.status === "delivering";
+  const shellClass =
+    isPreview
+      ? "gap-3"
+      : surface === "center"
+        ? "gap-7 py-2"
+        : "ghost-document-surface gap-7 p-6";
 
   return (
     <div
       key={object.id}
-      className={`flex w-full flex-col animate-in fade-in slide-in-from-bottom-3 duration-150 ease-out ${
-        isPreview ? "gap-3" : "ghost-document-surface gap-7 p-6"
-      }`}
+      className={`flex w-full flex-col animate-in fade-in slide-in-from-bottom-3 duration-150 ease-out ${shellClass}`}
     >
       {/* Status + type badge */}
         <div className="flex items-center gap-3">

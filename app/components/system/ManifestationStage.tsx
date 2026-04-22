@@ -9,6 +9,8 @@ import {
   focalStatusSubline,
   sublineForFlow,
 } from "@/app/lib/manifestation-stage-model";
+import { useRightPanelDocument } from "@/app/components/right-panel/RightPanel";
+import { FocalObjectRenderer } from "@/app/components/right-panel/FocalObjectRenderer";
 
 function greetingWord(): string {
   const h = new Date().getHours();
@@ -35,6 +37,18 @@ export function ManifestationStage() {
   const { data: session } = useSession();
   const { state: halo } = useHaloRuntime();
   const { focal, isFocused } = useFocalObject();
+  const {
+    focalDocumentInCenter,
+    documentObject,
+    closeDocument,
+    navigateDocument,
+    handleFocalAction,
+    isPending,
+    allObjects,
+    currentDocIndex,
+    hasPrev,
+    hasNext,
+  } = useRightPanelDocument();
 
   const isFocalReady = focal?.status === "ready" || focal?.status === "awaiting_approval";
   const activeThought = useThoughtStream(isFocalReady);
@@ -66,7 +80,7 @@ export function ManifestationStage() {
     ?? (focal && phase !== "idle_habited"
       ? (focalStatusSubline(focal.status)
         ?? sublineForFlow(halo.flowLabel)
-        ?? "Visible à droite.")
+        ?? (focalDocumentInCenter ? "Contenu stabilisé au centre." : "Visible à droite."))
       : (sublineForFlow(halo.flowLabel)
         ?? "Tout est en place. Dites ce dont vous avez besoin."));
 
@@ -80,7 +94,13 @@ export function ManifestationStage() {
     ?? (halo.flowLabel ? sublineForFlow(halo.flowLabel) : null)
     ?? "En attente d'une intention.";
   const focalLabel = focal?.title
-    ? `${focal.title}${focal.status === "ready" || focal.status === "awaiting_approval" ? " · inspectable" : ""}`
+    ? `${focal.title}${
+        focal.status === "ready" || focal.status === "awaiting_approval"
+          ? focalDocumentInCenter
+            ? " · au centre"
+            : " · inspectable"
+          : ""
+      }`
     : "Rien de stabilisé pour le moment";
 
   const animClass = STATE_ANIM[phase] ?? "";
@@ -124,26 +144,67 @@ export function ManifestationStage() {
         </svg>
       </div>
 
-      <div className="flex min-w-0 flex-col items-center gap-3 lg:gap-4">
-        <h1 className="compact-manifestation-title bounded-title-3 max-w-[15ch] font-light tracking-[0.08em] text-white/90" style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.7rem)" }}>
-          {primaryLine}
-        </h1>
-        <p className={`font-mono text-[10px] tracking-[0.36em] transition-colors duration-300 lg:text-[11px] lg:tracking-[0.42em] ${
-          activeThought ? "text-cyan-accent/60" : "text-cyan-accent/25"
-        }`}>
-          {stateLabel}
-        </p>
-        <p className={`compact-manifestation-secondary bounded-copy-4 max-w-[48ch] text-[13px] leading-[1.75] font-light transition-colors duration-300 lg:text-[15px] lg:leading-[1.85] ${
-          activeThought ? "text-white/60" : "text-white/35"
-        }`}>
-          {secondaryLine}
-        </p>
-        {phase === "ready_stabilized" && isFocused && focal && (
-          <p className="pt-1 text-[11px] tracking-[0.12em] text-white/22 font-light">
-            {"Visible à droite."}
+      {!focalDocumentInCenter ? (
+        <div className="flex min-w-0 flex-col items-center gap-3 lg:gap-4">
+          <h1 className="compact-manifestation-title bounded-title-3 max-w-[15ch] font-light tracking-[0.08em] text-white/90" style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.7rem)" }}>
+            {primaryLine}
+          </h1>
+          <p className={`font-mono text-[10px] tracking-[0.36em] transition-colors duration-300 lg:text-[11px] lg:tracking-[0.42em] ${
+            activeThought ? "text-cyan-accent/60" : "text-cyan-accent/25"
+          }`}>
+            {stateLabel}
           </p>
-        )}
-      </div>
+          <p className={`compact-manifestation-secondary bounded-copy-4 max-w-[48ch] text-[13px] leading-[1.75] font-light transition-colors duration-300 lg:text-[15px] lg:leading-[1.85] ${
+            activeThought ? "text-white/60" : "text-white/35"
+          }`}>
+            {secondaryLine}
+          </p>
+          {phase === "ready_stabilized" && isFocused && focal && (
+            <p className="pt-1 text-[11px] tracking-[0.12em] text-white/22 font-light">
+              {"Visible à droite."}
+            </p>
+          )}
+        </div>
+      ) : documentObject ? (
+        <div className="mt-1 w-full max-w-[min(92vw,780px)] min-w-0 self-stretch px-1 text-left">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-white/8 pb-4">
+            <button
+              type="button"
+              onClick={closeDocument}
+              className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[10px] tracking-[0.18em] text-white/50 transition-colors duration-200 hover:border-white/16 hover:text-white"
+            >
+              ← INDEX
+            </button>
+            {allObjects.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => hasPrev && navigateDocument(allObjects[currentDocIndex - 1])}
+                  disabled={!hasPrev}
+                  className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[11px] tracking-[0.16em] text-white/50 transition-colors duration-200 hover:border-white/16 hover:text-white disabled:cursor-default disabled:opacity-20"
+                >
+                  ← Précédent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => hasNext && navigateDocument(allObjects[currentDocIndex + 1])}
+                  disabled={!hasNext}
+                  className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[11px] tracking-[0.16em] text-white/50 transition-colors duration-200 hover:border-white/16 hover:text-white disabled:cursor-default disabled:opacity-20"
+                >
+                  Suivant →
+                </button>
+              </div>
+            )}
+          </div>
+          <FocalObjectRenderer
+            object={documentObject}
+            onAction={handleFocalAction}
+            isPending={isPending}
+            mode="full"
+            surface="center"
+          />
+        </div>
+      ) : null}
 
       <div className="compact-shell-signal shell-signal-strip w-full max-w-[760px]">
         <div className="shell-signal-cell">

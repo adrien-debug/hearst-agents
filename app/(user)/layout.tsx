@@ -4,7 +4,7 @@ import { SessionProvider, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import AppNav from "../components/AppNav";
-import RightPanel from "../components/right-panel/RightPanel";
+import RightPanel, { RightPanelDocumentProvider } from "../components/right-panel/RightPanel";
 import GlobalChat from "../components/GlobalChat";
 import { MissionProvider } from "../lib/missions";
 import { ChatProvider } from "../lib/chat-context";
@@ -55,13 +55,15 @@ export default function UserLayout({
             <div className="flex h-screen overflow-hidden bg-background">
               <AppNav />
               <SidebarMargin>
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                <RightPanelDocumentProvider>
                   <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                    {children}
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                      {children}
+                    </div>
+                    <GlobalChat />
                   </div>
-                  <GlobalChat />
-                </div>
-                <RightPanel />
+                  <RightPanel />
+                </RightPanelDocumentProvider>
               </SidebarMargin>
             </div>
             <SurfaceTracker />

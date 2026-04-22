@@ -9,8 +9,8 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 ## Architecture UX
 
 - **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. Pipeline v2 SSE par défaut (`/api/orchestrate`).
-- **Right Panel** (`RightPanel`) — Surface de confiance : runs live, timeline, assets, missions, connectors. Machine à états INDEX/DOCUMENT.
-- **Manifestation Stage** (`ManifestationStage` sur `/`) — Scène centrale 160×160, dérivation `deriveManifestationVisualState` (focal > artifact > halo core > flowLabel faible). Overshoot React. Pas de CSS animé en boucle.
+- **Right Panel** (`RightPanel` + `RightPanelDocumentProvider` dans `app/(user)/layout.tsx`) — Surface de confiance : missions, assets, stream. Machine à états INDEX/DOCUMENT (logique dans `RightPanel.tsx`). Quand le **focal** est `ready` ou `awaiting_approval` en mode DOCUMENT, le rendu `FocalObjectRenderer` part au **centre** (`ManifestationStage`) ; le rail reste en INDEX (pas de `<aside>`, fond `bg-background`).
+- **Manifestation Stage** (`ManifestationStage` sur `/`) — Scène centrale (halo + textes) ; héberge aussi le document focal prêt (`FocalObjectRenderer` `surface="center"`). Dérivation `deriveManifestationVisualState` (focal > artifact > halo core > flowLabel faible). Overshoot React. Pas de CSS animé en boucle.
 - **Halo runtime partagé** (`HaloRuntimeProvider` dans le layout user) — Un seul `useHalo` pour le bandeau d’orchestration et la scène centrale (même réduction SSE).
 - **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
 - Layout user : sidebar icon-only (AppNav) + zone centrale + chat global + right panel
@@ -23,11 +23,17 @@ Modèle d'élévation (du plus profond au plus clair) : **rail < background < su
 |-------|---------|-----|-------|
 | `bg-rail` | `--rail` | `#0c0c10` | Rail admin — `app/components/Sidebar.tsx` (`/admin/*`) |
 | `bg-background` | `--background` | `#09090b` | Canvas — `body` (`app/layout.tsx`), `/login`, spinner d'`AuthGate` |
-| `bg-surface` | `--surface` | `#14141a` | Panels lifted — `AppNav`, `RightPanel` (`aside`), barre d'input `GlobalChat` |
+| `bg-surface` | `--surface` | `#14141a` | Panels lifted — `AppNav`, barre d'input `GlobalChat` (le rail droit utilise `bg-background`, pas `bg-surface`) |
 | `bg-cyan-accent` / `text-cyan-accent` | `--cyan-accent` | `#00e5ff` | Accent unique (focal, dot connecté, divider) |
 | `--glow-cyan-{sm,md,core,soft,dot}` | — | rgba(0,229,255,…) | Halos centralisés — **ne pas dupliquer en `rgba` dans les composants** |
 
 Garde-fou : `__tests__/ui/design-tokens.test.ts` valide la présence de tous ces tokens dans `app/globals.css` et dans le bloc `@theme inline`.
+
+#### Guide de style — mise à jour à prévoir (focal home / rail)
+
+- **Deux surfaces** pour le contenu focal : `FocalObjectRenderer` avec `surface="rail"` conserve la coque verre (classe `.ghost-document-surface` dans `app/globals.css`) ; `surface="center"` évite cette coque pour que le document respire sur le fond de la scène (`ManifestationStage`).
+- **Hiérarchie d’élévation** : le rail droit n’est plus un `<aside>` « lifted » `ghost-side-panel` ; il s’aligne sur le canvas (`bg-background`). Si le guide impose à nouveau un panel *surface* pour ce rail, mettre à jour la table tokens ci-dessus et `RightPanel.tsx` en cohérence.
+- **État partagé** : toute évolution du flux INDEX/DOCUMENT ou d’un troisième emplacement de rendu doit rester sur `RightPanelDocumentProvider` + `useRightPanelDocument()` pour éviter des sources de vérité divergentes.
 
 > Note : la palette `bg-zinc-{800,900,950}` reste utilisée volontairement dans `app/admin/*` et certaines pages `app/(user)/*` pour les **élévations multi-niveaux** (cartes, inputs, hovers, code blocks). Ces niveaux ne sont pas couverts par les 3 tokens canoniques ci-dessus.
 
@@ -65,7 +71,9 @@ flowchart TD
   C --> F["app/(user)/page.tsx"]
   F --> G["ManifestationStage.tsx"]
   C --> H["GlobalChat.tsx"]
-  C --> I["RightPanel.tsx"]
+  C --> R["RightPanelDocumentProvider"]
+  R --> I["RightPanel.tsx"]
+  R --> G
   I --> J["useFocalObject()"]
   J --> K["useRightPanel() + thread state + SSE"]
 ```
@@ -77,8 +85,8 @@ flowchart TD
 - Sidebar gauche : `app/components/AppNav.tsx`
 - Barre haute : `app/components/system/TopContextBar.tsx`
 - Chat bas : `app/components/GlobalChat.tsx`
-- Panneau droit : `app/components/right-panel/RightPanel.tsx`
-- Rendu d'objet focal : `app/components/right-panel/FocalObjectRenderer.tsx`
+- Panneau droit : `app/components/right-panel/RightPanel.tsx` (export `RightPanelDocumentProvider`, hook `useRightPanelDocument`)
+- Rendu d'objet focal : `app/components/right-panel/FocalObjectRenderer.tsx` (prop `surface`: `rail` = panneau verre `.ghost-document-surface`, `center` = home sans coque verre)
 - État du panel/focal :
   - `app/hooks/use-right-panel.ts`
   - `app/hooks/use-focal-object.ts`
@@ -93,7 +101,7 @@ flowchart TD
 
 ### Why Agents Get Confused
 
-- `ManifestationStage` est réel, mais son rendu dépend du halo et du focal object
+- `ManifestationStage` est réel, mais son rendu dépend du halo et du focal object ; en DOCUMENT focal prêt il consomme `useRightPanelDocument()` (même état que le rail)
 - `RightPanel` dépend d'un thread actif, du polling `/api/v2/right-panel`, et des événements SSE
 - `RightPanel` est masqué sous le breakpoint `lg`
 - l'écran `/` passe d'abord par le shell authentifié, donc modifier un composant hors de cette chaîne ne change rien de visible
@@ -126,7 +134,7 @@ Si un agent ne peut pas relier visuellement un changement à `app/(user)/layout.
 - **Frontend** : Next.js 16 (App Router), React 19, Tailwind CSS, Geist
 - **Backend** : Next.js API Routes, Zod validation, domain layer typé
 - **Database** : Supabase (PostgreSQL), types auto-générés, pgvector
-- **LLM** : Multi-provider (OpenAI, Anthropic), smart routing, fallback chain, cost tracking
+- **LLM** : Multi-provider (OpenAI, Anthropic, Composer 2, Gemini 3 Flash), smart routing, fallback `model_profiles`, cost tracking
 - **Runtime** : Trace-first, lifecycle canonique, tool governance, replay (live/stub), cost sentinel, prompt guards, output validation
 - **Intelligence** : Failure classification, tool/model scoring, drift detection, feedback signals
 - **Décisions** : Tool/model selection, fallback intelligent, change tracking, operator surface
@@ -140,7 +148,7 @@ npm install
 
 # 2. Config
 cp .env.example .env.local
-# Remplir : SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY
+# Remplir : SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY (et optionnellement COMPOSER_*, GEMINI_API_KEY — voir `.env.example`)
 
 # 3. Database
 npx supabase db push
@@ -198,9 +206,11 @@ lib/
 │   └── index.ts
 └── llm/
     ├── types.ts             # LLMProvider, ModelProfileConfig
-    ├── router.ts            # Provider routing + smartChat/smartStreamChat
+    ├── router.ts            # getProvider, loadFallbackChain, smartChat…
     ├── openai.ts
-    └── anthropic.ts
+    ├── anthropic.ts
+    ├── composer.ts          # Cursor Composer 2 (OpenAI-compatible HTTP)
+    └── gemini.ts            # Gemini API (gemini-3-flash-preview, …)
 ```
 
 ## API Routes

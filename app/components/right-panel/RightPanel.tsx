@@ -9,10 +9,25 @@
  *   3. Historique (timeline with service icons)
  *   4. Assets & Services (fichiers + logos services)
  *
- * DOCUMENT: full object deployed in-place.
+ * DOCUMENT: full object in the rail, except when the **focal** is
+ * `ready` or `awaiting_approval` — then `FocalObjectRenderer` mounts in
+ * `ManifestationStage` (center) while this rail keeps INDEX (missions/assets).
+ *
+ * `RightPanelDocumentProvider` wraps `{children}` + this rail in the user layout
+ * so `useRightPanelDocument()` can read the same state on `/`.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  memo,
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
 import { useRightPanel } from "@/app/hooks/use-right-panel";
 import { useRunStreamOptional } from "@/app/lib/run-stream-context";
 import { useFocalObject } from "@/app/hooks/use-focal-object";
@@ -25,6 +40,36 @@ import type { RightPanelMission, RightPanelAsset } from "@/lib/ui/right-panel/ty
 import { FocalObjectRenderer } from "./FocalObjectRenderer";
 
 type PanelState = "INDEX" | "DOCUMENT";
+
+export type RightPanelDocumentContextValue = {
+  focalDocumentInCenter: boolean;
+  documentObject: FocalObject | null;
+  panelState: PanelState;
+  closeDocument: () => void;
+  navigateDocument: (obj: FocalObject) => void;
+  handleFocalAction: (action: FocalAction) => Promise<void>;
+  isPending: boolean;
+  allObjects: FocalObject[];
+  currentDocIndex: number;
+  hasPrev: boolean;
+  hasNext: boolean;
+  streamConnected: boolean;
+  focal: FocalObject | null;
+  haloCoreState: string;
+  missions: RightPanelMission[];
+  assets: RightPanelAsset[];
+  openDocument: (obj: FocalObject) => void;
+};
+
+const RightPanelDocumentContext = createContext<RightPanelDocumentContextValue | null>(null);
+
+export function useRightPanelDocument(): RightPanelDocumentContextValue {
+  const v = useContext(RightPanelDocumentContext);
+  if (!v) {
+    throw new Error("useRightPanelDocument must be used within RightPanelDocumentProvider");
+  }
+  return v;
+}
 
 const DEMO_MISSIONS: RightPanelMission[] = [
   { id: "demo-1", name: "Veille concurrentielle", input: "Surveiller les signaux concurrentiels et produire une synthèse exploitable", schedule: "every day", enabled: true, opsStatus: "running" },
@@ -108,7 +153,7 @@ function MissionRow({ mission, onInspect }: { mission: RightPanelMission; onInsp
   );
 }
 
-function RightPanelInner() {
+function useRightPanelDocumentMachine(): RightPanelDocumentContextValue {
   const { data } = useRightPanel();
   const stream = useRunStreamOptional();
   const connected = stream?.connected ?? false;
@@ -117,17 +162,18 @@ function RightPanelInner() {
   const sidebarCtx = useSidebarOptional();
   const { state: halo } = useHaloRuntime();
 
-  const rawMissions = data.missions ?? [];
-  const missions = rawMissions.length > 0 ? rawMissions : DEMO_MISSIONS;
-  const assets = data.assets ?? [];
+  const missions = useMemo(() => {
+    const raw = data.missions ?? [];
+    return raw.length > 0 ? raw : DEMO_MISSIONS;
+  }, [data.missions]);
+
+  const assets = useMemo(() => data.assets ?? [], [data.assets]);
 
   const [panelState, setPanelState] = useState<PanelState>("INDEX");
   const [documentObject, setDocumentObject] = useState<FocalObject | null>(null);
   const [isPending, setIsPending] = useState(false);
   const actionLockRef = useRef(false);
   const prevThreadIdRef = useRef(sidebarCtx?.state.activeThreadId);
-  // Tracks the focal object ID the user explicitly dismissed (Escape).
-  // Auto-materialize will not re-open the same object until a new one arrives.
   const dismissedFocalIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -151,7 +197,6 @@ function RightPanelInner() {
     setDocumentObject(null);
   }, [documentObject]);
 
-  // Keyboard: Escape closes Document → INDEX
   useEffect(() => {
     if (panelState !== "DOCUMENT") return;
     const handler = (e: KeyboardEvent) => {
@@ -161,13 +206,9 @@ function RightPanelInner() {
     return () => document.removeEventListener("keydown", handler);
   }, [panelState, closeDocument]);
 
-  // Auto-materialize: when focal becomes ready, open it automatically.
-  // Respects explicit dismissal: will not re-open the same object the user closed.
-  // Clears dismissal guard when a genuinely new focal object arrives.
   useEffect(() => {
     if (!focal) return;
 
-    // New focal object arrived — clear the dismissed guard
     if (focal.id !== dismissedFocalIdRef.current && dismissedFocalIdRef.current !== null) {
       dismissedFocalIdRef.current = null;
     }
@@ -181,7 +222,6 @@ function RightPanelInner() {
     }
   }, [focal, panelState, openDocument]);
 
-  // Navigate between objects while in DOCUMENT state
   const allObjects = useMemo(
     () => (focal ? [focal, ...secondary] : secondary),
     [focal, secondary],
@@ -221,23 +261,163 @@ function RightPanelInner() {
     }
   }, [documentObject, focal, v2, sidebarCtx?.state.activeThreadId]);
 
-  const isDocument = panelState === "DOCUMENT" && documentObject;
+  const isDocument = panelState === "DOCUMENT" && documentObject !== null;
+  const focalDocumentInCenter =
+    isDocument &&
+    focal != null &&
+    (focal.status === "ready" || focal.status === "awaiting_approval");
+
+  return useMemo(
+    (): RightPanelDocumentContextValue => ({
+      focalDocumentInCenter,
+      documentObject,
+      panelState,
+      closeDocument,
+      navigateDocument,
+      handleFocalAction,
+      isPending,
+      allObjects,
+      currentDocIndex,
+      hasPrev,
+      hasNext,
+      streamConnected: connected,
+      focal,
+      haloCoreState: halo.coreState,
+      missions,
+      assets,
+      openDocument,
+    }),
+    [
+      focalDocumentInCenter,
+      documentObject,
+      panelState,
+      closeDocument,
+      navigateDocument,
+      handleFocalAction,
+      isPending,
+      allObjects,
+      currentDocIndex,
+      hasPrev,
+      hasNext,
+      connected,
+      focal,
+      halo.coreState,
+      missions,
+      assets,
+      openDocument,
+    ],
+  );
+}
+
+export function RightPanelDocumentProvider({ children }: { children: ReactNode }) {
+  const value = useRightPanelDocumentMachine();
+  return (
+    <RightPanelDocumentContext.Provider value={value}>
+      {children}
+    </RightPanelDocumentContext.Provider>
+  );
+}
+
+function IndexSections({
+  focal,
+  haloCoreState,
+  missions,
+  assets,
+  openDocument,
+}: Pick<RightPanelDocumentContextValue, "focal" | "haloCoreState" | "missions" | "assets" | "openDocument">) {
+  return (
+    <div className="compact-right-panel-body flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto scrollbar-hide px-5 py-5">
+      <section className="ghost-rail-section">
+        <p className="ghost-kicker">System</p>
+        <div className="mt-3 text-[14px] leading-7 text-white/68">
+          {focal?.status === "ready"
+            ? "active"
+            : haloCoreState !== "idle"
+            ? "thinking"
+            : "idle"}{" "}
+          · {missions?.length ?? 0} missions
+        </div>
+      </section>
+
+      <section className="ghost-rail-section mt-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="ghost-kicker">Missions</p>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/32">
+            {(missions ?? []).slice(0, 4).length}
+          </span>
+        </div>
+
+        <div className="min-w-0 space-y-1.5">
+          {(missions ?? []).slice(0, 4).map((mission) => (
+            <MissionRow
+              key={mission.id}
+              mission={mission}
+              onInspect={() => openDocument(missionToFocalObject(mission))}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="ghost-rail-section mt-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="ghost-kicker">Assets</p>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/32">
+            {(assets ?? []).slice(0, 6).length}
+          </span>
+        </div>
+
+        <div className="flex min-w-0 flex-wrap gap-2">
+          {(assets ?? []).slice(0, 6).map((asset: RightPanelAsset) => (
+            <div
+              key={asset.id}
+              className="max-w-full rounded-full border border-white/8 bg-white/2 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-white/62 bounded-anywhere"
+            >
+              {asset.type}
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function RightPanelRail() {
+  const ctx = useRightPanelDocument();
+  const {
+    focalDocumentInCenter,
+    documentObject,
+    panelState,
+    closeDocument,
+    navigateDocument,
+    handleFocalAction,
+    isPending,
+    allObjects,
+    currentDocIndex,
+    hasPrev,
+    hasNext,
+    streamConnected,
+    focal,
+    haloCoreState,
+    missions,
+    assets,
+    openDocument,
+  } = ctx;
+
+  const isDocument = panelState === "DOCUMENT" && documentObject !== null;
+  const showRendererInRail = isDocument && !focalDocumentInCenter;
+  const railShowsIndexBody = !isDocument || focalDocumentInCenter;
 
   return (
-    <aside
-      className={`compact-shell-right-rail right-panel-width relative hidden h-full shrink-0 flex-col overflow-hidden border-l border-white/6 lg:flex ${
-        isDocument ? "ghost-side-panel ghost-side-panel-document" : "ghost-side-panel"
-      }`}
-      style={{
-        contain: "strict",
-      }}
+    <div
+      role="complementary"
+      aria-label="Object rail"
+      className="compact-shell-right-rail right-panel-width relative hidden h-full shrink-0 flex-col overflow-hidden border-l border-white/6 bg-background lg:flex"
+      style={{ contain: "strict" }}
     >
-      {/* Status indicator */}
-      <div className={`compact-right-panel-header z-20 flex h-[76px] shrink-0 items-center border-b px-6 ${
-        isDocument ? "border-white/8 bg-white/3" : "border-white/6"
-      }`}>
-        {isDocument && (
+      <div className="compact-right-panel-header z-20 flex h-[76px] shrink-0 items-center border-b border-white/6 px-6">
+        {showRendererInRail && (
           <button
+            type="button"
             onClick={closeDocument}
             className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[10px] tracking-[0.18em] text-white/50 transition-colors duration-200 hover:border-white/16 hover:text-white"
           >
@@ -245,15 +425,15 @@ function RightPanelInner() {
           </button>
         )}
         <div className="ml-auto flex items-center gap-3">
-          {!isDocument && (
+          {(!isDocument || focalDocumentInCenter) && (
             <div className="text-right">
               <p className="ghost-kicker">Object rail</p>
               <p className="mt-1 text-[12px] text-white/44">
-                {focal?.status === "ready" ? "ready" : halo.coreState !== "idle" ? "thinking" : "idle"}
+                {focal?.status === "ready" ? "ready" : haloCoreState !== "idle" ? "thinking" : "idle"}
               </p>
             </div>
           )}
-          {isDocument && documentObject && (
+          {showRendererInRail && documentObject && (
             <div className="text-right">
               <p className="ghost-kicker">Manifestation</p>
               <p className="mt-1 max-w-60 truncate text-[13px] text-white/72">
@@ -263,14 +443,13 @@ function RightPanelInner() {
           )}
           <span
             className={`transition-all duration-500 ${
-              connected ? "status-dot" : "h-[5px] w-[5px] rounded-full bg-white/10"
+              streamConnected ? "status-dot" : "h-[5px] w-[5px] rounded-full bg-white/10"
             }`}
           />
         </div>
       </div>
 
-      {/* ── STATE B: DOCUMENT ── */}
-      {isDocument && (
+      {showRendererInRail && documentObject && (
         <div className="compact-right-panel-body min-h-0 flex-1 overflow-y-auto scrollbar-hide px-6 pb-8 pt-6">
           <div className="mb-5">
             <p className="ghost-kicker">Manifestation</p>
@@ -280,12 +459,13 @@ function RightPanelInner() {
             onAction={handleFocalAction}
             isPending={isPending}
             mode="full"
+            surface="rail"
           />
 
-          {/* Document navigation */}
           {allObjects.length > 1 && (
             <div className="mt-8 flex items-center justify-between border-t border-white/6 pt-5 text-sm text-white/50">
               <button
+                type="button"
                 onClick={() => hasPrev && navigateDocument(allObjects[currentDocIndex - 1])}
                 disabled={!hasPrev}
                 className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[11px] tracking-[0.16em] transition-colors duration-200 hover:border-white/16 hover:text-white disabled:cursor-default disabled:opacity-20"
@@ -293,6 +473,7 @@ function RightPanelInner() {
                 ← Précédent
               </button>
               <button
+                type="button"
                 onClick={() => hasNext && navigateDocument(allObjects[currentDocIndex + 1])}
                 disabled={!hasNext}
                 className="rounded-full border border-white/8 px-3 py-1.5 font-mono text-[11px] tracking-[0.16em] transition-colors duration-200 hover:border-white/16 hover:text-white disabled:cursor-default disabled:opacity-20"
@@ -304,69 +485,18 @@ function RightPanelInner() {
         </div>
       )}
 
-      {/* ── STATE A: INDEX ── */}
-      {!isDocument && (
-        <div className="compact-right-panel-body flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto scrollbar-hide px-5 py-5">
-
-          {/* SYSTEM STATE */}
-          <section className="ghost-rail-section">
-            <p className="ghost-kicker">System</p>
-            <div className="mt-3 text-[14px] leading-7 text-white/68">
-              {focal?.status === "ready"
-                ? "active"
-                : halo.coreState !== "idle"
-                ? "thinking"
-                : "idle"}{" "}
-              · {missions?.length ?? 0} missions
-            </div>
-          </section>
-
-          {/* MISSIONS */}
-          <section className="ghost-rail-section mt-5 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="ghost-kicker">Missions</p>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/32">
-                {(missions ?? []).slice(0, 4).length}
-              </span>
-            </div>
-
-            <div className="min-w-0 space-y-1.5">
-              {(missions ?? []).slice(0, 4).map((mission) => (
-                <MissionRow
-                  key={mission.id}
-                  mission={mission}
-                  onInspect={() => openDocument(missionToFocalObject(mission))}
-                />
-              ))}
-            </div>
-          </section>
-
-          {/* ASSETS */}
-          <section className="ghost-rail-section mt-5 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="ghost-kicker">Assets</p>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/32">
-                {(assets ?? []).slice(0, 6).length}
-              </span>
-            </div>
-
-            <div className="flex min-w-0 flex-wrap gap-2">
-              {(assets ?? []).slice(0, 6).map((asset: RightPanelAsset) => (
-                <div
-                  key={asset.id}
-                  className="max-w-full rounded-full border border-white/8 bg-white/2 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-white/62 bounded-anywhere"
-                >
-                  {asset.type}
-                </div>
-              ))}
-            </div>
-          </section>
-
-        </div>
+      {railShowsIndexBody && (
+        <IndexSections
+          focal={focal}
+          haloCoreState={haloCoreState}
+          missions={missions}
+          assets={assets}
+          openDocument={openDocument}
+        />
       )}
-    </aside>
+    </div>
   );
 }
 
-const RightPanel = memo(RightPanelInner);
+const RightPanel = memo(RightPanelRail);
 export default RightPanel;

@@ -10,6 +10,7 @@ export type {
 export {
   getProvider,
   resolveModelProfile,
+  loadFallbackChain,
   chatWithProfile,
   streamChatWithProfile,
   smartChat,

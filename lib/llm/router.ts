@@ -4,6 +4,8 @@ import type { LLMProvider, ChatRequest, ChatResponse, StreamChunk, ModelProfileC
 import type { RunTracer } from "../runtime/tracer";
 import { OpenAIProvider } from "./openai";
 import { AnthropicProvider } from "./anthropic";
+import { ComposerProvider } from "./composer";
+import { GeminiProvider } from "./gemini";
 import { scoreModels, selectModel, type ModelGoal, type ModelScore, type ModelSelection } from "../decisions/model-selector";
 
 const providers: Record<string, LLMProvider> = {};
@@ -17,6 +19,12 @@ export function getProvider(providerName: string): LLMProvider {
         break;
       case "anthropic":
         providers[key] = new AnthropicProvider();
+        break;
+      case "composer":
+        providers[key] = new ComposerProvider();
+        break;
+      case "gemini":
+        providers[key] = new GeminiProvider();
         break;
       default:
         throw new Error(`Unknown LLM provider: ${providerName}`);
@@ -48,7 +56,7 @@ export async function resolveModelProfile(
   return data;
 }
 
-async function loadFallbackChain(
+export async function loadFallbackChain(
   sb: SupabaseClient<Database>,
   profileId: string,
   maxDepth = 3,
