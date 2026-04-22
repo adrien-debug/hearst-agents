@@ -255,14 +255,14 @@ export default function SchedulerAdminPage() {
                       <td className="px-3 py-2.5 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleRunNow(m.missionId)}
+                            onClick={() => handleRunNow(m.missionId || m.id)}
                             disabled={isLoading}
                             className="rounded border border-zinc-700/50 px-2 py-1 text-[10px] text-zinc-400 transition-colors hover:border-cyan-500/30 hover:text-cyan-400 disabled:opacity-40"
                           >
                             Run
                           </button>
                           <button
-                            onClick={() => handleToggle(m.missionId, !m.enabled)}
+                            onClick={() => handleToggle(m.missionId || m.id, !m.enabled)}
                             disabled={isLoading}
                             className="rounded border border-zinc-700/50 px-2 py-1 text-[10px] text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-300 disabled:opacity-40"
                           >

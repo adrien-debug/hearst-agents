@@ -1,43 +1,29 @@
-import Link from "next/link";
-import ModelBadge from "./ModelBadge";
+"use client";
 
-interface Agent {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string | null;
-  model_provider: string;
-  model_name: string;
-  status: string;
+import Link from "next/link";
+
+interface AgentCardProps {
+  agent: {
+    id: string;
+    slug: string;
+    name: string;
+    description?: string | null;
+    model_provider?: string | null;
+  };
 }
 
-const statusDot: Record<string, string> = {
-  active: "bg-emerald-500",
-  paused: "bg-amber-500",
-  archived: "bg-zinc-600",
-};
-
-export default function AgentCard({ agent }: { agent: Agent }) {
+export default function AgentCard({ agent }: AgentCardProps) {
   return (
     <Link
-      href={`/agents/${agent.id}`}
-      className="group flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950/80 p-5 transition-colors hover:border-zinc-700"
+      href={`/admin/agents/${agent.id}`}
+      className="block rounded-lg border border-white/10 bg-surface p-4 hover:border-cyan-accent/30 transition-colors"
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2 w-2 rounded-full ${statusDot[agent.status] ?? "bg-zinc-600"}`}
-          />
-          <h3 className="text-sm font-semibold text-white group-hover:text-zinc-100">
-            {agent.name}
-          </h3>
-        </div>
-        <ModelBadge provider={agent.model_provider} model={agent.model_name} />
+      <div className="flex items-center justify-between">
+        <h3 className="font-medium text-white">{agent.name}</h3>
+        <span className="text-xs text-white/40">{agent.model_provider}</span>
       </div>
       {agent.description && (
-        <p className="line-clamp-2 text-xs leading-relaxed text-zinc-500">
-          {agent.description}
-        </p>
+        <p className="mt-2 text-sm text-white/60 line-clamp-2">{agent.description}</p>
       )}
     </Link>
   );

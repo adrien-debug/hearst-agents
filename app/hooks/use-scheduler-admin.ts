@@ -1,57 +1,74 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import type { SchedulerStatus, MissionOpsRecord } from "@/lib/runtime/missions/ops-types";
+import { useState, useEffect, useCallback } from "react";
 
-interface SchedulerAdminData {
-  loading: boolean;
-  error: boolean;
-  scheduler: SchedulerStatus | null;
-  missions: MissionOpsRecord[];
-  refresh: () => void;
+export interface SchedulerInfo {
+  mode: "leader" | "standby" | "local_fallback";
+  instanceId: string;
+  leaderInstanceId?: string;
+  leaderExpiry?: number;
+  leadershipExpiresAt?: number;
+  lastPoll?: number;
+  lastHeartbeat?: number;
+  isLeader?: boolean;
+  healthy?: boolean;
+  currentMissions?: Array<{ id: string; name: string; startedAt: number }>;
 }
 
-export function useSchedulerAdmin(): SchedulerAdminData {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [scheduler, setScheduler] = useState<SchedulerStatus | null>(null);
-  const [missions, setMissions] = useState<MissionOpsRecord[]>([]);
+export interface MissionInfo {
+  id: string;
+  missionId?: string;
+  name: string;
+  enabled: boolean;
+  status: "idle" | "running" | "success" | "failed" | "blocked";
+  lastRunStatus?: string;
+  lastRunAt?: number;
+  nextRunAt?: number;
+  runId?: string;
+  lastRunId?: string;
+  runningSince?: number;
+  schedule?: string;
+  input?: string;
+  lastError?: string;
+  error?: string;
+}
 
-  const fetchData = useCallback(async () => {
+export function useSchedulerAdmin(pollMs = 5000) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [scheduler, setScheduler] = useState<SchedulerInfo | null>(null);
+  const [missions, setMissions] = useState<MissionInfo[]>([]);
+
+  const refresh = useCallback(async () => {
     try {
-      const [statusRes, opsRes] = await Promise.all([
+      const [statusRes, missionsRes] = await Promise.all([
         fetch("/api/v2/scheduler/status"),
-        fetch("/api/v2/missions/ops"),
+        fetch("/api/v2/missions"),
       ]);
 
-      if (!statusRes.ok || !opsRes.ok) {
-        setError(true);
-        return;
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        setScheduler(statusData);
       }
 
-      const statusData = await statusRes.json();
-      const opsData = await opsRes.json();
+      if (missionsRes.ok) {
+        const missionsData = await missionsRes.json();
+        setMissions(missionsData.missions || []);
+      }
 
-      setScheduler(statusData.scheduler ?? null);
-      setMissions(opsData.missions ?? []);
-      setError(false);
-    } catch {
-      setError(true);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      await fetchData();
-      if (cancelled) return;
-    };
-    load();
-    const id = setInterval(load, 15_000);
-    return () => { cancelled = true; clearInterval(id); };
-  }, [fetchData]);
+    refresh();
+    const id = setInterval(refresh, pollMs);
+    return () => clearInterval(id);
+  }, [pollMs, refresh]);
 
-  return { loading, error, scheduler, missions, refresh: fetchData };
+  return { loading, error, scheduler, missions, refresh };
 }
