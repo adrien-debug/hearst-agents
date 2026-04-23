@@ -1,7 +1,7 @@
 /**
  * Pure model: map Halo + focal object → Manifestation Stage visual state.
  * Halo core mapping uses only: idle | thinking | executing | waiting_approval | degraded | success
- * (no legacy "processing" or other aliases).
+ * Status machine for focal object manifestation.
  */
 
 import type { FocalObjectStatus } from "@/lib/right-panel/objects";

@@ -1,6 +1,5 @@
 /**
- * @deprecated Legacy admin single-run page (reads from Supabase v1 runs table).
- * Will be superseded by a v2 admin panel reading from /api/v2/runs/[id].
+ * Admin Run Detail Page
  */
 import { notFound } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase-server";

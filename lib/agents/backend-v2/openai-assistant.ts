@@ -30,7 +30,7 @@ export interface AssistantConfig {
   name?: string;
   description?: string;
   instructions?: string;
-  tools?: OpenAI.Beta.AssistantCreateParams.AssistantTools[];
+  tools?: OpenAI.Beta.AssistantTool[];
   fileIds?: string[];
   metadata?: Record<string, string>;
 }
@@ -121,7 +121,7 @@ export async function runAssistant(
   options?: {
     instructions?: string;
     additionalInstructions?: string;
-    tools?: OpenAI.Beta.AssistantCreateParams.AssistantTools[];
+    tools?: OpenAI.Beta.AssistantTool[];
     maxCompletionTokens?: number;
     timeoutMs?: number;
   },
@@ -129,7 +129,11 @@ export async function runAssistant(
   runId: string;
   status: string;
   messages: OpenAI.Beta.Threads.Message[];
-  usage?: OpenAI.Beta.Runs.Run.Usage;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }> {
   // Validation
   if (!threadId || typeof threadId !== 'string') {
@@ -210,7 +214,7 @@ export async function* streamRun(
   options?: {
     instructions?: string;
     additionalInstructions?: string;
-    tools?: OpenAI.Beta.AssistantCreateParams.AssistantTools[];
+    tools?: OpenAI.Beta.AssistantTool[];
     maxCompletionTokens?: number;
     onToolCall?: (toolCall: OpenAI.Beta.Threads.Runs.RequiredActionFunctionToolCall) => Promise<string>;
   },
@@ -229,9 +233,10 @@ export async function* streamRun(
     });
 
     for await (const event of stream) {
-      // Extraire runId du premier event
-      if (!runId && "data" in event && event.data?.id) {
-        runId = event.data.id;
+      // Extraire runId du premier event (uniquement pour ThreadRunCreated)
+      if (!runId && event.event === "thread.run.created") {
+        const runData = event.data as { id: string };
+        runId = runData.id;
       }
 
       // Mapper les events OpenAI vers ManagedAgentEvent
@@ -264,7 +269,8 @@ export async function* streamRun(
           );
 
           // Soumettre les résultats
-          await client.beta.threads.runs.submitToolOutputs(threadId, runId!, {
+          await client.beta.threads.runs.submitToolOutputs(runId!, {
+            thread_id: threadId,
             tool_outputs: outputs,
           });
 
