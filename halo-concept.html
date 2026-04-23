@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearst OS - Premium Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Animation subtile pour le halo */
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.25; transform: scale(1.05); }
+        }
+        .halo-animate { animation: pulse-slow 8s ease-in-out infinite; }
+    </style>
+</head>
+<body class="bg-[#050505] text-white h-screen w-full overflow-hidden flex antialiased selection:bg-cyan-500/30">
+
+    <!-- SIDEBAR GAUCHE (Verre fumé) -->
+    <aside class="w-64 flex-shrink-0 flex flex-col border-r border-white/[0.08] bg-white/[0.01] backdrop-blur-2xl z-20">
+        <!-- Header Profil -->
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center font-bold text-sm shadow-[0_0_15px_rgba(34,211,238,0.3)]">H</div>
+            <div>
+                <h1 class="text-sm font-semibold tracking-wide text-white">Hearst OS</h1>
+                <p class="text-xs text-zinc-400">Bonjour, Adrien</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-4 py-2 space-y-1">
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all">
+                <div class="w-4 h-4 rounded-full border border-current opacity-70"></div>
+                <span class="text-sm font-medium">Accueil</span>
+            </a>
+            <!-- Item Actif -->
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-white bg-white/[0.06] border border-white/[0.05] shadow-sm transition-all">
+                <div class="w-4 h-4 rounded-sm bg-current opacity-80"></div>
+                <span class="text-sm font-medium">Messages</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all">
+                <div class="w-4 h-4 rounded-full border border-current opacity-70"></div>
+                <span class="text-sm font-medium">Agenda</span>
+            </a>
+        </nav>
+
+        <!-- Section Conversations -->
+        <div class="px-4 py-6">
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-3 px-3">Conversations</h3>
+            <div class="space-y-1">
+                <a href="#" class="block px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-white hover:bg-white/[0.04] transition-all">Nouveau</a>
+                <a href="#" class="block px-3 py-2 rounded-lg text-sm text-white bg-white/[0.04] transition-all">Accueil</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ZONE CENTRALE (Le Halo et l'Input) -->
+    <main class="flex-1 relative flex flex-col z-10">
+        <!-- LE HALO EFFECT (Le secret du rendu premium) -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden">
+            <!-- Halo principal Cyan/Bleu -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.15)_0%,rgba(37,99,235,0.05)_30%,transparent_70%)] blur-3xl halo-animate"></div>
+        </div>
+
+        <!-- Top Bar (Bouton d'action) -->
+        <div class="p-6 flex justify-end relative z-20">
+            <button class="px-5 py-2.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-sm font-medium hover:bg-cyan-500/20 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all duration-300 backdrop-blur-md">
+                Résumer mes emails
+            </button>
+        </div>
+
+        <!-- Espace vide central pour le contenu futur -->
+        <div class="flex-1"></div>
+
+        <!-- Input Bar (Slick & Effortless) -->
+        <div class="p-8 relative z-20 max-w-4xl w-full mx-auto">
+            <div class="relative group">
+                <!-- Glow derrière l'input au hover/focus -->
+                <div class="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                
+                <!-- L'input -->
+                <div class="relative flex items-center bg-[#0A0A0C]/80 backdrop-blur-2xl border border-white/[0.12] rounded-2xl px-5 py-4 shadow-2xl transition-all duration-300 group-hover:border-white/[0.2]">
+                    <input 
+                        type="text" 
+                        placeholder="Rechercher dans vos messages..." 
+                        class="w-full bg-transparent text-white placeholder-zinc-500 text-base focus:outline-none"
+                    >
+                    <!-- Icône/Loader -->
+                    <div class="w-5 h-5 rounded-full border-2 border-cyan-500/30 border-t-cyan-400 animate-spin ml-3"></div>
+                </div>
+            </div>
+            <p class="text-center text-[11px] text-zinc-600 mt-4 tracking-wide">Entrée pour envoyer · Maj+Entrée pour nouvelle ligne</p>
+        </div>
+    </main>
+
+    <!-- SIDEBAR DROITE (Runtime & Logs) -->
+    <aside class="w-80 flex-shrink-0 border-l border-white/[0.08] bg-white/[0.01] backdrop-blur-2xl p-6 flex flex-col gap-8 z-20 overflow-y-auto custom-scrollbar">
+        
+        <!-- Runtime Status -->
+        <div>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Runtime</h3>
+                <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></div>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="flex items-center gap-2 text-cyan-400">
+                    <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+                    <span class="text-sm font-medium">En cours...</span>
+                </div>
+                
+                <!-- Progress Bar Premium -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-[10px] uppercase tracking-wider text-zinc-500">
+                        <span>Error</span>
+                    </div>
+                    <div class="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-cyan-400 w-2/3 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.5)] relative">
+                            <!-- Effet de brillance sur la barre -->
+                            <div class="absolute top-0 right-0 bottom-0 left-0 bg-gradient-to-r from-transparent to-white/30"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Runs -->
+        <div>
+            <h3 class="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-4">Runs Récents</h3>
+            <div class="space-y-3">
+                <!-- Card Run -->
+                <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05] transition-all cursor-pointer group">
+                    <h4 class="text-sm text-zinc-200 font-medium mb-2 group-hover:text-white transition-colors">ml</h4>
+                    <div class="flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                        <span class="text-[11px] text-zinc-400 uppercase tracking-wider">Completed</span>
+                    </div>
+                </div>
+
+                <!-- Card Run -->
+                <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.05] transition-all cursor-pointer group">
+                    <h4 class="text-sm text-zinc-200 font-medium mb-2 group-hover:text-white transition-colors">Résumer mes emails</h4>
+                    <div class="flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                        <span class="text-[11px] text-zinc-400 uppercase tracking-wider">Completed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+</body>
+</html>
