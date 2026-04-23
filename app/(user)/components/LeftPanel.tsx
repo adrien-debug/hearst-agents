@@ -1,7 +1,7 @@
 "use client";
 
 import { useNavigationStore, type Surface } from "@/stores/navigation";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 
 const SURFACES: { id: Surface; label: string; icon: string }[] = [
@@ -19,7 +19,12 @@ export function LeftPanel() {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const firstName = session?.user?.name?.split(" ")[0] || "Utilisateur";
-  const activeThreads = threads.filter(t => t.lastActivity > Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const [now] = useState(() => Date.now());
+  const activeThreads = threads.filter(t => t.lastActivity > now - 7 * 24 * 60 * 60 * 1000);
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/login" });
+  };
 
   return (
     <aside className={`${isExpanded ? "w-[240px]" : "w-[60px]"} bg-[#111] border-r border-white/[0.06] flex flex-col transition-all duration-200`}>
@@ -29,10 +34,28 @@ export function LeftPanel() {
           {isExpanded && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">Hearst OS</p>
-              <p className="text-[10px] text-white/40 truncate">Bonjour, {firstName}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-white/40 truncate">Bonjour, {firstName}</p>
+                <button
+                  onClick={handleLogout}
+                  className="text-[10px] text-white/30 hover:text-red-400 transition-colors ml-2"
+                  title="Déconnexion"
+                >
+                  →
+                </button>
+              </div>
             </div>
           )}
         </div>
+        {!isExpanded && (
+          <button
+            onClick={handleLogout}
+            className="mt-2 w-full text-center text-[10px] text-white/30 hover:text-red-400 transition-colors"
+            title="Déconnexion"
+          >
+            →
+          </button>
+        )}
       </div>
 
       <nav className="p-2 space-y-0.5">

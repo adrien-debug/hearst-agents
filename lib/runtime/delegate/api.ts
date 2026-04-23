@@ -162,7 +162,10 @@ async function fetchGmailData(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg === "not_authenticated" || msg === "token_revoked") {
-      return null; // Auth error = silent fail, no injection
+      return {
+        providerData: "[Gmail] Accès non autorisé — veuillez reconnecter votre compte Google.",
+        providerUsed: "gmail",
+      };
     }
     console.error("[Delegate/Gmail] error:", msg);
     return null; // Error = silent fail, no injection

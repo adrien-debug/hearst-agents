@@ -1,11 +1,13 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
-import { useNavigationStore } from "@/stores/navigation";
+import { useNavigationStore, type Message } from "@/stores/navigation";
 import { FocalStage } from "./components/FocalStage";
 import { ChatInput } from "./components/ChatInput";
+import { ChatMessages } from "./components/ChatMessages";
 
 function greeting() {
   const h = new Date().getHours();
@@ -23,10 +25,41 @@ export default function HomePage() {
   const startRun = useRuntimeStore((s) => s.startRun);
   const surface = useNavigationStore((s) => s.surface);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
+  const messages = useNavigationStore((s) => 
+    activeThreadId ? s.messages[activeThreadId] || [] : []
+  );
+  const addMessageToThread = useNavigationStore((s) => s.addMessageToThread);
+  const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
   const firstName = session?.user?.name?.split(" ")[0];
 
-  const handleSubmit = async (message: string) => {
+  const assistantBufferRef = useRef<string>("");
+  const currentAssistantIdRef = useRef<string | null>(null);
+
+  const handleSubmit = useCallback(async (message: string) => {
+    if (!activeThreadId) return;
+    
     const runId = `run-${Date.now()}`;
+    
+    // Add user message to current thread
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: message,
+    };
+    addMessageToThread(activeThreadId, userMessage);
+    
+    // Reset assistant buffer for new run
+    assistantBufferRef.current = "";
+    currentAssistantIdRef.current = `assistant-${Date.now()}`;
+    
+    // Add initial empty assistant message
+    const assistantMessage: Message = {
+      id: currentAssistantIdRef.current,
+      role: "assistant",
+      content: "",
+    };
+    addMessageToThread(activeThreadId, assistantMessage);
+    
     startRun(runId);
     try {
       const res = await fetch("/api/orchestrate", {
@@ -47,16 +80,31 @@ export default function HomePage() {
         buffer = lines.pop() ?? "";
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
-          try { const event = JSON.parse(line.slice(6)); addEvent({ ...event, run_id: runId }); } catch {}
+          try {
+            const event = JSON.parse(line.slice(6));
+            
+            // Handle text_delta events for streaming assistant responses
+            if (event.type === "text_delta" && event.delta) {
+              assistantBufferRef.current += event.delta;
+              updateMessageInThread(
+                activeThreadId,
+                currentAssistantIdRef.current!,
+                assistantBufferRef.current
+              );
+            }
+            
+            addEvent({ ...event, run_id: runId });
+          } catch {}
         }
       }
     } catch (err) {
       addEvent({ type: "run_failed", error: err instanceof Error ? err.message : "Failed", run_id: runId });
     }
-  };
+  }, [surface, activeThreadId, addEvent, startRun, addMessageToThread, updateMessageInThread]);
 
-  const isIdle = !focal && coreState === "idle";
+  const isIdle = !focal && coreState === "idle" && messages.length === 0;
   const isRunning = !focal && coreState !== "idle";
+  const hasConversation = messages.length > 0 && !focal;
 
   if (isIdle) {
     return (
@@ -77,16 +125,10 @@ export default function HomePage() {
     );
   }
 
-  if (isRunning) {
+  if (isRunning || hasConversation) {
     return (
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 flex flex-col items-center justify-center px-8">
-          <div className="text-center space-y-4">
-            <div className="w-12 h-12 rounded-full border-2 border-cyan-500/20 border-t-cyan-400 animate-spin mx-auto" />
-            <p className="text-sm text-cyan-400">{flowLabel || "Traitement en cours..."}</p>
-            <p className="text-[10px] font-mono text-white/30 uppercase">{coreState}</p>
-          </div>
-        </div>
+        <ChatMessages messages={messages} />
         <ChatInput onSubmit={handleSubmit} />
       </div>
     );
