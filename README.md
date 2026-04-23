@@ -2,6 +2,9 @@
 
 Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
+> 🚀 **Quick Start**: `npm run dev` démarre hearst-os | `npm run launch` démarre TOUS les services  
+> 📖 Guide complet: [`LAUNCHER.md`](./LAUNCHER.md)
+
 > ✅ **Phase 1 — V2 Foundation TERMINÉE (23/04/2026)**  
 > Legacy supprimé : `app/api/chat/route.ts`, `lib/orchestrator.ts`, `app/lib/missions/*`  
 > Structure V2 créée : `lib/agents/backend-v2/`, `lib/agents/sessions/`  
@@ -171,11 +174,29 @@ npx supabase db push
 npx supabase gen types typescript --project-id <ref> > lib/database.types.ts
 
 # 5. Dev
-npm run dev  # http://localhost:9000
+
+## Démarrage
+npm run dev         # Kill + redémarre hearst-os (port 9000)
+npm run dev:fresh   # Clean .next + redémarre hearst-os
+
+## Démarrage complet
+npm run launch      # 🚀 Kill + redémarre TOUT (9000, 8100, 3000)
+npm run launch:all  # Alias de launch
+npm run stop        # 🛑 Arrête tous les services
 
 # 6. Tests
-npm test     # Vitest (LLM, momentum, design tokens, …)
+npm test            # Vitest (LLM, momentum, design tokens, …)
 ```
+
+## Services et Ports
+
+| Service | Port | Description |
+|---------|------|-------------|
+| **hearst-os** | `9000` | Frontend principal + orchestration v2 |
+| **hearst-connect** | `8100` | Backend de connexion |
+| **Hearst-app** | `3000` | Landing page |
+
+**Logs**: `/tmp/hearst-{os,connect,app}.log`
 
 ### LLM — providers `composer` / `gemini`
 
@@ -763,9 +784,13 @@ docker run -p 9000:3000 --env-file .env.local hearst-agents
 
 | Commande | Description |
 |----------|-------------|
-| `npm run dev` | Serveur dev (port 9000) |
+| `npm run dev` | Kill + redémarre hearst-os uniquement (port 9000) |
+| `npm run dev:fresh` | Clean .next + redémarre hearst-os |
+| `npm run launch` | 🚀 **Lance TOUS les services** (kill + redémarre 9000, 8100, 3000) |
+| `npm run launch:all` | Alias de `npm run launch` |
+| `npm run stop` | 🛑 Arrête tous les services |
 | `npm run build` | Build production |
-| `npm start` | Serveur production |
+| `npm run start` | Serveur production |
 | `npm run lint` | ESLint (0 erreur ; des warnings peuvent rester) |
 | `npm test` | Tests (vitest) |
 | `npm run test:watch` | Tests en watch mode |

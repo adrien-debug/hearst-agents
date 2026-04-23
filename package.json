@@ -1,10 +1,13 @@
 {
-  "name": "hearst-agents",
+  "name": "hearst-os",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "mkdir -p .next && xattr -w com.apple.fileprovider.ignore#P 1 .next 2>/dev/null; next dev -p 9000",
-    "dev:fresh": "lsof -ti tcp:9000 | xargs -r kill -9 2>/dev/null; rm -rf .next && npm run dev",
+    "dev": "lsof -ti tcp:9000 | xargs kill -9 2>/dev/null; sleep 1; mkdir -p .next && xattr -w com.apple.fileprovider.ignore#P 1 .next 2>/dev/null; next dev -p 9000",
+    "dev:fresh": "lsof -ti tcp:9000 | xargs kill -9 2>/dev/null; rm -rf .next && npm run dev",
+    "launch": "./launch.sh",
+    "launch:all": "./launch.sh",
+    "stop": "./launch-stop.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
