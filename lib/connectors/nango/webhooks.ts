@@ -103,9 +103,9 @@ function extractUserIdFromConnectionId(connectionId: string): string | null {
  * Placeholder — implement based on Nango docs
  */
 export function verifyWebhookSignature(
-  payload: string,
-  signature: string,
-  secret: string
+  _payload: string,
+  _signature: string,
+  _secret: string
 ): boolean {
   // TODO: Implement HMAC signature verification when Nango supports it
   // For now, rely on IP allowlist and HTTPS

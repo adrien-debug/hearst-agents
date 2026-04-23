@@ -64,7 +64,7 @@ export default function ChatWindow({ agentId }: ChatWindowProps) {
           }
         }
       }
-    } catch (err) {
+    } catch (_err) {
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Erreur de connexion." },

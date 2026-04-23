@@ -1,11 +1,35 @@
 /**
  * Pure model: map Halo + focal object → Manifestation Stage visual state.
  * Halo core mapping uses only: idle | thinking | executing | waiting_approval | degraded | success
- * (no legacy “processing” or other aliases).
+ * (no legacy "processing" or other aliases).
  */
 
-import type { HaloCoreState, HaloArtifactSignal, HaloFlowLabel } from "@/app/lib/halo-state";
 import type { FocalObjectStatus } from "@/lib/right-panel/objects";
+
+// Types previously from halo-state.ts - inlined after dead code deletion
+export type HaloCoreState =
+  | "idle"
+  | "thinking"
+  | "executing"
+  | "waiting_approval"
+  | "degraded"
+  | "success";
+
+export interface HaloArtifactSignal {
+  status: "emerging" | "handoff" | "settled";
+}
+
+export type HaloFlowLabel =
+  | "LISTENING"
+  | "GATHERING"
+  | "SYNTHESIZING"
+  | "PREPARING"
+  | "AWAITING APPROVAL"
+  | "FINALIZING"
+  | "CHECKING"
+  | "MONITORING"
+  | "UNABLE TO RESOLVE"
+  | null;
 
 export type ManifestationVisualState = "idle_habited" | "active_condensation" | "ready_stabilized";
 
@@ -100,7 +124,7 @@ export function sublineForFlow(flow: HaloFlowLabel): string | null {
     case "MONITORING":
       return "Veille douce en arrière-plan.";
     case "UNABLE TO RESOLVE":
-      return "Un point mérite d’être précisé.";
+      return "Un point mérite d'être précisé.";
     default:
       return null;
   }
@@ -110,7 +134,7 @@ export function focalStatusSubline(status: FocalObjectStatus): string | null {
   switch (status) {
     case "composing":
     case "delivering":
-      return "L’objet prend corps.";
+      return "L'objet prend corps.";
     case "ready":
     case "awaiting_approval":
       return "Prêt à être regardé de près.";

@@ -81,7 +81,8 @@ export default function SchedulerAdminPage() {
   }, []);
 
   useEffect(() => {
-    refresh();
+    const load = () => refresh();
+    load();
     const interval = setInterval(refresh, 30000);
     return () => clearInterval(interval);
   }, [refresh]);

@@ -1,16 +1,16 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import { LeftPanel } from "./components/LeftPanel";
+import { RightPanel } from "./components/RightPanel";
 
-export default function UserLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function UserLayout({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <div className="h-screen w-full bg-black text-white flex flex-col overflow-hidden">
-        {children}
+      <div className="h-screen w-full bg-[#0a0a0a] text-white flex overflow-hidden">
+        <LeftPanel />
+        <main className="flex-1 flex flex-col min-w-0 relative">{children}</main>
+        <RightPanel />
       </div>
     </SessionProvider>
   );

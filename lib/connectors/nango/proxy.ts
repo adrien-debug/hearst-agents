@@ -95,9 +95,8 @@ export async function checkConnection(
 /**
  * Get list of active connections for a user
  */
-export async function listUserConnections(userId: string): Promise<NangoProvider[]> {
+export async function listUserConnections(_userId: string): Promise<NangoProvider[]> {
   try {
-    const nango = getNangoClient();
     // Nango list connections doesn't filter by user, we need to track in Supabase
     // This is a placeholder - actual implementation queries Supabase
     return [];

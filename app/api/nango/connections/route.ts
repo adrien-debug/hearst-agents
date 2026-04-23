@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { listActiveConnections, removeConnection } from "@/lib/connectors/nango";
+import { listActiveConnections } from "@/lib/connectors/nango";
 import { getUserId } from "@/lib/get-user-id";
 
 export const dynamic = "force-dynamic";

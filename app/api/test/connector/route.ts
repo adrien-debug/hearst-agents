@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const startTime = Date.now();
+    const _startTime = Date.now();
 
     // Exécuter l'action via le router
     const result = await executeConnector(
