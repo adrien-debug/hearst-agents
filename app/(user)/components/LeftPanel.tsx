@@ -3,20 +3,23 @@
 import { useNavigationStore, type Surface } from "@/stores/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
-const SURFACES: { id: Surface; label: string; icon: string }[] = [
-  { id: "home", label: "Accueil", icon: "◉" },
-  { id: "inbox", label: "Messages", icon: "✉" },
-  { id: "calendar", label: "Agenda", icon: "◷" },
-  { id: "files", label: "Fichiers", icon: "▦" },
-  { id: "tasks", label: "Missions", icon: "◈" },
-  { id: "apps", label: "Apps", icon: "◇" },
+const SURFACES: { id: Surface; label: string; icon: string; path: string }[] = [
+  { id: "home", label: "Accueil", icon: "◉", path: "/" },
+  { id: "inbox", label: "Messages", icon: "✉", path: "/inbox" },
+  { id: "calendar", label: "Agenda", icon: "◷", path: "/calendar" },
+  { id: "files", label: "Fichiers", icon: "▦", path: "/files" },
+  { id: "tasks", label: "Missions", icon: "◈", path: "/missions" },
+  { id: "apps", label: "Apps", icon: "◇", path: "/apps" },
 ];
 
 export function LeftPanel() {
   const { data: session } = useSession();
   const { surface, setSurface, threads, activeThreadId, setActiveThread, addThread } = useNavigationStore();
   const [isExpanded, setIsExpanded] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const firstName = session?.user?.name?.split(" ")[0] || "Utilisateur";
   const [now] = useState(() => Date.now());
@@ -59,18 +62,24 @@ export function LeftPanel() {
       </div>
 
       <nav className="p-2 space-y-0.5">
-        {SURFACES.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setSurface(s.id)}
-            className={`w-full flex items-center gap-3 px-2 py-1.5 rounded-md text-sm transition-colors ${
-              surface === s.id ? "bg-white/10 text-white" : "text-white/50 hover:text-white hover:bg-white/5"
-            }`}
-          >
-            <span className="w-5 text-center">{s.icon}</span>
-            {isExpanded && <span className="truncate">{s.label}</span>}
-          </button>
-        ))}
+        {SURFACES.map((s) => {
+          const isActive = pathname === s.path || (s.path !== "/" && pathname?.startsWith(s.path));
+          return (
+            <button
+              key={s.id}
+              onClick={() => {
+                setSurface(s.id);
+                router.push(s.path);
+              }}
+              className={`w-full flex items-center gap-3 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                isActive ? "bg-white/10 text-white" : "text-white/50 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <span className="w-5 text-center">{s.icon}</span>
+              {isExpanded && <span className="truncate">{s.label}</span>}
+            </button>
+          );
+        })}
       </nav>
 
       {isExpanded && (
