@@ -11,7 +11,11 @@ import type {
   ManagedAgentEvent,
 } from "./types";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _client: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (!_client) _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _client;
+}
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -46,7 +50,7 @@ export async function generateResponse(
 }> {
   const startTime = Date.now();
 
-  const response = await client.responses.create({
+  const response = await getClient().responses.create({
     model: config.model,
     input: inputs.map(i => ({
       role: i.role,
@@ -97,7 +101,7 @@ export async function* streamResponse(
 ): AsyncGenerator<ManagedAgentEvent> {
   const startTime = Date.now();
 
-  const stream = await client.responses.stream({
+  const stream = await getClient().responses.stream({
     model: config.model,
     input: inputs.map(i => ({
       role: i.role,

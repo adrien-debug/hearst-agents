@@ -18,7 +18,11 @@ import type {
 } from "./types";
 import { executeTool, toOpenAITools, type ToolCallEvent } from "./openai-tools";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _client: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (!_client) _client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return _client;
+}
 
 // ── Configuration ─────────────────────────────────────────
 
@@ -54,7 +58,7 @@ export async function* streamRunWithTools(
   console.log(`[streamRunWithTools] Starting run on thread ${threadId}`);
 
   // Démarrer le streaming
-  const stream = client.beta.threads.runs.stream(threadId, {
+  const stream = getClient().beta.threads.runs.stream(threadId, {
     assistant_id: assistantId,
   });
 
@@ -148,7 +152,7 @@ export async function* streamRunWithTools(
         // Soumettre les résultats
         if (runId && outputs.length > 0) {
           console.log(`[streamRunWithTools] Submitting ${outputs.length} tool outputs`);
-          await client.beta.threads.runs.submitToolOutputs(runId, {
+          await getClient().beta.threads.runs.submitToolOutputs(runId, {
             thread_id: threadId,
             tool_outputs: outputs,
           });
@@ -297,7 +301,7 @@ export async function createAssistantSession(
   const tools = toOpenAITools();
 
   // Créer l'assistant avec tools
-  const assistant = await client.beta.assistants.create({
+  const assistant = await getClient().beta.assistants.create({
     model,
     name: name ?? "Hearst Assistant",
     instructions: instructions ?? "You are a helpful assistant with access to tools.",
@@ -305,12 +309,12 @@ export async function createAssistantSession(
   });
 
   // Créer le thread
-  const thread = await client.beta.threads.create();
+  const thread = await getClient().beta.threads.create();
 
   // Ajouter messages initiaux
   if (initialMessages && initialMessages.length > 0) {
     for (const msg of initialMessages) {
-      await client.beta.threads.messages.create(thread.id, {
+      await getClient().beta.threads.messages.create(thread.id, {
         role: msg.role,
         content: msg.content,
       });
@@ -333,7 +337,7 @@ export async function* runAssistantSession(
   config?: StreamingConfig,
 ): AsyncGenerator<ManagedAgentEvent | ToolCallEvent> {
   // Ajouter le message utilisateur
-  await client.beta.threads.messages.create(session.threadId, {
+  await getClient().beta.threads.messages.create(session.threadId, {
     role: "user",
     content: userMessage,
   });

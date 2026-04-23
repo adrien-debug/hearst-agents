@@ -16,12 +16,15 @@ import type {
 
 // ── Configuration ─────────────────────────────────────────
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-if (!OPENAI_API_KEY) {
-  console.warn("[OpenAIAssistant] OPENAI_API_KEY not set");
+let _client: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (!_client) {
+    const key = process.env.OPENAI_API_KEY;
+    if (!key) console.warn("[OpenAIAssistant] OPENAI_API_KEY not set");
+    _client = new OpenAI({ apiKey: key });
+  }
+  return _client;
 }
-
-const client = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 // ── Types Internes ────────────────────────────────────────
 
@@ -50,7 +53,7 @@ export interface ThreadMessage {
 export async function createOrGetAssistant(
   config: AssistantConfig,
 ): Promise<string> {
-  const assistant = await client.beta.assistants.create({
+  const assistant = await getClient().beta.assistants.create({
     model: config.model,
     name: config.name ?? "Hearst Assistant",
     description: config.description,
@@ -76,13 +79,13 @@ export async function createThread(
   console.log("[createThread] Starting with messages:", messages?.length ?? 0);
 
   // Créer le thread sans messages d'abord
-  const thread = await client.beta.threads.create();
+  const thread = await getClient().beta.threads.create();
   console.log("[createThread] Thread created:", thread.id);
 
   // Ajouter les messages séparément si nécessaire
   if (messages && messages.length > 0) {
     for (const msg of messages) {
-      await client.beta.threads.messages.create(thread.id, {
+      await getClient().beta.threads.messages.create(thread.id, {
         role: msg.role,
         content: msg.content,
       });
@@ -100,7 +103,7 @@ export async function addMessageToThread(
   threadId: string,
   message: ThreadMessage,
 ): Promise<string> {
-  const msg = await client.beta.threads.messages.create(threadId, {
+  const msg = await getClient().beta.threads.messages.create(threadId, {
     role: message.role,
     content: message.content,
     attachments: message.attachments,
@@ -146,7 +149,7 @@ export async function runAssistant(
   console.log(`[runAssistant] Creating run on thread ${threadId} with assistant ${assistantId}`);
 
   // Créer le run
-  let run = await client.beta.threads.runs.create(threadId, {
+  let run = await getClient().beta.threads.runs.create(threadId, {
     assistant_id: assistantId,
     instructions: options?.instructions,
     additional_instructions: options?.additionalInstructions,
@@ -170,7 +173,7 @@ export async function runAssistant(
     console.log(`[runAssistant] Polling run ${runId} on thread ${threadId}, status: ${run.status}`);
 
     // Nouvelle signature SDK: retrieve(runId, { thread_id: threadId })
-    const retrieved = await client.beta.threads.runs.retrieve(runId, {
+    const retrieved = await getClient().beta.threads.runs.retrieve(runId, {
       thread_id: threadId,
     });
     run = retrieved;
@@ -189,7 +192,7 @@ export async function runAssistant(
   }
 
   // Récupérer les messages
-  const messages = await client.beta.threads.messages.list(threadId, {
+  const messages = await getClient().beta.threads.messages.list(threadId, {
     order: "desc",
     limit: 50,
   });
@@ -224,7 +227,7 @@ export async function* streamRun(
 
   try {
     // Créer le run avec streaming
-    const stream = client.beta.threads.runs.stream(threadId, {
+    const stream = getClient().beta.threads.runs.stream(threadId, {
       assistant_id: assistantId,
       instructions: options?.instructions,
       additional_instructions: options?.additionalInstructions,
@@ -269,7 +272,7 @@ export async function* streamRun(
           );
 
           // Soumettre les résultats
-          await client.beta.threads.runs.submitToolOutputs(runId!, {
+          await getClient().beta.threads.runs.submitToolOutputs(runId!, {
             thread_id: threadId,
             tool_outputs: outputs,
           });
