@@ -14,8 +14,8 @@ import type { ManagedAgentEvent } from "../agents/backend-v2/types";
 import { RunEventBus } from "../events/bus";
 import { SSEAdapter } from "../events/consumers/sse-adapter";
 import { SYSTEM_CONFIG } from "../system/config";
-import { toOpenAITools, type ToolDefinition } from "../agents/backend-v2/openai-tools";
-import { getConnectionsByScope } from "../connectors/control-plane/store";
+// import { toOpenAITools, type ToolDefinition } from "../agents/backend-v2/openai-tools";
+// import { getConnectionsByScope } from "../connectors/control-plane/store";
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -163,20 +163,7 @@ async function runV2Pipeline(
   });
 
   try {
-    // 1. Detect Context (inbox, calendar, files, etc.)
-    const toolContext = detectToolContext(input.message, input.surface);
-    const availableConnectors = await getAvailableConnectors(input.userId, input.tenantId, input.workspaceId);
-    const hasRelevantConnector = !!(toolContext && availableConnectors.includes(toolContext));
-
-    if (toolContext) {
-      eventBus.emit({
-        type: "orchestrator_log",
-        run_id: runId,
-        message: `[V2] Context detected: ${toolContext} | Connector available: ${hasRelevantConnector ? "YES" : "NO"}`,
-      });
-    }
-
-    // 2. Backend Selection
+    // 1. Backend Selection (tool context detection temporairement désactivé)
     const selectionStart = Date.now();
     const selection = selectBackend(
       { prompt: input.message },
@@ -199,34 +186,23 @@ async function runV2Pipeline(
       });
     }
 
-    // Force Assistants API if tools/connectors needed
-    let selectedBackend = selection.selectedBackend;
-    if (hasRelevantConnector && selectedBackend === "openai_responses") {
-      eventBus.emit({
-        type: "orchestrator_log",
-        run_id: runId,
-        message: `[V2] Switching to openai_assistants for tool support`,
-      });
-      selectedBackend = "openai_assistants";
-    }
-
     // 2. Session Creation
     const sessionStart = Date.now();
     const manager = SessionManager.getInstance();
 
     const session = input.forceBackend
-      ? await manager.createWithBackend(selectedBackend, {
+      ? await manager.createWithBackend(selection.selectedBackend, {
           userId: input.userId,
           tenantId: input.tenantId,
           workspaceId: input.workspaceId,
-          systemPrompt: buildSystemPrompt(input.surface, hasRelevantConnector, toolContext),
+          systemPrompt: buildSystemPrompt(input.surface),
           streaming: input.streaming ?? true,
         })
       : await manager.create(input.message, {
           userId: input.userId,
           tenantId: input.tenantId,
           workspaceId: input.workspaceId,
-          systemPrompt: buildSystemPrompt(input.surface, hasRelevantConnector, toolContext),
+          systemPrompt: buildSystemPrompt(input.surface),
           streaming: input.streaming ?? true,
         });
 
@@ -421,48 +397,50 @@ async function persistConversation(
 }
 
 // ── Tool Context Detection ──────────────────────────────────
+// Temporairement désactivé pour permettre le déploiement
 
-const CONTEXT_KEYWORDS: Array<{ context: string; keywords: string[] }> = [
-  { context: "inbox", keywords: ["email", "emails", "message", "mail", "inbox", "gmail", "courrier", "résumé", "résumer"] },
-  { context: "calendar", keywords: ["agenda", "réunion", "calendrier", "événement", "planning", "rdv", "rendez-vous"] },
-  { context: "files", keywords: ["fichier", "fichiers", "document", "documents", "drive", "pdf", "doc"] },
-];
+// const CONTEXT_KEYWORDS: Array<{ context: string; keywords: string[] }> = [
+//   { context: "inbox", keywords: ["email", "emails", "message", "mail", "inbox", "gmail", "courrier", "résumé", "résumer"] },
+//   { context: "calendar", keywords: ["agenda", "réunion", "calendrier", "événement", "planning", "rdv", "rendez-vous"] },
+//   { context: "files", keywords: ["fichier", "fichiers", "document", "documents", "drive", "pdf", "doc"] },
+// ];
 
-function detectToolContext(message: string, surface?: string): string | null {
-  // First check surface
-  if (surface && surface !== "home") {
-    if (["inbox", "calendar", "files"].includes(surface)) {
-      return surface;
-    }
-  }
+// function detectToolContext(message: string, surface?: string): string | null {
+//   // First check surface
+//   if (surface && surface !== "home") {
+//     if (["inbox", "calendar", "files"].includes(surface)) {
+//       return surface;
+//     }
+//   }
 
-  // Then check message keywords
-  const lower = message.toLowerCase();
-  for (const { context, keywords } of CONTEXT_KEYWORDS) {
-    if (keywords.some(kw => lower.includes(kw))) {
-      return context;
-    }
-  }
+//   // Then check message keywords
+//   const lower = message.toLowerCase();
+//   for (const { context, keywords } of CONTEXT_KEYWORDS) {
+//     if (keywords.some(kw => lower.includes(kw))) {
+//       return context;
+//     }
+//   }
 
-  return null;
-}
+//   return null;
+// }
 
 // ── Connector Availability ─────────────────────────────────
+// Temporairement désactivé pour permettre le déploiement
 
-async function getAvailableConnectors(userId: string, tenantId?: string, workspaceId?: string): Promise<string[]> {
-  try {
-    const connections = await getConnectionsByScope({
-      tenantId: tenantId || "dev-tenant",
-      workspaceId: workspaceId || "dev-workspace",
-      userId,
-    });
-    return connections
-      .filter(c => c.status === "connected")
-      .map(c => c.provider);
-  } catch {
-    return [];
-  }
-}
+// async function getAvailableConnectors(userId: string, tenantId?: string, workspaceId?: string): Promise<string[]> {
+//   try {
+//     const connections = await getConnectionsByScope({
+//       tenantId: tenantId || "dev-tenant",
+//       workspaceId: workspaceId || "dev-workspace",
+//       userId,
+//     });
+//     return connections
+//       .filter(c => c.status === "connected")
+//       .map(c => c.provider);
+//   } catch {
+//     return [];
+//   }
+// }
 
 // ── Feature Flags ─────────────────────────────────────────────
 
