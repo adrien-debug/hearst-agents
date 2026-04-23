@@ -1,18 +1,13 @@
 /**
- * Unified Orchestrator Entry — Routes to v2 or legacy pipeline based on config.
+ * Orchestrator Entry — v2 SSE Pipeline.
  *
- * v2 pipeline: orchestrate() → ReadableStream (SSE)
- * v1 pipeline: runOrchestrator() → OrchestratorResult (pre-LLM classification)
- *
- * /api/orchestrate uses orchestrateV2() (SSE stream).
- * /api/chat uses the legacy pipeline directly (not routed here yet).
+ * Canonical entry point for the orchestration engine.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SYSTEM_CONFIG } from "@/lib/system/config";
 import { orchestrate } from "./index";
 
-export interface UnifiedOrchestrateInput {
+export interface OrchestrateInput {
   userId: string;
   message: string;
   conversationId?: string;
@@ -26,18 +21,12 @@ export interface UnifiedOrchestrateInput {
 }
 
 /**
- * Unified entry point for the v2 SSE orchestration pipeline.
+ * Entry point for the v2 SSE orchestration pipeline.
  * Returns a ReadableStream suitable for SSE responses.
  */
 export function orchestrateV2(
   db: SupabaseClient,
-  input: UnifiedOrchestrateInput,
+  input: OrchestrateInput,
 ): ReadableStream {
-  if (!SYSTEM_CONFIG.useV2Orchestrator) {
-    throw new Error(
-      "[UnifiedOrchestrator] v2 orchestrator is disabled — enable SYSTEM_CONFIG.useV2Orchestrator",
-    );
-  }
-
   return orchestrate(db, input);
 }

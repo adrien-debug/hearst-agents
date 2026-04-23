@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
@@ -25,9 +25,10 @@ export default function HomePage() {
   const startRun = useRuntimeStore((s) => s.startRun);
   const surface = useNavigationStore((s) => s.surface);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
-  const messages = useNavigationStore((s) => 
-    activeThreadId ? s.messages[activeThreadId] || [] : []
+  const messagesRaw = useNavigationStore((s) => 
+    activeThreadId ? s.messages[activeThreadId] : undefined
   );
+  const messages = useMemo(() => messagesRaw ?? [], [messagesRaw]);
   const addMessageToThread = useNavigationStore((s) => s.addMessageToThread);
   const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
   const firstName = session?.user?.name?.split(" ")[0];

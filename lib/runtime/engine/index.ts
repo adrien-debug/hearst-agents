@@ -3,9 +3,6 @@
  *
  * Centralizes Run lifecycle, sub-managers, and event emission.
  * No code outside RunEngine should write directly to run-related tables.
- *
- * Coexists with the legacy RunTracer (lib/runtime/tracer.ts).
- * In Phase 1, both are used in /api/chat. Phase 3 retires RunTracer.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";

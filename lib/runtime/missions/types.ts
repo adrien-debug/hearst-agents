@@ -1,8 +1,7 @@
 /**
  * Scheduled Mission types — recurring automations executed via the orchestrator.
  *
- * Distinct from app/lib/missions (client-side, user-triggered, legacy pipeline).
- * These are server-side scheduled missions that run through the v2 orchestrator.
+ * Server-side scheduled missions that run through the orchestrator.
  */
 
 export interface ScheduledMission {

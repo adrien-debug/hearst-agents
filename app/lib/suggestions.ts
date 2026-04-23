@@ -5,7 +5,7 @@
 
 import type { UnifiedMessage } from "@/lib/connectors/unified-types";
 
-// Types locaux — indépendants du système de missions legacy
+// Types locaux
 export type ActionStatus = "waiting" | "running" | "completed" | "failed";
 
 export interface MissionAction {

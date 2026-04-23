@@ -1,8 +1,7 @@
 /**
- * Run Engine v2 — Core types.
+ * Run Engine — Core types.
  *
- * These types define the new Run/Step/Approval/Artifact/Cost model.
- * They coexist with the legacy RunTracer types in lib/domain/types.ts.
+ * These types define the Run/Step/Approval/Artifact/Cost model.
  */
 
 // ── Run ──────────────────────────────────────────────────

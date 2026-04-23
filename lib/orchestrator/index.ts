@@ -6,8 +6,6 @@
  * 2. Create RunEngine
  * 3. Dispatch to the appropriate handler based on mode
  * 4. Stream results via SSE
- *
- * Coexists with the legacy chat pipeline in /api/chat.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";

@@ -45,13 +45,6 @@ export function getCapabilityProviders(capability: Capability): string[] {
   return getProvidersByCapability(capability).map((p) => p.id);
 }
 
-/** @deprecated Use getCapabilityProviders() instead */
-export const CAPABILITY_PROVIDERS: Record<string, string[]> = {
-  messaging: ["gmail", "slack"],
-  calendar: ["google_calendar"],
-  files: ["google_drive"],
-};
-
 /**
  * Provider → token-store key.
  * Now derived from the Provider Registry.
@@ -59,14 +52,6 @@ export const CAPABILITY_PROVIDERS: Record<string, string[]> = {
 export function getTokenBucket(provider: string): string {
   return getProviderTokenBucket(provider);
 }
-
-/** @deprecated Use getTokenBucket() instead */
-export const PROVIDER_TO_TOKEN: Record<string, string> = {
-  gmail: "google",
-  google_calendar: "google",
-  google_drive: "google",
-  slack: "slack",
-};
 
 /**
  * Human-readable labels for capabilities (used in blocked messages).

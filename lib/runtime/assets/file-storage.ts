@@ -2,7 +2,6 @@
  * Asset File Storage — simple local filesystem storage for generated artifacts.
  *
  * Files are stored under `.runtime-assets/<tenantId>/<runId>/<fileName>`.
- * No cloud storage in v1 — local only.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, statSync } from "fs";

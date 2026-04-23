@@ -23,8 +23,24 @@ export type {
 
 export { BACKEND_CAPABILITIES } from "./types";
 
-// Implementation exports (to be implemented)
+// ── OpenAI Assistants Backend ────────────────────────────────
+
+export {
+  createOrGetAssistant,
+  createThread,
+  addMessageToThread,
+  runAssistant,
+  streamRun,
+  runOpenAIAssistantSession,
+  testAssistantBackend,
+  type AssistantConfig,
+  type ThreadMessage,
+} from "./openai-assistant";
+
+// ── Future Implementations ──────────────────────────────────
+
 // export { BackendSelector } from "./selector";
 // export { HybridRouter } from "./hybrid-router";
 // export { AnthropicBackend } from "./anthropic-backend";
-// export { OpenAIBackend } from "./openai-backend";
+// export { OpenAIResponsesBackend } from "./openai-responses";
+// export { OpenAIComputerUseBackend } from "./openai-computer-use";
