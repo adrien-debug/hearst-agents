@@ -19,6 +19,8 @@ export type {
   HybridStep,
   HandoffContext,
   HandoffResult,
+  TaskAnalysis,
+  BackendScore,
 } from "./types";
 
 export { BACKEND_CAPABILITIES } from "./types";
@@ -74,9 +76,39 @@ export {
   type ResponseInput,
 } from "./openai-responses";
 
+// ── OpenAI Computer Use API Backend ──────────────────────────
+
+export {
+  createComputerSession,
+  encodeImageToBase64,
+  executeComputerStep,
+  runComputerTask,
+  createMockScreenshot,
+  mockExecuteAction,
+  testComputerUseBackend,
+  testComputerUseWithMock,
+  type ComputerUseConfig,
+  type Screenshot,
+  type ComputerAction,
+  type ComputerSession,
+} from "./openai-computer-use";
+
+// ── Backend Selector ────────────────────────────────────────
+
+export {
+  analyzeTask,
+  scoreBackends,
+  selectBackend,
+  planHybridExecution,
+  isBackendAvailable,
+  listAvailableBackends,
+  recommendFor,
+  testSelector,
+  testHybridPlanning,
+  type SelectorConfig,
+} from "./selector";
+
 // ── Future Implementations ──────────────────────────────────
 
-// export { BackendSelector } from "./selector";
 // export { HybridRouter } from "./hybrid-router";
 // export { AnthropicBackend } from "./anthropic-backend";
-// export { OpenAIComputerUseBackend } from "./openai-computer-use";

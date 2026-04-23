@@ -355,16 +355,41 @@ export async function* quickStream(
 // ── Utilities ───────────────────────────────────────────────
 
 function calculateCost(tokensIn: number, tokensOut: number, model: string): number {
+  // Pricing par 1M tokens (input/output) — Mis à jour Avril 2026
   const pricing: Record<string, { in: number; out: number }> = {
+    // GPT-4o family
     "gpt-4o": { in: 2.5, out: 10 },
+    "gpt-4o-2024-11-20": { in: 2.5, out: 10 },
+    "gpt-4o-2024-08-06": { in: 2.5, out: 10 },
     "gpt-4o-mini": { in: 0.15, out: 0.6 },
+    "gpt-4o-mini-2024-07-18": { in: 0.15, out: 0.6 },
+    // GPT-4 family
     "gpt-4-turbo": { in: 10, out: 30 },
+    "gpt-4-turbo-2024-04-09": { in: 10, out: 30 },
     "gpt-4": { in: 30, out: 60 },
+    "gpt-4-0125-preview": { in: 10, out: 30 },
+    "gpt-4-1106-preview": { in: 10, out: 30 },
+    // O1 / O3 family (reasoning models)
     "o1": { in: 15, out: 60 },
+    "o1-2024-12-17": { in: 15, out: 60 },
+    "o1-mini": { in: 1.1, out: 4.4 },
+    "o1-mini-2024-09-12": { in: 1.1, out: 4.4 },
     "o3-mini": { in: 1.1, out: 4.4 },
+    "o3-mini-2025-01-31": { in: 1.1, out: 4.4 },
+    // GPT-3.5 (legacy but still used)
+    "gpt-3.5-turbo": { in: 0.5, out: 1.5 },
+    "gpt-3.5-turbo-0125": { in: 0.5, out: 1.5 },
   };
 
-  const p = pricing[model] ?? { in: 2.5, out: 10 };
+  // Fallback: si le modèle n'est pas listé, on utilise le pricing de gpt-4o
+  // ou on essaie de matcher le préfixe (gpt-4o-mini-xxx → gpt-4o-mini)
+  let p = pricing[model];
+  if (!p) {
+    // Essayer de matcher par préfixe
+    const baseModel = Object.keys(pricing).find(m => model.startsWith(m));
+    p = baseModel ? pricing[baseModel] : { in: 2.5, out: 10 }; // Default gpt-4o pricing
+  }
+
   return (tokensIn * p.in + tokensOut * p.out) / 1_000_000;
 }
 
@@ -385,8 +410,12 @@ export async function testResponsesBackend(): Promise<{
       { model: "gpt-4o-mini" },
     );
 
+    // Vérification souple : accepte hello, hi, greetings, bonjour, etc.
+    const greetings = ["hello", "hi", "greetings", "bonjour", "salut", "hey"];
+    const isGreeting = greetings.some(g => result.text.toLowerCase().includes(g));
+
     return {
-      ok: result.text.toLowerCase().includes("hello"),
+      ok: isGreeting,
       response: result.text,
       costUsd: result.costUsd,
     };

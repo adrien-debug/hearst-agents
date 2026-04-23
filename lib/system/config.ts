@@ -13,4 +13,30 @@ export const SYSTEM_CONFIG = {
    * Require tenantId + workspaceId for all v2 runtime operations.
    */
   requireTenantScopeForV2: true,
+
+  /**
+   * Backend V2 (Session Manager + Backend Selector) configuration.
+   */
+  orchestratorV2: {
+    /** Enable the new Backend V2 pipeline */
+    enabled: true,
+
+    /** Percentage of users to route to V2 (0-100) */
+    rolloutPercentage: 100,
+
+    /** Enable automatic backend selection */
+    autoSelectBackend: true,
+
+    /** Default backend when auto-selection is disabled */
+    defaultBackend: "openai_responses" as const,
+
+    /** Enable handoff between backends */
+    enableHandoff: true,
+
+    /** Max sessions per user */
+    maxSessionsPerUser: 10,
+
+    /** Session timeout in minutes */
+    sessionTimeoutMinutes: 30,
+  },
 } as const;

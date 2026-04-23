@@ -1,21 +1,42 @@
 /**
- * Unified Session Manager — Barrel export.
+ * Sessions Module — Unified Session Management
  *
- * Cross-provider session management with handoff capabilities.
+ * One interface for all AI backends.
  */
 
+// ── Types ───────────────────────────────────────────────────
+
 export type {
-  Session,
+  SessionMessage,
+  SessionResponse,
   SessionState,
-  SessionStore,
-  SessionManager,
-  SessionManagerEvent,
-  SessionManagerEventType,
-  SessionEventHandler,
   SessionMetrics,
+  SessionConfig,
+  UnifiedSession,
+  SessionManagerConfig,
+  SessionManagerEvent,
+  HandoffResult,
+  SessionStorage,
+  SessionFactory,
+  BackendSessionRegistry,
 } from "./types";
 
-// Implementation exports (to be implemented)
-// export { createSessionManager } from "./manager";
-// export { SupabaseSessionStore } from "./supabase-store";
-// export { MemorySessionStore } from "./memory-store";
+// ── Base Class ─────────────────────────────────────────────
+
+export { BaseSession } from "./base-session";
+
+// ── Backend Implementations ─────────────────────────────────
+
+export { OpenAIAssistantSession } from "./openai-assistant-session";
+export { OpenAIResponsesSession } from "./openai-responses-session";
+export { OpenAIComputerSession, type ScreenshotProvider } from "./openai-computer-session";
+export { AnthropicSession } from "./anthropic-session";
+
+// ── Session Manager ───────────────────────────────────────
+
+export {
+  SessionManager,
+  createSession,
+  getAllSessionMetrics,
+  closeAllSessions,
+} from "./manager";

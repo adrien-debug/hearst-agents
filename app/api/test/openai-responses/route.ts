@@ -133,10 +133,11 @@ export async function POST(req: NextRequest) {
 
       case "session-test": {
         const result = await testResponsesSession();
+        const { ok, ...restResult } = result;
         return Response.json({
           ok: result.ok,
           mode: "session-test",
-          ...result,
+          ...restResult,
           duration_ms: Date.now() - startTime,
         });
       }

@@ -17,14 +17,24 @@ export type AgentBackendV2 =
 
 export interface BackendCapabilities {
   id: AgentBackendV2;
+  name: string;
+  description: string;
   supportsStreaming: boolean;
   supportsTools: boolean;
   supportsVision: boolean;
   supportsComputerUse: boolean;
   supportsFileSearch: boolean;
   supportsCodeInterpreter: boolean;
+  /** Supports persistent thread/conversation */
+  supportsPersistence: boolean;
   maxContextWindow: number;
-  costTier: "low" | "medium" | "high";
+  /** Cost level for comparison */
+  costLevel: "low" | "medium" | "high";
+  costTier: "low" | "medium" | "high"; // Legacy alias
+  /** Latency profile */
+  latencyProfile: "fast" | "medium" | "slow";
+  /** Reasoning capability level */
+  reasoningLevel: "low" | "medium" | "high";
   /** Reliability score 0-1 based on telemetry */
   reliabilityScore: number;
   /** Average latency in ms */
@@ -36,79 +46,115 @@ export interface BackendCapabilities {
 export const BACKEND_CAPABILITIES: Record<AgentBackendV2, BackendCapabilities> = {
   hearst_runtime: {
     id: "hearst_runtime",
+    name: "Hearst Runtime",
+    description: "Internal step-by-step execution engine",
     supportsStreaming: true,
     supportsTools: true,
     supportsVision: false,
     supportsComputerUse: false,
     supportsFileSearch: false,
     supportsCodeInterpreter: false,
+    supportsPersistence: false,
     maxContextWindow: 128_000,
+    costLevel: "low",
     costTier: "low",
+    latencyProfile: "fast",
+    reasoningLevel: "medium",
     reliabilityScore: 0.98,
     avgLatencyMs: 500,
   },
   anthropic_sessions: {
     id: "anthropic_sessions",
+    name: "Anthropic Sessions",
+    description: "Claude managed sessions with 200K context",
     supportsStreaming: true,
     supportsTools: true,
     supportsVision: true,
     supportsComputerUse: false,
     supportsFileSearch: false,
     supportsCodeInterpreter: false,
+    supportsPersistence: true,
     maxContextWindow: 200_000,
+    costLevel: "medium",
     costTier: "medium",
+    latencyProfile: "medium",
+    reasoningLevel: "high",
     reliabilityScore: 0.95,
     avgLatencyMs: 2000,
   },
   openai_assistants: {
     id: "openai_assistants",
+    name: "OpenAI Assistants",
+    description: "Full-featured assistants with tools and file search",
     supportsStreaming: true,
     supportsTools: true,
     supportsVision: true,
     supportsComputerUse: false,
     supportsFileSearch: true,
     supportsCodeInterpreter: true,
+    supportsPersistence: true,
     maxContextWindow: 128_000,
+    costLevel: "medium",
     costTier: "medium",
+    latencyProfile: "medium",
+    reasoningLevel: "high",
     reliabilityScore: 0.96,
     avgLatencyMs: 1500,
   },
   openai_responses: {
     id: "openai_responses",
+    name: "OpenAI Responses",
+    description: "Fast stateless responses for simple queries",
     supportsStreaming: true,
     supportsTools: true,
     supportsVision: true,
     supportsComputerUse: false,
     supportsFileSearch: false,
     supportsCodeInterpreter: false,
+    supportsPersistence: false,
     maxContextWindow: 128_000,
+    costLevel: "low",
     costTier: "low",
+    latencyProfile: "fast",
+    reasoningLevel: "medium",
     reliabilityScore: 0.97,
     avgLatencyMs: 1000,
   },
   openai_computer_use: {
     id: "openai_computer_use",
+    name: "OpenAI Computer Use",
+    description: "Computer control with vision and actions",
     supportsStreaming: true,
     supportsTools: true,
     supportsVision: true,
     supportsComputerUse: true,
     supportsFileSearch: false,
     supportsCodeInterpreter: false,
+    supportsPersistence: false,
     maxContextWindow: 128_000,
+    costLevel: "high",
     costTier: "high",
+    latencyProfile: "slow",
+    reasoningLevel: "high",
     reliabilityScore: 0.90,
     avgLatencyMs: 5000,
   },
   hybrid: {
     id: "hybrid",
+    name: "Hybrid Router",
+    description: "Intelligent multi-backend orchestration",
     supportsStreaming: true,
     supportsTools: true,
     supportsVision: true,
     supportsComputerUse: true,
     supportsFileSearch: true,
     supportsCodeInterpreter: true,
+    supportsPersistence: true,
     maxContextWindow: 200_000,
+    costLevel: "high",
     costTier: "high",
+    latencyProfile: "medium",
+    reasoningLevel: "high",
     reliabilityScore: 0.94,
     avgLatencyMs: 3000,
   },
@@ -214,44 +260,75 @@ export interface ManagedAgentStep {
 
 export interface BackendSelectionInput {
   prompt: string;
-  context: string;
-  complexity: number; // 1-10
-  needsVision: boolean;
-  needsBrowsing: boolean;
-  needsCodeExecution: boolean;
-  needsFileSearch: boolean;
-  estimatedSteps: number;
-  userTier: "free" | "pro" | "enterprise";
+  /** Additional context about the request */
+  context?: string;
+  /** Explicit complexity if known (0-100), otherwise auto-detected */
+  complexity?: number;
+  needsVision?: boolean;
+  needsBrowsing?: boolean;
+  needsCodeExecution?: boolean;
+  needsFileSearch?: boolean;
+  needsComputerUse?: boolean;
+  estimatedSteps?: number;
+  userTier?: "free" | "pro" | "enterprise";
   /** Preferred backend if user has explicit preference */
   preferredBackend?: AgentBackendV2;
 }
 
 export interface BackendSelectionResult {
-  backend: AgentBackendV2;
-  reason: string;
+  selectedBackend: AgentBackendV2;
   confidence: number; // 0-1
-  alternatives: AgentBackendV2[];
+  reasoning: string[];
   estimatedCostUsd: number;
-  estimatedDurationMs: number;
+  estimatedLatencyMs: number;
+  /** Chain of fallback backends if primary fails */
+  fallbackChain: AgentBackendV2[];
+  routingDecision: "auto" | "forced" | "recommended";
+  /** Internal metadata for debugging */
+  _meta?: {
+    analysis: TaskAnalysis;
+    allScores: BackendScore[];
+    decisionTimeMs: number;
+  };
+}
+
+export interface TaskAnalysis {
+  complexity: number;
+  needsPersistence: boolean;
+  needsTools: boolean;
+  needsFileSearch: boolean;
+  needsCodeInterpreter: boolean;
+  needsVision: boolean;
+  needsComputerUse: boolean;
+  isSimpleQa: boolean;
+  isConversation: boolean;
+  needsRealtimeData: boolean;
+}
+
+export interface BackendScore {
+  backend: AgentBackendV2;
+  score: number;
+  confidence: number;
+  reasons: string[];
+  estimatedCostUsd: number;
+  estimatedLatencyMs: number;
+  warnings: string[];
 }
 
 // ── Hybrid Routing ───────────────────────────────────────────
 
 export interface HybridExecutionPlan {
   steps: HybridStep[];
-  totalEstimatedCost: number;
-  totalEstimatedDuration: number;
-  fallbackStrategy: "abort" | "degrade" | "retry_single";
+  totalEstimatedCostUsd: number;
+  totalEstimatedLatencyMs: number;
+  fallbackStrategy: "sequential" | "parallel" | "abort";
 }
 
 export interface HybridStep {
-  id: string;
-  intent: string;
-  selectedBackend: AgentBackendV2;
-  alternatives: AgentBackendV2[];
-  requiresApproval: boolean;
-  estimatedCostUsd: number;
-  dependencies: string[]; // Step IDs that must complete first
+  backend: AgentBackendV2;
+  task: string;
+  input: Record<string, unknown>;
+  dependsOn: string | null;
 }
 
 // ── Handoff Protocol ────────────────────────────────────────

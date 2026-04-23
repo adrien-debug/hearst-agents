@@ -1124,3 +1124,12 @@ async function runPipeline(
     storeAssistantMemory();
   }
 }
+
+// ── Backend V2 Integration ─────────────────────────────────
+
+export {
+  orchestrateV2,
+  orchestrateV2Blocking,
+  isV2Enabled,
+  shouldUseV2,
+} from "./orchestrate-v2";
