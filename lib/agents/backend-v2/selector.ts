@@ -204,8 +204,12 @@ export function scoreBackends(
   config: SelectorConfig,
 ): BackendScore[] {
   const scores: BackendScore[] = [];
-  // Exclude hearst_runtime from automatic selection (it's for internal workflows, not LLM tasks)
-  const allBackends = Object.keys(capabilities).filter(id => id !== "hearst_runtime");
+  // Exclude backends that require special setup from automatic selection
+  // - hearst_runtime: for internal workflows only
+  // - openai_computer_use: requires ScreenshotProvider (beta feature)
+  const allBackends = Object.keys(capabilities).filter(
+    id => id !== "hearst_runtime" && id !== "openai_computer_use"
+  );
   const available = config.availableBackends ?? allBackends;
 
   for (const backendId of available) {

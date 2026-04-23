@@ -29,3 +29,18 @@ export function createAsset(input: CreateAssetInput): Asset {
     metadata: input.metadata,
   };
 }
+
+// In-memory store for created assets (for API listing)
+const assetStore = new Map<string, Asset>();
+
+export function storeAsset(asset: Asset): void {
+  assetStore.set(asset.id, asset);
+}
+
+export function getAsset(id: string): Asset | undefined {
+  return assetStore.get(id);
+}
+
+export function getAllAssets(): Asset[] {
+  return Array.from(assetStore.values());
+}

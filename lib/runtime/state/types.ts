@@ -22,6 +22,15 @@ export interface PersistedRunRecord {
   createdAt: number;
   completedAt?: number;
   assets: Array<{ id: string; name: string; type: string }>;
+  /** Runtime metrics — tokens, cost, latency */
+  metrics?: {
+    tokensIn?: number;
+    tokensOut?: number;
+    costUsd?: number;
+    latencyMs?: number;
+  };
+  /** Additional metadata for the run */
+  metadata?: Record<string, unknown>;
 }
 
 export type PersistedMissionRunStatus = "success" | "failed" | "blocked";

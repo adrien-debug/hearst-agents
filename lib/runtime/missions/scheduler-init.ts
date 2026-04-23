@@ -23,6 +23,7 @@ import {
 } from "./leader-lease";
 import { cleanupExpiredSchedulerLeases } from "./cleanup-leases";
 import { INSTANCE_ID } from "../instance-id";
+import { SessionManager } from "@/lib/agents/sessions";
 
 const GLOBAL_KEY = "__hearst_scheduler_started__";
 const HEARTBEAT_INTERVAL_MS = 30_000;
@@ -157,6 +158,11 @@ export async function ensureSchedulerStarted(): Promise<void> {
   markStarted();
 
   console.log(`[Scheduler] Initializing… (${INSTANCE_ID})`);
+
+  // Reset SessionManager to clean up orphaned sessions from previous runs
+  // This prevents "Maximum sessions reached" errors after server restart
+  SessionManager.reset();
+  console.log(`[Scheduler] SessionManager reset — orphaned sessions cleared`);
 
   // Check if DB is available
   try {

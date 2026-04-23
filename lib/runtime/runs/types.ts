@@ -38,4 +38,12 @@ export interface RunRecord {
 
   events: RunEvent[];
   assets: RunAssetRef[];
+
+  /** Runtime metrics — tokens, cost, latency */
+  metrics?: {
+    tokensIn?: number;
+    tokensOut?: number;
+    costUsd?: number;
+    latencyMs?: number;
+  };
 }

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 interface Run { id: string; input: string; status: string; createdAt: number; }
 interface Mission { id: string; name: string; status: string; enabled: boolean; }
+interface Asset { id: string; name: string; type: string; runId: string; }
 
 export function RightPanel() {
   const coreState = useRuntimeStore((s) => s.coreState);
@@ -12,17 +13,23 @@ export function RightPanel() {
   const flowLabel = useRuntimeStore((s) => s.flowLabel);
   const [runs, setRuns] = useState<Run[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [runsRes, missionsRes] = await Promise.all([
+        const [runsRes, missionsRes, rightPanelRes] = await Promise.all([
           fetch("/api/v2/runs?limit=5"),
           fetch("/api/v2/missions"),
+          fetch("/api/v2/right-panel"),
         ]);
         if (runsRes.ok) setRuns((await runsRes.json()).runs || []);
         if (missionsRes.ok) setMissions((await missionsRes.json()).missions?.slice(0, 3) || []);
+        if (rightPanelRes.ok) {
+          const rightPanelData = await rightPanelRes.json();
+          setAssets(rightPanelData.assets?.slice(0, 5) || []);
+        }
         setIsConnected(true);
       } catch { setIsConnected(false); }
     };
@@ -82,6 +89,20 @@ export function RightPanel() {
             </div>
           )}
         </div>
+
+        {assets.length > 0 && (
+          <div className="p-4 border-t border-white/[0.06]">
+            <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-3">Assets ({assets.length})</p>
+            <div className="space-y-2">
+              {assets.map((asset) => (
+                <div key={asset.id} className="flex items-center gap-2 p-2 rounded-md bg-white/[0.02] text-xs">
+                  <span className="text-white/40">{asset.type === "report" ? "📄" : asset.type === "pdf" ? "📑" : asset.type === "excel" ? "📊" : "📁"}</span>
+                  <span className="truncate text-white/60 flex-1">{asset.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {missions.length > 0 && (
           <div className="p-4 border-t border-white/[0.06]">

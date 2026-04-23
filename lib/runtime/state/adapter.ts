@@ -50,6 +50,7 @@ export async function saveRun(run: PersistedRunRecord): Promise<boolean> {
       trigger: "orchestrator_v2",
       metadata: {
         v2: true,
+        runId: run.metadata?.runId ?? run.id, // Store v2 run ID for metrics linking
         tenantId: run.tenantId,
         workspaceId: run.workspaceId,
         executionMode: run.executionMode,
@@ -57,6 +58,7 @@ export async function saveRun(run: PersistedRunRecord): Promise<boolean> {
         backend: run.backend,
         missionId: run.missionId,
         assets: run.assets,
+        ...run.metadata, // Merge additional metadata
       },
     });
 
@@ -121,6 +123,91 @@ export async function updateRun(
   }
 }
 
+/**
+ * Update run metrics (tokens, cost, latency).
+ * Fire-and-forget: errors are logged but not thrown.
+ * Includes retry logic to handle race conditions with saveRun().
+ * @param dbRunId - The UUID of the run in the database
+ */
+export async function updateRunMetrics(
+  dbRunId: string,
+  metrics: {
+    tokensIn?: number;
+    tokensOut?: number;
+    costUsd?: number;
+    latencyMs?: number;
+  },
+): Promise<boolean> {
+  const sb = db();
+  if (!sb) return false;
+
+  // Retry configuration: 3 attempts with exponential backoff
+  const MAX_RETRIES = 3;
+  const RETRY_DELAYS = [100, 300, 500]; // ms
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      // Get existing metadata to merge
+      const { data: existing, error: fetchError } = await sb
+        .from("runs")
+        .select("metadata")
+        .eq("id", dbRunId)
+        .single();
+
+      // If run not found, wait and retry (race condition with saveRun)
+      if (fetchError?.code === "PGRST116" || !existing) {
+        if (attempt < MAX_RETRIES - 1) {
+          console.warn(`[RuntimeState] updateRunMetrics: run ${dbRunId} not found (attempt ${attempt + 1}/${MAX_RETRIES}), retrying in ${RETRY_DELAYS[attempt]}ms...`);
+          await sleep(RETRY_DELAYS[attempt]);
+          continue;
+        }
+        console.error(`[RuntimeState] updateRunMetrics: run ${dbRunId} not found after ${MAX_RETRIES} attempts`);
+        return false;
+      }
+
+      if (fetchError) {
+        console.error("[RuntimeState] updateRunMetrics fetch error:", fetchError.message);
+        return false;
+      }
+
+      const mergedMetadata = {
+        ...(existing?.metadata as Record<string, unknown> ?? {}),
+        usage: {
+          input_tokens: metrics.tokensIn ?? 0,
+          output_tokens: metrics.tokensOut ?? 0,
+          total_tokens: (metrics.tokensIn ?? 0) + (metrics.tokensOut ?? 0),
+        },
+        costUsd: metrics.costUsd,
+        latencyMs: metrics.latencyMs,
+      };
+
+      const { error } = await sb.from("runs").update({
+        updated_at: new Date().toISOString(),
+        metadata: mergedMetadata,
+      }).eq("id", dbRunId);
+
+      if (error) {
+        console.error("[RuntimeState] updateRunMetrics error:", error.message);
+        return false;
+      }
+      console.log(`[RuntimeState] Metrics saved for run ${dbRunId}: ${metrics.tokensIn ?? 0} in, $${metrics.costUsd?.toFixed(4) ?? 0}`);
+      return true;
+    } catch (err) {
+      console.error(`[RuntimeState] updateRunMetrics exception (attempt ${attempt + 1}):`, err);
+      if (attempt < MAX_RETRIES - 1) {
+        await sleep(RETRY_DELAYS[attempt]);
+      }
+    }
+  }
+
+  return false;
+}
+
+// Helper: sleep function for retry delays
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function getRuns(params?: {
   userId?: string;
   tenantId?: string;
@@ -178,8 +265,11 @@ function toRunRecord(row: any): PersistedRunRecord {
   const meta = (row.metadata ?? {}) as Record<string, unknown>;
   const input = (row.input ?? {}) as Record<string, unknown>;
 
+  // Use runId (v2 format) as primary ID if available, otherwise use DB UUID
+  const id = (meta.runId as string) || row.id;
+
   return {
-    id: row.id,
+    id,
     tenantId: (meta.tenantId as string) ?? "",
     workspaceId: (meta.workspaceId as string) ?? "",
     userId: row.user_id ?? "",
@@ -193,6 +283,13 @@ function toRunRecord(row: any): PersistedRunRecord {
     createdAt: new Date(row.created_at).getTime(),
     completedAt: row.finished_at ? new Date(row.finished_at).getTime() : undefined,
     assets: (meta.assets as PersistedRunRecord["assets"]) ?? [],
+    metrics: meta.usage ? {
+      tokensIn: (meta.usage as { input_tokens?: number }).input_tokens,
+      tokensOut: (meta.usage as { output_tokens?: number }).output_tokens,
+      costUsd: meta.costUsd as number | undefined,
+      latencyMs: meta.latencyMs as number | undefined,
+    } : undefined,
+    metadata: meta,
   };
 }
 

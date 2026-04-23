@@ -11,6 +11,7 @@ import {
   getRuns as getPersistedRuns,
   getScheduledMissions as getPersistedMissions,
 } from "@/lib/runtime/state/adapter";
+import { getAssets as getPersistedAssets } from "@/lib/runtime/assets/adapter";
 import { getConnectionsByScope } from "@/lib/connectors/control-plane/store";
 import { getAllMissionOps } from "@/lib/runtime/missions/ops-store";
 import { getSchedulerMode } from "@/lib/runtime/missions/scheduler-init";
@@ -71,16 +72,28 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
     completedAt: r.completedAt,
   }));
 
-  const assets = runs
-    .flatMap((r) =>
-      r.assets.map((a) => ({
-        id: a.id,
-        name: a.name,
-        type: a.type,
-        runId: r.id,
-      })),
-    )
-    .slice(0, MAX_ASSETS);
+  // Get assets from Supabase (canonical) + runs as fallback
+  const persistedAssets = await getPersistedAssets({ limit: MAX_ASSETS });
+
+  // Map to RightPanelAsset format
+  const assets: { id: string; name: string; type: string; runId: string }[] =
+    persistedAssets.length > 0
+      ? persistedAssets.map((a) => ({
+          id: a.id,
+          name: a.name,
+          type: a.type,
+          runId: a.run_id,
+        }))
+      : runs
+          .flatMap((r) =>
+            r.assets.map((a) => ({
+              id: a.id,
+              name: a.name,
+              type: a.type,
+              runId: r.id,
+            })),
+          )
+          .slice(0, MAX_ASSETS);
 
   // ── Missions ─────────────────────────────────────────────
   let missionList = await getPersistedMissions();

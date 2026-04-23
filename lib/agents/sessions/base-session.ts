@@ -128,10 +128,12 @@ export abstract class BaseSession implements UnifiedSession {
         if (event.content) {
           fullContent = event.content;
         }
-        if (event.usage) {
-          tokenCount = (event.usage.tokensIn ?? 0) + (event.usage.tokensOut ?? 0);
-          costUsd = event.usage.costUsd ?? 0;
-        }
+      }
+
+      // Capture usage from idle event (final event with metrics)
+      if (event.type === "idle" && event.usage) {
+        tokenCount = (event.usage.tokensIn ?? 0) + (event.usage.tokensOut ?? 0);
+        costUsd = event.usage.costUsd ?? 0;
       }
     }
 

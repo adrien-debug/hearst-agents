@@ -159,7 +159,9 @@ export async function runAssistant(
 
   console.log(`[runAssistant] Run created: ${run.id}, status: ${run.status}`);
 
-  const timeoutMs = options?.timeoutMs ?? 120_000;
+  // Default timeout: 30s (reduced from 120s to prevent long waits)
+  // File search operations should complete within this window
+  const timeoutMs = options?.timeoutMs ?? 30_000;
   const startTime = Date.now();
 
   // Polling jusqu'à completion

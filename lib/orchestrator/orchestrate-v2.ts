@@ -7,6 +7,7 @@
  * - Handoff dynamique entre backends
  */
 
+import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SessionManager, createSession, type UnifiedSession } from "../agents/sessions";
 import { selectBackend } from "../agents/backend-v2/selector";
@@ -14,8 +15,7 @@ import type { ManagedAgentEvent } from "../agents/backend-v2/types";
 import { RunEventBus } from "../events/bus";
 import { SSEAdapter } from "../events/consumers/sse-adapter";
 import { SYSTEM_CONFIG } from "../system/config";
-// import { toOpenAITools, type ToolDefinition } from "../agents/backend-v2/openai-tools";
-// import { getConnectionsByScope } from "../connectors/control-plane/store";
+import { saveRun, updateRun, updateRunMetrics } from "../runtime/state/adapter";
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -154,6 +154,24 @@ async function runV2Pipeline(
 ): Promise<void> {
   const startTime = Date.now();
   const runId = generateRunId();
+  const dbRunId = randomUUID(); // UUID valide pour PostgreSQL
+
+  // Persist run to DB immediately (fire-and-forget)
+  void saveRun({
+    id: dbRunId,
+    tenantId: input.tenantId ?? "dev-tenant",
+    workspaceId: input.workspaceId ?? "dev-workspace",
+    userId: input.userId,
+    input: input.message,
+    surface: input.surface,
+    status: "running",
+    createdAt: Date.now(),
+    assets: [],
+    backend: undefined,
+    metadata: {
+      runId, // Store v2 run ID for correlation
+    },
+  });
 
   // Emit start event
   eventBus.emit({
@@ -161,6 +179,9 @@ async function runV2Pipeline(
     run_id: runId,
     message: "[V2] Starting orchestration with Backend V2",
   });
+
+  // Session reference for cleanup
+  let session: UnifiedSession | undefined;
 
   try {
     // 1. Backend Selection (tool context detection temporairement désactivé)
@@ -190,7 +211,7 @@ async function runV2Pipeline(
     const sessionStart = Date.now();
     const manager = SessionManager.getInstance();
 
-    const session = input.forceBackend
+    session = input.forceBackend
       ? await manager.createWithBackend(selection.selectedBackend, {
           userId: input.userId,
           tenantId: input.tenantId,
@@ -216,6 +237,7 @@ async function runV2Pipeline(
     let fullResponse = "";
     let tokenCount = 0;
     let costUsd = 0;
+    let lastEmittedDelta = ""; // Deduplication tracking
 
     for await (const event of session.sendStream(input.message)) {
       // Map ManagedAgentEvent to SSE events
@@ -223,8 +245,9 @@ async function runV2Pipeline(
 
       // Track response
       if (event.type === "message") {
-        if (event.delta) {
+        if (event.delta && event.delta !== lastEmittedDelta) {
           fullResponse += event.delta;
+          lastEmittedDelta = event.delta;
           eventBus.emit({ type: "text_delta", run_id: runId, delta: event.delta });
         }
         if (event.content) {
@@ -270,8 +293,20 @@ async function runV2Pipeline(
       message: `[V2] Metrics: ${totalTime}ms | Tokens: ${metrics.totalTokensIn + metrics.totalTokensOut} | Cost: $${metrics.totalCostUsd.toFixed(4)} | Backend: ${session.backend}`,
     });
 
-    // Optional: Close session if not needed for follow-up
-    // await session.close();
+    // Persist metrics to database (fire-and-forget)
+    void updateRunMetrics(dbRunId, {
+      tokensIn: metrics.totalTokensIn,
+      tokensOut: metrics.totalTokensOut,
+      costUsd: metrics.totalCostUsd,
+      latencyMs: totalTime,
+    });
+
+    // Update run status and backend
+    void updateRun(dbRunId, {
+      status: "completed",
+      completedAt: Date.now(),
+      backend: session.backend,
+    });
 
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
@@ -288,6 +323,17 @@ async function runV2Pipeline(
       run_id: runId,
       error: errorMsg,
     });
+
+    // Update run status to failed
+    void updateRun(dbRunId, {
+      status: "failed",
+      completedAt: Date.now(),
+    });
+  } finally {
+    // Always close session to free up slot (sessions are limited per user)
+    if (session) {
+      void session.close();
+    }
   }
 }
 

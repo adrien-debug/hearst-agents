@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
         createdAt: r.createdAt,
         completedAt: r.completedAt,
         assetCount: r.assets.length,
+        metrics: r.metrics,
       }));
 
       return NextResponse.json({ runs });
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
       completedAt: r.completedAt,
       eventCount: r.events.length,
       assetCount: r.assets.length,
+      metrics: r.metrics,
     }));
 
     return NextResponse.json({ runs: memRuns });

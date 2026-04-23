@@ -165,15 +165,6 @@ export const EXTERNAL_CONNECTORS: ConnectorMeta[] = [
   { id: "medium", name: "Medium", description: "Publishing", icon: "✍️", source: "external", category: "other" },
   { id: "ghost", name: "Ghost", description: "Publishing", icon: "👻", source: "external", category: "other" },
 
-  // --- ADDING MORE TO REACH 200+ (SIMULATED BY CATEGORIES) ---
-  ...Array.from({ length: 100 }).map((_, i) => ({
-    id: `service-${i + 100}`,
-    name: `Service AI ${i + 100}`,
-    description: "Intégration spécialisée",
-    icon: "🧩",
-    source: "external" as const,
-    category: "other" as const,
-  })),
 ];
 
 export const ALL_CONNECTORS: ConnectorMeta[] = [...CORE_CONNECTORS, ...EXTERNAL_CONNECTORS];
