@@ -87,16 +87,16 @@ export function ChatInput({
   };
 
   return (
-    <div className="p-4 border-t border-white/[0.06] bg-[#0a0a0a]">
+    <div className="p-4 border-t border-[var(--line)]" style={{ background: "var(--bg)" }}>
       <div className="max-w-3xl mx-auto">
         {/* @mention Typeahead */}
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="mb-2 bg-[#141414] border border-white/[0.08] rounded-xl shadow-2xl overflow-hidden"
+            className="mb-2 bg-[var(--bg-soft)] border border-[var(--line)] rounded-xl shadow-2xl overflow-hidden"
           >
             {matchingServices.length === 0 ? (
-              <div className="p-3 text-xs text-white/40">
+              <div className="p-3 text-xs text-[var(--text-muted)]">
                 {typeaheadQuery ? (
                   <>Aucune source trouvée pour &quot;{typeaheadQuery}&quot;</>
                 ) : (
@@ -113,17 +113,17 @@ export function ChatInput({
                   >
                     <span className="text-lg">{service.icon}</span>
                     <div className="flex-1">
-                      <p className="text-sm text-white">@{service.id}</p>
-                      <p className="text-[10px] text-white/40">{service.name}</p>
+                      <p className="text-sm text-[var(--text)]">@{service.id}</p>
+                      <p className="text-[10px] text-[var(--text-muted)]">{service.name}</p>
                     </div>
-                    <span className="text-xs text-emerald-400">●</span>
+                    <span className="text-xs text-[var(--money)]">●</span>
                   </button>
                 ))}
               </div>
             )}
             {typeaheadQuery && !matchingServices.some((s) => s.id === typeaheadQuery) && (
-              <div className="px-3 py-2 border-t border-white/[0.06]">
-                <button className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+              <div className="px-3 py-2 border-t border-[var(--line)]">
+                <button className="text-xs text-[var(--cykan)] hover:text-[var(--cykan)]/80 transition-colors">
                   Voir les apps non connectées →
                 </button>
               </div>
@@ -131,8 +131,11 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Container */}
-        <div className="flex items-end gap-2 bg-[#141414] border border-white/10 rounded-xl px-4 py-3 focus-within:border-cyan-500/30 transition-colors">
+        {/* Input Container — Halo command bar style */}
+        <div
+          className="flex items-end gap-2 border border-[var(--line-strong)] rounded-xl px-4 py-3 focus-within:border-[var(--cykan)]/30 focus-within:shadow-[var(--glow-cyan-sm)] transition-all"
+          style={{ background: "var(--bg-soft)" }}
+        >
           <textarea
             ref={inputRef}
             value={input}
@@ -156,17 +159,20 @@ export function ChatInput({
             }}
             placeholder={placeholder || surfacePlaceholders[surface] || "Que puis-je faire pour vous ?"}
             rows={1}
-            className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none resize-none min-h-[20px] max-h-[200px] leading-relaxed"
+            className="flex-1 bg-transparent text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none resize-none min-h-[20px] max-h-[200px] leading-relaxed"
           />
           {isRunning ? (
             <div className="w-8 h-8 flex items-center justify-center">
-              <div className="w-4 h-4 border-2 border-white/20 border-t-cyan-400 rounded-full animate-spin" />
+              <div
+                className="w-4 h-4 border-2 border-[var(--text-faint)] border-t-[var(--cykan)] rounded-full animate-spin"
+                style={{ boxShadow: "0 0 4px var(--cykan)" }}
+              />
             </div>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={!input.trim()}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-white/40 hover:bg-cyan-500 hover:text-black disabled:opacity-30 transition-all"
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-[var(--text-muted)] hover:bg-[var(--cykan)] hover:text-black disabled:opacity-30 transition-all"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
@@ -174,7 +180,7 @@ export function ChatInput({
             </button>
           )}
         </div>
-        <p className="text-[10px] text-white/20 text-center mt-2">
+        <p className="text-[10px] text-[var(--text-faint)] text-center mt-2">
           Entrée pour envoyer · Maj+Entrée pour nouvelle ligne · @ pour mentionner
         </p>
       </div>

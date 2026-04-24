@@ -14,6 +14,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > [`lib/orchestrator/orchestrate-v2.ts`](./lib/orchestrator/orchestrate-v2.ts)
 
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
+> **Etat d'avancement / écarts (24/04/2026)** : [`docs/CONVERGENCE_STATUS_2026-04-24.md`](./docs/CONVERGENCE_STATUS_2026-04-24.md)
 
 ## 📚 Documentation Architecture (HTML)
 
@@ -24,6 +25,7 @@ Documents interactifs ouverts dans le navigateur :
 | **HEARST-ARCHITECTURE-FINALE.html** | Structure complète `lib/` après audit 100%. Où mettre les assets, services, admin. | [`./HEARST-ARCHITECTURE-FINALE.html`](./HEARST-ARCHITECTURE-FINALE.html) |
 | **HEARST-MASTERPLAN.html** | Vision produit, roadmap 19 semaines, investissements infrastructure | [`./HEARST-MASTERPLAN.html`](./HEARST-MASTERPLAN.html) |
 | **hearst-ui-vision.html** | Interface utilisateur — 2 états (IDLE/ACTIVE), chat-first, assets, missions | [`./hearst-ui-vision.html`](./hearst-ui-vision.html) |
+| **HEARST-STATUS-VS-VISION.html** | Vue simple et visuelle: état réel, vision cible, écarts, prochaines étapes | [`./HEARST-STATUS-VS-VISION.html`](./HEARST-STATUS-VS-VISION.html) |
 
 **Ouvrir :** `open HEARST-ARCHITECTURE-FINALE.html` (ou double-clic)
 
@@ -33,21 +35,30 @@ Documents interactifs ouverts dans le navigateur :
 |----------|---------|
 | [`LAUNCHER.md`](./LAUNCHER.md) | Guide démarrage — `npm run launch` |
 | [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md) | Spec produit / système complet |
+| [`docs/CONVERGENCE_STATUS_2026-04-24.md`](./docs/CONVERGENCE_STATUS_2026-04-24.md) | Etat réel du projet: fait, restant, écarts, ordre recommandé |
 | [`docs/AGENT_GOVERNANCE.md`](./docs/AGENT_GOVERNANCE.md) | Gouvernance outils & lifecycle agents |
 | [`docs/DOMAIN_MODEL.md`](./docs/DOMAIN_MODEL.md) | Modèle de données (Entity Map) |
 | [`docs/RUNTIME_AND_REPLAY.md`](./docs/RUNTIME_AND_REPLAY.md) | Cycle de vie runs & replay |
 | [`docs/DB_AND_MIGRATIONS.md`](./docs/DB_AND_MIGRATIONS.md) | Database & migrations |
 | [`docs/NANGO_SETUP.md`](./docs/NANGO_SETUP.md) | Setup OAuth Nango
 
+### Core Types
+
+| Module | Path | Description |
+|--------|------|-------------|
+| `lib/core/types` | [`./lib/core/types/index.ts`](./lib/core/types/index.ts) | Point d'entrée canonique pour les types métier centraux. Re-exports des types de `stores/`, `lib/assets/`, `lib/ui/right-panel/`, etc. |
+
+Migration recommandée : pour les nouveaux imports, utiliser `@/lib/core/types` au lieu de multiples imports dispersés. Les imports existants restent valides (non-breaking).
+
 ## Architecture UX
 
-- **Chat global** (`GlobalChat`) — Input fixe en bas, context-aware. S'estompe légèrement (`opacity: 0.6`) lors d'une manifestation active pour focaliser l'attention.
-- **Right Panel** (`RightPanel` + `RightPanelDocumentProvider` dans `app/(user)/layout.tsx`) — Surface de confiance : missions, assets, stream. Machine à états INDEX/DOCUMENT (logique dans `RightPanel.tsx`). Quand le **focal** est `ready` ou `awaiting_approval` en mode DOCUMENT, le rendu `FocalObjectRenderer` part au **centre** (`ManifestationStage`) ; le rail reste en INDEX (pas de `<aside>`, fond `bg-background`).
-- **Manifestation Stage** (`ManifestationStage` sur `/`) — Scène centrale de manifestation. L'objet focal s'y condense (transition de flou et d'échelle) au-dessus du Halo Core.
-- **Momentum** (`useMomentum`, `MomentumIndicator` dans `TopContextBar`) — Rappel discret runs / missions actives / focal « en cours » ; données via `useRightPanel` + abonnement au bus `RunStreamProvider` (même SSE que `use-right-panel.ts`). Voir `docs/PRODUCT_SYSTEM_SPEC.md` §4.
-- **Halo runtime partagé** (`HaloRuntimeProvider` dans le layout user) — Un seul `useHalo` pour le bandeau d’orchestration et la scène centrale (même réduction SSE).
-- **Surfaces** : `/` (home) — entrée principale chat-first. Routes legacy (`/inbox`, `/calendar`, `/files`, `/apps`, `/missions`) restent accessibles mais ne sont plus exposées dans la navigation primaire.
-- Layout user : sidebar mémoire/threads (AppNav) + zone centrale + chat global + right panel
+- **Chat-first shell** (`ChatInput` + `ChatMessages`) — Input fixe en bas, conversation thread-scopée. Chat toujours visible, focal toggleable au-dessus.
+- **Surface centrale principale** (`FocalStage` dans `app/(user)/page.tsx`) — Quand un objet focal existe, il devient la **surface de lecture principale** au centre. Chat contextuel en bas.
+- **Rail droit compact** (`RightPanel`) — Surface de confiance scannable : runtime, focal compact (titre + statut + action), secondaires en liste. Pas de lecture longue.
+- **Navigation gauche** (`LeftPanel`) — Mémoire des threads uniquement. Navigation chat-first.
+- **Momentum** — *Cible non montée* — rappel discret des activités. `TopContextBar` et `MomentumIndicator` sont des cibles de convergence.
+- **Surfaces** : `/` (home) — entrée chat-first. Routes legacy accessibles mais non exposées.
+- Layout user : `LeftPanel` (threads) + zone centrale (`main` avec chat + FocalStage toggleable) + `RightPanel` (index/confiance)
 
 ### Tokens (source `app/globals.css`)
 
@@ -56,18 +67,18 @@ Modèle d'élévation (du plus profond au plus clair) : **rail < background < su
 | Token | Var CSS | Hex | Usage |
 |-------|---------|-----|-------|
 | `bg-rail` | `--rail` | `#0c0c10` | Rail admin — `app/components/Sidebar.tsx` (`/admin/*`) |
-| `bg-background` | `--background` | `#09090b` | Canvas — `body` (`app/layout.tsx`), `/login`, spinner d'`AuthGate` |
-| `bg-surface` | `--surface` | `#14141a` | Panels lifted — `AppNav`, barre d'input `GlobalChat` (le rail droit utilise `bg-background`, pas `bg-surface`) |
+| `bg-background` | `--background` | `#09090b` | Canvas — `body` (`app/layout.tsx`), `/login` |
+| `bg-surface` | `--surface` | `#14141a` | Panels lifted — `LeftPanel`, barre d'input `ChatInput` |
 | `bg-cyan-accent` / `text-cyan-accent` | `--cyan-accent` | `#00e5ff` | Accent unique (focal, dot connecté, divider) |
 | `--glow-cyan-{sm,md,core,soft,dot}` | — | rgba(0,229,255,…) | Halos centralisés — **ne pas dupliquer en `rgba` dans les composants** |
 
 Garde-fou : `__tests__/ui/design-tokens.test.ts` valide la présence de tous ces tokens dans `app/globals.css` et dans le bloc `@theme inline`.
 
-#### Guide de style — mise à jour à prévoir (focal home / rail)
+#### Guide de style — surfaces actuelles
 
-- **Deux surfaces** pour le contenu focal : `FocalObjectRenderer` avec `surface="rail"` conserve la coque verre (classe `.ghost-document-surface` dans `app/globals.css`) ; `surface="center"` évite cette coque pour que le document respire sur le fond de la scène (`ManifestationStage`).
-- **Hiérarchie d’élévation** : le rail droit n’est plus un `<aside>` « lifted » `ghost-side-panel` ; il s’aligne sur le canvas (`bg-background`). Si le guide impose à nouveau un panel *surface* pour ce rail, mettre à jour la table tokens ci-dessus et `RightPanel.tsx` en cohérence.
-- **État partagé** : toute évolution du flux INDEX/DOCUMENT ou d’un troisième emplacement de rendu doit rester sur `RightPanelDocumentProvider` + `useRightPanelDocument()` pour éviter des sources de vérité divergentes.
+- **Surface centrale** (`FocalStage`) — pas de coque verre, le document respire directement sur le fond canvas.
+- **Rail droit** (`RightPanel`) — aligné sur le canvas (`bg-background`), pas de `ghost-side-panel`.
+- **État focal** — partagé via `stores/focal.ts` (Zustand), pas de provider React dédié actuellement.
 
 > Note : la palette `bg-zinc-{800,900,950}` reste utilisée volontairement dans `app/admin/*` et certaines pages `app/(user)/*` pour les **élévations multi-niveaux** (cartes, inputs, hovers, code blocks). Ces niveaux ne sont pas couverts par les 3 tokens canoniques ci-dessus.
 
@@ -99,33 +110,27 @@ Si un agent doit modifier l'UI HEARST OS, il doit partir de la chaîne réelle d
 ```mermaid
 flowchart TD
   A["/"] --> B["app/(user)/layout.tsx"]
-  B --> C["AuthGate"]
-  C --> D["TopContextBar"]
-  C --> E["AppNav"]
-  C --> F["app/(user)/page.tsx"]
-  F --> G["ManifestationStage.tsx"]
-  C --> H["GlobalChat.tsx"]
-  C --> R["RightPanelDocumentProvider"]
-  R --> I["RightPanel.tsx"]
-  R --> G
-  I --> J["useFocalObject()"]
-  J --> K["useRightPanel() + thread state + SSE"]
+  B --> C["SessionProvider"]
+  C --> D["LeftPanel"]
+  C --> E["main / page.tsx"]
+  C --> F["RightPanel"]
+  E --> G["ChatMessages"]
+  E --> H["FocalStage"]
+  E --> I["ChatInput"]
+  F --> J["stores/runtime.ts + stores/focal.ts"]
+  J --> K["GET /api/v2/right-panel + SSE"]
 ```
 
-### Work Here
+### Work Here — Chaîne de rendu réelle
 
-- Centre home `/` : `app/(user)/page.tsx` + `app/components/system/ManifestationStage.tsx` — rehydrate le focal state depuis `/api/v2/right-panel?thread_id=...` via `hydrateThreadState()` dans `stores/focal.ts` au mount et changement de thread. Même narration focale que le RightPanel, pas de divergence au reload.
-- Shell user réel : `app/(user)/layout.tsx`
-- Sidebar gauche : `app/components/AppNav.tsx`
-- Barre haute : `app/components/system/TopContextBar.tsx` + `MomentumIndicator` (`useMomentum()` — flux RunStream / données `useRightPanel`)
-- Chat bas : `app/components/GlobalChat.tsx`
-- Panneau droit : `app/components/RightPanel.tsx` — consomme la **source canonique** `/api/v2/right-panel?thread_id=...` et affiche `focalObject` comme surface primaire, `secondaryObjects` comme liste compacte. Fallback sur runs/assets/missions seulement si pas de focal.
-- Rendu d'objet focal : `app/components/right-panel/FocalObjectRenderer.tsx` (prop `surface`: `rail` = panneau verre `.ghost-document-surface`, `center` = home sans coque verre)
-- État du panel/focal :
-  - `app/hooks/use-right-panel.ts`
-  - `app/hooks/use-focal-object.ts`
-  - `app/hooks/use-sidebar.tsx`
-- Détail run `/runs/[id]` : `app/(user)/runs/[id]/page.tsx` — consomme la **timeline canonique normalisée** (`data.timeline`) depuis `/api/v2/runs/[id]` via `lib/runtime/timeline/normalize.ts`
+- **Centre home `/`** : `app/(user)/page.tsx` — `ChatMessages` (conversation), `FocalStage` (toggleable, surface principale quand focal existe), `ChatInput` (contextuel). Rehydrate via `stores/focal.ts`.
+- **Shell user** : `app/(user)/layout.tsx` — `LeftPanel` + `main` + `RightPanel`.
+- **Sidebar gauche** : `app/(user)/components/LeftPanel.tsx` — threads, mémoire de conversation.
+- **Chat** : `app/(user)/components/ChatMessages.tsx` + `ChatInput.tsx` — toujours visible, contextuel quand focal présent.
+- **Surface centrale** : `app/(user)/components/FocalStage.tsx` — lecture principale du document focal.
+- **Rail droit** : `app/(user)/components/RightPanel.tsx` — index/confiance, focal compact, runtime status.
+- **État** : `stores/focal.ts` + `stores/runtime.ts` + `stores/navigation.ts` (Zustand, pas de providers React).
+- **Détail run** : `app/(user)/runs/[id]/page.tsx` — timeline canonique.
 
 ### Do Not Work Here Unless Explicitly Asked
 
@@ -136,7 +141,7 @@ flowchart TD
 
 ### Why Agents Get Confused
 
-- `ManifestationStage` est réel, mais son rendu dépend du halo et du focal object ; en DOCUMENT focal prêt il consomme `useRightPanelDocument()` (même état que le rail)
+- `FocalStage` est la surface centrale principale quand un objet focal existe ; il consomme `stores/focal.ts` (Zustand) partagé avec le RightPanel
 - `RightPanel` dépend d'un thread actif, du polling `/api/v2/right-panel`, et des événements SSE
 - `RightPanel` est masqué sous le breakpoint `lg`
 - l'écran `/` passe d'abord par le shell authentifié, donc modifier un composant hors de cette chaîne ne change rien de visible
@@ -157,10 +162,10 @@ Si un agent ne peut pas relier visuellement un changement à `app/(user)/layout.
 
 ## Comportement produit
 
-- **V2 Runtime** par défaut. V1 fallback via `NEXT_PUBLIC_USE_V2=false`.
+- **V2 Runtime** canonique — fallback V1 legacy explicite conservé pour usage non-chat ou migration.
 - **Missions** : créées depuis le chat (CTA après report réussi) ou Right Panel. Composer inline, schedule presets, Run Now, toggle enable/disable.
 - **Artifacts** : file-backed — PDF (pdfkit), XLSX (exceljs), markdown, JSON, CSV. Download via `/api/v2/assets/{id}/download`.
-- **Connectors** : direct activation OAuth (Google, Slack). Vérité unifiée via `/api/v2/connectors/unified`.
+- **Connectors** : direct activation OAuth (Google, Slack). Vérité unifiée via `GET /api/v2/user/connections`.
 - **Timeline** : observable dans le Right Panel, événements persistés via `/api/v2/runs/{id}`.
 - **Inbox** : priorisation rule-based (urgent/normal/low), zéro LLM.
 
@@ -190,7 +195,246 @@ Le système utilise une nomenclature unifiée pour les états d'attente:
 - La page run continue le polling tant que le run est dans un état live (running, awaiting_approval, awaiting_clarification).
 - Les anciens wordings type `waiting_approval` sont legacy/conceptuels — le canonique est `awaiting_approval`.
 
-**Note**: Cette étape unifie la narration d'état. Le câblage des actions approve/reject viendra dans une étape ultérieure.
+**Note**: Cette étape unifie la narration d'état.
+
+### Narration Focale Canonique — Plan / Mission / Asset
+
+`/api/v2/right-panel` est la source canonique de narration focale thread-scopée. La résolution n'est plus "asset-only" mais prend en compte la chaîne complète:
+
+**Priorité de résolution focale** (implémentée dans `lib/right-panel/manifestation.ts:resolveFocalObject()`):
+1. **Plan en `awaiting_approval`** — Message draft, mission draft, watcher draft
+2. **Plan en exécution avec output visible** — Outline (pré-report en génération)
+3. **Latest asset** — Report, brief, message receipt
+4. **Mission active** — Mission active ou watcher active
+5. **Idle** — Aucun focal
+
+**Métadonnées conservées** (client et API):
+- `threadId` — Traçabilité thread-scopée
+- `sourcePlanId` — Lien vers le plan d'origine (si applicable)
+- `sourceAssetId` — Lien vers l'asset d'origine (si applicable)
+- `morphTarget` — Cible de transformation possible (ex: `message_draft` → `message_receipt`)
+- `primaryAction` — Action primaire affichable (approve/discard/pause/resume)
+
+**Architecture**:
+- `lib/right-panel/manifestation.ts` — Logique de manifestation (plan/mission/asset → focal)
+- `lib/ui/right-panel/aggregate.ts` — Résolution canonique côté API
+- `stores/focal.ts` — Store client avec métadonnées enrichies
+- `FocalStage.tsx` — Rendu enrichi avec status, provenance, action primaire
+- `RightPanel.tsx` — Surface primaire focal + historique secondaire compact
+
+**Actions primaires opérantes**:
+- `approve` — Approuve un plan en `awaiting_approval` et reprend l'exécution
+- `pause` — Met en pause une mission/watcher active
+- `resume` — Reprend une mission/watcher en pause
+
+**API endpoints**:
+- `POST /api/v2/plans/[id]/approve` — Approuve et exécute un plan
+- `POST /api/v2/missions/[id]/pause` — Met en pause une mission
+- `POST /api/v2/missions/[id]/resume` — Reprend une mission
+
+**Implémentation**:
+- `FocalStage.tsx` et `RightPanel.tsx` appellent les APIs via `fetch()`
+- Les identifiants canoniques (`sourcePlanId`, `missionId`) sont portés par le contrat focal
+- Refresh automatique du RightPanel après succès
+- États de loading et erreur gérés côté client
+- Le centre (`FocalStage`) et le RightPanel consomment le même contrat enrichi via `/api/v2/right-panel`
+
+### Contrat Run ID Canonique (Chat V2)
+
+**Principe**: Un seul `run_id` user-facing pour tout le flux chat-first V2 — client et backend alignés.
+
+**Flow**:
+1. Client initie avec un `client_token` (temporaire, pour correlation)
+2. Backend génère le `run_id` canonique (`run_${timestamp}_${counter}`)
+3. Backend émet `run_started` avec ce `run_id` dès le début
+4. Client capture ce `run_id` et l'utilise pour tous les events suivants
+5. Tous les events SSE portent le même `run_id` canonique
+6. L'API `/api/v2/runs/[id]` expose ce même identifiant
+
+**Logs de cohérence**:
+- `[RuntimeStore]` logue les transitions de run_id (client → canonique)
+- `[RuntimeStore]` warning si un event arrive avec un run_id différent du courant
+- `[Chat]` logue le run_id canonique établi et final
+
+**Résolution d'IDs**:
+- `client_token` (`client-${Date.now()}`) → temporaire, remplacé par le canonique
+- `run_id` canonique (`run_${ts}_${n}`) → utilisé partout (SSE, store, API)
+- `dbRunId` → identique au `run_id` canonique pour correlation directe
+
+### Connecteurs Réels — Flow OAuth Nango
+
+**Architecture**:
+- Source canonique: `/api/v2/user/connections` — retourne les statuts réels depuis control-plane + user_tokens
+- OAuth flow: Nango SDK (backend) + redirection frontend
+- Callback: `/api/nango/callback` → redirige vers `/apps`
+
+**APIs**:
+- `GET /api/v2/user/connections` — Liste des services avec statut de connexion
+- `POST /api/nango/connect` — Initie le flow OAuth (retourne config pour frontend)
+- `GET /api/nango/callback` — Callback OAuth, sync vers control-plane, redirect vers `/apps`
+
+**Flow complet**:
+1. User clique "Connecter" sur App Hub ou bannière
+2. Frontend appelle `POST /api/nango/connect` avec le provider
+3. Backend génère `connectionId` et retourne la config Nango
+4. Frontend redirige vers `/apps?connecting={serviceId}` (préparation pour popup SDK)
+5. OAuth popup s'ouvre avec Nango (à implémenter avec `@nangohq/frontend`)
+6. Nango callback → backend sync → redirect vers `/apps?connected={provider}`
+7. Frontend recharge les connexions via `/api/v2/user/connections`
+
+**État des connecteurs**:
+- `lib/integrations/catalog.ts:enrichWithConnectionStatus()` — fetch côté client, reconciler côté serveur
+- `stores` et composants reçoivent les vrais statuts (`connected`, `pending`, `error`, `disconnected`)
+- Les @mentions dans ChatInput sont filtrées sur les services réellement connectés
+- CapabilityTabs s'affiche uniquement si les services correspondants sont connectés
+
+**Logs backend**:
+- `[UserConnections] User xxx: N/M connected` — Chargement des connexions
+- `[NangoConnect] Initiating OAuth: {provider}` — Début flow OAuth
+- `[NangoCallback] Connection synced: {provider}` — Succès OAuth + sync control-plane
+
+### Design System — Halo Phase 1
+
+**North star**: `halo-design-direction.html` — cockpit premium avec surfaces profondes, accents cyan maîtrisés, typographie éditoriale.
+
+**Tokens CSS** (`app/globals.css`):
+```css
+/* Surfaces — hiérarchie profonde */
+--bg: #0a0a0b        /* Primary background */
+--bg-elev: #111114    /* Elevated surfaces */
+--bg-soft: #16161a    /* Cards, inputs */
+--rail: #0c0c10      /* Side panels */
+
+/* Text — échelle d'opacité */
+--text: rgba(255,255,255,0.9)       /* Titres */
+--text-soft: rgba(255,255,255,0.55) /* Body */
+--text-muted: rgba(255,255,255,0.32)/* Meta */
+--text-faint: rgba(255,255,255,0.18)/* Labels */
+
+/* Accents */
+--cykan: #00e5ff      /* Cyan primaire */
+--money: #4ade80      /* Succès, positif */
+--warn: #fbbf24       /* Attention */
+--danger: #ef4444     /* Erreur */
+
+/* Bordures */
+--line: rgba(255,255,255,0.06)       /* Bordures standard */
+--line-strong: rgba(255,255,255,0.12)/* Bordures focus */
+
+/* Glows */
+--glow-cyan-sm: 0 0 4px rgba(0, 229, 255, 0.3)
+--glow-cyan-md: 0 0 8px rgba(0, 229, 255, 0.4)
+```
+
+**Utilitaires typographiques**:
+- `.halo-title-xl` (56px, bold, tight tracking) — Valeurs principales
+- `.halo-title-lg` (24px, light) — Titres focaux
+- `.halo-title-md` (18px, semibold) — Sous-titres
+- `.halo-mono-label` (9px, uppercase, letter-spacing 0.18em) — Labels de section
+- `.halo-mono-tag` (10px, uppercase) — Tags, statuts
+- `.halo-mono-meta` (11px) — Métadonnées
+- `.halo-body` (13px, leading 1.6) — Contenu principal
+
+**Composants Halo**:
+- `.halo-card` — Surface carte avec bordure
+- `.halo-active` — État actif avec accent cyan
+- `.halo-progress` — Barre de progression avec glow
+- `.halo-command-bar` — Barre de commande avec backdrop blur
+- `.halo-idle-glow` — Effet de halo pour états vides
+
+### Architecture Runtime — Convergence V2 Canonique
+
+**Principe**: Une seule stack runtime pour le chat-first user-facing. V2 est le chemin canonique, V1 est legacy explicite.
+
+**Chemin canonique**:
+```
+/api/orchestrate (POST)
+  └── lib/orchestrator/entry.ts::orchestrateV2()
+      ├── V2 canonique (défaut) → lib/orchestrator/orchestrate-v2.ts
+      │   ├── SessionManager + Backend Selector
+      │   ├── Run lifecycle (run_started → text_delta → run_completed)
+      │   ├── Timeline persistence
+      │   ├── Asset generation + Focal narration
+      │   ├── Schedule detection → missions
+      │   └── Approvals/Clarification states
+      └── V1 legacy (fallback explicite) → lib/orchestrator/index.ts
+          └── Pour usage non-chat ou migration
+```
+
+**Routing** (`lib/orchestrator/entry.ts`):
+1. `forceLegacyV1: true` → V1 (opt-out explicite)
+2. V2 enabled + rollout match → V2 (canonique)
+3. Sinon → V1 (safe fallback)
+
+**État de convergence**:
+| Feature | V2 Canonique | V1 Legacy |
+|---------|--------------|-----------|
+| Session Manager + Multi-backend | ✅ | ❌ |
+| Run lifecycle SSE | ✅ | ✅ |
+| Timeline persistence | ✅ | ✅ |
+| Focal narration (asset → plan/mission) | ✅ | ✅ |
+| Schedule detection | ✅ | ✅ |
+| Mission linkage | ✅ | ✅ |
+| Approvals/Clarification | ✅ | ✅ |
+| Research reports | ❌ (roadmap) | ✅ |
+| Synthetic retrieval | ❌ (roadmap) | ✅ |
+
+**Logs backend**:
+- `[Orchestrator] Canonical V2 path for user xxx` — Routing V2
+- `[Orchestrator] Fallback to V1 for user xxx` — Routing legacy
+- `[Orchestrator] Explicit legacy V1 requested` — Opt-out explicite
+
+### Sécurité & Scope — Hardening V2
+
+**Principe**: Toutes les routes `/api/v2/*` user-facing sont protégées par auth et scopées au user/tenant/workspace courant.
+
+**Architecture**:
+```
+proxy.ts (Next.js 16 Proxy)
+├── Garde global auth — toutes les routes
+├── Public paths exemptées (/login, /api/auth, /api/health, /api/webhooks)
+├── Auth par: session cookie | API key (x-api-key) | dev bypass explicite
+└── API routes: 401 si non autorisé
+
+lib/scope.ts (Canonical Scope Resolution)
+├── resolveScope() → { userId, tenantId, workspaceId, isDevFallback }
+├── requireScope() → scope ou { error }
+├── Dev fallback: explicite et loggé uniquement
+└── Future: HEARST_TENANT_ID / HEARST_WORKSPACE_ID env pour multi-tenant explicite
+
+Routes V2 scopées
+├── GET /api/v2/runs — filtré par userId (DB + in-memory)
+├── GET /api/v2/runs/[id] — vérification ownership (userId match)
+├── GET /api/v2/missions — filtré par userId/tenant/workspace
+├── POST /api/v2/missions — créé avec scope courant
+├── PATCH/DELETE /api/v2/missions/[id] — vérification ownership
+├── POST /api/v2/missions/[id]/run — vérification ownership
+├── GET /api/v2/assets — filtré par tenant/workspace + user metadata
+├── POST /api/v2/assets — créé avec scope courant
+├── GET /api/v2/user/connections — scoped au user courant
+└── GET /api/v2/right-panel — scoped (via buildRightPanelData)
+```
+
+**Logs de sécurité**:
+- `[Proxy] Unauthorized API access — /api/v2/xxx` — Rejet auth
+- `[Proxy] Dev bypass active — /api/v2/xxx` — Bypass explicite
+- `[Scope] Dev fallback used — tenant: xxx, workspace: yyy` — Fallback loggé
+- `[Scope] Auth failed — no userId` — Session invalide
+- `[v2/runs/xxx] Access denied — user mismatch` — Tentative accès non autorisé
+
+**Fallbacks dev restants (documentés)**:
+| Variable | Valeur | Usage |
+|----------|--------|-------|
+| `HEARST_DEV_AUTH_BYPASS=1` | Bypass auth complet | Dev local uniquement |
+| `HEARST_TENANT_ID` | Tenant explicite | Multi-tenant futur |
+| `HEARST_WORKSPACE_ID` | Workspace explicite | Multi-tenant futur |
+
+**Surfaces mises à jour**:
+- `LeftPanel` — Rail avec tokens, active state cyan
+- `RightPanel` — Runtime panel avec halo progress bars
+- `ChatInput` — Command bar avec glow focus
+- `FocalStage` — Hiérarchie typo éditoriale
+- `Home idle` — Halo glow background, suggestions chips
 
 ## Stack
 
@@ -251,11 +495,10 @@ npm test            # Vitest (LLM, momentum, design tokens, …)
 - **Profils Supabase** : migration `supabase/migrations/0018_model_profiles_composer_gemini.sql` — profil tête `composer_2_with_gemini_fallback` (UUID `a1e2f3a4-b5c6-4789-a012-000000000001`) → repli `gemini_3_flash_leaf` (`…000002`). Usage : `chatWithProfile(sb, "<uuid>", messages)` enchaîne les providers selon `fallback_profile_id`.
 - **Tests** : `__tests__/llm/router-providers.test.ts` (getProvider + `loadFallbackChain`), `__tests__/llm/providers-http.test.ts` (réponses HTTP mockées), `__tests__/llm/chat-with-profile-composer-gemini.test.ts` (chaîne `chatWithProfile` composer→gemini).
 
-### Momentum — `useMomentum()` / `MomentumIndicator`
+### Momentum — `useMomentum()` / `MomentumIndicator` (cible non montée)
 
-- **Code** : `app/hooks/use-momentum.ts`, modèle pur `app/lib/momentum-model.ts`, UI `app/components/system/MomentumIndicator.tsx` (monté dans `TopContextBar`).
-- **Données** : agrégation `useRightPanel()` (polling `/api/v2/right-panel` + merges SSE identiques à `use-right-panel.ts`) + `useFocalObject()` ; abonnement explicite au bus `RunStreamProvider` pour re-render immédiat sur événement.
-- **Tests** : `__tests__/hooks/use-momentum.test.ts` (`buildMomentumItems` + simulation merge SSE) ; `__tests__/hooks/use-momentum.hook.test.tsx` (jsdom, `run_started` → `hasActive`).
+- **Code** : `app/hooks/use-momentum.ts`, modèle pur `app/lib/momentum-model.ts`, UI `MomentumIndicator.tsx` (fichiers existent mais **non montés** actuellement).
+- **Statut** : `TopContextBar` et `MomentumIndicator` sont des cibles de convergence future, pas l'état actuel.
 
 ## Architecture
 
@@ -533,7 +776,7 @@ Architecture : `lib/connectors/` (un connector par service), tokens chiffrés AE
 | `/api/v2/runs`, `/api/v2/runs/{id}` | Runs v2 + timeline events |
 | `/api/v2/assets/{id}`, `.../download` | Asset detail + file download |
 | `/api/v2/missions`, `.../[id]/run` | CRUD missions + Run Now |
-| `/api/v2/connectors/unified` | Reconciled connector view |
+| `/api/v2/user/connections` | User connections with service status |
 | `/api/v2/architecture` | Architecture map (admin) |
 
 ### Data APIs
@@ -553,7 +796,7 @@ Architecture : `lib/connectors/` (un connector par service), tokens chiffrés AE
 |-------|--------|----------------------|
 | `/api/chat` | ❌ **REMOVED** | `/api/orchestrate` |
 | `/api/runs`, `/api/runs/{id}` | ⚠️ Deprecated | `/api/v2/runs` |
-| `/api/connectors/status` | ⚠️ Deprecated | `/api/v2/connectors/unified` |
+| `/api/connectors/status` | ⚠️ Deprecated | `/api/v2/user/connections` |
 | `/api/missions/execute`, `/approve`, `/recent` | ❌ **REMOVED** | `/api/v2/missions` |
 
 ## Mission System

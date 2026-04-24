@@ -32,6 +32,9 @@ export type AssetKind =
 
 export interface AssetProvenance {
   providerId: ProviderId;
+  tenantId?: string;
+  workspaceId?: string;
+  userId?: string;
   channelRef?: string;
   sentAt?: number;
   deliveryStatus?: "sent" | "delivered" | "read" | "failed";

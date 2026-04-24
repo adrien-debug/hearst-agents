@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAssetDetail } from "@/lib/runtime/assets/detail";
 import { readAssetFile } from "@/lib/runtime/assets/file-storage";
+import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
-
-const DEV_TENANT_ID = "dev-tenant";
-const DEV_WORKSPACE_ID = "dev-workspace";
 
 export async function GET(
   _req: NextRequest,
@@ -14,10 +12,16 @@ export async function GET(
   const { id } = await params;
 
   try {
+    const { scope, error } = await requireScope({ context: `GET /api/v2/assets/${id}/download` });
+    if (error || !scope) {
+      return NextResponse.json({ error: error?.message ?? "not_authenticated" }, { status: error?.status ?? 401 });
+    }
+
     const detail = await getAssetDetail({
       assetId: id,
-      tenantId: DEV_TENANT_ID,
-      workspaceId: DEV_WORKSPACE_ID,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      userId: scope.userId,
     });
 
     if (!detail) {

@@ -1,0 +1,186 @@
+Vas-y tu fais tout<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearst OS — Halo Style Explorations</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bormioli:wght@300;400;700&family=Outfit:wght@100;300;500;700&family=Syne:wght@400;700;800&family=Space+Grotesk:wght@300;500;700&family=Clash+Display:wght@300;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&family=JetBrains+Mono:wght@100;300;500&family=Inter:wght@100;300;500;700&family=Unbounded:wght@200;500;900&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 2rem; padding: 2rem; }
+        .card { 
+            background: rgba(15, 15, 20, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            border-radius: 24px; 
+            padding: 2.5rem; 
+            position: relative; 
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.15); }
+        .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; opacity: 0.4; margin-bottom: 1rem; }
+        
+        /* 1. THE MONOLITH (Brutalism) */
+        .style-1 h2 { font-family: 'Unbounded', sans-serif; font-weight: 900; font-size: 2.5rem; line-height: 0.9; color: #fff; text-transform: uppercase; }
+        .style-1 .accent { color: #ff3e00; }
+        .style-1 .side { background: rgba(255, 62, 0, 0.05); }
+
+        /* 2. THE ETHER (Ethereal Serif) */
+        .style-2 h2 { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 3rem; font-style: italic; color: #e0e0e0; }
+        .style-2 .accent { color: #b8a1ff; }
+        .style-2 .side { background: rgba(184, 161, 255, 0.03); }
+
+        /* 3. THE KINETIC (Ultra Modern Sans) */
+        .style-3 h2 { font-family: 'Outfit', sans-serif; font-weight: 100; font-size: 2.8rem; letter-spacing: -0.05em; color: #fff; }
+        .style-3 .accent { color: #00ffcc; font-weight: 500; }
+        .style-3 .side { background: rgba(0, 255, 204, 0.04); }
+
+        /* 4. THE LIQUID (Experimental) */
+        .style-4 h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.6rem; color: #fff; }
+        .style-4 .accent { background: linear-gradient(90deg, #ff00ff, #00e5ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .style-4 .side { background: rgba(255, 0, 255, 0.02); }
+
+        /* 5. THE TECHNO (Cyberpunk Precision) */
+        .style-5 h2 { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 2.4rem; color: #00e5ff; text-shadow: 0 0 20px rgba(0, 229, 255, 0.3); }
+        .style-5 .accent { color: #fff; }
+        .style-5 .side { border-right: 2px solid #00e5ff; }
+
+        /* 6. THE PRESTIGE (High Fashion) */
+        .style-6 h2 { font-family: 'Clash Display', sans-serif; font-weight: 500; font-size: 2.7rem; color: #f5f5f7; }
+        .style-6 .accent { color: #d4af37; }
+        .style-6 .side { background: #1a1a1a; }
+
+        /* 7. THE VOID (Minimalist) */
+        .style-7 h2 { font-family: 'Inter', sans-serif; font-weight: 100; font-size: 3rem; color: #444; }
+        .style-7 .accent { color: #fff; }
+        .style-7 .side { opacity: 0.1; }
+
+        /* 8. THE SIGNAL (Retro-Future) */
+        .style-8 h2 { font-family: 'Syncopate', sans-serif; font-weight: 700; font-size: 2rem; color: #fff; letter-spacing: 0.2em; }
+        .style-8 .accent { color: #ffff00; }
+        .style-8 .side { background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,0,0.02) 10px, rgba(255,255,0,0.02) 20px); }
+
+        /* 9. THE NEBULA (Soft Gradient) */
+        .style-9 h2 { font-family: 'Outfit', sans-serif; font-weight: 300; font-size: 2.8rem; color: #fff; }
+        .style-9 .accent { color: #ff8a00; text-shadow: 0 0 30px rgba(255, 138, 0, 0.5); }
+        .style-9 .side { background: radial-gradient(circle at center, rgba(255, 138, 0, 0.1), transparent); }
+
+        /* 10. THE ARCHITECT (Swiss Design) */
+        .style-10 h2 { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 2.5rem; color: #fff; line-height: 1; }
+        .style-10 .accent { color: #007aff; }
+        .style-10 .side { background: #fff; color: #000; }
+    </style>
+</head>
+<body>
+    <div class="p-12">
+        <h1 class="text-4xl font-light mb-2">Hearst OS — <span class="text-cykan">Visual DNA</span></h1>
+        <p class="opacity-40 font-mono text-xs tracking-widest uppercase mb-12">Exploration de 10 directions typographiques et chromatiques</p>
+        
+        <div class="grid-container">
+            <!-- 1 -->
+            <div class="card style-1">
+                <div class="label">01. THE MONOLITH</div>
+                <h2>L'intelligence<br/><span class="accent">devient brute.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-white"></div>
+                    <div class="w-8 h-8 rounded-full bg-[#ff3e00]"></div>
+                </div>
+            </div>
+
+            <!-- 2 -->
+            <div class="card style-2">
+                <div class="label">02. THE ETHER</div>
+                <h2>L'intelligence<br/><span class="accent">devient souffle.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-[#e0e0e0]"></div>
+                    <div class="w-8 h-8 rounded-full bg-[#b8a1ff]"></div>
+                </div>
+            </div>
+
+            <!-- 3 -->
+            <div class="card style-3">
+                <div class="label">03. THE KINETIC</div>
+                <h2>L'intelligence<br/><span class="accent">devient flux.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-white"></div>
+                    <div class="w-8 h-8 rounded-full bg-[#00ffcc]"></div>
+                </div>
+            </div>
+
+            <!-- 4 -->
+            <div class="card style-4">
+                <div class="label">04. THE LIQUID</div>
+                <h2>L'intelligence<br/><span class="accent">devient prisme.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-[#ff00ff]"></div>
+                    <div class="w-8 h-8 rounded-full bg-[#00e5ff]"></div>
+                </div>
+            </div>
+
+            <!-- 5 -->
+            <div class="card style-5">
+                <div class="label">05. THE TECHNO</div>
+                <h2>L'intelligence<br/><span class="accent">devient code.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-[#00e5ff]"></div>
+                    <div class="w-8 h-8 rounded-full bg-white"></div>
+                </div>
+            </div>
+
+            <!-- 6 -->
+            <div class="card style-6">
+                <div class="label">06. THE PRESTIGE</div>
+                <h2>L'intelligence<br/><span class="accent">devient luxe.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-[#f5f5f7]"></div>
+                    <div class="w-8 h-8 rounded-full bg-[#d4af37]"></div>
+                </div>
+            </div>
+
+            <!-- 7 -->
+            <div class="card style-7">
+                <div class="label">07. THE VOID</div>
+                <h2>L'intelligence<br/><span class="accent">devient silence.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-[#444]"></div>
+                    <div class="w-8 h-8 rounded-full bg-white"></div>
+                </div>
+            </div>
+
+            <!-- 8 -->
+            <div class="card style-8">
+                <div class="label">08. THE SIGNAL</div>
+                <h2>L'intelligence<br/><span class="accent">devient onde.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-white"></div>
+                    <div class="w-8 h-8 rounded-full bg-[#ffff00]"></div>
+                </div>
+            </div>
+
+            <!-- 9 -->
+            <div class="card style-9">
+                <div class="label">09. THE NEBULA</div>
+                <h2>L'intelligence<br/><span class="accent">devient aura.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-white"></div>
+                    <div class="w-8 h-8 rounded-full bg-[#ff8a00]"></div>
+                </div>
+            </div>
+
+            <!-- 10 -->
+            <div class="card style-10">
+                <div class="label">10. THE ARCHITECT</div>
+                <h2>L'intelligence<br/><span class="accent">devient structure.</span></h2>
+                <div class="mt-8 flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-white"></div>
+                    <div class="w-8 h-8 rounded-full bg-[#007aff]"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

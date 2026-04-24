@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { getUserId } from "@/lib/get-user-id";
 
+// Helper to resolve dev scope (same logic as lib/scope.ts, but sync)
+function resolveDevScope(): { tenantId: string; workspaceId: string } {
+  return {
+    tenantId: process.env.HEARST_TENANT_ID ?? "dev-tenant",
+    workspaceId: process.env.HEARST_WORKSPACE_ID ?? "dev-workspace",
+  };
+}
+
 function generateCodeVerifier(): string {
   return crypto.randomBytes(32).toString("base64url");
 }
@@ -46,11 +54,12 @@ export async function GET() {
   url.searchParams.set("code_challenge", codeChallenge);
   url.searchParams.set("code_challenge_method", "S256");
 
-  // Encode verifier + userId into the OAuth `state` param so the callback
+  // Encode verifier + userId + scope into the OAuth `state` param so the callback
   // can read them from the URL — cookies don't survive cross-domain redirects
-  // (localhost → ngrok).
+  // (localhost → ngrok). Scope is required for multi-tenant isolation.
+  const { tenantId, workspaceId } = resolveDevScope();
   const statePayload = Buffer.from(
-    JSON.stringify({ v: codeVerifier, u: userId }),
+    JSON.stringify({ v: codeVerifier, u: userId, t: tenantId, w: workspaceId }),
   ).toString("base64url");
 
   url.searchParams.set("state", statePayload);

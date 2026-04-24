@@ -87,9 +87,11 @@ export interface FocalObjectView {
   sourcePlanId?: string;
   /** Source asset ID si dérivé d'un asset */
   sourceAssetId?: string;
+  /** Mission ID pour actions pause/resume */
+  missionId?: string;
   /** Cible de morphing possible */
   morphTarget?: string | null;
-  /** Action primaire affichable (non câblée métier dans cette mission) */
+  /** Action primaire affichable */
   primaryAction?: {
     kind: string;
     label: string;

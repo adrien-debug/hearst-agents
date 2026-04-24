@@ -47,6 +47,8 @@ export interface FocalObject {
   sourcePlanId?: string;
   /** Source asset ID si dérivé d'un asset stocké */
   sourceAssetId?: string;
+  /** Mission ID pour actions pause/resume sur missions/watchers */
+  missionId?: string;
   /** Cible de morphing possible (ex: message_draft → message_receipt) */
   morphTarget?: string | null;
   /** Action primaire affichable (approve, discard, pause, resume, etc.) */

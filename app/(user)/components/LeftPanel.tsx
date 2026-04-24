@@ -27,18 +27,24 @@ export function LeftPanel() {
   };
 
   return (
-    <aside className={`${isExpanded ? "w-[240px]" : "w-[60px]"} bg-[#111] border-r border-white/[0.06] flex flex-col transition-all duration-200`}>
-      <div className="p-3 border-b border-white/[0.06]">
+    <aside
+      className={`${isExpanded ? "w-[240px]" : "w-[60px]"} border-r border-[var(--line)] flex flex-col transition-all duration-200`}
+      style={{ background: "rgba(255,255,255,0.008)" }}
+    >
+      {/* Brand Header */}
+      <div className="p-3 border-b border-[var(--line)]">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-sm font-bold">H</div>
+          <div className="w-8 h-8 flex items-center justify-center text-sm font-bold bg-[var(--cykan)] text-black">
+            H
+          </div>
           {isExpanded && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">Hearst OS</p>
+              <p className="text-sm font-semibold truncate tracking-tight">Hearst OS</p>
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-white/40 truncate">Bonjour, {firstName}</p>
+                <p className="text-[10px] text-[var(--text-muted)] truncate">{firstName}</p>
                 <button
                   onClick={handleLogout}
-                  className="text-[10px] text-white/30 hover:text-red-400 transition-colors ml-2"
+                  className="text-[10px] text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors ml-2"
                   title="Déconnexion"
                 >
                   →
@@ -50,7 +56,7 @@ export function LeftPanel() {
         {!isExpanded && (
           <button
             onClick={handleLogout}
-            className="mt-2 w-full text-center text-[10px] text-white/30 hover:text-red-400 transition-colors"
+            className="mt-2 w-full text-center text-[10px] text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
             title="Déconnexion"
           >
             →
@@ -58,6 +64,7 @@ export function LeftPanel() {
         )}
       </div>
 
+      {/* Primary Navigation */}
       <nav className="p-2 space-y-0.5">
         {SURFACES.map((s) => {
           const isActive = pathname === s.path || (s.path !== "/" && pathname?.startsWith(s.path));
@@ -68,23 +75,31 @@ export function LeftPanel() {
                 setSurface(s.id);
                 router.push(s.path);
               }}
-              className={`w-full flex items-center gap-3 px-2 py-1.5 rounded-md text-sm transition-colors ${
-                isActive ? "bg-white/10 text-white" : "text-white/50 hover:text-white hover:bg-white/5"
+              className={`w-full flex items-center gap-3 px-2 py-1.5 text-sm transition-colors ${
+                isActive
+                  ? "bg-[var(--cykan)]/[0.04] text-[var(--cykan)] border-l-2 border-[var(--cykan)]"
+                  : "text-[var(--text-soft)] hover:text-[var(--text)] hover:bg-white/[0.02] border-l-2 border-transparent"
               }`}
             >
               <span className="w-5 text-center">{s.icon}</span>
-              {isExpanded && <span className="truncate">{s.label}</span>}
+              {isExpanded && <span className="truncate font-medium">{s.label}</span>}
             </button>
           );
         })}
       </nav>
 
+      {/* Conversations Section */}
       {isExpanded && (
         <>
-          <div className="mt-4 px-3 py-2 border-t border-white/[0.06]">
+          <div className="mt-4 px-3 py-2 border-t border-[var(--line)]">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">Conversations</p>
-              <button onClick={() => addThread("Nouveau", surface)} className="text-xs text-cyan-400 hover:text-cyan-300">+</button>
+              <p className="halo-mono-label">Conversations</p>
+              <button
+                onClick={() => addThread("Nouveau", surface)}
+                className="text-xs text-[var(--cykan)] hover:text-[var(--cykan)]/80 transition-colors"
+              >
+                +
+              </button>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
@@ -92,19 +107,27 @@ export function LeftPanel() {
               <button
                 key={thread.id}
                 onClick={() => setActiveThread(thread.id)}
-                className={`w-full text-left px-2 py-2 rounded-md text-xs transition-colors ${
-                  activeThreadId === thread.id ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60 hover:bg-white/[0.02]"
+                className={`w-full text-left px-2 py-2 text-xs transition-colors ${
+                  activeThreadId === thread.id
+                    ? "bg-[var(--cykan)]/[0.04] text-[var(--cykan)] border-l-2 border-[var(--cykan)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-soft)] hover:bg-white/[0.02] border-l-2 border-transparent"
                 }`}
               >
                 <p className="truncate font-medium">{thread.name}</p>
-                <p className="truncate text-[10px] text-white/20 mt-0.5">{SURFACES.find(s => s.id === thread.surface)?.label}</p>
+                <p className="truncate text-[10px] text-[var(--text-faint)] mt-0.5">
+                  {SURFACES.find(s => s.id === thread.surface)?.label}
+                </p>
               </button>
             ))}
           </div>
         </>
       )}
 
-      <button onClick={() => setIsExpanded(!isExpanded)} className="p-3 border-t border-white/[0.06] text-white/30 hover:text-white/60">
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="p-3 border-t border-[var(--line)] text-[var(--text-muted)] hover:text-[var(--text-soft)] transition-colors"
+      >
         {isExpanded ? "◀" : "▶"}
       </button>
     </aside>

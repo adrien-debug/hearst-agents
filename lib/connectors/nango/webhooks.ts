@@ -10,6 +10,7 @@
 
 import type { NangoWebhookPayload, NangoProvider } from "./types";
 import { syncNangoConnection, removeConnection } from "./credentials";
+import { parseConnectionId } from "./proxy";
 
 export interface WebhookHandlerContext {
   tenantId: string;
@@ -40,8 +41,7 @@ export async function handleNangoWebhook(
         status: "active",
       });
 
-    // TODO: Emit signal for real-time UI update via global event bus
-    console.log(`[NangoWebhook] Integration connected: ${payload.provider} for user ${userId}`);
+    console.log(`[NangoWebhook] Integration connected: ${payload.provider} for user ${userId.slice(0, 8)}`);
 
     return { success: true, action: "synced_active" };
     }
@@ -54,8 +54,7 @@ export async function handleNangoWebhook(
 
       await removeConnection(userId, payload.provider as NangoProvider);
 
-    // TODO: Emit signal for real-time UI update via global event bus
-    console.log(`[NangoWebhook] Integration disconnected: ${payload.provider} for user ${userId}`);
+    console.log(`[NangoWebhook] Integration disconnected: ${payload.provider} for user ${userId.slice(0, 8)}`);
 
     return { success: true, action: "removed" };
     }
@@ -76,8 +75,7 @@ export async function handleNangoWebhook(
         metadata: { error: payload.error },
       });
 
-    // TODO: Emit reliability alert via global event bus
-    console.error(`[NangoWebhook] OAuth error for ${payload.provider}: ${payload.error}`);
+    console.error(`[NangoWebhook] OAuth error for ${payload.provider}: ${payload.error} (user ${userId.slice(0, 8)})`);
 
     return { success: true, action: "marked_error" };
     }
@@ -89,13 +87,11 @@ export async function handleNangoWebhook(
 }
 
 /**
- * Extract userId from Nango connection ID
- * Format: hearst-{userId}-{provider}
+ * Extract userId from Nango connection ID.
+ * Delegates to parseConnectionId for canonical hex + legacy support.
  */
 function extractUserIdFromConnectionId(connectionId: string): string | null {
-  const match = connectionId.match(/^hearst-(.+)-([a-z-]+)$/);
-  if (!match) return null;
-  return match[1];
+  return parseConnectionId(connectionId)?.userId ?? null;
 }
 
 /**

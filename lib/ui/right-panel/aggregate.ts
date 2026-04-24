@@ -25,13 +25,34 @@ import type { RightPanelData, FocalObjectView } from "./types";
 const MAX_RUNS = 20;
 const MAX_ASSETS = 50;
 
-export async function buildRightPanelData(threadId?: string): Promise<RightPanelData> {
+interface RightPanelScope {
+  userId: string;
+  tenantId: string;
+  workspaceId: string;
+}
+
+export async function buildRightPanelData(
+  threadId?: string,
+  scope?: RightPanelScope,
+): Promise<RightPanelData> {
   // ── Runs ─────────────────────────────────────────────────
-  let runs = await getPersistedRuns({ limit: MAX_RUNS });
+  let runs = await getPersistedRuns({
+    userId: scope?.userId,
+    tenantId: scope?.tenantId,
+    workspaceId: scope?.workspaceId,
+    limit: MAX_RUNS,
+  });
   const fromPersistence = runs.length > 0;
 
   if (!fromPersistence) {
-    const mem = getMemoryRuns(MAX_RUNS);
+    const mem = getMemoryRuns(MAX_RUNS).filter((r) => {
+      if (!scope) return true;
+      return (
+        r.userId === scope.userId &&
+        r.tenantId === scope.tenantId &&
+        r.workspaceId === scope.workspaceId
+      );
+    });
     runs = mem.map((r) => ({
       id: r.id,
       tenantId: r.tenantId,
@@ -51,7 +72,14 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
   }
 
   // Current run = latest with live status (running, awaiting_approval, awaiting_clarification)
-  const memRuns = getMemoryRuns(5);
+  const memRuns = getMemoryRuns(5).filter((r) => {
+    if (!scope) return true;
+    return (
+      r.userId === scope.userId &&
+      r.tenantId === scope.tenantId &&
+      r.workspaceId === scope.workspaceId
+    );
+  });
   const liveStatuses = ["running", "awaiting_approval", "awaiting_clarification"];
   const liveRun = memRuns.find((r) => liveStatuses.includes(r.status));
   const currentRun = liveRun
@@ -75,7 +103,11 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
   }));
 
   // Get assets from Supabase (canonical) + runs as fallback
-  const persistedAssets = await getPersistedAssets({ limit: MAX_ASSETS });
+  const persistedAssets = await getPersistedAssets({
+    tenantId: scope?.tenantId,
+    workspaceId: scope?.workspaceId,
+    limit: MAX_ASSETS,
+  });
 
   // Map to RightPanelAsset format
   const assets: { id: string; name: string; type: string; runId: string }[] =
@@ -98,10 +130,23 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
           .slice(0, MAX_ASSETS);
 
   // ── Missions ─────────────────────────────────────────────
-  let missionList = await getPersistedMissions();
+  let missionList = await getPersistedMissions({
+    userId: scope?.userId,
+    tenantId: scope?.tenantId,
+    workspaceId: scope?.workspaceId,
+  });
 
   if (missionList.length === 0) {
-    missionList = getMemoryMissions().map((m) => ({
+    missionList = getMemoryMissions()
+      .filter((m) => {
+        if (!scope) return true;
+        return (
+          m.userId === scope.userId &&
+          m.tenantId === scope.tenantId &&
+          m.workspaceId === scope.workspaceId
+        );
+      })
+      .map((m) => ({
       id: m.id,
       tenantId: m.tenantId,
       workspaceId: m.workspaceId,
@@ -113,7 +158,7 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
       createdAt: m.createdAt,
       lastRunAt: m.lastRunAt,
       lastRunId: m.lastRunId,
-    }));
+      }));
   }
 
   const opsMap = getAllMissionOps();
@@ -138,9 +183,13 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
   // ── Connector Health ──────────────────────────────────────
   let connectorHealth: RightPanelData["connectorHealth"];
   try {
+    if (!scope) {
+      throw new Error("scope_required_for_connector_health");
+    }
     const conns = await getConnectionsByScope({
-      tenantId: "dev-tenant",
-      workspaceId: "dev-workspace",
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      userId: scope.userId,
     });
     if (conns.length > 0) {
       connectorHealth = {
@@ -174,8 +223,26 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
   if (threadId) {
     try {
       // 1. Récupérer les plans, missions et assets du thread
-      const plans = getPlansForThread(threadId);
-      const missionsForThread = getMissionsForThread(threadId);
+      // Filtrage scope explicite pour isolation multi-tenant
+      const allPlans = getPlansForThread(threadId);
+      const plans = scope
+        ? allPlans.filter(
+            (p) =>
+              p.userId === scope.userId &&
+              p.tenantId === scope.tenantId &&
+              p.workspaceId === scope.workspaceId,
+          )
+        : allPlans;
+
+      const allMissions = getMissionsForThread(threadId);
+      const missionsForThread = scope
+        ? allMissions.filter(
+            (m) =>
+              m.userId === scope.userId &&
+              m.tenantId === scope.tenantId &&
+              m.workspaceId === scope.workspaceId,
+          )
+        : allMissions;
 
       // 2. Récupérer les assets du thread (depuis DB ou mémoire)
       let threadAssets: Asset[] = [];
@@ -192,18 +259,27 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
             .limit(5);
 
           if (assetRows) {
-            threadAssets = assetRows.map((row: Record<string, unknown>) => ({
-              id: row.id as string,
-              threadId: row.thread_id as string,
-              kind: row.kind as AssetKind,
-              title: (row.title as string) ?? "",
-              summary: (row.summary as string | undefined) ?? undefined,
-              outputTier: (row.output_tier as OutputTier | undefined) ?? undefined,
-              provenance: (row.provenance ?? {}) as AssetProvenance,
-              createdAt: new Date(row.created_at as string).getTime(),
-              contentRef: (row.content_ref as string | undefined) ?? undefined,
-              runId: (row.run_id as string | undefined) ?? undefined,
-            }));
+            threadAssets = assetRows
+              .map((row: Record<string, unknown>) => ({
+                id: row.id as string,
+                threadId: row.thread_id as string,
+                kind: row.kind as AssetKind,
+                title: (row.title as string) ?? "",
+                summary: (row.summary as string | undefined) ?? undefined,
+                outputTier: (row.output_tier as OutputTier | undefined) ?? undefined,
+                provenance: (row.provenance ?? {}) as AssetProvenance,
+                createdAt: new Date(row.created_at as string).getTime(),
+                contentRef: (row.content_ref as string | undefined) ?? undefined,
+                runId: (row.run_id as string | undefined) ?? undefined,
+              }))
+              .filter((asset: Asset) => {
+                if (!scope) return true;
+                const tenantId = asset.provenance?.tenantId as string | undefined;
+                const workspaceId = asset.provenance?.workspaceId as string | undefined;
+                if (tenantId && tenantId !== scope.tenantId) return false;
+                if (workspaceId && workspaceId !== scope.workspaceId) return false;
+                return true;
+              });
           }
         }
       } catch {
@@ -226,11 +302,12 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
           threadId: resolvedFocal.threadId,
           sourcePlanId: resolvedFocal.sourcePlanId,
           sourceAssetId: resolvedFocal.sourceAssetId,
+          missionId: (resolvedFocal as { missionId?: string }).missionId,
           morphTarget: resolvedFocal.morphTarget,
           primaryAction: resolvedFocal.primaryAction,
-          body: (resolvedFocal as { body?: string }).body,
-          wordCount: (resolvedFocal as { wordCount?: number }).wordCount,
-          provider: (resolvedFocal as { providerId?: string }).providerId,
+        body: (resolvedFocal as { body?: string }).body,
+        wordCount: (resolvedFocal as { wordCount?: number }).wordCount,
+        provider: (resolvedFocal as { providerId?: string; provider?: string }).providerId ?? (resolvedFocal as { provider?: string }).provider,
           createdAt: resolvedFocal.createdAt,
           updatedAt: resolvedFocal.updatedAt,
         };
@@ -315,6 +392,14 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
               runId: (row.run_id as string | undefined) ?? undefined,
             };
 
+            if (scope) {
+              const tenantId = asset.provenance?.tenantId as string | undefined;
+              const workspaceId = asset.provenance?.workspaceId as string | undefined;
+              if ((tenantId && tenantId !== scope.tenantId) || (workspaceId && workspaceId !== scope.workspaceId)) {
+                continue;
+              }
+            }
+
             const contentIsInline =
               asset.contentRef &&
               asset.contentRef.length > 0 &&
@@ -338,6 +423,7 @@ export async function buildRightPanelData(threadId?: string): Promise<RightPanel
               primaryAction: fo.primaryAction,
               createdAt: fo.createdAt,
               updatedAt: fo.updatedAt,
+              provider: (fo as { providerId?: string }).providerId,
             };
 
             if (i === 0) {

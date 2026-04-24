@@ -46,11 +46,31 @@ export const useRuntimeStore = create<RuntimeState>()(
         return { events: [newEvent, ...state.events].slice(0, MAX_EVENTS) };
       });
 
+      // Validate run_id consistency
+      const eventRunId = event.run_id as string | undefined;
+      const currentRunId = get().currentRunId;
+
+      if (eventRunId && currentRunId && eventRunId !== currentRunId) {
+        // Allow transition from client token to canonical run_id
+        if (!currentRunId.startsWith("run_")) {
+          console.log(`[RuntimeStore] Transitioning run_id: ${currentRunId} -> ${eventRunId}`);
+        } else {
+          console.warn(`[RuntimeStore] Run ID mismatch in event ${event.type}: current=${currentRunId}, event=${eventRunId}`);
+        }
+      }
+
+      if (eventRunId && !currentRunId) {
+        console.warn(`[RuntimeStore] Event ${event.type} arrived with run_id ${eventRunId} but no current run`);
+      }
+
       switch (event.type) {
         case "run_started":
+          if (!eventRunId) {
+            console.error("[RuntimeStore] run_started event missing run_id");
+          }
           set({
             coreState: "streaming",
-            currentRunId: event.run_id as string,
+            currentRunId: eventRunId || currentRunId,
             flowLabel: event.flow_label as string || null,
           });
           break;
@@ -106,9 +126,21 @@ export const useRuntimeStore = create<RuntimeState>()(
               summary: (focalData.summary as string) ?? undefined,
               sections: (focalData.sections as { heading?: string; body: string }[]) ?? undefined,
               wordCount: focalData.wordCount as number | undefined,
-              provider: focalData.provider as string | undefined,
+              provider: (focalData.provider ?? focalData.providerId) as string | undefined,
               createdAt: (focalData.createdAt as number) ?? Date.now(),
               updatedAt: (focalData.updatedAt as number) ?? Date.now(),
+              // Métadonnées focales canoniques pour traçabilité et actions
+              threadId: (focalData.threadId as string) ?? undefined,
+              sourcePlanId: (focalData.sourcePlanId as string) ?? undefined,
+              sourceAssetId: (focalData.sourceAssetId as string) ?? undefined,
+              missionId: (focalData.missionId as string) ?? undefined,
+              morphTarget: focalData.morphTarget === null ? null : (focalData.morphTarget as string) ?? undefined,
+              primaryAction: focalData.primaryAction && typeof focalData.primaryAction === "object"
+                ? {
+                    kind: (focalData.primaryAction as Record<string, string>).kind,
+                    label: (focalData.primaryAction as Record<string, string>).label,
+                  }
+                : undefined,
             });
           }
           break;

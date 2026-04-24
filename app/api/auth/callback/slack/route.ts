@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { saveTokens } from "@/lib/token-store";
 import { registerProviderUsage } from "@/lib/connectors/control-plane/register";
 
-function parseState(raw: string | null): { v: string; u: string } | null {
+interface StatePayload {
+  v: string; // codeVerifier
+  u: string; // userId
+  t?: string; // tenantId (optional, for multi-tenant)
+  w?: string; // workspaceId (optional)
+}
+
+function parseState(raw: string | null): StatePayload | null {
   if (!raw) return null;
   try {
     return JSON.parse(Buffer.from(raw, "base64url").toString("utf-8"));
@@ -36,7 +43,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/apps?slack=error", appUrl));
   }
 
-  const { v: codeVerifier, u: userId } = state;
+  const { v: codeVerifier, u: userId, t: stateTenantId, w: stateWorkspaceId } = state;
+
+  // Resolve scope from state or env (state carries scope for session-independent OAuth)
+  const tenantId = stateTenantId ?? process.env.HEARST_TENANT_ID ?? "dev-tenant";
+  const workspaceId = stateWorkspaceId ?? process.env.HEARST_WORKSPACE_ID ?? "dev-workspace";
 
   try {
     const body: Record<string, string> = {
@@ -92,7 +103,11 @@ export async function GET(request: NextRequest) {
 
     void registerProviderUsage({
       provider: "slack",
-      scope: { tenantId: teamId ?? "dev-tenant", workspaceId: "dev-workspace", userId },
+      scope: {
+        tenantId: teamId ?? tenantId,
+        workspaceId,
+        userId,
+      },
     });
 
     return NextResponse.redirect(new URL("/apps?slack=connected", appUrl));

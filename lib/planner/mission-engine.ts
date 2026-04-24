@@ -46,6 +46,9 @@ export function activateMissionFromPlan(
   const mission: MissionDefinition = {
     id: `mission_${now}_${++missionCounter}`,
     threadId: plan.threadId,
+    userId: plan.userId,
+    tenantId: plan.tenantId,
+    workspaceId: plan.workspaceId,
     sourcePlanId: planId,
     mode,
     naturalLanguageRule: plan.intent,

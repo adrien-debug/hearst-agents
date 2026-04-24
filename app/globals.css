@@ -1,20 +1,49 @@
 @import "tailwindcss";
 
 /**
- * HEARST OS — Design Tokens v2 (clean rebuild).
+ * HEARST OS — Design Tokens v3 (Halo Phase 1).
  *
- * Surfaces: rail < background < surface < overlay
+ * Surfaces: bg < bg-elev < bg-soft
  * Accent: cyan (#00e5ff)
- * Opacity scale: 90, 72, 60, 40, 30, 20, 15, 10
+ * Opacity scale: 90,
+ 72,
+ 60,
+ 55,
+ 40,
+ 32,
+ 20,
+ 18,
+ 15,
+ 10,
+ 8,
+ 6 * Inspired by halo-design-direction.html
  */
 
 :root {
-  /* Core colors */
+  /* Core surfaces — deep dark hierarchy */
+    --bg: #0a0a0b;
+    --bg-elev: #111114;
+    --bg-soft: #16161a;
   --background: #000000;
-  --foreground: #fafafa;
+  --foreground: #ededed;
   --surface: #14141a;
   --rail: #0c0c10;
+/* Text opacity scale */
+  --text: rgba(255, 255, 255, 0.9);
+  --text-soft: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.32);
+  --text-faint: rgba(255, 255, 255, 0.18);
+
+  /* Accent colors */
   --cyan-accent: #00e5ff;
+  --cykan: #00e5ff;
+    --money: #4ade80;
+    --warn: #fbbf24;
+    --danger: #ef4444;
+  
+    /* Border / line opacities */
+    --line: rgba(255, 255, 255, 0.06);
+    --line-strong: rgba(255, 255, 255, 0.12);
 
   /* Glow shadows */
   --glow-cyan-sm: 0 0 4px rgba(0, 229, 255, 0.3);
@@ -22,6 +51,8 @@
   --glow-cyan-lg: 0 0 12px rgba(0, 229, 255, 0.5);
   --glow-cyan-xl: 0 0 20px rgba(0, 229, 255, 0.15);
 
+  --glow-money-sm: 0 0 4px rgba(74, 222, 128, 0.3);
+    --glow-money-md: 0 0 8px rgba(74, 222, 128, 0.4);
   /* Z-index scale */
   --z-base: 0;
   --z-nav: 30;
@@ -36,6 +67,18 @@
   --color-surface: var(--surface);
   --color-rail: var(--rail);
   --color-cyan-accent: var(--cyan-accent);
+  --color-bg: var(--bg);
+    --color-bg-elev: var(--bg-elev);
+    --color-bg-soft: var(--bg-soft);
+    --color-text: var(--text);
+    --color-text-soft: var(--text-soft);
+    --color-text-muted: var(--text-muted);
+    --color-text-faint: var(--text-faint);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --color-money: var(--money);
+    --color-warn: var(--warn);
+    --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -49,24 +92,28 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+    color: var(--text);
   min-height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  letter-spacing: -0.005em;
+    font-feature-settings: "ss01", "cv11", "tnum";
 }
 
-/* ── Typography utilities ────────────────────────────────── */
+/* ── Typography utilities — Halo Phase 1 ───────────────── */
 
+/* Bounded reading widths */
 .bounded-title-3 {
   max-width: 100%;
   font-weight: 300;
   letter-spacing: -0.02em;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text);
   line-height: 1.3;
 }
 
@@ -74,6 +121,78 @@ body {
   max-width: 60ch;
 }
 
+/* Halo heading hierarchy */
+.halo-title-xl {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.halo-title-lg {
+  font-size: 24px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.halo-title-md {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.halo-title-sm {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Mono labels — Halo style */
+.halo-mono-label {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.halo-mono-tag {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.halo-mono-meta {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+/* Body text */
+.halo-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-soft);
+}
+
+.halo-body-sm {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+
+/* Editorial spacing */
+.halo-editorial-section {
+  padding: 28px 36px;
+}
 /* ── Ghost Document Surface ───────────────────────────────── */
 
 .ghost-document-surface {
@@ -205,11 +324,13 @@ body {
   outline-offset: 2px;
 }
 
-/* ── Animations ────────────────────────────────────────────── */
+/* ── Animations — Halo Phase 1 ─────────────────────────────── */
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+    50% {
+      opacity: 0.3;
+    }
 }
 
 @keyframes fade-in {
@@ -222,8 +343,31 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes halo-breathe {
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes halo-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
 .animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse 1.6s ease-in-out infinite;
 }
 
 .animate-fade-in {
@@ -234,6 +378,123 @@ body {
   animation: slide-up 0.15s ease-out;
 }
 
+.animate-halo-breathe {
+  animation: halo-breathe 4s ease-in-out infinite;
+}
+
+.animate-halo-shimmer {
+  animation: halo-shimmer 3s linear infinite;
+  background-size: 200% 100%;
+}
+
+/* ── Halo Surface Utilities ───────────────────────────────── */
+
+/* Halo idle glow effect */
+.halo-idle-glow {
+  position: relative;
+}
+
+.halo-idle-glow::before {
+  content: '';
+  position: absolute;
+  inset: -100px;
+  background: radial-gradient(ellipse at center,
+      rgba(0, 229, 255, 0.08) 0%,
+      rgba(0, 229, 255, 0.02) 40%,
+      transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: halo-breathe 4s ease-in-out infinite;
+}
+
+/* Premium card surface */
+.halo-card {
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+/* Active/selected state with cyan accent */
+.halo-active {
+  background: rgba(0, 229, 255, 0.04);
+  border-left: 2px solid var(--cykan);
+  color: var(--cykan);
+}
+
+/* Hover lift effect */
+.halo-hover-lift {
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.halo-hover-lift:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Progress bar with glow */
+.halo-progress {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.halo-progress>div {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--cykan);
+  box-shadow: var(--glow-cyan-md);
+}
+
+.halo-progress.money>div {
+  background: var(--money);
+  box-shadow: var(--glow-money-md);
+}
+
+/* Halo command bar */
+.halo-command-bar {
+  border-top: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+/* Halo kicker/label */
+.halo-kicker {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.halo-kicker::before {
+  content: '';
+  width: 16px;
+  height: 1px;
+  background: var(--cykan);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
 /* ── Reduced Motion ────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {

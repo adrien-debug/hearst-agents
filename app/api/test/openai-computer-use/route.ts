@@ -18,9 +18,18 @@ import {
   testComputerUseBackend,
   testComputerUseWithMock,
   type ComputerAction,
+  type ComputerUseConfig,
 } from "@/lib/agents/backend-v2/openai-computer-use";
 
 export const dynamic = "force-dynamic";
+
+type ComputerEnvironment = NonNullable<ComputerUseConfig["environment"]>;
+
+function parseEnvironment(value: unknown): ComputerEnvironment {
+  return value === "browser" || value === "mac" || value === "windows" || value === "ubuntu"
+    ? value
+    : "browser";
+}
 
 // GET — Health check + access verification
 export async function GET() {
@@ -33,8 +42,8 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const body = await req.json();
-    const mode = body.mode ?? "access-check"; // "access-check" | "single-step" | "full-task" | "mock-test"
+    const body = (await req.json()) as Record<string, unknown>;
+    const mode = typeof body.mode === "string" ? body.mode : "access-check";
 
     switch (mode) {
       case "access-check": {
@@ -47,8 +56,9 @@ export async function POST(req: NextRequest) {
       }
 
       case "single-step": {
-        const instruction = body.instruction ?? "Click on the blue button";
-        const environment = body.environment ?? "browser";
+        const instruction =
+          typeof body.instruction === "string" ? body.instruction : "Click on the blue button";
+        const environment = parseEnvironment(body.environment);
 
         const session = createComputerSession();
         const screenshot = createMockScreenshot();
@@ -57,7 +67,7 @@ export async function POST(req: NextRequest) {
           session,
           encodeImageToBase64(screenshot),
           instruction,
-          { environment: environment as any },
+          { environment },
         );
 
         return Response.json({
@@ -75,9 +85,10 @@ export async function POST(req: NextRequest) {
       }
 
       case "full-task": {
-        const instruction = body.instruction ?? "Navigate to settings page";
-        const environment = body.environment ?? "browser";
-        const maxSteps = body.max_steps ?? 5;
+        const instruction =
+          typeof body.instruction === "string" ? body.instruction : "Navigate to settings page";
+        const environment = parseEnvironment(body.environment);
+        const maxSteps = typeof body.max_steps === "number" ? body.max_steps : 5;
 
         const events: Array<{
           type: string;
@@ -94,7 +105,7 @@ export async function POST(req: NextRequest) {
         for await (const event of runComputerTask(
           instruction,
           getScreenshot,
-          { environment: environment as any },
+          { environment },
           maxSteps,
         )) {
           const eventData = {

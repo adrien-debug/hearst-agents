@@ -39,6 +39,7 @@ import { logPlanEvent } from "./debug";
 export interface PipelineContext {
   userId: string;
   tenantId: string;
+  workspaceId?: string;
   threadId: string;
   connectedProviders: ProviderId[];
   forcedProviderId?: ProviderId;
@@ -221,7 +222,20 @@ export async function approveAndResume(
   const approved = approvePlan(planId);
   if (!approved) {
     return {
-      plan: { id: planId, threadId: ctx.threadId, intent: "", type: "one_shot", status: "failed", steps: [], requiresApproval: false, createdAt: Date.now(), updatedAt: Date.now() },
+      plan: {
+        id: planId,
+        threadId: ctx.threadId,
+        userId: ctx.userId,
+        tenantId: ctx.tenantId,
+        workspaceId: ctx.workspaceId ?? "default",
+        intent: "",
+        type: "one_shot",
+        status: "failed",
+        steps: [],
+        requiresApproval: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
       focalObject: null,
       stepOutputs: new Map(),
       assets: [],

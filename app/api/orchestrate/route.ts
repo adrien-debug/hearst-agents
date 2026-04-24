@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
-import { getUserId } from "@/lib/get-user-id";
 import { orchestrateV2 } from "@/lib/orchestrator/entry";
 import { ensureSchedulerStarted } from "@/lib/runtime/missions/scheduler-init";
+import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -12,11 +12,12 @@ export const maxDuration = 120;
 void ensureSchedulerStarted();
 
 export async function POST(req: NextRequest) {
-  const userId = await getUserId();
-  if (!userId) {
+  // Resolve full scope (userId + tenantId + workspaceId) via canonical scope resolver
+  const { scope, error } = await requireScope({ context: "POST /api/orchestrate" });
+  if (error || !scope) {
     return new Response(
-      JSON.stringify({ ok: false, error: "not_authenticated" }),
-      { status: 401, headers: { "Content-Type": "application/json" } },
+      JSON.stringify({ ok: false, error: error?.message ?? "not_authenticated" }),
+      { status: error?.status ?? 401, headers: { "Content-Type": "application/json" } },
     );
   }
 
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
     thread_id?: string;
     focal_context?: { id: string; objectType: string; title: string; status: string };
     history?: Array<{ role: "user" | "assistant"; content: string }>;
+    // Note: mission_id est intentionnellement absent — les runs mission passent par POST /api/v2/missions/[id]/run
   };
 
   try {
@@ -48,13 +50,16 @@ export async function POST(req: NextRequest) {
   const db = requireServerSupabase();
 
   const stream = orchestrateV2(db, {
-    userId,
+    userId: scope.userId,
     message: body.message,
     conversationId: body.conversation_id,
     surface: body.surface,
     threadId: body.thread_id,
     focalContext: body.focal_context,
     conversationHistory: body.history,
+    // missionId n'est pas accepté depuis le chat public — ownership validé via /api/v2/missions/[id]/run
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
   });
 
   return new Response(stream, {

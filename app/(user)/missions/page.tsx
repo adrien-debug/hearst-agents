@@ -158,9 +158,9 @@ export default function MissionsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a0a]">
+    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
       {/* Header */}
-      <div className="border-b border-white/[0.06] p-6">
+      <div className="border-b border-[var(--line)] p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-medium text-white mb-1">Missions</h1>
@@ -195,16 +195,16 @@ export default function MissionsPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {missions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-[var(--line)] flex items-center justify-center mb-4">
               <span className="text-2xl">◈</span>
             </div>
-            <h2 className="text-lg font-medium text-white mb-2">Aucune mission active</h2>
-            <p className="text-sm text-white/40 max-w-md mb-6">
+            <h2 className="text-lg font-medium text-[var(--text)] mb-2">Aucune mission active</h2>
+            <p className="text-sm text-[var(--text-muted)] max-w-md mb-6">
               Les missions sont des tâches récurrentes que vous pouvez planifier. Elles s&apos;exécutent automatiquement selon votre calendrier.
             </p>
             <button
               onClick={openNewMission}
-              className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] text-white/80 rounded-lg text-sm transition-colors border border-white/[0.08]"
+              className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] text-[var(--text-soft)] rounded-lg text-sm transition-colors border border-white/[0.08]"
             >
               Créer ma première mission
             </button>
@@ -214,41 +214,41 @@ export default function MissionsPage() {
             {missions.map((mission) => (
               <div
                 key={mission.id}
-                className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.03] transition-colors"
+                className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-[var(--line)] hover:bg-white/[0.03] transition-colors"
               >
                 <button
                   onClick={() => handleToggle(mission)}
                   className={`w-2 h-2 rounded-full transition-colors ${
-                    mission.status === "active" ? "bg-emerald-400" : mission.status === "paused" ? "bg-amber-400" : "bg-red-400"
+                    mission.status === "active" ? "bg-[var(--money)]" : mission.status === "paused" ? "bg-[var(--warn)]" : "bg-[var(--danger)]"
                   }`}
                   title={mission.enabled ? "Désactiver" : "Activer"}
                 />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-white mb-0.5">{mission.name}</h3>
-                  <p className="text-xs text-white/40 truncate">{mission.description}</p>
+                  <h3 className="text-sm font-medium text-[var(--text)] mb-0.5">{mission.name}</h3>
+                  <p className="text-xs text-[var(--text-muted)] truncate">{mission.description}</p>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-white/30">
+                <div className="flex items-center gap-4 text-xs text-[var(--text-faint)]">
                   <span>{mission.frequency}</span>
                   {mission.nextRun && <span>Prochain: {new Date(mission.nextRun).toLocaleDateString()}</span>}
                 </div>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleRunNow(mission.id)}
-                    className="p-2 text-white/30 hover:text-cyan-400 transition-colors"
+                    className="p-2 text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
                     title="Exécuter maintenant"
                   >
                     ▶
                   </button>
                   <button
                     onClick={() => openEditMission(mission)}
-                    className="p-2 text-white/30 hover:text-white/60 transition-colors"
+                    className="p-2 text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
                     title="Modifier"
                   >
                     ✎
                   </button>
                   <button
                     onClick={() => handleDelete(mission.id)}
-                    className="p-2 text-white/30 hover:text-red-400 transition-colors"
+                    className="p-2 text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
                     title="Supprimer"
                   >
                     🗑
@@ -263,15 +263,15 @@ export default function MissionsPage() {
       {/* Editor Modal */}
       {showEditor && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141414] border border-white/[0.08] rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-[var(--bg-soft)] border border-[var(--line)] rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-medium text-white">
+                <h2 className="text-lg font-medium text-[var(--text)]">
                   {editingMission ? "Modifier la mission" : "Nouvelle mission"}
                 </h2>
                 <button
                   onClick={closeEditor}
-                  className="text-white/40 hover:text-white/60"
+                  className="text-[var(--text-muted)] hover:text-[var(--text)]"
                 >
                   ✕
                 </button>

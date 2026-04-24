@@ -10,11 +10,8 @@
 
 import OpenAI from "openai";
 import type {
-  ManagedSessionConfig,
-  ManagedSessionContext,
   ManagedAgentEvent,
   ManagedAgentResult,
-  ManagedAgentStep,
 } from "./types";
 import { executeTool, toOpenAITools, type ToolCallEvent } from "./openai-tools";
 

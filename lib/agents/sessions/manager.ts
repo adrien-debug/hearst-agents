@@ -4,7 +4,6 @@
  * Crée et gère des sessions pour tous les backends de manière uniforme.
  */
 
-import { randomUUID } from "crypto";
 import type {
   AgentBackendV2,
   BackendSelectionInput,
@@ -13,7 +12,6 @@ import { selectBackend } from "../backend-v2/selector";
 import type {
   UnifiedSession,
   SessionConfig,
-  SessionState,
   SessionManagerConfig,
   SessionManagerEvent,
   SessionStorage,

@@ -71,6 +71,16 @@ function assetToDetail(
   };
 }
 
+function matchesRunScope(
+  run: { userId?: string; tenantId?: string; workspaceId?: string },
+  scope: { userId?: string; tenantId?: string; workspaceId?: string },
+): boolean {
+  if (scope.userId && run.userId !== scope.userId) return false;
+  if (scope.tenantId && run.tenantId !== scope.tenantId) return false;
+  if (scope.workspaceId && run.workspaceId !== scope.workspaceId) return false;
+  return true;
+}
+
 export async function getAssetDetail(input: {
   assetId: string;
   tenantId?: string;
@@ -80,6 +90,7 @@ export async function getAssetDetail(input: {
   // Search in-memory runs first (live data, has full Asset objects in events)
   const memRuns = getAllRuns(100);
   for (const run of memRuns) {
+    if (!matchesRunScope(run, input)) continue;
     const assetRef = run.assets.find((a) => a.id === input.assetId);
     if (!assetRef) continue;
 
@@ -138,8 +149,9 @@ export async function getAssetDetail(input: {
   }
 
   // Fall back to persisted runs (metadata only, no content unless stored)
-  const persistedRuns = await getPersistedRuns({ limit: 100 });
+  const persistedRuns = await getPersistedRuns({ userId: input.userId, limit: 100 });
   for (const run of persistedRuns) {
+    if (!matchesRunScope(run, input)) continue;
     const assetRef = run.assets.find((a) => a.id === input.assetId);
     if (!assetRef) continue;
 

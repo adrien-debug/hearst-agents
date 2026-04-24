@@ -3,22 +3,37 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/get-user-id";
 import { getMission, disableMission } from "@/lib/runtime/missions/store";
 import { updateScheduledMission } from "@/lib/runtime/state/adapter";
+import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
+
+async function verifyMissionOwnership(id: string, userId: string): Promise<boolean> {
+  const memMission = getMission(id);
+  if (memMission && memMission.userId && memMission.userId !== userId) {
+    return false;
+  }
+  return true;
+}
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  // Resolve scope with dev fallback allowed
+  const { scope, error } = await requireScope({ context: "PATCH /api/v2/missions/[id]" });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
   }
 
   const { id } = await params;
+
+  // Verify ownership
+  if (!await verifyMissionOwnership(id, scope.userId)) {
+    console.warn(`[MissionsAPI] Access denied — user mismatch for mission ${id}`);
+    return NextResponse.json({ error: "mission_not_found" }, { status: 404 });
+  }
 
   let body: {
     name?: string;
@@ -71,7 +86,7 @@ export async function PATCH(
     await updateScheduledMission(id, updates);
   }
 
-  console.log(`[MissionsAPI] Mission ${id} updated`);
+  console.log(`[MissionsAPI] Mission ${id} updated (user: ${scope.userId.slice(0, 8)})`);
 
   return NextResponse.json({
     ok: true,
@@ -84,12 +99,19 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  // Resolve scope with dev fallback allowed
+  const { scope, error } = await requireScope({ context: "DELETE /api/v2/missions/[id]" });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
   }
 
   const { id } = await params;
+
+  // Verify ownership
+  if (!await verifyMissionOwnership(id, scope.userId)) {
+    console.warn(`[MissionsAPI] Access denied — user mismatch for mission ${id}`);
+    return NextResponse.json({ error: "mission_not_found" }, { status: 404 });
+  }
 
   // Note: Deletion requires a delete method in the adapter
   // For now, we disable the mission as soft-delete
@@ -100,7 +122,7 @@ export async function DELETE(
 
   await updateScheduledMission(id, { enabled: false });
 
-  console.log(`[MissionsAPI] Mission ${id} deleted (soft)`);
+  console.log(`[MissionsAPI] Mission ${id} deleted (soft) (user: ${scope.userId.slice(0, 8)})`);
 
   return NextResponse.json({ ok: true, id, deleted: true });
 }

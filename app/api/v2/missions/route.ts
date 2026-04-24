@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/get-user-id";
 import { createScheduledMission } from "@/lib/runtime/missions/create-mission";
 import { addMission, disableMission, getMission } from "@/lib/runtime/missions/store";
 import {
@@ -12,16 +11,26 @@ import {
   getScheduledMissions,
   updateScheduledMission,
 } from "@/lib/runtime/state/adapter";
+import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
 
-const DEV_TENANT_ID = "dev-tenant";
-const DEV_WORKSPACE_ID = "dev-workspace";
-
 export async function GET() {
+  // Resolve scope with dev fallback allowed
+  const { scope, error } = await requireScope({ context: "GET /api/v2/missions" });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
+  }
+
   try {
-    const missions = await getScheduledMissions();
-    return NextResponse.json({ missions });
+    // Get missions scoped to current user/tenant/workspace
+    const missions = await getScheduledMissions({
+      userId: scope.userId,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+    });
+
+    return NextResponse.json({ missions, scope: { isDevFallback: scope.isDevFallback } });
   } catch (e) {
     console.error("GET /api/v2/missions: uncaught", e);
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
@@ -29,9 +38,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const userId = await getUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  // Resolve scope with dev fallback allowed
+  const { scope, error } = await requireScope({ context: "POST /api/v2/missions" });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
   }
 
   let body: {
@@ -55,10 +65,16 @@ export async function POST(req: NextRequest) {
   }
 
   const name = body.name || body.input.slice(0, 80);
-  const existingMissions = await getScheduledMissions();
+
+  // Check for duplicates within user's scope
+  const existingMissions = await getScheduledMissions({
+    userId: scope.userId,
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
+  });
+
   const duplicateMission = existingMissions.find(
     (mission) =>
-      mission.userId === userId &&
       mission.name === name &&
       mission.input === body.input &&
       mission.schedule === body.schedule,
@@ -75,9 +91,9 @@ export async function POST(req: NextRequest) {
     name,
     input: body.input,
     schedule: body.schedule,
-    tenantId: DEV_TENANT_ID,
-    workspaceId: DEV_WORKSPACE_ID,
-    userId,
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
+    userId: scope.userId,
   });
 
   if (body.enabled === false) {
@@ -102,15 +118,16 @@ export async function POST(req: NextRequest) {
     console.warn("[MissionsAPI] Mission saved in-memory only — Supabase unavailable");
   }
 
-  console.log(`[MissionsAPI] Mission created: ${mission.id} — ${mission.schedule}`);
+  console.log(`[MissionsAPI] Mission created: ${mission.id} — ${mission.schedule} (user: ${scope.userId.slice(0, 8)})`);
 
-  return NextResponse.json({ mission }, { status: 201 });
+  return NextResponse.json({ mission, scope: { isDevFallback: scope.isDevFallback } }, { status: 201 });
 }
 
 export async function PATCH(req: NextRequest) {
-  const userId = await getUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  // Resolve scope with dev fallback allowed
+  const { scope, error } = await requireScope({ context: "PATCH /api/v2/missions" });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
   }
 
   let body: { id?: string; enabled?: boolean };
@@ -125,8 +142,14 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "id_and_enabled_required" }, { status: 400 });
   }
 
-  // Update in-memory
+  // Verify ownership before updating
   const mem = getMission(body.id);
+  if (mem && mem.userId && mem.userId !== scope.userId) {
+    console.warn(`[MissionsAPI] Access denied — user mismatch for mission ${body.id}`);
+    return NextResponse.json({ error: "mission_not_found" }, { status: 404 });
+  }
+
+  // Update in-memory
   if (mem) {
     if (!body.enabled) {
       disableMission(body.id);
@@ -138,7 +161,7 @@ export async function PATCH(req: NextRequest) {
   // Update in Supabase
   await updateScheduledMission(body.id, { enabled: body.enabled });
 
-  console.log(`[MissionsAPI] Mission ${body.id} ${body.enabled ? "enabled" : "disabled"}`);
+  console.log(`[MissionsAPI] Mission ${body.id} ${body.enabled ? "enabled" : "disabled"} (user: ${scope.userId.slice(0, 8)})`);
 
   return NextResponse.json({ ok: true, id: body.id, enabled: body.enabled });
 }

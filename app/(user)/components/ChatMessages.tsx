@@ -11,9 +11,11 @@ export interface Message {
 
 interface ChatMessagesProps {
   messages: Message[];
+  className?: string;
+  compact?: boolean;
 }
 
-export function ChatMessages({ messages }: ChatMessagesProps) {
+export function ChatMessages({ messages, className, compact = false }: ChatMessagesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const coreState = useRuntimeStore((s) => s.coreState);
   const isRunning = coreState !== "idle";
@@ -28,10 +30,14 @@ export function ChatMessages({ messages }: ChatMessagesProps) {
     return null;
   }
 
+  const defaultClass = compact
+    ? "h-full overflow-y-auto px-4 py-3 space-y-3"
+    : "h-full overflow-y-auto px-4 py-6 space-y-4";
+
   return (
     <div
       ref={scrollRef}
-      className="flex-1 overflow-y-auto px-4 py-6 space-y-4"
+      className={className ?? defaultClass}
     >
       {messages.map((message) => (
         <div

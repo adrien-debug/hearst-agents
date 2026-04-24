@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { ServiceDefinition } from "@/lib/integrations/types";
-import { AppCard } from "./AppCard";
 
 interface CapabilityBlockedBannerProps {
   capability: string;

@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/get-user-id";
 import { getAssetDetail } from "@/lib/runtime/assets/detail";
+import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
-
-const DEV_TENANT_ID = "dev-tenant";
-const DEV_WORKSPACE_ID = "dev-workspace";
 
 export async function GET(
   _req: NextRequest,
@@ -14,13 +11,16 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const userId = await getUserId();
+    const { scope, error } = await requireScope({ context: `GET /api/v2/assets/${id}` });
+    if (error || !scope) {
+      return NextResponse.json({ error: error?.message ?? "not_authenticated" }, { status: error?.status ?? 401 });
+    }
 
     const asset = await getAssetDetail({
       assetId: id,
-      tenantId: DEV_TENANT_ID,
-      workspaceId: DEV_WORKSPACE_ID,
-      userId: userId ?? undefined,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      userId: scope.userId,
     });
 
     if (!asset) {

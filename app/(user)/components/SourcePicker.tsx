@@ -34,7 +34,7 @@ const SURFACE_CAPABILITIES: Record<string, string> = {
 export function SourcePicker({
   availableServices,
   connectedServices,
-  currentSurface,
+  currentSurface: _currentSurface,
   selection,
   onChange,
   compact = false,

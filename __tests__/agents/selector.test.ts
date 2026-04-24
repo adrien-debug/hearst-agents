@@ -13,9 +13,9 @@ import {
   recommendFor,
   testSelector,
   testHybridPlanning,
-  type SelectorConfig,
   type TaskAnalysis,
 } from "@/lib/agents/backend-v2/selector";
+import type { AgentBackendV2 } from "@/lib/agents/backend-v2/types";
 
 describe("Backend Selector", () => {
   describe("analyzeTask", () => {
@@ -157,7 +157,7 @@ describe("Backend Selector", () => {
       const analysis = baseAnalysis;
       const capabilities = {
         cheap_backend: {
-          id: "cheap_backend" as any,
+          id: "cheap_backend" as unknown as AgentBackendV2,
           name: "Cheap",
           description: "",
           supportsStreaming: true,
@@ -176,7 +176,7 @@ describe("Backend Selector", () => {
           avgLatencyMs: 500,
         },
         expensive_backend: {
-          id: "expensive_backend" as any,
+          id: "expensive_backend" as unknown as AgentBackendV2,
           name: "Expensive",
           description: "",
           supportsStreaming: true,
@@ -206,7 +206,7 @@ describe("Backend Selector", () => {
       const analysis = baseAnalysis;
       const capabilities = {
         fast_backend: {
-          id: "fast_backend" as any,
+          id: "fast_backend" as unknown as AgentBackendV2,
           name: "Fast",
           description: "",
           supportsStreaming: true,
@@ -225,7 +225,7 @@ describe("Backend Selector", () => {
           avgLatencyMs: 500,
         },
         slow_backend: {
-          id: "slow_backend" as any,
+          id: "slow_backend" as unknown as AgentBackendV2,
           name: "Slow",
           description: "",
           supportsStreaming: true,
@@ -266,10 +266,13 @@ describe("Backend Selector", () => {
       expect(result.selectedBackend).toBe("openai_assistants");
     });
 
-    it("should select Computer Use for UI tasks", () => {
+    it("should select hybrid for UI tasks (computer_use excluded from auto-select)", () => {
       const result = selectBackend({ prompt: "Click the submit button and fill the form" });
 
-      expect(result.selectedBackend).toBe("openai_computer_use");
+      // openai_computer_use is excluded from automatic selection in scoreBackends,
+      // so hybrid (which supports computer_use) is selected instead
+      expect(result.selectedBackend).toBe("hybrid");
+      expect(result._meta!.analysis.needsComputerUse).toBe(true);
     });
 
     it("should select Assistants for code tasks", () => {
@@ -305,7 +308,7 @@ describe("Backend Selector", () => {
 
     it("should throw for invalid forceBackend", () => {
       expect(() =>
-        selectBackend({ prompt: "test" }, { forceBackend: "invalid_backend" as any }),
+        selectBackend({ prompt: "test" }, { forceBackend: "invalid_backend" }),
       ).toThrow();
     });
   });
@@ -349,7 +352,7 @@ describe("Backend Selector", () => {
   describe("Helper functions", () => {
     it("isBackendAvailable should return boolean", () => {
       expect(isBackendAvailable("openai_responses")).toBe(true);
-      expect(isBackendAvailable("nonexistent" as any)).toBe(false);
+      expect(isBackendAvailable("nonexistent")).toBe(false);
     });
 
     it("listAvailableBackends should return all backends", () => {

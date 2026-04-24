@@ -20,7 +20,6 @@ import type {
   BackendSelectionResult,
   HybridExecutionPlan,
   HybridStep,
-  ManagedSessionConfig,
 } from "./types";
 import { BACKEND_CAPABILITIES } from "./types";
 
@@ -621,7 +620,9 @@ export async function testSelector(): Promise<{
     {
       name: "UI automation",
       input: { prompt: "Click the login button and fill the form" },
-      expected: "openai_computer_use",
+      // openai_computer_use is excluded from automatic selection (requires manual force),
+      // so hybrid (which supports all features) is selected instead
+      expected: "hybrid",
     },
     {
       name: "Multi-turn conversation",

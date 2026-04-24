@@ -12,7 +12,6 @@
 import {
   SERVICE_MAP,
   getAllServiceIds,
-  getProviderIdForService,
 } from "./service-map";
 import type {
   ServiceDefinition,
@@ -282,17 +281,71 @@ export function getAllBundles(): ServiceBundle[] {
 /**
  * Enrich services with connection status.
  * This is the bridge to control-plane.
+ *
+ * Client-side: calls /api/v2/user/connections
+ * Server-side: uses unified reconciler directly
  */
 export async function enrichWithConnectionStatus(
   services: ServiceDefinition[],
-  // TODO: Add control-plane connection check
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _userId: string,
 ): Promise<ServiceWithConnectionStatus[]> {
-  // Placeholder: all disconnected for now
-  // Future: check lib/connectors/control-plane/store.ts
-  return services.map((s) => ({
-    ...s,
-    connectionStatus: "disconnected",
-  }));
+  // Client-side: fetch from API
+  if (typeof window !== "undefined") {
+    try {
+      const res = await fetch("/api/v2/user/connections", { credentials: "include" });
+      if (!res.ok) {
+        console.warn("[Catalog] Failed to fetch connections:", res.status);
+        return services.map((s) => ({ ...s, connectionStatus: "disconnected" }));
+      }
+      const data = await res.json();
+      return data.services as ServiceWithConnectionStatus[];
+    } catch (err) {
+      console.error("[Catalog] Error fetching connections:", err);
+      return services.map((s) => ({ ...s, connectionStatus: "disconnected" }));
+    }
+  }
+
+  // Server-side: use unified reconciler directly
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getUnifiedConnectors } = require("@/lib/connectors/unified/reconcile");
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getProviderIdForService } = require("@/lib/integrations/service-map");
+
+  // Resolve scope from env (consistent with lib/scope.ts)
+  const tenantId = process.env.HEARST_TENANT_ID ?? "dev-tenant";
+  const workspaceId = process.env.HEARST_WORKSPACE_ID ?? "dev-workspace";
+  const connectors = await getUnifiedConnectors({
+    tenantId,
+    workspaceId,
+    userId: _userId,
+  });
+
+  return services.map((s) => {
+    const providerId = getProviderIdForService(s.id);
+    const connector = connectors.find((c: { provider: string }) => c.provider === providerId);
+
+    let connectionStatus: ServiceWithConnectionStatus["connectionStatus"] = "disconnected";
+    let accountLabel: string | undefined;
+
+    if (connector) {
+      switch (connector.status) {
+        case "connected":
+          connectionStatus = "connected";
+          accountLabel = connector.userId || connector.label;
+          break;
+        case "pending_auth":
+          connectionStatus = "pending";
+          break;
+        case "degraded":
+          connectionStatus = "error";
+          break;
+        case "disconnected":
+        case "coming_soon":
+        default:
+          connectionStatus = "disconnected";
+      }
+    }
+
+    return { ...s, connectionStatus, accountLabel };
+  });
 }

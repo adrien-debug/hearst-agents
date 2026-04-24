@@ -3,6 +3,7 @@ import { getRunById as getPersistedRun } from "@/lib/runtime/state/adapter";
 import { getRunById } from "@/lib/runtime/runs/store";
 import { normalizeRunEventsToTimeline } from "@/lib/runtime/timeline/normalize";
 import { getPersistedRunEvents } from "@/lib/runtime/timeline/persist";
+import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -46,12 +47,24 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Resolve scope with dev fallback allowed
+  const { scope, error } = await requireScope({ context: "GET /api/v2/runs/[id]" });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
+  }
+
   const { id } = await params;
 
   try {
     // In-memory run has live events — best for active/recent runs
     const memRun = getRunById(id);
     if (memRun && memRun.events.length > 0) {
+      // Verify ownership
+      if (memRun.userId && memRun.userId !== scope.userId) {
+        console.warn(`[v2/runs/${id}] Access denied — user mismatch (mem)`);
+        return NextResponse.json({ error: "run_not_found" }, { status: 404 });
+      }
+
       return NextResponse.json({
         run: serializeRun(memRun, memRun.events),
         timeline: normalizeRunEventsToTimeline({
@@ -66,6 +79,12 @@ export async function GET(
     const persisted = memRun ? null : await getPersistedRun(id);
     const run = memRun ?? persisted;
     if (!run) {
+      return NextResponse.json({ error: "run_not_found" }, { status: 404 });
+    }
+
+    // Verify ownership for persisted runs
+    if (run.userId && run.userId !== scope.userId) {
+      console.warn(`[v2/runs/${id}] Access denied — user mismatch (db)`);
       return NextResponse.json({ error: "run_not_found" }, { status: 404 });
     }
 

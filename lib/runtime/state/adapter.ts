@@ -391,28 +391,50 @@ export async function updateScheduledMission(
   }
 }
 
-export async function getScheduledMissions(): Promise<PersistedScheduledMission[]> {
+export async function getScheduledMissions(params?: {
+  userId?: string;
+  tenantId?: string;
+  workspaceId?: string;
+}): Promise<PersistedScheduledMission[]> {
   const sb = db();
   if (!sb) return [];
 
   try {
-    const { data, error } = await sb
+    let query = sb
       .from("missions")
       .select("id, user_id, title, status, actions, created_at")
       .order("created_at", { ascending: false })
       .limit(100);
+
+    // Filter by userId if provided
+    if (params?.userId) {
+      query = query.eq("user_id", params.userId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("[RuntimeState] getScheduledMissions error:", error.message);
       return [];
     }
 
-    return (data ?? [])
+    const missions = (data ?? [])
       .filter((row) => {
         const actions = row.actions as Record<string, unknown> | null;
         return actions?.type === "scheduled";
       })
       .map(toScheduledMission);
+
+    // Additional tenant/workspace filtering (stored in actions JSONB)
+    if (params?.tenantId || params?.workspaceId) {
+      return missions.filter((m) => {
+        if (params.tenantId && m.tenantId && m.tenantId !== params.tenantId) return false;
+        if (params.workspaceId && m.workspaceId && m.workspaceId !== params.workspaceId) return false;
+        return true;
+      });
+    }
+
+    return missions;
   } catch (err) {
     console.error("[RuntimeState] getScheduledMissions exception:", err);
     return [];

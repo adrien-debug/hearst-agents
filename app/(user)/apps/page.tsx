@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSession } from "next-auth/react";
 import { useNavigationStore } from "@/stores/navigation";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { AppCard } from "../components/AppCard";
@@ -47,8 +48,12 @@ export default function AppsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "connected" | "tier_1" | "tier_2" | "tier_3">("all");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState<string | null>(null);
 
-  const { surface } = useNavigationStore();
+  const { surface: _surface } = useNavigationStore();
+  const { data: session } = useSession();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userId = (session?.user as any)?.id as string | undefined;
 
   // Load services on mount
   useEffect(() => {
@@ -57,18 +62,19 @@ export default function AppsPage() {
         // Get all services (Tier 1/2 + Tier 3 Nango)
         const baseServices = [...getAllServices(), ...getNangoServices()];
 
-        // TODO: Replace with real user ID from session
-        const enriched = await enrichWithConnectionStatus(baseServices, "temp-user-id");
+        // Use real user ID from session
+        const enriched = await enrichWithConnectionStatus(baseServices, userId || "anonymous");
         setServices(enriched);
+        console.log(`[AppsPage] Loaded ${enriched.filter(s => s.connectionStatus === "connected").length} connected services`);
       } catch (error) {
-        console.error("Failed to load services:", error);
+        console.error("[AppsPage] Failed to load services:", error);
       } finally {
         setLoading(false);
       }
     }
 
     loadServices();
-  }, []);
+  }, [userId]);
 
   // Filtered services
   const filteredServices = useMemo(() => {
@@ -140,11 +146,79 @@ export default function AppsPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleServiceClickAny = (service: any) => handleServiceClick(service as ServiceWithConnectionStatus);
 
-  // Handle connect (placeholder)
+  // Service ID → Provider ID mapping for OAuth
+  const getProviderForService = (serviceId: string): string | null => {
+    const map: Record<string, string> = {
+      gmail: "google",
+      calendar: "google",
+      drive: "google",
+      slack: "slack",
+      notion: "notion",
+      github: "github",
+      hubspot: "hubspot",
+      jira: "jira",
+      linear: "linear",
+      stripe: "stripe",
+      figma: "figma",
+      airtable: "airtable",
+      zapier: "zapier",
+    };
+    return map[serviceId] || null;
+  };
+
+  // Handle connect — initiate OAuth via Nango
   const handleConnect = async (serviceId: string) => {
-    console.log("Connecting to:", serviceId);
-    // TODO: Implement OAuth flow via /api/nango/connect
-    // Redirect to OAuth, then update service status on callback
+    const provider = getProviderForService(serviceId);
+    if (!provider) {
+      console.error(`[AppsPage] No provider mapping for service: ${serviceId}`);
+      return;
+    }
+
+    setIsConnecting(serviceId);
+    console.log(`[AppsPage] Initiating OAuth for ${serviceId} via ${provider}`);
+
+    try {
+      const res = await fetch("/api/nango/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ provider }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("[AppsPage] OAuth init failed:", err);
+        alert(`Erreur de connexion: ${err.message || "Service temporairement indisponible"}`);
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.success || !data.config) {
+        console.error("[AppsPage] Invalid OAuth config:", data);
+        return;
+      }
+
+      // For now, redirect to callback URL pattern
+      // In a full implementation, we would open a popup with Nango SDK
+      console.log(`[AppsPage] OAuth config received, connectionId: ${data.config.connectionId.slice(0, 20)}...`);
+
+      // Open Nango OAuth in a popup (simplified version)
+      const nangoHost = data.config.host || "https://api.nango.dev";
+      const oauthUrl = `${nangoHost}/oauth/connect/${provider}?connection_id=${encodeURIComponent(data.config.connectionId)}&public_key=${encodeURIComponent(data.config.publicKey)}`;
+
+      // For now, just log and close drawer — the actual OAuth would require the Nango frontend SDK
+      console.log(`[AppsPage] OAuth URL: ${oauthUrl}`);
+
+      // Close drawer and show message
+      setIsDrawerOpen(false);
+      alert(`Connexion à ${serviceId} initiée. (Nango OAuth flow ready — integration SDK implementation needed for popup)`);
+
+    } catch (err) {
+      console.error("[AppsPage] OAuth initiation failed:", err);
+      alert("Erreur lors de l'initiation de la connexion");
+    } finally {
+      setIsConnecting(null);
+    }
   };
 
   // Connected services for "Connected" section
@@ -155,25 +229,25 @@ export default function AppsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-white/40 text-sm">Chargement des applications...</div>
+      <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg)" }}>
+        <div className="text-[var(--text-muted)] text-sm">Chargement des applications...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a0a]">
+    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
       {/* Header */}
-      <div className="border-b border-white/[0.06] p-6">
+      <div className="border-b border-[var(--line)] p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-medium text-white mb-1">App Hub</h1>
-            <p className="text-sm text-white/40">
+            <h1 className="text-xl font-medium text-[var(--text)] mb-1">App Hub</h1>
+            <p className="text-sm text-[var(--text-muted)]">
               {stats.connected} connecté{stats.connected !== 1 ? "s" : ""} sur {stats.total} applications
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/30 bg-white/[0.05] px-3 py-1.5 rounded-full">
+            <span className="text-xs text-[var(--text-faint)] bg-white/[0.05] px-3 py-1.5 rounded-full">
               ⌘K pour rechercher
             </span>
           </div>
@@ -187,12 +261,12 @@ export default function AppsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher une application..."
-              className="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/30"
+              className="w-full bg-white/[0.03] border border-[var(--line)] rounded-lg px-4 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--cykan)]/30"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-soft)]"
               >
                 ✕
               </button>
@@ -212,12 +286,12 @@ export default function AppsPage() {
                 onClick={() => setActiveFilter(filter.id as typeof activeFilter)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                   activeFilter === filter.id
-                    ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30"
-                    : "bg-white/[0.03] text-white/50 border border-white/[0.06] hover:bg-white/[0.05]"
+                    ? "bg-[var(--cykan)]/15 text-[var(--cykan)] border border-[var(--cykan)]/30"
+                    : "bg-white/[0.03] text-[var(--text-muted)] border border-[var(--line)] hover:bg-white/[0.05]"
                 }`}
               >
                 {filter.label}
-                <span className="ml-1.5 text-white/30">{filter.count}</span>
+                <span className="ml-1.5 text-[var(--text-faint)]">{filter.count}</span>
               </button>
             ))}
           </div>
@@ -230,11 +304,11 @@ export default function AppsPage() {
         {activeFilter !== "connected" && connectedServices.length > 0 && (
           <section className="mb-8">
             <div className="flex items-center gap-3 mb-4">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <h2 className="text-sm font-medium text-white/80 uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-[var(--money)]" />
+              <h2 className="text-sm font-medium text-[var(--text-soft)] uppercase tracking-wider">
                 Connectés
               </h2>
-              <span className="text-xs text-white/30 bg-white/[0.05] px-2 py-0.5 rounded-full">
+              <span className="text-xs text-[var(--text-faint)] bg-white/[0.05] px-2 py-0.5 rounded-full">
                 {connectedServices.length}
               </span>
             </div>
@@ -255,7 +329,7 @@ export default function AppsPage() {
           <section className="mb-8">
             <div className="flex items-center gap-3 mb-4">
               <span className="text-lg">📦</span>
-              <h2 className="text-sm font-medium text-white/80 uppercase tracking-wider">
+              <h2 className="text-sm font-medium text-[var(--text-soft)] uppercase tracking-wider">
                 Bundles recommandés
               </h2>
             </div>
@@ -299,8 +373,8 @@ export default function AppsPage() {
         {filteredServices.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <span className="text-4xl mb-4">🔍</span>
-            <p className="text-white/60 mb-2">Aucune application trouvée</p>
-            <p className="text-sm text-white/30">
+            <p className="text-[var(--text-muted)] mb-2">Aucune application trouvée</p>
+            <p className="text-sm text-[var(--text-faint)]">
               Essayez une autre recherche ou filtre
             </p>
           </div>
@@ -313,6 +387,7 @@ export default function AppsPage() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         onConnect={handleConnect}
+        isConnecting={isConnecting === selectedService?.id}
       />
     </div>
   );

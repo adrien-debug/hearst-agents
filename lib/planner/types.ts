@@ -83,6 +83,10 @@ export type ExecutionPlanType = "one_shot" | "mission" | "monitoring";
 export interface ExecutionPlan {
   id: string;
   threadId: string;
+  /** Scope pour isolation multi-tenant */
+  userId: string;
+  tenantId: string;
+  workspaceId: string;
   intent: string;
   type: ExecutionPlanType;
   status: PlanStatus;
@@ -102,6 +106,10 @@ export type MissionStatus = "draft" | "active" | "paused" | "completed";
 export interface MissionDefinition {
   id: string;
   threadId: string;
+  /** Scope pour isolation multi-tenant */
+  userId: string;
+  tenantId: string;
+  workspaceId: string;
   sourcePlanId: string;
   mode: MissionMode;
   naturalLanguageRule: string;
@@ -121,6 +129,7 @@ export interface PlanIntent {
   threadId: string;
   userId: string;
   tenantId: string;
+  workspaceId?: string;
   /** If the user specified a provider explicitly. */
   forcedProviderId?: ProviderId;
   /** Clarification context from previous chat turns. */

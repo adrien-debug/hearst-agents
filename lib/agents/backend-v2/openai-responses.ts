@@ -7,7 +7,6 @@
 
 import OpenAI from "openai";
 import type {
-  ManagedSessionConfig,
   ManagedAgentEvent,
 } from "./types";
 
@@ -115,7 +114,7 @@ export async function* streamResponse(
 
   let responseId: string | null = null;
   let fullText = "";
-  let toolCalls: Array<{ name: string; args: string }> = [];
+  const toolCalls: Array<{ name: string; args: string }> = [];
 
   yield {
     type: "step",

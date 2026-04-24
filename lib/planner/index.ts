@@ -177,6 +177,9 @@ export function createPlanFromIntent(input: PlanIntent): ExecutionPlan {
   const plan: ExecutionPlan = {
     id: generateId("plan"),
     threadId: input.threadId,
+    userId: input.userId,
+    tenantId: input.tenantId,
+    workspaceId: input.workspaceId ?? "default",
     intent: input.intent,
     type,
     status: "draft",

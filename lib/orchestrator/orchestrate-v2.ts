@@ -26,6 +26,9 @@ import { detectOutputTier, formatOutput } from "../runtime/formatting/pipeline";
 import type { AssetType } from "../runtime/assets/types";
 import { getRecentMessages, appendMessage } from "../memory/store";
 import type { TenantScope } from "../multi-tenant/types";
+import { createScheduledMission } from "../runtime/missions/create-mission";
+import { addMission } from "../runtime/missions/store";
+import { saveScheduledMission as persistMission } from "../runtime/state/adapter";
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -42,6 +45,8 @@ interface OrchestrateV2Input {
   streaming?: boolean;
   tenantId?: string;
   workspaceId?: string;
+  /** Mission ID when triggered by scheduler */
+  missionId?: string;
 }
 
 interface OrchestrateV2Result {
@@ -185,8 +190,9 @@ async function runV2Pipeline(
   input: OrchestrateV2Input,
 ): Promise<void> {
   const startTime = Date.now();
+  // Single canonical run_id used everywhere (SSE, memory store, DB correlation)
   const runId = generateRunId();
-  const dbRunId = randomUUID(); // UUID valide pour PostgreSQL
+  const dbRunId = runId; // Same ID for correlation — DB uses this as correlation key
 
   // Normalize: conversationId falls back to threadId for chat-first V2 continuity
   const threadId = input.threadId ?? input.conversationId ?? runId;
@@ -205,6 +211,70 @@ async function runV2Pipeline(
       console.error(`[OrchestratorV2] Failed to load history from memory for ${conversationId}:`, err);
       // Continue with empty history — non-blocking
     }
+  }
+
+  // ── Schedule Detection (early exit for scheduled missions) ──
+  const scheduleMatch = detectSchedule(input.message);
+  if (scheduleMatch && !input.missionId) {
+    const scope: TenantScope = {
+      tenantId: input.tenantId ?? "dev-tenant",
+      workspaceId: input.workspaceId ?? "dev-workspace",
+      userId: input.userId,
+    };
+
+    const mission = createScheduledMission({
+      name: input.message.slice(0, 80),
+      input: input.message,
+      schedule: scheduleMatch.schedule,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      userId: input.userId,
+    });
+    addMission(mission);
+
+    void persistMission({
+      id: mission.id,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      userId: mission.userId,
+      name: mission.name,
+      input: mission.input,
+      schedule: mission.schedule,
+      enabled: mission.enabled,
+      createdAt: mission.createdAt,
+    });
+
+    const placeholderRunId = `schedule-${mission.id}`;
+
+    eventBus.emit({
+      type: "scheduled_mission_created",
+      run_id: placeholderRunId,
+      mission_id: mission.id,
+      name: mission.name,
+      schedule: scheduleMatch.schedule,
+    });
+
+    eventBus.emit({
+      type: "text_delta",
+      run_id: placeholderRunId,
+      delta: `Mission planifiée : "${mission.name}"\nRécurrence : ${scheduleMatch.label}\nElle s'exécutera automatiquement.`,
+    });
+
+    eventBus.emit({
+      type: "orchestrator_log",
+      run_id: placeholderRunId,
+      message: `[V2] Scheduled mission created: ${mission.name} (${scheduleMatch.schedule})`,
+    });
+
+    // Complete the run for scheduled mission creation
+    eventBus.emit({
+      type: "run_completed",
+      run_id: placeholderRunId,
+      artifacts: [],
+    });
+
+    console.log(`[OrchestratorV2] Scheduled mission created: ${mission.id} — ${scheduleMatch.schedule}`);
+    return;
   }
 
   // 1. Create RunRecord in memory
@@ -246,6 +316,16 @@ async function runV2Pipeline(
     timestamp: new Date().toISOString(),
   };
   eventBus.emit(runStartedEvent);
+
+  // Emit mission triggered (if scheduler-triggered)
+  if (input.missionId) {
+    eventBus.emit({
+      type: "scheduled_mission_triggered",
+      run_id: runId,
+      mission_id: input.missionId,
+      name: input.message.slice(0, 80),
+    });
+  }
 
   // Persist run_started to timeline
   if (shouldPersistEvent("run_started")) {
@@ -729,51 +809,35 @@ async function persistConversation(
   }
 }
 
-// ── Tool Context Detection ──────────────────────────────────
-// Temporairement désactivé pour permettre le déploiement
+// ── Schedule Detection ─────────────────────────────────────
 
-// const CONTEXT_KEYWORDS: Array<{ context: string; keywords: string[] }> = [
-//   { context: "inbox", keywords: ["email", "emails", "message", "mail", "inbox", "gmail", "courrier", "résumé", "résumer"] },
-//   { context: "calendar", keywords: ["agenda", "réunion", "calendrier", "événement", "planning", "rdv", "rendez-vous"] },
-//   { context: "files", keywords: ["fichier", "fichiers", "document", "documents", "drive", "pdf", "doc"] },
-// ];
+const SCHEDULE_PATTERNS: Array<{ pattern: RegExp; schedule: string; label: string }> = [
+  { pattern: /tous les matins|every\s+morning|chaque matin/, schedule: "0 8 * * *", label: "Tous les jours à 8h" },
+  { pattern: /tous les soirs|every\s+evening|chaque soir/, schedule: "0 18 * * *", label: "Tous les jours à 18h" },
+  { pattern: /every\s+day|tous les jours|chaque jour|daily/, schedule: "0 8 * * *", label: "Tous les jours à 8h" },
+  { pattern: /à\s+(\d{1,2})h/, schedule: "", label: "" },
+];
 
-// function detectToolContext(message: string, surface?: string): string | null {
-//   // First check surface
-//   if (surface && surface !== "home") {
-//     if (["inbox", "calendar", "files"].includes(surface)) {
-//       return surface;
-//     }
-//   }
+function detectSchedule(message: string): { schedule: string; label: string } | null {
+  const lower = message.toLowerCase();
 
-//   // Then check message keywords
-//   const lower = message.toLowerCase();
-//   for (const { context, keywords } of CONTEXT_KEYWORDS) {
-//     if (keywords.some(kw => lower.includes(kw))) {
-//       return context;
-//     }
-//   }
-
-//   return null;
-// }
-
-// ── Connector Availability ─────────────────────────────────
-// Temporairement désactivé pour permettre le déploiement
-
-// async function getAvailableConnectors(userId: string, tenantId?: string, workspaceId?: string): Promise<string[]> {
-//   try {
-//     const connections = await getConnectionsByScope({
-//       tenantId: tenantId || "dev-tenant",
-//       workspaceId: workspaceId || "dev-workspace",
-//       userId,
-//     });
-//     return connections
-//       .filter(c => c.status === "connected")
-//       .map(c => c.provider);
-//   } catch {
-//     return [];
-//   }
-// }
+  for (const p of SCHEDULE_PATTERNS) {
+    if (!p.schedule) {
+      const match = lower.match(p.pattern);
+      if (match) {
+        const hour = parseInt(match[1], 10);
+        if (hour >= 0 && hour <= 23) {
+          return { schedule: `0 ${hour} * * *`, label: `Tous les jours à ${hour}h` };
+        }
+      }
+      continue;
+    }
+    if (p.pattern.test(lower)) {
+      return { schedule: p.schedule, label: p.label };
+    }
+  }
+  return null;
+}
 
 // ── Feature Flags ─────────────────────────────────────────────
 

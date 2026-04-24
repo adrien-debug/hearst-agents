@@ -59,9 +59,12 @@ export const authOptions: AuthOptions = {
           },
           providerName,
         );
+        // Resolve scope from env (consistent with lib/scope.ts)
+        const tenantId = process.env.HEARST_TENANT_ID ?? "dev-tenant";
+        const workspaceId = process.env.HEARST_WORKSPACE_ID ?? "dev-workspace";
         void registerProviderUsage({
           provider: providerName as "google",
-          scope: { tenantId: "dev-tenant", workspaceId: "dev-workspace", userId },
+          scope: { tenantId, workspaceId, userId },
         });
       }
       return token;

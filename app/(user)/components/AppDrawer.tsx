@@ -10,6 +10,7 @@ interface AppDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onConnect?: (serviceId: string) => void;
+  isConnecting?: boolean;
 }
 
 const TYPE_BADGES = {
@@ -24,8 +25,9 @@ const TIER_LABELS = {
   tier_3: "Catalogue",
 };
 
-export function AppDrawer({ service, isOpen, onClose, onConnect }: AppDrawerProps) {
-  const [isConnecting, setIsConnecting] = useState(false);
+export function AppDrawer({ service, isOpen, onClose, onConnect, isConnecting: externalIsConnecting }: AppDrawerProps) {
+  const [internalIsConnecting, setInternalIsConnecting] = useState(false);
+  const isConnecting = externalIsConnecting ?? internalIsConnecting;
 
   if (!isOpen || !service) return null;
 
@@ -36,11 +38,11 @@ export function AppDrawer({ service, isOpen, onClose, onConnect }: AppDrawerProp
 
   const handleConnect = async () => {
     if (!onConnect || isConnecting) return;
-    setIsConnecting(true);
+    setInternalIsConnecting(true);
     try {
       await onConnect(service.id);
     } finally {
-      setIsConnecting(false);
+      setInternalIsConnecting(false);
     }
   };
 

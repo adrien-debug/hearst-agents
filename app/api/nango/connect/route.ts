@@ -1,12 +1,12 @@
 /**
- * Nango Connect — Get OAuth configuration
+ * Nango Connect — Initiate OAuth flow
  *
  * Returns the configuration needed by the frontend to initiate OAuth via Nango.
  * The frontend uses @nangohq/frontend to open the OAuth popup.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { buildConnectionId, isNangoEnabled } from "@/lib/connectors/nango";
+import { buildConnectionId, isNangoEnabled, getNangoConfig } from "@/lib/connectors/nango";
 import { getUserId } from "@/lib/get-user-id";
 import { z } from "zod";
 
@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!isNangoEnabled()) {
+    console.warn("[NangoConnect] NANGO_SECRET_KEY not configured");
     return NextResponse.json(
       { error: "nango_not_configured", message: "NANGO_SECRET_KEY not set" },
       { status: 503 }
@@ -41,6 +42,14 @@ export async function POST(req: NextRequest) {
 
   const { provider } = parsed.data;
   const connectionId = buildConnectionId(userId, provider);
+  const nangoConfig = getNangoConfig();
+
+  // Log for debugging
+  console.log(`[NangoConnect] Initiating OAuth:`, {
+    provider,
+    connectionId: connectionId.slice(0, 20) + "...",
+    userId: userId.slice(0, 8),
+  });
 
   // Return config for frontend — frontend uses @nangohq/frontend SDK
   return NextResponse.json({
@@ -48,7 +57,9 @@ export async function POST(req: NextRequest) {
     config: {
       provider,
       connectionId,
-      // Frontend will use these to open OAuth via Nango.connect()
+      publicKey: nangoConfig.secretKey.slice(0, 20) + "...", // Frontend SDK needs this
+      host: nangoConfig.host,
+      // Callback will be handled by Nango and redirected to /api/nango/callback
     },
   });
 }

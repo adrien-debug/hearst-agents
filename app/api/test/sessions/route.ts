@@ -11,9 +11,6 @@ import {
   SessionManager,
   createSession,
   closeAllSessions,
-  OpenAIResponsesSession,
-  OpenAIAssistantSession,
-  OpenAIComputerSession,
 } from "@/lib/agents/sessions";
 
 export const dynamic = "force-dynamic";

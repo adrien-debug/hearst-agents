@@ -10,8 +10,20 @@ import {
   OpenAIComputerSession,
   createSession,
   closeAllSessions,
-  type SessionConfig,
 } from "@/lib/agents/sessions";
+import type { AgentBackendV2 } from "@/lib/agents/backend-v2/types";
+import type { SessionMessage, SessionMetrics } from "@/lib/agents/sessions/types";
+
+type SessionInternals = {
+  messages: SessionMessage[];
+  metrics: SessionMetrics;
+  tokenCount: number;
+  trimHistory(): void;
+};
+
+function getSessionInternals(session: unknown): SessionInternals {
+  return session as SessionInternals;
+}
 
 // Reset singleton between tests
 describe("Session Manager", () => {
@@ -144,11 +156,12 @@ describe("Session Manager", () => {
     it("should maintain history", async () => {
       const manager = SessionManager.getInstance();
       const session = await manager.createWithBackend("openai_responses");
+      const internals = getSessionInternals(session);
 
       // Manually add messages (since send is mocked/skipped)
       const msg1 = { id: "1", role: "user" as const, content: "Hello", timestamp: Date.now() };
       const msg2 = { id: "2", role: "assistant" as const, content: "Hi!", timestamp: Date.now() };
-      (session as any).messages.push(msg1, msg2);
+      internals.messages.push(msg1, msg2);
 
       const history = await session.getHistory();
       expect(history.length).toBe(2);
@@ -159,8 +172,9 @@ describe("Session Manager", () => {
     it("should clear history", async () => {
       const manager = SessionManager.getInstance();
       const session = await manager.createWithBackend("openai_responses");
+      const internals = getSessionInternals(session);
 
-      (session as any).messages.push({ id: "1", role: "user", content: "test", timestamp: Date.now() });
+      internals.messages.push({ id: "1", role: "user", content: "test", timestamp: Date.now() });
       await session.clearHistory();
 
       const history = await session.getHistory();
@@ -172,10 +186,11 @@ describe("Session Manager", () => {
       const session = await manager.createWithBackend("openai_responses", {
         maxHistoryLength: 5,
       });
+      const internals = getSessionInternals(session);
 
       // Add 10 messages
       for (let i = 0; i < 10; i++) {
-        (session as any).messages.push({
+        internals.messages.push({
           id: String(i),
           role: i % 2 === 0 ? "user" : "assistant",
           content: `msg ${i}`,
@@ -183,7 +198,7 @@ describe("Session Manager", () => {
         });
       }
 
-      (session as any).trimHistory();
+      internals.trimHistory();
       const history = await session.getHistory();
 
       // Should keep only 5 most recent
@@ -197,14 +212,15 @@ describe("Session Manager", () => {
     it("should track metrics", async () => {
       const manager = SessionManager.getInstance();
       const session = await manager.createWithBackend("openai_responses");
+      const internals = getSessionInternals(session);
 
       // Simulate message exchange
-      (session as any).messages.push({ id: "1", role: "user", content: "test", timestamp: Date.now() });
-      (session as any).messages.push({ id: "2", role: "assistant", content: "response", timestamp: Date.now() });
-      (session as any).metrics.messageCount = 2;
-      (session as any).metrics.totalTokensIn = 10;
-      (session as any).metrics.totalTokensOut = 20;
-      (session as any).metrics.totalCostUsd = 0.001;
+      internals.messages.push({ id: "1", role: "user", content: "test", timestamp: Date.now() });
+      internals.messages.push({ id: "2", role: "assistant", content: "response", timestamp: Date.now() });
+      internals.metrics.messageCount = 2;
+      internals.metrics.totalTokensIn = 10;
+      internals.metrics.totalTokensOut = 20;
+      internals.metrics.totalCostUsd = 0.001;
 
       const metrics = session.getMetrics();
 
@@ -219,8 +235,9 @@ describe("Session Manager", () => {
     it("should get token count", async () => {
       const manager = SessionManager.getInstance();
       const session = await manager.createWithBackend("openai_responses");
+      const internals = getSessionInternals(session);
 
-      (session as any).tokenCount = 100;
+      internals.tokenCount = 100;
 
       expect(session.getTokenCount()).toBe(100);
     });
@@ -254,8 +271,9 @@ describe("Session Manager", () => {
     it("should persist session state", async () => {
       const manager = SessionManager.getInstance();
       const session = await manager.createWithBackend("openai_responses");
+      const internals = getSessionInternals(session);
 
-      (session as any).messages.push({
+      internals.messages.push({
         id: "1",
         role: "user",
         content: "test",
@@ -278,15 +296,16 @@ describe("Session Manager", () => {
     it("should handoff between backends", async () => {
       const manager = SessionManager.getInstance();
       const fromSession = await manager.createWithBackend("openai_responses");
+      const internals = getSessionInternals(fromSession);
 
       // Add some history
-      (fromSession as any).messages.push({
+      internals.messages.push({
         id: "1",
         role: "user",
         content: "Hello",
         timestamp: Date.now(),
       });
-      (fromSession as any).messages.push({
+      internals.messages.push({
         id: "2",
         role: "assistant",
         content: "Hi!",
@@ -319,11 +338,12 @@ describe("Session Manager", () => {
     it("should transfer metrics on handoff", async () => {
       const manager = SessionManager.getInstance();
       const fromSession = await manager.createWithBackend("openai_responses");
+      const internals = getSessionInternals(fromSession);
 
       // Set some metrics
-      (fromSession as any).metrics.totalTokensIn = 100;
-      (fromSession as any).metrics.totalTokensOut = 200;
-      (fromSession as any).metrics.totalCostUsd = 0.01;
+      internals.metrics.totalTokensIn = 100;
+      internals.metrics.totalTokensOut = 200;
+      internals.metrics.totalCostUsd = 0.01;
 
       const result = await manager.handoff(fromSession.id, "openai_assistants");
 
@@ -347,7 +367,7 @@ describe("Session Manager", () => {
       const manager = SessionManager.getInstance();
 
       await expect(
-        manager.createWithBackend("unknown_backend" as any),
+        manager.createWithBackend("unknown_backend" as unknown as AgentBackendV2),
       ).rejects.toThrow("No factory for backend");
     });
 

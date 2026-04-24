@@ -1,13 +1,14 @@
 /**
- * Orchestrator Entry — Backend V2 Integration.
+ * Orchestrator Entry — Canonical routing for chat-first V2.
  *
- * Canonical entry point for the orchestration engine.
- * Routes to Backend V2 (Session Manager + Multi-Provider) when enabled.
+ * V2 is the canonical path for all chat-first user-facing interactions.
+ * V1 (legacy) is kept only for explicit backward compatibility and
+ * non-chat usage (e.g., internal tools, migration window).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { orchestrate } from "./index";
-import { orchestrateV2 as orchestrateBackendV2, isV2Enabled, shouldUseV2 } from "./orchestrate-v2";
+import { orchestrate as orchestrateLegacyV1 } from "./index";
+import { orchestrateV2 as orchestrateCanonicalV2, isV2Enabled, shouldUseV2 } from "./orchestrate-v2";
 
 export interface OrchestrateInput {
   userId: string;
@@ -20,23 +21,37 @@ export interface OrchestrateInput {
   missionId?: string;
   tenantId?: string;
   workspaceId?: string;
+  /** Force legacy V1 execution (for explicit backward compatibility) */
+  forceLegacyV1?: boolean;
 }
 
 /**
- * Entry point for the SSE orchestration pipeline.
- * Routes to Backend V2 when enabled and user matches rollout percentage.
- * Falls back to legacy V1 orchestration for backward compatibility.
+ * Canonical entry point for the SSE orchestration pipeline.
+ *
+ * Routing logic:
+ * 1. If forceLegacyV1 is set → use V1 (explicit opt-out)
+ * 2. If V2 is enabled and user matches rollout → use V2 (canonical path)
+ * 3. Otherwise → fallback to V1 (safe default during transition)
+ *
+ * The goal is to converge all chat-first traffic to V2, eliminating
+ * dual-stack ambiguity for the user-facing product.
  */
 export function orchestrateV2(
   db: SupabaseClient,
   input: OrchestrateInput,
 ): ReadableStream {
-  // Check if Backend V2 should be used
-  const useBackendV2 = isV2Enabled() && shouldUseV2(input.userId);
+  // Explicit legacy opt-out for non-chat or migration scenarios
+  if (input.forceLegacyV1) {
+    console.log(`[Orchestrator] Explicit legacy V1 requested for user ${input.userId}`);
+    return orchestrateLegacyV1(db, input);
+  }
 
-  if (useBackendV2) {
-    console.log(`[Orchestrator] Using Backend V2 for user ${input.userId}`);
-    return orchestrateBackendV2(db, {
+  // Canonical path: V2 when enabled
+  const useV2 = isV2Enabled() && shouldUseV2(input.userId);
+
+  if (useV2) {
+    console.log(`[Orchestrator] Canonical V2 path for user ${input.userId}`);
+    return orchestrateCanonicalV2(db, {
       userId: input.userId,
       message: input.message,
       conversationId: input.conversationId,
@@ -45,10 +60,11 @@ export function orchestrateV2(
       conversationHistory: input.conversationHistory,
       tenantId: input.tenantId,
       workspaceId: input.workspaceId,
+      missionId: input.missionId,
     });
   }
 
-  // Fallback to legacy V1 orchestration
-  console.log(`[Orchestrator] Using Legacy V1 for user ${input.userId}`);
-  return orchestrate(db, input);
+  // Safe fallback during transition or if V2 disabled
+  console.log(`[Orchestrator] Fallback to V1 for user ${input.userId} (V2 disabled or rollout)`);
+  return orchestrateLegacyV1(db, input);
 }

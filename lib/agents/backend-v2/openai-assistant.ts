@@ -7,10 +7,9 @@
 
 import OpenAI from "openai";
 import type {
-  ManagedSessionConfig,
-  ManagedSessionContext,
   ManagedAgentEvent,
   ManagedAgentResult,
+  ManagedSessionConfig,
   ManagedAgentStep,
 } from "./types";
 

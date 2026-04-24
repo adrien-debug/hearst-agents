@@ -6,7 +6,7 @@
 
 import { BaseSession } from "./base-session";
 import type { SessionConfig, SessionResponse, SessionState } from "./types";
-import type { AgentBackendV2, ManagedAgentEvent } from "../backend-v2/types";
+import type { ManagedAgentEvent, AgentBackendV2 } from "../backend-v2/types";
 import {
   createOrGetAssistant,
   createThread,

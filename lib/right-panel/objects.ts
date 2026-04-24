@@ -61,6 +61,8 @@ interface FocalObjectBase {
   sourcePlanId?: string;
   /** Source asset ID, if derived from stored asset. */
   sourceAssetId?: string;
+  /** Mission ID, for mission/watcher objects. */
+  missionId?: string;
   /** What this object can morph into next. Null = terminal. */
   morphTarget: MorphTarget;
   /** 0 or 1 action. Never more. */

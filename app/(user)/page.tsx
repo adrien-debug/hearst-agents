@@ -2,20 +2,19 @@
 
 import { useRef, useCallback, useMemo, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useFocalStore, type FocalObject, type FocalType, type FocalStatus } from "@/stores/focal";
+import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
-import { useNavigationStore, type Message, type Surface } from "@/stores/navigation";
+import { useNavigationStore } from "@/stores/navigation";
+import type { FocalObject, FocalType, FocalStatus, Message, Surface, RightPanelData } from "@/lib/core/types";
 import { FocalStage } from "./components/FocalStage";
 import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
-import { CapabilityTabs, type CapabilityMode, getCapabilityFromSurface } from "./components/CapabilityTabs";
+import { CapabilityTabs, type CapabilityMode, getCapabilityFromSurface, isCapabilityAvailable } from "./components/CapabilityTabs";
 import { SourcePicker, type SourceSelection, getDefaultSelection } from "./components/SourcePicker";
 import { CapabilityBlockedBanner } from "./components/CapabilityBlockedBanner";
 import { getAllServices } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
-import { isCapabilityAvailable } from "./components/CapabilityTabs";
-import type { RightPanelData } from "@/lib/ui/right-panel/types";
 
 function greeting() {
   const h = new Date().getHours();
@@ -89,7 +88,7 @@ function ChatControls({
   );
 }
 
-// Initialize services only once
+// Initialize services with loading state — real status fetched on mount
 const initialServices = (() => {
   const baseServices = [...getAllServices(), ...getNangoServices()];
   return baseServices.map((s) => ({
@@ -97,6 +96,26 @@ const initialServices = (() => {
     connectionStatus: "disconnected" as const,
   }));
 })();
+
+// Service ID → Provider ID mapping for OAuth
+function getProviderForService(serviceId: string): string | null {
+  const map: Record<string, string> = {
+    gmail: "google",
+    calendar: "google",
+    drive: "google",
+    slack: "slack",
+    notion: "notion",
+    github: "github",
+    hubspot: "hubspot",
+    jira: "jira",
+    linear: "linear",
+    stripe: "stripe",
+    figma: "figma",
+    airtable: "airtable",
+    zapier: "zapier",
+  };
+  return map[serviceId] || null;
+}
 
 export default function HomePage() {
   const { data: session } = useSession();
@@ -190,6 +209,7 @@ export default function HomePage() {
             threadId: (o.threadId as string) || undefined,
             sourcePlanId: (o.sourcePlanId as string) || undefined,
             sourceAssetId: (o.sourceAssetId as string) || undefined,
+            missionId: (o.missionId as string) || undefined,
             morphTarget: o.morphTarget === null ? null : (o.morphTarget as string) || undefined,
             primaryAction,
           };
@@ -216,8 +236,8 @@ export default function HomePage() {
     // No polling here — live updates come via SSE through setFocal
   }, [activeThreadId, hydrateThreadState]);
 
-  // Services state - initialized directly without useEffect
-  const [services] = useState<ServiceWithConnectionStatus[]>(initialServices);
+  // Services state with real connection status
+  const [services, setServices] = useState<ServiceWithConnectionStatus[]>(initialServices);
   const [capabilityMode, setCapabilityMode] = useState<CapabilityMode>(
     getCapabilityFromSurface(surface)
   );
@@ -225,6 +245,35 @@ export default function HomePage() {
     getDefaultSelection(initialServices)
   );
   const [showBlockedBanner, setShowBlockedBanner] = useState(false);
+  const [showFocal, setShowFocal] = useState(false);
+
+  // Fetch real connection status on mount
+  useEffect(() => {
+    async function loadConnections() {
+      try {
+        const res = await fetch("/api/v2/user/connections", { credentials: "include" });
+        if (!res.ok) {
+          console.warn("[HomePage] Failed to fetch connections:", res.status);
+          return;
+        }
+        const data = await res.json();
+        if (data.services && Array.isArray(data.services)) {
+          setServices(data.services as ServiceWithConnectionStatus[]);
+          // Update source selection with connected services
+          const connected = data.services.filter(
+            (s: ServiceWithConnectionStatus) => s.connectionStatus === "connected"
+          );
+          if (connected.length > 0) {
+            setSourceSelection(getDefaultSelection(connected));
+          }
+        }
+        console.log(`[HomePage] Loaded ${data.meta?.connected || 0}/${data.meta?.total || 0} connected services`);
+      } catch (err) {
+        console.error("[HomePage] Error loading connections:", err);
+      }
+    }
+    loadConnections();
+  }, []);
 
   // Use refs to track previous values without triggering effects
   const prevSurfaceRef = useRef(surface);
@@ -288,7 +337,8 @@ export default function HomePage() {
   const handleSubmit = useCallback(async (message: string) => {
     if (!activeThreadId) return;
 
-    const runId = `run-${Date.now()}`;
+    // Client token for correlation (not the canonical run_id)
+    const clientToken = `client-${Date.now()}`;
 
     // Add user message to current thread
     const userMessage: Message = {
@@ -316,7 +366,9 @@ export default function HomePage() {
       .slice(-10)
       .map((m) => ({ role: m.role, content: m.content }));
 
-    startRun(runId);
+    // Start run with client token (will be replaced by server run_id on run_started)
+    startRun(clientToken);
+
     try {
       const res = await fetch("/api/orchestrate", {
         method: "POST",
@@ -331,11 +383,16 @@ export default function HomePage() {
           selected_providers: sourceSelection.providers,
         }),
       });
-      if (!res.ok) { addEvent({ type: "run_failed", error: "Server error", run_id: runId }); return; }
+      if (!res.ok) {
+        addEvent({ type: "run_failed", error: "Server error", run_id: clientToken, client_token: clientToken });
+        return;
+      }
       const reader = res.body?.getReader();
       if (!reader) return;
       const decoder = new TextDecoder();
       let buffer = "";
+      let canonicalRunId: string | null = null;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -347,6 +404,17 @@ export default function HomePage() {
           try {
             const event = JSON.parse(line.slice(6));
 
+            // Capture canonical run_id from run_started event
+            if (event.type === "run_started" && event.run_id) {
+              canonicalRunId = event.run_id as string;
+              console.log(`[Chat] Canonical run_id established: ${canonicalRunId}`);
+            }
+
+            // Log warning if event has mismatched run_id
+            if (event.run_id && canonicalRunId && event.run_id !== canonicalRunId) {
+              console.warn(`[Chat] Event run_id mismatch: expected ${canonicalRunId}, got ${event.run_id}`);
+            }
+
             // Handle text_delta events for streaming assistant responses
             if (event.type === "text_delta" && event.delta) {
               assistantBufferRef.current += event.delta;
@@ -357,14 +425,24 @@ export default function HomePage() {
               );
             }
 
-            addEvent({ ...event, run_id: runId });
-          } catch {}
+            // Use canonical run_id if available, otherwise client token
+            const eventRunId = (event.run_id as string) || canonicalRunId || clientToken;
+            addEvent({ ...event, run_id: eventRunId });
+          } catch (parseErr) {
+            console.error("[Chat] Failed to parse SSE event:", parseErr);
+          }
         }
       }
+
+      // Log final canonical run_id for debugging
+      if (canonicalRunId) {
+        console.log(`[Chat] Run completed with canonical id: ${canonicalRunId}`);
+      }
     } catch (err) {
-      addEvent({ type: "run_failed", error: err instanceof Error ? err.message : "Failed", run_id: runId });
+      console.error("[Chat] Orchestration failed:", err);
+      addEvent({ type: "run_failed", error: err instanceof Error ? err.message : "Failed", run_id: clientToken });
     }
-  }, [surface, activeThreadId, capabilityMode, sourceSelection, addEvent, startRun, addMessageToThread, updateMessageInThread]);
+  }, [surface, activeThreadId, capabilityMode, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread]);
 
   const handleCapabilityChange = useCallback((mode: CapabilityMode) => {
     setCapabilityMode(mode);
@@ -375,18 +453,60 @@ export default function HomePage() {
   }, [setSurface]);
 
   const handleConnect = useCallback(async (serviceId: string) => {
-    console.log("Connecting to:", serviceId);
-    // TODO: Redirect to OAuth flow
-    // window.location.href = `/api/nango/connect?provider=${serviceId}`;
+    const provider = getProviderForService(serviceId);
+    if (!provider) {
+      console.error(`[HomePage] No provider mapping for service: ${serviceId}`);
+      return;
+    }
+
+    console.log(`[HomePage] Initiating OAuth for ${serviceId} via ${provider}`);
+
+    try {
+      // Get OAuth config from backend
+      const res = await fetch("/api/nango/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ provider }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("[HomePage] OAuth init failed:", err);
+        alert(`Erreur de connexion: ${err.message || "Configuration Nango manquante"}`);
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.success || !data.config) {
+        console.error("[HomePage] Invalid OAuth config:", data);
+        return;
+      }
+
+      // Redirect to apps page with pending connection
+      // The actual OAuth popup will be handled by Nango SDK on the apps page
+      console.log(`[HomePage] OAuth ready for ${provider}, redirecting to App Hub`);
+      window.location.href = `/apps?connecting=${encodeURIComponent(serviceId)}&provider=${encodeURIComponent(provider)}`;
+    } catch (err) {
+      console.error("[HomePage] OAuth initiation failed:", err);
+      alert("Erreur lors de l'initiation de la connexion");
+    }
   }, []);
 
   const handleDismissBanner = useCallback(() => {
     setShowBlockedBanner(false);
   }, []);
 
-  const isIdle = !focal && coreState === "idle" && messages.length === 0;
-  const isRunning = !focal && coreState !== "idle";
-  const hasConversation = messages.length > 0 && !focal;
+  const isIdle = coreState === "idle" && messages.length === 0 && !focal;
+
+  // Auto-show focal when it first appears (user can then close it)
+  const focalIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (focal && focal.id !== focalIdRef.current) {
+      focalIdRef.current = focal.id;
+      setShowFocal(true);
+    }
+  }, [focal]);
 
   const chatControlsProps: ChatControlsProps = {
     showBlockedBanner,
@@ -405,14 +525,50 @@ export default function HomePage() {
 
   if (isIdle) {
     return (
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex-1 flex flex-col items-center justify-center px-8">
-          <div className="text-center space-y-4">
-            <h1 className="text-3xl font-light text-white/90 tracking-wide">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
-            <p className="text-sm text-white/40 max-w-md">Comment puis-je vous aider aujourd&apos;hui ?</p>
-            <div className="flex flex-wrap justify-center gap-2 mt-8">
+      <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+        {/* Halo idle glow background */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse at 50% 40%, rgba(0, 229, 255, 0.06) 0%, transparent 60%)",
+          }}
+        />
+
+        <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
+          <div className="text-center space-y-5">
+            {/* Halo-style greeting with gradient accent */}
+            <div
+              className="inline-flex items-center gap-3 px-4 py-2 mb-2"
+              style={{
+                background: "linear-gradient(180deg, rgba(0,229,255,0.05) 0%, transparent 100%)",
+                borderBottom: "1px solid rgba(0,229,255,0.15)",
+              }}
+            >
+              <div
+                className="w-5 h-5 flex items-center justify-center text-xs font-bold"
+                style={{
+                  background: "var(--cykan)",
+                  color: "#000",
+                }}
+              >
+                H
+              </div>
+              <span className="halo-mono-label" style={{ color: "var(--text-faint)" }}>Hearst OS</span>
+            </div>
+
+            <h1 className="halo-title-lg">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
+            <p className="halo-body max-w-md mx-auto">Comment puis-je vous aider aujourd&apos;hui ?</p>
+
+            {/* Suggestion chips — Halo style */}
+            <div className="flex flex-wrap justify-center gap-2 mt-10">
               {["Résumer mes emails", "Planifier une réunion", "Analyser un document", "Créer un rapport"].map((s) => (
-                <button key={s} onClick={() => handleSubmit(s)} className="px-3 py-1.5 text-xs bg-white/[0.03] hover:bg-white/[0.06] text-white/60 hover:text-white/80 rounded-full border border-white/[0.06] transition-colors">{s}</button>
+                <button
+                  key={s}
+                  onClick={() => handleSubmit(s)}
+                  className="px-3 py-1.5 text-xs border border-[var(--line)] text-[var(--text-soft)] hover:text-[var(--text)] hover:border-[var(--cykan)]/30 hover:bg-[var(--cykan)]/[0.04] transition-all"
+                >
+                  {s}
+                </button>
               ))}
             </div>
           </div>
@@ -426,26 +582,66 @@ export default function HomePage() {
     );
   }
 
-  if (isRunning || hasConversation) {
-    return (
-      <div className="flex-1 flex flex-col min-h-0">
-        <ChatMessages messages={messages} />
-        <ChatControls {...chatControlsProps} />
-        <ChatInput
-          onSubmit={handleSubmit}
-          connectedServices={connectedServices}
-        />
-      </div>
-    );
-  }
-
+  // Chat-first with focal as principal surface when present
   return (
-    <div className="flex-1 flex flex-col min-h-0">
-      <FocalStage />
+    <div className="flex-1 flex flex-col min-h-0 relative">
+      {/* Principal surface: Focal Stage - takes full height when active */}
+      {focal && showFocal && (
+        <div className="flex-1 flex flex-col min-h-0 border-b border-[var(--line)]">
+          {/* Focal header - minimal, contextual */}
+          <div className="flex items-center justify-between px-4 py-2 bg-white/[0.02] border-b border-[var(--line)] flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[var(--text-muted)] uppercase tracking-wider">{focal.type}</span>
+              <span className="text-xs text-[var(--text-faint)]">·</span>
+              <span className="text-xs text-[var(--text-soft)] truncate max-w-[300px]">{focal.title}</span>
+            </div>
+            <button
+              onClick={() => setShowFocal(false)}
+              className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] px-2 py-1 rounded hover:bg-white/[0.05] transition-colors"
+              title="Minimiser (rester dans le contexte)"
+            >
+              Minimiser ✕
+            </button>
+          </div>
+          {/* Focal content - principal reading surface */}
+          <div className="flex-1 overflow-y-auto">
+            <FocalStage />
+          </div>
+        </div>
+      )}
+
+      {/* Collapsed focal indicator - contextual chip */}
+      {focal && !showFocal && (
+        <div className="flex-shrink-0 px-4 py-2 border-b border-[var(--line)] bg-white/[0.02]">
+          <button
+            onClick={() => setShowFocal(true)}
+            className="inline-flex items-center gap-2 text-xs text-[var(--cykan)] hover:text-[var(--text)] transition-colors"
+          >
+            <span>◉</span>
+            <span className="text-[var(--text-soft)]">
+              {focal.type === "brief" ? "Synthèse" : focal.type === "report" ? "Rapport" : "Document"} en cours
+            </span>
+            <span className="text-[var(--text-faint)]">·</span>
+            <span className="truncate max-w-[200px]">{focal.title}</span>
+            <span className="ml-2 text-[var(--cykan)]">▲</span>
+          </button>
+        </div>
+      )}
+
+      {/* Chat messages - canonical renderer with conditional sizing - only render container when messages exist */}
+      {messages.length > 0 && (
+        <div className={focal && showFocal ? "flex-shrink-0 h-[180px] border-b border-[var(--line)]" : "flex-1 min-h-0"}>
+          <ChatMessages
+            messages={messages}
+            compact={!!(focal && showFocal)}
+            className={focal && showFocal ? "h-full overflow-y-auto px-4 py-3 space-y-3" : "h-full overflow-y-auto px-4 py-6 space-y-4"}
+          />
+        </div>
+      )}
       <ChatControls {...chatControlsProps} />
       <ChatInput
         onSubmit={handleSubmit}
-        placeholder={`Continuer sur "${focal?.title.slice(0, 30)}..."`}
+        placeholder={focal ? `Continuer sur "${focal.title.slice(0, 30)}..."` : undefined}
         connectedServices={connectedServices}
       />
     </div>

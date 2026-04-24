@@ -4,11 +4,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/get-user-id";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { orchestrateV2 } from "@/lib/orchestrator/entry";
 import { getScheduledMissions, updateScheduledMission } from "@/lib/runtime/state/adapter";
 import { updateMissionLastRun, getMission } from "@/lib/runtime/missions/store";
+import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -17,9 +17,10 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getUserId();
-  if (!userId) {
-    return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
+  // Resolve scope with dev fallback allowed
+  const { scope, error } = await requireScope({ context: "POST /api/v2/missions/[id]/run" });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
   }
 
   const { id } = await params;
@@ -30,10 +31,20 @@ export async function POST(
 
   const memMission = getMission(id);
   if (memMission) {
+    // Verify ownership
+    if (memMission.userId && memMission.userId !== scope.userId) {
+      console.warn(`[MissionRunNow] Access denied — user mismatch for mission ${id}`);
+      return NextResponse.json({ error: "mission_not_found" }, { status: 404 });
+    }
     missionInput = memMission.input;
     missionName = memMission.name;
   } else {
-    const persisted = await getScheduledMissions();
+    // Query persisted missions scoped to current user
+    const persisted = await getScheduledMissions({
+      userId: scope.userId,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+    });
     const found = persisted.find((m) => m.id === id);
     if (found) {
       missionInput = found.input;
@@ -45,12 +56,12 @@ export async function POST(
     return NextResponse.json({ error: "mission_not_found" }, { status: 404 });
   }
 
-  console.log(`[MissionRunNow] Triggering "${missionName}" (${id})`);
+  console.log(`[MissionRunNow] Triggering "${missionName}" (${id}) for user ${scope.userId.slice(0, 8)}`);
 
   const db = requireServerSupabase();
 
   const stream = orchestrateV2(db, {
-    userId,
+    userId: scope.userId,
     message: missionInput,
     missionId: id,
   });

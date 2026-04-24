@@ -77,7 +77,7 @@ export async function getAssets(params?: {
   if (!sb) return [];
 
   try {
-    let query = sb
+    const query = sb
       .from("assets")
       .select("*")
       .order("created_at", { ascending: false })
@@ -89,7 +89,17 @@ export async function getAssets(params?: {
       return [];
     }
 
-    return (data ?? []).map(toAsset);
+    const assets = (data ?? []).map(toAsset);
+
+    if (params?.tenantId || params?.workspaceId) {
+      return assets.filter((asset) => {
+        if (params.tenantId && asset.tenantId !== params.tenantId) return false;
+        if (params.workspaceId && asset.workspaceId !== params.workspaceId) return false;
+        return true;
+      });
+    }
+
+    return assets;
   } catch (err) {
     console.error("[AssetsAdapter] getAssets exception:", err);
     return [];
