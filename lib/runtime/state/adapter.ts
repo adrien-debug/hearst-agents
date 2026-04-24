@@ -31,6 +31,8 @@ const STATUS_MAP: Record<string, string> = {
   running: "running",
   completed: "completed",
   failed: "failed",
+  awaiting_approval: "awaiting_approval",
+  awaiting_clarification: "awaiting_clarification",
 };
 
 export async function saveRun(run: PersistedRunRecord): Promise<boolean> {

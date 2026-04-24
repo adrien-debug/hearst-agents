@@ -90,7 +90,29 @@ export function RightPanel() {
           <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">Runtime</p>
           <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500" : "bg-red-500"}`} />
         </div>
-        {isRunning ? (
+        {coreState === "awaiting_approval" ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-sm text-amber-400">{flowLabel || "Validation requise"}</span>
+            </div>
+            <p className="text-[10px] font-mono text-white/30 uppercase">awaiting_approval</p>
+            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-amber-400 w-full" />
+            </div>
+          </div>
+        ) : coreState === "awaiting_clarification" ? (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+              <span className="text-sm text-violet-400">{flowLabel || "Précision requise"}</span>
+            </div>
+            <p className="text-[10px] font-mono text-white/30 uppercase">awaiting_clarification</p>
+            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-violet-400 w-full" />
+            </div>
+          </div>
+        ) : isRunning ? (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
@@ -171,19 +193,31 @@ export function RightPanel() {
           <div className="p-4">
             <p className="text-[10px] font-medium uppercase tracking-wider text-white/40 mb-3">Runs récents</p>
             <div className="space-y-2">
-              {data.recentRuns.slice(0, 5).map((run) => (
-                <div key={run.id} className={`p-2 rounded-md text-xs ${run.id === currentRunId ? "bg-cyan-500/10 border border-cyan-500/20" : "bg-white/[0.02]"}`}>
-                  <p className="truncate text-white/70">{run.input.slice(0, 40)}{run.input.length > 40 ? "..." : ""}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${
-                      run.status === "completed" ? "bg-emerald-500" :
-                      run.status === "failed" ? "bg-red-500" :
-                      run.status === "running" ? "bg-cyan-400 animate-pulse" : "bg-white/20"
-                    }`} />
-                    <span className="text-[10px] text-white/40 uppercase">{run.status}</span>
+              {data.recentRuns.slice(0, 5).map((run) => {
+                const statusLabel = run.status === "awaiting_approval" ? "validation requise" :
+                  run.status === "awaiting_clarification" ? "précision requise" :
+                  run.status;
+                return (
+                  <div key={run.id} className={`p-2 rounded-md text-xs ${run.id === currentRunId ? "bg-cyan-500/10 border border-cyan-500/20" : "bg-white/[0.02]"}`}>
+                    <p className="truncate text-white/70">{run.input.slice(0, 40)}{run.input.length > 40 ? "..." : ""}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        run.status === "completed" ? "bg-emerald-500" :
+                        run.status === "failed" ? "bg-red-500" :
+                        run.status === "running" ? "bg-cyan-400 animate-pulse" :
+                        run.status === "awaiting_approval" ? "bg-amber-400" :
+                        run.status === "awaiting_clarification" ? "bg-violet-400" :
+                        "bg-white/20"
+                      }`} />
+                      <span className={`text-[10px] uppercase ${
+                        run.status === "awaiting_approval" ? "text-amber-400" :
+                        run.status === "awaiting_clarification" ? "text-violet-400" :
+                        "text-white/40"
+                      }`}>{statusLabel}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

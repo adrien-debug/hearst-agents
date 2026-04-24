@@ -134,7 +134,7 @@ export default function HomePage() {
 
         const data: RightPanelData = await res.json();
 
-        // Map focalObject to FocalObject type
+        // Map focalObject to FocalObject type — conserve toutes les métadonnées utiles
         const mapFocalObject = (obj: unknown): FocalObject | null => {
           if (!obj || typeof obj !== "object") return null;
           const o = obj as Record<string, unknown>;
@@ -165,6 +165,15 @@ export default function HomePage() {
             body = firstSection?.body || "";
           }
 
+          // Extract primaryAction if present
+          let primaryAction: { kind: string; label: string } | undefined;
+          if (o.primaryAction && typeof o.primaryAction === "object") {
+            const pa = o.primaryAction as Record<string, unknown>;
+            if (typeof pa.kind === "string" && typeof pa.label === "string") {
+              primaryAction = { kind: pa.kind, label: pa.label };
+            }
+          }
+
           return {
             id: (o.id as string) || `focal-${Date.now()}`,
             type,
@@ -177,6 +186,12 @@ export default function HomePage() {
             provider: (o.providerId as string) || (o.provider as string) || undefined,
             createdAt,
             updatedAt,
+            // Métadonnées focales enrichies — conservées pour traçabilité et action future
+            threadId: (o.threadId as string) || undefined,
+            sourcePlanId: (o.sourcePlanId as string) || undefined,
+            sourceAssetId: (o.sourceAssetId as string) || undefined,
+            morphTarget: o.morphTarget === null ? null : (o.morphTarget as string) || undefined,
+            primaryAction,
           };
         };
 

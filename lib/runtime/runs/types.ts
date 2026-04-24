@@ -7,7 +7,7 @@
 
 import type { RunEvent } from "../../events/types";
 
-export type RunStatus = "running" | "completed" | "failed";
+export type RunStatus = "running" | "completed" | "failed" | "awaiting_approval" | "awaiting_clarification";
 
 export interface RunAssetRef {
   id: string;

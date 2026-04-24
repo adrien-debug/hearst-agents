@@ -81,8 +81,23 @@ export interface FocalObjectView {
   status: string;
   summary?: string;
   sections?: Array<{ heading?: string; body: string }>;
+  /** Thread ID pour traçabilité */
+  threadId?: string;
+  /** Source plan ID si dérivé d'un plan */
+  sourcePlanId?: string;
+  /** Source asset ID si dérivé d'un asset */
+  sourceAssetId?: string;
+  /** Cible de morphing possible */
+  morphTarget?: string | null;
+  /** Action primaire affichable (non câblée métier dans cette mission) */
   primaryAction?: {
     kind: string;
     label: string;
   };
+  /** Métadonnées additionnelles pour enrichissement UI */
+  body?: string;
+  wordCount?: number;
+  provider?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }

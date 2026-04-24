@@ -272,6 +272,21 @@ async function runV2Pipeline(
     // Add to accumulated events
     accumulatedEvents.push(eventWithTimestamp as RunEvent);
 
+    // Sync run status for suspension/resumption events
+    if (event.type === "run_suspended") {
+      const reason = (event as unknown as Record<string, string>).reason;
+      if (reason === "awaiting_approval") {
+        runRecord.status = "awaiting_approval";
+        void updateRun(dbRunId, { status: "awaiting_approval" });
+      } else if (reason === "awaiting_clarification") {
+        runRecord.status = "awaiting_clarification";
+        void updateRun(dbRunId, { status: "awaiting_clarification" });
+      }
+    } else if (event.type === "run_resumed") {
+      runRecord.status = "running";
+      void updateRun(dbRunId, { status: "running" });
+    }
+
     // Persist timeline events
     if (shouldPersistEvent(event.type)) {
       void persistRunEvent({

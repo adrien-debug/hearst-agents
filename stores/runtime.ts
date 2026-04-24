@@ -12,7 +12,7 @@ export type StreamEvent = {
   [key: string]: unknown;
 };
 
-export type CoreState = "idle" | "connecting" | "streaming" | "processing" | "error";
+export type CoreState = "idle" | "connecting" | "streaming" | "processing" | "error" | "awaiting_approval" | "awaiting_clarification";
 
 interface RuntimeState {
   connected: boolean;
@@ -65,6 +65,35 @@ export const useRuntimeStore = create<RuntimeState>()(
         case "run_failed":
           set({ coreState: "error", flowLabel: null });
           break;
+        case "approval_requested":
+          set({
+            coreState: "awaiting_approval",
+            flowLabel: "Validation requise",
+          });
+          break;
+        case "clarification_requested":
+          set({
+            coreState: "awaiting_clarification",
+            flowLabel: "Précision requise",
+          });
+          break;
+        case "run_suspended": {
+          const reason = event.reason as string;
+          if (reason === "awaiting_approval") {
+            set({ coreState: "awaiting_approval", flowLabel: "Validation requise" });
+          } else if (reason === "awaiting_clarification") {
+            set({ coreState: "awaiting_clarification", flowLabel: "Précision requise" });
+          }
+          break;
+        }
+        case "run_resumed": {
+          // Return to active state if we were in a waiting state
+          const currentState = get().coreState;
+          if (currentState === "awaiting_approval" || currentState === "awaiting_clarification") {
+            set({ coreState: "streaming", flowLabel: event.flow_label as string || "En cours..." });
+          }
+          break;
+        }
         case "focal_object_ready":
           const focalData = event.focal_object as Record<string, unknown>;
           if (focalData) {

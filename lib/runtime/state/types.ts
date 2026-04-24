@@ -5,7 +5,7 @@
  * These mirror RunRecord / ScheduledMission but are DB-oriented.
  */
 
-export type PersistedRunStatus = "running" | "completed" | "failed";
+export type PersistedRunStatus = "running" | "completed" | "failed" | "awaiting_approval" | "awaiting_clarification";
 
 export interface PersistedRunRecord {
   id: string;

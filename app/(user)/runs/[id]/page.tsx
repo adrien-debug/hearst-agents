@@ -27,7 +27,8 @@ export default function RunDetailPage() {
         // Use canonical normalized timeline from API
         setTimeline(data.timeline || []);
         setTimelineSource(data.timelineSource || "empty");
-        setIsLive(data.run?.status === "running");
+        const liveStatuses = ["running", "awaiting_approval", "awaiting_clarification"];
+        setIsLive(liveStatuses.includes(data.run?.status));
       } catch (error) {
         console.error("Failed to load run:", error);
       } finally {
@@ -37,12 +38,13 @@ export default function RunDetailPage() {
 
     loadRun();
 
-    // Poll for updates if run is live
-    if (isLive) {
+    // Poll for updates if run is live (including waiting states)
+    const liveStatuses = ["running", "awaiting_approval", "awaiting_clarification"];
+    if (run && liveStatuses.includes(run.status)) {
       const interval = setInterval(loadRun, 2000);
       return () => clearInterval(interval);
     }
-  }, [runId, isLive]);
+  }, [runId, run?.status]);
 
   if (loading) {
     return (
@@ -66,10 +68,20 @@ export default function RunDetailPage() {
     );
   }
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     running: "text-cyan-400",
     completed: "text-emerald-400",
     failed: "text-red-400",
+    awaiting_approval: "text-amber-400",
+    awaiting_clarification: "text-violet-400",
+  };
+
+  const statusLabels: Record<string, string> = {
+    running: "En cours",
+    completed: "Terminé",
+    failed: "Échoué",
+    awaiting_approval: "Validation requise",
+    awaiting_clarification: "Précision requise",
   };
 
   return (
@@ -89,10 +101,8 @@ export default function RunDetailPage() {
             <h1 className="text-xl font-medium text-white mb-1">Run {run.id.slice(0, 8)}...</h1>
             <p className="text-sm text-white/40">{run.input}</p>
           </div>
-          <span className={`text-sm font-medium ${statusColors[run.status]}`}>
-            {run.status === "running" && "En cours"}
-            {run.status === "completed" && "Terminé"}
-            {run.status === "failed" && "Échoué"}
+          <span className={`text-sm font-medium ${statusColors[run.status] || "text-white/60"}`}>
+            {statusLabels[run.status] || run.status}
           </span>
         </div>
       </div>

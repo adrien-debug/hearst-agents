@@ -41,6 +41,19 @@ export interface FocalObject {
   provider?: string;
   createdAt: number;
   updatedAt: number;
+  /** Thread ID pour traçabilité et continuité */
+  threadId?: string;
+  /** Source plan ID si dérivé d'un plan d'exécution */
+  sourcePlanId?: string;
+  /** Source asset ID si dérivé d'un asset stocké */
+  sourceAssetId?: string;
+  /** Cible de morphing possible (ex: message_draft → message_receipt) */
+  morphTarget?: string | null;
+  /** Action primaire affichable (approve, discard, pause, resume, etc.) */
+  primaryAction?: {
+    kind: string;
+    label: string;
+  };
 }
 
 interface FocalState {

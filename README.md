@@ -177,6 +177,21 @@ Sur la home `/` (chat-first), la continuité repose sur `thread_id` comme clé u
 
 **Note**: `/api/conversations` existe mais n'est pas encore la source canonique de la home chat-first. Le contrat actuel est `thread_id === conversation_id`.
 
+### Approvals et États d'attente — Nomenclature canonique
+
+Le système utilise une nomenclature unifiée pour les états d'attente:
+
+- **`awaiting_approval`** — État canonique pour "validation requise". Émis via `approval_requested` ou `run_suspended` avec `reason: "awaiting_approval"`.
+- **`awaiting_clarification`** — État canonique pour "précision requise". Émis via `clarification_requested` ou `run_suspended` avec `reason: "awaiting_clarification"`.
+
+**Règles**:
+- Le runtime (`stores/runtime.ts`) mappe ces événements vers `coreState` et `flowLabel`.
+- Le RightPanel affiche des labels lisibles (amber pour approval, violet pour clarification) au lieu de l'état brut.
+- La page run continue le polling tant que le run est dans un état live (running, awaiting_approval, awaiting_clarification).
+- Les anciens wordings type `waiting_approval` sont legacy/conceptuels — le canonique est `awaiting_approval`.
+
+**Note**: Cette étape unifie la narration d'état. Le câblage des actions approve/reject viendra dans une étape ultérieure.
+
 ## Stack
 
 - **Frontend** : Next.js 16 (App Router), React 19, Tailwind CSS, Geist
