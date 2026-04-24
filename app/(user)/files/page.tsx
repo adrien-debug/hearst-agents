@@ -77,6 +77,6 @@ export default function FilesPage() {
           </span>
         </div>
       </div>
-n    </div>
+    </div>
   );
 }

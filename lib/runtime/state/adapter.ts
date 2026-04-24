@@ -154,19 +154,21 @@ export async function updateRunMetrics(
         .eq("id", dbRunId)
         .single();
 
-      // If run not found, wait and retry (race condition with saveRun)
-      if (fetchError?.code === "PGRST116" || !existing) {
-        if (attempt < MAX_RETRIES - 1) {
-          console.warn(`[RuntimeState] updateRunMetrics: run ${dbRunId} not found (attempt ${attempt + 1}/${MAX_RETRIES}), retrying in ${RETRY_DELAYS[attempt]}ms...`);
-          await sleep(RETRY_DELAYS[attempt]);
-          continue;
-        }
-        console.error(`[RuntimeState] updateRunMetrics: run ${dbRunId} not found after ${MAX_RETRIES} attempts`);
-        return false;
-      }
-
+      // Handle errors
       if (fetchError) {
-        console.error("[RuntimeState] updateRunMetrics fetch error:", fetchError.message);
+        const errorCode = (fetchError as { code?: string }).code;
+        // If run not found, wait and retry (race condition with saveRun)
+        if (errorCode === "PGRST116" || !existing) {
+          if (attempt < MAX_RETRIES - 1) {
+            console.warn(`[RuntimeState] updateRunMetrics: run ${dbRunId} not found (attempt ${attempt + 1}/${MAX_RETRIES}), retrying in ${RETRY_DELAYS[attempt]}ms...`);
+            await sleep(RETRY_DELAYS[attempt]);
+            continue;
+          }
+          console.error(`[RuntimeState] updateRunMetrics: run ${dbRunId} not found after ${MAX_RETRIES} attempts`);
+          return false;
+        }
+        // Other errors - log and fail
+        console.error("[RuntimeState] updateRunMetrics fetch error:", (fetchError as Error).message);
         return false;
       }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useNavigationStore } from "@/stores/navigation";
-import type { ServiceDefinition, ServiceWithConnectionStatus } from "@/lib/integrations/types";
+import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { AppCard } from "../components/AppCard";
 import { AppDrawer } from "../components/AppDrawer";
 import { AppCategorySection } from "../components/AppCategorySection";
@@ -137,6 +137,8 @@ export default function AppsPage() {
     setSelectedService(service);
     setIsDrawerOpen(true);
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleServiceClickAny = (service: any) => handleServiceClick(service as ServiceWithConnectionStatus);
 
   // Handle connect (placeholder)
   const handleConnect = async (serviceId: string) => {
@@ -289,7 +291,7 @@ export default function AppsPage() {
             key={category}
             title={CATEGORY_LABELS[category] || category}
             services={catServices}
-            onServiceClick={handleServiceClick}
+            onServiceClick={handleServiceClickAny}
           />
         ))}
 

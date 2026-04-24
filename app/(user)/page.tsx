@@ -1,13 +1,20 @@
 "use client";
 
-import { useRef, useCallback, useMemo } from "react";
+import { useRef, useCallback, useMemo, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
-import { useNavigationStore, type Message } from "@/stores/navigation";
+import { useNavigationStore, type Message, type Surface } from "@/stores/navigation";
 import { FocalStage } from "./components/FocalStage";
 import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
+import { CapabilityTabs, type CapabilityMode, getCapabilityFromSurface } from "./components/CapabilityTabs";
+import { SourcePicker, type SourceSelection, getDefaultSelection } from "./components/SourcePicker";
+import { CapabilityBlockedBanner } from "./components/CapabilityBlockedBanner";
+import { getAllServices } from "@/lib/integrations/catalog";
+import { getNangoServices } from "@/lib/integrations/catalog.generated";
+import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
+import { isCapabilityAvailable } from "./components/CapabilityTabs";
 
 function greeting() {
   const h = new Date().getHours();
@@ -16,16 +23,90 @@ function greeting() {
   return "Bonsoir";
 }
 
+// ChatControls component defined outside to avoid "created during render" warning
+interface ChatControlsProps {
+  showBlockedBanner: boolean;
+  capabilityMode: CapabilityMode;
+  capabilityServices: ServiceWithConnectionStatus[];
+  connectedServices: ServiceWithConnectionStatus[];
+  services: ServiceWithConnectionStatus[];
+  sourceSelection: SourceSelection;
+  surface: Surface;
+  onConnect: (serviceId: string) => void;
+  onDismissBanner: () => void;
+  onCapabilityChange: (mode: CapabilityMode) => void;
+  onNavigate: (newSurface: Surface) => void;
+  onSourceChange: (selection: SourceSelection) => void;
+}
+
+function ChatControls({
+  showBlockedBanner,
+  capabilityMode,
+  capabilityServices,
+  connectedServices,
+  services,
+  sourceSelection,
+  surface,
+  onConnect,
+  onDismissBanner,
+  onCapabilityChange,
+  onNavigate,
+  onSourceChange,
+}: ChatControlsProps) {
+  return (
+    <div className="px-4 pt-3 space-y-2">
+      {/* Blocked Capability Banner */}
+      {showBlockedBanner && (
+        <CapabilityBlockedBanner
+          capability={capabilityMode}
+          requiredServices={capabilityServices}
+          connectedServices={connectedServices}
+          onConnect={onConnect}
+          onDismiss={onDismissBanner}
+        />
+      )}
+
+      {/* Source Picker & Capability Tabs */}
+      <div className="flex items-center justify-between">
+        <CapabilityTabs
+          connectedServices={connectedServices}
+          activeMode={capabilityMode}
+          onModeChange={onCapabilityChange}
+          onNavigate={onNavigate}
+          compact
+        />
+        <SourcePicker
+          availableServices={services}
+          connectedServices={connectedServices}
+          currentSurface={surface}
+          selection={sourceSelection}
+          onChange={onSourceChange}
+          compact
+        />
+      </div>
+    </div>
+  );
+}
+
+// Initialize services only once
+const initialServices = (() => {
+  const baseServices = [...getAllServices(), ...getNangoServices()];
+  return baseServices.map((s) => ({
+    ...s,
+    connectionStatus: "disconnected" as const,
+  }));
+})();
+
 export default function HomePage() {
   const { data: session } = useSession();
   const focal = useFocalStore((s) => s.focal);
   const coreState = useRuntimeStore((s) => s.coreState);
-  const flowLabel = useRuntimeStore((s) => s.flowLabel);
   const addEvent = useRuntimeStore((s) => s.addEvent);
   const startRun = useRuntimeStore((s) => s.startRun);
   const surface = useNavigationStore((s) => s.surface);
+  const setSurface = useNavigationStore((s) => s.setSurface);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
-  const messagesRaw = useNavigationStore((s) => 
+  const messagesRaw = useNavigationStore((s) =>
     activeThreadId ? s.messages[activeThreadId] : undefined
   );
   const messages = useMemo(() => messagesRaw ?? [], [messagesRaw]);
@@ -33,14 +114,80 @@ export default function HomePage() {
   const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
   const firstName = session?.user?.name?.split(" ")[0];
 
+  // Services state - initialized directly without useEffect
+  const [services] = useState<ServiceWithConnectionStatus[]>(initialServices);
+  const [capabilityMode, setCapabilityMode] = useState<CapabilityMode>(
+    getCapabilityFromSurface(surface)
+  );
+  const [sourceSelection, setSourceSelection] = useState<SourceSelection>(
+    getDefaultSelection(initialServices)
+  );
+  const [showBlockedBanner, setShowBlockedBanner] = useState(false);
+
+  // Use refs to track previous values without triggering effects
+  const prevSurfaceRef = useRef(surface);
+  const prevCapabilityRef = useRef(capabilityMode);
+
+  // Update capability mode when surface changes - using setTimeout to break sync cycle
+  useEffect(() => {
+    if (surface !== prevSurfaceRef.current) {
+      prevSurfaceRef.current = surface;
+      const newMode = getCapabilityFromSurface(surface);
+      if (newMode !== prevCapabilityRef.current) {
+        prevCapabilityRef.current = newMode;
+        // Use timeout to avoid sync setState warning
+        setTimeout(() => setCapabilityMode(newMode), 0);
+      }
+    }
+  }, [surface]);
+
+  // Update blocked banner when capability or services change
+  const prevServicesRef = useRef(services);
+  useEffect(() => {
+    if (services !== prevServicesRef.current || capabilityMode !== prevCapabilityRef.current) {
+      prevServicesRef.current = services;
+      prevCapabilityRef.current = capabilityMode;
+      const connectedServices = services.filter((s) => s.connectionStatus === "connected");
+      const isAvailable = isCapabilityAvailable(capabilityMode, connectedServices);
+      const shouldShow = !isAvailable && capabilityMode !== "general";
+      // Only update if different, using timeout to avoid sync warning
+      setTimeout(() => {
+        setShowBlockedBanner((prev) => (prev !== shouldShow ? shouldShow : prev));
+      }, 0);
+    }
+  }, [capabilityMode, services]);
+
   const assistantBufferRef = useRef<string>("");
   const currentAssistantIdRef = useRef<string | null>(null);
 
+  // Connected services for SourcePicker
+  const connectedServices = useMemo(
+    () => services.filter((s) => s.connectionStatus === "connected"),
+    [services]
+  );
+
+  // Services matching current capability
+  const capabilityServices = useMemo(() => {
+    const capabilityMap: Record<string, string> = {
+      messaging: "messaging",
+      calendar: "calendar",
+      files: "files",
+      crm: "crm",
+      support: "support",
+      finance: "finance",
+      developer: "developer_tools",
+      design: "design",
+    };
+    const requiredCap = capabilityMap[capabilityMode];
+    if (!requiredCap) return services;
+    return services.filter((s) => s.capabilities.includes(requiredCap as ServiceWithConnectionStatus["capabilities"][number]));
+  }, [services, capabilityMode]);
+
   const handleSubmit = useCallback(async (message: string) => {
     if (!activeThreadId) return;
-    
+
     const runId = `run-${Date.now()}`;
-    
+
     // Add user message to current thread
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -48,11 +195,11 @@ export default function HomePage() {
       content: message,
     };
     addMessageToThread(activeThreadId, userMessage);
-    
+
     // Reset assistant buffer for new run
     assistantBufferRef.current = "";
     currentAssistantIdRef.current = `assistant-${Date.now()}`;
-    
+
     // Add initial empty assistant message
     const assistantMessage: Message = {
       id: currentAssistantIdRef.current,
@@ -60,13 +207,19 @@ export default function HomePage() {
       content: "",
     };
     addMessageToThread(activeThreadId, assistantMessage);
-    
+
     startRun(runId);
     try {
       const res = await fetch("/api/orchestrate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, surface, thread_id: activeThreadId }),
+        body: JSON.stringify({
+          message,
+          surface,
+          thread_id: activeThreadId,
+          capability_mode: capabilityMode,
+          selected_providers: sourceSelection.providers,
+        }),
       });
       if (!res.ok) { addEvent({ type: "run_failed", error: "Server error", run_id: runId }); return; }
       const reader = res.body?.getReader();
@@ -83,7 +236,7 @@ export default function HomePage() {
           if (!line.startsWith("data: ")) continue;
           try {
             const event = JSON.parse(line.slice(6));
-            
+
             // Handle text_delta events for streaming assistant responses
             if (event.type === "text_delta" && event.delta) {
               assistantBufferRef.current += event.delta;
@@ -93,7 +246,7 @@ export default function HomePage() {
                 assistantBufferRef.current
               );
             }
-            
+
             addEvent({ ...event, run_id: runId });
           } catch {}
         }
@@ -101,11 +254,44 @@ export default function HomePage() {
     } catch (err) {
       addEvent({ type: "run_failed", error: err instanceof Error ? err.message : "Failed", run_id: runId });
     }
-  }, [surface, activeThreadId, addEvent, startRun, addMessageToThread, updateMessageInThread]);
+  }, [surface, activeThreadId, capabilityMode, sourceSelection, addEvent, startRun, addMessageToThread, updateMessageInThread]);
+
+  const handleCapabilityChange = useCallback((mode: CapabilityMode) => {
+    setCapabilityMode(mode);
+  }, []);
+
+  const handleNavigate = useCallback((newSurface: Surface) => {
+    setSurface(newSurface);
+  }, [setSurface]);
+
+  const handleConnect = useCallback(async (serviceId: string) => {
+    console.log("Connecting to:", serviceId);
+    // TODO: Redirect to OAuth flow
+    // window.location.href = `/api/nango/connect?provider=${serviceId}`;
+  }, []);
+
+  const handleDismissBanner = useCallback(() => {
+    setShowBlockedBanner(false);
+  }, []);
 
   const isIdle = !focal && coreState === "idle" && messages.length === 0;
   const isRunning = !focal && coreState !== "idle";
   const hasConversation = messages.length > 0 && !focal;
+
+  const chatControlsProps: ChatControlsProps = {
+    showBlockedBanner,
+    capabilityMode,
+    capabilityServices,
+    connectedServices,
+    services,
+    sourceSelection,
+    surface,
+    onConnect: handleConnect,
+    onDismissBanner: handleDismissBanner,
+    onCapabilityChange: handleCapabilityChange,
+    onNavigate: handleNavigate,
+    onSourceChange: setSourceSelection,
+  };
 
   if (isIdle) {
     return (
@@ -121,7 +307,11 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <ChatInput onSubmit={handleSubmit} />
+        <ChatControls {...chatControlsProps} />
+        <ChatInput
+          onSubmit={handleSubmit}
+          connectedServices={connectedServices}
+        />
       </div>
     );
   }
@@ -130,7 +320,11 @@ export default function HomePage() {
     return (
       <div className="flex-1 flex flex-col min-h-0">
         <ChatMessages messages={messages} />
-        <ChatInput onSubmit={handleSubmit} />
+        <ChatControls {...chatControlsProps} />
+        <ChatInput
+          onSubmit={handleSubmit}
+          connectedServices={connectedServices}
+        />
       </div>
     );
   }
@@ -138,7 +332,12 @@ export default function HomePage() {
   return (
     <div className="flex-1 flex flex-col min-h-0">
       <FocalStage />
-      <ChatInput onSubmit={handleSubmit} placeholder={`Continuer sur "${focal?.title.slice(0, 30)}..."`} />
+      <ChatControls {...chatControlsProps} />
+      <ChatInput
+        onSubmit={handleSubmit}
+        placeholder={`Continuer sur "${focal?.title.slice(0, 30)}..."`}
+        connectedServices={connectedServices}
+      />
     </div>
   );
 }

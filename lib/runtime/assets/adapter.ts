@@ -5,7 +5,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Asset } from "./types";
+import type { Asset, AssetType } from "./types";
 
 let _raw: SupabaseClient | null = null;
 
@@ -152,9 +152,9 @@ function mapTypeToKind(type: string): string {
   return mapping[type] ?? "document";
 }
 
-function mapKindToType(kind: string, originalType?: string): string {
-  if (originalType) return originalType;
-  const mapping: Record<string, string> = {
+function mapKindToType(kind: string, originalType?: string): AssetType {
+  if (originalType) return originalType as AssetType;
+  const mapping: Record<string, AssetType> = {
     document: "pdf",
     spreadsheet: "excel",
     report: "report",

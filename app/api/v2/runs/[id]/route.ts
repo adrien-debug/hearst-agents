@@ -6,20 +6,25 @@ import { getPersistedRunEvents } from "@/lib/runtime/timeline/persist";
 
 export const dynamic = "force-dynamic";
 
-function serializeRun(r: {
-  id: string;
-  userId?: string;
-  input: string;
-  surface?: string;
-  executionMode?: string;
-  agentId?: string;
-  backend?: string;
-  missionId?: string;
-  status: string;
-  createdAt: number;
-  completedAt?: number;
-  assets: Array<{ id: string; name: string; type: string }>;
-}) {
+import type { RunEvent } from "@/lib/events/types";
+
+function serializeRun(
+  r: {
+    id: string;
+    userId?: string;
+    input: string;
+    surface?: string;
+    executionMode?: string;
+    agentId?: string;
+    backend?: string;
+    missionId?: string;
+    status: string;
+    createdAt: number;
+    completedAt?: number;
+    assets: Array<{ id: string; name: string; type: string }>;
+  },
+  events: RunEvent[],
+) {
   return {
     id: r.id,
     userId: r.userId,
@@ -33,6 +38,7 @@ function serializeRun(r: {
     createdAt: r.createdAt,
     completedAt: r.completedAt,
     assets: r.assets,
+    events,
   };
 }
 
@@ -47,7 +53,7 @@ export async function GET(
     const memRun = getRunById(id);
     if (memRun && memRun.events.length > 0) {
       return NextResponse.json({
-        run: serializeRun(memRun),
+        run: serializeRun(memRun, memRun.events),
         timeline: normalizeRunEventsToTimeline({
           runId: id,
           events: memRun.events,
@@ -71,8 +77,10 @@ export async function GET(
         })
       : [];
 
+    const events = persistedEvents.map((e) => e.payload as RunEvent);
+
     return NextResponse.json({
-      run: serializeRun(run),
+      run: serializeRun(run, events),
       timeline,
       timelineSource: persistedEvents.length > 0 ? "persistent" : "empty",
     });
