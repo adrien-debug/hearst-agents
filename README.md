@@ -46,8 +46,8 @@ Documents interactifs ouverts dans le navigateur :
 - **Manifestation Stage** (`ManifestationStage` sur `/`) — Scène centrale de manifestation. L'objet focal s'y condense (transition de flou et d'échelle) au-dessus du Halo Core.
 - **Momentum** (`useMomentum`, `MomentumIndicator` dans `TopContextBar`) — Rappel discret runs / missions actives / focal « en cours » ; données via `useRightPanel` + abonnement au bus `RunStreamProvider` (même SSE que `use-right-panel.ts`). Voir `docs/PRODUCT_SYSTEM_SPEC.md` §4.
 - **Halo runtime partagé** (`HaloRuntimeProvider` dans le layout user) — Un seul `useHalo` pour le bandeau d’orchestration et la scène centrale (même réduction SSE).
-- **Surfaces** : `/` (home), `/inbox`, `/calendar`, `/files`, `/tasks`, `/apps`, `/admin/*`
-- Layout user : sidebar icon-only (AppNav) + zone centrale + chat global + right panel
+- **Surfaces** : `/` (home) — entrée principale chat-first. Routes legacy (`/inbox`, `/calendar`, `/files`, `/apps`, `/missions`) restent accessibles mais ne sont plus exposées dans la navigation primaire.
+- Layout user : sidebar mémoire/threads (AppNav) + zone centrale + chat global + right panel
 
 ### Tokens (source `app/globals.css`)
 
@@ -114,17 +114,18 @@ flowchart TD
 
 ### Work Here
 
-- Centre home `/` : `app/(user)/page.tsx` + `app/components/system/ManifestationStage.tsx`
+- Centre home `/` : `app/(user)/page.tsx` + `app/components/system/ManifestationStage.tsx` — rehydrate le focal state depuis `/api/v2/right-panel?thread_id=...` via `hydrateThreadState()` dans `stores/focal.ts` au mount et changement de thread. Même narration focale que le RightPanel, pas de divergence au reload.
 - Shell user réel : `app/(user)/layout.tsx`
 - Sidebar gauche : `app/components/AppNav.tsx`
 - Barre haute : `app/components/system/TopContextBar.tsx` + `MomentumIndicator` (`useMomentum()` — flux RunStream / données `useRightPanel`)
 - Chat bas : `app/components/GlobalChat.tsx`
-- Panneau droit : `app/components/right-panel/RightPanel.tsx` (export `RightPanelDocumentProvider`, hook `useRightPanelDocument`)
+- Panneau droit : `app/components/RightPanel.tsx` — consomme la **source canonique** `/api/v2/right-panel?thread_id=...` et affiche `focalObject` comme surface primaire, `secondaryObjects` comme liste compacte. Fallback sur runs/assets/missions seulement si pas de focal.
 - Rendu d'objet focal : `app/components/right-panel/FocalObjectRenderer.tsx` (prop `surface`: `rail` = panneau verre `.ghost-document-surface`, `center` = home sans coque verre)
 - État du panel/focal :
   - `app/hooks/use-right-panel.ts`
   - `app/hooks/use-focal-object.ts`
   - `app/hooks/use-sidebar.tsx`
+- Détail run `/runs/[id]` : `app/(user)/runs/[id]/page.tsx` — consomme la **timeline canonique normalisée** (`data.timeline`) depuis `/api/v2/runs/[id]` via `lib/runtime/timeline/normalize.ts`
 
 ### Do Not Work Here Unless Explicitly Asked
 
@@ -162,6 +163,19 @@ Si un agent ne peut pas relier visuellement un changement à `app/(user)/layout.
 - **Connectors** : direct activation OAuth (Google, Slack). Vérité unifiée via `/api/v2/connectors/unified`.
 - **Timeline** : observable dans le Right Panel, événements persistés via `/api/v2/runs/{id}`.
 - **Inbox** : priorisation rule-based (urgent/normal/low), zéro LLM.
+
+### Thread ↔ Conversation ↔ Focal — Contrat canonique chat-first
+
+Sur la home `/` (chat-first), la continuité repose sur `thread_id` comme clé unique:
+
+- **`thread_id === conversation_id`** — Canonique actuelle sur `/`. Les deux IDs sont identiques pour assurer la continuité sans ambiguïté.
+- **Historique borné** — ~10 derniers messages user/assistant sont envoyés à `/api/orchestrate` pour le contexte LLM. Si absent, rechargé depuis `lib/memory/store.ts`.
+- **Persistance mémoire** — Messages persistés via `appendMessage()` dans `lib/memory/store.ts` sous la même clé canonique, scoped par tenant.
+- **Session seeding** — Les sessions OpenAI (Assistants et Responses) sont initialisées avec `initialHistory` pour rejouer le contexte dans une session fraîche.
+- **Focal/assets durable** — Le focal et les assets restent durables par `thread_id`, réhydratés depuis `/api/v2/right-panel` au changement de thread ou au reload.
+- **Pas de bleed** — Nouveau thread = nouvelle session mémoire vide, pas de contexte de l'ancien thread.
+
+**Note**: `/api/conversations` existe mais n'est pas encore la source canonique de la home chat-first. Le contrat actuel est `thread_id === conversation_id`.
 
 ## Stack
 
@@ -378,8 +392,8 @@ const session = await SessionManager.getInstance()
 orchestratorV2: {
   enabled: true,              // Activer V2
   rolloutPercentage: 100,     // % users (0-100)
-  autoSelectBackend: true,    // Sélection auto
-  defaultBackend: "openai_responses",
+  autoSelectBackend: false,   // Sélection auto désactivée (canonique: OpenAI Assistants)
+  defaultBackend: "openai_assistants", // Backend canonique chat-first
 }
 ```
 
@@ -395,6 +409,38 @@ Endpoints de test pour valider Backend V2:
 | `GET /api/test/openai-assistant` | Test Assistants API |
 | `GET /api/test/openai-responses` | Test Responses API |
 | `GET /api/test/openai-computer-use` | Test Computer Use |
+
+### 🔄 Rich Event Flow (Chat-First Canonique)
+
+Chaque run V2 produit un flux d'événements structurés:
+
+```
+run_started
+    ↓
+execution_mode_selected / backend_selected
+    ↓
+[tool_call_started → tool_call_completed] (optionnel)
+    ↓
+text_delta (streaming)
+    ↓
+asset_generated (si réponse non vide)
+    ↓
+focal_object_ready (si asset manifestable)
+    ↓
+run_completed
+```
+
+**Création d'assets automatique**:
+- Détection du tier: `detectOutputTier(input)` → "report" | "brief" | "message"
+- Type d'asset: "report" si tier=report, sinon "brief"
+- Stockage: `storeAsset()` + DB Supabase
+- Manifestation: `manifestAsset()` → focal object pour Right Panel
+- Events émis: `asset_generated` → `focal_object_ready`
+
+**Timeline persistence**:
+- Tous les événements clés persistés via `persistRunEvent()`
+- Table `run_logs` pour historique complet
+- Accès via `/api/v2/runs/[id]` avec events intégrés
 
 ### 📊 Stats
 

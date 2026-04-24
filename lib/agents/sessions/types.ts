@@ -66,6 +66,8 @@ export interface SessionConfig {
   tenantId?: string;
   workspaceId?: string;
   userId?: string;
+  /** Initial history to seed the session (for continuity) */
+  initialHistory?: Array<{ role: "user" | "assistant"; content: string }>;
 }
 
 // ── Unified Session Interface ────────────────────────────────

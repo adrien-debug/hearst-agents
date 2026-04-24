@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useMemo, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useFocalStore } from "@/stores/focal";
+import { useFocalStore, type FocalObject, type FocalType, type FocalStatus } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore, type Message, type Surface } from "@/stores/navigation";
 import { FocalStage } from "./components/FocalStage";
@@ -15,6 +15,7 @@ import { getAllServices } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { isCapabilityAvailable } from "./components/CapabilityTabs";
+import type { RightPanelData } from "@/lib/ui/right-panel/types";
 
 function greeting() {
   const h = new Date().getHours();
@@ -100,6 +101,7 @@ const initialServices = (() => {
 export default function HomePage() {
   const { data: session } = useSession();
   const focal = useFocalStore((s) => s.focal);
+  const hydrateThreadState = useFocalStore((s) => s.hydrateThreadState);
   const coreState = useRuntimeStore((s) => s.coreState);
   const addEvent = useRuntimeStore((s) => s.addEvent);
   const startRun = useRuntimeStore((s) => s.startRun);
@@ -113,6 +115,91 @@ export default function HomePage() {
   const addMessageToThread = useNavigationStore((s) => s.addMessageToThread);
   const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
   const firstName = session?.user?.name?.split(" ")[0];
+
+  // Rehydrate focal state from right-panel API on mount and thread switch
+  useEffect(() => {
+    if (!activeThreadId) {
+      hydrateThreadState(null, []);
+      return;
+    }
+
+    const fetchThreadState = async () => {
+      try {
+        const res = await fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`);
+        if (!res.ok) {
+          console.error("[HomePage] Failed to fetch right-panel:", res.status);
+          hydrateThreadState(null, []);
+          return;
+        }
+
+        const data: RightPanelData = await res.json();
+
+        // Map focalObject to FocalObject type
+        const mapFocalObject = (obj: unknown): FocalObject | null => {
+          if (!obj || typeof obj !== "object") return null;
+          const o = obj as Record<string, unknown>;
+
+          const objectType = o.objectType as string | undefined;
+          if (!objectType) return null;
+
+          const validTypes: FocalType[] = [
+            "message_draft", "message_receipt", "brief", "outline",
+            "report", "doc", "watcher_draft", "watcher_active",
+            "mission_draft", "mission_active"
+          ];
+          const type = validTypes.includes(objectType as FocalType) ? (objectType as FocalType) : "brief";
+
+          const validStatuses: FocalStatus[] = [
+            "composing", "ready", "awaiting_approval", "delivering",
+            "delivered", "active", "paused", "failed"
+          ];
+          const status = validStatuses.includes(o.status as FocalStatus) ? (o.status as FocalStatus) : "ready";
+
+          const createdAt = typeof o.createdAt === "number" ? o.createdAt : Date.now();
+          const updatedAt = typeof o.updatedAt === "number" ? o.updatedAt : Date.now();
+
+          // Extract body from summary or sections
+          let body = (o.body as string) || (o.summary as string) || "";
+          if (!body && Array.isArray(o.sections) && o.sections.length > 0) {
+            const firstSection = o.sections[0] as Record<string, string>;
+            body = firstSection?.body || "";
+          }
+
+          return {
+            id: (o.id as string) || `focal-${Date.now()}`,
+            type,
+            status,
+            title: (o.title as string) || "Untitled",
+            body,
+            summary: (o.summary as string) || undefined,
+            sections: Array.isArray(o.sections) ? o.sections as { heading?: string; body: string }[] : undefined,
+            wordCount: typeof o.wordCount === "number" ? o.wordCount : undefined,
+            provider: (o.providerId as string) || (o.provider as string) || undefined,
+            createdAt,
+            updatedAt,
+          };
+        };
+
+        // Map secondaryObjects
+        const secondary: FocalObject[] = [];
+        if (data.secondaryObjects && Array.isArray(data.secondaryObjects)) {
+          for (const obj of data.secondaryObjects) {
+            const mapped = mapFocalObject(obj);
+            if (mapped) secondary.push(mapped);
+          }
+        }
+
+        const mappedFocal = data.focalObject ? mapFocalObject(data.focalObject) : null;
+        hydrateThreadState(mappedFocal, secondary.slice(0, 3));
+      } catch (err) {
+        console.error("[HomePage] Error fetching thread state:", err);
+        hydrateThreadState(null, []);
+      }
+    };
+
+    fetchThreadState();
+    // No polling here — live updates come via SSE through setFocal
+  }, [activeThreadId, hydrateThreadState]);
 
   // Services state - initialized directly without useEffect
   const [services] = useState<ServiceWithConnectionStatus[]>(initialServices);
@@ -208,6 +295,12 @@ export default function HomePage() {
     };
     addMessageToThread(activeThreadId, assistantMessage);
 
+    // Build bounded conversation history (~10 last messages, user/assistant only, non-empty)
+    const recentMessages = messages
+      .filter((m) => (m.role === "user" || m.role === "assistant") && m.content.trim().length > 0)
+      .slice(-10)
+      .map((m) => ({ role: m.role, content: m.content }));
+
     startRun(runId);
     try {
       const res = await fetch("/api/orchestrate", {
@@ -217,6 +310,8 @@ export default function HomePage() {
           message,
           surface,
           thread_id: activeThreadId,
+          conversation_id: activeThreadId, // Canonique: thread_id === conversation_id
+          history: recentMessages,
           capability_mode: capabilityMode,
           selected_providers: sourceSelection.providers,
         }),

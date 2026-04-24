@@ -25,10 +25,10 @@ export const SYSTEM_CONFIG = {
     rolloutPercentage: 100,
 
     /** Enable automatic backend selection */
-    autoSelectBackend: true,
+    autoSelectBackend: false,
 
     /** Default backend when auto-selection is disabled */
-    defaultBackend: "openai_responses" as const,
+    defaultBackend: "openai_assistants" as const,
 
     /** Enable handoff between backends */
     enableHandoff: true,

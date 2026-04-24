@@ -34,6 +34,15 @@ export class OpenAIAssistantSession extends BaseSession {
 
     // Create thread
     this.threadId = await createThread();
+
+    // Seed with initial history if provided (for continuity)
+    if (this.config.initialHistory && this.config.initialHistory.length > 0) {
+      for (const msg of this.config.initialHistory) {
+        await addMessageToThread(this.threadId, { role: msg.role, content: msg.content });
+      }
+      console.log(`[OpenAIAssistantSession] Seeded thread with ${this.config.initialHistory.length} messages`);
+    }
+
     this.status = "created";
   }
 

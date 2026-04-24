@@ -5,13 +5,10 @@ import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
+// Chat-first navigation: primary surface is Home only
+// Legacy routes (/inbox, /calendar, /files, /apps) remain accessible but are not exposed in primary nav
 const SURFACES: { id: Surface; label: string; icon: string; path: string }[] = [
   { id: "home", label: "Accueil", icon: "◉", path: "/" },
-  { id: "inbox", label: "Messages", icon: "✉", path: "/inbox" },
-  { id: "calendar", label: "Agenda", icon: "◷", path: "/calendar" },
-  { id: "files", label: "Fichiers", icon: "▦", path: "/files" },
-  { id: "tasks", label: "Missions", icon: "◈", path: "/missions" },
-  { id: "apps", label: "Apps", icon: "◇", path: "/apps" },
 ];
 
 export function LeftPanel() {

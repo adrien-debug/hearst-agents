@@ -67,6 +67,22 @@ export interface RightPanelData {
   connectorHealth?: RightPanelConnectorHealth;
   scheduler?: RightPanelSchedulerSummary;
   missionOpsSummary?: RightPanelMissionOpsSummary;
-  focalObject?: Record<string, unknown>;
-  secondaryObjects?: Record<string, unknown>[];
+  /** Canonique: objet focal principal (report, brief, message, mission, etc.) */
+  focalObject?: FocalObjectView | Record<string, unknown>;
+  /** Objets secondaires pour navigation rapide */
+  secondaryObjects?: (FocalObjectView | Record<string, unknown>)[];
+}
+
+/** Subset léger du focal object pour affichage dans le RightPanel */
+export interface FocalObjectView {
+  objectType: string;
+  id: string;
+  title: string;
+  status: string;
+  summary?: string;
+  sections?: Array<{ heading?: string; body: string }>;
+  primaryAction?: {
+    kind: string;
+    label: string;
+  };
 }

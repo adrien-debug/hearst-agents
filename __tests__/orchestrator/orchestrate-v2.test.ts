@@ -83,15 +83,15 @@ describe("Orchestrator V2", () => {
       expect(result.backend).toBe("openai_assistants");
     }, 15000);
 
-    it.skipIf(!process.env.OPENAI_API_KEY)("should auto-select backend for simple question", async () => {
+    it.skipIf(!process.env.OPENAI_API_KEY)("should use default backend when auto-select disabled", async () => {
       const result = await orchestrateV2Blocking(mockDb, {
         userId: "test-user",
         message: "What is the weather today?",
       });
 
       expect(result.success).toBe(true);
-      // Should select Responses for simple questions
-      expect(result.backend).toBe("openai_responses");
+      // With autoSelectBackend: false, should use defaultBackend (openai_assistants)
+      expect(result.backend).toBe("openai_assistants");
     }, 15000);
 
     it("should handle errors gracefully", async () => {
@@ -176,12 +176,13 @@ describe("Orchestrator V2", () => {
   });
 
   describe("Backend Selection", () => {
-    it("should select correct backend based on intent", async () => {
+    it("should use default backend (openai_assistants) when auto-select disabled", async () => {
+      // With autoSelectBackend: false, all requests use defaultBackend regardless of intent
       const testCases = [
-        { message: "What is 2+2?", expectedBackend: "openai_responses" },
-        { message: "Search my documents", expectedBackend: "openai_assistants" },
-        { message: "Calculate fibonacci", expectedBackend: "openai_assistants" },
-        { message: "Click the button", expectedBackend: "openai_computer_use" },
+        { message: "What is 2+2?" },
+        { message: "Search my documents" },
+        { message: "Calculate fibonacci" },
+        { message: "Click the button" },
       ];
 
       for (const tc of testCases) {
@@ -191,7 +192,7 @@ describe("Orchestrator V2", () => {
         });
 
         if (result.success) {
-          expect(result.backend).toBe(tc.expectedBackend);
+          expect(result.backend).toBe("openai_assistants");
         }
       }
     }, 60000);

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RunTimeline } from "../../components/RunTimeline";
 import type { RunRecord } from "@/lib/runtime/runs/types";
-import type { RunEvent } from "@/lib/events/types";
+import type { TimelineItem } from "@/lib/runtime/timeline/types";
 
 export default function RunDetailPage() {
   const params = useParams();
@@ -12,7 +12,8 @@ export default function RunDetailPage() {
   const runId = params.id as string;
 
   const [run, setRun] = useState<RunRecord | null>(null);
-  const [events, setEvents] = useState<RunEvent[]>([]);
+  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [timelineSource, setTimelineSource] = useState<"memory" | "persistent" | "empty">("empty");
   const [loading, setLoading] = useState(true);
   const [isLive, setIsLive] = useState(false);
 
@@ -23,7 +24,9 @@ export default function RunDetailPage() {
         if (!res.ok) throw new Error("Failed to load run");
         const data = await res.json();
         setRun(data.run);
-        setEvents(data.run?.events || []);
+        // Use canonical normalized timeline from API
+        setTimeline(data.timeline || []);
+        setTimelineSource(data.timelineSource || "empty");
         setIsLive(data.run?.status === "running");
       } catch (error) {
         console.error("Failed to load run:", error);
@@ -98,11 +101,18 @@ export default function RunDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Timeline */}
           <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-sm font-medium text-white/60 uppercase tracking-wider">
-              Timeline
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-white/60 uppercase tracking-wider">
+                Timeline
+              </h2>
+              {timelineSource !== "empty" && (
+                <span className="text-xs text-white/30">
+                  {timelineSource === "memory" ? "Live" : "Persisted"}
+                </span>
+              )}
+            </div>
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
-              <RunTimeline events={events} isLive={isLive} />
+              <RunTimeline timeline={timeline} isLive={isLive} />
             </div>
           </div>
 

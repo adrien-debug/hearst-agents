@@ -1,0 +1,62 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "▶ hearst-os: dev + debug",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:9000",
+            "webRoot": "${workspaceFolder}",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./*": "${webRoot}/*",
+                "webpack:///src/*": "${webRoot}/src/*"
+            },
+            "preLaunchTask": "npm: dev",
+            "postDebugTask": "npm: stop",
+            "presentation": {
+                "group": "hearst-os",
+                "order": 1
+            }
+        },
+        {
+            "name": "⛔ hearst-os: stop",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "bash",
+            "runtimeArgs": [
+                "-c",
+                "lsof -ti tcp:9000 | xargs kill -9 2>/dev/null; echo 'Stopped'"
+            ],
+            "console": "integratedTerminal",
+            "presentation": {
+                "group": "hearst-os",
+                "order": 2
+            }
+        },
+        {
+            "name": "hearst-connect: debug",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:8100",
+            "webRoot": "${workspaceFolder}/../hearst-connect",
+            "sourceMaps": true,
+            "presentation": {
+                "group": "other",
+                "order": 1
+            }
+        },
+        {
+            "name": "Hearst-app: debug",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/../Hearst-app/packages/frontend",
+            "sourceMaps": true,
+            "presentation": {
+                "group": "other",
+                "order": 2
+            }
+        }
+    ]
+}

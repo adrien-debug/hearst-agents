@@ -57,6 +57,9 @@ interface FocalState {
   // Derived
   isFocused: boolean;
   hasContent: boolean;
+
+  // Thread rehydratation — replaces focal and secondary atomically
+  hydrateThreadState: (focal: FocalObject | null, secondary: FocalObject[]) => void;
 }
 
 // Helper to detect error content
@@ -112,4 +115,27 @@ export const useFocalStore = create<FocalState>((set, get) => ({
     })),
 
   clearSecondary: () => set({ secondary: [] }),
+
+  // Atomic rehydratation for thread switch / hard reload
+  hydrateThreadState: (newFocal, newSecondary) => {
+    // Validate focal content
+    if (newFocal && !isValidContent(newFocal)) {
+      console.warn("[FocalStore] Rejected hydrated focal with error content:", newFocal.title);
+      set({
+        focal: null,
+        secondary: newSecondary.slice(0, 3),
+        isFocused: false,
+        hasContent: false,
+      });
+      return;
+    }
+
+    // Atomic replace — no movement of old focal to secondary
+    set({
+      focal: newFocal,
+      secondary: newSecondary.slice(0, 3),
+      isFocused: !!newFocal,
+      hasContent: !!newFocal?.body || !!newFocal?.summary,
+    });
+  },
 }));

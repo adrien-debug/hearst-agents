@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "npm: dev",
+            "type": "npm",
+            "script": "dev",
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "."
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": ".*Ready.*|.*ready.*started.*|.*Local:.*http://localhost:9000.*"
+                }
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "npm: stop",
+            "type": "shell",
+            "command": "lsof -ti tcp:9000 | xargs kill -9 2>/dev/null || true",
+            "presentation": {
+                "reveal": "never"
+            }
+        }
+    ]
+}

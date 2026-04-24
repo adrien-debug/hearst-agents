@@ -9,13 +9,23 @@
 
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SessionManager, createSession, type UnifiedSession } from "../agents/sessions";
+import { SessionManager, type UnifiedSession } from "../agents/sessions";
 import { selectBackend } from "../agents/backend-v2/selector";
-import type { ManagedAgentEvent } from "../agents/backend-v2/types";
+import type { ManagedAgentEvent, AgentBackendV2 } from "../agents/backend-v2/types";
 import { RunEventBus } from "../events/bus";
 import { SSEAdapter } from "../events/consumers/sse-adapter";
 import { SYSTEM_CONFIG } from "../system/config";
 import { saveRun, updateRun, updateRunMetrics } from "../runtime/state/adapter";
+import { addRun } from "../runtime/runs/store";
+import type { RunRecord, RunAssetRef } from "../runtime/runs/types";
+import type { RunEvent } from "../events/types";
+import { shouldPersistEvent, persistRunEvent } from "../runtime/timeline/persist";
+import { storeAsset, type Asset, type AssetKind } from "../assets/types";
+import { manifestAsset } from "../right-panel/manifestation";
+import { detectOutputTier, formatOutput } from "../runtime/formatting/pipeline";
+import type { AssetType } from "../runtime/assets/types";
+import { getRecentMessages, appendMessage } from "../memory/store";
+import type { TenantScope } from "../multi-tenant/types";
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -89,35 +99,57 @@ export async function orchestrateV2Blocking(
 ): Promise<OrchestrateV2Result> {
   const startTime = Date.now();
 
-  try {
-    // 1. Select backend
-    const selection = selectBackend(
-      { prompt: input.message },
-      input.forceBackend ? { forceBackend: input.forceBackend } : {},
-      input.conversationHistory,
-    );
+  // Normalize: conversationId falls back to threadId for chat-first V2 continuity
+  const conversationId = input.conversationId ?? input.threadId;
 
-    // 2. Create session
+  // Load conversation history if not provided (fallback from memory store)
+  let conversationHistory = input.conversationHistory ?? [];
+  if (conversationHistory.length === 0 && conversationId) {
+    try {
+      const recentFromMemory = getRecentMessages(conversationId, 10);
+      conversationHistory = recentFromMemory.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+    } catch (err) {
+      console.error(`[OrchestratorV2] Failed to load history from memory for ${conversationId}:`, err);
+      // Continue with empty history — non-blocking
+    }
+  }
+
+  try {
+    // 1. Backend selection: forceBackend > defaultBackend (if autoSelect disabled) > auto-selection
+    const v2Config = SYSTEM_CONFIG.orchestratorV2;
+    let selectedBackend: string;
+
+    if (input.forceBackend) {
+      selectedBackend = input.forceBackend;
+    } else if (!v2Config.autoSelectBackend) {
+      selectedBackend = v2Config.defaultBackend;
+    } else {
+      const selection = selectBackend(
+        { prompt: input.message },
+        {},
+        conversationHistory,
+      );
+      selectedBackend = selection.selectedBackend;
+    }
+
+    // 2. Create session with initial history for continuity
     const manager = SessionManager.getInstance();
-    const session = input.forceBackend
-      ? await manager.createWithBackend(input.forceBackend as any, {
-          userId: input.userId,
-          tenantId: input.tenantId,
-          workspaceId: input.workspaceId,
-          systemPrompt: buildSystemPrompt(input.surface),
-        })
-      : await manager.create(input.message, {
-          userId: input.userId,
-          tenantId: input.tenantId,
-          workspaceId: input.workspaceId,
-          systemPrompt: buildSystemPrompt(input.surface),
-        });
+    const session = await manager.createWithBackend(selectedBackend as AgentBackendV2, {
+      userId: input.userId,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      systemPrompt: buildSystemPrompt(input.surface),
+      initialHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
+    });
 
     // 3. Send message
     const response = await session.send(input.message);
 
-    // 4. Persist to memory
-    await persistConversation(db, input, session.id, input.message, response.message.content);
+    // 4. Persist to memory (non-blocking)
+    void persistConversation(input, input.message, response.message.content);
 
     // 5. Get metrics
     const metrics = session.getMetrics();
@@ -156,6 +188,40 @@ async function runV2Pipeline(
   const runId = generateRunId();
   const dbRunId = randomUUID(); // UUID valide pour PostgreSQL
 
+  // Normalize: conversationId falls back to threadId for chat-first V2 continuity
+  const threadId = input.threadId ?? input.conversationId ?? runId;
+  const conversationId = input.conversationId ?? threadId;
+
+  // Load conversation history if not provided (fallback from memory store)
+  let conversationHistory = input.conversationHistory ?? [];
+  if (conversationHistory.length === 0) {
+    try {
+      const recentFromMemory = getRecentMessages(conversationId, 10);
+      conversationHistory = recentFromMemory.map((m) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+    } catch (err) {
+      console.error(`[OrchestratorV2] Failed to load history from memory for ${conversationId}:`, err);
+      // Continue with empty history — non-blocking
+    }
+  }
+
+  // 1. Create RunRecord in memory
+  const runRecord: RunRecord = {
+    id: dbRunId,
+    tenantId: input.tenantId ?? "dev-tenant",
+    workspaceId: input.workspaceId ?? "dev-workspace",
+    userId: input.userId,
+    input: input.message,
+    surface: input.surface,
+    status: "running",
+    createdAt: Date.now(),
+    events: [],
+    assets: [],
+  };
+  addRun(runRecord);
+
   // Persist run to DB immediately (fire-and-forget)
   void saveRun({
     id: dbRunId,
@@ -173,70 +239,132 @@ async function runV2Pipeline(
     },
   });
 
-  // Emit start event
-  eventBus.emit({
-    type: "orchestrator_log",
+  // 2. Emit run_started event
+  const runStartedEvent: RunEvent = {
+    type: "run_started",
     run_id: runId,
-    message: "[V2] Starting orchestration with Backend V2",
-  });
+    timestamp: new Date().toISOString(),
+  };
+  eventBus.emit(runStartedEvent);
+
+  // Persist run_started to timeline
+  if (shouldPersistEvent("run_started")) {
+    void persistRunEvent({
+      runId: dbRunId,
+      type: "run_started",
+      ts: Date.now(),
+      payload: { run_id: runId, timestamp: new Date().toISOString() },
+    });
+  }
+
+  // Setup event accumulation in runRecord
+  const accumulatedEvents: RunEvent[] = [runStartedEvent];
+
+  // Listen to eventBus to accumulate events and persist timeline
+  const originalEmit = eventBus.emit.bind(eventBus);
+  eventBus.emit = (event: RunEvent) => {
+    // Add timestamp if missing
+    const eventWithTimestamp = {
+      ...event,
+      timestamp: (event as unknown as Record<string, string>).timestamp ?? new Date().toISOString(),
+    };
+
+    // Add to accumulated events
+    accumulatedEvents.push(eventWithTimestamp as RunEvent);
+
+    // Persist timeline events
+    if (shouldPersistEvent(event.type)) {
+      void persistRunEvent({
+        runId: dbRunId,
+        type: event.type,
+        ts: Date.now(),
+        payload: eventWithTimestamp as unknown as Record<string, unknown>,
+      });
+    }
+
+    // Call original emit
+    return originalEmit(eventWithTimestamp as RunEvent);
+  };
 
   // Session reference for cleanup
   let session: UnifiedSession | undefined;
 
   try {
-    // 1. Backend Selection (tool context detection temporairement désactivé)
-    const selectionStart = Date.now();
-    const selection = selectBackend(
-      { prompt: input.message },
-      input.forceBackend ? { forceBackend: input.forceBackend } : {},
-      input.conversationHistory,
-    );
+    // 1. Backend Selection: forceBackend > defaultBackend (if autoSelect disabled) > auto-selection
+    const v2Config = SYSTEM_CONFIG.orchestratorV2;
 
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: runId,
-      message: `[V2] Backend selected: ${selection.selectedBackend} (confidence: ${(selection.confidence * 100).toFixed(0)}%)`,
-    });
+    let selectedBackend: string;
+    let selection: { selectedBackend: string; confidence: number; reasoning: string[] } | undefined;
 
-    // Emit reasoning
-    for (const reason of selection.reasoning.slice(0, 3)) {
-      eventBus.emit({
+    if (input.forceBackend) {
+      selectedBackend = input.forceBackend;
+      const logEvent: RunEvent = {
         type: "orchestrator_log",
         run_id: runId,
-        message: `[V2] ${reason}`,
-      });
+        timestamp: new Date().toISOString(),
+        message: `[V2] Backend forced: ${selectedBackend}`,
+      };
+      eventBus.emit(logEvent);
+    } else if (!v2Config.autoSelectBackend) {
+      selectedBackend = v2Config.defaultBackend;
+      const logEvent: RunEvent = {
+        type: "orchestrator_log",
+        run_id: runId,
+        timestamp: new Date().toISOString(),
+        message: `[V2] Backend default (auto-select disabled): ${selectedBackend}`,
+      };
+      eventBus.emit(logEvent);
+    } else {
+      selection = selectBackend(
+        { prompt: input.message },
+        {},
+        input.conversationHistory,
+      );
+      selectedBackend = selection.selectedBackend;
+
+      const logEvent: RunEvent = {
+        type: "orchestrator_log",
+        run_id: runId,
+        timestamp: new Date().toISOString(),
+        message: `[V2] Backend selected: ${selectedBackend} (confidence: ${(selection.confidence * 100).toFixed(0)}%)`,
+      };
+      eventBus.emit(logEvent);
+
+      // Emit reasoning
+      for (const reason of selection.reasoning.slice(0, 3)) {
+        const reasonEvent: RunEvent = {
+          type: "orchestrator_log",
+          run_id: runId,
+          timestamp: new Date().toISOString(),
+          message: `[V2] ${reason}`,
+        };
+        eventBus.emit(reasonEvent);
+      }
     }
 
-    // 2. Session Creation
+    // 2. Session Creation with initial history for continuity
     const sessionStart = Date.now();
     const manager = SessionManager.getInstance();
 
-    session = input.forceBackend
-      ? await manager.createWithBackend(selection.selectedBackend, {
-          userId: input.userId,
-          tenantId: input.tenantId,
-          workspaceId: input.workspaceId,
-          systemPrompt: buildSystemPrompt(input.surface),
-          streaming: input.streaming ?? true,
-        })
-      : await manager.create(input.message, {
-          userId: input.userId,
-          tenantId: input.tenantId,
-          workspaceId: input.workspaceId,
-          systemPrompt: buildSystemPrompt(input.surface),
-          streaming: input.streaming ?? true,
-        });
+    session = await manager.createWithBackend(selectedBackend as AgentBackendV2, {
+      userId: input.userId,
+      tenantId: input.tenantId,
+      workspaceId: input.workspaceId,
+      systemPrompt: buildSystemPrompt(input.surface),
+      streaming: input.streaming ?? true,
+      initialHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
+    });
 
-    eventBus.emit({
+    const sessionLogEvent: RunEvent = {
       type: "orchestrator_log",
       run_id: runId,
+      timestamp: new Date().toISOString(),
       message: `[V2] Session created: ${session.id} (${Date.now() - sessionStart}ms)`,
-    });
+    };
+    eventBus.emit(sessionLogEvent);
 
     // 3. Stream Response
     let fullResponse = "";
-    let tokenCount = 0;
-    let costUsd = 0;
     let lastEmittedDelta = ""; // Deduplication tracking
 
     for await (const event of session.sendStream(input.message)) {
@@ -248,24 +376,29 @@ async function runV2Pipeline(
         if (event.delta && event.delta !== lastEmittedDelta) {
           fullResponse += event.delta;
           lastEmittedDelta = event.delta;
-          eventBus.emit({ type: "text_delta", run_id: runId, delta: event.delta });
+          const deltaEvent: RunEvent = {
+            type: "text_delta",
+            run_id: runId,
+            timestamp: new Date().toISOString(),
+            delta: event.delta,
+          };
+          eventBus.emit(deltaEvent);
         }
         if (event.content) {
           fullResponse = event.content;
         }
-        if (event.usage) {
-          tokenCount = (event.usage.tokensIn ?? 0) + (event.usage.tokensOut ?? 0);
-          costUsd = event.usage.costUsd ?? 0;
-        }
+        // Token usage tracked via session.getMetrics() at completion
       }
 
       if (event.type === "tool_call") {
-        eventBus.emit({
+        const toolEvent: RunEvent = {
           type: "tool_call_started",
           run_id: runId,
+          timestamp: new Date().toISOString(),
           step_id: `step_${Date.now()}`,
           tool: event.tool ?? "unknown",
-        });
+        };
+        eventBus.emit(toolEvent);
       }
     }
 
@@ -273,25 +406,103 @@ async function runV2Pipeline(
     const metrics = session.getMetrics();
     const totalTime = Date.now() - startTime;
 
-    eventBus.emit({
+    const completedLogEvent: RunEvent = {
       type: "orchestrator_log",
       run_id: runId,
+      timestamp: new Date().toISOString(),
       message: `[V2] Completed in ${totalTime}ms | Tokens: ${metrics.totalTokensIn + metrics.totalTokensOut} | Cost: $${metrics.totalCostUsd.toFixed(4)}`,
-    });
+    };
+    eventBus.emit(completedLogEvent);
 
-    // 5. Completion
-    eventBus.emit({
+    // 5. Asset Creation (if response exists)
+    let assetRef: RunAssetRef | undefined;
+    let focalObject: Record<string, unknown> | null = null;
+
+    if (fullResponse.trim()) {
+      const tier = detectOutputTier(input.message);
+      const assetKind: AssetKind = tier === "report" ? "report" : "brief";
+      const formatted = formatOutput(fullResponse, tier);
+
+      // Create asset
+      const assetId = `asset_${randomUUID()}`;
+      const asset: Asset = {
+        id: assetId,
+        threadId,
+        kind: assetKind,
+        title: formatted.title || (tier === "report" ? "Rapport" : "Synthèse"),
+        summary: formatted.summary,
+        outputTier: tier,
+        provenance: {
+          providerId: "system",
+        },
+        createdAt: Date.now(),
+        runId: dbRunId,
+      };
+
+      // Store asset
+      storeAsset(asset);
+
+      // Add to runRecord assets
+      assetRef = {
+        id: assetId,
+        name: asset.title,
+        type: assetKind,
+      };
+      runRecord.assets.push(assetRef);
+
+      // Map AssetKind to AssetType for the event
+      const assetTypeForEvent: AssetType = assetKind === "report" ? "report" :
+        assetKind === "brief" ? "text" :
+        assetKind === "spreadsheet" ? "excel" :
+        assetKind === "document" ? "doc" : "text";
+
+      // Emit asset_generated event
+      const assetEvent: RunEvent = {
+        type: "asset_generated",
+        run_id: runId,
+        timestamp: new Date().toISOString(),
+        asset_id: assetId,
+        asset_type: assetTypeForEvent,
+        name: asset.title,
+      };
+      eventBus.emit(assetEvent);
+
+      // Manifest asset to focal object
+      const manifested = manifestAsset(asset, formatted);
+      if (manifested) {
+        focalObject = manifested as unknown as Record<string, unknown>;
+
+        // Emit focal_object_ready
+        const focalEvent: RunEvent = {
+          type: "focal_object_ready",
+          run_id: runId,
+          timestamp: new Date().toISOString(),
+          focal_object: focalObject,
+        };
+        eventBus.emit(focalEvent);
+      }
+
+      // Log asset creation
+      console.log(`[OrchestratorV2] Asset created: ${assetId} (${assetKind}) for run ${dbRunId}`);
+    }
+
+    // 6. Completion
+    const runCompletedEvent: RunEvent = {
       type: "run_completed",
       run_id: runId,
-      artifacts: [], // No artifacts for simple chat
-    });
+      timestamp: new Date().toISOString(),
+      artifacts: assetRef ? [{ artifact_id: assetRef.id, type: "report", title: assetRef.name }] : [],
+    };
+    eventBus.emit(runCompletedEvent);
 
     // Emit metrics as log
-    eventBus.emit({
+    const metricsLogEvent: RunEvent = {
       type: "orchestrator_log",
       run_id: runId,
+      timestamp: new Date().toISOString(),
       message: `[V2] Metrics: ${totalTime}ms | Tokens: ${metrics.totalTokensIn + metrics.totalTokensOut} | Cost: $${metrics.totalCostUsd.toFixed(4)} | Backend: ${session.backend}`,
-    });
+    };
+    eventBus.emit(metricsLogEvent);
 
     // Persist metrics to database (fire-and-forget)
     void updateRunMetrics(dbRunId, {
@@ -306,25 +517,42 @@ async function runV2Pipeline(
       status: "completed",
       completedAt: Date.now(),
       backend: session.backend,
+      assets: runRecord.assets,
     });
+
+    // Update runRecord status
+    runRecord.status = "completed";
+    runRecord.completedAt = Date.now();
+    runRecord.metrics = {
+      tokensIn: metrics.totalTokensIn,
+      tokensOut: metrics.totalTokensOut,
+      costUsd: metrics.totalCostUsd,
+      latencyMs: totalTime,
+    };
 
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : "Unknown error";
     console.error("[OrchestratorV2] Error:", error);
 
-    eventBus.emit({
+    const errorLogEvent: RunEvent = {
       type: "orchestrator_log",
       run_id: runId,
+      timestamp: new Date().toISOString(),
       message: `[V2] Error: ${errorMsg}`,
-    });
+    };
+    eventBus.emit(errorLogEvent);
 
-    eventBus.emit({
+    const runFailedEvent: RunEvent = {
       type: "run_failed",
       run_id: runId,
+      timestamp: new Date().toISOString(),
       error: errorMsg,
-    });
+    };
+    eventBus.emit(runFailedEvent);
 
     // Update run status to failed
+    runRecord.status = "failed";
+    runRecord.completedAt = Date.now();
     void updateRun(dbRunId, {
       status: "failed",
       completedAt: Date.now(),
@@ -345,48 +573,62 @@ function mapAndEmitEvent(
   event: ManagedAgentEvent,
 ): void {
   switch (event.type) {
-    case "step":
-      eventBus.emit({
+    case "step": {
+      const stepEvent: RunEvent = {
         type: "orchestrator_log",
         run_id: runId,
+        timestamp: new Date().toISOString(),
         message: `[V2] Step: ${event.content}`,
-      });
+      };
+      eventBus.emit(stepEvent);
       break;
+    }
 
     case "message":
       if (event.delta) {
-        eventBus.emit({
+        const deltaEvent: RunEvent = {
           type: "text_delta",
           run_id: runId,
+          timestamp: new Date().toISOString(),
           delta: event.delta,
-        });
+        };
+        eventBus.emit(deltaEvent);
       }
       break;
 
-    case "tool_call":
-      eventBus.emit({
+    case "tool_call": {
+      const toolEvent: RunEvent = {
         type: "tool_call_started",
         run_id: runId,
+        timestamp: new Date().toISOString(),
         step_id: `step_${Date.now()}`,
         tool: event.tool ?? "unknown",
-      });
+      };
+      eventBus.emit(toolEvent);
       break;
+    }
 
-    case "thinking":
-      eventBus.emit({
+    case "thinking": {
+      const thinkingEvent: RunEvent = {
         type: "orchestrator_log",
         run_id: runId,
+        timestamp: new Date().toISOString(),
         message: `[V2] Thinking: ${event.content}`,
-      });
+      };
+      eventBus.emit(thinkingEvent);
       break;
+    }
 
-    case "error":
-      eventBus.emit({
+    case "error": {
+      const errorEvent: RunEvent = {
         type: "run_failed",
         run_id: runId,
+        timestamp: new Date().toISOString(),
         error: event.error ?? "Unknown error",
-      });
+      };
+      eventBus.emit(errorEvent);
       break;
+    }
 
     case "idle":
       // Completion handled at pipeline level
@@ -426,19 +668,49 @@ function buildSystemPrompt(surface?: string, hasConnector?: boolean, toolContext
 }
 
 async function persistConversation(
-  _db: SupabaseClient,
   input: OrchestrateV2Input,
-  _sessionId: string,
-  _userMessage: string,
-  _assistantResponse: string,
+  userMessage: string,
+  assistantResponse: string,
 ): Promise<void> {
+  const conversationId = input.conversationId ?? input.threadId;
+  if (!conversationId) {
+    console.warn("[OrchestratorV2] Cannot persist conversation: no conversationId/threadId");
+    return;
+  }
+
+  const scope: TenantScope = {
+    tenantId: input.tenantId ?? "dev-tenant",
+    workspaceId: input.workspaceId ?? "dev-workspace",
+    userId: input.userId,
+  };
+
   try {
-    const _threadId = input.threadId ?? input.conversationId;
-    // TODO: Implement with correct memory store signature
-    // Memory persistence is non-blocking for V2
+    // Persist user message
+    appendMessage(
+      conversationId,
+      {
+        role: "user",
+        content: userMessage,
+        createdAt: Date.now(),
+      },
+      scope
+    );
+
+    // Persist assistant response
+    appendMessage(
+      conversationId,
+      {
+        role: "assistant",
+        content: assistantResponse,
+        createdAt: Date.now(),
+      },
+      scope
+    );
+
+    console.log(`[OrchestratorV2] Conversation persisted for ${conversationId}`);
   } catch (error) {
-    console.warn("[OrchestratorV2] Failed to persist conversation:", error);
-    // Non-blocking
+    console.error(`[OrchestratorV2] Failed to persist conversation for ${conversationId}:`, error);
+    // Non-blocking — continuity degrades but run continues
   }
 }
 

@@ -41,6 +41,18 @@ export abstract class BaseSession implements UnifiedSession {
       startTime: this.startTime,
       lastActivity: this.startTime,
     };
+
+    // Seed with initial history if provided (for continuity across sessions)
+    if (config.initialHistory && config.initialHistory.length > 0) {
+      for (const msg of config.initialHistory) {
+        this.messages.push({
+          id: randomUUID(),
+          role: msg.role,
+          content: msg.content,
+          timestamp: Date.now(),
+        });
+      }
+    }
   }
 
   // ── Abstract Methods (to be implemented by backends) ──────

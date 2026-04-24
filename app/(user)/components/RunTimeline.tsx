@@ -1,40 +1,43 @@
 "use client";
 
-import type { RunEvent } from "@/lib/events/types";
+import type { TimelineItem, TimelineSeverity } from "@/lib/runtime/timeline/types";
 
 interface RunTimelineProps {
-  events: RunEvent[];
+  timeline: TimelineItem[];
   isLive?: boolean;
 }
 
-const EVENT_ICONS: Record<string, string> = {
+const SEVERITY_STYLES: Record<TimelineSeverity, string> = {
+  info: "text-white/60",
+  success: "text-emerald-400",
+  warning: "text-amber-400",
+  error: "text-red-400",
+};
+
+const SEVERITY_ICONS: Record<TimelineSeverity, string> = {
+  info: "•",
+  success: "✓",
+  warning: "⚠",
+  error: "✗",
+};
+
+const TYPE_ICONS: Record<string, string> = {
   run_started: "▶️",
   run_completed: "✅",
   run_failed: "❌",
-  text_delta: "📝",
-  tool_call_started: "🔧",
-  tool_call_completed: "✓",
-  tool_call_failed: "✗",
-  orchestrator_log: "📋",
-  approval_requested: "⏸️",
-  approval_decided: "▶️",
+  execution_mode: "⚙️",
+  agent_selected: "🤖",
+  provider_check: "🔌",
+  capability_blocked: "🚫",
+  step_started: "🔄",
+  step_completed: "✓",
+  step_failed: "✗",
+  asset_generated: "📄",
+  log: "📋",
 };
 
-const EVENT_LABELS: Record<string, string> = {
-  run_started: "Run démarré",
-  run_completed: "Run terminé",
-  run_failed: "Run échoué",
-  text_delta: "Réponse",
-  tool_call_started: "Appel outil",
-  tool_call_completed: "Outil terminé",
-  tool_call_failed: "Outil échoué",
-  orchestrator_log: "Log",
-  approval_requested: "Approbation requise",
-  approval_decided: "Décision prise",
-};
-
-export function RunTimeline({ events, isLive }: RunTimelineProps) {
-  if (events.length === 0) {
+export function RunTimeline({ timeline, isLive }: RunTimelineProps) {
+  if (timeline.length === 0) {
     return (
       <div className="flex items-center justify-center py-8 text-white/40 text-sm">
         {isLive ? "En attente d'événements..." : "Aucun événement"}
@@ -44,29 +47,32 @@ export function RunTimeline({ events, isLive }: RunTimelineProps) {
 
   return (
     <div className="space-y-1">
-      {events.map((event, index) => {
-        const icon = EVENT_ICONS[event.type] || "•";
-        const label = EVENT_LABELS[event.type] || event.type;
-        const isLast = index === events.length - 1;
+      {timeline.map((item, index) => {
+        const icon = TYPE_ICONS[item.type] || SEVERITY_ICONS[item.severity];
+        const isLast = index === timeline.length - 1;
+        const severityClass = SEVERITY_STYLES[item.severity];
 
         return (
           <div
-            key={`${event.type}-${index}`}
+            key={item.id}
             className={`flex items-start gap-3 py-2 px-3 rounded-lg ${
               isLast && isLive ? "bg-cyan-500/5" : ""
             }`}
           >
             <span className="text-sm mt-0.5">{icon}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-white/80">{label}</p>
-              {"message" in event && event.message && (
-                <p className="text-xs text-white/40 truncate">{event.message}</p>
+              <p className={`text-sm ${severityClass}`}>{item.title}</p>
+              {item.description && (
+                <p className="text-xs text-white/40 truncate">{item.description}</p>
               )}
-              {"tool" in event && event.tool && (
-                <p className="text-xs text-white/40">{event.tool}</p>
+              {item.backend && (
+                <p className="text-xs text-white/30">Backend: {item.backend}</p>
               )}
-              {"delta" in event && event.delta && (
-                <p className="text-xs text-white/40 truncate">{event.delta.slice(0, 50)}...</p>
+              {item.provider && (
+                <p className="text-xs text-white/30">Provider: {item.provider}</p>
+              )}
+              {item.assetName && (
+                <p className="text-xs text-emerald-400/60">Asset: {item.assetName}</p>
               )}
             </div>
             {isLast && isLive && (
