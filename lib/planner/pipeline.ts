@@ -33,6 +33,10 @@ import { storeAsset, storeAction, type Asset } from "@/lib/assets/types";
 import { handleSendMessage } from "@/lib/tools/handlers/send-message";
 import { manifestPlan, manifestAsset } from "@/lib/right-panel/manifestation";
 import { logPlanEvent } from "./debug";
+import { gmailConnector, calendarConnector, driveConnector } from "@/lib/connectors";
+import { searchWeb } from "@/lib/tools/handlers/web-search";
+import { generatePdfArtifact } from "@/lib/engine/runtime/assets/generators/pdf";
+import { generateSpreadsheetArtifact } from "@/lib/engine/runtime/assets/generators/spreadsheet";
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -275,51 +279,129 @@ async function executeToolCall(
     }
 
     case "get_messages": {
-      // TODO: call real Gmail/Slack API via provider tokens
-      logPlanEvent("tool_stub", { tool, providerId });
-      return {
-        success: true,
-        data: { content: `[Messages from ${providerId}] — stub data`, source: providerId },
-      };
+      try {
+        const result = await gmailConnector.getEmails(ctx.userId, (params.limit as number) ?? 10);
+        const content = result.data
+          .map((m) => `- **${m.subject}** (${m.sender}) — ${m.snippet ?? ""}`)
+          .join("\n");
+        return {
+          success: true,
+          data: { content: content || "Aucun message récent.", source: providerId, emails: result.data },
+        };
+      } catch (err) {
+        logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });
+        return { success: false, error: `Impossible de lire les emails: ${(err as Error).message}` };
+      }
     }
 
     case "get_calendar_events": {
-      // TODO: call real Google Calendar API
-      logPlanEvent("tool_stub", { tool, providerId });
-      return {
-        success: true,
-        data: { content: `[Calendar events from ${providerId}] — stub data`, source: providerId },
-      };
+      try {
+        const days = (params.days as number) ?? 7;
+        const result = await calendarConnector.getEvents(ctx.userId, days);
+        const content = result.data
+          .map((e) => `- **${e.title}** — ${e.start} → ${e.end}${e.location ? ` (${e.location})` : ""}`)
+          .join("\n");
+        return {
+          success: true,
+          data: { content: content || "Aucun événement à venir.", source: providerId, events: result.data },
+        };
+      } catch (err) {
+        logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });
+        return { success: false, error: `Impossible de lire le calendrier: ${(err as Error).message}` };
+      }
     }
 
     case "get_files": {
-      // TODO: call real Google Drive API
-      logPlanEvent("tool_stub", { tool, providerId });
-      return {
-        success: true,
-        data: { content: `[Files from ${providerId}] — stub data`, source: providerId },
-      };
+      try {
+        const result = await driveConnector.getFiles(ctx.userId, (params.limit as number) ?? 15);
+        const content = result.data
+          .map((f) => `- **${f.name}** (${f.mimeType}) — modifié ${f.modifiedTime}`)
+          .join("\n");
+        return {
+          success: true,
+          data: { content: content || "Aucun fichier trouvé.", source: providerId, files: result.data },
+        };
+      } catch (err) {
+        logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });
+        return { success: false, error: `Impossible de lire les fichiers: ${(err as Error).message}` };
+      }
     }
 
     case "generate_report":
-    case "generate_pdf":
+    case "generate_pdf": {
+      try {
+        const assetId = `asset_${Date.now()}`;
+        const title = (params.title as string) ?? "Rapport";
+        const content = (params.content as string) ?? "";
+        const pdfResult = await generatePdfArtifact({
+          tenantId: ctx.tenantId,
+          runId: ctx.threadId,
+          assetId,
+          title,
+          content,
+        });
+        return {
+          success: true,
+          data: {
+            content: `PDF "${title}" généré (${pdfResult.sizeBytes} octets).`,
+            format: "pdf",
+            filePath: pdfResult.filePath,
+          },
+          assetId,
+        };
+      } catch (err) {
+        logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });
+        return { success: false, error: `Erreur génération PDF: ${(err as Error).message}` };
+      }
+    }
+
     case "generate_xlsx": {
-      // TODO: call real report generation
-      logPlanEvent("tool_stub", { tool, providerId });
-      return {
-        success: true,
-        data: { content: `[Generated ${tool}] — stub data` },
-        assetId: `asset_${Date.now()}`,
-      };
+      try {
+        const assetId = `asset_${Date.now()}`;
+        const title = (params.title as string) ?? "Spreadsheet";
+        const rows = (params.rows as Record<string, unknown>[]) ?? [];
+        if (!rows.length) {
+          return { success: false, error: "Aucune donnée fournie pour le tableur." };
+        }
+        const xlsxResult = await generateSpreadsheetArtifact({
+          tenantId: ctx.tenantId,
+          runId: ctx.threadId,
+          assetId,
+          title,
+          rows,
+        });
+        return {
+          success: true,
+          data: {
+            content: `Tableur "${title}" généré (${xlsxResult.sizeBytes} octets).`,
+            format: "xlsx",
+            filePath: xlsxResult.filePath,
+          },
+          assetId,
+        };
+      } catch (err) {
+        logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });
+        return { success: false, error: `Erreur génération XLSX: ${(err as Error).message}` };
+      }
     }
 
     case "search_web": {
-      // TODO: call real web search
-      logPlanEvent("tool_stub", { tool, providerId });
-      return {
-        success: true,
-        data: { content: `[Web search results] — stub data`, source: "web" },
-      };
+      try {
+        const query = (params.query as string) ?? (params.intent as string) ?? "";
+        const webResult = await searchWeb(query);
+        return {
+          success: true,
+          data: {
+            content: webResult.summary,
+            source: "web",
+            results: webResult.results,
+            query: webResult.query,
+          },
+        };
+      } catch (err) {
+        logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });
+        return { success: false, error: `Erreur recherche web: ${(err as Error).message}` };
+      }
     }
 
     default: {
