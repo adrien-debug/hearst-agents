@@ -24,7 +24,7 @@ export interface AssetFileInfo {
   sizeBytes: number;
 }
 
-export interface Asset {
+export interface RuntimeAsset {
   id: string;
   type: AssetType;
   name: string;
@@ -36,3 +36,6 @@ export interface Asset {
   metadata?: Record<string, unknown>;
   file?: AssetFileInfo;
 }
+
+/** @deprecated Use RuntimeAsset instead */
+export type Asset = RuntimeAsset;

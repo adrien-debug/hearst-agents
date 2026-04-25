@@ -19,7 +19,7 @@ export type {
   AssetType,
   AssetStorageKind,
   AssetFileInfo,
-  Asset as RuntimeAsset,
+  RuntimeAsset,
 } from "@/lib/engine/runtime/assets/types";
 
 export type {

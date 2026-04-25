@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AssetPreview } from "../../components/AssetPreview";
-import type { Asset } from "@/lib/engine/runtime/assets/types";
+import type { RuntimeAsset } from "@/lib/engine/runtime/assets/types";
 
 export default function AssetDetailPage() {
   const params = useParams();
   const router = useRouter();
   const assetId = params.id as string;
 
-  const [asset, setAsset] = useState<Asset | null>(null);
+  const [asset, setAsset] = useState<RuntimeAsset | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
