@@ -46,10 +46,10 @@ export class RunEngine {
   readonly cost: CostTracker;
   readonly events: RunEventBus;
 
-  private db: SupabaseClient;
-  private runId: string;
-  private status: EngineRunStatus;
-  private userId: string;
+  private _db: SupabaseClient;
+  private _runId: string;
+  private _status: EngineRunStatus;
+  private _userId: string;
 
   private constructor(
     db: SupabaseClient,
@@ -57,10 +57,10 @@ export class RunEngine {
     userId: string,
     eventBus: RunEventBus,
   ) {
-    this.db = db;
-    this.runId = runId;
-    this.userId = userId;
-    this.status = "created";
+    this._db = db;
+    this._runId = runId;
+    this._userId = userId;
+    this._status = "created";
     this.events = eventBus;
     this.steps = new StepManager(db, runId, eventBus);
     this.approvals = new ApprovalManager(db, runId, eventBus);
@@ -126,9 +126,23 @@ export class RunEngine {
       (data as Record<string, unknown>).user_id as string,
       eventBus,
     );
-    engine.status =
+    engine._status =
       (data.status as EngineRunStatus) ?? "created";
     return engine;
+  }
+
+  // ── Public getters ──────────────────────────────────────
+
+  get db(): SupabaseClient {
+    return this._db;
+  }
+
+  get runId(): string {
+    return this._runId;
+  }
+
+  get userId(): string {
+    return this._userId;
   }
 
   // ── Run lifecycle ────────────────────────────────────────
@@ -214,24 +228,24 @@ export class RunEngine {
   }
 
   getStatus(): EngineRunStatus {
-    return this.status;
+    return this._status;
   }
 
   getUserId(): string {
-    return this.userId;
+    return this._userId;
   }
 
   getDb(): SupabaseClient {
-    return this.db;
+    return this._db;
   }
 
   // ── Private ──────────────────────────────────────────────
 
   private async transition(target: EngineRunStatus): Promise<void> {
-    const allowed = ALLOWED_TRANSITIONS[this.status];
+    const allowed = ALLOWED_TRANSITIONS[this._status];
     if (!allowed?.includes(target)) {
       throw new Error(
-        `Invalid run transition: ${this.status} → ${target}`,
+        `Invalid run transition: ${this._status} → ${target}`,
       );
     }
 
@@ -247,17 +261,17 @@ export class RunEngine {
       update.finished_at = new Date().toISOString();
     }
 
-    const { error } = await this.db
+    const { error } = await this._db
       .from("runs")
       .update(update)
-      .eq("id", this.runId);
+      .eq("id", this._runId);
 
     if (error) {
       throw new Error(
-        `[RunEngine] transition ${this.status} → ${target} failed: ${error.message}`,
+        `[RunEngine] transition ${this._status} → ${target} failed: ${error.message}`,
       );
     }
 
-    this.status = target;
+    this._status = target;
   }
 }

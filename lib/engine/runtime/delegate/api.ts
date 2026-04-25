@@ -10,8 +10,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { RunEngine } from "../engine";
 import type { DelegateInput, DelegateResult } from "./types";
 import type { StepActor } from "../engine/types";
+// Legacy connectors (to be replaced gradually)
 import { searchDriveFiles, readDriveFileContent } from "@/lib/connectors/drive";
 import { searchEmails } from "@/lib/connectors/gmail";
+// Router-wrapped connectors (Pack → Nango → Legacy)
+import { searchFiles, readFileContent, searchEmails as searchEmailsRouter } from "./connectors";
 
 export async function delegate(
   engine: RunEngine,

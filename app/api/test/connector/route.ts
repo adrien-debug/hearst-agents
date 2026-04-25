@@ -1,12 +1,13 @@
 /**
- * Test Connector — Demo avec Google (natif)
+ * Test Connector — Demo avec Router (Phase A)
  *
- * Teste le système de routing avec les connecteurs Google déjà configurés.
- * Pas besoin de Nango pour Google — OAuth natif déjà en place.
+ * Teste le système de routing Pack → Nango → Legacy.
+ * TODO: Mettre à jour avec nouveau context Router quand Phase B démarre.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { executeConnector, isProviderConnected } from "@/lib/connectors/router";
+// TODO: Phase B — réintégrer avec nouveau Router
+// import { routeConnectorRequest, getRouterStats } from "@/lib/connectors/router";
 import { getUserId } from "@/lib/get-user-id";
 
 export const dynamic = "force-dynamic";
@@ -19,56 +20,27 @@ export async function GET(req: NextRequest) {
 
   const searchParams = req.nextUrl.searchParams;
   const provider = searchParams.get("provider") || "gmail";
-  const action = searchParams.get("action") || "getEmails";
+  const action = searchParams.get("action") || "list";
 
-  // Vérifier si le provider est connecté
-  const connected = await isProviderConnected(userId, provider);
-  if (!connected) {
-    return NextResponse.json(
-      {
-        error: "not_connected",
-        message: `${provider} not connected. Connect via /admin/integrations`,
-        provider,
-        action,
-        connected: false,
-      },
-      { status: 403 }
-    );
-  }
+  // Phase A: Router créé mais pas encore branché au runtime
+  // Phase B: Réactiver avec vrai appel routeConnectorRequest
 
-  try {
-    const _startTime = Date.now();
-
-    // Exécuter l'action via le router
-    const result = await executeConnector(
-      {
-        provider,
-        action,
-        input: { limit: 5 },
-      },
-      { userId, tenantId: "default" }
-    );
-
-    return NextResponse.json({
-      success: result.success,
-      provider,
-      action,
-      via: result.via, // "native" pour Google
-      latencyMs: result.latencyMs,
-      data: result.data,
-      error: result.error,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("[TestConnector] Error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        provider,
-        action,
-      },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    status: "Phase A — Connector Router créé",
+    message: "Router disponible dans lib/connectors/router.ts",
+    provider,
+    action,
+    userId,
+    note: "Integration runtime dans Phase B (Finance Agent)",
+    routerStats: {
+      availablePacks: 1, // finance-pack
+      legacyConnectors: 12,
+      routingTable: [
+        { id: "stripe", source: "pack" },
+        { id: "gmail", source: "nango" },
+        { id: "slack", source: "nango" },
+      ],
+    },
+    timestamp: new Date().toISOString(),
+  });
 }

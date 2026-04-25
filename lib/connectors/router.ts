@@ -1,233 +1,399 @@
 /**
- * Connector Router — Decides Nango vs Native execution
+ * Connector Router
  *
- * Routes API calls to either:
- * - Nango proxy (180+ standard connectors)
- * - Native adapters (20 critical connectors with custom logic)
+ * Route les requêtes vers:
+ * - Connector Packs (nouveau) si disponible
+ * - Nango (legacy) en fallback
+ *
+ * Pattern: Strangler Fig — migration progressive sans breaking changes
  */
 
-import type { NangoProvider } from "./nango/types";
-import { nangoProxy, checkConnection as checkNangoConnection } from "./nango/proxy";
-import type { ProxyOptions } from "./nango/proxy";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getPackLoader } from "./packs";
+import { getNangoClient } from "./nango/client";
+import type { ConnectorManifest } from "./packs/types";
 
-// ─── Native Providers (critical connectors) ─────────────────────────────
-
-const NATIVE_PROVIDERS = new Set<NangoProvider>([
-  "gmail",
-  "calendar",
-  "drive",
-  "slack",
-  "notion",
-  "github",
-]);
-
-// ─── Router ──────────────────────────────────────────────────────────────
-
-export interface ConnectorRequest {
-  provider: NangoProvider;
-  action: string;
-  input: unknown;
+export interface RouterContext {
+  db: SupabaseClient;
+  tenantId: string;
+  userId: string;
 }
 
-export interface ConnectorResult {
+export interface RouterResult<T = unknown> {
   success: boolean;
-  data?: unknown;
+  data?: T;
   error?: string;
+  source: "pack" | "nango" | "none";
   latencyMs: number;
-  via: "nango" | "native";
 }
 
 /**
- * Execute connector request via appropriate adapter
+ * Route une requête connector
+ *
+ * 1. Check Pack availability
+ * 2. Si Pack dispo → utiliser Pack
+ * 3. Sinon → fallback Nango (legacy)
+ * 4. Sinon → error
  */
-export async function executeConnector(
-  request: ConnectorRequest,
-  options: ProxyOptions
-): Promise<ConnectorResult> {
-  const startTime = Date.now();
+export async function routeConnectorRequest<T>(
+  connectorId: string,
+  operation: "list" | "get" | "create" | "update" | "delete",
+  params: unknown,
+  context: RouterContext
+): Promise<RouterResult<T>> {
+  const start = Date.now();
 
-  // Route to native adapter for critical providers
-  if (NATIVE_PROVIDERS.has(request.provider)) {
-    return executeNative(request, options, startTime);
-  }
+  // 1. Check if connector exists in Packs
+  const packLoader = getPackLoader();
+  const packConnector = packLoader.getConnector(connectorId);
 
-  // Route to Nango for all others
-  return executeNango(request, options, startTime);
-}
-
-/**
- * Check if a provider connection is active
- */
-export async function isProviderConnected(
-  userId: string,
-  provider: NangoProvider
-): Promise<boolean> {
-  // For Nango providers
-  if (!NATIVE_PROVIDERS.has(provider)) {
-    return checkNangoConnection(userId, provider);
-  }
-
-  // For native providers — use unified layer
-  const { hasCapability } = await import("@/lib/capabilities");
-  const capability = mapProviderToCapability(provider);
-  return hasCapability(capability, userId);
-}
-
-/**
- * List available connectors for a user
- */
-export async function listAvailableConnectors(userId: string): Promise<{
-  native: NangoProvider[];
-  nango: NangoProvider[];
-}> {
-  const [native, nango] = await Promise.all([
-    listNativeConnectors(userId),
-    listNangoConnectors(userId),
-  ]);
-
-  return { native, nango };
-}
-
-// ─── Nango Execution ─────────────────────────────────────────────────────
-
-async function executeNango(
-  request: ConnectorRequest,
-  options: ProxyOptions,
-  startTime: number
-): Promise<ConnectorResult> {
-  try {
-    // Map generic action to actual API endpoint
-    const endpoint = mapActionToEndpoint(request.provider, request.action);
-    const method = mapActionToMethod(request.action);
-
-    const response = await nangoProxy(
-      {
-        provider: request.provider,
-        endpoint,
-        method,
-        data: request.input,
-      },
-      options
+  if (packConnector) {
+    // Try Pack first
+    const result = await executePackOperation<T>(
+      packConnector,
+      operation,
+      params,
+      context
     );
 
-    return {
-      success: true,
-      data: response.data,
-      latencyMs: Date.now() - startTime,
-      via: "nango",
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Nango proxy failed",
-      latencyMs: Date.now() - startTime,
-      via: "nango",
-    };
-  }
-}
-
-async function listNangoConnectors(userId: string): Promise<NangoProvider[]> {
-  // Query Supabase for active Nango connections
-  const { listActiveConnections } = await import("./nango/credentials");
-  const connections = await listActiveConnections(userId);
-  return connections.map((c) => c.provider);
-}
-
-// ─── Native Execution ────────────────────────────────────────────────────
-
-async function executeNative(
-  request: ConnectorRequest,
-  options: ProxyOptions,
-  startTime: number
-): Promise<ConnectorResult> {
-  try {
-    // Dynamic import to avoid circular dependencies
-    const nativeModule = await import(`@/lib/connectors/${request.provider}`);
-
-    if (typeof nativeModule[request.action] !== "function") {
-      throw new Error(`Native action ${request.action} not found for ${request.provider}`);
+    if (result.success) {
+      return {
+        ...result,
+        source: "pack",
+        latencyMs: Date.now() - start,
+      };
     }
 
-    const result = await nativeModule[request.action](request.input, options.userId);
+    // Pack failed, try Nango fallback if available
+    console.warn(
+      `[Router] Pack ${connectorId} failed, trying Nango fallback: ${result.error}`
+    );
+  }
 
-    return {
-      success: true,
-      data: result,
-      latencyMs: Date.now() - startTime,
-      via: "native",
-    };
-  } catch (error) {
+  // 2. Fallback to Nango (legacy)
+  const nangoResult = await executeNangoOperation<T>(
+    connectorId,
+    operation,
+    params,
+    context
+  );
+
+  return {
+    ...nangoResult,
+    source: nangoResult.success ? "nango" : "none",
+    latencyMs: Date.now() - start,
+  };
+}
+
+/**
+ * Execute via Connector Pack
+ */
+async function executePackOperation<T>(
+  manifest: ConnectorManifest,
+  operation: string,
+  params: unknown,
+  context: RouterContext
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  try {
+    // Check if connector is enabled for this tenant/user
+    const isEnabled = await checkConnectorEnabled(
+      manifest.id,
+      context.tenantId,
+      context.userId,
+      context.db
+    );
+
+    if (!isEnabled) {
+      return {
+        success: false,
+        error: `Connector ${manifest.id} not enabled for this user`,
+      };
+    }
+
+    // Get credentials
+    const credentials = await getPackCredentials(
+      manifest.id,
+      context.tenantId,
+      context.userId,
+      context.db
+    );
+
+    if (!credentials) {
+      return {
+        success: false,
+        error: `No credentials for ${manifest.id}. Please connect first.`,
+      };
+    }
+
+    // Route to specific connector implementation
+    switch (manifest.id) {
+      case "stripe":
+        return await executeStripeOperation<T>(
+          operation,
+          params,
+          credentials,
+          context
+        );
+      // Add more pack connectors here as they're implemented
+      default:
+        return {
+          success: false,
+          error: `Pack connector ${manifest.id} not yet implemented`,
+        };
+    }
+  } catch (err) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Native execution failed",
-      latencyMs: Date.now() - startTime,
-      via: "native",
+      error: err instanceof Error ? err.message : String(err),
     };
   }
 }
 
-async function listNativeConnectors(userId: string): Promise<NangoProvider[]> {
-  // Check native connections via capabilities
-  const { hasCapability } = await import("@/lib/capabilities");
-  const providers: NangoProvider[] = [];
+/**
+ * Execute via Nango (legacy)
+ */
+async function executeNangoOperation<T>(
+  connectorId: string,
+  operation: string,
+  params: unknown,
+  context: RouterContext
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  try {
+    const nango = getNangoClient();
 
-  if (await hasCapability("messaging", userId)) providers.push("slack");
-  if (await hasCapability("calendar", userId)) providers.push("calendar");
-  if (await hasCapability("files", userId)) providers.push("drive");
-  if (await hasCapability("messaging", userId)) providers.push("gmail");
+    // Map operation to Nango proxy
+    const response = await nango.proxy({
+      providerConfigKey: connectorId,
+      connectionId: `${context.tenantId}:${context.userId}`,
+      method: getHttpMethod(operation),
+      endpoint: getNangoEndpoint(connectorId, operation, params),
+      data: operation !== "get" && operation !== "list" ? params : undefined,
+    });
 
-  return providers;
+    return {
+      success: true,
+      data: response.data as T,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
-// ─── Mapping Helpers ─────────────────────────────────────────────────────
+/**
+ * Check if connector is enabled for tenant/user
+ */
+async function checkConnectorEnabled(
+  connectorId: string,
+  tenantId: string,
+  userId: string,
+  db: SupabaseClient
+): Promise<boolean> {
+  const { data, error } = await db
+    .from("connector_instances")
+    .select("status")
+    .eq("connector_id", connectorId)
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
 
-import type { Capability } from "@/lib/capabilities";
+  if (error || !data) {
+    return false;
+  }
 
-function mapProviderToCapability(provider: NangoProvider): Capability {
-  const mapping: Record<string, Capability> = {
-    gmail: "messaging",
-    calendar: "calendar",
-    drive: "files",
-    slack: "messaging",
-    notion: "files",
-    github: "developer_tools",
+  return data.status === "active";
+}
+
+/**
+ * Get credentials from pack connector instance
+ */
+async function getPackCredentials(
+  connectorId: string,
+  tenantId: string,
+  userId: string,
+  db: SupabaseClient
+): Promise<Record<string, string> | null> {
+  const { data, error } = await db
+    .from("connector_instances")
+    .select("config")
+    .eq("connector_id", connectorId)
+    .eq("tenant_id", tenantId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error || !data?.config) {
+    return null;
+  }
+
+  return data.config as Record<string, string>;
+}
+
+/**
+ * Execute Stripe-specific operation
+ */
+async function executeStripeOperation<T>(
+  operation: string,
+  params: unknown,
+  credentials: Record<string, string>,
+  context: RouterContext
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  // Lazy load Stripe service to avoid circular deps
+  const { StripeApiService, mapStripeChargesToPayments } = await import(
+    "./packs/finance-pack/stripe"
+  );
+
+  const stripe = new StripeApiService({
+    apiKey: credentials.accessToken || credentials.apiKey || "",
+  });
+
+  try {
+    switch (operation) {
+      case "list": {
+        const resource = (params as { resource?: string }).resource;
+
+        if (resource === "payments" || resource === "charges") {
+          const charges = await stripe.listCharges();
+          return {
+            success: true,
+            data: mapStripeChargesToPayments(charges) as T,
+          };
+        }
+
+        if (resource === "invoices") {
+          const invoices = await stripe.listInvoices();
+          return {
+            success: true,
+            data: invoices as T,
+          };
+        }
+
+        if (resource === "subscriptions") {
+          const subs = await stripe.listSubscriptions();
+          return {
+            success: true,
+            data: subs as T,
+          };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "get": {
+        const { resource, id } = params as { resource: string; id: string };
+
+        if (resource === "charge") {
+          const charge = await stripe.getCharge(id);
+          return { success: true, data: charge as T };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      default:
+        return { success: false, error: `Operation ${operation} not supported` };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+/**
+ * Get HTTP method for operation
+ */
+function getHttpMethod(operation: string): "GET" | "POST" | "PUT" | "DELETE" {
+  switch (operation) {
+    case "list":
+    case "get":
+      return "GET";
+    case "create":
+      return "POST";
+    case "update":
+      return "PUT";
+    case "delete":
+      return "DELETE";
+    default:
+      return "GET";
+  }
+}
+
+/**
+ * Build Nango endpoint URL
+ */
+function getNangoEndpoint(
+  connectorId: string,
+  operation: string,
+  params: unknown
+): string {
+  // Simple mapping for common connectors
+  // This would be more sophisticated in production
+
+  switch (connectorId) {
+    case "gmail":
+      return operation === "list" ? "/threads" : "/messages/${id}";
+    case "slack":
+      return operation === "list" ? "/conversations.list" : "/chat.postMessage";
+    case "github":
+      return operation === "list" ? "/user/repos" : "/repos/${owner}/${repo}";
+    default:
+      return "/";
+  }
+}
+
+/**
+ * Get router stats
+ */
+export function getRouterStats(): {
+  availablePacks: number;
+  legacyConnectors: number;
+  routingTable: Array<{ id: string; source: "pack" | "nango" | "both" }>;
+} {
+  const packLoader = getPackLoader();
+  const packs = packLoader.getAllConnectors();
+
+  // Legacy connectors known to work with Nango
+  const legacyConnectors = [
+    "gmail",
+    "slack",
+    "google-drive",
+    "google-calendar",
+    "github",
+    "jira",
+    "trello",
+    "asana",
+    "notion",
+    "airtable",
+    "hubspot",
+    "salesforce",
+  ];
+
+  const routingTable: Array<{ id: string; source: "pack" | "nango" | "both" }> =
+    [];
+
+  // All pack connectors
+  for (const pack of packs) {
+    const hasNango = legacyConnectors.includes(pack.id);
+    routingTable.push({
+      id: pack.id,
+      source: hasNango ? "both" : "pack",
+    });
+  }
+
+  // Legacy-only connectors
+  for (const legacy of legacyConnectors) {
+    if (!packs.find((p) => p.id === legacy)) {
+      routingTable.push({ id: legacy, source: "nango" });
+    }
+  }
+
+  return {
+    availablePacks: packs.length,
+    legacyConnectors: legacyConnectors.length,
+    routingTable,
   };
-  return mapping[provider] || "messaging";
-}
-
-function mapActionToEndpoint(provider: string, action: string): string {
-  // Common endpoint mappings
-  const mappings: Record<string, Record<string, string>> = {
-    hubspot: {
-      get_contacts: "/crm/v3/objects/contacts",
-      get_deals: "/crm/v3/objects/deals",
-      create_contact: "/crm/v3/objects/contacts",
-    },
-    stripe: {
-      get_charges: "/v1/charges",
-      get_customers: "/v1/customers",
-      get_invoices: "/v1/invoices",
-    },
-    jira: {
-      get_issues: "/rest/api/3/search",
-      create_issue: "/rest/api/3/issue",
-    },
-    airtable: {
-      list_bases: "/v0/meta/bases",
-      list_records: "/v0/{baseId}/{tableId}",
-    },
-    figma: {
-      get_file: "/v1/files/{fileKey}",
-      get_comments: "/v1/files/{fileKey}/comments",
-    },
-  };
-
-  return mappings[provider]?.[action] || "/";
-}
-
-function mapActionToMethod(action: string): "GET" | "POST" | "PUT" | "PATCH" | "DELETE" {
-  if (action.startsWith("create_") || action.startsWith("add_")) return "POST";
-  if (action.startsWith("update_") || action.startsWith("modify_")) return "PUT";
-  if (action.startsWith("delete_") || action.startsWith("remove_")) return "DELETE";
-  return "GET";
 }
