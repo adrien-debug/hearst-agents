@@ -6,8 +6,11 @@
  * 1. Authentication (session or API key)
  * 2. Public path exemptions
  * 3. Explicit dev bypass only
+ *
+ * Environment validation is triggered by importing lib/env.server.ts
  */
 
+import "@/lib/env.server";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = [

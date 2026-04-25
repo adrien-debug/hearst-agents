@@ -5,7 +5,8 @@ import { useNavigationStore } from "@/stores/navigation";
 import { useFocalStore } from "@/stores/focal";
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
-import type { FocalObject, FocalType, FocalStatus, RightPanelData, FocalObjectView } from "@/lib/core/types";
+import type { RightPanelData, FocalObjectView } from "@/lib/core/types";
+import { mapFocalObject, mapFocalObjects } from "@/lib/focal/utils";
 
 export function RightPanel() {
   const coreState = useRuntimeStore((s) => s.coreState);
@@ -136,40 +137,13 @@ export function RightPanel() {
 
             // Sync with focalStore for convergence centre ↔ RightPanel
             const hydrateThreadState = useFocalStore.getState().hydrateThreadState;
-            const mapFocalObject = (obj: unknown): FocalObject | null => {
-              if (!obj || typeof obj !== "object") return null;
-              const o = obj as Record<string, unknown>;
-              const objectType = o.objectType as string | undefined;
-              if (!objectType) return null;
-              return {
-                id: (o.id as string) || `focal-${Date.now()}`,
-                type: objectType as FocalType,
-                status: (o.status as FocalStatus) || "ready",
-                title: (o.title as string) || "Untitled",
-                body: (o.body as string) || (o.summary as string) || "",
-                summary: (o.summary as string) || undefined,
-                sections: Array.isArray(o.sections) ? o.sections as { heading?: string; body: string }[] : undefined,
-                threadId: (o.threadId as string) || activeThreadId,
-                sourcePlanId: (o.sourcePlanId as string) || undefined,
-                sourceAssetId: (o.sourceAssetId as string) || undefined,
-                missionId: (o.missionId as string) || undefined,
-                morphTarget: o.morphTarget === null ? null : (o.morphTarget as string) || undefined,
-                primaryAction: o.primaryAction && typeof o.primaryAction === "object"
-                  ? { kind: (o.primaryAction as Record<string, string>).kind, label: (o.primaryAction as Record<string, string>).label }
-                  : undefined,
-                createdAt: typeof o.createdAt === "number" ? o.createdAt : Date.now(),
-                updatedAt: typeof o.updatedAt === "number" ? o.updatedAt : Date.now(),
-              };
-            };
-            const mappedFocal = panelData.focalObject ? mapFocalObject(panelData.focalObject) : null;
-            const secondary: FocalObject[] = [];
-            if (panelData.secondaryObjects && Array.isArray(panelData.secondaryObjects)) {
-              for (const obj of panelData.secondaryObjects) {
-                const mapped = mapFocalObject(obj);
-                if (mapped) secondary.push(mapped);
-              }
-            }
-            hydrateThreadState(mappedFocal, secondary.slice(0, 3));
+            const mappedFocal = panelData.focalObject
+              ? mapFocalObject(panelData.focalObject, activeThreadId)
+              : null;
+            const secondary = panelData.secondaryObjects
+              ? mapFocalObjects(panelData.secondaryObjects as unknown[], activeThreadId).slice(0, 3)
+              : [];
+            hydrateThreadState(mappedFocal, secondary);
           }
         } catch {
           setIsConnected(false);

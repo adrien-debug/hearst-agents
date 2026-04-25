@@ -27,7 +27,8 @@ export async function handleNangoWebhook(
 
   switch (payload.type) {
     case "connection.created": {
-      // Extract userId from connectionId (format: hearst-{userId}-{provider})
+      // Extract userId from connectionId (canonical: hearstx-{hex(userId)}-{provider},
+      // legacy fallback: hearst-{normalizedUserId}-{provider})
       const userId = extractUserIdFromConnectionId(payload.connectionId);
       if (!userId) {
         return { success: false, action: "invalid_connection_id" };

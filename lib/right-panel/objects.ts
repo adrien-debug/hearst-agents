@@ -1,50 +1,27 @@
 /**
- * Right Panel Focal Objects — Premium output manifestation model.
+ * Right Panel Focal Objects — Re-export from canonical source (stores/focal)
  *
- * Each object type represents a specific manifestation of plan-derived output.
- * The right panel renders ONE focal object at a time — never a list.
+ * ⚠️ DEPRECATED: Import directly from `@/stores/focal` or `@/lib/core/types`
+ * for new code. This file exists for backward compatibility only.
  *
- * Morphing lifecycle:
- * - MessageDraft → MessageReceipt (after send)
- * - Outline → Report (after generation)
- * - MissionDraft → ActiveMission (after approval)
- * - WatcherDraft → WatcherActive (after activation)
- *
- * Anti-patterns:
- * - NO list rendering
- * - NO widget zoo
- * - NO generic cards
- * - NO file manager
- * - NO raw markdown dumps
- * - NO exposed plan steps
+ * Canonical source: stores/focal.ts (client) re-exported via lib/core/types/index.ts
  */
 
 import type { ProviderId } from "@/lib/providers/types";
 import type { OutputTone, FormattedSection } from "@/lib/runtime/formatting/pipeline";
+import type {
+  FocalType,
+  FocalStatus,
+  FocalObject as StoreFocalObject,
+} from "@/stores/focal";
 
-// ── Base ────────────────────────────────────────────────────
+// ── Re-exports from canonical source ────────────────────────
 
-export type FocalObjectType =
-  | "message_draft"
-  | "message_receipt"
-  | "brief"
-  | "outline"
-  | "report"
-  | "doc"
-  | "watcher_draft"
-  | "watcher_active"
-  | "mission_draft"
-  | "mission_active";
+/** @deprecated Use FocalType from @/stores/focal */
+export type FocalObjectType = FocalType;
 
-export type FocalObjectStatus =
-  | "composing"
-  | "ready"
-  | "awaiting_approval"
-  | "delivering"
-  | "delivered"
-  | "active"
-  | "paused"
-  | "failed";
+/** @deprecated Use FocalStatus from @/stores/focal */
+export type FocalObjectStatus = FocalStatus;
 
 /** Morphing transition — which object type this can become. */
 export type MorphTarget = FocalObjectType | null;
@@ -196,6 +173,17 @@ export interface MissionActiveObject extends FocalObjectBase {
 
 // ── Union ───────────────────────────────────────────────────
 
+/**
+ * ⚠️ CONVERGENCE DEBT: This server-side manifestation type has a different
+ * shape than stores/focal.ts FocalObject (client canonical).
+ *
+ * Differences:
+ *   - This: objectType (required), threadId (required), union of specific types
+ *   - Store: type (not objectType), threadId (optional), generic interface
+ *
+ * Resolution: Phase 7 convergence will align these. For now, lib/core/types
+ * exports the store version as canonical for new client code.
+ */
 export type FocalObject =
   | MessageDraftObject
   | MessageReceiptObject

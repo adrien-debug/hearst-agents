@@ -28,7 +28,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Extract userId from connectionId (format: hearst-{userId}-{provider})
+  // Extract userId from connectionId (canonical: hearstx-{hex(userId)}-{provider},
+  // legacy fallback: hearst-{normalizedUserId}-{provider}).
+  // The canonical format preserves the full email lossless so the connection is
+  // persisted under the correct user_id in integration_connections.
   const parsed = parseConnectionId(connectionId);
   if (!parsed) {
     console.error("[NangoCallback] Invalid connectionId format:", connectionId.slice(0, 20));
