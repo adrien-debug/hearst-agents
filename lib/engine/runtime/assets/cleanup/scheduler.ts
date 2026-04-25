@@ -7,19 +7,23 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { runAssetCleanup } from "./worker";
+import type { StorageProvider } from "../storage/types";
+import { runAssetCleanup, type CleanupConfig, type CleanupResult } from "./worker";
 
 export interface SchedulerConfig {
   cronExpression: string; // e.g., "0 2 * * *" (daily at 2am)
   enabled: boolean;
+  cleanupConfig?: Partial<CleanupConfig>;
 }
 
 export class CleanupScheduler {
   private config: SchedulerConfig;
   private db: SupabaseClient;
+  private storage: StorageProvider;
 
-  constructor(db: SupabaseClient, config: SchedulerConfig) {
+  constructor(db: SupabaseClient, storage: StorageProvider, config: SchedulerConfig) {
     this.db = db;
+    this.storage = storage;
     this.config = config;
   }
 
@@ -36,11 +40,15 @@ export class CleanupScheduler {
     console.log("[CleanupScheduler] Stopped");
   }
 
-  async runNow(): Promise<{ deleted: number; archived: number; errors: number }> {
-    return runAssetCleanup(this.db, {
+  async runNow(): Promise<CleanupResult> {
+    const cleanupConfig: CleanupConfig = {
       defaultTtlDays: 30,
       archiveAfterDays: 90,
+      deleteArchivedAfterDays: 0,
       dryRun: false,
-    });
+      batchSize: 1000,
+      ...this.config.cleanupConfig,
+    };
+    return runAssetCleanup(this.db, this.storage, cleanupConfig);
   }
 }

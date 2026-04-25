@@ -19,9 +19,11 @@ tail -f /tmp/hearst-app.log       # Landing page (port 3000)
 
 ## `npm run dev` (depuis `hearst-os/`)
 
-Même stack **3000 + 8100 + 9000** : les deux repos voisins démarrent en arrière-plan (logs `/tmp/hearst-connect.log`, `/tmp/hearst-app.log`), **hearst-os** reste au premier plan sur **:9000**. Pas de suppression des `.next` (contrairement à `npm run launch`). **`npm run dev:solo`** = uniquement hearst-os sur :9000.
+**Par défaut** : uniquement **hearst-os** sur **:9000** — aucun démarrage des repos `../hearst-connect` ni `../Hearst-app`, donc pas de conflit avec d’autres projets sur 3000/8100.
 
-Après écoute du port **9000**, **Google Chrome** ouvre trois onglets (3000 → 8100 → 9000). Désactiver : `HEARST_OPEN_CHROME=0 npm run dev` ou variable dans `.env`. Log ouverture : `/tmp/hearst-chrome-open.log`.
+**Stack multi-repos** (comme avant) : `npm run dev:stack` — lance hearst-connect :8100 et Hearst-app :3000 en arrière-plan, puis hearst-os :9000 au premier plan (voir `scripts/dev-stack.sh`). Chrome peut ouvrir trois onglets si `HEARST_OPEN_CHROME` n’est pas `0`.
+
+**`npm run dev:solo`** : alias de `npm run dev` (un seul serveur).
 
 ## Ce que fait `npm run launch`
 

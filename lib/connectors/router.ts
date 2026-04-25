@@ -29,26 +29,19 @@ export interface RouterResult<T = unknown> {
 
 /**
  * Route une requête connector
- *
- * 1. Check Pack availability
- * 2. Si Pack dispo → utiliser Pack
- * 3. Sinon → fallback Nango (legacy)
- * 4. Sinon → error
  */
 export async function routeConnectorRequest<T>(
   connectorId: string,
-  operation: "list" | "get" | "create" | "update" | "delete",
+  operation: string,
   params: unknown,
   context: RouterContext
 ): Promise<RouterResult<T>> {
   const start = Date.now();
 
-  // 1. Check if connector exists in Packs
   const packLoader = getPackLoader();
   const packConnector = packLoader.getConnector(connectorId);
 
   if (packConnector) {
-    // Try Pack first
     const result = await executePackOperation<T>(
       packConnector,
       operation,
@@ -64,13 +57,11 @@ export async function routeConnectorRequest<T>(
       };
     }
 
-    // Pack failed, try Nango fallback if available
     console.warn(
       `[Router] Pack ${connectorId} failed, trying Nango fallback: ${result.error}`
     );
   }
 
-  // 2. Fallback to Nango (legacy)
   const nangoResult = await executeNangoOperation<T>(
     connectorId,
     operation,
@@ -85,9 +76,6 @@ export async function routeConnectorRequest<T>(
   };
 }
 
-/**
- * Execute via Connector Pack
- */
 async function executePackOperation<T>(
   manifest: ConnectorManifest,
   operation: string,
@@ -95,7 +83,6 @@ async function executePackOperation<T>(
   context: RouterContext
 ): Promise<{ success: boolean; data?: T; error?: string }> {
   try {
-    // Check if connector is enabled for this tenant/user
     const isEnabled = await checkConnectorEnabled(
       manifest.id,
       context.tenantId,
@@ -110,7 +97,6 @@ async function executePackOperation<T>(
       };
     }
 
-    // Get credentials
     const credentials = await getPackCredentials(
       manifest.id,
       context.tenantId,
@@ -125,7 +111,6 @@ async function executePackOperation<T>(
       };
     }
 
-    // Route to specific connector implementation
     switch (manifest.id) {
       case "stripe":
         return await executeStripeOperation<T>(
@@ -134,7 +119,25 @@ async function executePackOperation<T>(
           credentials,
           context
         );
-      // Add more pack connectors here as they're implemented
+      case "hubspot":
+        return await executeHubSpotOperation<T>(
+          operation,
+          params,
+          credentials,
+          context
+        );
+      case "notion":
+        return await handleNotion<T>(
+          operation,
+          params,
+          credentials
+        );
+      case "figma":
+        return await handleFigma<T>(
+          operation,
+          params,
+          credentials
+        );
       default:
         return {
           success: false,
@@ -149,9 +152,6 @@ async function executePackOperation<T>(
   }
 }
 
-/**
- * Execute via Nango (legacy)
- */
 async function executeNangoOperation<T>(
   connectorId: string,
   operation: string,
@@ -161,7 +161,6 @@ async function executeNangoOperation<T>(
   try {
     const nango = getNangoClient();
 
-    // Map operation to Nango proxy
     const response = await nango.proxy({
       providerConfigKey: connectorId,
       connectionId: `${context.tenantId}:${context.userId}`,
@@ -182,9 +181,6 @@ async function executeNangoOperation<T>(
   }
 }
 
-/**
- * Check if connector is enabled for tenant/user
- */
 async function checkConnectorEnabled(
   connectorId: string,
   tenantId: string,
@@ -207,9 +203,6 @@ async function checkConnectorEnabled(
   return data.status === "active";
 }
 
-/**
- * Get credentials from pack connector instance
- */
 async function getPackCredentials(
   connectorId: string,
   tenantId: string,
@@ -231,16 +224,12 @@ async function getPackCredentials(
   return data.config as Record<string, string>;
 }
 
-/**
- * Execute Stripe-specific operation
- */
 async function executeStripeOperation<T>(
   operation: string,
   params: unknown,
   credentials: Record<string, string>,
-  context: RouterContext
+  _context: RouterContext
 ): Promise<{ success: boolean; data?: T; error?: string }> {
-  // Lazy load Stripe service to avoid circular deps
   const { StripeApiService, mapStripeChargesToPayments } = await import(
     "./packs/finance-pack"
   );
@@ -324,17 +313,252 @@ async function executeStripeOperation<T>(
   }
 }
 
-/**
- * Get HTTP method for operation
- */
+async function executeHubSpotOperation<T>(
+  operation: string,
+  params: unknown,
+  credentials: Record<string, string>,
+  _context: RouterContext
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  const { HubSpotApiService, mapHubSpotContactsToUnified, mapHubSpotCompaniesToUnified, mapHubSpotDealsToUnified } = await import(
+    "./packs/crm-pack"
+  );
+
+  const hubspot = new HubSpotApiService({
+    accessToken: credentials.accessToken || "",
+  });
+
+  try {
+    switch (operation) {
+      case "list": {
+        const resource = (params as { resource?: string }).resource;
+        const limit = (params as { limit?: number }).limit ?? 100;
+
+        if (resource === "contacts") {
+          const result = await hubspot.listContacts({ limit });
+          return { success: true, data: mapHubSpotContactsToUnified(result.results) as T };
+        }
+
+        if (resource === "companies") {
+          const result = await hubspot.listCompanies({ limit });
+          return { success: true, data: mapHubSpotCompaniesToUnified(result.results) as T };
+        }
+
+        if (resource === "deals") {
+          const result = await hubspot.listDeals({ limit });
+          return { success: true, data: mapHubSpotDealsToUnified(result.results) as T };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "get": {
+        const { resource, id } = params as { resource: string; id: string };
+
+        if (resource === "contact") {
+          const contact = await hubspot.getContact(id);
+          return { success: !!contact, data: contact as T, error: contact ? undefined : "Contact not found" };
+        }
+
+        if (resource === "company") {
+          const company = await hubspot.getCompany(id);
+          return { success: !!company, data: company as T, error: company ? undefined : "Company not found" };
+        }
+
+        if (resource === "deal") {
+          const deal = await hubspot.getDeal(id);
+          return { success: !!deal, data: deal as T, error: deal ? undefined : "Deal not found" };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "search": {
+        const { query } = params as { query: string };
+        const contacts = await hubspot.searchContacts(query);
+        return { success: true, data: mapHubSpotContactsToUnified(contacts) as T };
+      }
+
+      default:
+        return { success: false, error: `Operation ${operation} not supported` };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+async function handleNotion<T>(
+  operation: string,
+  params: unknown,
+  credentials: Record<string, string>
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  const { NotionApiService } = await import("./packs/productivity-pack");
+
+  const notion = new NotionApiService({
+    accessToken: credentials.accessToken || "",
+  });
+
+  try {
+    switch (operation) {
+      case "list": {
+        const resource = (params as { resource?: string }).resource;
+
+        if (resource === "pages") {
+          const searchRes = await notion.search("", { pageSize: 100 });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pageList = searchRes.results.filter((r: any) => r.object === "page");
+          return { success: true, data: pageList as T };
+        }
+
+        if (resource === "databases") {
+          const searchRes = await notion.search("", { pageSize: 100 });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const dbList = searchRes.results.filter((r: any) => r.object === "database");
+          return { success: true, data: dbList as T };
+        }
+
+        if (resource === "users") {
+          const userRes = await notion.listUsers({ pageSize: 100 });
+          return { success: true, data: userRes.results as T };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "get": {
+        const { resource, id } = params as { resource: string; id: string };
+
+        if (resource === "page") {
+          const page = await notion.getPage(id);
+          return { success: !!page, data: page as T, error: page ? undefined : "Page not found" };
+        }
+
+        if (resource === "database") {
+          const db = await notion.getDatabase(id);
+          return { success: !!db, data: db as T, error: db ? undefined : "Database not found" };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "search": {
+        const { query } = params as { query: string };
+        const searchRes = await notion.search(query);
+        return { success: true, data: searchRes.results as T };
+      }
+
+      case "query": {
+        const { databaseId, filter } = params as { databaseId: string; filter?: Record<string, unknown> };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const queryRes = await notion.queryDatabase(databaseId, { filter } as any);
+        return { success: true, data: queryRes.results as T };
+      }
+
+      default:
+        return { success: false, error: `Operation ${operation} not supported` };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+async function handleFigma<T>(
+  operation: string,
+  params: unknown,
+  credentials: Record<string, string>
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  const { FigmaApiService } = await import("./packs/design-pack");
+
+  const figma = new FigmaApiService({
+    accessToken: credentials.accessToken || "",
+  });
+
+  try {
+    switch (operation) {
+      case "list": {
+        const resource = (params as { resource?: string }).resource;
+
+        if (resource === "files") {
+          const user = await figma.getCurrentUser();
+          return { success: true, data: [{ id: user.id, name: "User files" }] as T };
+        }
+
+        if (resource === "projects") {
+          const teams = await figma.getUserTeams();
+          const allProjects: unknown[] = [];
+          for (const team of teams.teams.slice(0, 3)) {
+            const projects = await figma.getTeamProjects(team.id);
+            allProjects.push(...projects.projects);
+          }
+          return { success: true, data: allProjects as T };
+        }
+
+        if (resource === "components") {
+          const { fileKey } = params as { fileKey: string };
+          const compRes = await figma.getFileComponents(fileKey);
+          return { success: true, data: Object.values(compRes.components) as T };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "get": {
+        const { resource, id } = params as { resource: string; id: string };
+
+        if (resource === "file") {
+          const file = await figma.getFile(id);
+          return { success: true, data: file as T };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "search": {
+        // Figma API doesn't have a search endpoint
+        // Return user teams as a proxy for discoverable content
+        const teams = await figma.getUserTeams();
+        return { success: true, data: teams.teams as T };
+      }
+
+      case "get_variables": {
+        const { fileKey } = params as { fileKey: string };
+        const varRes = await figma.getLocalVariables(fileKey);
+        const varList = Object.values(varRes.meta.variables);
+        return { success: true, data: varList as T };
+      }
+
+      case "get_comments": {
+        const { fileKey } = params as { fileKey: string };
+        const commentRes = await figma.getComments(fileKey);
+        return { success: true, data: commentRes.comments as T };
+      }
+
+      default:
+        return { success: false, error: `Operation ${operation} not supported` };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 function getHttpMethod(operation: string): "GET" | "POST" | "PUT" | "DELETE" {
   switch (operation) {
     case "list":
     case "get":
+    case "search":
       return "GET";
     case "create":
       return "POST";
     case "update":
+    case "query":
       return "PUT";
     case "delete":
       return "DELETE";
@@ -343,17 +567,11 @@ function getHttpMethod(operation: string): "GET" | "POST" | "PUT" | "DELETE" {
   }
 }
 
-/**
- * Build Nango endpoint URL
- */
 function getNangoEndpoint(
   connectorId: string,
   operation: string,
   params: unknown
 ): string {
-  // Simple mapping for common connectors
-  // This would be more sophisticated in production
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = params as Record<string, any>;
 
@@ -372,9 +590,6 @@ function getNangoEndpoint(
   }
 }
 
-/**
- * Get router stats
- */
 export function getRouterStats(): {
   availablePacks: number;
   legacyConnectors: number;
@@ -383,26 +598,13 @@ export function getRouterStats(): {
   const packLoader = getPackLoader();
   const packs = packLoader.getAllConnectors();
 
-  // Legacy connectors known to work with Nango
   const legacyConnectors = [
-    "gmail",
-    "slack",
-    "google-drive",
-    "google-calendar",
-    "github",
-    "jira",
-    "trello",
-    "asana",
-    "notion",
-    "airtable",
-    "hubspot",
-    "salesforce",
+    "gmail", "slack", "google-drive", "google-calendar", "github",
+    "jira", "trello", "asana", "notion", "airtable", "hubspot", "salesforce",
   ];
 
-  const routingTable: Array<{ id: string; source: "pack" | "nango" | "both" }> =
-    [];
+  const routingTable: Array<{ id: string; source: "pack" | "nango" | "both" }> = [];
 
-  // All pack connectors
   for (const pack of packs) {
     const hasNango = legacyConnectors.includes(pack.id);
     routingTable.push({
@@ -411,7 +613,6 @@ export function getRouterStats(): {
     });
   }
 
-  // Legacy-only connectors
   for (const legacy of legacyConnectors) {
     if (!packs.find((p) => p.id === legacy)) {
       routingTable.push({ id: legacy, source: "nango" });

@@ -1,0 +1,85 @@
+{
+  "id": "design-pack",
+  "name": "Design Pack",
+  "description": "Design and creative tools including Figma, Adobe Creative Cloud, and Canva",
+  "version": "1.0.0",
+  "category": "design",
+  "author": "Hearst OS",
+  "license": "MIT",
+  "connectors": [
+    {
+      "id": "figma",
+      "name": "Figma",
+      "description": "Figma - Files, Components, Variables, Dev Mode, and Design Systems",
+      "version": "1.0.0",
+      "category": "design",
+      "auth": {
+        "type": "oauth2",
+        "scopes": ["files:read", "file_variables:read", "file_comments:read"]
+      },
+      "capabilities": {
+        "read": true,
+        "write": false,
+        "delete": false,
+        "webhooks": false,
+        "realtime": false
+      },
+      "icon": "/icons/figma.svg",
+      "docsUrl": "https://www.figma.com/developers/api",
+      "rateLimits": {
+        "requestsPerMinute": 60
+      },
+      "healthCheck": {
+        "endpoint": "/v1/me",
+        "method": "GET",
+        "expectedStatus": 200
+      }
+    },
+    {
+      "id": "adobe",
+      "name": "Adobe Creative Cloud",
+      "description": "Adobe CC - Assets, Libraries, Photoshop, Illustrator integration",
+      "version": "1.0.0",
+      "category": "design",
+      "auth": {
+        "type": "oauth2",
+        "scopes": ["openid", "creative_sdk"]
+      },
+      "capabilities": {
+        "read": true,
+        "write": false,
+        "delete": false,
+        "webhooks": false,
+        "realtime": false
+      },
+      "icon": "/icons/adobe.svg",
+      "docsUrl": "https://developer.adobe.com",
+      "rateLimits": {
+        "requestsPerHour": 500
+      }
+    },
+    {
+      "id": "canva",
+      "name": "Canva",
+      "description": "Canva - Designs, Templates, Brand Kit, and Visual Content",
+      "version": "1.0.0",
+      "category": "design",
+      "auth": {
+        "type": "oauth2",
+        "scopes": ["design:read", "design:write"]
+      },
+      "capabilities": {
+        "read": true,
+        "write": true,
+        "delete": false,
+        "webhooks": false,
+        "realtime": false
+      },
+      "icon": "/icons/canva.svg",
+      "docsUrl": "https://www.canva.com/developers",
+      "rateLimits": {
+        "requestsPerMinute": 30
+      }
+    }
+  ]
+}

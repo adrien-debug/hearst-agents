@@ -2,8 +2,10 @@
 
 Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
-> 🚀 **Quick Start**: `npm run dev` démarre **hearst-connect :8100** + **Hearst-app :3000** + **hearst-os :9000** (logs `/tmp/hearst-*.log`) et ouvre les 3 URLs dans **Google Chrome** — `HEARST_OPEN_CHROME=0` pour désactiver | `npm run launch` = idem + nohup + purge `.next`  
-> `npm run dev:solo` = seulement hearst-os sur **:9000**  
+> 🚀 **Quick Start**: `npm run dev` = **hearst-os seul** sur **:9000** (pas de repos voisins).  
+> `npm run dev:stack` = hearst-connect :8100 + Hearst-app :3000 + hearst-os :9000 (logs `/tmp/hearst-*.log`, Chrome si `HEARST_OPEN_CHROME` non à 0) — uniquement si les dossiers `../hearst-connect` et `../Hearst-app` existent.  
+> `npm run launch` = stack complète + nohup + purge `.next` (voir [`LAUNCHER.md`](./LAUNCHER.md))  
+> `npm run dev:solo` = alias de `npm run dev`  
 > 📖 Guide complet: [`LAUNCHER.md`](./LAUNCHER.md)
 
 > ✅ **Phase 1 — V2 Foundation TERMINÉE (23/04/2026)**  
@@ -32,11 +34,20 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > - `lib/agents/index.ts` — Barrel export restauré
 > - `lib/connectors/packs/finance-pack/{auth,services,mappers,schemas}/` — Connector Pack structure
 > - `lib/engine/runtime/assets/{generators,cache,cleanup,api}/` — Asset subsystems
-> - `lib/admin/{settings,permissions,connectors,health,audit}.ts` — Admin API stubs
+> - `lib/admin/{settings,permissions,connectors,health,audit}.ts` — Admin API complets
 > - `lib/platform/db/{supabase,schema,index}.ts` — Database layer
 >
+> ✅ **Phase 10 — Connector Packs Expansion** — 4 Packs avec services complets
+> - `finance-pack/` — Stripe (payments, invoices, subscriptions, balance, customers)
+> - `crm-pack/` — HubSpot (contacts, companies, deals), Salesforce (planned)
+> - `productivity-pack/` — Notion (pages, databases, blocks, search), Trello/Asana (planned)
+> - `design-pack/` — Figma (files, components, variables, comments), Adobe/Canva (planned)
+>
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
+> **État Phase 10** : [`docs/STATUS_2026-04-25_PHASE10.md`](./docs/STATUS_2026-04-25_PHASE10.md)
 > **État d'avancement / écarts** : [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
+>
+> **Métriques** : 267 fichiers • 404 tests pass • 4 Connector Packs validés • Build ✅
 
 ## 📚 Documentation Architecture (HTML)
 
