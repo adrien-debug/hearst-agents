@@ -181,9 +181,8 @@ export class LocalStorageProvider implements StorageProvider {
 
         const fullPath = path.join(searchPath, entry.name);
         const stats = await fs.stat(fullPath);
-        const relativeKey = tenantId
-          ? path.relative(path.join(this.basePath, tenantId), fullPath)
-          : path.relative(this.basePath, fullPath);
+        // Key is relative to prefix, not including the prefix itself
+        const relativeKey = entry.name;
 
         let contentType = "application/octet-stream";
         try {

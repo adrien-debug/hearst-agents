@@ -50,10 +50,12 @@ describe("LocalStorageProvider", () => {
     const content = "Download test content";
     await storage.upload("download.txt", Buffer.from(content), {
       contentType: "text/plain",
+      metadata: { source: "test" },
     });
 
     const result = await storage.download("download.txt");
     expect(result.size).toBe(content.length);
+    // ContentType comes from metadata sidecar file
     expect(result.contentType).toBe("text/plain");
 
     // Read stream
