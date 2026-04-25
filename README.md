@@ -13,8 +13,8 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > 5 backends unifiés • 384 tests • 98.3% pass rate  
 > [`lib/orchestrator/orchestrate-v2.ts`](./lib/orchestrator/orchestrate-v2.ts)
 
-> ✅ **Fondations — Semaines 0-4 TERMINÉES (25/04/2026)**  
-> Sécurité env • Responsive shell • Toasts/feedback • Login FR • Core types unifiés  
+> ✅ **Fondations — Semaines 0-6 TERMINÉES (25/04/2026)**  
+> Sécurité env • Responsive shell • Toasts/feedback • Login FR • Core types unifiés • Analytics 4 events • E2E complet (mobile+desktop)  
 > [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)

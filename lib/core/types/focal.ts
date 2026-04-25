@@ -5,10 +5,34 @@
  * Part of Architecture Finale — Type Unification layer.
  *
  * Centralizes focal object transformations to prevent drift between
- * RightPanel, FocalStage, and other consumers.
+ * RightPanel, FocalStage, HomePage rehydration, and other consumers.
  */
 
 import type { FocalObject, FocalType, FocalStatus } from "@/stores/focal";
+
+const VALID_FOCAL_TYPES: FocalType[] = [
+  "message_draft",
+  "message_receipt",
+  "brief",
+  "outline",
+  "report",
+  "doc",
+  "watcher_draft",
+  "watcher_active",
+  "mission_draft",
+  "mission_active",
+];
+
+const VALID_FOCAL_STATUSES: FocalStatus[] = [
+  "composing",
+  "ready",
+  "awaiting_approval",
+  "delivering",
+  "delivered",
+  "active",
+  "paused",
+  "failed",
+];
 
 export interface FocalMappingOptions {
   fallbackThreadId: string;
@@ -18,11 +42,7 @@ export interface FocalMappingOptions {
 
 /**
  * Maps an unknown API response object to a typed FocalObject.
- * Used by RightPanel and other consumers to normalize API data.
- *
- * Architecture Finale alignment: This utility bridges the gap between
- * server-side manifest types (lib/right-panel/objects.ts) and client
- * canonical types (stores/focal.ts). Phase 7 will eliminate the duplication.
+ * Used by RightPanel, FocalStage, thread rehydration, and other consumers.
  */
 export function mapFocalObject(
   obj: unknown,
@@ -34,16 +54,47 @@ export function mapFocalObject(
   const objectType = (o.objectType ?? o.type) as string | undefined;
   if (!objectType) return null;
 
+  const type = VALID_FOCAL_TYPES.includes(objectType as FocalType)
+    ? (objectType as FocalType)
+    : "brief";
+
+  const status = VALID_FOCAL_STATUSES.includes(o.status as FocalStatus)
+    ? (o.status as FocalStatus)
+    : "ready";
+
+  let body = (o.body as string) || (o.summary as string) || "";
+  if (!body && Array.isArray(o.sections) && o.sections.length > 0) {
+    const firstSection = o.sections[0] as Record<string, string>;
+    body = firstSection?.body || "";
+  }
+
+  let primaryAction: { kind: string; label: string } | undefined;
+  if (o.primaryAction && typeof o.primaryAction === "object") {
+    const pa = o.primaryAction as Record<string, unknown>;
+    if (typeof pa.kind === "string" && typeof pa.label === "string") {
+      primaryAction = { kind: pa.kind, label: pa.label };
+    }
+  }
+
+  const createdAt =
+    typeof o.createdAt === "number" ? o.createdAt : Date.now();
+  const updatedAt =
+    typeof o.updatedAt === "number" ? o.updatedAt : Date.now();
+
   return {
     id: (o.id as string) || `focal-${Date.now()}`,
-    type: objectType as FocalType,
-    status: (o.status as FocalStatus) || "ready",
+    type,
+    status,
     title: (o.title as string) || "Untitled",
-    body: (o.body as string) || (o.summary as string) || "",
+    body,
     summary: (o.summary as string) || undefined,
     sections: Array.isArray(o.sections)
       ? (o.sections as { heading?: string; body: string }[])
       : undefined,
+    wordCount: typeof o.wordCount === "number" ? o.wordCount : undefined,
+    provider: (o.providerId as string) || (o.provider as string) || undefined,
+    createdAt,
+    updatedAt,
     threadId: (o.threadId as string) || fallbackThreadId,
     sourcePlanId: (o.sourcePlanId as string) || undefined,
     sourceAssetId: (o.sourceAssetId as string) || undefined,
@@ -52,17 +103,7 @@ export function mapFocalObject(
       o.morphTarget === null
         ? null
         : (o.morphTarget as string) || undefined,
-    primaryAction:
-      o.primaryAction && typeof o.primaryAction === "object"
-        ? {
-            kind: (o.primaryAction as Record<string, string>).kind,
-            label: (o.primaryAction as Record<string, string>).label,
-          }
-        : undefined,
-    createdAt:
-      typeof o.createdAt === "number" ? o.createdAt : Date.now(),
-    updatedAt:
-      typeof o.updatedAt === "number" ? o.updatedAt : Date.now(),
+    primaryAction,
   };
 }
 

@@ -69,7 +69,7 @@ lib/
 |---------|--------|-------|
 | `lib/core/types/` | 🟡 Partiel | Canonique créé, migration progressive |
 | RightPanel UI | 🟡 Fonctionnel | Drawer mobile OK, INDEX/DOCUMENT différé |
-| Focal objects | 🟡 Fonctionnels | `mapFocalObject` extrait, dédoublonnage partiel |
+| Focal objects | 🟢 Fonctionnels | `mapFocalObject` / `mapFocalObjects` canoniques dans `lib/core/types/focal.ts` (HomePage, FocalStage, RightPanel) |
 | Assets storage | 🔴 Local | Reste file-backed, cloud (R2/S3) Phase 7+ |
 | Settings dynamiques | 🔴 Hardcodés | `lib/platform/settings/` squelette uniquement |
 | RBAC | 🔴 Absent | `roles`, `user_roles` Phase 7+ |
@@ -78,16 +78,32 @@ lib/
 
 ## 4. Ce qu'il reste à faire
 
-### Phase 5 — Analytics (Semaine 5)
+### Phase 5 — Analytics (Semaine 5) ✅
 
-- [ ] 4 événements logs structurés (login, message, run, erreur)
-- [ ] Configuration via `lib/platform/settings/` (début)
+- [x] 4 événements logs structurés (login, message, run, erreur)
+  - `login_success` — déclenché au clic OAuth
+  - `first_message_sent` — activation (premier message utilisateur)
+  - `run_completed` — flux SSE terminé avec succès
+  - `run_failed` — erreur orchestration ou serveur
+- [x] Endpoint API `/api/analytics` pour ingestion
+- [x] Anonymisation user ID (hash simple)
+- [ ] Configuration via `lib/platform/settings/` (début — Phase 7)
 
-### Phase 6 — E2E complet (Semaine 6)
+### Phase 6 — E2E complet (Semaine 6) ✅
 
-- [ ] Happy path E2E : login → message → focal visible
-- [ ] Test mobile : drawer toggle, responsive
-- [ ] Test erreur : toast visibility
+- [x] Happy path E2E : login → message → focal visible
+- [x] Test mobile : drawer toggle, responsive (iPhone SE, Pixel 5)
+- [x] Test erreur : toast visibility
+- [x] Test analytics : event tracking validation
+- [x] Multi-device config : Desktop Chrome, iPhone 12, Pixel 5
+- [x] Documentation E2E : `e2e/README.md`
+
+**Fichiers E2E créés** :
+- `e2e/smoke.spec.ts` — Health, login FR, responsive (Semaine 1+4)
+- `e2e/happy-path.spec.ts` — Flow complet, mobile drawer, toasts
+- `e2e/analytics.spec.ts` — Event tracking validation
+
+**Note** : Tests avec tag `@skip-ci` nécessitent `HEARST_DEV_AUTH_BYPASS=1` ou session OAuth. Les smoke tests (health, login page) passent sans auth.
 
 ### Phase 7 — Convergence Architecture Finale (Mois 2)
 

@@ -5,6 +5,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { SessionProvider } from "next-auth/react";
 
+// Analytics tracking (client-side call to server)
+function trackLogin(provider: string) {
+  fetch("/api/analytics", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "login_success",
+      userId: `oauth_${provider}_${Date.now()}`, // Temporary ID, replaced server-side
+      properties: { provider },
+    }),
+  }).catch(() => {
+    // Silent fail for analytics
+  });
+}
+
 /* ─── Provider config ─── */
 
 type ProviderId = "google" | "azure-ad";
@@ -76,6 +91,7 @@ function LoginContent() {
   const handleSignIn = useCallback(
     (providerId: ProviderId) => {
       setLoadingProvider(providerId);
+      trackLogin(providerId);
       signIn(providerId, { callbackUrl });
     },
     [callbackUrl],
@@ -152,8 +168,8 @@ function LoginContent() {
           {error && (
             <div className="mt-5 rounded-lg border border-red-500/10 bg-red-500/4 px-4 py-3 text-center text-[13px] leading-normal text-red-400/70">
               {error === "OAuthCallback"
-                ? "L&apos;authentification a été annulée ou a échoué. Veuillez réessayer."
-                : "Nous n&apos;avons pas pu vous connecter. Veuillez réessayer ou utiliser l&apos;autre fournisseur."}
+                ? "L'authentification a été annulée ou a échoué. Veuillez réessayer."
+                : "Nous n'avons pas pu vous connecter. Veuillez réessayer ou utiliser l'autre fournisseur."}
             </div>
           )}
 

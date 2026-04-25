@@ -5,7 +5,8 @@ import { useSession } from "next-auth/react";
 import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
-import type { FocalObject, FocalType, FocalStatus, Message, Surface, RightPanelData } from "@/lib/core/types";
+import type { Message, Surface, RightPanelData } from "@/lib/core/types";
+import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { FocalStage } from "./components/FocalStage";
 import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
@@ -16,6 +17,16 @@ import { getAllServices } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { toast } from "@/app/hooks/use-toast";
+// Analytics tracking helper (client-side)
+function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_failed", userId: string, properties?: Record<string, unknown>) {
+  fetch("/api/analytics", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ type, userId, properties }),
+  }).catch(() => {
+    // Silent fail for analytics
+  });
+}
 
 function greeting() {
   const h = new Date().getHours();
@@ -155,79 +166,18 @@ export default function HomePage() {
 
         const data: RightPanelData = await res.json();
 
-        // Map focalObject to FocalObject type — conserve toutes les métadonnées utiles
-        const mapFocalObject = (obj: unknown): FocalObject | null => {
-          if (!obj || typeof obj !== "object") return null;
-          const o = obj as Record<string, unknown>;
+        const secondary =
+          data.secondaryObjects && Array.isArray(data.secondaryObjects)
+            ? mapFocalObjects(
+                data.secondaryObjects as unknown[],
+                activeThreadId
+              ).slice(0, 3)
+            : [];
 
-          const objectType = o.objectType as string | undefined;
-          if (!objectType) return null;
-
-          const validTypes: FocalType[] = [
-            "message_draft", "message_receipt", "brief", "outline",
-            "report", "doc", "watcher_draft", "watcher_active",
-            "mission_draft", "mission_active"
-          ];
-          const type = validTypes.includes(objectType as FocalType) ? (objectType as FocalType) : "brief";
-
-          const validStatuses: FocalStatus[] = [
-            "composing", "ready", "awaiting_approval", "delivering",
-            "delivered", "active", "paused", "failed"
-          ];
-          const status = validStatuses.includes(o.status as FocalStatus) ? (o.status as FocalStatus) : "ready";
-
-          const createdAt = typeof o.createdAt === "number" ? o.createdAt : Date.now();
-          const updatedAt = typeof o.updatedAt === "number" ? o.updatedAt : Date.now();
-
-          // Extract body from summary or sections
-          let body = (o.body as string) || (o.summary as string) || "";
-          if (!body && Array.isArray(o.sections) && o.sections.length > 0) {
-            const firstSection = o.sections[0] as Record<string, string>;
-            body = firstSection?.body || "";
-          }
-
-          // Extract primaryAction if present
-          let primaryAction: { kind: string; label: string } | undefined;
-          if (o.primaryAction && typeof o.primaryAction === "object") {
-            const pa = o.primaryAction as Record<string, unknown>;
-            if (typeof pa.kind === "string" && typeof pa.label === "string") {
-              primaryAction = { kind: pa.kind, label: pa.label };
-            }
-          }
-
-          return {
-            id: (o.id as string) || `focal-${Date.now()}`,
-            type,
-            status,
-            title: (o.title as string) || "Untitled",
-            body,
-            summary: (o.summary as string) || undefined,
-            sections: Array.isArray(o.sections) ? o.sections as { heading?: string; body: string }[] : undefined,
-            wordCount: typeof o.wordCount === "number" ? o.wordCount : undefined,
-            provider: (o.providerId as string) || (o.provider as string) || undefined,
-            createdAt,
-            updatedAt,
-            // Métadonnées focales enrichies — conservées pour traçabilité et action future
-            threadId: (o.threadId as string) || undefined,
-            sourcePlanId: (o.sourcePlanId as string) || undefined,
-            sourceAssetId: (o.sourceAssetId as string) || undefined,
-            missionId: (o.missionId as string) || undefined,
-            morphTarget: o.morphTarget === null ? null : (o.morphTarget as string) || undefined,
-            primaryAction,
-          };
-        };
-
-        // Map secondaryObjects
-        const secondary: FocalObject[] = [];
-        if (data.secondaryObjects && Array.isArray(data.secondaryObjects)) {
-          for (const obj of data.secondaryObjects) {
-            const mapped = mapFocalObject(obj);
-            if (mapped) secondary.push(mapped);
-          }
-        }
-
-        const mappedFocal = data.focalObject ? mapFocalObject(data.focalObject) : null;
-        hydrateThreadState(mappedFocal, secondary.slice(0, 3));
+        const mappedFocal = data.focalObject
+          ? mapFocalObject(data.focalObject, activeThreadId)
+          : null;
+        hydrateThreadState(mappedFocal, secondary);
       } catch (_err) {
         // Silent fail — user can continue with chat
         hydrateThreadState(null, []);
@@ -350,6 +300,14 @@ export default function HomePage() {
     };
     addMessageToThread(activeThreadId, userMessage);
 
+    // Track first message (activation metric)
+    if (messages.length === 0) {
+      trackAnalytics("first_message_sent", session?.user?.email || "anonymous", {
+        threadId: activeThreadId,
+        provider: capabilityMode,
+      });
+    }
+
     // Reset assistant buffer for new run
     assistantBufferRef.current = "";
     currentAssistantIdRef.current = `assistant-${Date.now()}`;
@@ -443,11 +401,25 @@ export default function HomePage() {
       if (canonicalRunId) {
         console.log(`[Chat] Run completed with canonical id: ${canonicalRunId}`);
       }
+
+      // Track run completion
+      trackAnalytics("run_completed", session?.user?.email || "anonymous", {
+        runId: canonicalRunId || clientToken,
+        provider: capabilityMode,
+        messageCount: messages.length,
+      });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Échec de la connexion";
       console.error("[Chat] Orchestration failed:", err);
       toast.error("Erreur de connexion", errorMsg);
       addEvent({ type: "run_failed", error: errorMsg, run_id: clientToken });
+
+      // Track run failure
+      trackAnalytics("run_failed", session?.user?.email || "anonymous", {
+        runId: clientToken,
+        provider: capabilityMode,
+        error: errorMsg,
+      });
     }
   }, [surface, activeThreadId, capabilityMode, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread]);
 

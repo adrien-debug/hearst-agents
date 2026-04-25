@@ -37,8 +37,18 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
+      name: "chromium-desktop",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "mobile-safari",
+      use: { ...devices["iPhone 12"] },
+    },
+    {
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 5"] },
+    },
   ],
+  // Skip auth-required tests in CI (no OAuth credentials)
+  grepInvert: process.env.CI ? /@skip-ci/ : undefined,
 });
