@@ -1,5 +1,8 @@
 /**
- * Focal Object Utilities — Shared mapping and type guards
+ * Focal Object Utilities — Core mapping and type guards
+ *
+ * Canonical location: lib/core/types/focal.ts
+ * Part of Architecture Finale — Type Unification layer.
  *
  * Centralizes focal object transformations to prevent drift between
  * RightPanel, FocalStage, and other consumers.
@@ -7,9 +10,19 @@
 
 import type { FocalObject, FocalType, FocalStatus } from "@/stores/focal";
 
+export interface FocalMappingOptions {
+  fallbackThreadId: string;
+  /** Include debug info in mapped object (dev only) */
+  debug?: boolean;
+}
+
 /**
  * Maps an unknown API response object to a typed FocalObject.
  * Used by RightPanel and other consumers to normalize API data.
+ *
+ * Architecture Finale alignment: This utility bridges the gap between
+ * server-side manifest types (lib/right-panel/objects.ts) and client
+ * canonical types (stores/focal.ts). Phase 7 will eliminate the duplication.
  */
 export function mapFocalObject(
   obj: unknown,
@@ -18,7 +31,7 @@ export function mapFocalObject(
   if (!obj || typeof obj !== "object") return null;
 
   const o = obj as Record<string, unknown>;
-  const objectType = o.objectType as string | undefined;
+  const objectType = (o.objectType ?? o.type) as string | undefined;
   if (!objectType) return null;
 
   return {

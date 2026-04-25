@@ -11,6 +11,13 @@ const SURFACES: { id: Surface; label: string; icon: string; path: string }[] = [
   { id: "home", label: "Accueil", icon: "◉", path: "/" },
 ];
 
+/**
+ * LeftPanel — Thread navigation and primary surface switcher
+ *
+ * Desktop: Collapsible sidebar (240px expanded / 60px collapsed)
+ * Mobile: Hidden (see layout.tsx), navigation moved to mobile drawer if needed
+ */
+
 export function LeftPanel() {
   const { data: session } = useSession();
   const { surface, setSurface, threads, activeThreadId, setActiveThread, addThread } = useNavigationStore();
@@ -28,7 +35,7 @@ export function LeftPanel() {
 
   return (
     <aside
-      className={`${isExpanded ? "w-[240px]" : "w-[60px]"} border-r border-[var(--line)] flex flex-col transition-all duration-200`}
+      className={`${isExpanded ? "w-[240px]" : "w-[60px]"} border-r border-[var(--line)] flex flex-col transition-all duration-200 h-full`}
       style={{ background: "rgba(255,255,255,0.008)" }}
     >
       {/* Brand Header */}
@@ -53,6 +60,17 @@ export function LeftPanel() {
             </div>
           )}
         </div>
+
+        {/* Toggle expand/collapse — always visible */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="mt-2 w-full py-1 flex items-center justify-center gap-1 text-[10px] text-[var(--text-faint)] hover:text-[var(--text-muted)] hover:bg-white/[0.02] rounded transition-colors"
+          title={isExpanded ? "Réduire" : "Développer"}
+        >
+          <span>{isExpanded ? "←" : "→"}</span>
+          {isExpanded && <span>Réduire</span>}
+        </button>
+
         {!isExpanded && (
           <button
             onClick={handleLogout}

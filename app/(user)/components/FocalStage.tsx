@@ -5,6 +5,7 @@ import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useSession } from "next-auth/react";
 import type { FocalObject, FocalStatus } from "@/lib/core/types";
+import { mapFocalObject } from "@/lib/core/types/focal";
 
 // Status labels for user-facing display
 const STATUS_LABELS: Record<FocalStatus, string> = {
@@ -216,46 +217,21 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
       const res = await fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`);
       if (res.ok) {
         const data = await res.json();
-        // Map focalObject to FocalObject type
-        const mapFocalObject = (obj: unknown): import("@/stores/focal").FocalObject | null => {
-          if (!obj || typeof obj !== "object") return null;
-          const o = obj as Record<string, unknown>;
-          const objectType = o.objectType as string | undefined;
-          if (!objectType) return null;
-          return {
-            id: (o.id as string) || `focal-${Date.now()}`,
-            type: objectType as import("@/stores/focal").FocalType,
-            status: (o.status as import("@/stores/focal").FocalStatus) || "ready",
-            title: (o.title as string) || "Untitled",
-            body: (o.body as string) || (o.summary as string) || "",
-            summary: (o.summary as string) || undefined,
-            sections: Array.isArray(o.sections) ? o.sections as { heading?: string; body: string }[] : undefined,
-            threadId: (o.threadId as string) || activeThreadId,
-            sourcePlanId: (o.sourcePlanId as string) || undefined,
-            sourceAssetId: (o.sourceAssetId as string) || undefined,
-            missionId: (o.missionId as string) || undefined,
-            morphTarget: o.morphTarget === null ? null : (o.morphTarget as string) || undefined,
-            primaryAction: o.primaryAction && typeof o.primaryAction === "object"
-              ? { kind: (o.primaryAction as Record<string, string>).kind, label: (o.primaryAction as Record<string, string>).label }
-              : undefined,
-            createdAt: typeof o.createdAt === "number" ? o.createdAt : Date.now(),
-            updatedAt: typeof o.updatedAt === "number" ? o.updatedAt : Date.now(),
-          };
-        };
 
-        const mappedFocal = data.focalObject ? mapFocalObject(data.focalObject) : null;
-        const secondary: import("@/stores/focal").FocalObject[] = [];
+        // Use shared utility from lib/core/types/focal
+        const mappedFocal = data.focalObject ? mapFocalObject(data.focalObject, activeThreadId) : null;
+        const secondary: FocalObject[] = [];
         if (data.secondaryObjects && Array.isArray(data.secondaryObjects)) {
           for (const obj of data.secondaryObjects) {
-            const mapped = mapFocalObject(obj);
+            const mapped = mapFocalObject(obj, activeThreadId);
             if (mapped) secondary.push(mapped);
           }
         }
         // Atomic rehydratation without full page reload
         hydrateThreadState(mappedFocal, secondary.slice(0, 3));
       }
-    } catch (err) {
-      console.error("[FocalStage] Failed to refresh after action:", err);
+    } catch (_err) {
+      // Silent fail - focal state remains unchanged
     }
   };
 

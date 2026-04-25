@@ -1,0 +1,10 @@
+# lib/engine/ — Architecture Finale Skeleton
+#
+# Target structure:
+#   runtime/assets/   — StorageProvider abstraction (local/R2/S3)
+#   runtime/missions/ — Scheduler, leases (existing)
+#   runtime/engine/   — RunEngine v2 (existing)
+#   orchestrator/     — Facade (move from lib/orchestrator/)
+#   planner/          — Intent → Plan (existing)
+#
+# Status: Phase 7 — Current lib/runtime/ stays functional during migration

@@ -1,0 +1,9 @@
+# lib/agents/ — Architecture Finale Skeleton
+#
+# Target structure:
+#   sessions/     — SessionManager, cross-provider state
+#   backends/     — Unified backend selector (move from lib/agents/backend-v2/)
+#   specialized/  — Domain agents (finance, design, developer, crm)
+#   operator/     — Human-in-the-loop (existing)
+#
+# Status: Phase 7 — Current lib/agents/backend-v2/ stays functional

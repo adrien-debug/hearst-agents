@@ -1,12 +1,28 @@
-import { defineConfig, devices } from "@playwright/test";
-
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any */
 /**
  * Playwright configuration — Smoke tests for critical paths
  *
  * Tests:
  * - Health endpoint availability
  * - Login page rendering without crash
+ *
+ * Note: Install Playwright before using: npm install --save-dev @playwright/test
  */
+
+// Conditionally import to avoid build errors when Playwright is not installed
+let defineConfig: any;
+let devices: any;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const playwright = require("@playwright/test");
+  defineConfig = playwright.defineConfig;
+  devices = playwright.devices;
+} catch {
+  // Fallback for build when Playwright is not installed
+  defineConfig = (config: any) => config;
+  devices = {};
+}
 
 export default defineConfig({
   testDir: "./e2e",

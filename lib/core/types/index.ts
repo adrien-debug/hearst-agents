@@ -1,15 +1,13 @@
 /**
  * Core Types — Canonical type exports for Hearst OS.
  *
- * This module provides a unified entry point for the most frequently used
- * types across the application. It re-exports types from their original
- * locations to maintain backward compatibility while reducing import
- * fragmentation.
+ * Architecture Finale alignment: lib/core/types/ is the single source of truth
+ * for all domain types. Re-exports from stores/, engine/, and focal domain.
  *
- * Migration strategy:
- * - New code should import from `@/lib/core/types`
- * - Existing imports remain valid (non-breaking)
- * - Types are not duplicated, only re-exported
+ * Migration:
+ * - New code: import from "@/lib/core/types"
+ * - Legacy: existing imports still valid (backward compatible)
+ * - Goal: eliminate lib/right-panel/objects.ts duplication (Phase 7)
  */
 
 // ── Navigation & Thread System ──────────────────────────────
@@ -19,12 +17,19 @@ export type {
   Thread,
 } from "@/stores/navigation";
 
-// ── Focal Object System ─────────────────────────────────────
+// ── Focal Object System (Canonical) ─────────────────────────
 export type {
   FocalType,
   FocalStatus,
   FocalObject,
 } from "@/stores/focal";
+
+// ── Focal Utilities ────────────────────────────────────────
+export {
+  mapFocalObject,
+  mapFocalObjects,
+  type FocalMappingOptions,
+} from "./focal";
 
 // ── Runtime & Streaming ────────────────────────────────────
 export type {
@@ -39,7 +44,7 @@ export type {
   Asset,
 } from "@/lib/assets/types";
 
-// ── Right Panel (UI View Model) ─────────────────────────────
+// ── Right Panel (UI View Model) ────────────────────────────
 export type {
   RightPanelCurrentRun,
   RightPanelRun,
@@ -55,3 +60,12 @@ export type {
   RunAssetRef,
   RunRecord,
 } from "@/lib/runtime/runs/types";
+
+// ── Connectors (Unified) ───────────────────────────────────
+export type {
+  ServiceDefinition,
+  ServiceWithConnectionStatus,
+} from "@/lib/integrations/types";
+
+// Note: ConnectorCapability imported from @/lib/connectors/platform/types
+// Import directly from there if needed: import type { ConnectorCapability } from "@/lib/connectors/platform/types"

@@ -18,12 +18,12 @@ test.describe("Login Page", () => {
   test("login page renders without crash", async ({ page }) => {
     await page.goto("/login");
 
-    // OAuth buttons should be visible
+    // OAuth buttons should be visible (FR labels)
     await expect(
-      page.locator("text=Continue with Google")
+      page.locator("text=Continuer avec Google")
     ).toBeVisible();
     await expect(
-      page.locator("text=Continue with Outlook")
+      page.locator("text=Continuer avec Outlook")
     ).toBeVisible();
   });
 });

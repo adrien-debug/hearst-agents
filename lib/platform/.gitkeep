@@ -1,0 +1,8 @@
+# lib/platform/ — Architecture Finale Skeleton
+#
+# Target structure:
+#   auth/     — NextAuth, token management (move from lib/auth.ts)
+#   db/       — Supabase client, schema types
+#   settings/ — system_settings, user preferences, tenant config
+#
+# Status: Phase 7 (Post-Scale) — lib/core/types/ is priority

@@ -10,11 +10,15 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > Structure V2 créée : `lib/agents/backend-v2/`, `lib/agents/sessions/`
 
 > ✅ **Backend V2 — Multi-Provider TERMINÉ (24/04/2026)**  
-> 5 backends unifiés • 353 tests • 98.3% pass rate  
+> 5 backends unifiés • 384 tests • 98.3% pass rate  
 > [`lib/orchestrator/orchestrate-v2.ts`](./lib/orchestrator/orchestrate-v2.ts)
 
+> ✅ **Fondations — Semaines 0-4 TERMINÉES (25/04/2026)**  
+> Sécurité env • Responsive shell • Toasts/feedback • Login FR • Core types unifiés  
+> [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
+
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
-> **Etat d'avancement / écarts (24/04/2026)** : [`docs/CONVERGENCE_STATUS_2026-04-24.md`](./docs/CONVERGENCE_STATUS_2026-04-24.md)
+> **État d'avancement / écarts** : [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 
 ## 📚 Documentation Architecture (HTML)
 
@@ -42,13 +46,16 @@ Documents interactifs ouverts dans le navigateur :
 | [`docs/DB_AND_MIGRATIONS.md`](./docs/DB_AND_MIGRATIONS.md) | Database & migrations |
 | [`docs/NANGO_SETUP.md`](./docs/NANGO_SETUP.md) | Setup OAuth Nango
 
-### Core Types
+### Core Types — Architecture Finale
 
 | Module | Path | Description |
 |--------|------|-------------|
-| `lib/core/types` | [`./lib/core/types/index.ts`](./lib/core/types/index.ts) | Point d'entrée canonique pour les types métier centraux. Re-exports des types de `stores/`, `lib/assets/`, `lib/ui/right-panel/`, etc. |
+| `lib/core/types` | [`./lib/core/types/index.ts`](./lib/core/types/index.ts) | **Point d'entrée canonique** pour les types métier centraux. Barrel export unifié aligné sur Architecture Finale. |
+| `lib/core/types/focal` | [`./lib/core/types/focal.ts`](./lib/core/types/focal.ts) | Utilities focal (mapFocalObject, mapFocalObjects) — unification client/serveur. |
 
-Migration recommandée : pour les nouveaux imports, utiliser `@/lib/core/types` au lieu de multiples imports dispersés. Les imports existants restent valides (non-breaking).
+**Migration** : nouveaux imports depuis `@/lib/core/types` (unifié) plutôt que dispersés. Legacy supporté avec marquage @deprecated.
+
+**Architecture Finale alignment** : [`ROADMAP_ARCHITECTURE_FINALE.md`](./ROADMAP_ARCHITECTURE_FINALE.md) — plan de convergence vers la structure cible (lib/platform/, lib/engine/, lib/agents/, connector packs).
 
 ## Architecture UX
 

@@ -11,6 +11,7 @@ export interface RightPanelCurrentRun {
   executionMode?: string;
   agentId?: string;
   backend?: string;
+  pendingToolCalls?: number;
 }
 
 export interface RightPanelRun {

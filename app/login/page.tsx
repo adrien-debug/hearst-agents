@@ -18,7 +18,7 @@ interface ProviderEntry {
 const PROVIDERS: ProviderEntry[] = [
   {
     id: "google",
-    label: "Continue with Google",
+    label: "Continuer avec Google",
     icon: (
       <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden="true">
         <path
@@ -42,7 +42,7 @@ const PROVIDERS: ProviderEntry[] = [
   },
   {
     id: "azure-ad",
-    label: "Continue with Outlook",
+    label: "Continuer avec Outlook",
     icon: (
       <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden="true">
         <path d="M11.4 24H0V8.8l11.4-2.6V24Z" fill="#0078D4" />
@@ -87,7 +87,7 @@ function LoginContent() {
         <div className="flex flex-col items-center gap-3">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
           <p className="text-[13px] text-white/70">
-            {status === "authenticated" ? "Redirecting\u2026" : "Loading\u2026"}
+            {status === "authenticated" ? "Redirection\u2026" : "Chargement\u2026"}
           </p>
         </div>
       </div>
@@ -109,17 +109,17 @@ function LoginContent() {
 
             {/* Secure access label */}
             <span className="mt-3 text-[11px] font-medium uppercase tracking-[0.15em] text-white/25">
-              Secure access
+              Accès sécurisé
             </span>
 
             {/* Title */}
             <h1 className="mt-4 text-center text-[26px] font-semibold leading-[1.15] tracking-tight text-white sm:text-[30px] md:text-[34px]">
-              Access your workspace
+              Accédez à votre espace de travail
             </h1>
 
             {/* Description */}
             <p className="mt-4 max-w-[340px] text-center text-[15px] leading-[1.55] text-white/70 sm:text-[16px]">
-              Continue to your workspace using your company identity provider.
+              Connectez-vous via votre fournisseur d&apos;identité professionnel.
             </p>
           </div>
 
@@ -142,7 +142,7 @@ function LoginContent() {
                   ) : (
                     provider.icon
                   )}
-                  <span>{isLoading ? "Redirecting\u2026" : provider.label}</span>
+                  <span>{isLoading ? "Redirection\u2026" : provider.label}</span>
                 </button>
               );
             })}
@@ -152,24 +152,24 @@ function LoginContent() {
           {error && (
             <div className="mt-5 rounded-lg border border-red-500/10 bg-red-500/4 px-4 py-3 text-center text-[13px] leading-normal text-red-400/70">
               {error === "OAuthCallback"
-                ? "Authentication was cancelled or failed. Please try again."
-                : "We couldn\u2019t complete sign-in. Please try again or use the other provider."}
+                ? "L&apos;authentification a été annulée ou a échoué. Veuillez réessayer."
+                : "Nous n&apos;avons pas pu vous connecter. Veuillez réessayer ou utiliser l&apos;autre fournisseur."}
             </div>
           )}
 
           {/* Micro-copy */}
           <p className="mt-6 text-center text-[12px] leading-[1.6] text-white/50">
-            By continuing, you authenticate using your organization provider.
+            En continuant, vous vous authentifiez via votre fournisseur d&apos;entreprise.
           </p>
         </div>
 
         {/* Footer */}
         <div className="mt-6 flex items-center justify-center gap-4 text-[11px] text-white/30">
-          <span>Privacy</span>
+          <span>Confidentialité</span>
           <span className="text-white/8">&middot;</span>
-          <span>Terms</span>
+          <span>Conditions</span>
           <span className="text-white/8">&middot;</span>
-          <span>Support</span>
+          <span>Aide</span>
         </div>
       </div>
     </div>

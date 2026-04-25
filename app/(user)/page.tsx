@@ -15,6 +15,7 @@ import { CapabilityBlockedBanner } from "./components/CapabilityBlockedBanner";
 import { getAllServices } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
+import { toast } from "@/app/hooks/use-toast";
 
 function greeting() {
   const h = new Date().getHours();
@@ -147,6 +148,7 @@ export default function HomePage() {
         const res = await fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`);
         if (!res.ok) {
           console.error("[HomePage] Failed to fetch right-panel:", res.status);
+          // Silent fail for right-panel — user sees empty state, not blocking
           hydrateThreadState(null, []);
           return;
         }
@@ -226,8 +228,8 @@ export default function HomePage() {
 
         const mappedFocal = data.focalObject ? mapFocalObject(data.focalObject) : null;
         hydrateThreadState(mappedFocal, secondary.slice(0, 3));
-      } catch (err) {
-        console.error("[HomePage] Error fetching thread state:", err);
+      } catch (_err) {
+        // Silent fail — user can continue with chat
         hydrateThreadState(null, []);
       }
     };
@@ -253,7 +255,7 @@ export default function HomePage() {
       try {
         const res = await fetch("/api/v2/user/connections", { credentials: "include" });
         if (!res.ok) {
-          console.warn("[HomePage] Failed to fetch connections:", res.status);
+          toast.warning("Connecteurs indisponibles", "Impossible de charger l'état des connexions");
           return;
         }
         const data = await res.json();
@@ -268,8 +270,8 @@ export default function HomePage() {
           }
         }
         console.log(`[HomePage] Loaded ${data.meta?.connected || 0}/${data.meta?.total || 0} connected services`);
-      } catch (err) {
-        console.error("[HomePage] Error loading connections:", err);
+      } catch (_err) {
+        toast.warning("Connecteurs temporairement indisponibles");
       }
     }
     loadConnections();
@@ -384,7 +386,9 @@ export default function HomePage() {
         }),
       });
       if (!res.ok) {
-        addEvent({ type: "run_failed", error: "Server error", run_id: clientToken, client_token: clientToken });
+        const errorMsg = `Erreur serveur: ${res.status}`;
+        toast.error("Échec de l'envoi", errorMsg);
+        addEvent({ type: "run_failed", error: errorMsg, run_id: clientToken, client_token: clientToken });
         return;
       }
       const reader = res.body?.getReader();
@@ -430,6 +434,7 @@ export default function HomePage() {
             addEvent({ ...event, run_id: eventRunId });
           } catch (parseErr) {
             console.error("[Chat] Failed to parse SSE event:", parseErr);
+            // Silently ignore parse errors during streaming
           }
         }
       }
@@ -439,8 +444,10 @@ export default function HomePage() {
         console.log(`[Chat] Run completed with canonical id: ${canonicalRunId}`);
       }
     } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Échec de la connexion";
       console.error("[Chat] Orchestration failed:", err);
-      addEvent({ type: "run_failed", error: err instanceof Error ? err.message : "Failed", run_id: clientToken });
+      toast.error("Erreur de connexion", errorMsg);
+      addEvent({ type: "run_failed", error: errorMsg, run_id: clientToken });
     }
   }, [surface, activeThreadId, capabilityMode, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread]);
 
@@ -471,15 +478,14 @@ export default function HomePage() {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        console.error("[HomePage] OAuth init failed:", err);
-        alert(`Erreur de connexion: ${err.message || "Configuration Nango manquante"}`);
+        const errData = await res.json();
+        toast.error("Échec de connexion", errData.message || "Configuration Nango manquante");
         return;
       }
 
       const data = await res.json();
       if (!data.success || !data.config) {
-        console.error("[HomePage] Invalid OAuth config:", data);
+        toast.error("Configuration invalide", "Impossible d'initialiser la connexion");
         return;
       }
 
@@ -487,9 +493,8 @@ export default function HomePage() {
       // The actual OAuth popup will be handled by Nango SDK on the apps page
       console.log(`[HomePage] OAuth ready for ${provider}, redirecting to App Hub`);
       window.location.href = `/apps?connecting=${encodeURIComponent(serviceId)}&provider=${encodeURIComponent(provider)}`;
-    } catch (err) {
-      console.error("[HomePage] OAuth initiation failed:", err);
-      alert("Erreur lors de l'initiation de la connexion");
+    } catch (_err) {
+      toast.error("Erreur de connexion", "Impossible d'initier la connexion OAuth");
     }
   }, []);
 
