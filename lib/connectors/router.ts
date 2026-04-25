@@ -242,7 +242,7 @@ async function executeStripeOperation<T>(
 ): Promise<{ success: boolean; data?: T; error?: string }> {
   // Lazy load Stripe service to avoid circular deps
   const { StripeApiService, mapStripeChargesToPayments } = await import(
-    "./packs/finance-pack/stripe"
+    "./packs/finance-pack"
   );
 
   const stripe = new StripeApiService({
@@ -256,37 +256,58 @@ async function executeStripeOperation<T>(
 
         if (resource === "payments" || resource === "charges") {
           const charges = await stripe.listCharges();
-          return {
-            success: true,
-            data: mapStripeChargesToPayments(charges) as T,
-          };
+          return { success: true, data: mapStripeChargesToPayments(charges) as T };
         }
 
         if (resource === "invoices") {
           const invoices = await stripe.listInvoices();
-          return {
-            success: true,
-            data: invoices as T,
-          };
+          return { success: true, data: invoices as T };
         }
 
         if (resource === "subscriptions") {
           const subs = await stripe.listSubscriptions();
-          return {
-            success: true,
-            data: subs as T,
-          };
+          return { success: true, data: subs as T };
+        }
+
+        if (resource === "customers") {
+          const customers = await stripe.listCustomers();
+          return { success: true, data: customers as T };
+        }
+
+        if (resource === "balance") {
+          const balance = await stripe.getBalance();
+          return { success: true, data: balance as T };
         }
 
         return { success: false, error: `Unknown resource: ${resource}` };
       }
 
       case "get": {
-        const { resource, id } = params as { resource: string; id: string };
+        const { resource, id } = params as { resource: string; id?: string };
 
-        if (resource === "charge") {
+        if (resource === "charge" && id) {
           const charge = await stripe.getCharge(id);
           return { success: true, data: charge as T };
+        }
+
+        if (resource === "invoice" && id) {
+          const invoice = await stripe.getInvoice(id);
+          return { success: true, data: invoice as T };
+        }
+
+        if (resource === "subscription" && id) {
+          const sub = await stripe.getSubscription(id);
+          return { success: true, data: sub as T };
+        }
+
+        if (resource === "customer" && id) {
+          const customer = await stripe.getCustomer(id);
+          return { success: true, data: customer as T };
+        }
+
+        if (resource === "health") {
+          const balance = await stripe.getBalance();
+          return { success: true, data: { status: "ok", hasBalance: !!balance } as T };
         }
 
         return { success: false, error: `Unknown resource: ${resource}` };

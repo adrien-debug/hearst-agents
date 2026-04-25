@@ -1,13 +1,14 @@
 /**
- * Spreadsheet Artifact Generator — produces real .xlsx files using ExcelJS.
+ * Spreadsheet Generator — Architecture Finale
  *
+ * Produces real .xlsx files using ExcelJS.
  * Generates a proper Excel workbook with headers, auto-width columns, and data rows.
- * Falls back to CSV only if ExcelJS fails at runtime (which should not happen).
+ * Path: lib/engine/runtime/assets/generators/spreadsheet.ts
  */
 
 import ExcelJS from "exceljs";
-import { saveAssetFile } from "./file-storage";
-import type { AssetFileInfo } from "./types";
+import { saveAssetFile } from "../file-storage";
+import type { AssetFileInfo } from "../types";
 
 interface GenerateSpreadsheetInput {
   tenantId: string;

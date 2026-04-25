@@ -18,13 +18,23 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > Sécurité env • Responsive shell • Toasts/feedback • Login FR • Core types unifiés • Analytics 4 events • E2E complet (mobile+desktop)  
 > [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 
-> 🚧 **Phase 7 — Convergence Architecture (75% complète)**  
-> Runtime migré (52 fichiers) • Settings dynamiques (4 fichiers + SQL) • Auth réorganisé • 384 tests ✅
+> ✅ **Phase 7 — Convergence Architecture** — **Terminé 25/04/2026**  
+> Runtime migré (52 fichiers) • Settings dynamiques (4 fichiers + SQL) • Auth réorganisé • 404 tests ✅
 
 > ✅ **Phase 8.0 — Infrastructure (scale)** — `lib/engine/runtime/assets/storage/` (local, R2, hybrid) • `scripts/migrate-assets.ts` • `lib/connectors/packs/` (loader, `finance-pack` + Stripe) — **Terminé 25/04/2026**
 
 > ✅ **Phase A — Connector Router** — `lib/connectors/router.ts` • Routing Pack-first (Stripe) • Fallback Nango • Stats + diagnostics — **Terminé 25/04/2026**
-
+>
+> ✅ **Phase B — Finance Agent** — `lib/agents/specialized/finance.ts` • Stripe Agent (list/get payments, invoices, subscriptions, balance, customers, summarize) • Router integration — **Terminé 25/04/2026**
+>
+> ✅ **Phase 9 — Architecture Finale Alignment** — Structure réorganisée et alignée sur `HEARST-ARCHITECTURE-FINALE.html`
+> - `lib/agents/specialized/` — Agents métier (finance.ts)
+> - `lib/agents/index.ts` — Barrel export restauré
+> - `lib/connectors/packs/finance-pack/{auth,services,mappers,schemas}/` — Connector Pack structure
+> - `lib/engine/runtime/assets/{generators,cache,cleanup,api}/` — Asset subsystems
+> - `lib/admin/{settings,permissions,connectors,health,audit}.ts` — Admin API stubs
+> - `lib/platform/db/{supabase,schema,index}.ts` — Database layer
+>
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
 > **État d'avancement / écarts** : [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 

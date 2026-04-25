@@ -1,14 +1,15 @@
 /**
- * PDF Artifact Generator — produces real .pdf files using PDFKit.
+ * PDF Generator — Architecture Finale
  *
+ * Produces real .pdf files using PDFKit.
  * Supports structured text with title, headings (##), bullet points, and body.
- * Files are saved through the existing file-storage pipeline.
+ * Path: lib/engine/runtime/assets/generators/pdf.ts
  */
 
 import PDFDocument from "pdfkit";
 import path from "path";
-import { saveAssetFile } from "./file-storage";
-import type { AssetFileInfo } from "./types";
+import { saveAssetFile } from "../file-storage";
+import type { AssetFileInfo } from "../types";
 
 // PDFKit looks for font AFM files relative to its own install.
 // Resolved lazily to avoid Turbopack treating require.resolve as a numeric chunk ID at import time.

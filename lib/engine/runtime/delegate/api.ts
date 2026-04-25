@@ -13,6 +13,8 @@ import type { StepActor } from "../engine/types";
 // Router-wrapped connectors (Pack → Nango → Legacy)
 // Phase A: Router-first routing for all connector operations
 import { searchFiles, readFileContent, searchEmails } from "./connectors";
+// Phase B: Finance Agent (Stripe)
+import { executeStripeAgentInRuntime, isStripeTask } from "@/lib/agents/specialized/finance";
 
 export async function delegate(
   engine: RunEngine,
@@ -43,6 +45,20 @@ export async function delegate(
   });
 
   try {
+    // Route Stripe/Finance tasks to specialized FinanceAgent
+    if (input.agent === "FinanceAgent" || isStripeTask(input.task)) {
+      const stripeResult = await executeStripeAgentInRuntime(engine, input.task);
+      if (stripeResult.success) {
+        await engine.steps.complete(step.id, { output: stripeResult as unknown as Record<string, unknown> });
+        engine.events.emit({ type: "step_completed", run_id: engine.id, step_id: step.id, agent: "FinanceAgent" as StepActor });
+        return { status: "success", step_id: step.id, data: stripeResult as unknown as Record<string, unknown> };
+      } else {
+        await engine.steps.fail(step.id, { code: "STRIPE_ERROR", message: stripeResult.error || "Unknown", retryable: false });
+        engine.events.emit({ type: "step_failed", run_id: engine.id, step_id: step.id, error: stripeResult.error || "Unknown" });
+        return { status: "error", step_id: step.id, error: { code: "STRIPE_ERROR", message: stripeResult.error || "Unknown", retryable: false } };
+      }
+    }
+
     const result = await executeAgentSync(engine, step.id, input);
     return result;
   } catch (err) {

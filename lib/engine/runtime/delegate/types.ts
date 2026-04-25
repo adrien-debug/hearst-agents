@@ -8,7 +8,8 @@ export type CapabilityAgent =
   | "Planner"
   | "DocBuilder"
   | "Analyst"
-  | "Operator";
+  | "Operator"
+  | "FinanceAgent";
 
 export type ExpectedOutput =
   | "summary"
@@ -87,6 +88,8 @@ export interface DelegateError {
       | "TOKEN_EXPIRED"
       | "INVALID_INPUT"
       | "AGENT_FAILED"
+      | "AGENT_FATAL"
+      | "STRIPE_ERROR"
       | "RATE_LIMITED";
     message: string;
     retryable: boolean;

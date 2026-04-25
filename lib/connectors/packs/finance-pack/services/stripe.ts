@@ -3,6 +3,7 @@
  *
  * Wrappers HTTP pour l'API Stripe.
  * Gère retry, rate limiting, et erreurs.
+ * Architecture Finale: lib/connectors/packs/finance-pack/services/
  */
 
 import type {
@@ -10,13 +11,13 @@ import type {
   StripeCharge,
   StripeInvoice,
   StripeSubscription,
-} from "../schemas";
+} from "../schemas/stripe";
 import {
   StripeCustomerSchema,
   StripeChargeSchema,
   StripeInvoiceSchema,
   StripeSubscriptionSchema,
-} from "../schemas";
+} from "../schemas/stripe";
 
 interface StripeConfig {
   apiKey: string; // Secret key (sk_...)
@@ -238,6 +239,13 @@ export class StripeApiService {
       }
       throw err;
     }
+  }
+
+  // ==================== Balance ====================
+
+  async getBalance(): Promise<{ available: Array<{ amount: number; currency: string }>; pending: Array<{ amount: number; currency: string }> }> {
+    const data = await this.request<{ available: Array<{ amount: number; currency: string }>; pending: Array<{ amount: number; currency: string }> }>("/balance");
+    return data;
   }
 
   // ==================== Health Check ====================

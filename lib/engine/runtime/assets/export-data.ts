@@ -10,7 +10,7 @@
 
 import { randomUUID } from "crypto";
 import { createAsset } from "./create-asset";
-import { generateSpreadsheetArtifact } from "./generate-spreadsheet";
+import { generateSpreadsheetArtifact } from "./generators/spreadsheet";
 import type { Asset } from "./types";
 
 interface DataExportInput {

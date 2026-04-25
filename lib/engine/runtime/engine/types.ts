@@ -65,6 +65,7 @@ export type StepActor =
   | "DocBuilder"
   | "Analyst"
   | "Operator"
+  | "FinanceAgent"
   | "runtime"
   | "anthropic_managed";
 

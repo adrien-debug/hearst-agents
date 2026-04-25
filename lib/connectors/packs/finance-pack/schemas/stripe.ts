@@ -2,6 +2,7 @@
  * Stripe Connector — Zod Schemas
  *
  * Validation des types Stripe avec Zod.
+ * Architecture Finale: lib/connectors/packs/finance-pack/schemas/
  */
 
 import { z } from "zod";

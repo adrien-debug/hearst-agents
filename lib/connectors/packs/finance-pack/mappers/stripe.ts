@@ -2,6 +2,7 @@
  * Stripe Connector — Mappers
  *
  * Transformations Stripe API → Unified types.
+ * Architecture Finale: lib/connectors/packs/finance-pack/mappers/
  */
 
 import type {
@@ -9,12 +10,12 @@ import type {
   StripeCharge,
   StripeInvoice,
   StripeSubscription,
-} from "./schemas";
+} from "../schemas/stripe";
 import type {
   UnifiedPayment,
   UnifiedInvoice,
   UnifiedSubscription,
-} from "./schemas";
+} from "../schemas/stripe";
 
 /**
  * Convertit un timestamp Unix Stripe en Date
