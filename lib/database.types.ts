@@ -1631,6 +1631,756 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          id: string
+          key: string
+          value: string
+          category: string
+          description: string | null
+          is_encrypted: boolean
+          tenant_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          value: string
+          category: string
+          description?: string | null
+          is_encrypted?: boolean
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          value?: string
+          category?: string
+          description?: string | null
+          is_encrypted?: boolean
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          id: string
+          user_id: string
+          action: string
+          resource: string
+          resource_id: string | null
+          details: Json
+          severity: string
+          ip_address: string | null
+          user_agent: string | null
+          tenant_id: string | null
+          success: boolean
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          action: string
+          resource: string
+          resource_id?: string | null
+          details?: Json
+          severity?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          tenant_id?: string | null
+          success?: boolean
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          action?: string
+          resource?: string
+          resource_id?: string | null
+          details?: Json
+          severity?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          tenant_id?: string | null
+          success?: boolean
+          error_message?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          user_id: string
+          tenant_id: string | null
+          role: string
+          assigned_by: string | null
+          assigned_at: string
+          expires_at: string | null
+          metadata: Json
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          tenant_id?: string | null
+          role: string
+          assigned_by?: string | null
+          assigned_at?: string
+          expires_at?: string | null
+          metadata?: Json
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          tenant_id?: string | null
+          role?: string
+          assigned_by?: string | null
+          assigned_at?: string
+          expires_at?: string | null
+          metadata?: Json
+        }
+        Relationships: []
+      }
+      assets: {
+        Row: {
+          id: string
+          thread_id: string
+          run_id: string | null
+          kind: string
+          title: string
+          summary: string | null
+          content_ref: string | null
+          output_tier: string | null
+          provenance: Json
+          created_at: string
+        }
+        Insert: {
+          id: string
+          thread_id: string
+          run_id?: string | null
+          kind: string
+          title?: string
+          summary?: string | null
+          content_ref?: string | null
+          output_tier?: string | null
+          provenance?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          thread_id?: string
+          run_id?: string | null
+          kind?: string
+          title?: string
+          summary?: string | null
+          content_ref?: string | null
+          output_tier?: string | null
+          provenance?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      actions: {
+        Row: {
+          id: string
+          thread_id: string
+          type: string
+          provider: string
+          status: string
+          timestamp: string
+          metadata: Json
+          asset_id: string | null
+        }
+        Insert: {
+          id: string
+          thread_id: string
+          type: string
+          provider: string
+          status?: string
+          timestamp?: string
+          metadata?: Json
+          asset_id?: string | null
+        }
+        Update: {
+          id?: string
+          thread_id?: string
+          type?: string
+          provider?: string
+          status?: string
+          timestamp?: string
+          metadata?: Json
+          asset_id?: string | null
+        }
+        Relationships: []
+      }
+      run_steps: {
+        Row: {
+          id: string
+          run_id: string
+          parent_step_id: string | null
+          seq: number
+          type: string
+          actor: string
+          title: string
+          status: string
+          input: Json | null
+          output: Json | null
+          error: Json | null
+          retry_count: number
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          run_id: string
+          parent_step_id?: string | null
+          seq: number
+          type: string
+          actor: string
+          title: string
+          status?: string
+          input?: Json | null
+          output?: Json | null
+          error?: Json | null
+          retry_count?: number
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          run_id?: string
+          parent_step_id?: string | null
+          seq?: number
+          type?: string
+          actor?: string
+          title?: string
+          status?: string
+          input?: Json | null
+          output?: Json | null
+          error?: Json | null
+          retry_count?: number
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      run_approvals: {
+        Row: {
+          id: string
+          run_id: string
+          step_id: string
+          status: string
+          kind: string
+          summary: string
+          proposed_action: Json
+          reversible: boolean
+          decided_at: string | null
+          decided_by: string | null
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          run_id: string
+          step_id: string
+          status?: string
+          kind: string
+          summary: string
+          proposed_action: Json
+          reversible?: boolean
+          decided_at?: string | null
+          decided_by?: string | null
+          expires_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          run_id?: string
+          step_id?: string
+          status?: string
+          kind?: string
+          summary?: string
+          proposed_action?: Json
+          reversible?: boolean
+          decided_at?: string | null
+          decided_by?: string | null
+          expires_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      run_logs: {
+        Row: {
+          id: string
+          run_id: string
+          step_id: string | null
+          at: string
+          level: string
+          actor: string | null
+          message: string
+        }
+        Insert: {
+          id?: string
+          run_id: string
+          step_id?: string | null
+          at?: string
+          level: string
+          actor?: string | null
+          message: string
+        }
+        Update: {
+          id?: string
+          run_id?: string
+          step_id?: string | null
+          at?: string
+          level?: string
+          actor?: string | null
+          message?: string
+        }
+        Relationships: []
+      }
+      artifacts: {
+        Row: {
+          id: string
+          run_id: string | null
+          user_id: string
+          type: string
+          title: string
+          status: string
+          format: string
+          summary: string | null
+          content: string
+          sections: Json
+          sources: Json
+          metadata: Json
+          version: number
+          parent_artifact_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          run_id?: string | null
+          user_id: string
+          type: string
+          title: string
+          status?: string
+          format?: string
+          summary?: string | null
+          content: string
+          sections?: Json
+          sources?: Json
+          metadata?: Json
+          version?: number
+          parent_artifact_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          run_id?: string | null
+          user_id?: string
+          type?: string
+          title?: string
+          status?: string
+          format?: string
+          summary?: string | null
+          content?: string
+          sections?: Json
+          sources?: Json
+          metadata?: Json
+          version?: number
+          parent_artifact_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      artifact_versions: {
+        Row: {
+          id: string
+          artifact_id: string
+          version: number
+          content: string
+          sections: Json
+          change_summary: string | null
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          artifact_id: string
+          version: number
+          content: string
+          sections: Json
+          change_summary?: string | null
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          artifact_id?: string
+          version?: number
+          content?: string
+          sections?: Json
+          change_summary?: string | null
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      document_sessions: {
+        Row: {
+          id: string
+          run_id: string
+          artifact_id: string | null
+          user_id: string
+          title: string
+          document_type: string
+          status: string
+          outline: Json
+          sources: Json
+          metadata: Json
+          current_version: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          run_id: string
+          artifact_id?: string | null
+          user_id: string
+          title: string
+          document_type: string
+          status?: string
+          outline?: Json
+          sources?: Json
+          metadata?: Json
+          current_version?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          run_id?: string
+          artifact_id?: string | null
+          user_id?: string
+          title?: string
+          document_type?: string
+          status?: string
+          outline?: Json
+          sources?: Json
+          metadata?: Json
+          current_version?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          id: string
+          run_id: string
+          reasoning: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          run_id: string
+          reasoning: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          run_id?: string
+          reasoning?: string
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      plan_steps: {
+        Row: {
+          id: string
+          plan_id: string
+          order: number
+          intent: string
+          agent: string
+          task_description: string
+          expected_output: string
+          retrieval_mode: string | null
+          depends_on: string[] | null
+          optional: boolean
+          status: string
+          run_step_id: string | null
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          plan_id: string
+          order: number
+          intent: string
+          agent: string
+          task_description: string
+          expected_output: string
+          retrieval_mode?: string | null
+          depends_on?: string[] | null
+          optional?: boolean
+          status?: string
+          run_step_id?: string | null
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          plan_id?: string
+          order?: number
+          intent?: string
+          agent?: string
+          task_description?: string
+          expected_output?: string
+          retrieval_mode?: string | null
+          depends_on?: string[] | null
+          optional?: boolean
+          status?: string
+          run_step_id?: string | null
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      action_plans: {
+        Row: {
+          id: string
+          run_id: string
+          plan_id: string | null
+          created_by: string
+          summary: string
+          status: string
+          created_at: string
+          decided_at: string | null
+        }
+        Insert: {
+          id?: string
+          run_id: string
+          plan_id?: string | null
+          created_by: string
+          summary: string
+          status?: string
+          created_at?: string
+          decided_at?: string | null
+        }
+        Update: {
+          id?: string
+          run_id?: string
+          plan_id?: string | null
+          created_by?: string
+          summary?: string
+          status?: string
+          created_at?: string
+          decided_at?: string | null
+        }
+        Relationships: []
+      }
+      action_plan_steps: {
+        Row: {
+          id: string
+          action_plan_id: string
+          order: number
+          tool: string
+          pack: string
+          params: Json
+          description: string
+          severity: string
+          reversible: boolean
+          requires_approval: boolean
+          approval_status: string
+          execution_status: string
+          idempotency_key: string
+          result: Json | null
+          error: Json | null
+          executed_at: string | null
+        }
+        Insert: {
+          id?: string
+          action_plan_id: string
+          order: number
+          tool: string
+          pack: string
+          params: Json
+          description: string
+          severity: string
+          reversible?: boolean
+          requires_approval?: boolean
+          approval_status?: string
+          execution_status?: string
+          idempotency_key: string
+          result?: Json | null
+          error?: Json | null
+          executed_at?: string | null
+        }
+        Update: {
+          id?: string
+          action_plan_id?: string
+          order?: number
+          tool?: string
+          pack?: string
+          params?: Json
+          description?: string
+          severity?: string
+          reversible?: boolean
+          requires_approval?: boolean
+          approval_status?: string
+          execution_status?: string
+          idempotency_key?: string
+          result?: Json | null
+          error?: Json | null
+          executed_at?: string | null
+        }
+        Relationships: []
+      }
+      action_executions: {
+        Row: {
+          id: string
+          action_step_id: string
+          run_id: string
+          step_id: string
+          tool: string
+          params: Json
+          idempotency_key: string
+          status: string
+          result: Json | null
+          error: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          action_step_id: string
+          run_id: string
+          step_id: string
+          tool: string
+          params: Json
+          idempotency_key: string
+          status?: string
+          result?: Json | null
+          error?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          action_step_id?: string
+          run_id?: string
+          step_id?: string
+          tool?: string
+          params?: Json
+          idempotency_key?: string
+          status?: string
+          result?: Json | null
+          error?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Relationships: []
+      }
+      missions: {
+        Row: {
+          id: string
+          user_id: string
+          agent_id: string | null
+          title: string
+          surface: string
+          status: string
+          actions: Json
+          services: string[]
+          result: string | null
+          error: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          agent_id?: string | null
+          title: string
+          surface?: string
+          status?: string
+          actions?: Json
+          services?: string[]
+          result?: string | null
+          error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          agent_id?: string | null
+          title?: string
+          surface?: string
+          status?: string
+          actions?: Json
+          services?: string[]
+          result?: string | null
+          error?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mission_runs: {
+        Row: {
+          id: string
+          mission_id: string
+          action_id: string
+          status: string
+          input: Json
+          output: Json
+          error: string | null
+          latency_ms: number | null
+          started_at: string | null
+          finished_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          mission_id: string
+          action_id: string
+          status?: string
+          input?: Json
+          output?: Json
+          error?: string | null
+          latency_ms?: number | null
+          started_at?: string | null
+          finished_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          mission_id?: string
+          action_id?: string
+          status?: string
+          input?: Json
+          output?: Json
+          error?: string | null
+          latency_ms?: number | null
+          started_at?: string | null
+          finished_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1639,6 +2389,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      mission_status:
+        | "created"
+        | "running"
+        | "awaiting_approval"
+        | "completed"
+        | "failed"
+        | "cancelled"
       run_kind: "chat" | "workflow" | "evaluation" | "tool_test"
       run_status:
         | "pending"
@@ -1647,6 +2404,9 @@ export type Database = {
         | "failed"
         | "cancelled"
         | "timeout"
+        | "created"
+        | "awaiting_approval"
+        | "awaiting_clarification"
       trace_kind:
         | "llm_call"
         | "tool_call"
