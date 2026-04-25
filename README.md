@@ -21,6 +21,8 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > 🚧 **Phase 7 — Convergence Architecture (75% complète)**  
 > Runtime migré (52 fichiers) • Settings dynamiques (4 fichiers + SQL) • Auth réorganisé • 384 tests ✅
 
+> ✅ **Phase 8.0 — Infrastructure (scale)** — `lib/engine/runtime/assets/storage/` (local, R2, hybrid) • `scripts/migrate-assets.ts` • `lib/connectors/packs/` (loader, `finance-pack` + Stripe) — **Terminé 25/04/2026**
+
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
 > **État d'avancement / écarts** : [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 

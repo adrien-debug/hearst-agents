@@ -15,6 +15,7 @@ import type {
   DownloadResult,
   SignedUrlOptions,
 } from "./types";
+import { normalizeStorageKey } from "./types";
 
 export interface LocalStorageOptions {
   basePath: string; // e.g., ".runtime-assets"
@@ -40,6 +41,8 @@ export class LocalStorageProvider implements StorageProvider {
       tenantId?: string;
     }
   ): Promise<UploadResult> {
+    key = normalizeStorageKey(key);
+
     const dirPath = options.tenantId
       ? path.join(this.basePath, options.tenantId, path.dirname(key))
       : path.join(this.basePath, path.dirname(key));
@@ -87,6 +90,8 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   async download(key: string, tenantId?: string): Promise<DownloadResult> {
+    key = normalizeStorageKey(key);
+
     const fullPath = tenantId
       ? path.join(this.basePath, tenantId, key)
       : path.join(this.basePath, key);
@@ -134,6 +139,8 @@ export class LocalStorageProvider implements StorageProvider {
     options?: SignedUrlOptions,
     tenantId?: string
   ): Promise<string> {
+    key = normalizeStorageKey(key);
+
     if (operation === "read") {
       const expires = Date.now() + (options?.expiresInSeconds || 3600) * 1000;
       const token = crypto
@@ -146,6 +153,8 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   async delete(key: string, tenantId?: string): Promise<void> {
+    key = normalizeStorageKey(key);
+
     const fullPath = tenantId
       ? path.join(this.basePath, tenantId, key)
       : path.join(this.basePath, key);
@@ -155,6 +164,8 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   async exists(key: string, tenantId?: string): Promise<boolean> {
+    key = normalizeStorageKey(key);
+
     const fullPath = tenantId
       ? path.join(this.basePath, tenantId, key)
       : path.join(this.basePath, key);
@@ -168,6 +179,8 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   async list(prefix: string, tenantId?: string): Promise<StorageObject[]> {
+    prefix = normalizeStorageKey(prefix);
+
     const searchPath = tenantId
       ? path.join(this.basePath, tenantId, prefix)
       : path.join(this.basePath, prefix);

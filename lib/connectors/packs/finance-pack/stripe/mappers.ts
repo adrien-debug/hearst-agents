@@ -70,7 +70,7 @@ export function mapStripeInvoiceToInvoice(
   return {
     id: `stripe_invoice_${invoice.id}`,
     provider: "stripe",
-    customerEmail: customer?.email || "unknown",
+    customerEmail: customer?.email,
     customerName: customer?.name,
     status: invoice.status,
     total: invoice.total / 100,
@@ -98,7 +98,7 @@ export function mapStripeSubscriptionToSubscription(
   return {
     id: `stripe_subscription_${subscription.id}`,
     provider: "stripe",
-    customerEmail: customer?.email || "unknown",
+    customerEmail: customer?.email,
     status: subscription.status,
     planName: price?.product || "Unknown Plan",
     planAmount: price ? price.unit_amount / 100 : 0,

@@ -127,7 +127,7 @@ export type UnifiedPayment = z.infer<typeof UnifiedPaymentSchema>;
 export const UnifiedInvoiceSchema = z.object({
   id: z.string(),
   provider: z.literal("stripe"),
-  customerEmail: z.string().email(),
+  customerEmail: z.string().email().optional(),
   customerName: z.string().optional(),
   status: z.enum(["draft", "open", "paid", "uncollectible", "void"]),
   total: z.number(),
@@ -144,7 +144,7 @@ export type UnifiedInvoice = z.infer<typeof UnifiedInvoiceSchema>;
 export const UnifiedSubscriptionSchema = z.object({
   id: z.string(),
   provider: z.literal("stripe"),
-  customerEmail: z.string().email(),
+  customerEmail: z.string().email().optional(),
   status: z.enum([
     "active",
     "canceled",

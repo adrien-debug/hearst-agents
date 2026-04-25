@@ -15,6 +15,26 @@ export interface StorageObject {
   metadata: Record<string, string>;
 }
 
+/**
+ * Normalise une clé de stockage pour éviter le path traversal.
+ * Rejette les chemins contenant ".." ou commençant par "/".
+ */
+export function normalizeStorageKey(key: string): string {
+  // Reject absolute paths
+  if (key.startsWith("/")) {
+    throw new Error(`[Storage] Invalid key: absolute paths not allowed (${key})`);
+  }
+
+  // Reject path traversal attempts
+  const parts = key.split(/[/\\]/);
+  if (parts.some((p) => p === "..")) {
+    throw new Error(`[Storage] Invalid key: path traversal not allowed (${key})`);
+  }
+
+  // Normalize separators to forward slash
+  return key.replace(/\\/g, "/");
+}
+
 export interface SignedUrlOptions {
   expiresInSeconds: number; // Default: 3600 (1h)
   responseContentDisposition?: string; // e.g., "attachment; filename=\"report.pdf\""

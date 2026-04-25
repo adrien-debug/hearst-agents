@@ -83,7 +83,7 @@ async function migrateAssets(options: MigrationOptions) {
 
   // List all files
   console.log("Scanning source files...");
-  const files = await listAllFiles(source, "", options.tenantId);
+  const files = await listAllFilesRecursive(source, "", options.tenantId);
   console.log(`Found ${files.length} files\n`);
 
   if (files.length === 0) {
@@ -161,18 +161,44 @@ async function migrateAssets(options: MigrationOptions) {
   console.log(`  Total: ${(totalBytes / 1024 / 1024).toFixed(2)} MB`);
 }
 
-async function listAllFiles(
+async function listAllFilesRecursive(
   storage: LocalStorageProvider,
   prefix: string,
   tenantId?: string
 ): Promise<Array<{ key: string; size: number }>> {
   const files: Array<{ key: string; size: number }> = [];
 
-  const list = await storage.list(prefix, tenantId);
-  for (const obj of list) {
-    files.push({ key: obj.key, size: obj.size });
+  // Note: LocalStorageProvider.list() only lists direct children
+  // For a full recursive scan, we need to walk the filesystem directly
+  const fs = await import("fs/promises");
+  const path = await import("path");
+
+  const basePath = tenantId
+    ? path.join(storage["basePath"], tenantId, prefix)
+    : path.join(storage["basePath"], prefix);
+
+  async function walk(dir: string, relativePrefix: string) {
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const relativePath = relativePrefix
+          ? `${relativePrefix}/${entry.name}`
+          : entry.name;
+
+        if (entry.isDirectory()) {
+          await walk(path.join(dir, entry.name), relativePath);
+        } else if (!entry.name.endsWith(".meta.json")) {
+          const fullPath = path.join(dir, entry.name);
+          const stats = await fs.stat(fullPath);
+          files.push({ key: relativePath, size: stats.size });
+        }
+      }
+    } catch (err) {
+      // Directory doesn't exist or permission error
+    }
   }
 
+  await walk(basePath, prefix);
   return files;
 }
 

@@ -240,12 +240,17 @@ export class HybridStorageProvider implements StorageProvider {
   private evictIfNeeded(neededSpace: number): void {
     // Check TTL eviction first
     const now = Date.now();
+    const ttlExpired: string[] = [];
     for (const [key, entry] of this.cache) {
       if (now - entry.lastAccessed > this.ttlMs) {
+        ttlExpired.push(key);
         this.cache.delete(key);
         this.currentHotSize -= entry.size;
-        // Note: Actual file deletion happens via GC or manual cleanup
       }
+    }
+    // Delete expired files from hot storage (async, don't block)
+    for (const key of ttlExpired) {
+      this.hot.delete(key).catch(() => {});
     }
 
     // LRU eviction if still needed
