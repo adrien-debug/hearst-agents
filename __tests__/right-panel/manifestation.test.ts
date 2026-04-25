@@ -11,7 +11,7 @@ import {
   manifestPlan,
   manifestAsset,
   manifestMission,
-} from "@/lib/right-panel/manifestation";
+} from "@/lib/ui/right-panel/manifestation";
 import type { ExecutionPlan, MissionDefinition } from "@/lib/planner/types";
 import type { Asset } from "@/lib/assets/types";
 import type { ProviderId } from "@/lib/providers/types";

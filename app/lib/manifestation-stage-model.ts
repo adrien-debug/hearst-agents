@@ -4,7 +4,7 @@
  * Status machine for focal object manifestation.
  */
 
-import type { FocalObjectStatus } from "@/lib/right-panel/objects";
+import type { FocalObjectStatus } from "@/lib/ui/right-panel/objects";
 
 // Types previously from halo-state.ts - inlined after dead code deletion
 export type HaloCoreState =

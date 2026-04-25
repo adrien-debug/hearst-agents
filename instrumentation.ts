@@ -1,9 +1,11 @@
 /**
  * Next.js Instrumentation — runs once when the server starts.
  *
- * Primary bootstrap point for the mission scheduler so it starts
- * without requiring any API traffic. The /api/orchestrate module-scope
- * call remains as a secondary guard.
+ * Primary bootstrap point for:
+ * 1. Mission scheduler (orchestration engine)
+ * 2. Asset cleanup scheduler (garbage collection)
+ *
+ * The /api/orchestrate module-scope call remains as a secondary guard.
  */
 
 export async function register() {
@@ -12,5 +14,10 @@ export async function register() {
       "@/lib/engine/runtime/missions/scheduler-init"
     );
     await ensureSchedulerStarted();
+
+    const { ensureCleanupSchedulerStarted } = await import(
+      "@/lib/engine/runtime/assets/cleanup/boot"
+    );
+    await ensureCleanupSchedulerStarted();
   }
 }

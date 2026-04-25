@@ -7,8 +7,9 @@
  * Requires: `npm install ioredis`
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type IORedisClient = any;
+import type Redis from "ioredis";
+
+type IORedisClient = Redis;
 
 export interface RedisCacheConfig {
   host: string;
@@ -42,9 +43,7 @@ export class RedisCache {
     if (this.client) return this.client;
 
     try {
-      // Dynamic import to avoid hard dependency
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ioredis = await import("ioredis" as any);
+      const ioredis = await import("ioredis");
       const Redis = ioredis.Redis || ioredis.default;
 
       this.client = new Redis({

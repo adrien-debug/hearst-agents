@@ -11,7 +11,7 @@ import { getMission as getRuntimeMission, disableMission } from "@/lib/engine/ru
 import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { pauseMission as pausePlannerMission } from "@/lib/planner/mission-engine";
 import { getMission as getPlannerMission } from "@/lib/planner/store";
-import { manifestMission } from "@/lib/right-panel/manifestation";
+import { manifestMission } from "@/lib/ui/right-panel/manifestation";
 
 export async function POST(
   _req: NextRequest,

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { slackConnector } from "@/lib/connectors";
 import { SlackApiError } from "@/lib/connectors/slack";
 import { getUserId } from "@/lib/get-user-id";
-import { getTokens } from "@/lib/token-store";
+import { getTokens } from "@/lib/platform/auth/tokens";
 
 export const dynamic = "force-dynamic";
 

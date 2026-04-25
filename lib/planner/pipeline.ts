@@ -21,7 +21,7 @@
 
 import type { ProviderId } from "@/lib/providers/types";
 import type { ConnectorCapability } from "@/lib/connectors/platform/types";
-import type { FocalObject } from "@/lib/right-panel/objects";
+import type { FocalObject } from "@/lib/ui/right-panel/objects";
 import type { ExecutionPlan } from "./types";
 import { createPlanFromIntent, approvePlan } from "./index";
 import { executePlan } from "./executor";
@@ -31,7 +31,7 @@ import { recordProviderSuccess, recordProviderFailure } from "@/lib/providers/st
 import { formatOutput, detectOutputTier } from "@/lib/engine/runtime/formatting/pipeline";
 import { storeAsset, storeAction, type Asset } from "@/lib/assets/types";
 import { handleSendMessage } from "@/lib/tools/handlers/send-message";
-import { manifestPlan, manifestAsset } from "@/lib/right-panel/manifestation";
+import { manifestPlan, manifestAsset } from "@/lib/ui/right-panel/manifestation";
 import { logPlanEvent } from "./debug";
 import { gmailConnector, calendarConnector, driveConnector } from "@/lib/connectors";
 import { searchWeb } from "@/lib/tools/handlers/web-search";

@@ -1,5 +1,5 @@
 import { WebClient } from "@slack/web-api";
-import { getTokens, touchLastUsed, recordAuthFailure } from "@/lib/token-store";
+import { getTokens, touchLastUsed, recordAuthFailure } from "@/lib/platform/auth/tokens";
 import type { SlackConnector, ConnectorResult, SlackMessage } from "./types";
 
 const PROVIDER = "slack";

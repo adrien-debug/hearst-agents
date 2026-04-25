@@ -6,7 +6,7 @@ import {
   recordAuthFailure,
   resetAuthFailures,
   isTokenExpired,
-} from "@/lib/token-store";
+} from "@/lib/platform/auth/tokens";
 
 /**
  * Returns an authenticated OAuth2 client for a given user.

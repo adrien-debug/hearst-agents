@@ -10,7 +10,7 @@ import { gmailConnector } from "./gmail";
 import { slackConnector } from "./slack";
 import { calendarConnector } from "./calendar";
 import { driveConnector } from "./drive";
-import { getTokens } from "@/lib/token-store";
+import { getTokens } from "@/lib/platform/auth/tokens";
 import {
   gmailToUnifiedMessage,
   slackToUnifiedMessage,

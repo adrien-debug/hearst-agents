@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveTokens } from "@/lib/token-store";
+import { saveTokens } from "@/lib/platform/auth/tokens";
 import { registerProviderUsage } from "@/lib/connectors/control-plane/register";
 
 interface StatePayload {

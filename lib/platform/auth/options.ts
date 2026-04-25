@@ -1,7 +1,7 @@
 import type { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
-import { saveTokens } from "@/lib/token-store";
+import { saveTokens } from "@/lib/platform/auth/tokens";
 import { registerProviderUsage } from "@/lib/connectors/control-plane/register";
 
 export const authOptions: AuthOptions = {

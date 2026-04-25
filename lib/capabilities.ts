@@ -6,7 +6,7 @@
  * and the runtime resolution functions (token-dependent).
  */
 
-import { getTokens } from "@/lib/token-store";
+import { getTokens } from "@/lib/platform/auth/tokens";
 import {
   getProvidersByCapability,
   getProviderTokenBucket,
