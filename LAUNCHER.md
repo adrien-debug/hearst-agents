@@ -17,6 +17,10 @@ tail -f /tmp/hearst-connect.log   # Backend connexion (port 8100)
 tail -f /tmp/hearst-app.log       # Landing page (port 3000)
 ```
 
+## `npm run dev` (depuis `hearst-os/`)
+
+Même stack **3000 + 8100 + 9000** : les deux repos voisins démarrent en arrière-plan (logs `/tmp/hearst-connect.log`, `/tmp/hearst-app.log`), **hearst-os** reste au premier plan sur **:9000**. Pas de suppression des `.next` (contrairement à `npm run launch`). **`npm run dev:solo`** = uniquement hearst-os sur :9000.
+
 ## Ce que fait `npm run launch`
 
 1. **Kill processus existants** sur ports 9000, 8100, 3000

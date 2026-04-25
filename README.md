@@ -2,7 +2,8 @@
 
 Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
-> 🚀 **Quick Start**: `npm run dev` démarre hearst-os | `npm run launch` démarre TOUS les services  
+> 🚀 **Quick Start**: `npm run dev` démarre **hearst-connect :8100** + **Hearst-app :3000** + **hearst-os :9000** (logs `/tmp/hearst-*.log`) | `npm run launch` = script complet + nohup + purge `.next`  
+> `npm run dev:solo` = seulement hearst-os sur **:9000**  
 > 📖 Guide complet: [`LAUNCHER.md`](./LAUNCHER.md)
 
 > ✅ **Phase 1 — V2 Foundation TERMINÉE (23/04/2026)**  
