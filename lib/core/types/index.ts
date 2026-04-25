@@ -59,7 +59,7 @@ export type {
   RunStatus,
   RunAssetRef,
   RunRecord,
-} from "@/lib/runtime/runs/types";
+} from "@/lib/engine/runtime/runs/types";
 
 // ── Connectors (Unified) ───────────────────────────────────
 export type {

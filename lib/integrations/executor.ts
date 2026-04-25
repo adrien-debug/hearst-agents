@@ -13,8 +13,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "../database.types";
 import type { IntegrationAdapter, IntegrationCredentials, AdapterResult } from "./adapter";
-import { RunTracer } from "../runtime/tracer";
-import { RuntimeError, withRetry, DEFAULT_RETRY, type RetryPolicy } from "../runtime/lifecycle";
+import { RunTracer } from "../engine/runtime/tracer";
+import { RuntimeError, withRetry, DEFAULT_RETRY, type RetryPolicy } from "../engine/runtime/lifecycle";
 import { HttpAdapter } from "./http-adapter";
 import { NotionAdapter } from "./notion-adapter";
 

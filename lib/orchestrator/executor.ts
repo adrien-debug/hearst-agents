@@ -11,14 +11,14 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Plan, PlanStep } from "../plans/types";
-import type { RunEngine } from "../runtime/engine";
+import type { RunEngine } from "../engine/runtime/engine";
 import type {
   DelegateResult,
   DelegateSuccess,
   CapabilityAgent,
   ExpectedOutput,
-} from "../runtime/delegate/types";
-import { delegate } from "../runtime/delegate/api";
+} from "../engine/runtime/delegate/types";
+import { delegate } from "../engine/runtime/delegate/api";
 import { PlanStore } from "../plans/store";
 import { evaluateForArtifact } from "../artifacts/evaluator";
 

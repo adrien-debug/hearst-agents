@@ -10,10 +10,10 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Json } from "../database.types";
-import type { ChatMessage } from "../llm/types";
-import type { TraceKind } from "../domain/types";
-import { getProvider } from "../llm/router";
+import type { Database, Json } from "../../database.types";
+import type { ChatMessage } from "../../llm/types";
+import type { TraceKind } from "../../domain/types";
+import { getProvider } from "../../llm/router";
 import { RunTracer, type ReplayMode } from "./tracer";
 import { RuntimeError } from "./lifecycle";
 

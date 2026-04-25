@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { ok, err } from "@/lib/domain/api-helpers";
 import { checkConnectionHealth } from "@/lib/integrations";
-import { RuntimeError } from "@/lib/runtime/lifecycle";
+import { RuntimeError } from "@/lib/engine/runtime/lifecycle";
 
 export const dynamic = "force-dynamic";
 

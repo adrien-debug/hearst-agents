@@ -17,7 +17,7 @@
 import type { ProviderId } from "@/lib/providers/types";
 // Inlined from deleted halo-state.ts
 type HaloArtifactKind = "report" | "draft" | "file" | "task" | "event";
-import type { OutputTier } from "@/lib/runtime/formatting/pipeline";
+import type { OutputTier } from "@/lib/engine/runtime/formatting/pipeline";
 
 // ── Asset types ─────────────────────────────────────────────
 

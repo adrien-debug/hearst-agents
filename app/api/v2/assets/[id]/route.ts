@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAssetDetail } from "@/lib/runtime/assets/detail";
+import { getAssetDetail } from "@/lib/engine/runtime/assets/detail";
 import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { ok, err } from "@/lib/domain";
-import { enforceMemoryPolicy } from "@/lib/runtime";
+import { enforceMemoryPolicy } from "@/lib/engine/runtime";
 
 export const dynamic = "force-dynamic";
 

@@ -9,9 +9,9 @@
  * Designed for opt-in use. Standard executeTool still works without this.
  */
 
-import type { ToolDef, ToolGovernance, ToolResult } from "../runtime/tool-executor";
-import { executeTool } from "../runtime/tool-executor";
-import { RunTracer } from "../runtime/tracer";
+import type { ToolDef, ToolGovernance, ToolResult } from "../engine/runtime/tool-executor";
+import { executeTool } from "../engine/runtime/tool-executor";
+import { RunTracer } from "../engine/runtime/tracer";
 import type { ToolScore } from "../analytics/tool-ranking";
 import { selectTool, buildFallbackChain, type SelectionGoal } from "./tool-selector";
 

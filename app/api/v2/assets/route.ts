@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAsset, storeAsset, getAllAssets } from "@/lib/runtime/assets/create-asset";
-import { saveAsset, getAssets as getPersistedAssets } from "@/lib/runtime/assets/adapter";
+import { createAsset, storeAsset, getAllAssets } from "@/lib/engine/runtime/assets/create-asset";
+import { saveAsset, getAssets as getPersistedAssets } from "@/lib/engine/runtime/assets/adapter";
 // Note: AssetType est utilisé implicitement via le z.enum dans createAssetSchema
 import { z } from "zod";
 import { requireScope } from "@/lib/scope";

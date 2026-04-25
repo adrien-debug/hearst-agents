@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { ok, err } from "@/lib/domain";
-import { executeWorkflow } from "@/lib/runtime/workflow-engine";
+import { executeWorkflow } from "@/lib/engine/runtime/workflow-engine";
 
 export const dynamic = "force-dynamic";
 

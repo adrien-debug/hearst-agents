@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { orchestrateV2 } from "@/lib/orchestrator/entry";
-import { ensureSchedulerStarted } from "@/lib/runtime/missions/scheduler-init";
+import { ensureSchedulerStarted } from "@/lib/engine/runtime/missions/scheduler-init";
 import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";

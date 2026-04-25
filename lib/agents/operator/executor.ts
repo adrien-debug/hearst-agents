@@ -12,7 +12,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { RunEngine } from "../../runtime/engine";
+import type { RunEngine } from "../../engine/runtime/engine";
 import { getProviderForTool } from "@/lib/providers/registry";
 import type { ActionPlan } from "../../plans/types";
 import { PlanStore } from "../../plans/store";

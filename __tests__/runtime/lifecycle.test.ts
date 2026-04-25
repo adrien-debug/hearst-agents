@@ -8,7 +8,7 @@ import {
   withRetry,
   DEFAULT_TIMEOUTS,
   DEFAULT_RETRY,
-} from "@/lib/runtime/lifecycle";
+} from "@/lib/engine/runtime/lifecycle";
 
 describe("Run status transitions", () => {
   it("allows pending → running", () => {

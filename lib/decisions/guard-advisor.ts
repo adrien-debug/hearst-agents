@@ -8,7 +8,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../database.types";
-import type { AgentGuardPolicy } from "../runtime/prompt-guard";
+import type { AgentGuardPolicy } from "../engine/runtime/prompt-guard";
 import type { FeedbackSignal } from "../analytics/feedback";
 
 type DB = SupabaseClient<Database>;

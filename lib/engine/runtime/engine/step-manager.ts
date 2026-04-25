@@ -11,7 +11,7 @@ import type {
   StepStatus,
   StepError,
 } from "./types";
-import type { RunEventBus } from "../../events/bus";
+import type { RunEventBus } from "../../../events/bus";
 
 export class StepManager {
   constructor(

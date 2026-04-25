@@ -15,20 +15,20 @@ import type { ManagedAgentEvent, AgentBackendV2 } from "../agents/backend-v2/typ
 import { RunEventBus } from "../events/bus";
 import { SSEAdapter } from "../events/consumers/sse-adapter";
 import { SYSTEM_CONFIG } from "../system/config";
-import { saveRun, updateRun, updateRunMetrics } from "../runtime/state/adapter";
-import { addRun } from "../runtime/runs/store";
-import type { RunRecord, RunAssetRef } from "../runtime/runs/types";
+import { saveRun, updateRun, updateRunMetrics } from "../engine/runtime/state/adapter";
+import { addRun } from "../engine/runtime/runs/store";
+import type { RunRecord, RunAssetRef } from "../engine/runtime/runs/types";
 import type { RunEvent } from "../events/types";
-import { shouldPersistEvent, persistRunEvent } from "../runtime/timeline/persist";
+import { shouldPersistEvent, persistRunEvent } from "../engine/runtime/timeline/persist";
 import { storeAsset, type Asset, type AssetKind } from "../assets/types";
 import { manifestAsset } from "../right-panel/manifestation";
-import { detectOutputTier, formatOutput } from "../runtime/formatting/pipeline";
-import type { AssetType } from "../runtime/assets/types";
+import { detectOutputTier, formatOutput } from "../engine/runtime/formatting/pipeline";
+import type { AssetType } from "../engine/runtime/assets/types";
 import { getRecentMessages, appendMessage } from "../memory/store";
 import type { TenantScope } from "../multi-tenant/types";
-import { createScheduledMission } from "../runtime/missions/create-mission";
-import { addMission } from "../runtime/missions/store";
-import { saveScheduledMission as persistMission } from "../runtime/state/adapter";
+import { createScheduledMission } from "../engine/runtime/missions/create-mission";
+import { addMission } from "../engine/runtime/missions/store";
+import { saveScheduledMission as persistMission } from "../engine/runtime/state/adapter";
 
 // ── Types ───────────────────────────────────────────────────
 

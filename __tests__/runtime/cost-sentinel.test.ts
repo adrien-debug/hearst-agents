@@ -3,8 +3,8 @@ import {
   checkCostBudget,
   enforceCostBudget,
   DEFAULT_COST_BUDGET,
-} from "@/lib/runtime/cost-sentinel";
-import { RuntimeError } from "@/lib/runtime/lifecycle";
+} from "@/lib/engine/runtime/cost-sentinel";
+import { RuntimeError } from "@/lib/engine/runtime/lifecycle";
 
 describe("checkCostBudget", () => {
   it("returns no issue when budget is null", () => {

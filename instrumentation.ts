@@ -9,7 +9,7 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { ensureSchedulerStarted } = await import(
-      "@/lib/runtime/missions/scheduler-init"
+      "@/lib/engine/runtime/missions/scheduler-init"
     );
     await ensureSchedulerStarted();
   }

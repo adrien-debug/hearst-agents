@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { INSTANCE_ID } from "@/lib/runtime/instance-id";
-import { getSchedulerLeader } from "@/lib/runtime/missions/leader-lease";
-import { getSchedulerMode } from "@/lib/runtime/missions/scheduler-init";
-import type { SchedulerStatus } from "@/lib/runtime/missions/ops-types";
+import { INSTANCE_ID } from "@/lib/engine/runtime/instance-id";
+import { getSchedulerLeader } from "@/lib/engine/runtime/missions/leader-lease";
+import { getSchedulerMode } from "@/lib/engine/runtime/missions/scheduler-init";
+import type { SchedulerStatus } from "@/lib/engine/runtime/missions/ops-types";
 
 export const dynamic = "force-dynamic";
 

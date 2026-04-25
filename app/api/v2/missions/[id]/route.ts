@@ -3,8 +3,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getMission, disableMission } from "@/lib/runtime/missions/store";
-import { updateScheduledMission } from "@/lib/runtime/state/adapter";
+import { getMission, disableMission } from "@/lib/engine/runtime/missions/store";
+import { updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";

@@ -7,8 +7,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireScope } from "@/lib/scope";
-import { getMission as getRuntimeMission } from "@/lib/runtime/missions/store";
-import { getScheduledMissions, updateScheduledMission } from "@/lib/runtime/state/adapter";
+import { getMission as getRuntimeMission } from "@/lib/engine/runtime/missions/store";
+import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { resumeMission as resumePlannerMission } from "@/lib/planner/mission-engine";
 import { getMission as getPlannerMission } from "@/lib/planner/store";
 import { manifestMission } from "@/lib/right-panel/manifestation";

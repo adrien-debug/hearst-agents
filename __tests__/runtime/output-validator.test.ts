@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validateOutput } from "@/lib/runtime/output-validator";
+import { validateOutput } from "@/lib/engine/runtime/output-validator";
 
 describe("validateOutput", () => {
   it("returns valid for normal output without policy", () => {

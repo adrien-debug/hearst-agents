@@ -14,7 +14,7 @@
  */
 
 import type { ArtifactType } from "./types";
-import type { ExpectedOutput } from "../runtime/delegate/types";
+import type { ExpectedOutput } from "../engine/runtime/delegate/types";
 
 // ── Configuration ────────────────────────────────────────
 

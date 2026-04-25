@@ -9,8 +9,8 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { CreateRunInput } from "../runtime/engine/types";
-import { RunEngine } from "../runtime/engine";
+import type { CreateRunInput } from "../engine/runtime/engine/types";
+import { RunEngine } from "../engine/runtime/engine";
 import { RunEventBus } from "../events/bus";
 import { SSEAdapter } from "../events/consumers/sse-adapter";
 import { LogPersister } from "../events/consumers/log-persister";
@@ -22,21 +22,21 @@ import {
   type ExecutionContext,
   type ExecutionDecision,
 } from "./types/execution-mode";
-import { createAsset } from "../runtime/assets/create-asset";
-import { createScheduledMission } from "../runtime/missions/create-mission";
-import { addMission } from "../runtime/missions/store";
+import { createAsset } from "../engine/runtime/assets/create-asset";
+import { createScheduledMission } from "../engine/runtime/missions/create-mission";
+import { addMission } from "../engine/runtime/missions/store";
 import type { ToolContext } from "../tools/types";
 import { selectToolsForContext } from "../tools/tool-selector";
 import { selectAgentForContext } from "../agents/agent-selector";
 import { selectAgentBackend } from "../agents/backend/selector";
-import type { RunRecord } from "../runtime/runs/types";
-import { addRun as storeRun } from "../runtime/runs/store";
+import type { RunRecord } from "../engine/runtime/runs/types";
+import { addRun as storeRun } from "../engine/runtime/runs/store";
 import { runAnthropicManaged } from "../agents/backend/run-anthropic-managed";
 import {
   saveRun as persistRun,
   updateRun as persistUpdateRun,
   saveScheduledMission as persistMission,
-} from "../runtime/state/adapter";
+} from "../engine/runtime/state/adapter";
 import type { TenantScope } from "../multi-tenant/types";
 import { assertTenantScope } from "../multi-tenant/guards";
 import { SYSTEM_CONFIG } from "../system/config";
@@ -47,7 +47,7 @@ import { memoryToConversationHistory } from "../memory/format";
 import { isResearchIntent, isReportIntent } from "./research-intent";
 import { runResearchReport } from "./run-research-report";
 import { getRequiredProvidersForInput } from "./provider-requirements";
-import { shouldPersistEvent, persistRunEvent } from "../runtime/timeline/persist";
+import { shouldPersistEvent, persistRunEvent } from "../engine/runtime/timeline/persist";
 import type { ProviderId } from "../providers/types";
 
 interface FocalContext {
@@ -300,8 +300,8 @@ async function runSyntheticRetrieval(
   retrievalMode: string,
   llmFallbackText?: string,
 ): Promise<void> {
-  const { delegate } = await import("../runtime/delegate/api");
-  const { detectOutputTier, formatOutput } = await import("../runtime/formatting/pipeline");
+  const { delegate } = await import("../engine/runtime/delegate/api");
+  const { detectOutputTier, formatOutput } = await import("../engine/runtime/formatting/pipeline");
   const { storeAsset, storeAction } = await import("../assets/types");
 
   engine.events.emit({

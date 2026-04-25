@@ -5,19 +5,19 @@
  * in-memory fallback for resilience.
  */
 
-import { getAllRuns as getMemoryRuns } from "@/lib/runtime/runs/store";
-import { getAllMissions as getMemoryMissions } from "@/lib/runtime/missions/store";
+import { getAllRuns as getMemoryRuns } from "@/lib/engine/runtime/runs/store";
+import { getAllMissions as getMemoryMissions } from "@/lib/engine/runtime/missions/store";
 import {
   getRuns as getPersistedRuns,
   getScheduledMissions as getPersistedMissions,
-} from "@/lib/runtime/state/adapter";
-import { getAssets as getPersistedAssets } from "@/lib/runtime/assets/adapter";
+} from "@/lib/engine/runtime/state/adapter";
+import { getAssets as getPersistedAssets } from "@/lib/engine/runtime/assets/adapter";
 import { getConnectionsByScope } from "@/lib/connectors/control-plane/store";
-import { getAllMissionOps } from "@/lib/runtime/missions/ops-store";
-import { getSchedulerMode } from "@/lib/runtime/missions/scheduler-init";
+import { getAllMissionOps } from "@/lib/engine/runtime/missions/ops-store";
+import { getSchedulerMode } from "@/lib/engine/runtime/missions/scheduler-init";
 import { getServerSupabase } from "@/lib/supabase-server";
 import { manifestAsset, resolveFocalObject } from "@/lib/right-panel/manifestation";
-import { formatOutput, type OutputTier } from "@/lib/runtime/formatting/pipeline";
+import { formatOutput, type OutputTier } from "@/lib/engine/runtime/formatting/pipeline";
 import { getPlansForThread, getMissionsForThread } from "@/lib/planner/store";
 import type { Asset, AssetKind, AssetProvenance } from "@/lib/assets/types";
 import type { RightPanelData, FocalObjectView } from "./types";

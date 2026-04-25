@@ -2,11 +2,11 @@ import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { getProvider, smartStreamChat } from "@/lib/llm";
 import type { ModelDecision } from "@/lib/llm";
-import { RunTracer } from "@/lib/runtime";
+import { RunTracer } from "@/lib/engine/runtime";
 import { chatRequestSchema, parseBody, err } from "@/lib/domain";
 import type { ChatMessage } from "@/lib/llm";
 import type { Json } from "@/lib/database.types";
-import type { AgentGuardPolicy } from "@/lib/runtime/prompt-guard";
+import type { AgentGuardPolicy } from "@/lib/engine/runtime/prompt-guard";
 import type { ModelGoal } from "@/lib/decisions/model-selector";
 
 export const dynamic = "force-dynamic";

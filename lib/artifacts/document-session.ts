@@ -19,7 +19,7 @@ import type {
   ArtifactSourceRef,
   ArtifactMetadata,
 } from "./types";
-import { ArtifactManager } from "../runtime/engine/artifact-manager";
+import { ArtifactManager } from "../engine/runtime/engine/artifact-manager";
 import type { RunEventBus } from "../events/bus";
 
 // ── Types ────────────────────────────────────────────────

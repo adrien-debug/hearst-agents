@@ -6,8 +6,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { orchestrateV2 } from "@/lib/orchestrator/entry";
-import { getScheduledMissions, updateScheduledMission } from "@/lib/runtime/state/adapter";
-import { updateMissionLastRun, getMission } from "@/lib/runtime/missions/store";
+import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
+import { updateMissionLastRun, getMission } from "@/lib/engine/runtime/missions/store";
 import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";

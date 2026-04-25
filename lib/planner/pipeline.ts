@@ -28,7 +28,7 @@ import { executePlan } from "./executor";
 import type { ExecutorCallbacks, StepExecutionResult } from "./executor";
 import { resolveProvider, resolveFallback } from "@/lib/providers/resolver";
 import { recordProviderSuccess, recordProviderFailure } from "@/lib/providers/state";
-import { formatOutput, detectOutputTier } from "@/lib/runtime/formatting/pipeline";
+import { formatOutput, detectOutputTier } from "@/lib/engine/runtime/formatting/pipeline";
 import { storeAsset, storeAction, type Asset } from "@/lib/assets/types";
 import { handleSendMessage } from "@/lib/tools/handlers/send-message";
 import { manifestPlan, manifestAsset } from "@/lib/right-panel/manifestation";

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
 import { ok, err, parseBody } from "@/lib/domain";
 import { getProvider } from "@/lib/llm";
-import { RunTracer } from "@/lib/runtime";
+import { RunTracer } from "@/lib/engine/runtime";
 import type { ChatMessage } from "@/lib/llm";
 import type { Json } from "@/lib/database.types";
 import { z } from "zod";

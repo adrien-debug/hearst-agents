@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/lib/platform/auth";
 
 const DEV_BYPASS = process.env.HEARST_DEV_AUTH_BYPASS === "1";
 const DEV_USER = "adrien@hearstcorporation.io";

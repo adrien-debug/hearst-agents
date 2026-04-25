@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "../database.types";
 import type { LLMProvider, ChatRequest, ChatResponse, StreamChunk, ModelProfileConfig } from "./types";
-import type { RunTracer } from "../runtime/tracer";
+import type { RunTracer } from "../engine/runtime/tracer";
 import { OpenAIProvider } from "./openai";
 import { AnthropicProvider } from "./anthropic";
 import { ComposerProvider } from "./composer";

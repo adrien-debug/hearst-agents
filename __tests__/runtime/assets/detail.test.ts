@@ -1,20 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAssetDetail } from "@/lib/runtime/assets/detail";
-import type { RunRecord } from "@/lib/runtime/runs/types";
-import type { PersistedRunRecord } from "@/lib/runtime/state/types";
+import { getAssetDetail } from "@/lib/engine/runtime/assets/detail";
+import type { RunRecord } from "@/lib/engine/runtime/runs/types";
+import type { PersistedRunRecord } from "@/lib/engine/runtime/state/types";
 
 const getAllRunsMock = vi.fn();
 const getPersistedRunsMock = vi.fn();
 
-vi.mock("@/lib/runtime/runs/store", () => ({
+vi.mock("@/lib/engine/runtime/runs/store", () => ({
   getAllRuns: (limit?: number) => getAllRunsMock(limit),
 }));
 
-vi.mock("@/lib/runtime/state/adapter", () => ({
+vi.mock("@/lib/engine/runtime/state/adapter", () => ({
   getRuns: (params?: { userId?: string; tenantId?: string; workspaceId?: string; limit?: number }) => getPersistedRunsMock(params),
 }));
 
-vi.mock("@/lib/runtime/assets/file-storage", () => ({
+vi.mock("@/lib/engine/runtime/assets/file-storage", () => ({
   getAssetDownloadInfo: () => ({ exists: false }),
 }));
 

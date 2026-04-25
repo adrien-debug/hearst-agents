@@ -1,6 +1,6 @@
 "use client";
 
-import type { TimelineItem, TimelineSeverity } from "@/lib/runtime/timeline/types";
+import type { TimelineItem, TimelineSeverity } from "@/lib/engine/runtime/timeline/types";
 
 interface RunTimelineProps {
   timeline: TimelineItem[];

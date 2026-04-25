@@ -7,7 +7,7 @@ import {
   checkOutputBlacklist,
   applyAgentGuardPolicy,
   determineOutputTrust,
-} from "@/lib/runtime/prompt-guard";
+} from "@/lib/engine/runtime/prompt-guard";
 
 describe("checkOutputBasicGuards", () => {
   it("fails on empty string", () => {

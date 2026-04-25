@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Asset, AssetType } from "@/lib/runtime/assets/types";
+import type { Asset, AssetType } from "@/lib/engine/runtime/assets/types";
 
 interface AssetPreviewProps {
   asset: Asset;

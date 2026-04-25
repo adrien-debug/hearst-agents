@@ -5,7 +5,7 @@
  * aggregating metadata, events, and assets for the unified timeline.
  */
 
-import type { RunEvent } from "../../events/types";
+import type { RunEvent } from "../../../events/types";
 
 export type RunStatus = "running" | "completed" | "failed" | "awaiting_approval" | "awaiting_clarification";
 

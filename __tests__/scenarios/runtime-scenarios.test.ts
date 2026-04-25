@@ -8,8 +8,8 @@
 
 import { describe, it, expect } from "vitest";
 import { createMockSupabase } from "../runtime/mock-supabase";
-import { RunTracer } from "../../lib/runtime/tracer";
-import { validateOutput } from "../../lib/runtime/output-validator";
+import { RunTracer } from "../../lib/engine/runtime/tracer";
+import { validateOutput } from "../../lib/engine/runtime/output-validator";
 import {
   classifyTraceFailure,
   classifyRunFailure,
@@ -20,7 +20,7 @@ import type { ToolMetrics } from "../../lib/analytics/metrics";
 import { selectTool } from "../../lib/decisions/tool-selector";
 import { selectModel, type ModelScore } from "../../lib/decisions/model-selector";
 import { generateToolFeedback } from "../../lib/analytics/feedback";
-import type { AgentGuardPolicy } from "../../lib/runtime/prompt-guard";
+import type { AgentGuardPolicy } from "../../lib/engine/runtime/prompt-guard";
 
 // ─────────────────────────────────────────────────────────────
 // SCÉNARIO 1 — TOOL FAILURE + FALLBACK + TRACE

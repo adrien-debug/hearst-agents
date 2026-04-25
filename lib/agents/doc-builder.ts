@@ -14,7 +14,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { RunEngine } from "../runtime/engine";
+import type { RunEngine } from "../engine/runtime/engine";
 import type { ArtifactType, ArtifactMetadata } from "../artifacts/types";
 import {
   DocumentSessionManager,

@@ -8,9 +8,9 @@
 import type {
   StepActor,
   RunCost,
-} from "../runtime/engine/types";
+} from "../engine/runtime/engine/types";
 import type { ArtifactType } from "../artifacts/types";
-import type { AssetType } from "../runtime/assets/types";
+import type { AssetType } from "../engine/runtime/assets/types";
 import type { ToolCapability } from "../tools/types";
 
 // ── Event union ──────────────────────────────────────────

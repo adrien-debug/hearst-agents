@@ -8,7 +8,7 @@
  */
 
 import type { ProviderId } from "@/lib/providers/types";
-import type { OutputTone, FormattedSection } from "@/lib/runtime/formatting/pipeline";
+import type { OutputTone, FormattedSection } from "@/lib/engine/runtime/formatting/pipeline";
 import type {
   FocalType,
   FocalStatus,

@@ -1,14 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, Json } from "../database.types";
-import type { ChatMessage } from "../llm/types";
-import type { ModelGoal } from "../decisions/model-selector";
-import { getProvider } from "../llm/router";
-import { smartChat } from "../llm/router";
+import type { Database, Json } from "../../database.types";
+import type { ChatMessage } from "../../llm/types";
+import type { ModelGoal } from "../../decisions/model-selector";
+import { getProvider } from "../../llm/router";
+import { smartChat } from "../../llm/router";
 import { RunTracer } from "./tracer";
 import { executeTool, type ToolDef } from "./tool-executor";
 import { RuntimeError, DEFAULT_RETRY } from "./lifecycle";
-import { computeToolMetrics, scoreTools } from "../analytics";
-import { selectTool } from "../decisions/tool-selector";
+import { computeToolMetrics, scoreTools } from "../../analytics";
+import { selectTool } from "../../decisions/tool-selector";
 
 type DB = SupabaseClient<Database>;
 

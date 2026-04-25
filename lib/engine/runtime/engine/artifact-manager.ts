@@ -11,7 +11,7 @@ import type {
   ArtifactRef,
   CreateArtifactInput,
   ReviseArtifactInput,
-} from "../../artifacts/types";
+} from "../../../artifacts/types";
 
 export class ArtifactManager {
   constructor(

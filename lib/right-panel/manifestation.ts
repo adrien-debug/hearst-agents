@@ -22,7 +22,7 @@ import type { ExecutionPlan } from "@/lib/planner/types";
 import type { MissionDefinition } from "@/lib/planner/types";
 import type { Asset } from "@/lib/assets/types";
 import type { ProviderId } from "@/lib/providers/types";
-import type { FormattedOutput, FormattedSection } from "@/lib/runtime/formatting/pipeline";
+import type { FormattedOutput, FormattedSection } from "@/lib/engine/runtime/formatting/pipeline";
 import type {
   FocalObject,
   MessageDraftObject,

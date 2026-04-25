@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AssetPreview } from "../../components/AssetPreview";
-import type { Asset } from "@/lib/runtime/assets/types";
+import type { Asset } from "@/lib/engine/runtime/assets/types";
 
 export default function AssetDetailPage() {
   const params = useParams();

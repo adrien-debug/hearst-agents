@@ -4,7 +4,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RunApproval, CreateApprovalInput } from "./types";
-import type { RunEventBus } from "../../events/bus";
+import type { RunEventBus } from "../../../events/bus";
 
 const DEFAULT_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
 

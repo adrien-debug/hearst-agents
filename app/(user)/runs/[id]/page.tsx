@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RunTimeline } from "../../components/RunTimeline";
-import type { RunRecord } from "@/lib/runtime/runs/types";
-import type { TimelineItem } from "@/lib/runtime/timeline/types";
+import type { RunRecord } from "@/lib/engine/runtime/runs/types";
+import type { TimelineItem } from "@/lib/engine/runtime/timeline/types";
 
 export default function RunDetailPage() {
   const params = useParams();

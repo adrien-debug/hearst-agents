@@ -15,7 +15,7 @@ import { StepManager } from "./step-manager";
 import { ApprovalManager } from "./approval-manager";
 import { ArtifactManager } from "./artifact-manager";
 import { CostTracker } from "./cost-tracker";
-import { RunEventBus } from "../../events/bus";
+import { RunEventBus } from "../../../events/bus";
 
 const EMPTY_COST: RunCost = {
   llm_input_tokens: 0,
