@@ -4,6 +4,20 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+if [[ -f "$SCRIPT_DIR/.env" ]]; then
+  _h=$(grep -E '^[[:space:]]*HEARST_OPEN_CHROME=' "$SCRIPT_DIR/.env" 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//')
+  if [[ -n "$_h" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source /dev/stdin <<<"$_h"
+    set +a
+  fi
+  unset _h
+fi
+
 echo "🚀 Hearst OS Launcher"
 echo "===================="
 echo ""
@@ -154,6 +168,12 @@ echo -e "  🌐 hearst-os:      ${GREEN}http://localhost:9000${NC}"
 echo -e "  🌐 hearst-connect: ${GREEN}http://localhost:8100${NC}"
 echo -e "  🌐 Hearst-app:     ${GREEN}http://localhost:3000${NC}"
 echo ""
+
+if [[ "${HEARST_OPEN_CHROME:-1}" != "0" ]]; then
+  echo -e "${CYAN}Chrome:${NC} ouverture des onglets (3000 → 8100 → 9000)…"
+  nohup bash "$SCRIPT_DIR/scripts/hearst-open-chrome.sh" >>/tmp/hearst-chrome-open.log 2>&1 &
+fi
+
 echo -e "${CYAN}Logs:${NC}"
 echo ""
 echo -e "  📄 hearst-os:      tail -f /tmp/hearst-os.log"

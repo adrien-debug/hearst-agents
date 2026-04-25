@@ -5,6 +5,17 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+if [[ -f "$ROOT/.env" ]]; then
+  _h=$(grep -E '^[[:space:]]*HEARST_OPEN_CHROME=' "$ROOT/.env" 2>/dev/null | tail -1 | sed 's/^[[:space:]]*//')
+  if [[ -n "$_h" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source /dev/stdin <<<"$_h"
+    set +a
+  fi
+  unset _h
+fi
+
 for port in 9000 8100 3000; do
   lsof -ti tcp:"$port" | xargs kill -9 2>/dev/null || true
 done
@@ -32,6 +43,11 @@ else
 fi
 
 sleep 2
+
+if [[ "${HEARST_OPEN_CHROME:-1}" != "0" ]]; then
+  echo "▶ Chrome → onglets :3000 :8100 :9000 (désactiver: HEARST_OPEN_CHROME=0)"
+  nohup bash "$ROOT/scripts/hearst-open-chrome.sh" >>/tmp/hearst-chrome-open.log 2>&1 &
+fi
 
 echo "▶ hearst-os → :9000 (ce terminal)"
 exec npm run dev:solo

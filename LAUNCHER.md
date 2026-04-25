@@ -21,6 +21,8 @@ tail -f /tmp/hearst-app.log       # Landing page (port 3000)
 
 Même stack **3000 + 8100 + 9000** : les deux repos voisins démarrent en arrière-plan (logs `/tmp/hearst-connect.log`, `/tmp/hearst-app.log`), **hearst-os** reste au premier plan sur **:9000**. Pas de suppression des `.next` (contrairement à `npm run launch`). **`npm run dev:solo`** = uniquement hearst-os sur :9000.
 
+Après écoute du port **9000**, **Google Chrome** ouvre trois onglets (3000 → 8100 → 9000). Désactiver : `HEARST_OPEN_CHROME=0 npm run dev` ou variable dans `.env`. Log ouverture : `/tmp/hearst-chrome-open.log`.
+
 ## Ce que fait `npm run launch`
 
 1. **Kill processus existants** sur ports 9000, 8100, 3000

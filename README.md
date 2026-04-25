@@ -2,7 +2,7 @@
 
 Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
-> 🚀 **Quick Start**: `npm run dev` démarre **hearst-connect :8100** + **Hearst-app :3000** + **hearst-os :9000** (logs `/tmp/hearst-*.log`) | `npm run launch` = script complet + nohup + purge `.next`  
+> 🚀 **Quick Start**: `npm run dev` démarre **hearst-connect :8100** + **Hearst-app :3000** + **hearst-os :9000** (logs `/tmp/hearst-*.log`) et ouvre les 3 URLs dans **Google Chrome** — `HEARST_OPEN_CHROME=0` pour désactiver | `npm run launch` = idem + nohup + purge `.next`  
 > `npm run dev:solo` = seulement hearst-os sur **:9000**  
 > 📖 Guide complet: [`LAUNCHER.md`](./LAUNCHER.md)
 
