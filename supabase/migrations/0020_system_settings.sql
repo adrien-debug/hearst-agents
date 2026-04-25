@@ -1,5 +1,6 @@
 -- Migration: System Settings table for dynamic configuration
 -- Created: 2026-04-25
+-- Fixed: Unique constraint for NULL tenant_id (global settings)
 
 CREATE TABLE IF NOT EXISTS system_settings (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -17,11 +18,20 @@ CREATE TABLE IF NOT EXISTS system_settings (
     is_encrypted BOOLEAN DEFAULT FALSE,
     tenant_id TEXT REFERENCES tenants(id) ON DELETE CASCADE,
     updated_at TIMESTAMPTZ DEFAULT now(),
-    updated_by TEXT,
-
-    -- Composite unique: key + tenant (null tenant = global)
-    UNIQUE(key, tenant_id)
+    updated_by TEXT
+    -- Note: UNIQUE(key, tenant_id) removed - see partial unique indexes below
 );
+
+-- Partial unique indexes for proper constraint handling
+-- Global settings: only one per key (tenant_id IS NULL)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_settings_global_unique 
+    ON system_settings(key) 
+    WHERE tenant_id IS NULL;
+
+-- Tenant-specific settings: only one per (key, tenant_id) combo
+CREATE UNIQUE INDEX IF NOT EXISTS idx_settings_tenant_unique 
+    ON system_settings(key, tenant_id) 
+    WHERE tenant_id IS NOT NULL;
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_system_settings_category ON system_settings(category);
@@ -49,17 +59,17 @@ CREATE POLICY "Users can read non-sensitive settings" ON system_settings
         )
     );
 
--- Seed default settings
-INSERT INTO system_settings (key, value, category, description)
+-- Seed default settings (globals with tenant_id = NULL)
+INSERT INTO system_settings (key, value, category, description, tenant_id)
 VALUES
-    ('analytics.enabled', 'true', 'feature_flags', 'Enable analytics event tracking'),
-    ('toasts.enabled', 'true', 'feature_flags', 'Enable user toast notifications'),
-    ('memory.max_tokens', '128000', 'thresholds', 'Maximum context window tokens'),
-    ('runs.max_concurrent', '5', 'thresholds', 'Maximum concurrent runs per user'),
-    ('upload.max_size_mb', '50', 'limits', 'Maximum file upload size in MB'),
-    ('nango.enabled', 'true', 'integrations', 'Enable Nango OAuth integration'),
-    ('ui.theme.default', '"dark"', 'ui', 'Default UI theme'),
-    ('analytics.retention_days', '90', 'analytics', 'Event retention period')
-ON CONFLICT (key, tenant_id) DO NOTHING;
+    ('analytics.enabled', 'true', 'feature_flags', 'Enable analytics event tracking', NULL),
+    ('toasts.enabled', 'true', 'feature_flags', 'Enable user toast notifications', NULL),
+    ('memory.max_tokens', '128000', 'thresholds', 'Maximum context window tokens', NULL),
+    ('runs.max_concurrent', '5', 'thresholds', 'Maximum concurrent runs per user', NULL),
+    ('upload.max_size_mb', '50', 'limits', 'Maximum file upload size in MB', NULL),
+    ('nango.enabled', 'true', 'integrations', 'Enable Nango OAuth integration', NULL),
+    ('ui.theme.default', '"dark"', 'ui', 'Default UI theme', NULL),
+    ('analytics.retention_days', '90', 'analytics', 'Event retention period', NULL)
+ON CONFLICT (key) WHERE tenant_id IS NULL DO NOTHING;
 
 COMMENT ON TABLE system_settings IS 'Dynamic system configuration with tenant override support';

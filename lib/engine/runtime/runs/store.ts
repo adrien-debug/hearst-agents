@@ -1,7 +1,7 @@
 /**
  * Run Store — In-memory store for RunRecords.
  * Kept for live event accumulation during a run and as fallback if Supabase is unavailable.
- * Canonical runtime state is persisted via lib/runtime/state/adapter.ts.
+ * Canonical runtime state is persisted via lib/engine/runtime/state/adapter.ts.
  */
 
 import type { RunRecord } from "./types";

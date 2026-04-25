@@ -18,6 +18,9 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > Sécurité env • Responsive shell • Toasts/feedback • Login FR • Core types unifiés • Analytics 4 events • E2E complet (mobile+desktop)  
 > [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 
+> 🚧 **Phase 7 — Convergence Architecture (75% complète)**  
+> Runtime migré (52 fichiers) • Settings dynamiques (4 fichiers + SQL) • Auth réorganisé • 384 tests ✅
+
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
 > **État d'avancement / écarts** : [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 
@@ -813,10 +816,10 @@ Architecture canonique pour les missions planifiées/autonomes.
 
 | Layer | Path | Role |
 |-------|------|------|
-| Runtime (canonical) | `lib/runtime/missions/*` | Scheduler, store, lease, ops, types |
-| Persistence | `lib/runtime/state/adapter.ts` | Supabase read/write (missions.actions jsonb) |
+| Runtime (canonical) | `lib/engine/runtime/missions/*` | Scheduler, store, lease, ops, types |
+| Persistence | `lib/engine/runtime/state/adapter.ts` | Supabase read/write (missions.actions jsonb) |
 | APIs (canonical) | `/api/v2/missions`, `.../[id]/run`, `.../ops` | CRUD, Run Now, Ops status |
-| Scheduler | `lib/runtime/missions/scheduler.ts` + `scheduler-init.ts` | Polling loop, leader lease, distributed dedup |
+| Scheduler | `lib/engine/runtime/missions/scheduler.ts` + `scheduler-init.ts` | Polling loop, leader lease, distributed dedup |
 | UI client (canonical) | `app/lib/missions-v2.ts` | Frontend helpers (fetch, create, toggle, run) |
 | Admin | `/admin/scheduler` | Leadership, ops table, run/toggle actions |
 | Right Panel | `MissionsSection` + `MissionDetailSection` | Live status, schedule, errors |
@@ -836,14 +839,14 @@ Architecture multi-agents avec exécution déterministe et observable.
 
 ```
 lib/
-├── runtime/engine/
+├── engine/runtime/engine/
 │   ├── types.ts              # EngineRun, RunStep, RunApproval, RunCost
 │   ├── index.ts              # RunEngine façade (lifecycle, plan attachment)
 │   ├── step-manager.ts       # CRUD + state transitions pour RunSteps
 │   ├── approval-manager.ts   # Approval gates (create, decide, expire)
 │   ├── artifact-manager.ts   # Artifacts CRUD + versioning
 │   └── cost-tracker.ts       # Token/tool usage tracking
-├── runtime/delegate/
+├── engine/runtime/delegate/
 │   ├── types.ts              # DelegateInput, DelegateResult union
 │   ├── queue.ts              # DelegateJobQueue interface + factory
 │   └── queue-memory.ts       # In-memory queue (dev/proto)
@@ -879,7 +882,7 @@ Migration : `supabase/migrations/0015_run_engine_v2.sql`
 
 Run lifecycle : `created → running → completed | failed | cancelled | awaiting_approval | awaiting_clarification`
 
-Coexiste avec le legacy `RunTracer` (`lib/runtime/tracer.ts`). Phase 1 utilise les deux.
+Coexiste avec le legacy `RunTracer` (`lib/engine/runtime/tracer.ts`). Phase 1 utilise les deux.
 
 ## Database (32 tables, 15 migrations)
 
@@ -965,7 +968,7 @@ Couverture : lifecycle, cost sentinel, prompt guards, output validator, tracer i
 
 ## Report Capabilities (Cron Production)
 
-Infrastructure partagée (`lib/runtime/report-runner.ts`) pour toutes les capabilities de reporting.
+Infrastructure partagée (`lib/engine/runtime/report-runner.ts`) pour toutes les capabilities de reporting.
 
 ### Architecture d'exécution
 
@@ -1159,7 +1162,7 @@ Toute nouvelle capability doit suivre ce pattern exact. Un 3e report est **un fi
 ```typescript
 import { NextRequest } from "next/server";
 import { err } from "@/lib/domain";
-import { authenticateCron, runReport, parseCronBody, type ReportConfig } from "@/lib/runtime/report-runner";
+import { authenticateCron, runReport, parseCronBody, type ReportConfig } from "@/lib/engine/runtime/report-runner";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;

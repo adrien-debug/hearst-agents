@@ -9,7 +9,7 @@
  * - MissionDefinition: draft → active → paused/completed
  * - Active missions: scheduler checks getDueMissions() and runs them
  *
- * This module does NOT contain scheduling logic (that's in lib/runtime/missions/scheduler.ts).
+ * This module does NOT contain scheduling logic (that's in lib/engine/runtime/missions/scheduler.ts).
  * It provides the mission lifecycle management layer above it.
  */
 

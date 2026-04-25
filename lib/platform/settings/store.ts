@@ -9,31 +9,49 @@ import type { SystemSetting, SettingValue, SettingCategory } from "./types";
 
 const TABLE = "system_settings";
 
+/**
+ * Get a setting with tenant-specific priority.
+ * Returns tenant setting if exists, otherwise global (tenant_id = null).
+ */
 export async function getSetting(
   db: SupabaseClient,
   key: string,
   tenantId: string | null = null
 ): Promise<SystemSetting | null> {
-  let query = db
+  // First, try to get tenant-specific setting
+  if (tenantId) {
+    const { data: tenantData, error: tenantError } = await db
+      .from(TABLE)
+      .select("*")
+      .eq("key", key)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+
+    if (tenantError) {
+      console.error(`[Settings] Error fetching tenant setting ${key}:`, tenantError.message);
+    } else if (tenantData) {
+      return transformFromDb(tenantData);
+    }
+  }
+
+  // Fallback to global setting (tenant_id = null)
+  const { data: globalData, error: globalError } = await db
     .from(TABLE)
     .select("*")
     .eq("key", key)
-    .order("tenant_id", { ascending: false }) // Prioritize tenant-specific
-    .limit(1);
+    .is("tenant_id", null)
+    .maybeSingle();
 
-  if (tenantId) {
-    query = query.in("tenant_id", [tenantId, null]);
-  } else {
-    query = query.is("tenant_id", null);
-  }
-
-  const { data, error } = await query;
-
-  if (error || !data || data.length === 0) {
+  if (globalError) {
+    console.error(`[Settings] Error fetching global setting ${key}:`, globalError.message);
     return null;
   }
 
-  return transformFromDb(data[0]);
+  if (!globalData) {
+    return null;
+  }
+
+  return transformFromDb(globalData);
 }
 
 export async function setSetting(
@@ -93,7 +111,12 @@ export async function getAllSettings(
 
   const { data, error } = await query;
 
-  if (error || !data) {
+  if (error) {
+    console.error(`[Settings] Error fetching settings:`, error.message);
+    return [];
+  }
+
+  if (!data) {
     return [];
   }
 

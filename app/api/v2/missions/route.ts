@@ -1,6 +1,6 @@
 /**
  * Missions API — Create and list scheduled missions.
- * Uses the canonical v2 mission layer (lib/runtime/missions + state/adapter).
+ * Uses the canonical v2 mission layer (lib/engine/runtime/missions + state/adapter).
  */
 
 import { NextRequest, NextResponse } from "next/server";

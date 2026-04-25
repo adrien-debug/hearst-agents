@@ -7,4 +7,4 @@
 #   orchestrator/     — Facade (move from lib/orchestrator/)
 #   planner/          — Intent → Plan (existing)
 #
-# Status: Phase 7 — Current lib/runtime/ stays functional during migration
+# Status: Phase 7 — Runtime canonique sous lib/engine/runtime/ (ex-lib/runtime).

@@ -1,7 +1,7 @@
 /**
  * Scheduled Mission Store — in-memory store for scheduled missions.
  * Kept as fallback and for scheduler hot-path reads.
- * Canonical runtime state is persisted via lib/runtime/state/adapter.ts.
+ * Canonical runtime state is persisted via lib/engine/runtime/state/adapter.ts.
  */
 
 import type { ScheduledMission } from "./types";

@@ -2,8 +2,7 @@
 
 Document de référence pour aligner le repo réel avec la vision produit et `HEARST-ARCHITECTURE-FINALE.html`.
 
-**Date de mise à jour** : 25/04/2026  
-**Précédente version** : [2026-04-24](./CONVERGENCE_STATUS_2026-04-24.md)
+**Date de mise à jour** : 25/04/2026
 
 ---
 
@@ -70,8 +69,10 @@ lib/
 | `lib/core/types/` | 🟡 Partiel | Canonique créé, migration progressive |
 | RightPanel UI | 🟡 Fonctionnel | Drawer mobile OK, INDEX/DOCUMENT différé |
 | Focal objects | 🟢 Fonctionnels | `mapFocalObject` / `mapFocalObjects` canoniques dans `lib/core/types/focal.ts` (HomePage, FocalStage, RightPanel) |
+| Runtime engine | 🟢 Migré | `lib/engine/runtime/` — 52 fichiers déplacés (25/04) |
 | Assets storage | 🔴 Local | Reste file-backed, cloud (R2/S3) Phase 7+ |
-| Settings dynamiques | 🔴 Hardcodés | `lib/platform/settings/` squelette uniquement |
+| Settings dynamiques | 🟡 Implémenté | `lib/platform/settings/` — structure complète, non utilisé dans le code |
+| Auth platform | 🟢 Migré | `lib/platform/auth/` — réorganisé (25/04) |
 | RBAC | 🔴 Absent | `roles`, `user_roles` Phase 7+ |
 
 ---
@@ -107,10 +108,12 @@ lib/
 
 ### Phase 7 — Convergence Architecture Finale (Mois 2)
 
-- [ ] Migration `lib/runtime/` → `lib/engine/runtime/`
+- [x] Migration `lib/runtime/` → `lib/engine/runtime/` ✅ (52 fichiers, 38+ imports mis à jour)
 - [ ] Unification types `lib/right-panel/objects.ts` → `stores/focal.ts`
-- [ ] Settings dynamiques : `system_settings` table
-- [ ] Auth déplacé : `lib/auth.ts` → `lib/platform/auth/`
+- [x] Settings dynamiques : `system_settings` table ✅ (4 fichiers + migration SQL)
+- [x] Auth déplacé : `lib/auth.ts` → `lib/platform/auth/` ✅ (2 fichiers réorganisés)
+
+**Statut Phase 7** : 3/4 tâches complètes (75%)
 
 ### Phase 8+ — Scale (Mois 3+)
 
