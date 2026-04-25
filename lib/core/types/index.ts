@@ -4,11 +4,100 @@
  * Architecture Finale alignment: lib/core/types/ is the single source of truth
  * for all domain types. Re-exports from stores/, engine/, and focal domain.
  *
- * Migration:
- * - New code: import from "@/lib/core/types"
- * - Legacy: existing imports still valid (backward compatible)
- * - Goal: eliminate lib/right-panel/objects.ts duplication (Phase 7)
+ * Usage: import type { Asset, RunRecord, AgentDefinition } from "@/lib/core/types"
  */
+
+// ── Common ──────────────────────────────────────────────────
+export type {
+  ApiResponse,
+  ProviderId,
+  Timestamp,
+  PaginatedResult,
+  TenantScope,
+} from "./common";
+
+// ── Connectors ──────────────────────────────────────────────
+export type {
+  EmailMessage,
+  CalendarEvent,
+  FileEntry,
+  TaskItem,
+  ConnectorResult,
+  EmailConnector,
+  CalendarConnector,
+  FileConnector,
+  TaskConnector,
+  SlackMessage,
+  SlackConnector,
+  ConnectorSource,
+  ConnectorMeta,
+  ConnectorCapability,
+  ConnectorDefinition,
+  PackManifest,
+  ConnectorManifest,
+  ConnectorInstance,
+  ConnectorCategory,
+  ConnectorAuthType,
+  ConnectorHealth,
+} from "./connectors";
+
+// ── Agents ──────────────────────────────────────────────────
+export type {
+  AgentDefinition,
+  AgentBackend,
+  AgentBackendDecision,
+  AgentBackendV2,
+  BackendCapabilities,
+  ManagedSessionConfig,
+  ManagedSessionContext,
+  ManagedAgentEvent,
+  ManagedAgentEventType,
+  ManagedAgentResult,
+  ManagedAgentStep,
+  BackendSelectionInput,
+  BackendSelectionResult,
+  HybridExecutionPlan,
+  HybridStep,
+  HandoffContext,
+  HandoffResult,
+  CapabilityAgent,
+  StepActor,
+} from "./agents";
+
+// ── Runtime ─────────────────────────────────────────────────
+export type {
+  RunStatus,
+  RunAssetRef,
+  RunRecord,
+  TimelineItemType,
+  TimelineSeverity,
+  TimelineItem,
+  PersistedRunStatus,
+  PersistedRunRecord,
+  PersistedMissionRunStatus,
+  PersistedScheduledMission,
+} from "./runtime";
+
+// ── Assets ──────────────────────────────────────────────────
+export type {
+  AssetKind,
+  AssetProvenance,
+  Asset,
+  ActionType,
+  ActionStatus,
+  Action,
+  AssetType,
+  AssetStorageKind,
+  AssetFileInfo,
+  RuntimeAsset,
+  StorageProvider,
+  StorageProviderType,
+  StorageObject,
+  StorageConfig,
+  SignedUrlOptions,
+  UploadResult,
+  DownloadResult,
+} from "./assets";
 
 // ── Navigation & Thread System ──────────────────────────────
 export type {
@@ -37,13 +126,6 @@ export type {
   CoreState,
 } from "@/stores/runtime";
 
-// ── Assets ──────────────────────────────────────────────────
-export type {
-  AssetKind,
-  AssetProvenance,
-  Asset,
-} from "@/lib/assets/types";
-
 // ── Right Panel (UI View Model) ────────────────────────────
 export type {
   RightPanelCurrentRun,
@@ -54,18 +136,8 @@ export type {
   FocalObjectView,
 } from "@/lib/ui/right-panel/types";
 
-// ── Runs ────────────────────────────────────────────────────
-export type {
-  RunStatus,
-  RunAssetRef,
-  RunRecord,
-} from "@/lib/engine/runtime/runs/types";
-
-// ── Connectors (Unified) ───────────────────────────────────
+// ── Connectors (Unified — legacy re-export) ────────────────
 export type {
   ServiceDefinition,
   ServiceWithConnectionStatus,
 } from "@/lib/integrations/types";
-
-// Note: ConnectorCapability imported from @/lib/connectors/platform/types
-// Import directly from there if needed: import type { ConnectorCapability } from "@/lib/connectors/platform/types"

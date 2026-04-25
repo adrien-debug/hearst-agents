@@ -7,13 +7,47 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const LINKS = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/agents", label: "Agents" },
-  { href: "/admin/runs", label: "Runs" },
-  { href: "/admin/scheduler", label: "Scheduler" },
-  { href: "/admin/reports", label: "Reports" },
-  { href: "/admin/signals", label: "Signals" },
+interface NavSection {
+  title: string;
+  links: { href: string; label: string }[];
+}
+
+const SECTIONS: NavSection[] = [
+  {
+    title: "Overview",
+    links: [
+      { href: "/admin", label: "Dashboard" },
+      { href: "/admin/reports", label: "Reports" },
+    ],
+  },
+  {
+    title: "Orchestration",
+    links: [
+      { href: "/admin/agents", label: "Agents" },
+      { href: "/admin/runs", label: "Runs" },
+      { href: "/admin/workflows", label: "Workflows" },
+      { href: "/admin/scheduler", label: "Scheduler" },
+    ],
+  },
+  {
+    title: "Knowledge",
+    links: [
+      { href: "/admin/datasets", label: "Datasets" },
+      { href: "/admin/tools", label: "Tools" },
+      { href: "/admin/skills", label: "Skills" },
+    ],
+  },
+  {
+    title: "System",
+    links: [
+      { href: "/admin/settings", label: "Settings" },
+      { href: "/admin/health", label: "Health" },
+      { href: "/admin/audit", label: "Audit Log" },
+      { href: "/admin/signals", label: "Signals" },
+      { href: "/admin/changes", label: "Changelog" },
+      { href: "/admin/architecture", label: "Architecture" },
+    ],
+  },
 ];
 
 export default function AdminSidebar() {
@@ -25,21 +59,28 @@ export default function AdminSidebar() {
         <span className="text-lg font-light text-white/90">Hearst</span>
         <span className="ml-2 text-xs text-white/40">Admin</span>
       </div>
-      <nav className="p-2">
-        {LINKS.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`
-              block px-3 py-2 rounded-lg text-sm transition-colors
-              ${pathname === link.href || pathname?.startsWith(link.href + "/")
-                ? "bg-white/10 text-white"
-                : "text-white/60 hover:text-white hover:bg-white/5"
-              }
-            `}
-          >
-            {link.label}
-          </Link>
+      <nav className="p-2 space-y-4">
+        {SECTIONS.map((section) => (
+          <div key={section.title}>
+            <p className="px-3 mb-1 text-[10px] uppercase tracking-wider text-white/30 font-medium">
+              {section.title}
+            </p>
+            {section.links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`
+                  block px-3 py-1.5 rounded-lg text-sm transition-colors
+                  ${pathname === link.href || (link.href !== "/admin" && pathname?.startsWith(link.href + "/"))
+                    ? "bg-white/10 text-white"
+                    : "text-white/60 hover:text-white hover:bg-white/5"
+                  }
+                `}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
         ))}
       </nav>
     </aside>

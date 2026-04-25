@@ -1,31 +1,28 @@
 /**
  * Admin Settings API — Architecture Finale
  *
- * CRUD system_settings table with tenant override support.
+ * Thin façade over platform/settings/store for admin CRUD.
+ * Single source of truth for types: lib/platform/settings/types.ts
  * Path: lib/admin/settings.ts
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getSetting,
+  setSetting,
+  getAllSettings,
+} from "@/lib/platform/settings/store";
 
-export type SettingCategory =
-  | "feature_flags"
-  | "thresholds"
-  | "limits"
-  | "integrations"
-  | "ui"
-  | "analytics";
+export type {
+  SettingCategory,
+  SettingValue,
+  SystemSetting,
+} from "@/lib/platform/settings/types";
 
-export interface SystemSetting {
-  id: string;
-  key: string;
-  value: unknown;
-  category: SettingCategory;
-  description?: string;
-  isEncrypted: boolean;
-  tenantId: string | null;
-  updatedAt: string;
-  updatedBy?: string;
-}
+import type {
+  SettingCategory,
+  SystemSetting,
+} from "@/lib/platform/settings/types";
 
 export interface CreateSettingInput {
   key: string;
@@ -56,33 +53,19 @@ export async function getSystemSettings(
     includeGlobal?: boolean;
   }
 ): Promise<SystemSetting[]> {
-  let query = db
-    .from("system_settings")
-    .select("*")
-    .order("key");
+  const results = await getAllSettings(db, filters?.category, filters?.tenantId);
 
-  if (filters?.category) {
-    query = query.eq("category", filters.category);
-  }
-
-  if (filters?.tenantId === null) {
-    query = query.is("tenant_id", null);
-  } else if (filters?.tenantId) {
-    if (filters.includeGlobal) {
-      query = query.or(`tenant_id.eq.${filters.tenantId},tenant_id.is.null`);
-    } else {
-      query = query.eq("tenant_id", filters.tenantId);
+  if (filters?.tenantId && filters.includeGlobal) {
+    const globalResults = await getAllSettings(db, filters.category, null);
+    const tenantKeys = new Set(results.map((r) => r.key));
+    for (const g of globalResults) {
+      if (!tenantKeys.has(g.key)) {
+        results.push(g);
+      }
     }
   }
 
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("[Admin/Settings] Failed to fetch settings:", error);
-    throw new Error(`Failed to fetch settings: ${error.message}`);
-  }
-
-  return (data || []).map(parseSettingRow);
+  return results;
 }
 
 /**
@@ -93,26 +76,7 @@ export async function getSystemSetting(
   key: string,
   tenantId?: string | null
 ): Promise<SystemSetting | null> {
-  let query = db
-    .from("system_settings")
-    .select("*")
-    .eq("key", key);
-
-  if (tenantId === null || tenantId === undefined) {
-    query = query.is("tenant_id", null);
-  } else {
-    query = query.eq("tenant_id", tenantId);
-  }
-
-  const { data, error } = await query.single();
-
-  if (error) {
-    if (error.code === "PGRST116") return null; // Not found
-    console.error("[Admin/Settings] Failed to fetch setting:", error);
-    throw new Error(`Failed to fetch setting: ${error.message}`);
-  }
-
-  return data ? parseSettingRow(data) : null;
+  return getSetting(db, key, tenantId ?? null);
 }
 
 /**
@@ -124,14 +88,12 @@ export async function getEffectiveSetting<T = unknown>(
   tenantId?: string | null,
   defaultValue?: T
 ): Promise<T> {
-  // Try tenant-specific first
   if (tenantId) {
-    const tenantSetting = await getSystemSetting(db, key, tenantId);
+    const tenantSetting = await getSetting(db, key, tenantId);
     if (tenantSetting) return tenantSetting.value as T;
   }
 
-  // Fall back to global
-  const globalSetting = await getSystemSetting(db, key, null);
+  const globalSetting = await getSetting(db, key, null);
   if (globalSetting) return globalSetting.value as T;
 
   return defaultValue as T;
@@ -144,26 +106,11 @@ export async function createSystemSetting(
   db: SupabaseClient,
   input: CreateSettingInput
 ): Promise<SystemSetting> {
-  const { data, error } = await db
-    .from("system_settings")
-    .insert({
-      key: input.key,
-      value: JSON.stringify(input.value),
-      category: input.category,
-      description: input.description,
-      is_encrypted: input.isEncrypted ?? false,
-      tenant_id: input.tenantId ?? null,
-      updated_by: input.updatedBy,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    console.error("[Admin/Settings] Failed to create setting:", error);
-    throw new Error(`Failed to create setting: ${error.message}`);
-  }
-
-  return parseSettingRow(data);
+  return setSetting(db, input.key, input.value as string | number | boolean | object, input.category, input.tenantId ?? null, {
+    description: input.description,
+    isEncrypted: input.isEncrypted,
+    updatedBy: input.updatedBy,
+  });
 }
 
 /**
@@ -175,45 +122,23 @@ export async function updateSystemSetting(
   input: UpdateSettingInput,
   tenantId?: string | null
 ): Promise<SystemSetting> {
-  const updates: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-  };
-
-  if (input.value !== undefined) {
-    updates.value = JSON.stringify(input.value);
-  }
-  if (input.category !== undefined) {
-    updates.category = input.category;
-  }
-  if (input.description !== undefined) {
-    updates.description = input.description;
-  }
-  if (input.isEncrypted !== undefined) {
-    updates.is_encrypted = input.isEncrypted;
-  }
-  if (input.updatedBy !== undefined) {
-    updates.updated_by = input.updatedBy;
+  const existing = await getSetting(db, key, tenantId ?? null);
+  if (!existing) {
+    throw new Error(`Setting '${key}' not found`);
   }
 
-  let query = db
-    .from("system_settings")
-    .update(updates)
-    .eq("key", key);
-
-  if (tenantId === null || tenantId === undefined) {
-    query = query.is("tenant_id", null);
-  } else {
-    query = query.eq("tenant_id", tenantId);
-  }
-
-  const { data, error } = await query.select().single();
-
-  if (error) {
-    console.error("[Admin/Settings] Failed to update setting:", error);
-    throw new Error(`Failed to update setting: ${error.message}`);
-  }
-
-  return parseSettingRow(data);
+  return setSetting(
+    db,
+    key,
+    (input.value ?? existing.value) as string | number | boolean | object,
+    input.category ?? existing.category,
+    tenantId ?? null,
+    {
+      description: input.description ?? existing.description,
+      isEncrypted: input.isEncrypted ?? existing.isEncrypted,
+      updatedBy: input.updatedBy,
+    }
+  );
 }
 
 /**
@@ -223,24 +148,11 @@ export async function upsertSystemSetting(
   db: SupabaseClient,
   input: CreateSettingInput
 ): Promise<SystemSetting> {
-  const existing = await getSystemSetting(db, input.key, input.tenantId ?? null);
-
-  if (existing) {
-    return updateSystemSetting(
-      db,
-      input.key,
-      {
-        value: input.value,
-        category: input.category,
-        description: input.description,
-        isEncrypted: input.isEncrypted,
-        updatedBy: input.updatedBy,
-      },
-      input.tenantId ?? null
-    );
-  }
-
-  return createSystemSetting(db, input);
+  return setSetting(db, input.key, input.value as string | number | boolean | object, input.category, input.tenantId ?? null, {
+    description: input.description,
+    isEncrypted: input.isEncrypted,
+    updatedBy: input.updatedBy,
+  });
 }
 
 /**
@@ -265,46 +177,13 @@ export async function deleteSystemSetting(
   const { error } = await query;
 
   if (error) {
-    console.error("[Admin/Settings] Failed to delete setting:", error);
+    console.error("[Admin/Settings] Failed to delete setting:", error.message);
     throw new Error(`Failed to delete setting: ${error.message}`);
   }
 }
 
 /**
- * Parse a database row into SystemSetting interface
- */
-function parseSettingRow(row: Record<string, unknown>): SystemSetting {
-  return {
-    id: row.id as string,
-    key: row.key as string,
-    value: parseValue(row.value as string, row.is_encrypted as boolean),
-    category: row.category as SettingCategory,
-    description: row.description as string | undefined,
-    isEncrypted: row.is_encrypted as boolean,
-    tenantId: row.tenant_id as string | null,
-    updatedAt: row.updated_at as string,
-    updatedBy: row.updated_by as string | undefined,
-  };
-}
-
-/**
- * Parse value from stored string (handle JSON and encryption)
- */
-function parseValue(valueStr: string, isEncrypted: boolean): unknown {
-  if (isEncrypted) {
-    // TODO: Decrypt if encryption is implemented
-    return valueStr;
-  }
-
-  try {
-    return JSON.parse(valueStr);
-  } catch {
-    return valueStr;
-  }
-}
-
-/**
- * Get feature flags (convenience function)
+ * Get feature flags (convenience)
  */
 export async function getFeatureFlags(
   db: SupabaseClient,

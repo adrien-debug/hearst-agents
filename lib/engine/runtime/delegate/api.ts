@@ -15,6 +15,12 @@ import type { StepActor } from "../engine/types";
 import { searchFiles, readFileContent, searchEmails } from "./connectors";
 // Phase B: Finance Agent (Stripe)
 import { executeStripeAgentInRuntime, isStripeTask } from "@/lib/agents/specialized/finance";
+// Phase C: CRM, Productivity, Design Agents
+import { executeCRMAgentInRuntime, isCRMTask } from "@/lib/agents/specialized/crm";
+import { executeProductivityAgentInRuntime, isProductivityTask } from "@/lib/agents/specialized/productivity";
+import { executeDesignAgentInRuntime, isDesignTask } from "@/lib/agents/specialized/design";
+// Phase D: Developer Agent
+import { executeDeveloperAgentInRuntime, isDeveloperTask } from "@/lib/agents/specialized/developer";
 
 export async function delegate(
   engine: RunEngine,
@@ -56,6 +62,62 @@ export async function delegate(
         await engine.steps.fail(step.id, { code: "STRIPE_ERROR", message: stripeResult.error || "Unknown", retryable: false });
         engine.events.emit({ type: "step_failed", run_id: engine.id, step_id: step.id, error: stripeResult.error || "Unknown" });
         return { status: "error", step_id: step.id, error: { code: "STRIPE_ERROR", message: stripeResult.error || "Unknown", retryable: false } };
+      }
+    }
+
+    // Route CRM tasks to specialized CRMAgent
+    if (input.agent === "CRMAgent" || isCRMTask(input.task)) {
+      const crmResult = await executeCRMAgentInRuntime(engine, input.task);
+      if (crmResult.success) {
+        await engine.steps.complete(step.id, { output: crmResult as unknown as Record<string, unknown> });
+        engine.events.emit({ type: "step_completed", run_id: engine.id, step_id: step.id, agent: "CRMAgent" as StepActor });
+        return { status: "success", step_id: step.id, data: crmResult as unknown as Record<string, unknown> };
+      } else {
+        await engine.steps.fail(step.id, { code: "CRM_ERROR", message: crmResult.error || "Unknown", retryable: false });
+        engine.events.emit({ type: "step_failed", run_id: engine.id, step_id: step.id, error: crmResult.error || "Unknown" });
+        return { status: "error", step_id: step.id, error: { code: "CRM_ERROR", message: crmResult.error || "Unknown", retryable: false } };
+      }
+    }
+
+    // Route Productivity tasks to specialized ProductivityAgent
+    if (input.agent === "ProductivityAgent" || isProductivityTask(input.task)) {
+      const productivityResult = await executeProductivityAgentInRuntime(engine, input.task);
+      if (productivityResult.success) {
+        await engine.steps.complete(step.id, { output: productivityResult as unknown as Record<string, unknown> });
+        engine.events.emit({ type: "step_completed", run_id: engine.id, step_id: step.id, agent: "ProductivityAgent" as StepActor });
+        return { status: "success", step_id: step.id, data: productivityResult as unknown as Record<string, unknown> };
+      } else {
+        await engine.steps.fail(step.id, { code: "PRODUCTIVITY_ERROR", message: productivityResult.error || "Unknown", retryable: false });
+        engine.events.emit({ type: "step_failed", run_id: engine.id, step_id: step.id, error: productivityResult.error || "Unknown" });
+        return { status: "error", step_id: step.id, error: { code: "PRODUCTIVITY_ERROR", message: productivityResult.error || "Unknown", retryable: false } };
+      }
+    }
+
+    // Route Design tasks to specialized DesignAgent
+    if (input.agent === "DesignAgent" || isDesignTask(input.task)) {
+      const designResult = await executeDesignAgentInRuntime(engine, input.task);
+      if (designResult.success) {
+        await engine.steps.complete(step.id, { output: designResult as unknown as Record<string, unknown> });
+        engine.events.emit({ type: "step_completed", run_id: engine.id, step_id: step.id, agent: "DesignAgent" as StepActor });
+        return { status: "success", step_id: step.id, data: designResult as unknown as Record<string, unknown> };
+      } else {
+        await engine.steps.fail(step.id, { code: "DESIGN_ERROR", message: designResult.error || "Unknown", retryable: false });
+        engine.events.emit({ type: "step_failed", run_id: engine.id, step_id: step.id, error: designResult.error || "Unknown" });
+        return { status: "error", step_id: step.id, error: { code: "DESIGN_ERROR", message: designResult.error || "Unknown", retryable: false } };
+      }
+    }
+
+    // Route Developer tasks to specialized DeveloperAgent
+    if (input.agent === "DeveloperAgent" || isDeveloperTask(input.task)) {
+      const developerResult = await executeDeveloperAgentInRuntime(engine, input.task);
+      if (developerResult.success) {
+        await engine.steps.complete(step.id, { output: developerResult as unknown as Record<string, unknown> });
+        engine.events.emit({ type: "step_completed", run_id: engine.id, step_id: step.id, agent: "DeveloperAgent" as StepActor });
+        return { status: "success", step_id: step.id, data: developerResult as unknown as Record<string, unknown> };
+      } else {
+        await engine.steps.fail(step.id, { code: "DEVELOPER_ERROR", message: developerResult.error || "Unknown", retryable: false });
+        engine.events.emit({ type: "step_failed", run_id: engine.id, step_id: step.id, error: developerResult.error || "Unknown" });
+        return { status: "error", step_id: step.id, error: { code: "DEVELOPER_ERROR", message: developerResult.error || "Unknown", retryable: false } };
       }
     }
 

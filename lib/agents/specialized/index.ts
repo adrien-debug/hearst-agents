@@ -42,3 +42,14 @@ export {
   type DesignAgentOutput,
   type FigmaSummary,
 } from "./design";
+
+export {
+  executeDeveloperAgent,
+  executeDeveloperAgentInRuntime,
+  isDeveloperTask,
+  type DeveloperAgentInput,
+  type DeveloperAgentOutput,
+  type RepoSummary,
+  type IssueSummary,
+  type PullRequestSummary,
+} from "./developer";

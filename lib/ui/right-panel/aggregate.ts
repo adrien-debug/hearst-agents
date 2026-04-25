@@ -16,7 +16,7 @@ import { getConnectionsByScope } from "@/lib/connectors/control-plane/store";
 import { getAllMissionOps } from "@/lib/engine/runtime/missions/ops-store";
 import { getSchedulerMode } from "@/lib/engine/runtime/missions/scheduler-init";
 import { getServerSupabase } from "@/lib/supabase-server";
-import { manifestAsset, resolveFocalObject } from "@/lib/right-panel/manifestation";
+import { manifestAsset, resolveFocalObject } from "./manifestation";
 import { formatOutput, type OutputTier } from "@/lib/engine/runtime/formatting/pipeline";
 import { getPlansForThread, getMissionsForThread } from "@/lib/planner/store";
 import type { Asset, AssetKind, AssetProvenance } from "@/lib/assets/types";

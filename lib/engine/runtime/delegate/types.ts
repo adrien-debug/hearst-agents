@@ -9,7 +9,11 @@ export type CapabilityAgent =
   | "DocBuilder"
   | "Analyst"
   | "Operator"
-  | "FinanceAgent";
+  | "FinanceAgent"
+  | "CRMAgent"
+  | "ProductivityAgent"
+  | "DesignAgent"
+  | "DeveloperAgent";
 
 export type ExpectedOutput =
   | "summary"
@@ -90,6 +94,10 @@ export interface DelegateError {
       | "AGENT_FAILED"
       | "AGENT_FATAL"
       | "STRIPE_ERROR"
+      | "CRM_ERROR"
+      | "PRODUCTIVITY_ERROR"
+      | "DESIGN_ERROR"
+      | "DEVELOPER_ERROR"
       | "RATE_LIMITED";
     message: string;
     retryable: boolean;

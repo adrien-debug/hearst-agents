@@ -66,6 +66,10 @@ export type StepActor =
   | "Analyst"
   | "Operator"
   | "FinanceAgent"
+  | "CRMAgent"
+  | "ProductivityAgent"
+  | "DesignAgent"
+  | "DeveloperAgent"
   | "runtime"
   | "anthropic_managed";
 

@@ -37,17 +37,25 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > - `lib/admin/{settings,permissions,connectors,health,audit}.ts` — Admin API complets
 > - `lib/platform/db/{supabase,schema,index}.ts` — Database layer
 >
-> ✅ **Phase 10 — Connector Packs Expansion** — 4 Packs avec services complets
+> ✅ **Phase 10 — Connector Packs Expansion** — 5 Packs avec services complets
 > - `finance-pack/` — Stripe (payments, invoices, subscriptions, balance, customers)
 > - `crm-pack/` — HubSpot (contacts, companies, deals), Salesforce (planned)
 > - `productivity-pack/` — Notion (pages, databases, blocks, search), Trello/Asana (planned)
 > - `design-pack/` — Figma (files, components, variables, comments), Adobe/Canva (planned)
+> - `developer-pack/` — GitHub (repos, PRs, issues, commits) — ✅ **Phase 4**
 >
 > **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
 > **État Phase 10** : [`docs/STATUS_2026-04-25_PHASE10.md`](./docs/STATUS_2026-04-25_PHASE10.md)
 > **État d'avancement / écarts** : [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 >
-> **Métriques** : 267 fichiers • 404 tests pass • 4 Connector Packs validés • Build ✅
+> **Métriques** : 267+ fichiers • 404 tests pass • 5 Connector Packs validés • 5 Specialized Agents • Build ✅
+>
+> **Phase 0–4 Complete (25/04/2026)**:
+> - Phase 0 — Infrastructure alignment (connectors, settings, sidebar, v2 security)
+> - Phase 1 — 5 Admin API routes with RBAC
+> - Phase 2 — 3 Admin UI pages (settings, health, audit)
+> - Phase 3 — 2 Platform settings routes (flags, preferences)
+> - Phase 4 — Agents capabilities endpoint + Developer Pack
 
 ## 📚 Documentation Architecture (HTML)
 
@@ -538,6 +546,40 @@ npm test            # Vitest (LLM, momentum, design tokens, …)
 
 ## Architecture
 
+### Admin Layer (Phase 0–4)
+
+```
+lib/admin/
+├── settings.ts              # Settings facade → stores/store.ts (Phase 0B)
+├── connectors.ts            # Connectors aligned with DB schema (Phase 0A)
+├── permissions.ts           # RBAC user role management
+├── health.ts                # System health checks (DB, storage, connectors, LLM)
+└── audit.ts                 # Audit log viewer
+
+app/api/admin/
+├── _helpers.ts              # Shared auth + RBAC guard (Phase 1)
+├── settings/route.ts        # GET/POST settings
+├── health/route.ts          # GET health
+├── permissions/route.ts     # GET/POST/DELETE permissions
+├── audit/route.ts           # GET audit logs
+└── connectors/route.ts      # GET/POST/PATCH/DELETE connectors
+
+app/admin/
+├── settings/page.tsx        # Feature flags + settings UI (Phase 2)
+├── health/page.tsx          # Real-time health dashboard (Phase 2)
+└── audit/page.tsx           # Audit log viewer UI (Phase 2)
+```
+
+**Phase Summary**:
+- **Phase 0A** — `lib/admin/connectors.ts` aligned with real DB schema
+- **Phase 0B** — `lib/admin/settings.ts` facade on `stores/store.ts` (no duplication)
+- **Phase 0C** — `AdminSidebar` 15 links grouped by section
+- **Phase 0D** — 4 v2 routes secured with `requireScope()` (missions/ops, scheduler/status, plans/approve, architecture)
+- **Phase 1** — 5 admin API routes with shared RBAC guard (`_helpers.ts`)
+- **Phase 2** — 3 admin UI pages (settings, health, audit)
+- **Phase 3** — 2 platform settings routes (flags, preferences)
+- **Phase 4** — Agents capabilities endpoint (5 specialized agents + 4 connector packs catalog)
+
 ```
 lib/
 ├── database.types.ts        # Types auto-générés Supabase
@@ -805,15 +847,92 @@ Architecture : `lib/connectors/` (un connector par service), tokens chiffrés AE
 
 ### Canonical APIs (v2)
 
-| Route | Description |
-|-------|-------------|
-| `/api/orchestrate` | **Chat v2** — Pipeline SSE (Orchestrator → Plan → Agents) |
-| `/api/v2/right-panel` | Agrégat UI (runs, assets, missions, connectors) |
-| `/api/v2/runs`, `/api/v2/runs/{id}` | Runs v2 + timeline events |
-| `/api/v2/assets/{id}`, `.../download` | Asset detail + file download |
-| `/api/v2/missions`, `.../[id]/run` | CRUD missions + Run Now |
-| `/api/v2/user/connections` | User connections with service status |
-| `/api/v2/architecture` | Architecture map (admin) |
+| Route | Description | RBAC |
+|-------|-------------|------|
+| `/api/orchestrate` | **Chat v2** — Pipeline SSE (Orchestrator → Plan → Agents) | User auth |
+| `/api/v2/right-panel` | Agrégat UI (runs, assets, missions, connectors) | User auth |
+| `/api/v2/runs`, `/api/v2/runs/{id}` | Runs v2 + timeline events | User auth |
+| `/api/v2/assets/{id}`, `.../download` | Asset detail + file download | User auth |
+| `/api/v2/missions`, `/api/v2/missions/[id]/run` | CRUD missions + Run Now | User auth |
+| `/api/v2/missions/ops` | Mission ops status (active, paused, errored) | `read:missions` — ✅ **Phase 0D** |
+| `/api/v2/scheduler/status` | Scheduler leadership & health | `read:scheduler` — ✅ **Phase 0D** |
+| `/api/v2/plans/[id]/approve` | Approve plan + resume execution | `approve:plans` — ✅ **Phase 0D** |
+| `/api/v2/architecture` | Architecture map (admin) | `read:architecture` — ✅ **Phase 0D** |
+| `/api/v2/user/connections` | User connections with service status | User auth |
+
+**Phase 0D — Secured Routes**: 4 routes migrated from open access to `requireScope()` RBAC (missions/ops, scheduler/status, plans/approve, architecture).
+
+### Admin APIs (RBAC-protected)
+
+**Helper Guard**: `app/api/admin/_helpers.ts` — Shared auth + RBAC validation for all admin routes.
+
+| Route | Méthode | Description | RBAC Scope |
+|-------|---------|-------------|------------|
+| `/api/admin/settings` | GET/POST | CRUD system settings | `read:settings` / `update:settings` |
+| `/api/admin/health` | GET | System health check (DB, storage, connectors, LLM) | `read:settings` |
+| `/api/admin/permissions` | GET/POST/DELETE | User role management (assign/revoke) | `admin` |
+| `/api/admin/audit` | GET | Audit log viewer with filters | `admin` |
+| `/api/admin/connectors` | GET/POST/PATCH/DELETE | Connector registry & instance management | `manage:connectors` |
+
+**Architecture**:
+- **Auth layer**: `lib/admin/` — Business logic (settings, permissions, connectors, health, audit)
+- **API layer**: `app/api/admin/` — HTTP routes with RBAC guards
+- **Storage**: Supabase (settings, permissions), Store abstraction (`lib/admin/settings.ts` → `stores/store.ts`)
+
+### Platform Settings APIs
+
+| Route | Méthode | Description |
+|-------|---------|-------------|
+| `/api/v2/settings/flags` | GET/POST | Feature flags (read/toggle) |
+| `/api/v2/settings/preferences` | GET/POST | User preferences (theme, locale, notifications) |
+| `/api/v2/agents/capabilities` | GET | Specialized agents (5) & connector packs (4) catalog |
+
+**Specialized Agents** (5):
+1. **Finance Agent** — Stripe integration (payments, invoices, subscriptions, balance, customers)
+2. **CRM Agent** — HubSpot integration (contacts, companies, deals)
+3. **Productivity Agent** — Notion integration (pages, databases, blocks, search)
+4. **Design Agent** — Figma integration (files, components, variables, comments)
+5. **Developer Agent** — GitHub integration (repos, PRs, issues) — ✅ **NEW**
+
+**Connector Packs** (4):
+- `finance-pack/` — Stripe services
+- `crm-pack/` — HubSpot services
+- `productivity-pack/` — Notion services
+- `design-pack/` — Figma services
+- `developer-pack/` — GitHub services — ✅ **NEW**
+
+### Admin Pages (UI)
+
+| Page | Description |
+|------|-------------|
+| `/admin` | Admin dashboard — Quick stats + nav links |
+| `/admin/settings` | Feature flags + settings by category (system, auth, integrations) |
+| `/admin/health` | Real-time system health (DB, storage, connectors, LLM) |
+| `/admin/audit` | Audit log viewer with severity/action/resource columns |
+| `/admin/agents` | Agent registry — List, create, edit agents |
+| `/admin/agents/[id]` | Agent detail — Edit config, tools, skills |
+| `/admin/scheduler` | Mission scheduler status — Leadership, ops table |
+| `/admin/runs` | Runs history — Filter, search, detail |
+| `/admin/runs/[id]` | Run detail — Timeline, traces, events |
+| `/admin/workflows` | Workflows — List, create, edit |
+| `/admin/tools` | Tool catalog — List, create, edit |
+| `/admin/skills` | Skill catalog — List, create, edit |
+| `/admin/datasets` | Test datasets — List, create, entries |
+| `/admin/signals` | Improvement signals — Filter, acknowledge, apply |
+| `/admin/changes` | Change audit trail — Before/after diff |
+| `/admin/reports` | Cron reports — Health, history, manual trigger |
+
+**Navigation**: `app/components/AdminSidebar.tsx` — 15 grouped links (Dashboard, Agents, Scheduler, Runs, Workflows, Tools/Skills, Datasets, Signals, Changes, Reports, Settings, Health, Audit, Architecture)
+
+**Phase 0–4 Complete**:
+- ✅ Phase 0A — Connectors aligned with DB schema (`lib/admin/connectors.ts`)
+- ✅ Phase 0B — Settings unified (facade on `stores/store.ts`)
+- ✅ Phase 0C — AdminSidebar 15 links grouped by section
+- ✅ Phase 0D — 4 v2 routes secured with `requireScope` (missions/ops, scheduler/status, plans/approve, architecture)
+- ✅ Phase 1 — 5 admin API routes with shared RBAC guard
+- ✅ Phase 2 — 3 admin UI pages (settings, health, audit)
+- ✅ Phase 3 — 2 platform settings routes (flags, preferences)
+- ✅ Phase 4 — Agents capabilities endpoint (5 specialized agents + 4 connector packs)
 
 ### Data APIs
 
@@ -887,12 +1006,38 @@ lib/
 ├── artifacts/
 │   ├── types.ts              # Artifact, ArtifactSection, ArtifactSourceRef
 │   └── document-session.ts   # DocumentSession state machine (building→review→finalized)
-└── agents/
-    ├── doc-builder.ts        # DocBuilder agent (create_outline → generate_section → finalize)
-    └── operator/
-        ├── index.ts          # Exports publics
-        ├── guard.ts          # Validation runtime tool calls vs ActionPlan
-        └── executor.ts       # Exécution séquentielle + idempotency + action_executions
+├── agents/
+│   ├── doc-builder.ts        # DocBuilder agent (create_outline → generate_section → finalize)
+│   ├── specialized/          # Specialized agents (Phase B+)
+│   │   ├── finance.ts        # Finance Agent (Stripe integration)
+│   │   ├── developer.ts      # Developer Agent (GitHub integration) — ✅ Phase 4
+│   │   └── index.ts          # Barrel export
+│   └── operator/
+│       ├── index.ts          # Exports publics
+│       ├── guard.ts          # Validation runtime tool calls vs ActionPlan
+│       └── executor.ts       # Exécution séquentielle + idempotency + action_executions
+└── connectors/
+    ├── router.ts             # Pack-first routing (Stripe, GitHub) + Nango fallback
+    └── packs/
+        ├── finance-pack/     # Stripe connector
+        │   ├── auth/         # OAuth & token management
+        │   ├── services/     # API calls (payments, invoices, etc.)
+        │   ├── mappers/      # External → Internal data mapping
+        │   └── schemas/      # Zod validation schemas
+        ├── crm-pack/         # HubSpot connector
+        ├── productivity-pack/ # Notion connector
+        ├── design-pack/      # Figma connector
+        └── developer-pack/   # GitHub connector — ✅ Phase 4
+            ├── auth/
+            │   └── github.ts # GitHub OAuth flow
+            ├── services/
+            │   └── github.ts # GitHub API services (repos, PRs, issues, commits)
+            ├── mappers/
+            │   └── github.ts # GitHub data mapping
+            ├── schemas/
+            │   └── github.ts # GitHub Zod schemas
+            ├── manifest.json # Pack metadata
+            └── index.ts      # Pack exports
 ```
 
 ```

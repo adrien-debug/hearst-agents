@@ -138,6 +138,13 @@ async function executePackOperation<T>(
           params,
           credentials
         );
+      case "github":
+        return await executeGitHubOperation<T>(
+          operation,
+          params,
+          credentials,
+          context
+        );
       default:
         return {
           success: false,
@@ -454,6 +461,103 @@ async function handleNotion<T>(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const queryRes = await notion.queryDatabase(databaseId, { filter } as any);
         return { success: true, data: queryRes.results as T };
+      }
+
+      default:
+        return { success: false, error: `Operation ${operation} not supported` };
+    }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+async function executeGitHubOperation<T>(
+  operation: string,
+  params: unknown,
+  credentials: Record<string, string>,
+  _context: RouterContext
+): Promise<{ success: boolean; data?: T; error?: string }> {
+  const { GitHubApiService, mapGitHubReposToUnified, mapGitHubIssuesToUnified, mapGitHubPullRequestsToUnified, mapGitHubCommitsToUnified, mapGitHubCodeSearchItemsToUnified } = await import(
+    "./packs/developer-pack"
+  );
+
+  const github = new GitHubApiService({
+    accessToken: credentials.accessToken || "",
+  });
+
+  try {
+    switch (operation) {
+      case "list": {
+        const resource = (params as { resource?: string }).resource;
+        const limit = (params as { limit?: number }).limit ?? 30;
+
+        if (resource === "repos") {
+          const result = await github.listRepos({ per_page: limit });
+          return { success: true, data: mapGitHubReposToUnified(result.results) as T };
+        }
+
+        const owner = (params as { owner?: string }).owner;
+        const repo = (params as { repo?: string }).repo;
+
+        if (resource === "issues" && owner && repo) {
+          const result = await github.listIssues(owner, repo, { per_page: limit });
+          return { success: true, data: mapGitHubIssuesToUnified(result.results) as T };
+        }
+
+        if (resource === "pull_requests" && owner && repo) {
+          const result = await github.listPullRequests(owner, repo, { per_page: limit });
+          return { success: true, data: mapGitHubPullRequestsToUnified(result.results) as T };
+        }
+
+        if (resource === "commits" && owner && repo) {
+          const result = await github.listCommits(owner, repo, { per_page: limit });
+          return { success: true, data: mapGitHubCommitsToUnified(result.results) as T };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "get": {
+        const { resource, id } = params as { resource: string; id?: string | number };
+        const owner = (params as { owner?: string }).owner;
+        const repo = (params as { repo?: string }).repo;
+
+        if (resource === "repo" && owner && repo) {
+          const repository = await github.getRepo(owner, repo);
+          return { success: !!repository, data: repository as T, error: repository ? undefined : "Repo not found" };
+        }
+
+        if (resource === "issue" && owner && repo && typeof id === "number") {
+          const issue = await github.getIssue(owner, repo, id);
+          return { success: !!issue, data: issue as T, error: issue ? undefined : "Issue not found" };
+        }
+
+        if (resource === "pull_request" && owner && repo && typeof id === "number") {
+          const pr = await github.getPullRequest(owner, repo, id);
+          return { success: !!pr, data: pr as T, error: pr ? undefined : "Pull request not found" };
+        }
+
+        return { success: false, error: `Unknown resource: ${resource}` };
+      }
+
+      case "search": {
+        const resource = (params as { resource?: string }).resource;
+        const { query } = params as { query: string };
+
+        if (resource === "code") {
+          const result = await github.searchCode(query);
+          return { success: true, data: { totalCount: result.totalCount, items: mapGitHubCodeSearchItemsToUnified(result.items) } as T };
+        }
+
+        if (resource === "issues") {
+          const result = await github.searchIssues(query);
+          return { success: true, data: { totalCount: result.totalCount, items: mapGitHubIssuesToUnified(result.items) } as T };
+        }
+
+        return { success: false, error: `Unknown search resource: ${resource}` };
       }
 
       default:

@@ -39,8 +39,7 @@ export default function ChatWindow({ agentId }: ChatWindowProps) {
       if (!reader) throw new Error("No stream");
 
       const decoder = new TextDecoder();
-      let assistantContent = "";
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+            setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -52,10 +51,11 @@ export default function ChatWindow({ agentId }: ChatWindowProps) {
           try {
             const data = JSON.parse(line.slice(6));
             if (data.delta) {
-              assistantContent += data.delta;
               setMessages((prev) => {
+                const currentContent = prev[prev.length - 1].content;
+                const newContent = currentContent + data.delta;
                 const copy = [...prev];
-                copy[copy.length - 1] = { role: "assistant", content: assistantContent };
+                copy[copy.length - 1] = { role: "assistant", content: newContent };
                 return copy;
               });
             }

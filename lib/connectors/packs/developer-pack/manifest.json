@@ -1,0 +1,80 @@
+{
+  "id": "developer-pack",
+  "name": "Developer Pack",
+  "description": "Developer tools connectors including GitHub, Jira, and Linear",
+  "version": "1.0.0",
+  "category": "developer",
+  "author": "Hearst OS",
+  "license": "MIT",
+  "connectors": [
+    {
+      "id": "github",
+      "name": "GitHub",
+      "description": "GitHub API - Repositories, Issues, Pull Requests, and Commits",
+      "version": "1.0.0",
+      "category": "developer",
+      "auth": {
+        "type": "oauth2",
+        "scopes": ["repo", "read:user", "read:org"]
+      },
+      "capabilities": {
+        "read": true,
+        "write": false,
+        "delete": false,
+        "webhooks": false,
+        "realtime": false
+      },
+      "icon": "/icons/github.svg",
+      "docsUrl": "https://docs.github.com/en/rest",
+      "rateLimits": {
+        "requestsPerHour": 5000
+      }
+    },
+    {
+      "id": "jira",
+      "name": "Jira",
+      "description": "Atlassian Jira - Issues, Projects, and Sprints",
+      "version": "1.0.0",
+      "category": "developer",
+      "auth": {
+        "type": "oauth2",
+        "scopes": ["read:jira-work", "read:jira-user"]
+      },
+      "capabilities": {
+        "read": true,
+        "write": false,
+        "delete": false,
+        "webhooks": true,
+        "realtime": false
+      },
+      "icon": "/icons/jira.svg",
+      "docsUrl": "https://developer.atlassian.com/cloud/jira/platform/rest/",
+      "rateLimits": {
+        "requestsPerMinute": 100
+      }
+    },
+    {
+      "id": "linear",
+      "name": "Linear",
+      "description": "Linear - Issues, Cycles, and Projects",
+      "version": "1.0.0",
+      "category": "developer",
+      "auth": {
+        "type": "oauth2",
+        "scopes": ["read"]
+      },
+      "capabilities": {
+        "read": true,
+        "write": false,
+        "delete": false,
+        "webhooks": true,
+        "realtime": false
+      },
+      "icon": "/icons/linear.svg",
+      "docsUrl": "https://developers.linear.com/docs/graphql/intro",
+      "rateLimits": {
+        "requestsPerMinute": 150
+      }
+    }
+  ]
+}

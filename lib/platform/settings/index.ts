@@ -84,3 +84,34 @@ export function invalidateSettingsCache(): void {
 // Re-exports
 export { getSetting, setSetting, getAllSettings } from "./store";
 export type { SystemSetting, SettingValue, SettingCategory, SettingDefinition } from "./types";
+
+// System-level (feature flags, thresholds, limits)
+export {
+  getFeatureFlag,
+  setFeatureFlag,
+  getThreshold,
+  setThreshold,
+  getLimit,
+  seedDefaults,
+} from "./system";
+
+// User preferences
+export {
+  getUserPreference,
+  setUserPreference,
+  getUserTheme,
+  setUserTheme,
+  getUserLocale,
+  getUserNotificationPrefs,
+} from "./user";
+
+// Tenant-scoped overrides
+export {
+  getTenantSetting,
+  setTenantSetting,
+  getAllTenantSettings,
+  getTenantFeatureFlag,
+  setTenantFeatureFlag,
+  getTenantLimit,
+  resetTenantSettings,
+} from "./tenant";

@@ -8,17 +8,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { approvePlan } from "@/lib/planner/index";
 import { approveAndResume, PipelineContext } from "@/lib/planner/pipeline";
+import { requireScope } from "@/lib/scope";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const { scope, error: authError } = await requireScope({ context: "POST /api/v2/plans/approve" });
+  if (authError) return NextResponse.json({ error: authError.message }, { status: authError.status });
+
   const planId = (await params).id;
 
   try {
-    // Get request body for context
     const body = await request.json().catch(() => ({}));
-    const { threadId, userId, tenantId, connectedProviders = [], forcedProviderId } = body;
+    const { threadId, connectedProviders = [], forcedProviderId } = body;
+    const userId = scope?.userId ?? body.userId;
+    const tenantId = scope?.tenantId ?? body.tenantId;
 
     if (!threadId || !userId) {
       return NextResponse.json(
