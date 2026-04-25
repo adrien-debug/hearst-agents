@@ -12,3 +12,11 @@ export { driveConnector } from "./drive";
 export { slackConnector } from "./slack";
 
 export { CORE_CONNECTORS, EXTERNAL_CONNECTORS, ALL_CONNECTORS, getConnector } from "./registry";
+
+// Router (Phase A) — Pack-first routing with Nango fallback
+export {
+  routeConnectorRequest,
+  getRouterStats,
+  type RouterResult,
+  type RouterContext,
+} from "./router";

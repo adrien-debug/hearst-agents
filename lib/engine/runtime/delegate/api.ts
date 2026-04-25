@@ -10,11 +10,9 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { RunEngine } from "../engine";
 import type { DelegateInput, DelegateResult } from "./types";
 import type { StepActor } from "../engine/types";
-// Legacy connectors (to be replaced gradually)
-import { searchDriveFiles, readDriveFileContent } from "@/lib/connectors/drive";
-import { searchEmails } from "@/lib/connectors/gmail";
 // Router-wrapped connectors (Pack → Nango → Legacy)
-import { searchFiles, readFileContent, searchEmails as searchEmailsRouter } from "./connectors";
+// Phase A: Router-first routing for all connector operations
+import { searchFiles, readFileContent, searchEmails } from "./connectors";
 
 export async function delegate(
   engine: RunEngine,
@@ -75,13 +73,14 @@ const AGENTS_WITH_WEB_SEARCH = new Set(["KnowledgeRetriever", "Analyst", "DocBui
 async function fetchProviderData(
   userId: string,
   task: string,
-  retrievalMode?: string,
+  retrievalMode: string | undefined,
+  engine: RunEngine,
 ): Promise<{ providerData: string; providerUsed: string } | null> {
   if (retrievalMode === "documents") {
-    return fetchDriveData(userId, task);
+    return fetchDriveData(userId, task, engine);
   }
   if (retrievalMode === "messages") {
-    return fetchGmailData(userId, task);
+    return fetchGmailData(userId, task, engine);
   }
   return null;
 }
@@ -89,23 +88,32 @@ async function fetchProviderData(
 async function fetchDriveData(
   userId: string,
   task: string,
+  engine: RunEngine,
 ): Promise<{ providerData: string; providerUsed: string } | null> {
   try {
     const keywords = extractSearchKeywords(task);
-    console.log(`[Delegate/Drive] searching: "${keywords}" for user=${userId}`);
 
-    const files = await searchDriveFiles(userId, keywords, 5);
+    // Router-first connector call (Pack → Nango → Legacy)
+    const files = await searchFiles(
+      "google-drive",
+      userId,
+      keywords,
+      5,
+      { db: engine.db, tenantId: "default", userId }
+    );
+
     if (files.length === 0) {
-      console.log("[Delegate/Drive] no files found");
       return null; // Pas de données = pas d'injection
     }
-
-    console.log(`[Delegate/Drive] found ${files.length} file(s), reading first`);
 
     const file = files[0];
     let content: string;
     try {
-      content = await readDriveFileContent(userId, file.id);
+      content = await readFileContent("google-drive", userId, file.id, {
+        db: engine.db,
+        tenantId: "default",
+        userId,
+      });
     } catch (readErr) {
       console.error("[Delegate/Drive] read error:", readErr);
       content = `[Erreur de lecture du fichier ${file.name}]`;
@@ -139,19 +147,24 @@ async function fetchDriveData(
 async function fetchGmailData(
   userId: string,
   task: string,
+  engine: RunEngine,
 ): Promise<{ providerData: string; providerUsed: string } | null> {
   try {
     const senderMatch = task.match(/(?:de|from)\s+(\w+)/i);
     const query = senderMatch ? `from:${senderMatch[1]}` : undefined;
 
-    console.log(`[Delegate/Gmail] fetching emails, query=${query ?? "inbox"}, user=${userId}`);
+    // Router-first connector call (Pack → Nango → Legacy)
+    const emails = await searchEmails(
+      "gmail",
+      userId,
+      query,
+      10,
+      { db: engine.db, tenantId: "default", userId }
+    );
 
-    const emails = await searchEmails(userId, query, 10);
     if (emails.length === 0) {
       return null; // Pas de données = pas d'injection dans le prompt
     }
-
-    console.log(`[Delegate/Gmail] found ${emails.length} email(s)`);
 
     const summaries = emails.map(
       (e, i) =>
@@ -208,7 +221,7 @@ async function executeAgentSync(
   let providerPayload: { providerData: string; providerUsed: string } | null = null;
 
   if (input.agent === "KnowledgeRetriever" && input.retrieval_mode) {
-    providerPayload = await fetchProviderData(userId, input.task, input.retrieval_mode);
+    providerPayload = await fetchProviderData(userId, input.task, input.retrieval_mode, engine);
     if (providerPayload) {
       engine.events.emit({
         type: "orchestrator_log",

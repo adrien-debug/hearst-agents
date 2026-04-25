@@ -333,13 +333,19 @@ function getNangoEndpoint(
   // Simple mapping for common connectors
   // This would be more sophisticated in production
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = params as Record<string, any>;
+
   switch (connectorId) {
     case "gmail":
-      return operation === "list" ? "/threads" : "/messages/${id}";
+      return operation === "list" ? "/threads" : `/messages/${p?.id ?? ""}`;
     case "slack":
       return operation === "list" ? "/conversations.list" : "/chat.postMessage";
-    case "github":
-      return operation === "list" ? "/user/repos" : "/repos/${owner}/${repo}";
+    case "github": {
+      if (operation === "list") return "/user/repos";
+      const { owner, repo } = p ?? {};
+      return `/repos/${owner ?? ""}/${repo ?? ""}`;
+    }
     default:
       return "/";
   }

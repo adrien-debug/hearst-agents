@@ -37,12 +37,11 @@ export async function searchFiles(
   );
 
   if (result.success && result.data) {
-    console.log(`[ConnectorRouter] Drive via ${result.source}: ${result.data.length} files`);
+    // Router trace: success via result.source
     return result.data;
   }
 
   // Fallback to legacy direct connector
-  console.log(`[ConnectorRouter] Drive fallback to legacy`);
   return legacySearchDrive(userId, keywords, limit);
 }
 
@@ -90,12 +89,11 @@ export async function searchEmails(
   );
 
   if (result.success && result.data) {
-    console.log(`[ConnectorRouter] Gmail via ${result.source}: ${result.data.length} emails`);
+    // Router trace: success via result.source
     return result.data;
   }
 
-  // Fallback
-  console.log(`[ConnectorRouter] Gmail fallback to legacy`);
+  // Fallback to legacy
   return legacySearchGmail(userId, query, limit);
 }
 
