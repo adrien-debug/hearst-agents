@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS system_settings (
     )),
     description TEXT,
     is_encrypted BOOLEAN DEFAULT FALSE,
-    tenant_id TEXT REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
     updated_at TIMESTAMPTZ DEFAULT now(),
     updated_by TEXT
     -- Note: UNIQUE(key, tenant_id) removed - see partial unique indexes below
@@ -55,7 +55,7 @@ CREATE POLICY "Users can read non-sensitive settings" ON system_settings
         is_encrypted = FALSE
         AND (
             tenant_id IS NULL
-            OR tenant_id = auth.jwt() ->> 'tenant_id'
+            OR tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
         )
     );
 
