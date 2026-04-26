@@ -19,54 +19,77 @@ const createAssetSchema = z.object({
 /**
  * GET /api/v2/assets
  * List all assets for the current user/tenant/workspace scope
+ * Query params: offset, limit, type, search
  */
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   // Resolve scope with dev fallback allowed
   const { scope, error } = await requireScope({ context: "GET /api/v2/assets" });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
 
+  // Parse query params
+  const url = new URL(req.url);
+  const offset = parseInt(url.searchParams.get("offset") || "0", 10);
+  const limit = parseInt(url.searchParams.get("limit") || "50", 10);
+  const typeFilter = url.searchParams.get("type");
+  const searchQuery = url.searchParams.get("search")?.toLowerCase();
+
   try {
     // Canonical source: Supabase persistence — scoped to current tenant/workspace
     const persisted = await getPersistedAssets({
       tenantId: scope.tenantId,
       workspaceId: scope.workspaceId,
-      limit: 50,
+      limit: 1000, // Fetch all for filtering
     });
 
     // Filter by userId if persisted assets have user info
-    const userScopedPersisted = persisted.filter((a) => {
+    let filtered = persisted.filter((a) => {
       // If asset has no user info, include it (backward compatibility)
       // If asset has user info, only include if matches current user
       const assetUserId = (a.metadata as Record<string, unknown>)?.createdBy;
       return !assetUserId || assetUserId === scope.userId;
     });
 
-    if (userScopedPersisted.length > 0) {
-      return NextResponse.json({
-        assets: userScopedPersisted,
-        count: userScopedPersisted.length,
-        source: "database",
-        scope: { isDevFallback: scope.isDevFallback },
+    // Fallback: in-memory store if no persisted assets
+    if (filtered.length === 0) {
+      const assets = getAllAssets();
+      filtered = assets.filter((a) => {
+        const tenantMatch = a.tenantId === scope.tenantId;
+        const workspaceMatch = a.workspaceId === scope.workspaceId;
+        const assetUserId = (a.metadata as Record<string, unknown>)?.createdBy;
+        const userMatch = !assetUserId || assetUserId === scope.userId;
+        return tenantMatch && workspaceMatch && userMatch;
       });
     }
 
-    // Fallback: in-memory store — scoped to current tenant/workspace/user
-    const assets = getAllAssets();
-    const filteredAssets = assets.filter((a) => {
-      const tenantMatch = a.tenantId === scope.tenantId;
-      const workspaceMatch = a.workspaceId === scope.workspaceId;
-      // For user scoping, check metadata if available
-      const assetUserId = (a.metadata as Record<string, unknown>)?.createdBy;
-      const userMatch = !assetUserId || assetUserId === scope.userId;
-      return tenantMatch && workspaceMatch && userMatch;
-    });
+    // Apply type filter
+    if (typeFilter && typeFilter !== "all") {
+      filtered = filtered.filter((a) => a.type === typeFilter);
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter((a) => {
+        const nameMatch = a.name.toLowerCase().includes(searchQuery);
+        const descMatch = ((a.metadata as Record<string, unknown>)?.description as string)
+          ?.toLowerCase()
+          .includes(searchQuery);
+        return nameMatch || descMatch;
+      });
+    }
+
+    const total = filtered.length;
+    const paginatedAssets = filtered.slice(offset, offset + limit);
 
     return NextResponse.json({
-      assets: filteredAssets,
-      count: filteredAssets.length,
-      source: "memory",
+      assets: paginatedAssets,
+      pagination: {
+        offset,
+        limit,
+        total,
+      },
+      source: persisted.length > 0 ? "database" : "memory",
       scope: { isDevFallback: scope.isDevFallback },
     });
   } catch (e) {

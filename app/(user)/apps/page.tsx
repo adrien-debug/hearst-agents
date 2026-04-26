@@ -70,6 +70,10 @@ export default function AppsPage() {
         console.log(`[AppsPage] Loaded ${enriched.filter(s => s.connectionStatus === "connected").length} connected services`);
       } catch (error) {
         console.error("[AppsPage] Failed to load services:", error);
+        toast.error("Échec du chargement", "Impossible de charger les services");
+        // Set services to base list without connection status
+        const baseServices = [...getAllServices(), ...getNangoServices()];
+        setServices(baseServices.map(s => ({ ...s, connectionStatus: "disconnected" as const })));
       } finally {
         setLoading(false);
       }
@@ -193,7 +197,6 @@ export default function AppsPage() {
         const err = await res.json();
         console.error("[AppsPage] OAuth init failed:", err);
         toast.error("Échec de connexion", err.message || "Service temporairement indisponible");
-        setIsConnecting(null);
         return;
       }
 
@@ -201,7 +204,6 @@ export default function AppsPage() {
       if (!data.success || !data.config) {
         console.error("[AppsPage] Invalid OAuth config:", data);
         toast.error("Configuration invalide", "Impossible d'initialiser l'authentification");
-        setIsConnecting(null);
         return;
       }
 

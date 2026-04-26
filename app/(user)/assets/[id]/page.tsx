@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AssetPreview } from "../../components/AssetPreview";
 import type { RuntimeAsset } from "@/lib/engine/runtime/assets/types";
+import { toast } from "@/app/hooks/use-toast";
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -33,7 +34,11 @@ export default function AssetDetailPage() {
   const handleDownload = async () => {
     try {
       const res = await fetch(`/api/v2/assets/${assetId}/download`);
-      if (!res.ok) throw new Error("Download failed");
+      if (!res.ok) {
+        console.error("Download failed:", res.status);
+        toast.error("Téléchargement échoué", `Impossible de télécharger ${asset?.name || "l'asset"}`);
+        return;
+      }
       
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -44,9 +49,10 @@ export default function AssetDetailPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success("Téléchargement réussi", asset?.name || "Asset téléchargé");
     } catch (error) {
       console.error("Download failed:", error);
-      alert("Échec du téléchargement");
+      toast.error("Erreur de téléchargement", "Une erreur est survenue");
     }
   };
 
