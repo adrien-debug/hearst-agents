@@ -72,7 +72,10 @@ export default function MissionsPage() {
     // Refresh ops status every 5s
     const opsInterval = setInterval(() => {
       fetch("/api/v2/missions/ops")
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error(`ops status fetch failed: ${res.status}`);
+          return res.json();
+        })
         .then((opsData) => {
           const opsMap = new Map(
             opsData.missions?.map((op: { missionId: string; status: MissionOpsStatus; lastError?: string; runningSince?: number }) => [
@@ -87,8 +90,9 @@ export default function MissionsPage() {
             }))
           );
         })
-        .catch(() => {
-          // Silent fail for background refresh
+        .catch((err) => {
+          console.error("[MissionsPage] Background ops refresh failed:", err);
+          // Silent fail for background refresh — keep showing last known state
         });
     }, 5000);
 
@@ -284,25 +288,26 @@ export default function MissionsPage() {
         ) : (
           <div className="space-y-3">
             {missions.map((mission) => {
+              const effectiveOpsStatus = mission.opsStatus || "idle";
               const opsStatusColor =
-                mission.opsStatus === "running"
+                effectiveOpsStatus === "running"
                   ? "bg-[var(--cykan)]"
-                  : mission.opsStatus === "success"
+                  : effectiveOpsStatus === "success"
                   ? "bg-[var(--money)]"
-                  : mission.opsStatus === "failed"
+                  : effectiveOpsStatus === "failed"
                   ? "bg-[var(--danger)]"
-                  : mission.opsStatus === "blocked"
+                  : effectiveOpsStatus === "blocked"
                   ? "bg-[var(--warn)]"
                   : "bg-[var(--text-faint)]";
 
               const opsStatusLabel =
-                mission.opsStatus === "running"
+                effectiveOpsStatus === "running"
                   ? "En cours"
-                  : mission.opsStatus === "success"
+                  : effectiveOpsStatus === "success"
                   ? "Succès"
-                  : mission.opsStatus === "failed"
+                  : effectiveOpsStatus === "failed"
                   ? "Échec"
-                  : mission.opsStatus === "blocked"
+                  : effectiveOpsStatus === "blocked"
                   ? "Bloqué"
                   : "Inactif";
 
@@ -321,24 +326,22 @@ export default function MissionsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-sm font-medium text-[var(--text)]">{mission.name}</h3>
-                      {mission.opsStatus && (
-                        <span
-                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                            mission.opsStatus === "running"
-                              ? "bg-[var(--cykan)]/20 text-[var(--cykan)]"
-                              : mission.opsStatus === "success"
-                              ? "bg-[var(--money)]/20 text-[var(--money)]"
-                              : mission.opsStatus === "failed"
-                              ? "bg-[var(--danger)]/20 text-[var(--danger)]"
-                              : mission.opsStatus === "blocked"
-                              ? "bg-[var(--warn)]/20 text-[var(--warn)]"
-                              : "bg-white/5 text-[var(--text-faint)]"
-                          }`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${opsStatusColor} ${mission.opsStatus === "running" ? "animate-pulse" : ""}`} />
-                          {opsStatusLabel}
-                        </span>
-                      )}
+                      <span
+                        className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          effectiveOpsStatus === "running"
+                            ? "bg-[var(--cykan)]/20 text-[var(--cykan)]"
+                            : effectiveOpsStatus === "success"
+                            ? "bg-[var(--money)]/20 text-[var(--money)]"
+                            : effectiveOpsStatus === "failed"
+                            ? "bg-[var(--danger)]/20 text-[var(--danger)]"
+                            : effectiveOpsStatus === "blocked"
+                            ? "bg-[var(--warn)]/20 text-[var(--warn)]"
+                            : "bg-white/5 text-[var(--text-faint)]"
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${opsStatusColor} ${effectiveOpsStatus === "running" ? "animate-pulse" : ""}`} />
+                        {opsStatusLabel}
+                      </span>
                     </div>
                     <p className="text-xs text-[var(--text-muted)] mb-2">{mission.description}</p>
                     {mission.lastError && (
