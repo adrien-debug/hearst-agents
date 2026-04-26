@@ -50,17 +50,16 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 >
 > **Métriques** : 267+ fichiers • 404 tests pass • 5 Connector Packs validés • 5 Specialized Agents • Build ✅
 >
-> **Phase 0–4 + Priorités 2-5 COMPLÈTES (26/04/2026)**:
-> - **Phase 0** — Infrastructure alignment (connectors, settings, sidebar, v2 security)
-> - **Phase 1** — 5 Admin API routes with RBAC (`app/api/admin/{settings,health,permissions,audit,connectors}`)
-> - **Phase 2** — 3 Admin UI pages (settings, health, audit)
-> - **Phase 3** — 2 Platform settings routes (flags, preferences)
-> - **Phase 4** — Agents capabilities endpoint + Developer Pack
-> - **Priorité 2** — Planner stubs → Real API calls (Gmail, Calendar, Drive, PDF, XLSX, Web Search)
-> - **Priorité 3** — Stripe OAuth via Nango + Health checks réels (9 providers)
-> - **Priorité 4** — Redis cache (`ioredis`) + Asset cleanup scheduler (cron boot)
-> - **Priorité 5** — Structure refactor (`token-store` → `lib/platform/auth/tokens`, `right-panel` → `lib/ui/right-panel/`)
-> - **Corrections finales** — Barrel export exhaustif (`lib/index.ts`), Vrai LRU cache (move-to-end), Types Asset unifiés (`RuntimeAsset`)
+> **Phase 0–5 + UI Improvements COMPLÈTES (26/04/2026)**:
+> - **Phase 0-4** — Infrastructure alignment + Admin APIs + Platform settings + Agents capabilities
+> - **Priorité 2-5** — Planner stubs → Real API calls + Stripe OAuth + Redis cache + Structure refactor
+> - **Corrections finales** — Barrel export exhaustif, Vrai LRU cache, Types Asset unifiés
+> 
+> **UI Improvements (26/04/2026)**:
+> - ✅ **OAuth Connectors** — Flow fonctionnel avec Nango SDK popup (@nangohq/frontend)
+> - ✅ **Assets Liste** — Page `/assets` découvrable avec search, filtres, pagination
+> - ✅ **Error Handling** — Remplacement alerts par système toast unifié
+> - ✅ **Security** — Validation stricte NEXT_PUBLIC_NANGO_PUBLIC_KEY (pas de fallback secret key)
 >
 > **Documentation audits** : 3 rapports détaillés (2,267 lignes) — [`docs/AUDIT_PRIORITIES_2_3.md`](./docs/AUDIT_PRIORITIES_2_3.md), [`docs/AUDIT_PRIORITIES_2_5_COMPLETE.md`](./docs/AUDIT_PRIORITIES_2_5_COMPLETE.md), [`docs/AUDIT_FINAL_CORRECTIONS.md`](./docs/AUDIT_FINAL_CORRECTIONS.md)
 
