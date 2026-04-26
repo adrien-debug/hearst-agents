@@ -53,10 +53,10 @@ export default function NewAgentPage() {
 
   return (
     <div className="px-8 py-10">
-      <h1 className="mb-8 text-2xl font-semibold text-white">Nouvel agent</h1>
+      <h1 className="mb-8 text-2xl font-semibold text-[var(--text)]">Nouvel agent</h1>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+        <div className="mb-4 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -64,33 +64,33 @@ export default function NewAgentPage() {
       <form onSubmit={submit} className="max-w-xl space-y-5">
         {/* Name */}
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-zinc-400">
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
             Nom
           </span>
           <input
             required
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
         {/* Description */}
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-zinc-400">
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
             Description
           </span>
           <input
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
         {/* Provider + Model */}
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-400">
+            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
               Provider
             </span>
             <select
@@ -100,7 +100,7 @@ export default function NewAgentPage() {
                 set("model_provider", prov);
                 set("model_name", defaultModels[prov]?.[0] ?? "");
               }}
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none"
+              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none"
             >
               {providers.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -111,13 +111,13 @@ export default function NewAgentPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-400">
+            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
               Modèle
             </span>
             <select
               value={form.model_name}
               onChange={(e) => set("model_name", e.target.value)}
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none"
+              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none"
             >
               {(defaultModels[form.model_provider] ?? []).map((m) => (
                 <option key={m} value={m}>
@@ -130,14 +130,14 @@ export default function NewAgentPage() {
 
         {/* System Prompt */}
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-zinc-400">
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
             System Prompt
           </span>
           <textarea
             rows={6}
             value={form.system_prompt}
             onChange={(e) => set("system_prompt", e.target.value)}
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-zinc-600"
+            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 font-mono text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
             placeholder="Tu es un assistant expert en..."
           />
         </label>
@@ -145,7 +145,7 @@ export default function NewAgentPage() {
         {/* Temperature + Max tokens */}
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-400">
+            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
               Temperature ({form.temperature})
             </span>
             <input
@@ -160,7 +160,7 @@ export default function NewAgentPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-zinc-400">
+            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
               Max tokens
             </span>
             <input
@@ -169,7 +169,7 @@ export default function NewAgentPage() {
               max={128000}
               value={form.max_tokens}
               onChange={(e) => set("max_tokens", parseInt(e.target.value, 10))}
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none"
+              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none"
             />
           </label>
         </div>
@@ -177,7 +177,7 @@ export default function NewAgentPage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-zinc-200 disabled:opacity-50"
+          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-6 py-2.5 text-sm disabled:opacity-50"
         >
           {saving ? "Création..." : "Créer l'agent"}
         </button>

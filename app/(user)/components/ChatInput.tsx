@@ -78,54 +78,47 @@ export function ChatInput({
   }
 
   const surfacePlaceholders: Record<string, string> = {
-    home: "Que puis-je faire pour vous ?",
-    inbox: "Rechercher dans vos messages...",
-    calendar: "Quels événements chercher ?",
-    files: "Quels documents trouver ?",
-    tasks: "Créer ou gérer une mission...",
-    apps: "Configurer un connecteur...",
+    home: "ENTER_COMMAND_",
+    inbox: "SEARCH_MESSAGES_",
+    calendar: "QUERY_SCHEDULE_",
+    files: "LOCATE_DOCUMENTS_",
+    tasks: "INIT_MISSION_",
+    apps: "CONFIG_CONNECTORS_",
   };
 
   return (
-    <div className="px-6 py-6 bg-[var(--bg)]">
-      <div className="max-w-4xl mx-auto relative">
+    <div className="px-12 py-20 bg-transparent">
+      <div className="max-w-6xl mx-auto relative">
         {/* @mention Typeahead */}
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="absolute bottom-full mb-4 w-full bg-[var(--bg-elev)] border border-[var(--line-strong)] rounded-[8px] overflow-hidden z-50"
+            className="absolute bottom-full mb-12 w-full bg-black/95 backdrop-blur-3xl rounded-[12px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden z-50"
           >
             {matchingServices.length === 0 ? (
-              <div className="p-3 text-xs text-[var(--text-muted)]">
+              <div className="p-8 text-[12px] font-mono uppercase tracking-[0.3em] text-white/30">
                 {typeaheadQuery ? (
-                  <>Aucune source trouvée pour &quot;{typeaheadQuery}&quot;</>
+                  <>No_Source_Found: {typeaheadQuery}</>
                 ) : (
-                  <>Tapez @ pour mentionner une source connectée</>
+                  <>Mention_Source: @</>
                 )}
               </div>
             ) : (
-              <div className="py-1">
+              <div className="py-4">
                 {matchingServices.map((service) => (
                   <button
                     key={service.id}
                     onClick={() => selectService(service)}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-white/[0.03] transition-colors"
+                    className="w-full flex items-center gap-8 px-8 py-5 text-left hover:bg-white/5 transition-all duration-300 group"
                   >
-                    <span className="text-lg">{service.icon}</span>
+                    <span className="text-3xl grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
                     <div className="flex-1">
-                      <p className="text-sm text-[var(--text)]">@{service.id}</p>
-                      <p className="text-[10px] text-[var(--text-muted)]">{service.name}</p>
+                      <p className="text-[16px] font-black uppercase tracking-tighter text-white">@{service.id}</p>
+                      <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/30">{service.name}</p>
                     </div>
-                    <span className="text-xs text-[var(--money)]">●</span>
+                    <span className="text-[11px] font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity tracking-widest">LINK_</span>
                   </button>
                 ))}
-              </div>
-            )}
-            {typeaheadQuery && !matchingServices.some((s) => s.id === typeaheadQuery) && (
-              <div className="px-3 py-2 border-t border-[var(--line)]">
-                <button className="text-xs text-[var(--cykan)] hover:text-[var(--cykan)]/80 transition-colors">
-                  Voir les apps non connectées →
-                </button>
               </div>
             )}
           </div>
@@ -133,8 +126,9 @@ export function ChatInput({
 
         {/* Input Container */}
         <div
-          className="flex items-end gap-3 border border-[var(--line-strong)] px-5 py-4 rounded-[8px] focus-within:border-[var(--cykan)] bg-[var(--bg-elev)] transition-all duration-150"
+          className="flex items-end gap-10 px-12 py-12 bg-white/[0.015] border border-white/[0.05] transition-all duration-1000 group focus-within:bg-white/[0.03] focus-within:border-white/[0.1] shadow-[0_40px_100px_rgba(0,0,0,0.6)] rounded-sm"
         >
+          <span className="text-[12px] font-mono text-[var(--cykan)] pt-5 opacity-20 group-focus-within:opacity-100 transition-opacity tracking-[0.4em]">HEARST_OS &gt;</span>
           <textarea
             ref={inputRef}
             value={input}
@@ -156,32 +150,34 @@ export function ChatInput({
                 setHideTypeahead(true);
               }
             }}
-            placeholder={placeholder || surfacePlaceholders[surface] || "Que puis-je faire pour vous ?"}
+            placeholder={placeholder || surfacePlaceholders[surface] || "ENTER_COMMAND_"}
             rows={1}
-            className="flex-1 bg-transparent text-[15px] font-medium tracking-wide text-[var(--text)] placeholder:text-[var(--text-faint)] border-0 focus:ring-0 focus:outline-none resize-none min-h-[24px] max-h-[200px] leading-relaxed p-0 m-0"
+            className="flex-1 bg-transparent text-[38px] font-light tracking-tighter text-white placeholder:text-white/[0.04] border-0 focus:ring-0 focus:outline-none resize-none min-h-[48px] max-h-[200px] leading-tight p-0 m-0"
           />
+          <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-white/[0.03] overflow-hidden">
+            <div className="h-full bg-[var(--cykan)] w-0 group-focus-within:w-full transition-all duration-1000 ease-in-out shadow-[0_0_30px_var(--cykan)]" />
+          </div>
           {isRunning ? (
-            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 flex items-center justify-center shrink-0">
               <div
-                className="w-5 h-5 border-2 border-[var(--text-faint)] border-t-[var(--cykan)] rounded-full animate-spin"
-                style={{ boxShadow: "var(--glow-cyan-sm)" }}
+                className="w-6 h-6 border-[3px] border-white/5 border-t-[var(--cykan)] rounded-full animate-spin shadow-[0_0_20px_var(--cykan)]"
               />
             </div>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={!input.trim()}
-              className="w-10 h-10 flex items-center justify-center flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--cykan)] disabled:opacity-30 disabled:hover:text-[var(--text-muted)] transition-colors"
+              className="w-12 h-12 flex items-center justify-center shrink-0 text-white/10 hover:text-black hover:bg-[var(--cykan)] transition-all duration-500 rounded-sm disabled:opacity-0"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </button>
           )}
         </div>
-        <div className="absolute left-0 right-0 -bottom-5 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
-          <p className="text-[11px] text-[var(--text-faint)] font-medium tracking-widest uppercase">
-            Entrée <span className="text-[var(--text-muted)]">pour envoyer</span> <span className="mx-2">·</span> Maj+Entrée <span className="text-[var(--text-muted)]">pour nouvelle ligne</span> <span className="mx-2">·</span> @ <span className="text-[var(--text-muted)]">pour lier</span>
+        <div className="absolute left-0 right-0 -bottom-10 flex justify-center opacity-20 hover:opacity-100 transition-opacity">
+          <p className="text-[10px] text-white font-mono tracking-[0.6em] uppercase">
+            [ENT] SEND_ [SHIFT+ENT] LINE_ [@] LINK_
           </p>
         </div>
       </div>

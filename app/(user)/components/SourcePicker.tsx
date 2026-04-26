@@ -43,7 +43,6 @@ export function SourcePicker({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const surface = useNavigationStore((s) => s.surface);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -54,35 +53,32 @@ export function SourcePicker({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Get services matching current surface capability
   const relevantCapability = SURFACE_CAPABILITIES[surface] || "general";
   const relevantServices = connectedServices.filter((s) =>
     s.capabilities.some((c) => c === relevantCapability || c === "messaging" || c === "calendar" || c === "files")
   );
 
-  // Format display text
   const getDisplayText = () => {
     if (selection.mode === "auto") {
-      if (relevantServices.length === 0) return "Auto (aucune source)";
+      if (relevantServices.length === 0) return "AUTO_NONE";
       const names = relevantServices.slice(0, 2).map((s) => s.name);
-      return `Auto (${names.join(" · ")}${relevantServices.length > 2 ? "…" : ""})`;
+      return `AUTO_${names.join("_").toUpperCase()}${relevantServices.length > 2 ? "..." : ""}`;
     }
     if (selection.mode === "pinned") {
-      if (selection.services.length === 0) return "Verrouillé (aucun)";
+      if (selection.services.length === 0) return "PIN_NONE";
       if (selection.services.length === 1) {
         const service = availableServices.find((s) => s.id === selection.services[0]);
-        return `🔒 ${service?.name || selection.services[0]}`;
+        return `PIN_${(service?.name || selection.services[0]).toUpperCase()}`;
       }
-      return `🔒 ${selection.services.length} sources`;
+      return `PIN_${selection.services.length}_NODES`;
     }
     if (selection.mode === "multi") {
-      if (selection.services.length === 0) return "Multi (aucune)";
-      return `☑ ${selection.services.length} sources`;
+      if (selection.services.length === 0) return "MULTI_NONE";
+      return `MULTI_${selection.services.length}_NODES`;
     }
-    return "Auto";
+    return "AUTO";
   };
 
-  // Handle mode change
   const handleModeChange = (mode: SelectionMode) => {
     if (mode === "auto") {
       onChange({
@@ -100,11 +96,9 @@ export function SourcePicker({
     setIsOpen(false);
   };
 
-  // Handle service toggle (for multi/pinned)
   const toggleService = (service: ServiceDefinition) => {
     const providerId = getProviderIdForService(service.id) || service.providerId;
     const isSelected = selection.services.includes(service.id);
-
     if (selection.mode === "multi" || selection.mode === "pinned") {
       if (isSelected) {
         onChange({
@@ -127,14 +121,14 @@ export function SourcePicker({
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] rounded-full text-xs text-white/60 transition-colors"
+          className="flex items-center gap-4 text-[11px] font-mono font-black tracking-[0.4em] text-white/30 hover:text-[var(--cykan)] transition-all duration-500 uppercase"
         >
+          <span className="w-2 h-2 rounded-full bg-[var(--cykan)] shadow-[0_0_12px_var(--cykan)]" />
           <span>{getDisplayText()}</span>
-          <span className="text-white/30">{isOpen ? "▲" : "▼"}</span>
         </button>
 
         {isOpen && (
-          <div className="absolute bottom-full left-0 mb-2 w-72 bg-[#141414] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute bottom-full left-0 mb-6 w-96 bg-black/95 backdrop-blur-3xl border border-white/10 rounded-[8px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] z-50 overflow-hidden">
             <SourcePickerContent
               mode={selection.mode}
               onModeChange={handleModeChange}
@@ -153,15 +147,14 @@ export function SourcePicker({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] rounded-xl text-sm text-white/70 transition-colors"
+        className="flex items-center gap-6 text-[11px] font-mono font-black tracking-[0.4em] text-white/30 hover:text-[var(--cykan)] transition-all duration-500 uppercase"
       >
-        <span className="text-xs text-white/40">Sources:</span>
+        <span className="text-white/10 uppercase">Sources:</span>
         <span>{getDisplayText()}</span>
-        <span className="text-white/30 ml-1">{isOpen ? "▲" : "▼"}</span>
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-80 bg-[#141414] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute bottom-full left-0 mb-6 w-96 bg-black/95 backdrop-blur-3xl border border-white/10 rounded-[8px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] z-50 overflow-hidden">
           <SourcePickerContent
             mode={selection.mode}
             onModeChange={handleModeChange}
@@ -175,8 +168,6 @@ export function SourcePicker({
     </div>
   );
 }
-
-// ── Sub-component: Dropdown Content ───────────────────────
 
 interface SourcePickerContentProps {
   mode: SelectionMode;
@@ -196,62 +187,58 @@ function SourcePickerContent({
   onClose,
 }: SourcePickerContentProps) {
   const [activeTab, setActiveTab] = useState<"mode" | "services">("mode");
-
   return (
-    <div className="p-3">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3 border-b border-white/[0.06] pb-2">
+    <div className="p-6">
+      <div className="flex items-center gap-6 mb-6 border-b border-white/10 pb-6">
         <button
           onClick={() => setActiveTab("mode")}
-          className={`text-xs font-medium px-2 py-1 rounded transition-colors ${
-            activeTab === "mode" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"
+          className={`text-[11px] font-mono font-black uppercase tracking-[0.3em] transition-colors ${
+            activeTab === "mode" ? "text-[var(--cykan)]" : "text-white/30 hover:text-white"
           }`}
         >
-          Mode
+          _Mode
         </button>
         <button
           onClick={() => setActiveTab("services")}
-          className={`text-xs font-medium px-2 py-1 rounded transition-colors ${
-            activeTab === "services" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/60"
+          className={`text-[11px] font-mono font-black uppercase tracking-[0.3em] transition-colors ${
+            activeTab === "services" ? "text-[var(--cykan)]" : "text-white/30 hover:text-white"
           }`}
         >
-          Sources
+          _Sources
         </button>
       </div>
 
-      {/* Mode Selection */}
       {activeTab === "mode" && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <ModeOption
             id="auto"
             label="Auto"
-            description="Le système choisit automatiquement les meilleures sources"
+            description="Automatic node selection"
             selected={mode === "auto"}
             onClick={() => onModeChange("auto")}
           />
           <ModeOption
             id="pinned"
-            label="Verrouillé"
-            description="Sources fixes pour cette conversation"
+            label="Pinned"
+            description="Fixed nodes for this session"
             selected={mode === "pinned"}
             onClick={() => onModeChange("pinned")}
           />
           <ModeOption
             id="multi"
-            label="Multi-sélection"
-            description="Choisir plusieurs sources manuellement"
+            label="Multi"
+            description="Manual multi-node selection"
             selected={mode === "multi"}
             onClick={() => onModeChange("multi")}
           />
         </div>
       )}
 
-      {/* Services List */}
       {activeTab === "services" && (
-        <div className="space-y-1 max-h-64 overflow-y-auto">
+        <div className="space-y-2 max-h-80 overflow-y-auto scrollbar-hide">
           {services.length === 0 ? (
-            <p className="text-xs text-white/40 text-center py-4">
-              Aucune source connectée pour cette capacité
+            <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-white/20 text-center py-16">
+              No_Connected_Sources
             </p>
           ) : (
             services.map((service) => {
@@ -260,20 +247,20 @@ function SourcePickerContent({
                 <button
                   key={service.id}
                   onClick={() => onToggleService(service)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                  className={`w-full flex items-center gap-6 px-6 py-5 rounded-[4px] text-left transition-all duration-300 ${
                     isSelected
-                      ? "bg-cyan-500/10 border border-cyan-500/30"
-                      : "hover:bg-white/[0.03] border border-transparent"
+                      ? "bg-white/10"
+                      : "hover:bg-white/5"
                   }`}
                 >
-                  <span className="text-lg">{service.icon}</span>
+                  <span className="text-2xl grayscale">{service.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${isSelected ? "text-white" : "text-white/70"}`}>
+                    <p className={`text-[15px] font-black uppercase tracking-tighter ${isSelected ? "text-white" : "text-white/50"}`}>
                       {service.name}
                     </p>
-                    <p className="text-[10px] text-white/40 truncate">{service.description}</p>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40 truncate">{service.description}</p>
                   </div>
-                  {isSelected && <span className="text-cyan-400 text-xs">✓</span>}
+                  {isSelected && <span className="text-[var(--cykan)] text-[11px] font-mono font-black tracking-widest">LINKED_</span>}
                 </button>
               );
             })
@@ -281,23 +268,20 @@ function SourcePickerContent({
         </div>
       )}
 
-      {/* Footer */}
-      <div className="mt-3 pt-2 border-t border-white/[0.06] flex items-center justify-between">
-        <span className="text-[10px] text-white/30">
-          {services.length} source{services.length !== 1 ? "s" : ""} disponible{services.length !== 1 ? "s" : ""}
+      <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
+        <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/20">
+          {services.length}_Available
         </span>
         <button
           onClick={onClose}
-          className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+          className="text-[11px] font-mono font-black uppercase tracking-[0.4em] text-white/30 hover:text-white transition-colors"
         >
-          Fermer
+          Close_
         </button>
       </div>
     </div>
   );
 }
-
-// ── Sub-component: Mode Option ───────────────────────────
 
 interface ModeOptionProps {
   id: string;
@@ -311,26 +295,24 @@ function ModeOption({ label, description, selected, onClick }: ModeOptionProps) 
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-        selected ? "bg-white/[0.06]" : "hover:bg-white/[0.03]"
+      className={`w-full flex items-center gap-6 px-6 py-6 rounded-[4px] text-left transition-all duration-300 ${
+        selected ? "bg-white/10" : "hover:bg-white/5"
       }`}
     >
       <div
-        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-          selected ? "border-cyan-400" : "border-white/20"
+        className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+          selected ? "border-[var(--cykan)]" : "border-white/20"
         }`}
       >
-        {selected && <div className="w-2 h-2 rounded-full bg-cyan-400" />}
+        {selected && <div className="w-2 h-2 rounded-full bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)]" />}
       </div>
       <div className="flex-1">
-        <p className={`text-sm ${selected ? "text-white" : "text-white/70"}`}>{label}</p>
-        <p className="text-[10px] text-white/40">{description}</p>
+        <p className={`text-[16px] font-black uppercase tracking-tighter ${selected ? "text-white" : "text-white/50"}`}>{label}</p>
+        <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40">{description}</p>
       </div>
     </button>
   );
 }
-
-// ── Default selection helper ──────────────────────────────
 
 export function getDefaultSelection(services: ServiceDefinition[]): SourceSelection {
   return {

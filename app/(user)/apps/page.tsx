@@ -12,6 +12,7 @@ import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import { enrichWithConnectionStatus } from "@/lib/integrations/catalog";
 import Nango from "@nangohq/frontend";
 import { toast } from "@/app/hooks/use-toast";
+import { GhostIconLayers, GhostIconSearch, GhostIconX } from "../components/ghost-icons";
 
 const CATEGORY_ORDER = [
   "communication",
@@ -262,8 +263,13 @@ export default function AppsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg)" }}>
-        <div className="text-[var(--text-muted)] text-sm">Chargement des applications...</div>
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8" style={{ background: "var(--bg)" }}>
+        <p className="ghost-meta-label">LOAD_APP_HUB</p>
+        <div className="w-full max-w-xs space-y-2">
+          <div className="ghost-skeleton-bar" />
+          <div className="ghost-skeleton-bar" />
+          <div className="ghost-skeleton-bar" />
+        </div>
       </div>
     );
   }
@@ -271,19 +277,18 @@ export default function AppsPage() {
   return (
     <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
       {/* Header */}
-      <div className="border-b border-[var(--line)] p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="border-b border-[var(--line)] p-8">
+        <div className="flex flex-wrap items-end justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-xl font-medium text-[var(--text)] mb-1">App Hub</h1>
-            <p className="text-sm text-[var(--text-muted)]">
-              {stats.connected} connecté{stats.connected !== 1 ? "s" : ""} sur {stats.total} applications
+            <p className="ghost-meta-label mb-2">CTRL_PLANE</p>
+            <h1 className="ghost-title-impact text-xl">App Hub</h1>
+            <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] mt-2">
+              LINK_OK_{stats.connected}_TOTAL_{stats.total}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[var(--text-faint)] bg-white/[0.05] px-3 py-1.5 rounded-full">
-              ⌘K pour rechercher
-            </span>
-          </div>
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-1">
+            SHORTCUT_MOD_K
+          </span>
         </div>
 
         {/* Search & Filters */}
@@ -293,15 +298,18 @@ export default function AppsPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher une application..."
-              className="w-full bg-white/[0.03] border border-[var(--line)] rounded-lg px-4 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--cykan)]/30"
+              placeholder="QUERY_APP_"
+              className="ghost-input-line w-full pr-10"
             />
+            <GhostIconSearch className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-faint)] pointer-events-none" />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-soft)]"
+                className="absolute right-8 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] p-1"
+                aria-label="Effacer"
               >
-                ✕
+                <GhostIconX className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -317,10 +325,10 @@ export default function AppsPage() {
               <button
                 key={filter.id}
                 onClick={() => setActiveFilter(filter.id as typeof activeFilter)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`font-mono text-[9px] uppercase tracking-[0.15em] whitespace-nowrap pb-1 border-b-2 transition-colors ${
                   activeFilter === filter.id
-                    ? "bg-[var(--cykan)]/15 text-[var(--cykan)] border border-[var(--cykan)]/30"
-                    : "bg-white/[0.03] text-[var(--text-muted)] border border-[var(--line)] hover:bg-white/[0.05]"
+                    ? "text-[var(--cykan)] border-[var(--cykan)]"
+                    : "text-[var(--text-faint)] border-transparent hover:text-[var(--text-muted)]"
                 }`}
               >
                 {filter.label}
@@ -336,40 +344,33 @@ export default function AppsPage() {
         {/* Connected Section (if any and not filtered) */}
         {activeFilter !== "connected" && connectedServices.length > 0 && (
           <section className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="w-2 h-2 rounded-full bg-[var(--money)]" />
-              <h2 className="text-sm font-medium text-[var(--text-soft)] uppercase tracking-wider">
-                Connectés
-              </h2>
-              <span className="text-xs text-[var(--text-faint)] bg-white/[0.05] px-2 py-0.5 rounded-full">
-                {connectedServices.length}
+            <div className="flex items-center gap-4 mb-6 border-b border-[var(--line)] pb-4">
+              <span className="w-1.5 h-1.5 bg-[var(--money)] shrink-0" />
+              <h2 className="text-[11px] font-mono uppercase tracking-[0.35em] text-[var(--text-muted)]">Linked</h2>
+              <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--money)] pb-0.5">
+                N_{connectedServices.length}
               </span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-[var(--line)]">
               {connectedServices.slice(0, 4).map((service) => (
-                <AppCard
-                  key={service.id}
-                  service={service}
-                  onClick={() => handleServiceClick(service)}
-                />
+                <div key={service.id} className="bg-[var(--bg)] min-h-0">
+                  <AppCard service={service} onClick={() => handleServiceClick(service)} />
+                </div>
               ))}
             </div>
           </section>
         )}
 
-        {/* Bundles (if no search/filter) */}
         {activeFilter === "all" && !searchQuery && bundles.length > 0 && (
-          <section className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-lg">📦</span>
-              <h2 className="text-sm font-medium text-[var(--text-soft)] uppercase tracking-wider">
-                Bundles recommandés
-              </h2>
+          <section className="mb-12">
+            <div className="flex items-center gap-4 mb-6 border-b border-[var(--line)] pb-4">
+              <GhostIconLayers className="w-5 h-5 text-[var(--text-muted)]" />
+              <h2 className="text-[11px] font-mono uppercase tracking-[0.35em] text-[var(--text-muted)]">Bundles</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--line)]">
               {bundles.map((bundle) => (
+                <div key={bundle.id} className="bg-[var(--bg)] min-h-0">
                 <AppCard
-                  key={bundle.id}
                   service={{
                     id: bundle.id,
                     name: bundle.name,
@@ -387,6 +388,7 @@ export default function AppsPage() {
                   variant="bundle"
                   onClick={() => console.log("Activate bundle:", bundle.id)}
                 />
+                </div>
               ))}
             </div>
           </section>
@@ -396,6 +398,7 @@ export default function AppsPage() {
         {Object.entries(groupedServices).map(([category, catServices]) => (
           <AppCategorySection
             key={category}
+            categoryId={category}
             title={CATEGORY_LABELS[category] || category}
             services={catServices}
             onServiceClick={handleServiceClickAny}
@@ -404,12 +407,10 @@ export default function AppsPage() {
 
         {/* Empty state */}
         {filteredServices.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="text-4xl mb-4">🔍</span>
-            <p className="text-[var(--text-muted)] mb-2">Aucune application trouvée</p>
-            <p className="text-sm text-[var(--text-faint)]">
-              Essayez une autre recherche ou filtre
-            </p>
+          <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
+            <GhostIconSearch className="w-12 h-12 text-[var(--text-faint)]" />
+            <p className="ghost-meta-label">NO_MATCH</p>
+            <p className="text-[12px] font-light text-[var(--text-muted)]">Adjust QUERY or FILTER.</p>
           </div>
         )}
       </div>

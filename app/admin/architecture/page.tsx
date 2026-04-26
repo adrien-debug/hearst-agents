@@ -57,10 +57,10 @@ type Tab = "system" | "agents" | "flows" | "dependencies" | "raw";
 // ── Status helpers ─────────────────────────────────────────
 
 const STATUS_COLOR: Record<NodeStatus, string> = {
-  active: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  beta: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-  planned: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
-  deprecated: "bg-red-500/20 text-red-400 border-red-500/30",
+  active: "bg-[var(--money)]/20 text-[var(--money)] border-[var(--money)]/30",
+  beta: "bg-[var(--cykan)]/20 text-[var(--cyan-accent)] border-[var(--cykan)]/30",
+  planned: "bg-[var(--text-muted)]/20 text-[var(--text-muted)] border-[var(--line-strong)]",
+  deprecated: "bg-[var(--danger)]/20 text-[var(--danger)] border-[var(--danger)]/30",
 };
 
 const CATEGORY_LABEL: Record<NodeCategory, string> = {
@@ -72,10 +72,10 @@ const CATEGORY_LABEL: Record<NodeCategory, string> = {
 };
 
 const CATEGORY_COLOR: Record<NodeCategory, string> = {
-  ui_surface: "border-l-cyan-500",
-  agent: "border-l-violet-500",
-  runtime: "border-l-amber-500",
-  persistence: "border-l-emerald-500",
+  ui_surface: "border-l-[var(--cykan)]",
+  agent: "border-l-[var(--warn)]",
+  runtime: "border-l-[var(--warn)]",
+  persistence: "border-l-[var(--money)]",
   connector: "border-l-rose-500",
 };
 
@@ -118,14 +118,14 @@ export default function ArchitecturePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-[var(--bg-elev)] text-[var(--text)]">
       {/* Header */}
-      <header className="border-b border-zinc-800/50 px-6 py-5">
-        <h1 className="text-lg font-semibold text-zinc-100">Architecture Map</h1>
-        <p className="mt-0.5 text-xs text-zinc-500">
+      <header className="border-b border-[var(--line)] px-6 py-5">
+        <h1 className="text-lg font-semibold text-[var(--text)]">Architecture Map</h1>
+        <p className="mt-0.5 text-xs text-[var(--text-muted)]">
           Living system graph of HEARST OS
           {data?.meta && (
-            <span className="ml-2 text-zinc-700">
+            <span className="ml-2 text-[var(--text-faint)]">
               v{data.meta.version} · {data.meta.updated}
             </span>
           )}
@@ -133,15 +133,15 @@ export default function ArchitecturePage() {
       </header>
 
       {/* Tabs */}
-      <nav className="flex gap-0.5 border-b border-zinc-800/50 px-6">
+      <nav className="flex gap-0.5 border-b border-[var(--line)] px-6">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`px-4 py-2.5 text-xs font-medium transition-colors ${
               tab === t.id
-                ? "border-b-2 border-cyan-500 text-cyan-400"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "border-b-2 border-[var(--cykan)] text-[var(--cykan)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-soft)]"
             }`}
           >
             {t.label}
@@ -170,20 +170,20 @@ export default function ArchitecturePage() {
         </div>
 
         {/* Detail Panel */}
-        <aside className="hidden w-[320px] shrink-0 border-l border-zinc-800/50 lg:block" style={{ maxHeight: "calc(100vh - 130px)", overflowY: "auto" }}>
+        <aside className="hidden w-[320px] shrink-0 border-l border-[var(--line)] lg:block" style={{ maxHeight: "calc(100vh - 130px)", overflowY: "auto" }}>
           {selectedNode ? (
             <DetailPanel node={selectedNode} nodeMap={nodeMap} />
           ) : (
             <div className="flex h-full items-center justify-center p-6">
-              <p className="text-xs text-zinc-600">Select a node to inspect</p>
+              <p className="text-xs text-[var(--text-muted)]">Select a node to inspect</p>
             </div>
           )}
         </aside>
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800/30 px-6 py-2">
-        <p className="text-[10px] text-zinc-700">
+      <footer className="border-t border-[var(--line)] px-6 py-2">
+        <p className="text-[10px] text-[var(--text-faint)]">
           Generated from docs/architecture-map.json
         </p>
       </footer>
@@ -202,9 +202,9 @@ function SystemView({ nodes, onSelect, selected }: { nodes: GraphNode[]; onSelec
         const catNodes = nodes.filter((n) => n.category === cat);
         return (
           <div key={cat}>
-            <h3 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            <h3 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               {CATEGORY_LABEL[cat]}
-              <span className="ml-1.5 text-zinc-700">{catNodes.length}</span>
+              <span className="ml-1.5 text-[var(--text-faint)]">{catNodes.length}</span>
             </h3>
             <div className="space-y-1.5">
               {catNodes.map((n) => (
@@ -238,7 +238,7 @@ function AgentsView({ agents, onSelect, selected }: { agents: AgentData[]; onSel
     <div className="space-y-8">
       {Array.from(groups.entries()).map(([group, groupAgents]) => (
         <div key={group}>
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             {AGENT_GROUP_LABEL[group] ?? group}
           </h3>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -248,30 +248,30 @@ function AgentsView({ agents, onSelect, selected }: { agents: AgentData[]; onSel
                 onClick={() => onSelect(a.id)}
                 className={`rounded-lg border border-l-4 p-4 text-left transition-colors ${
                   selected === a.id
-                    ? "border-cyan-500/50 border-l-violet-500 bg-zinc-900/80"
-                    : "border-zinc-800/50 border-l-violet-500/50 bg-zinc-900/40 hover:bg-zinc-900/60"
+                    ? "border-[var(--cykan)]/50 border-l-[var(--warn)] bg-[var(--bg-soft)]"
+                    : "border-[var(--line)] border-l-[var(--warn)]/50 bg-[var(--bg-soft)] hover:bg-[var(--bg-soft)]"
                 }`}
               >
                 <div className="mb-1 flex items-center justify-between">
-                  <span className="text-sm font-medium text-zinc-200">{a.label}</span>
+                  <span className="text-sm font-medium text-[var(--text)]">{a.label}</span>
                   <StatusBadge status={a.status} />
                 </div>
-                <p className="mb-2 text-[11px] text-zinc-500">{a.role}</p>
+                <p className="mb-2 text-[11px] text-[var(--text-muted)]">{a.role}</p>
                 <div className="flex flex-wrap gap-1">
-                  <span className="rounded bg-zinc-800/80 px-1.5 py-0.5 text-[9px] text-zinc-500">
+                  <span className="rounded bg-[var(--bg-soft)] px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">
                     ctx: {a.context}
                   </span>
                   {a.backends.map((b) => (
-                    <span key={b} className="rounded bg-zinc-800/60 px-1.5 py-0.5 text-[9px] text-zinc-600">{b}</span>
+                    <span key={b} className="rounded bg-[var(--bg-soft)] px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">{b}</span>
                   ))}
                 </div>
                 {a.tools.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {a.tools.slice(0, 4).map((t) => (
-                      <span key={t} className="rounded bg-violet-500/10 px-1.5 py-0.5 text-[9px] text-violet-400/70">{t}</span>
+                      <span key={t} className="rounded bg-[var(--warn)]/10 px-1.5 py-0.5 text-[9px] text-[var(--warn)]/80">{t}</span>
                     ))}
                     {a.tools.length > 4 && (
-                      <span className="text-[9px] text-zinc-600">+{a.tools.length - 4}</span>
+                      <span className="text-[9px] text-[var(--text-muted)]">+{a.tools.length - 4}</span>
                     )}
                   </div>
                 )}
@@ -290,9 +290,9 @@ function FlowsView({ flows, nodeMap, onSelect, selected }: { flows: FlowData[]; 
   return (
     <div className="space-y-6">
       {flows.map((flow) => (
-        <div key={flow.id} className="rounded-lg border border-zinc-800/50 bg-zinc-900/30 p-4">
-          <h3 className="text-sm font-medium text-zinc-200">{flow.label}</h3>
-          <p className="mb-3 text-[11px] text-zinc-500">{flow.description}</p>
+        <div key={flow.id} className="rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-4">
+          <h3 className="text-sm font-medium text-[var(--text)]">{flow.label}</h3>
+          <p className="mb-3 text-[11px] text-[var(--text-muted)]">{flow.description}</p>
           <div className="flex flex-wrap items-center gap-1">
             {flow.steps.map((stepId, i) => {
               const node = nodeMap.get(stepId);
@@ -303,16 +303,16 @@ function FlowsView({ flows, nodeMap, onSelect, selected }: { flows: FlowData[]; 
                   <button
                     onClick={() => onSelect(stepId)}
                     className={`rounded px-2.5 py-1.5 text-[11px] transition-colors ${
-                      selected === stepId ? "bg-cyan-500/20 text-cyan-400" :
-                      isDeprecated ? "bg-red-500/10 text-red-400/70 line-through" :
-                      isCritical ? "bg-amber-500/10 text-amber-300" :
-                      "bg-zinc-800/60 text-zinc-400 hover:bg-zinc-800"
+                      selected === stepId ? "bg-[var(--cykan)]/15 text-[var(--cykan)]" :
+                      isDeprecated ? "bg-[var(--danger)]/10 text-[var(--danger)]/80 line-through" :
+                      isCritical ? "bg-[var(--warn)]/10 text-[var(--warn)]" :
+                      "bg-[var(--bg-soft)] text-[var(--text-muted)] hover:bg-[var(--bg-soft)]"
                     }`}
                   >
                     {node?.label ?? stepId}
                   </button>
                   {i < flow.steps.length - 1 && (
-                    <span className="text-[10px] text-zinc-700">→</span>
+                    <span className="text-[10px] text-[var(--text-faint)]">→</span>
                   )}
                 </div>
               );
@@ -332,7 +332,7 @@ function DependenciesView({ nodes, onSelect, selected }: { nodes: GraphNode[]; o
 
   return (
     <div className="space-y-1">
-      <div className="mb-4 grid grid-cols-[1fr_80px_80px_80px_100px] gap-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+      <div className="mb-4 grid grid-cols-[1fr_80px_80px_80px_100px] gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         <span>Component</span>
         <span className="text-center">Status</span>
         <span className="text-center">Upstream</span>
@@ -344,19 +344,19 @@ function DependenciesView({ nodes, onSelect, selected }: { nodes: GraphNode[]; o
           key={n.id}
           onClick={() => onSelect(n.id)}
           className={`grid w-full grid-cols-[1fr_80px_80px_80px_100px] items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors ${
-            selected === n.id ? "bg-zinc-800/80" : "hover:bg-zinc-900/40"
+            selected === n.id ? "bg-[var(--bg-soft)]" : "hover:bg-[var(--bg-soft)]"
           }`}
         >
           <div>
-            <span className="text-xs text-zinc-300">{n.label}</span>
-            <span className="ml-2 text-[10px] text-zinc-600">{CATEGORY_LABEL[n.category]}</span>
+            <span className="text-xs text-[var(--text-soft)]">{n.label}</span>
+            <span className="ml-2 text-[10px] text-[var(--text-muted)]">{CATEGORY_LABEL[n.category]}</span>
           </div>
           <div className="text-center"><StatusBadge status={n.status} /></div>
-          <div className="text-center text-xs text-zinc-500">{n.upstream.length}</div>
-          <div className="text-center text-xs text-zinc-500">{n.downstream.length}</div>
+          <div className="text-center text-xs text-[var(--text-muted)]">{n.upstream.length}</div>
+          <div className="text-center text-xs text-[var(--text-muted)]">{n.downstream.length}</div>
           <div className="text-center">
             {n.critical && (
-              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-400">critical</span>
+              <span className="rounded bg-[var(--warn)]/20 px-1.5 py-0.5 text-[10px] text-[var(--warn)]">critical</span>
             )}
           </div>
         </button>
@@ -369,11 +369,11 @@ function DependenciesView({ nodes, onSelect, selected }: { nodes: GraphNode[]; o
 
 function RawView({ raw }: { raw: unknown }) {
   return (
-    <div className="rounded-lg border border-zinc-800/50 bg-zinc-900/30 p-4">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+    <div className="rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-4">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Source — docs/architecture-map.json
       </h3>
-      <pre className="max-h-[70vh] overflow-auto text-[11px] leading-relaxed text-zinc-400">
+      <pre className="max-h-[70vh] overflow-auto text-[11px] leading-relaxed text-[var(--text-muted)]">
         {JSON.stringify(raw, null, 2)}
       </pre>
     </div>
@@ -386,17 +386,17 @@ function DetailPanel({ node, nodeMap }: { node: GraphNode; nodeMap: Map<string, 
   return (
     <div className="p-5">
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-zinc-200">{node.label}</h3>
-        <p className="mt-0.5 text-[11px] text-zinc-500">{node.role}</p>
+        <h3 className="text-sm font-semibold text-[var(--text)]">{node.label}</h3>
+        <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">{node.role}</p>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
         <StatusBadge status={node.status} />
-        <span className={`inline-block rounded border border-zinc-700/50 bg-zinc-800/50 px-1.5 py-0.5 text-[10px] text-zinc-400`}>
+        <span className={`inline-block rounded border border-[var(--line-strong)] bg-[var(--bg-soft)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]`}>
           {CATEGORY_LABEL[node.category]}
         </span>
         {node.critical && (
-          <span className="rounded border border-amber-500/30 bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-400">
+          <span className="rounded border border-[var(--warn)]/30 bg-[var(--warn)]/20 px-1.5 py-0.5 text-[10px] text-[var(--warn)]">
             critical
           </span>
         )}
@@ -409,18 +409,18 @@ function DetailPanel({ node, nodeMap }: { node: GraphNode; nodeMap: Map<string, 
       <Section title="Connected from" items={node.upstream} nodeMap={nodeMap} />
 
       {/* Impact */}
-      <div className="mt-5 rounded-lg border border-zinc-800/40 bg-zinc-900/30 p-3">
-        <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+      <div className="mt-5 rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-3">
+        <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
           Impact if changed
         </h4>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <div className="text-lg font-semibold text-zinc-200">{node.downstream.length}</div>
-            <div className="text-[10px] text-zinc-600">downstream</div>
+            <div className="text-lg font-semibold text-[var(--text)]">{node.downstream.length}</div>
+            <div className="text-[10px] text-[var(--text-muted)]">downstream</div>
           </div>
           <div>
-            <div className="text-lg font-semibold text-zinc-200">{node.upstream.length}</div>
-            <div className="text-[10px] text-zinc-600">upstream</div>
+            <div className="text-lg font-semibold text-[var(--text)]">{node.upstream.length}</div>
+            <div className="text-[10px] text-[var(--text-muted)]">upstream</div>
           </div>
         </div>
       </div>
@@ -428,14 +428,14 @@ function DetailPanel({ node, nodeMap }: { node: GraphNode; nodeMap: Map<string, 
       {/* Metadata */}
       {Object.keys(node.metadata).length > 0 && (
         <div className="mt-5">
-          <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             Metadata
           </h4>
           <div className="space-y-1">
             {Object.entries(node.metadata).map(([k, v]) => (
               <div key={k} className="flex items-start gap-2 text-[11px]">
-                <span className="shrink-0 text-zinc-600">{k}:</span>
-                <span className="text-zinc-400">
+                <span className="shrink-0 text-[var(--text-muted)]">{k}:</span>
+                <span className="text-[var(--text-muted)]">
                   {Array.isArray(v) ? v.join(", ") : String(v)}
                 </span>
               </div>
@@ -451,17 +451,17 @@ function Section({ title, items, nodeMap }: { title: string; items: string[]; no
   if (items.length === 0) return null;
   return (
     <div className="mt-3">
-      <h4 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+      <h4 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         {title}
-        <span className="ml-1 text-zinc-700">{items.length}</span>
+        <span className="ml-1 text-[var(--text-faint)]">{items.length}</span>
       </h4>
       <div className="space-y-0.5">
         {items.map((id) => {
           const n = nodeMap.get(id);
           return (
             <div key={id} className="flex items-center gap-2 rounded px-2 py-1 text-[11px]">
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${n?.status === "deprecated" ? "bg-red-400" : n?.critical ? "bg-amber-400" : "bg-zinc-600"}`} />
-              <span className={n?.status === "deprecated" ? "text-red-400/70 line-through" : "text-zinc-400"}>
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${n?.status === "deprecated" ? "bg-[var(--danger)]" : n?.critical ? "bg-[var(--warn)]" : "bg-[var(--text-muted)]"}`} />
+              <span className={n?.status === "deprecated" ? "text-[var(--danger)]/80 line-through" : "text-[var(--text-muted)]"}>
                 {n?.label ?? id}
               </span>
             </div>
@@ -480,20 +480,20 @@ function NodeCard({ node, onClick, isSelected }: { node: GraphNode; onClick: () 
       onClick={onClick}
       className={`w-full rounded-lg border border-l-4 px-3 py-2 text-left transition-colors ${CATEGORY_COLOR[node.category]} ${
         isSelected
-          ? "border-cyan-500/50 bg-zinc-900/80"
-          : "border-zinc-800/50 bg-zinc-900/30 hover:bg-zinc-900/50"
+          ? "border-[var(--cykan)]/50 bg-[var(--bg-soft)]"
+          : "border-[var(--line)] bg-[var(--bg-elev)] hover:bg-[var(--bg-soft)]"
       }`}
     >
       <div className="flex items-center justify-between gap-1">
-        <span className={`text-xs font-medium ${node.status === "deprecated" ? "text-red-400/70 line-through" : "text-zinc-300"}`}>
+        <span className={`text-xs font-medium ${node.status === "deprecated" ? "text-[var(--danger)]/80 line-through" : "text-[var(--text-soft)]"}`}>
           {node.label}
         </span>
         <div className="flex shrink-0 items-center gap-1">
-          {node.critical && <span className="h-1.5 w-1.5 rounded-full bg-amber-400" title="critical" />}
+          {node.critical && <span className="h-1.5 w-1.5 rounded-full bg-[var(--warn)]" title="critical" />}
           <StatusBadge status={node.status} />
         </div>
       </div>
-      <p className="mt-0.5 text-[10px] leading-tight text-zinc-600">{node.role.length > 80 ? node.role.slice(0, 80) + "…" : node.role}</p>
+      <p className="mt-0.5 text-[10px] leading-tight text-[var(--text-muted)]">{node.role.length > 80 ? node.role.slice(0, 80) + "…" : node.role}</p>
     </button>
   );
 }
@@ -505,10 +505,10 @@ function LoadingSkeleton() {
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
       {[1, 2, 3, 4, 5].map((c) => (
         <div key={c}>
-          <div className="mb-3 h-3 w-20 animate-pulse rounded bg-zinc-800/60" />
+          <div className="mb-3 h-3 w-20 animate-pulse rounded bg-[var(--bg-soft)]" />
           <div className="space-y-1.5">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-14 animate-pulse rounded-lg bg-zinc-900/40" />
+              <div key={i} className="h-14 animate-pulse rounded-lg bg-[var(--bg-soft)]" />
             ))}
           </div>
         </div>
@@ -521,8 +521,8 @@ function ErrorState({ message }: { message: string }) {
   return (
     <div className="flex items-center justify-center py-20">
       <div className="text-center">
-        <p className="text-sm text-zinc-400">Architecture map unavailable</p>
-        <p className="mt-1 text-xs text-zinc-600">{message}</p>
+        <p className="text-sm text-[var(--text-muted)]">Architecture map unavailable</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">{message}</p>
       </div>
     </div>
   );

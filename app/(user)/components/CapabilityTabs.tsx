@@ -23,7 +23,6 @@ interface CapabilityTab {
   description: string;
 }
 
-// Static tabs — only General, as other capabilities have dedicated pages
 const STATIC_TABS: CapabilityTab[] = [
   {
     id: "general",
@@ -90,10 +89,8 @@ export function CapabilityTabs({
   const [showMore, setShowMore] = useState(false);
   const surface = useNavigationStore((s) => s.surface);
 
-  // Determine which dynamic tabs should be visible based on connected services
   const visibleDynamicTabs = useMemo(() => {
     return DYNAMIC_TABS.filter((tab) => {
-      // Check if any connected service has this capability
       return connectedServices.some((service) =>
         service.capabilities.some((cap) => {
           if (tab.id === "crm" && cap === "crm") return true;
@@ -107,19 +104,15 @@ export function CapabilityTabs({
     });
   }, [connectedServices]);
 
-  // Combine static + visible dynamic tabs
   const allTabs = useMemo(() => {
     return [...STATIC_TABS, ...visibleDynamicTabs];
   }, [visibleDynamicTabs]);
 
-  // Show first 4 tabs + "More" button if needed
   const displayedTabs = compact && !showMore ? allTabs.slice(0, 4) : allTabs;
   const hasMore = allTabs.length > 4;
 
   const handleTabClick = (tab: CapabilityTab) => {
     onModeChange(tab.id);
-
-    // Navigate if surface is different and it's a static tab
     if (tab.surface !== surface && STATIC_TABS.some((t) => t.id === tab.id)) {
       onNavigate(tab.surface);
     }
@@ -127,8 +120,8 @@ export function CapabilityTabs({
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1">
-        <div className="flex items-center bg-white/[0.03] border border-white/[0.06] rounded-lg p-1">
+      <div className="flex items-center gap-10">
+        <div className="flex items-center gap-12">
           {displayedTabs.map((tab) => {
             const isActive = activeMode === tab.id;
             return (
@@ -136,14 +129,17 @@ export function CapabilityTabs({
                 key={tab.id}
                 onClick={() => handleTabClick(tab)}
                 title={tab.description}
-                className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                className={`text-[11px] font-mono font-black uppercase tracking-[0.4em] transition-all duration-500 flex items-center gap-4 relative group ${
                   isActive
-                    ? "bg-cyan-500/15 text-cyan-400"
-                    : "text-white/50 hover:text-white/70 hover:bg-white/[0.03]"
+                    ? "text-[var(--cykan)]"
+                    : "text-white/30 hover:text-white"
                 }`}
               >
-                <span className="text-xs">{tab.icon}</span>
+                <span className="text-lg grayscale group-hover:grayscale-0 transition-all">{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
+                {isActive && (
+                  <span className="absolute -bottom-3 left-0 right-0 h-[2px] bg-[var(--cykan)] shadow-[0_0_15px_var(--cykan)]" />
+                )}
               </button>
             );
           })}
@@ -152,15 +148,14 @@ export function CapabilityTabs({
         {hasMore && !showMore && (
           <button
             onClick={() => setShowMore(true)}
-            className="px-2 py-1.5 text-xs text-white/40 hover:text-white/60 transition-colors"
-            title="Plus de modes"
+            className="text-[11px] font-mono font-black tracking-[0.3em] text-white/20 hover:text-white transition-colors"
           >
             +{allTabs.length - 4}
           </button>
         )}
 
         {showMore && (
-          <div className="absolute top-full left-0 mt-1 bg-[#141414] border border-white/[0.08] rounded-xl shadow-2xl z-50 p-2 min-w-[200px]">
+          <div className="absolute top-full left-0 mt-6 bg-black/95 backdrop-blur-3xl border border-white/10 rounded-[8px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] z-50 p-4 min-w-[280px]">
             {allTabs.slice(4).map((tab) => (
               <button
                 key={tab.id}
@@ -168,22 +163,22 @@ export function CapabilityTabs({
                   handleTabClick(tab);
                   setShowMore(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                  activeMode === tab.id ? "bg-cyan-500/10 text-cyan-400" : "hover:bg-white/[0.03] text-white/70"
+                className={`w-full flex items-center gap-6 px-6 py-4 rounded-[4px] text-left transition-all duration-300 ${
+                  activeMode === tab.id ? "bg-white/10 text-[var(--cykan)]" : "hover:bg-white/5 text-white/50 hover:text-white"
                 }`}
               >
-                <span>{tab.icon}</span>
+                <span className="text-2xl grayscale group-hover:grayscale-0">{tab.icon}</span>
                 <div>
-                  <p className="text-sm">{tab.label}</p>
-                  <p className="text-[10px] text-white/40">{tab.description}</p>
+                  <p className="text-[15px] font-black uppercase tracking-tighter">{tab.label}</p>
+                  <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40">{tab.description}</p>
                 </div>
               </button>
             ))}
             <button
               onClick={() => setShowMore(false)}
-              className="w-full text-center text-xs text-white/40 hover:text-white/60 py-2 border-t border-white/[0.06] mt-1"
+              className="w-full text-center text-[11px] font-mono font-black uppercase tracking-[0.5em] text-white/20 hover:text-white py-6 border-t border-white/10 mt-4"
             >
-              Fermer
+              Close_Menu
             </button>
           </div>
         )}
@@ -191,30 +186,31 @@ export function CapabilityTabs({
     );
   }
 
-  // Full-size version for dedicated settings/pages
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium text-white/40 uppercase tracking-wider">
-        Mode de conversation
+    <div className="space-y-10">
+      <p className="text-[11px] font-mono font-black text-white/30 uppercase tracking-[0.8em]">
+        Capability_Mode
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
         {allTabs.map((tab) => {
           const isActive = activeMode === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab)}
-              className={`flex flex-col items-start gap-1 p-3 rounded-xl border transition-all text-left ${
+              className={`flex flex-col items-start gap-6 p-10 rounded-sm border transition-all text-left ${
                 isActive
-                  ? "bg-cyan-500/10 border-cyan-500/30"
-                  : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.03]"
+                  ? "bg-white/[0.04] border-[var(--cykan)]/50 text-[var(--cykan)] shadow-[0_40px_80px_rgba(0,0,0,0.6)]"
+                  : "bg-white/[0.02] border-white/10 hover:bg-white/[0.03] hover:border-white/20"
               }`}
             >
-              <span className="text-lg">{tab.icon}</span>
-              <p className={`text-sm font-medium ${isActive ? "text-white" : "text-white/70"}`}>
-                {tab.label}
-              </p>
-              <p className="text-[10px] text-white/40 line-clamp-2">{tab.description}</p>
+              <span className="text-3xl grayscale group-hover:grayscale-0">{tab.icon}</span>
+              <div>
+                <p className={`text-[18px] font-black uppercase tracking-tighter ${isActive ? "text-white" : "text-white/50"}`}>
+                  {tab.label}
+                </p>
+                <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/30 line-clamp-2 mt-2">{tab.description}</p>
+              </div>
             </button>
           );
         })}
@@ -222,8 +218,6 @@ export function CapabilityTabs({
     </div>
   );
 }
-
-// ── Helper to get capability from surface ─────────────────
 
 export function getCapabilityFromSurface(surface: Surface): CapabilityMode {
   const mapping: Record<string, CapabilityMode> = {
@@ -237,16 +231,13 @@ export function getCapabilityFromSurface(surface: Surface): CapabilityMode {
   return mapping[surface] || "general";
 }
 
-// ── Helper to check if capability is available ───────────────
-
 export function isCapabilityAvailable(
   mode: CapabilityMode,
   connectedServices: ServiceDefinition[]
 ): boolean {
   if (["general", "messaging", "calendar", "files"].includes(mode)) {
-    return true; // Static modes always available
+    return true;
   }
-
   const capabilityMap: Record<string, string> = {
     crm: "crm",
     support: "support",
@@ -254,9 +245,7 @@ export function isCapabilityAvailable(
     developer: "developer_tools",
     design: "design",
   };
-
   const requiredCap = capabilityMap[mode];
   if (!requiredCap) return false;
-
   return connectedServices.some((s) => s.capabilities.includes(requiredCap as ServiceDefinition["capabilities"][number]));
 }

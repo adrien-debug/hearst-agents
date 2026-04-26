@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HEARST OS — Ghost Protocol v5.0</title>
+  
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400,200&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #000000;
+      --cykan: #a3ff00;
+      --cykan-soft: rgba(163, 255, 0, 0.1);
+      --text: rgba(255, 255, 255, 0.95);
+      --text-muted: rgba(255, 255, 255, 0.65);
+      --text-ghost: rgba(255, 255, 255, 0.25);
+      --line: rgba(255, 255, 255, 0.03);
+      --line-strong: rgba(255, 255, 255, 0.08);
+      --font-mono: 'Geist Mono', monospace;
+      --font-sans: 'Satoshi', sans-serif;
+    }
+
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+    
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    body { 
+      margin: 0; 
+      background: var(--bg); 
+      color: var(--text); 
+      font-family: var(--font-sans);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── The Void (Background) ── */
+    .void {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .void::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: 
+        linear-gradient(rgba(163, 255, 0, 0.01) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(163, 255, 0, 0.01) 1px, transparent 1px);
+      background-size: 100px 100px;
+      mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+    }
+
+    /* ── Sidebar (The Rail) ── */
+    .rail {
+      width: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 0;
+      gap: 48px;
+      z-index: 10;
+      border-right: 1px solid var(--line);
+    }
+
+    .rail-item {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-ghost);
+      cursor: pointer;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .rail-item:hover { color: var(--text); transform: scale(1.1); }
+    .rail-item.active { color: var(--cykan); }
+    .rail-item.active::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 1px solid var(--cykan);
+      border-radius: 50%;
+      opacity: 0.2;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.2; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    /* ── Main Canvas ── */
+    .canvas {
+      flex: 1;
+      padding: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-bar {
+      padding: 40px 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    /* ── Typography ── */
+    .glitch-title {
+      font-size: 140px;
+      font-weight: 900;
+      letter-spacing: -0.08em;
+      line-height: 0.7;
+      margin: 0;
+      color: var(--text-ghost);
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.8em;
+      color: var(--cykan);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      display: block;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: block;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--line-strong);
+      padding-bottom: 8px;
+    }
+
+    /* ── The Grid System ── */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 1px;
+      background: var(--line);
+      flex: 1;
+    }
+
+    .main-zone { background: var(--bg); padding: 80px; display: flex; flex-direction: column; gap: 80px; }
+    .side-zone { background: var(--bg); padding: 40px; border-left: 1px solid var(--line); }
+
+    /* ── Components: Data Cards ── */
+    .data-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .data-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+    .data-value {
+      font-size: 32px;
+      font-weight: 200;
+      letter-spacing: -0.02em;
+    }
+    .data-trend {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--cykan);
+    }
+
+    /* ── Components: Ghost Menu ── */
+    .ghost-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .menu-item {
+      padding: 16px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .menu-item:hover { padding-left: 12px; border-bottom-color: var(--cykan); }
+    .menu-item .label { font-size: 14px; font-weight: 500; color: var(--text-muted); transition: color 0.3s; }
+    .menu-item:hover .label { color: var(--text); }
+    .menu-item .meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-ghost); }
+
+    /* ── Components: Chat v5 ── */
+    .chat-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+    .stream-entry {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 24px;
+    }
+    .entry-id {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text-ghost);
+      padding-top: 8px;
+    }
+    .entry-content {
+      font-size: 20px;
+      line-height: 1.5;
+      font-weight: 300;
+    }
+    .entry-content.user { color: var(--text); font-weight: 400; }
+    .entry-id.user { color: var(--cykan); opacity: 0.8; }
+
+    /* ── Components: Command Bar ── */
+    .cmd-wrapper {
+      position: sticky;
+      bottom: 0;
+      background: linear-gradient(transparent, var(--bg) 50%);
+      padding: 60px 80px 40px;
+    }
+    .cmd-input-group {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      border-bottom: 1px solid var(--line-strong);
+      padding-bottom: 16px;
+    }
+    .cmd-prefix { font-family: var(--font-mono); font-size: 12px; color: var(--cykan); }
+    .cmd-input {
+      background: transparent;
+      border: none;
+      flex: 1;
+      color: var(--text);
+      font-size: 24px;
+      font-family: var(--font-sans);
+      outline: none;
+    }
+
+    /* ── Status HUD ── */
+    .hud-stat {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .hud-bar {
+      height: 2px;
+      flex: 1;
+      background: var(--line-strong);
+      position: relative;
+    }
+    .hud-bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      background: var(--cykan);
+      box-shadow: 0 0 10px var(--cykan);
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="void"></div>
+
+  <aside class="rail">
+    <div class="rail-item active" title="Dashboard">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    </div>
+    <div class="rail-item" title="Missions">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7"/><path d="M16 19h6"/><path d="M19 16v6"/></svg>
+    </div>
+    <div class="rail-item" title="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    </div>
+    <div style="margin-top: auto;">
+      <div class="rail-item" style="color: var(--danger); opacity: 0.4;" title="Logout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <main class="canvas">
+    
+    <div class="header-bar">
+      <div>
+        <span class="kicker">Protocol_Active</span>
+        <h1 class="glitch-title">HEARST</h1>
+      </div>
+      <div style="text-align: right;">
+        <span class="data-label">System_Load</span>
+        <div class="data-value" style="font-size: 18px;">0.042ms</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      
+      <div class="main-zone">
+        
+        <!-- Section: Intelligence Stream -->
+        <section>
+          <span class="section-label">01 // Intelligence_Stream</span>
+          <div class="chat-stream">
+            <div class="stream-entry">
+              <div class="entry-id user">USR_01</div>
+              <div class="entry-content user">Initialiser le diagnostic de sécurité sur le cluster Production-A.</div>
+            </div>
+            <div class="stream-entry">
+              <div class="entry-id">AI_CORE</div>
+              <div class="entry-content">Diagnostic initialisé. Scan des 128 nœuds en cours. Aucune intrusion détectée. Latence moyenne : 0.8ms.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section: Tactical Actions -->
+        <section>
+          <span class="section-label">02 // Tactical_Actions</span>
+          <div style="display: flex; gap: 64px;">
+            <div class="data-card">
+              <span class="data-label">Success_Rate</span>
+              <span class="data-value">99.8%</span>
+              <span class="data-trend">+0.2% vs last_run</span>
+            </div>
+            <div class="data-card">
+              <span class="data-label">Active_Missions</span>
+              <span class="data-value">12</span>
+              <span class="data-trend">All_Nominal</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="side-zone">
+        <span class="section-label">System_HUD</span>
+        
+        <div class="hud-stat">
+          <div style="flex: 1;">
+            <div class="data-label" style="margin-bottom: 8px;">Neural_Engine</div>
+            <div class="hud-bar"><div class="hud-bar-fill" style="width: 75%;"></div></div>
+          </div>
+          <span class="data-label" style="color: var(--text);">75%</span>
+        </div>
+
+        <div class="hud-stat" style="margin-bottom: 64px;">
+          <div style="flex: 1;">
+            <div class="data-label" style="margin-bottom: 8px;">Memory_Buffer</div>
+            <div class="hud-bar"><div class="hud-bar-fill" style="width: 32%;"></div></div>
+          </div>
+          <span class="data-label" style="color: var(--text);">32%</span>
+        </div>
+
+        <span class="section-label">Quick_Access</span>
+        <div class="ghost-menu">
+          <div class="menu-item">
+            <span class="label">View_Logs</span>
+            <span class="meta">CTRL+L</span>
+          </div>
+          <div class="menu-item">
+            <span class="label">Network_Map</span>
+            <span class="meta">CTRL+N</span>
+          </div>
+          <div class="menu-item">
+            <span class="label">Security_Vault</span>
+            <span class="meta">CTRL+S</span>
+          </div>
+          <div class="menu-item">
+            <span class="label">Terminal_Shell</span>
+            <span class="meta">CTRL+T</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cmd-wrapper">
+      <div class="cmd-input-group">
+        <span class="cmd-prefix">HEARST_OS ></span>
+        <input type="text" class="cmd-input" placeholder="Enter_Command_">
+      </div>
+    </div>
+
+  </main>
+
+</body>
+</html>

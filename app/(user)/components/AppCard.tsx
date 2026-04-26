@@ -2,6 +2,7 @@
 
 import type { ServiceWithConnectionStatus, ServiceDefinition } from "@/lib/integrations/types";
 import { ConnectionStatusChip } from "./ConnectionStatusChip";
+import { GhostIconLayers, GhostIconPlus, ServiceIdGlyph } from "./ghost-icons";
 
 interface AppCardProps {
   service: ServiceWithConnectionStatus | ServiceDefinition;
@@ -17,15 +18,13 @@ export function AppCard({ service, onClick, variant = "default" }: AppCardProps)
     return (
       <button
         onClick={onClick}
-        className={`flex items-center gap-3 p-2 rounded-lg border transition-all ${
-          isConnected
-            ? "bg-white/[0.03] border-white/[0.08] hover:border-cyan-500/30"
-            : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.03]"
+        className={`flex w-full items-center gap-3 p-3 text-left transition-colors border-b border-[var(--line)] ${
+          isConnected ? "hover:bg-[var(--bg-soft)]" : "hover:bg-[var(--bg-elev)]"
         }`}
       >
-        <span className="text-xl">{service.icon}</span>
-        <div className="flex-1 min-w-0 text-left">
-          <p className={`text-sm font-medium truncate ${isConnected ? "text-white" : "text-white/70"}`}>
+        <ServiceIdGlyph id={service.id} icon={service.icon} size="sm" />
+        <div className="flex-1 min-w-0">
+          <p className={`text-[13px] font-medium tracking-tight truncate ${isConnected ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
             {service.name}
           </p>
         </div>
@@ -38,74 +37,69 @@ export function AppCard({ service, onClick, variant = "default" }: AppCardProps)
     return (
       <button
         onClick={onClick}
-        className="flex flex-col p-4 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.03] hover:border-cyan-500/20 transition-all text-left"
+        className="flex w-full flex-col p-6 text-left transition-colors border-b border-[var(--line)] bg-[var(--bg)] hover:bg-[var(--bg-soft)]"
       >
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex -space-x-2">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex -space-x-1">
             {(service as ServiceDefinition).popularUseCases?.slice(0, 4).map((_, i) => (
               <div
                 key={i}
-                className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-white/[0.08] flex items-center justify-center text-sm"
+                className="w-8 h-8 flex items-center justify-center border border-[var(--line-strong)] bg-[var(--bg-elev)] text-[var(--text-muted)]"
                 style={{ zIndex: 4 - i }}
               >
-                {i === 3 ? "+" : "◈"}
+                {i === 3 ? <GhostIconPlus className="w-3.5 h-3.5" /> : <GhostIconLayers className="w-3.5 h-3.5" />}
               </div>
             ))}
           </div>
-          <span className="text-xs text-white/40 bg-white/[0.05] px-2 py-0.5 rounded-full">
-            {(service as ServiceDefinition).popularUseCases?.length || 0} apps
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--warn)] pb-0.5">
+            BND_{(service as ServiceDefinition).popularUseCases?.length || 0}
           </span>
         </div>
-        <h3 className="text-sm font-medium text-white mb-1">{service.name}</h3>
-        <p className="text-xs text-white/40 line-clamp-2">{service.description}</p>
+        <h3 className="text-[13px] font-black uppercase tracking-tighter text-[var(--text)] mb-1">{service.name}</h3>
+        <p className="text-[11px] font-light leading-relaxed text-[var(--text-muted)] line-clamp-2">{service.description}</p>
       </button>
     );
   }
 
-  // Default variant
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col p-4 rounded-xl border transition-all text-left group ${
-        isConnected
-          ? "bg-white/[0.03] border-white/[0.08] hover:border-cyan-500/30"
-          : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.03]"
+      className={`group flex w-full flex-col p-5 text-left transition-colors border-b border-[var(--line)] bg-[var(--bg)] ${
+        isConnected ? "hover:bg-[var(--bg-soft)]" : "hover:bg-[var(--bg-elev)]"
       }`}
     >
       <div className="flex items-start justify-between mb-3">
-        <span className="text-2xl">{service.icon}</span>
+        <ServiceIdGlyph id={service.id} icon={service.icon} />
         <ConnectionStatusChip status={status} type={service.type} compact />
       </div>
 
-      <h3 className={`text-sm font-medium mb-1 ${isConnected ? "text-white" : "text-white/80"}`}>
+      <h3 className={`text-[13px] font-black uppercase tracking-tighter mb-1 ${isConnected ? "text-[var(--text)]" : "text-[var(--text-soft)]"}`}>
         {service.name}
       </h3>
-      <p className="text-xs text-white/40 line-clamp-2 mb-3">{service.description}</p>
+      <p className="text-[11px] font-light leading-relaxed text-[var(--text-muted)] line-clamp-2 mb-3">{service.description}</p>
 
       {service.tier === "tier_1" && (
-        <div className="flex flex-wrap gap-1 mt-auto">
+        <div className="flex flex-wrap gap-2 mt-auto">
           {service.popularUseCases?.slice(0, 2).map((useCase) => (
             <span
               key={useCase}
-              className="text-[10px] text-white/30 bg-white/[0.05] px-2 py-0.5 rounded-full"
+              className="text-[9px] font-mono uppercase tracking-[0.12em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-0.5 truncate max-w-full"
             >
-              {useCase.slice(0, 20)}...
+              UC_{useCase.slice(0, 24)}
             </span>
           ))}
         </div>
       )}
 
       {isConnected ? (
-        <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
-          <span className="text-xs text-emerald-400">Prêt à utiliser</span>
-          <span className="text-xs text-white/30 group-hover:text-cyan-400 transition-colors">
-            Ouvrir →
-          </span>
+        <div className="mt-4 pt-4 border-t border-[var(--line)] flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.16em]">
+          <span className="text-[var(--money)] border-b border-[var(--money)] pb-0.5">STATUS_READY</span>
+          <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">OPEN_R</span>
         </div>
       ) : (
-        <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between">
-          <span className="text-xs text-white/30">Non connecté</span>
-          <span className="text-xs text-cyan-400">Connecter →</span>
+        <div className="mt-4 pt-4 border-t border-[var(--line)] flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.16em]">
+          <span className="text-[var(--text-faint)]">STATUS_OFF</span>
+          <span className="text-[var(--cykan)] border-b border-[var(--cykan)] pb-0.5">LINK_R</span>
         </div>
       )}
     </button>

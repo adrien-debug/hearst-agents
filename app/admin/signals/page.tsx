@@ -27,17 +27,17 @@ const KINDS = [
 ] as const;
 
 const priorityColor: Record<string, string> = {
-  critical: "text-red-400 bg-red-950/40 border-red-900/50",
+  critical: "text-[var(--danger)] bg-[var(--danger)]/12 border-[var(--danger)]/40",
   high: "text-orange-400 bg-orange-950/40 border-orange-900/50",
   medium: "text-yellow-400 bg-yellow-950/40 border-yellow-900/50",
-  low: "text-zinc-400 bg-zinc-900 border-zinc-800",
+  low: "text-[var(--text-muted)] bg-[var(--bg-soft)] border-[var(--line-strong)]",
 };
 
 const statusColor: Record<string, string> = {
-  open: "text-blue-400",
+  open: "text-[var(--cyan-accent)]",
   acknowledged: "text-yellow-400",
   applied: "text-green-400",
-  dismissed: "text-zinc-500",
+  dismissed: "text-[var(--text-muted)]",
 };
 
 export default function SignalsPage() {
@@ -100,9 +100,9 @@ export default function SignalsPage() {
   return (
     <div className="px-8 py-10">
       <div className="mb-8">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">Décisions</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Signaux</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Décisions</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">Signaux</h1>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           Recommandations et alertes générées par le système.
         </p>
       </div>
@@ -114,20 +114,20 @@ export default function SignalsPage() {
         <FilterGroup label="Type" options={KINDS} value={kind} onChange={setKind} />
         <button
           onClick={load}
-          className="ml-auto rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-white"
+          className="ml-auto rounded-lg border border-[var(--line-strong)] px-3 py-1.5 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--cykan)] hover:text-[var(--text)]"
         >
           Rafraîchir
         </button>
       </div>
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Chargement…</p>
+        <p className="text-sm text-[var(--text-muted)]">Chargement…</p>
       ) : signals.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aucun signal trouvé.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucun signal trouvé.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {signals.map((s) => (
-            <div key={s.id} className="rounded-xl border border-zinc-800 bg-zinc-950/80">
+            <div key={s.id} className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)]">
               <button
                 onClick={() => setExpanded(expanded === s.id ? null : s.id)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left"
@@ -135,41 +135,41 @@ export default function SignalsPage() {
                 <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase border ${priorityColor[s.priority] ?? priorityColor.low}`}>
                   {s.priority}
                 </span>
-                <span className={`text-xs font-medium ${statusColor[s.status] ?? "text-zinc-400"}`}>
+                <span className={`text-xs font-medium ${statusColor[s.status] ?? "text-[var(--text-muted)]"}`}>
                   {s.status}
                 </span>
-                <span className="text-xs text-zinc-600">{s.kind}</span>
-                <span className="flex-1 truncate text-sm text-zinc-200">{s.title}</span>
-                <span className="text-[10px] text-zinc-600">{s.target_type}:{s.target_id.slice(0, 8)}</span>
-                <span className="text-[10px] text-zinc-700">{new Date(s.created_at).toLocaleDateString()}</span>
+                <span className="text-xs text-[var(--text-muted)]">{s.kind}</span>
+                <span className="flex-1 truncate text-sm text-[var(--text)]">{s.title}</span>
+                <span className="text-[10px] text-[var(--text-muted)]">{s.target_type}:{s.target_id.slice(0, 8)}</span>
+                <span className="text-[10px] text-[var(--text-faint)]">{new Date(s.created_at).toLocaleDateString()}</span>
               </button>
 
               {expanded === s.id && (
-                <div className="border-t border-zinc-800 px-4 py-4">
+                <div className="border-t border-[var(--line-strong)] px-4 py-4">
                   {s.description && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-semibold uppercase text-zinc-600">Description</p>
-                      <p className="text-sm text-zinc-300">{s.description}</p>
+                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">Description</p>
+                      <p className="text-sm text-[var(--text-soft)]">{s.description}</p>
                     </div>
                   )}
                   {s.suggestion && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-semibold uppercase text-zinc-600">Suggestion</p>
-                      <p className="text-sm text-emerald-400">{s.suggestion}</p>
+                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">Suggestion</p>
+                      <p className="text-sm text-[var(--money)]">{s.suggestion}</p>
                     </div>
                   )}
                   {s.data && Object.keys(s.data).length > 0 && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-semibold uppercase text-zinc-600">Data</p>
-                      <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-zinc-900 p-2 text-xs text-zinc-400">
+                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">Data</p>
+                      <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-[var(--bg-soft)] p-2 text-xs text-[var(--text-muted)]">
                         {JSON.stringify(s.data, null, 2)}
                       </pre>
                     </div>
                   )}
                   {s.applied_at && (
-                    <div className="mb-3 text-xs text-zinc-500">
+                    <div className="mb-3 text-xs text-[var(--text-muted)]">
                       Résolu le {new Date(s.applied_at).toLocaleString()} par {s.applied_by ?? "—"}
-                      {s.resolution && <span className="ml-2 text-zinc-600">({s.resolution})</span>}
+                      {s.resolution && <span className="ml-2 text-[var(--text-muted)]">({s.resolution})</span>}
                     </div>
                   )}
 
@@ -206,15 +206,15 @@ function FilterGroup({
 }) {
   return (
     <div className="flex items-center gap-1">
-      <span className="mr-1 text-[10px] font-semibold uppercase text-zinc-600">{label}</span>
+      <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">{label}</span>
       {options.map((opt) => (
         <button
           key={opt}
           onClick={() => onChange(opt)}
           className={`rounded px-2 py-1 text-[11px] transition-colors ${
             value === opt
-              ? "bg-zinc-800 text-white"
-              : "text-zinc-500 hover:text-zinc-300"
+              ? "bg-[var(--bg-soft)] text-[var(--text)]"
+              : "text-[var(--text-muted)] hover:text-[var(--text-soft)]"
           }`}
         >
           {opt}
@@ -235,7 +235,7 @@ function ActionBtn({
   const colors = {
     green: "border-green-800 text-green-400 hover:bg-green-950/50",
     yellow: "border-yellow-800 text-yellow-400 hover:bg-yellow-950/50",
-    zinc: "border-zinc-700 text-zinc-400 hover:bg-zinc-900",
+    zinc: "border-[var(--line-strong)] text-[var(--text-muted)] hover:bg-[var(--bg-soft)]",
   };
   return (
     <button

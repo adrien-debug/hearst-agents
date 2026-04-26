@@ -36,39 +36,39 @@ export default async function DatasetsPage() {
     <div className="px-8 py-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">Hearst</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">Datasets</h1>
-          <p className="mt-1 text-sm text-zinc-500">Jeux de tests pour évaluation structurée.</p>
+          <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Hearst</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">Datasets</h1>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Jeux de tests pour évaluation structurée.</p>
         </div>
         <Link
           href="/admin/datasets/new"
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-zinc-200"
+          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 text-sm"
         >
           + Nouveau dataset
         </Link>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
           {error}
         </div>
       )}
 
       {datasets.length === 0 && !error ? (
-        <p className="text-sm text-zinc-500">Aucun dataset créé.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucun dataset créé.</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {datasets.map((d) => (
             <Link
               key={d.id}
               href={`/datasets/${d.id}`}
-              className="flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-950/80 p-5 transition-colors hover:border-zinc-700"
+              className="flex flex-col gap-2 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5 transition-colors hover:border-[var(--line-strong)]"
             >
-              <h3 className="text-sm font-semibold text-white">{d.name}</h3>
+              <h3 className="text-sm font-semibold text-[var(--text)]">{d.name}</h3>
               {d.description && (
-                <p className="line-clamp-2 text-xs text-zinc-500">{d.description}</p>
+                <p className="line-clamp-2 text-xs text-[var(--text-muted)]">{d.description}</p>
               )}
-              <div className="flex items-center gap-3 text-[10px] text-zinc-600">
+              <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
                 {d.agents && <span>Agent: {d.agents.name}</span>}
                 <span>
                   {new Date(d.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}

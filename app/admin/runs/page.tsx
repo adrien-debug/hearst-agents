@@ -21,12 +21,12 @@ interface RunRow {
 }
 
 const statusColor: Record<string, string> = {
-  completed: "text-emerald-400",
-  running: "text-blue-400",
-  failed: "text-red-400",
-  pending: "text-zinc-500",
-  cancelled: "text-zinc-600",
-  timeout: "text-amber-400",
+  completed: "text-[var(--money)]",
+  running: "text-[var(--cyan-accent)]",
+  failed: "text-[var(--danger)]",
+  pending: "text-[var(--text-muted)]",
+  cancelled: "text-[var(--text-muted)]",
+  timeout: "text-[var(--warn)]",
 };
 
 const kindLabel: Record<string, string> = {
@@ -60,50 +60,50 @@ export default async function RunsPage() {
   return (
     <div className="px-8 py-10">
       <div className="mb-8">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">
+        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
           Hearst
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">
           Runs
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           Chaque exécution, chaque trace, chaque token.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
           {error}
         </div>
       )}
 
       {runs.length === 0 && !error ? (
-        <p className="text-sm text-zinc-500">Aucun run enregistré. Lancez un chat ou un workflow.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucun run enregistré. Lancez un chat ou un workflow.</p>
       ) : (
         <div className="space-y-2">
           {runs.map((run) => (
             <Link
               key={run.id}
               href={`/admin/runs/${run.id}`}
-              className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 transition-colors hover:border-zinc-700"
+              className="flex items-center justify-between rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4 transition-colors hover:border-[var(--line-strong)]"
             >
               <div className="flex items-center gap-4">
-                <span className="rounded-md border border-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+                <span className="rounded-md border border-[var(--line-strong)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
                   {kindLabel[run.kind] ?? run.kind}
                 </span>
-                <span className={`text-xs font-medium ${statusColor[run.status] ?? "text-zinc-500"}`}>
+                <span className={`text-xs font-medium ${statusColor[run.status] ?? "text-[var(--text-muted)]"}`}>
                   {run.status}
                 </span>
                 {run.agents && (
-                  <span className="text-xs text-zinc-500">{run.agents.name}</span>
+                  <span className="text-xs text-[var(--text-muted)]">{run.agents.name}</span>
                 )}
                 {run.error && (
-                  <span className="max-w-[200px] truncate text-xs text-red-400/70">
+                  <span className="max-w-[200px] truncate text-xs text-[var(--danger)]/80">
                     {run.error}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-6 text-xs text-zinc-600">
+              <div className="flex items-center gap-6 text-xs text-[var(--text-muted)]">
                 {run.tokens_in > 0 && (
                   <span>{run.tokens_in + run.tokens_out} tok</span>
                 )}

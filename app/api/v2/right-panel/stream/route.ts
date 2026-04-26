@@ -46,6 +46,15 @@ export async function GET(req: NextRequest) {
 
       req.signal.addEventListener("abort", closeAll);
 
+      const enqueue = (chunk: Uint8Array) => {
+        if (stopped || req.signal.aborted) return;
+        try {
+          controller.enqueue(chunk);
+        } catch {
+          closeAll();
+        }
+      };
+
       const sendPanel = async () => {
         if (stopped || req.signal.aborted) return;
         try {
@@ -54,23 +63,21 @@ export async function GET(req: NextRequest) {
             tenantId: scope.tenantId,
             workspaceId: scope.workspaceId,
           });
+          // Re-check after async work — client may have disconnected during await
+          if (stopped || req.signal.aborted) return;
           const payload = JSON.stringify({
             ...data,
             scope: { isDevFallback: scope.isDevFallback },
           });
-          controller.enqueue(encoder.encode(`event: panel\ndata: ${payload}\n\n`));
+          enqueue(encoder.encode(`event: panel\ndata: ${payload}\n\n`));
         } catch (e) {
-          console.error("[GET /api/v2/right-panel/stream] buildRightPanelData failed:", e);
           if (stopped || req.signal.aborted) return;
-          try {
-            controller.enqueue(
-              encoder.encode(
-                `event: stream_error\ndata: ${JSON.stringify({ message: "internal_error" })}\n\n`,
-              ),
-            );
-          } catch {
-            closeAll();
-          }
+          console.error("[GET /api/v2/right-panel/stream] buildRightPanelData failed:", e);
+          enqueue(
+            encoder.encode(
+              `event: stream_error\ndata: ${JSON.stringify({ message: "internal_error" })}\n\n`,
+            ),
+          );
         }
       };
 
@@ -85,11 +92,7 @@ export async function GET(req: NextRequest) {
           closeAll();
           return;
         }
-        try {
-          controller.enqueue(encoder.encode(":\n\n"));
-        } catch {
-          closeAll();
-        }
+        enqueue(encoder.encode(":\n\n"));
       }, PING_INTERVAL_MS);
     },
   });

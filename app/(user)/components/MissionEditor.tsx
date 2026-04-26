@@ -23,14 +23,9 @@ const FREQUENCY_OPTIONS = [
   { value: "weekly", label: "Hebdomadaire", description: "Tous les lundis à 9h" },
   { value: "monthly", label: "Mensuel", description: "Le 1er de chaque mois" },
   { value: "custom", label: "Personnalisé", description: "Expression cron custom" },
-];
+] as const;
 
-export function MissionEditor({
-  initialData,
-  onSave,
-  onCancel,
-  isLoading,
-}: MissionEditorProps) {
+export function MissionEditor({ initialData, onSave, onCancel, isLoading }: MissionEditorProps) {
   const [formData, setFormData] = useState<MissionFormData>({
     name: initialData?.name || "",
     description: initialData?.description || "",
@@ -48,132 +43,107 @@ export function MissionEditor({
   const isValid = formData.name.trim() && formData.prompt.trim();
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Name */}
+    <form onSubmit={handleSubmit} className="space-y-8">
       <div>
-        <label className="block text-sm font-medium text-white/60 mb-2">
-          Nom de la mission
-        </label>
+        <label className="ghost-meta-label block mb-2">FIELD_NAME</label>
         <input
           type="text"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="ex: Rapport hebdo ventes"
-          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/30"
+          className="ghost-input-line w-full"
         />
       </div>
 
-      {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-white/60 mb-2">
-          Description
-        </label>
+        <label className="ghost-meta-label block mb-2">FIELD_DESC</label>
         <input
           type="text"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Objectif de cette mission..."
-          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/30"
+          className="ghost-input-line w-full"
         />
       </div>
 
-      {/* Prompt */}
       <div>
-        <label className="block text-sm font-medium text-white/60 mb-2">
-          Prompt
-        </label>
+        <label className="ghost-meta-label block mb-2">FIELD_PROMPT</label>
         <textarea
           value={formData.prompt}
           onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
-          placeholder="Instructions pour l'IA... ex: Génère un rapport des ventes Stripe de la semaine"
+          placeholder="Instructions pour l'IA..."
           rows={4}
-          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/30 resize-none"
+          className="ghost-input-line w-full resize-none min-h-[120px]"
         />
       </div>
 
-      {/* Frequency */}
       <div>
-        <label className="block text-sm font-medium text-white/60 mb-2">
-          Fréquence
-        </label>
-        <div className="grid grid-cols-2 gap-2">
-          {FREQUENCY_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setFormData({ ...formData, frequency: option.value as MissionFormData["frequency"] })}
-              className={`p-3 rounded-lg border text-left transition-colors ${
-                formData.frequency === option.value
-                  ? "bg-cyan-500/10 border-cyan-500/30"
-                  : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.03]"
-              }`}
-            >
-              <p className={`text-sm font-medium ${
-                formData.frequency === option.value ? "text-cyan-400" : "text-white/70"
-              }`}>
-                {option.label}
-              </p>
-              <p className="text-xs text-white/40 mt-0.5">{option.description}</p>
-            </button>
-          ))}
+        <label className="ghost-meta-label block mb-4">FIELD_CRON_PRESET</label>
+        <div className="grid grid-cols-2 gap-px bg-[var(--line)]">
+          {FREQUENCY_OPTIONS.map((option) => {
+            const selected = formData.frequency === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setFormData({ ...formData, frequency: option.value })}
+                className={`text-left p-4 transition-colors ${
+                  selected ? "bg-[var(--bg-soft)] text-[var(--cykan)]" : "bg-[var(--bg)] text-[var(--text-muted)] hover:bg-[var(--bg-elev)]"
+                }`}
+              >
+                <p className={`text-[12px] font-black uppercase tracking-tighter ${selected ? "" : "text-[var(--text-soft)]"}`}>{option.label}</p>
+                <p className="text-[10px] font-mono uppercase tracking-[0.08em] text-[var(--text-faint)] mt-1">{option.description}</p>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Custom Cron */}
       {formData.frequency === "custom" && (
         <div>
-          <label className="block text-sm font-medium text-white/60 mb-2">
-            Expression Cron
-          </label>
+          <label className="ghost-meta-label block mb-2">FIELD_CRON_EXPR</label>
           <input
             type="text"
             value={formData.customCron}
             onChange={(e) => setFormData({ ...formData, customCron: e.target.value })}
             placeholder="0 9 * * 1"
-            className="w-full bg-white/[0.03] border border-white/[0.06] rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-cyan-500/30 font-mono"
+            className="ghost-input-line w-full font-mono text-[12px]"
           />
-          <p className="text-xs text-white/30 mt-1">
-            Format: minute heure jour-mois mois jour-semaine
-          </p>
+          <p className="text-[10px] font-mono text-[var(--text-faint)] mt-2 uppercase tracking-[0.1em]">FMT_MIN HOUR DOM MON DOW</p>
         </div>
       )}
 
-      {/* Enabled toggle */}
-      <div className="flex items-center justify-between p-3 bg-white/[0.02] rounded-lg border border-white/[0.06]">
+      <div className="flex items-center justify-between py-4 border-y border-[var(--line)]">
         <div>
-          <p className="text-sm font-medium text-white/80">Activer la mission</p>
-          <p className="text-xs text-white/40">La mission s&apos;exécutera selon la fréquence</p>
+          <p className="text-[12px] font-medium text-[var(--text-soft)]">FLAG_ENABLED</p>
+          <p className="text-[10px] font-mono text-[var(--text-faint)] mt-1 uppercase tracking-[0.12em]">Exécution selon fréquence</p>
         </div>
         <button
           type="button"
           onClick={() => setFormData({ ...formData, enabled: !formData.enabled })}
-          className={`w-12 h-6 rounded-full transition-colors relative ${
-            formData.enabled ? "bg-cyan-500/30" : "bg-white/10"
+          className={`w-12 h-6 rounded-sm transition-colors relative border ${
+            formData.enabled ? "border-[var(--cykan)] bg-[var(--bg-soft)]" : "border-[var(--line-strong)] bg-[var(--bg)]"
           }`}
+          aria-pressed={formData.enabled}
         >
           <span
-            className={`absolute top-1 w-4 h-4 rounded-full transition-all ${
-              formData.enabled ? "left-7 bg-cyan-400" : "left-1 bg-white/40"
+            className={`absolute top-1 w-4 h-4 rounded-sm transition-all ${
+              formData.enabled ? "left-6 bg-[var(--cykan)]" : "left-1 bg-[var(--text-muted)]"
             }`}
           />
         </button>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 pt-4 border-t border-white/[0.06]">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 py-2.5 bg-transparent border border-white/[0.08] text-white/60 rounded-lg text-sm font-medium hover:bg-white/[0.03] transition-colors"
-        >
-          Annuler
+      <div className="flex gap-3 pt-2">
+        <button type="button" onClick={onCancel} className="ghost-btn-solid ghost-btn-ghost flex-1 rounded-sm">
+          Abort
         </button>
         <button
           type="submit"
           disabled={!isValid || isLoading}
-          className="flex-1 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="ghost-btn-solid ghost-btn-cykan flex-1 rounded-sm disabled:opacity-40"
         >
-          {isLoading ? "Sauvegarde..." : "Sauvegarder"}
+          {isLoading ? "COMMIT…" : "Commit"}
         </button>
       </div>
     </form>

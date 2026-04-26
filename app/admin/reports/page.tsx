@@ -36,13 +36,13 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string 
   },
   failed: {
     label: "Échoué",
-    dot: "bg-red-400",
-    badge: "text-red-400 bg-red-950/40 border-red-900/50",
+    dot: "bg-[var(--danger)]",
+    badge: "text-[var(--danger)] bg-[var(--danger)]/12 border-[var(--danger)]/40",
   },
   running: {
     label: "En cours",
-    dot: "bg-blue-400 animate-pulse",
-    badge: "text-blue-400 bg-blue-950/40 border-blue-900/50",
+    dot: "bg-[var(--cykan)] animate-pulse",
+    badge: "text-[var(--cyan-accent)] bg-[var(--cykan)]/8 border-[var(--cykan)]/30",
   },
   pending: {
     label: "En attente",
@@ -51,13 +51,13 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string 
   },
   skipped: {
     label: "Ignoré",
-    dot: "bg-zinc-500",
-    badge: "text-zinc-400 bg-zinc-900 border-zinc-800",
+    dot: "bg-[var(--text-muted)]",
+    badge: "text-[var(--text-muted)] bg-[var(--bg-soft)] border-[var(--line-strong)]",
   },
   not_generated: {
     label: "Non généré",
-    dot: "bg-zinc-600",
-    badge: "text-zinc-500 bg-zinc-900 border-zinc-800",
+    dot: "bg-[var(--text-muted)]",
+    badge: "text-[var(--text-muted)] bg-[var(--bg-soft)] border-[var(--line-strong)]",
   },
 };
 
@@ -83,15 +83,15 @@ const REPORT_TYPES = [
 ] as const;
 
 const TYPE_STYLE: Record<string, { label: string; color: string }> = {
-  crypto_daily: { label: "Daily Crypto", color: "text-amber-400 bg-amber-950/30 border-amber-900/40" },
+  crypto_daily: { label: "Daily Crypto", color: "text-[var(--warn)] bg-[var(--warn)]/10 border-[var(--warn)]/35" },
   market_watch: { label: "Market Watch", color: "text-indigo-400 bg-indigo-950/30 border-indigo-900/40" },
   market_alert: { label: "Market Alert", color: "text-rose-400 bg-rose-950/30 border-rose-900/40" },
 };
 
 const SEVERITY_STYLE: Record<string, { label: string; color: string }> = {
-  critical: { label: "Critical", color: "text-red-300 bg-red-950/50 border-red-800/50" },
+  critical: { label: "Critical", color: "text-[var(--danger)] bg-[var(--danger)]/12 border-[var(--danger)]/40" },
   warning: { label: "Warning", color: "text-yellow-300 bg-yellow-950/40 border-yellow-800/40" },
-  info: { label: "Info", color: "text-blue-300 bg-blue-950/40 border-blue-800/40" },
+  info: { label: "Info", color: "text-[var(--cyan-accent)] bg-[var(--cykan)]/8 border-[var(--cykan)]/30" },
 };
 
 function extractSeverity(highlights: string[] | null): string | null {
@@ -158,26 +158,26 @@ export default function ReportsPage() {
     <div className="px-8 py-10">
       <div className="mb-8 flex items-end justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">
+          <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
             Opérations
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">
             Reports
           </h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-[var(--text-muted)]">
             Surveillance et historique des capabilities de reporting.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg border border-zinc-800 p-0.5">
+          <div className="flex items-center gap-1 rounded-lg border border-[var(--line-strong)] p-0.5">
             {REPORT_TYPES.map((t) => (
               <button
                 key={t.value}
                 onClick={() => setActiveType(t.value)}
                 className={`rounded-md px-3 py-1.5 text-xs transition-colors ${
                   activeType === t.value
-                    ? "bg-zinc-800 text-white"
-                    : "text-zinc-500 hover:text-zinc-300"
+                    ? "bg-[var(--bg-soft)] text-[var(--text)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-soft)]"
                 }`}
               >
                 {t.label}
@@ -186,7 +186,7 @@ export default function ReportsPage() {
           </div>
           <button
             onClick={load}
-            className="rounded-lg border border-zinc-700 px-4 py-2 text-xs text-zinc-400 transition-colors hover:border-zinc-500 hover:text-white"
+            className="rounded-lg border border-[var(--line-strong)] px-4 py-2 text-xs text-[var(--text-muted)] transition-colors hover:border-[var(--cykan)] hover:text-[var(--text)]"
           >
             Rafraîchir
           </button>
@@ -197,25 +197,25 @@ export default function ReportsPage() {
       {activeType === "all" && Object.keys(healthAll).length > 0 && (
         <div className="mb-6 grid grid-cols-3 gap-4">
           {Object.entries(healthAll).map(([type, h]) => {
-            const ts = TYPE_STYLE[type] ?? { label: type, color: "text-zinc-400 bg-zinc-900 border-zinc-800" };
+            const ts = TYPE_STYLE[type] ?? { label: type, color: "text-[var(--text-muted)] bg-[var(--bg-soft)] border-[var(--line-strong)]" };
             return (
-              <div key={type} className={`rounded-xl border px-5 py-4 ${
+              <div key={type} className={`rounded-sm border px-5 py-4 ${
                 h.today.status === "completed" ? "border-green-900/30 bg-green-950/10"
-                  : h.today.status === "failed" ? "border-red-900/30 bg-red-950/10"
-                  : "border-zinc-800 bg-zinc-950/60"
+                  : h.today.status === "failed" ? "border-[var(--danger)]/30 bg-[var(--danger)]/8"
+                  : "border-[var(--line-strong)] bg-[var(--bg-elev)]"
               }`}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${ts.color}`}>
                     {ts.label}
                   </span>
                   <StatusDot status={h.today.status} />
-                  <span className="text-xs text-white">
+                  <span className="text-xs text-[var(--text)]">
                     {STATUS_CONFIG[h.today.status]?.label ?? h.today.status}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 text-[10px] text-zinc-500">
-                  <span>Streak: <strong className="text-zinc-300">{h.streak_consecutive_success}</strong></span>
-                  <span>14j: <strong className="text-zinc-300">{h.recent_14d.success_rate ?? "—"}%</strong></span>
+                <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
+                  <span>Streak: <strong className="text-[var(--text-soft)]">{h.streak_consecutive_success}</strong></span>
+                  <span>14j: <strong className="text-[var(--text-soft)]">{h.recent_14d.success_rate ?? "—"}%</strong></span>
                   <span>{h.recent_14d.success}/{h.recent_14d.total} ok</span>
                 </div>
               </div>
@@ -228,66 +228,66 @@ export default function ReportsPage() {
       {health && activeType !== "all" && (
         <div className="mb-8 grid grid-cols-4 gap-4">
           {/* Today */}
-          <div className={`rounded-xl border px-4 py-4 ${
+          <div className={`rounded-sm border px-4 py-4 ${
             health.today.status === "completed"
               ? "border-green-900/40 bg-green-950/10"
               : health.today.status === "failed"
-                ? "border-red-900/40 bg-red-950/10"
-                : "border-zinc-800 bg-zinc-950/60"
+                ? "border-[var(--danger)]/40 bg-[var(--danger)]/8"
+                : "border-[var(--line-strong)] bg-[var(--bg-elev)]"
           }`}>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               {"Aujourd'hui"}
             </p>
             <div className="mt-2 flex items-center gap-2">
               <StatusDot status={health.today.status} />
-              <span className="text-sm font-medium text-white">
+              <span className="text-sm font-medium text-[var(--text)]">
                 {STATUS_CONFIG[health.today.status]?.label ?? health.today.status}
               </span>
             </div>
             {health.today.generated_at && (
-              <p className="mt-1 text-[10px] text-zinc-600">
+              <p className="mt-1 text-[10px] text-[var(--text-muted)]">
                 {new Date(health.today.generated_at).toLocaleTimeString()}
               </p>
             )}
           </div>
 
           {/* Streak */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               Streak succès
             </p>
-            <p className="mt-2 text-2xl font-bold text-white">
+            <p className="mt-2 text-2xl font-bold text-[var(--text)]">
               {health.streak_consecutive_success}
-              <span className="ml-1 text-sm font-normal text-zinc-500">jours</span>
+              <span className="ml-1 text-sm font-normal text-[var(--text-muted)]">jours</span>
             </p>
           </div>
 
           {/* Success rate */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               Taux 14j
             </p>
-            <p className="mt-2 text-2xl font-bold text-white">
+            <p className="mt-2 text-2xl font-bold text-[var(--text)]">
               {health.recent_14d.success_rate !== null
                 ? `${health.recent_14d.success_rate}%`
                 : "—"}
             </p>
-            <p className="mt-1 text-[10px] text-zinc-600">
+            <p className="mt-1 text-[10px] text-[var(--text-muted)]">
               {health.recent_14d.success}/{health.recent_14d.total} réussis
             </p>
           </div>
 
           {/* Last failure */}
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               Dernier échec
             </p>
             {health.last_failure ? (
               <>
-                <p className="mt-2 text-sm font-medium text-red-400">
+                <p className="mt-2 text-sm font-medium text-[var(--danger)]">
                   {health.last_failure.report_date}
                 </p>
-                <p className="mt-1 truncate text-[10px] text-zinc-500" title={health.last_failure.error ?? ""}>
+                <p className="mt-1 truncate text-[10px] text-[var(--text-muted)]" title={health.last_failure.error ?? ""}>
                   {health.last_failure.error?.slice(0, 60) ?? "—"}
                 </p>
               </>
@@ -300,22 +300,22 @@ export default function ReportsPage() {
 
       {/* ─── Report list ─── */}
       {loading ? (
-        <p className="text-sm text-zinc-500">Chargement…</p>
+        <p className="text-sm text-[var(--text-muted)]">Chargement…</p>
       ) : reports.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aucun rapport trouvé.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucun rapport trouvé.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {reports.map((r) => (
-            <div key={r.id} className="rounded-xl border border-zinc-800 bg-zinc-950/80">
+            <div key={r.id} className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)]">
               <button
                 onClick={() => setExpanded(expanded === r.id ? null : r.id)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left"
               >
-                <span className="min-w-[90px] text-sm font-medium text-white">
+                <span className="min-w-[90px] text-sm font-medium text-[var(--text)]">
                   {r.report_date}
                 </span>
                 <span className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${
-                  TYPE_STYLE[r.report_type]?.color ?? "text-zinc-400 bg-zinc-900 border-zinc-800"
+                  TYPE_STYLE[r.report_type]?.color ?? "text-[var(--text-muted)] bg-[var(--bg-soft)] border-[var(--line-strong)]"
                 }`}>
                   {TYPE_STYLE[r.report_type]?.label ?? r.report_type}
                 </span>
@@ -330,7 +330,7 @@ export default function ReportsPage() {
                     </span>
                   ) : null;
                 })()}
-                <span className="rounded bg-zinc-900 px-2 py-0.5 text-[10px] text-zinc-500">
+                <span className="rounded bg-[var(--bg-soft)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">
                   {r.triggered_by}
                 </span>
                 {r.idempotency_decision && !["run", "cooldown_passed"].includes(r.idempotency_decision) && (
@@ -338,21 +338,21 @@ export default function ReportsPage() {
                     {r.idempotency_decision}
                   </span>
                 )}
-                <span className="flex-1 truncate text-xs text-zinc-500">
+                <span className="flex-1 truncate text-xs text-[var(--text-muted)]">
                   {r.status === "failed"
                     ? r.error_message?.slice(0, 80) ?? "—"
                     : r.summary?.slice(0, 100) ?? "—"}
                 </span>
                 {r.run_id && (
-                  <span className="font-mono text-[10px] text-zinc-700">
+                  <span className="font-mono text-[10px] text-[var(--text-faint)]">
                     run:{r.run_id.slice(0, 8)}
                   </span>
                 )}
-                <span className="text-[10px] text-zinc-700">
+                <span className="text-[10px] text-[var(--text-faint)]">
                   {new Date(r.created_at).toLocaleTimeString()}
                 </span>
                 <svg
-                  className={`h-4 w-4 text-zinc-600 transition-transform ${expanded === r.id ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 text-[var(--text-muted)] transition-transform ${expanded === r.id ? "rotate-180" : ""}`}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -360,14 +360,14 @@ export default function ReportsPage() {
               </button>
 
               {expanded === r.id && (
-                <div className="border-t border-zinc-800 px-4 py-4">
+                <div className="border-t border-[var(--line-strong)] px-4 py-4">
                   {/* Error - prominent */}
                   {r.error_message && (
-                    <div className="mb-4 rounded-lg border border-red-900/30 bg-red-950/20 p-4">
-                      <p className="text-[10px] font-semibold uppercase text-red-500 mb-1">
+                    <div className="mb-4 rounded-lg border border-[var(--danger)]/30 bg-[var(--danger)]/10 p-4">
+                      <p className="text-[10px] font-semibold uppercase text-[var(--danger)] mb-1">
                         Erreur
                       </p>
-                      <p className="text-sm text-red-300 font-mono break-all">
+                      <p className="text-sm text-[var(--danger)] font-mono break-all">
                         {r.error_message}
                       </p>
                     </div>
@@ -398,14 +398,14 @@ export default function ReportsPage() {
 
                   {/* Highlights */}
                   {r.highlights && r.highlights.filter((h) => !h.startsWith("severity: ") && !h.startsWith("signal_types: ")).length > 0 && (
-                    <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                      <p className="text-[10px] font-semibold uppercase text-zinc-500 mb-2">
+                    <div className="mb-4 rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] p-4">
+                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)] mb-2">
                         Points clés
                       </p>
                       <ul className="space-y-1.5">
                         {r.highlights.filter((h) => !h.startsWith("severity: ") && !h.startsWith("signal_types: ")).map((h, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-zinc-300">
-                            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                          <li key={i} className="flex items-start gap-2 text-xs text-[var(--text-soft)]">
+                            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--money)]" />
                             {h}
                           </li>
                         ))}
@@ -416,11 +416,11 @@ export default function ReportsPage() {
                   {/* Content */}
                   {r.content_markdown && (
                     <div>
-                      <p className="text-[10px] font-semibold uppercase text-zinc-500 mb-2">
+                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)] mb-2">
                         Rapport complet
                       </p>
-                      <div className="max-h-[500px] overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-                        <pre className="whitespace-pre-wrap text-xs leading-relaxed text-zinc-300">
+                      <div className="max-h-[500px] overflow-auto rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] p-4">
+                        <pre className="whitespace-pre-wrap text-xs leading-relaxed text-[var(--text-soft)]">
                           {r.content_markdown}
                         </pre>
                       </div>
@@ -450,13 +450,13 @@ function MetaField({
   const display = value ?? "—";
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase text-zinc-600">{label}</p>
+      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">{label}</p>
       {link ? (
-        <a href={link} className={`text-blue-400 hover:underline ${mono ? "font-mono" : ""}`}>
+        <a href={link} className={`text-[var(--cyan-accent)] hover:underline ${mono ? "font-mono" : ""}`}>
           {display.length > 16 ? `${display.slice(0, 12)}…` : display}
         </a>
       ) : (
-        <p className={`text-zinc-400 break-all ${mono ? "font-mono" : ""}`}>
+        <p className={`text-[var(--text-muted)] break-all ${mono ? "font-mono" : ""}`}>
           {display.length > 36 ? `${display.slice(0, 12)}…` : display}
         </p>
       )}

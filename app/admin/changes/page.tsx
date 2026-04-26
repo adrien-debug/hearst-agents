@@ -46,23 +46,23 @@ export default function ChangesPage() {
   return (
     <div className="px-8 py-10">
       <div className="mb-8">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">Décisions</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">Historique des changements</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Décisions</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">Historique des changements</h1>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
           Audit trail de chaque décision appliquée au système.
         </p>
       </div>
 
       <div className="mb-6 flex items-center gap-1">
-        <span className="mr-1 text-[10px] font-semibold uppercase text-zinc-600">Type</span>
+        <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">Type</span>
         {CHANGE_TYPES.map((opt) => (
           <button
             key={opt}
             onClick={() => setChangeType(opt)}
             className={`rounded px-2 py-1 text-[11px] transition-colors ${
               changeType === opt
-                ? "bg-zinc-800 text-white"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "bg-[var(--bg-soft)] text-[var(--text)]"
+                : "text-[var(--text-muted)] hover:text-[var(--text-soft)]"
             }`}
           >
             {opt}
@@ -71,46 +71,46 @@ export default function ChangesPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Chargement…</p>
+        <p className="text-sm text-[var(--text-muted)]">Chargement…</p>
       ) : changes.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aucun changement enregistré.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucun changement enregistré.</p>
       ) : (
         <div className="flex flex-col gap-2">
           {changes.map((c) => (
-            <div key={c.id} className="rounded-xl border border-zinc-800 bg-zinc-950/80">
+            <div key={c.id} className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)]">
               <button
                 onClick={() => setExpanded(expanded === c.id ? null : c.id)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left"
               >
-                <span className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-semibold uppercase text-zinc-300">
+                <span className="rounded bg-[var(--bg-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--text-soft)]">
                   {c.change_type}
                 </span>
-                <span className="text-xs text-zinc-500">{c.target_type}</span>
-                <span className="text-xs text-zinc-600">{c.target_id.slice(0, 8)}…</span>
-                <span className="flex-1 truncate text-sm text-zinc-400">
+                <span className="text-xs text-[var(--text-muted)]">{c.target_type}</span>
+                <span className="text-xs text-[var(--text-muted)]">{c.target_id.slice(0, 8)}…</span>
+                <span className="flex-1 truncate text-sm text-[var(--text-muted)]">
                   {c.reason ?? "—"}
                 </span>
-                <span className="text-xs text-zinc-600">{c.actor}</span>
-                <span className="text-[10px] text-zinc-700">{new Date(c.created_at).toLocaleString()}</span>
+                <span className="text-xs text-[var(--text-muted)]">{c.actor}</span>
+                <span className="text-[10px] text-[var(--text-faint)]">{new Date(c.created_at).toLocaleString()}</span>
               </button>
 
               {expanded === c.id && (
-                <div className="border-t border-zinc-800 px-4 py-4">
+                <div className="border-t border-[var(--line-strong)] px-4 py-4">
                   {c.signal_id && (
-                    <p className="mb-2 text-xs text-zinc-500">
-                      Signal source : <span className="font-mono text-zinc-400">{c.signal_id.slice(0, 12)}…</span>
+                    <p className="mb-2 text-xs text-[var(--text-muted)]">
+                      Signal source : <span className="font-mono text-[var(--text-muted)]">{c.signal_id.slice(0, 12)}…</span>
                     </p>
                   )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="mb-1 text-[10px] font-semibold uppercase text-red-500">Avant</p>
-                      <pre className="max-h-40 overflow-auto rounded-lg bg-zinc-900 p-2 text-xs text-zinc-400">
+                      <p className="mb-1 text-[10px] font-semibold uppercase text-[var(--danger)]">Avant</p>
+                      <pre className="max-h-40 overflow-auto rounded-lg bg-[var(--bg-soft)] p-2 text-xs text-[var(--text-muted)]">
                         {JSON.stringify(c.before_value, null, 2)}
                       </pre>
                     </div>
                     <div>
                       <p className="mb-1 text-[10px] font-semibold uppercase text-green-500">Après</p>
-                      <pre className="max-h-40 overflow-auto rounded-lg bg-zinc-900 p-2 text-xs text-zinc-400">
+                      <pre className="max-h-40 overflow-auto rounded-lg bg-[var(--bg-soft)] p-2 text-xs text-[var(--text-muted)]">
                         {JSON.stringify(c.after_value, null, 2)}
                       </pre>
                     </div>

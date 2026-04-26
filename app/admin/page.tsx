@@ -84,20 +84,16 @@ export default async function DashboardPage() {
 
   return (
     <div className="px-8 py-10">
-      <div className="mb-8">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">
-          Hearst
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
-          Command Center
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
+      <div className="mb-8 border-b border-[var(--line)] pb-8">
+        <p className="ghost-meta-label">Hearst</p>
+        <h1 className="mt-2 ghost-title-impact text-2xl">Command Center</h1>
+        <p className="mt-2 text-[13px] font-light leading-relaxed text-[var(--text-muted)]">
           Vue d&apos;ensemble de la plateforme d&apos;orchestration.
         </p>
       </div>
 
       {dbError && (
-        <div className="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+        <div className="mb-6 border-t border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)] font-mono text-[12px]">
           {dbError}
         </div>
       )}
@@ -115,13 +111,13 @@ export default async function DashboardPage() {
 
       {/* Recent agents */}
       <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Agents</h2>
-        <Link href="/admin/agents" className="text-xs text-zinc-500 transition-colors hover:text-zinc-300">
-          Voir tout →
+        <h2 className="text-[11px] font-mono uppercase tracking-[0.25em] text-[var(--text-muted)]">Agents</h2>
+        <Link href="/admin/agents" className="text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-0.5 hover:text-[var(--cykan)] hover:border-[var(--cykan)] transition-colors">
+          View all
         </Link>
       </div>
       {agents.length === 0 ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-[var(--text-muted)]">
           Aucun agent. Créez-en un depuis la page Agents.
         </p>
       ) : (
@@ -133,7 +129,7 @@ export default async function DashboardPage() {
       )}
 
       {/* Quick actions */}
-      <h2 className="mb-4 text-lg font-semibold text-white">Actions rapides</h2>
+      <h2 className="mb-4 text-[11px] font-mono uppercase tracking-[0.25em] text-[var(--text-muted)]">Actions rapides</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
           { href: "/admin/agents/new", label: "Créer un agent" },
@@ -145,7 +141,7 @@ export default async function DashboardPage() {
           <Link
             key={action.href}
             href={action.href}
-            className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-4 py-3 text-center text-sm text-zinc-400 transition-colors hover:border-zinc-600 hover:text-white"
+            className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3 text-center text-sm text-[var(--text-muted)] transition-colors hover:border-[var(--cykan)]/40 hover:text-[var(--text)]"
           >
             {action.label}
           </Link>

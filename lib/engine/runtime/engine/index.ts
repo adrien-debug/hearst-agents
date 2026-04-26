@@ -11,6 +11,7 @@ import type {
   CreateRunInput,
   RunCost,
 } from "./types";
+import type { ArtifactRef } from "../../../artifacts/types";
 import { StepManager } from "./step-manager";
 import { ApprovalManager } from "./approval-manager";
 import { ArtifactManager } from "./artifact-manager";
@@ -154,7 +155,15 @@ export class RunEngine {
 
   async complete(): Promise<void> {
     await this.transition("completed");
-    const artifactRefs = await this.artifacts.listRefs(this.runId);
+    let artifactRefs: ArtifactRef[] = [];
+    try {
+      artifactRefs = await this.artifacts.listRefs(this.runId);
+    } catch (error) {
+      console.error(
+        "[RunEngine] complete could not list artifacts:",
+        error instanceof Error ? error.message : error,
+      );
+    }
     this.events.emit({
       type: "run_completed",
       run_id: this.runId,

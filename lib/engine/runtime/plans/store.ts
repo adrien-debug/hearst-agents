@@ -47,25 +47,54 @@ export class PlanStore {
 
     const planId = plan.id;
 
-    // Insert steps
+    // Insert steps first, then resolve LLM dependency indices to real step UUIDs.
     if (steps.length > 0) {
-      const { error: stepsError } = await this.db.from("plan_steps").insert(
-        steps.map((s, idx) => ({
-          plan_id: planId,
-          order: idx,
-          intent: s.intent,
-          agent: s.agent,
-          task_description: s.task_description,
-          expected_output: s.expected_output,
-          retrieval_mode: s.retrieval_mode,
-          depends_on: s.depends_on,
-          optional: s.optional,
-          status: "pending",
-        })),
-      );
+      const rows = steps.map((s, idx) => ({
+        plan_id: planId,
+        order: idx,
+        intent: s.intent,
+        agent: s.agent,
+        task_description: s.task_description,
+        expected_output: s.expected_output,
+        retrieval_mode: s.retrieval_mode,
+        depends_on: [],
+        optional: s.optional,
+        status: "pending",
+      }));
+
+      const { data: insertedSteps, error: stepsError } = await this.db
+        .from("plan_steps")
+        .insert(rows)
+        .select("id, order");
 
       if (stepsError) {
         throw new Error(`Failed to create plan steps: ${stepsError.message}`);
+      }
+
+      const stepIdByOrder = new Map<number, string>(
+        (insertedSteps ?? []).map((step) => [step.order as number, step.id as string]),
+      );
+
+      for (const [idx, step] of steps.entries()) {
+        const dependsOnIds = (step.depends_on ?? [])
+          .map((dep) => Number.parseInt(dep, 10))
+          .filter((depOrder) => Number.isInteger(depOrder))
+          .map((depOrder) => stepIdByOrder.get(depOrder))
+          .filter((depId): depId is string => Boolean(depId));
+
+        if (dependsOnIds.length === 0) continue;
+
+        const stepId = stepIdByOrder.get(idx);
+        if (!stepId) continue;
+
+        const { error: depError } = await this.db
+          .from("plan_steps")
+          .update({ depends_on: dependsOnIds })
+          .eq("id", stepId);
+
+        if (depError) {
+          throw new Error(`Failed to resolve plan step dependencies: ${depError.message}`);
+        }
       }
     }
 

@@ -30,19 +30,19 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   gmail: {
     providerId: "google",
     capability: "messaging",
-    icon: "✉️",
+    icon: "/icons/services/gmail.svg",
     category: "communication",
   },
   calendar: {
     providerId: "google",
     capability: "calendar",
-    icon: "📅",
+    icon: "/icons/services/google-calendar.svg",
     category: "productivity",
   },
   drive: {
     providerId: "google",
     capability: "files",
-    icon: "📁",
+    icon: "/icons/services/google-drive.svg",
     category: "storage",
   },
 
@@ -50,7 +50,7 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   slack: {
     providerId: "slack",
     capability: "messaging",
-    icon: "💬",
+    icon: "/icons/services/slack.svg",
     category: "communication",
   },
 
@@ -58,7 +58,7 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   notion: {
     providerId: "notion",
     capability: "files",
-    icon: "📝",
+    icon: "/icons/services/notion.svg",
     category: "productivity",
   },
 
@@ -66,19 +66,19 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   github: {
     providerId: "github",
     capability: "developer_tools",
-    icon: "🐙",
+    icon: "/icons/services/github.svg",
     category: "dev",
   },
   jira: {
     providerId: "jira",
     capability: "developer_tools",
-    icon: "🎫",
+    icon: "/icons/services/jira.svg",
     category: "dev",
   },
   linear: {
-    providerId: "linear", // Will need to be added to runtime registry
+    providerId: "linear",
     capability: "developer_tools",
-    icon: "📐",
+    icon: "/icons/services/linear.svg",
     category: "dev",
   },
 
@@ -86,7 +86,7 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   hubspot: {
     providerId: "hubspot",
     capability: "crm",
-    icon: "🤝",
+    icon: "/icons/services/hubspot.svg",
     category: "crm",
   },
 
@@ -94,7 +94,7 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   stripe: {
     providerId: "stripe",
     capability: "finance",
-    icon: "💳",
+    icon: "/icons/services/stripe.svg",
     category: "finance",
   },
 
@@ -102,7 +102,7 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   figma: {
     providerId: "figma",
     capability: "design",
-    icon: "🎨",
+    icon: "/icons/services/figma.svg",
     category: "design",
   },
 
@@ -110,7 +110,7 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   zapier: {
     providerId: "zapier",
     capability: "automation",
-    icon: "⚡",
+    icon: "/icons/services/zapier.svg",
     category: "automation",
   },
 
@@ -118,7 +118,7 @@ export const SERVICE_MAP: Record<ServiceId, ServiceMapping> = {
   airtable: {
     providerId: "airtable",
     capability: "files",
-    icon: "📊",
+    icon: "/icons/services/airtable.svg",
     category: "productivity",
   },
 };

@@ -73,7 +73,7 @@ function generateFromNango(seed: typeof TIER_3_NANGO_SERVICES[0]): ServiceDefini
     id: seed.id!,
     name: seed.name!,
     description: `Intégration ${seed.name} via Nango`,
-    icon: "🧩",
+    icon: "",
     category: seed.category!,
     tier: "tier_3" as ServiceTier,
     type: "nango" as IntegrationType,

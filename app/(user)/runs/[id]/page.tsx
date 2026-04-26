@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RunTimeline } from "../../components/RunTimeline";
+import { GhostIconChevronLeft, GhostIconChevronRight, ServiceIdGlyph } from "../../components/ghost-icons";
 import type { RunRecord } from "@/lib/engine/runtime/runs/types";
 import type { TimelineItem } from "@/lib/engine/runtime/timeline/types";
 
@@ -80,11 +81,11 @@ export default function RunDetailPage() {
   }
 
   const statusColors: Record<string, string> = {
-    running: "text-cyan-400",
-    completed: "text-emerald-400",
-    failed: "text-red-400",
-    awaiting_approval: "text-amber-400",
-    awaiting_clarification: "text-violet-400",
+    running: "text-[var(--cykan)]",
+    completed: "text-[var(--money)]",
+    failed: "text-[var(--danger)]",
+    awaiting_approval: "text-[var(--warn)]",
+    awaiting_clarification: "text-[var(--text-muted)]",
   };
 
   const statusLabels: Record<string, string> = {
@@ -101,10 +102,12 @@ export default function RunDetailPage() {
       <div className="border-b border-[var(--line)] p-6">
         <div className="flex items-center gap-2 mb-2">
           <button
+            type="button"
             onClick={() => router.back()}
-            className="text-[var(--text-muted)] hover:text-[var(--text-soft)] text-sm"
+            className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] hover:text-[var(--text)]"
           >
-            ← Retour
+            <GhostIconChevronLeft className="w-4 h-4" />
+            Back
           </button>
         </div>
         <div className="flex items-start justify-between">
@@ -132,7 +135,7 @@ export default function RunDetailPage() {
                 </span>
               )}
             </div>
-            <div className="bg-white/[0.02] border border-[var(--line)] rounded-xl p-4">
+            <div className="border-t border-[var(--line)] p-4 bg-[var(--bg)]">
               <RunTimeline timeline={timeline} isLive={isLive} />
             </div>
           </div>
@@ -141,8 +144,8 @@ export default function RunDetailPage() {
           <div className="space-y-4">
             {/* Metrics */}
             {run.metrics && (
-              <div className="bg-white/[0.02] border border-[var(--line)] rounded-xl p-4">
-                <h3 className="text-sm font-medium text-[var(--text-muted)] mb-3">Métriques</h3>
+              <div className="border-t border-[var(--line)] p-4 bg-[var(--bg)]">
+                <h3 className="ghost-meta-label mb-4">Metrics</h3>
                 <div className="space-y-2">
                   {run.metrics.tokensIn !== undefined && (
                     <div className="flex justify-between text-sm">
@@ -174,32 +177,31 @@ export default function RunDetailPage() {
 
             {/* Assets */}
             {run.assets && run.assets.length > 0 && (
-              <div className="bg-white/[0.02] border border-[var(--line)] rounded-xl p-4">
-                <h3 className="text-sm font-medium text-[var(--text-muted)] mb-3">Assets</h3>
-                <div className="space-y-2">
+              <div className="border-t border-[var(--line)] p-4 bg-[var(--bg)]">
+                <h3 className="ghost-meta-label mb-4">Assets</h3>
+                <div className="divide-y divide-[var(--line)]">
                   {run.assets.map((asset) => (
-                    <div
+                    <button
+                      type="button"
                       key={asset.id}
-                      className="flex items-center gap-3 p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.05] cursor-pointer"
+                      className="flex w-full items-center gap-3 py-3 text-left hover:bg-[var(--bg-soft)]"
                       onClick={() => router.push(`/assets/${asset.id}`)}
                     >
-                      <span className="text-lg">
-                        {asset.type === "pdf" ? "📄" : asset.type === "excel" ? "📊" : "📁"}
-                      </span>
+                      <ServiceIdGlyph id={asset.id} size="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-[var(--text)] truncate">{asset.name}</p>
-                        <p className="text-xs text-[var(--text-muted)]">{asset.type}</p>
+                        <p className="text-[10px] font-mono uppercase text-[var(--text-muted)]">{asset.type}</p>
                       </div>
-                      <span className="text-xs text-[var(--cykan)]">→</span>
-                    </div>
+                      <GhostIconChevronRight className="w-4 h-4 shrink-0 text-[var(--cykan)]" />
+                    </button>
                   ))}
                 </div>
               </div>
             )}
 
             {/* Info */}
-            <div className="bg-white/[0.02] border border-[var(--line)] rounded-xl p-4">
-              <h3 className="text-sm font-medium text-[var(--text-muted)] mb-3">Informations</h3>
+            <div className="border-t border-[var(--line)] p-4 bg-[var(--bg)]">
+              <h3 className="ghost-meta-label mb-4">Info</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-[var(--text-faint)]">Backend</span>

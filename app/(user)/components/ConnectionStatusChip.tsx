@@ -11,31 +11,31 @@ interface ConnectionStatusChipProps {
 const STATUS_CONFIG = {
   connected: {
     label: "Connecté",
-    compactLabel: "●",
-    bg: "bg-emerald-500/15",
-    text: "text-emerald-400",
-    border: "border-emerald-500/30",
+    compactLabel: "ON",
+    line: "border-[var(--money)]",
+    text: "text-[var(--money)]",
+    dot: "bg-[var(--money)]",
   },
   pending: {
     label: "En cours",
-    compactLabel: "◐",
-    bg: "bg-amber-500/15",
-    text: "text-amber-400",
-    border: "border-amber-500/30",
+    compactLabel: "WT",
+    line: "border-[var(--warn)]",
+    text: "text-[var(--warn)]",
+    dot: "bg-[var(--warn)]",
   },
   error: {
     label: "Erreur",
-    compactLabel: "✕",
-    bg: "bg-red-500/15",
-    text: "text-red-400",
-    border: "border-red-500/30",
+    compactLabel: "ERR",
+    line: "border-[var(--danger)]",
+    text: "text-[var(--danger)]",
+    dot: "bg-[var(--danger)]",
   },
   disconnected: {
     label: "Déconnecté",
-    compactLabel: "○",
-    bg: "bg-white/5",
-    text: "text-white/40",
-    border: "border-white/10",
+    compactLabel: "OFF",
+    line: "border-[var(--line-strong)]",
+    text: "text-[var(--text-muted)]",
+    dot: "bg-[var(--text-muted)]",
   },
 };
 
@@ -51,7 +51,7 @@ export function ConnectionStatusChip({ status, type, compact }: ConnectionStatus
   if (compact) {
     return (
       <span
-        className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-medium ${config.bg} ${config.text}`}
+        className={`inline-flex items-center justify-center min-w-[1.75rem] px-1 py-0.5 font-mono text-[8px] uppercase tracking-[0.12em] border-b ${config.line} ${config.text}`}
         title={config.label}
       >
         {config.compactLabel}
@@ -62,15 +62,13 @@ export function ConnectionStatusChip({ status, type, compact }: ConnectionStatus
   return (
     <div className="flex items-center gap-2">
       <span
-        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium border ${config.bg} ${config.text} ${config.border}`}
+        className={`inline-flex items-center gap-2 px-0 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] border-b ${config.line} ${config.text}`}
       >
-        <span className="w-1.5 h-1.5 rounded-full bg-current" />
-        {config.label}
+        <span className={`w-1 h-1 shrink-0 ${config.dot}`} />
+        STATUS_{config.compactLabel}
       </span>
       {type && (
-        <span className="text-[10px] text-white/30 uppercase tracking-wide">
-          {TYPE_LABELS[type]}
-        </span>
+        <span className="text-[9px] font-mono text-[var(--text-faint)] uppercase tracking-[0.2em]">{TYPE_LABELS[type]}</span>
       )}
     </div>
   );

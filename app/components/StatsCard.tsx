@@ -8,10 +8,10 @@ interface StatsCardProps {
 
 export default function StatsCard({ label, value, sub }: StatsCardProps) {
   return (
-    <div className="rounded-lg border border-white/10 bg-surface p-4">
-      <p className="text-xs text-white/40 uppercase tracking-wider">{label}</p>
-      <p className="mt-1 text-2xl font-light text-white">{value}</p>
-      {sub && <p className="mt-1 text-xs text-white/30">{sub}</p>}
+    <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4">
+      <p className="ghost-meta-label">{label}</p>
+      <p className="mt-2 text-2xl font-light text-[var(--text)]">{value}</p>
+      {sub && <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--text-faint)]">{sub}</p>}
     </div>
   );
 }

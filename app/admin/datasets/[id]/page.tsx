@@ -66,40 +66,40 @@ export default function DatasetDetailPage() {
     setSaving(false);
   };
 
-  if (loading) return <div className="px-8 py-10 text-sm text-zinc-500">Chargement...</div>;
+  if (loading) return <div className="px-8 py-10 text-sm text-[var(--text-muted)]">Chargement...</div>;
 
   return (
     <div className="px-8 py-10">
       <div className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">Dataset</p>
-        <h1 className="text-2xl font-semibold text-white">{dataset?.name ?? "—"}</h1>
+        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Dataset</p>
+        <h1 className="text-2xl font-semibold text-[var(--text)]">{dataset?.name ?? "—"}</h1>
         {dataset?.description && (
-          <p className="mt-1 text-sm text-zinc-500">{dataset.description}</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">{dataset.description}</p>
         )}
-        <p className="mt-2 text-xs text-zinc-600">{entries.length} entrées</p>
+        <p className="mt-2 text-xs text-[var(--text-muted)]">{entries.length} entrées</p>
       </div>
 
-      <div className="mb-8 rounded-xl border border-zinc-800 bg-zinc-950/80 p-5">
-        <h3 className="mb-3 text-xs font-semibold uppercase text-zinc-500">Ajouter une entrée</h3>
+      <div className="mb-8 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+        <h3 className="mb-3 text-xs font-semibold uppercase text-[var(--text-muted)]">Ajouter une entrée</h3>
         <form onSubmit={addEntry} className="space-y-3">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <label className="block">
-              <span className="mb-1 block text-[10px] font-medium text-zinc-500">Input</span>
+              <span className="mb-1 block text-[10px] font-medium text-[var(--text-muted)]">Input</span>
               <textarea
                 rows={3}
                 value={newInput}
                 onChange={(e) => setNewInput(e.target.value)}
-                className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
                 placeholder="Question ou instruction de test..."
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-[10px] font-medium text-zinc-500">Expected output</span>
+              <span className="mb-1 block text-[10px] font-medium text-[var(--text-muted)]">Expected output</span>
               <textarea
                 rows={3}
                 value={newExpected}
                 onChange={(e) => setNewExpected(e.target.value)}
-                className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
                 placeholder="Résultat attendu..."
               />
             </label>
@@ -107,34 +107,34 @@ export default function DatasetDetailPage() {
           <button
             type="submit"
             disabled={saving || !newInput.trim() || !newExpected.trim()}
-            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-zinc-200 disabled:opacity-40"
+            className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 text-sm disabled:opacity-40"
           >
             {saving ? "..." : "Ajouter"}
           </button>
         </form>
       </div>
 
-      <h2 className="mb-4 text-lg font-semibold text-white">Entrées</h2>
+      <h2 className="mb-4 text-lg font-semibold text-[var(--text)]">Entrées</h2>
       {entries.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aucune entrée.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucune entrée.</p>
       ) : (
         <div className="space-y-2">
           {entries.map((entry, i) => (
-            <div key={entry.id} className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-4">
+            <div key={entry.id} className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-mono text-zinc-600">#{i + 1}</span>
+                <span className="text-xs font-mono text-[var(--text-muted)]">#{i + 1}</span>
                 {entry.tags.length > 0 && entry.tags.map((t) => (
-                  <span key={t} className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">{t}</span>
+                  <span key={t} className="rounded-full border border-[var(--line-strong)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">{t}</span>
                 ))}
               </div>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <div>
-                  <p className="text-[10px] font-medium uppercase text-zinc-600">Input</p>
-                  <p className="mt-1 text-xs text-zinc-300 whitespace-pre-wrap">{entry.input}</p>
+                  <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">Input</p>
+                  <p className="mt-1 text-xs text-[var(--text-soft)] whitespace-pre-wrap">{entry.input}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-medium uppercase text-zinc-600">Expected</p>
-                  <p className="mt-1 text-xs text-zinc-300 whitespace-pre-wrap">{entry.expected_output}</p>
+                  <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">Expected</p>
+                  <p className="mt-1 text-xs text-[var(--text-soft)] whitespace-pre-wrap">{entry.expected_output}</p>
                 </div>
               </div>
             </div>

@@ -8,14 +8,14 @@ interface AssetPreviewProps {
   onDownload?: () => void;
 }
 
-const ASSET_ICONS: Record<AssetType, string> = {
-  pdf: "📄",
-  excel: "📊",
-  doc: "📝",
-  json: "📋",
-  csv: "📉",
-  report: "📑",
-  text: "📃",
+const TYPE_REF: Record<AssetType, string> = {
+  pdf: "TYPE_PDF",
+  excel: "TYPE_XLSX",
+  doc: "TYPE_DOC",
+  json: "TYPE_JSON",
+  csv: "TYPE_CSV",
+  report: "TYPE_RPT",
+  text: "TYPE_TXT",
 };
 
 const MIME_TYPE_LABELS: Record<string, string> = {
@@ -39,76 +39,72 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
     }
   };
 
-  // Inline content preview (for text-based assets)
   const canPreviewInline = ["json", "csv", "text"].includes(asset.type);
+  const typeRef = TYPE_REF[asset.type] ?? "TYPE_ASSET";
 
   return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b border-white/[0.06] flex items-center gap-4">
-        <span className="text-3xl">{ASSET_ICONS[asset.type]}</span>
+    <div className="border-t border-[var(--ghost-modal-top)] bg-[var(--bg)] overflow-hidden">
+      <div className="p-6 border-b border-[var(--line)] flex flex-wrap items-start gap-6">
+        <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[var(--text-muted)] border-b border-[var(--cykan)] pb-1">{typeRef}</span>
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-medium text-white truncate">{asset.name}</h3>
-          <p className="text-sm text-white/40">
+          <h3 className="text-[15px] font-black uppercase tracking-tighter text-[var(--text)] truncate">{asset.name}</h3>
+          <p className="text-[11px] font-light text-[var(--text-muted)] mt-2">
             {MIME_TYPE_LABELS[asset.file?.mimeType || ""] || asset.type.toUpperCase()}
             {asset.file?.sizeBytes && (
-              <span className="ml-2">• {(asset.file.sizeBytes / 1024).toFixed(1)} KB</span>
+              <span className="ml-3 font-mono text-[10px]">SIZE_{(asset.file.sizeBytes / 1024).toFixed(1)}KB</span>
             )}
           </p>
         </div>
         <button
+          type="button"
           onClick={handleDownload}
           disabled={isLoading}
-          className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          className="ghost-btn-solid ghost-btn-cykan rounded-sm shrink-0 disabled:opacity-40"
         >
-          {isLoading ? "..." : "Télécharger"}
+          {isLoading ? "FETCH…" : "DOWNLOAD"}
         </button>
       </div>
 
-      {/* Preview area */}
-      <div className="p-4 min-h-[200px] flex items-center justify-center">
+      <div className="p-6 min-h-[200px] flex items-center justify-center border-b border-[var(--line)]">
         {canPreviewInline ? (
-          <div className="w-full max-h-96 overflow-auto bg-[#0c0c10] rounded-lg p-4 font-mono text-xs text-white/60">
-            {/* Placeholder for inline content */}
-            <p className="text-white/30 italic">Prévisualisation du contenu...</p>
+          <div className="w-full max-h-96 overflow-auto bg-[var(--bg-elev)] p-4 font-mono text-[11px] text-[var(--text-muted)] border border-[var(--line)]">
+            <p className="text-[var(--text-faint)] italic">PREVIEW_PENDING</p>
           </div>
         ) : (
-          <div className="text-center">
-            <span className="text-6xl">{ASSET_ICONS[asset.type]}</span>
-            <p className="mt-4 text-sm text-white/40">
-              {asset.type === "pdf" && "PDF - Téléchargez pour visualiser"}
-              {asset.type === "excel" && "Excel - Téléchargez pour éditer"}
-              {asset.type === "doc" && "Document - Téléchargez pour visualiser"}
-              {asset.type === "report" && "Rapport - Téléchargez pour visualiser"}
+          <div className="text-center space-y-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-[var(--text-faint)]">{typeRef}_VIEW</p>
+            <p className="text-[12px] font-light text-[var(--text-muted)]">
+              {asset.type === "pdf" && "PDF — téléchargement requis"}
+              {asset.type === "excel" && "Excel — téléchargement requis"}
+              {asset.type === "doc" && "Document — téléchargement requis"}
+              {asset.type === "report" && "Rapport — téléchargement requis"}
             </p>
           </div>
         )}
       </div>
 
-      {/* Metadata */}
-      <div className="p-4 border-t border-white/[0.06] bg-white/[0.01]">
-        <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="p-6 bg-[var(--bg-soft)]">
+        <p className="ghost-meta-label mb-4">META_ROW</p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-[11px] font-mono text-[var(--text-muted)]">
           <div>
-            <span className="text-white/40">ID:</span>
-            <span className="ml-2 text-white/60 font-mono">{asset.id.slice(0, 8)}...</span>
+            <span className="text-[var(--text-faint)]">ID_REF</span>
+            <span className="ml-2">{asset.id.slice(0, 8)}…</span>
           </div>
           <div>
-            <span className="text-white/40">Run:</span>
-            <span className="ml-2 text-white/60 font-mono">{asset.run_id.slice(0, 8)}...</span>
+            <span className="text-[var(--text-faint)]">RUN_REF</span>
+            <span className="ml-2">{asset.run_id.slice(0, 8)}…</span>
           </div>
-          <div>
-            <span className="text-white/40">Créé:</span>
-            <span className="ml-2 text-white/60">
-              {new Date(asset.created_at).toLocaleString()}
-            </span>
+          <div className="col-span-2 sm:col-span-1">
+            <span className="text-[var(--text-faint)]">TS_CREATED</span>
+            <span className="ml-2">{new Date(asset.created_at).toLocaleString()}</span>
           </div>
           {(() => {
             const createdBy = asset.metadata?.createdBy;
             if (typeof createdBy === "string") {
               return (
                 <div>
-                  <span className="text-white/40">Par:</span>
-                  <span className="ml-2 text-white/60">{createdBy}</span>
+                  <span className="text-[var(--text-faint)]">ACTOR</span>
+                  <span className="ml-2">{createdBy}</span>
                 </div>
               );
             }

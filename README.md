@@ -2,6 +2,8 @@
 
 Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
+**UI — Ghost Protocol (26/04/2026)** : surface cockpit sombre (`app/globals.css` tokens), typographie Satoshi + Geist Mono, séparateurs `var(--line)`, glyphes SVG filaires (`app/(user)/components/ghost-icons.tsx`), intégrations affichées en `ServiceIdGlyph` (plus d’emojis dans l’UI). Classes utilitaires Ghost (`.ghost-meta-label`, `.ghost-btn-solid`, modales, skeleton scanline) et `.status-dot*` (`box-shadow: none`) sont définies dans `app/globals.css` et couvertes par `__tests__/ui/design-tokens.test.ts`. **Admin** (`app/admin/*`, `app/components/AdminSidebar.tsx`) aligné sur les mêmes variables (remplacement massif des tons `zinc-*` / boutons primaires).
+
 > 🚀 **Quick Start**: `npm run dev` = **hearst-os seul** sur **:9000**  
 > `npm run launch` = stack complète + nohup + purge `.next`  
 > 📖 Guide complet: [`LAUNCHER.md`](./LAUNCHER.md)
@@ -11,6 +13,10 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > ✅ Shims `lib/planner/` et `lib/orchestrator/` nettoyés  
 > ✅ Nango configuré (200+ OAuth providers)  
 > ✅ 407 tests pass • Build ✅ • TypeScript 0 erreur
+>
+> **🆕 Mise à jour 26/04/2026 — Provider routing** :  
+> ✅ Intent Google Calendar aligné entre orchestrateur, planner et fallback synthétique  
+> ✅ `KnowledgeRetriever` supporte aussi `retrieval_mode: "structured_data"` pour les événements calendrier
 
 > ✅ **Phase 1 — V2 Foundation TERMINÉE (23/04/2026)**  
 > Legacy supprimé : `app/api/chat/route.ts`, `lib/orchestrator.ts`, `app/lib/missions/*`  
@@ -1035,7 +1041,7 @@ Architecture multi-agents avec exécution déterministe et observable.
 lib/
 ├── engine/runtime/engine/
 │   ├── types.ts              # EngineRun, RunStep, RunApproval, RunCost
-│   ├── index.ts              # RunEngine façade (lifecycle, plan attachment)
+│   ├── index.ts              # RunEngine façade (lifecycle, plan attachment, safe run_completed emission)
 │   ├── step-manager.ts       # CRUD + state transitions pour RunSteps
 │   ├── approval-manager.ts   # Approval gates (create, decide, expire)
 │   ├── artifact-manager.ts   # Artifacts CRUD + versioning
@@ -1052,7 +1058,7 @@ lib/
 │       └── log-persister.ts  # Persist errors/warnings to run_logs
 ├── plans/
 │   ├── types.ts              # Plan, PlanStep, ActionPlan, ActionStep
-│   └── store.ts              # PlanStore CRUD (dedicated tables)
+│   └── store.ts              # PlanStore CRUD (dedicated tables, resolves LLM dependency indices to step UUIDs)
 ├── artifacts/
 │   ├── types.ts              # Artifact, ArtifactSection, ArtifactSourceRef
 │   └── document-session.ts   # DocumentSession state machine (building→review→finalized)

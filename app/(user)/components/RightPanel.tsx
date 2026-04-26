@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from "react";
 import { RightPanelContent } from "./RightPanelContent";
+import { GhostIconMenu, GhostIconX } from "./ghost-icons";
 
 export function RightPanel() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -30,22 +31,18 @@ export function RightPanel() {
           {/* Floating toggle button */}
           <button
             onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className={`fixed bottom-4 right-4 z-50 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all ${
+            className={`fixed bottom-4 right-4 z-50 w-12 h-12 rounded-sm flex items-center justify-center border transition-all ${
               isMobileOpen
-                ? "bg-[var(--danger)] text-white"
-                : "bg-[var(--cykan)] text-black"
+                ? "bg-[var(--bg-elev)] text-[var(--danger)] border-[var(--danger)]"
+                : "bg-[var(--cykan)] text-black border-[var(--line-strong)]"
             }`}
             aria-label={isMobileOpen ? "Fermer le panneau" : "Ouvrir le panneau runtime"}
           >
-            {isMobileOpen ? "✕" : "☰"}
+            {isMobileOpen ? <GhostIconX className="w-5 h-5" /> : <GhostIconMenu className="w-5 h-5" />}
           </button>
 
-          {/* Overlay backdrop */}
           {isMobileOpen && (
-            <div
-              className="fixed inset-0 bg-black/60 z-40"
-              onClick={() => setIsMobileOpen(false)}
-            />
+            <div className="ghost-overlay-backdrop z-40" onClick={() => setIsMobileOpen(false)} aria-hidden />
           )}
 
           {/* Drawer panel */}

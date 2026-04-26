@@ -39,29 +39,29 @@ export default async function AgentsPage() {
     <div className="px-8 py-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">
+          <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
             Hearst
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">
             Agents
           </h1>
         </div>
         <Link
           href="/admin/agents/new"
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-zinc-200"
+          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 text-sm"
         >
           + Nouvel agent
         </Link>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
           {error}
         </div>
       )}
 
       {agents.length === 0 && !error ? (
-        <p className="text-sm text-zinc-500">Aucun agent créé pour l&apos;instant.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucun agent créé pour l&apos;instant.</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {agents.map((a) => (

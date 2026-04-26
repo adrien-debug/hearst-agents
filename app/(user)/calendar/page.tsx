@@ -1,28 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useNavigationStore } from "@/stores/navigation";
 
 export default function CalendarPage() {
-  const { surface } = useNavigationStore();
   const [view, setView] = useState<"day" | "week" | "month">("week");
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a0a]">
-      {/* Header */}
-      <div className="border-b border-white/[0.06] p-6">
+    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
+      <div className="border-b border-[var(--line)] p-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-medium text-white mb-1">Agenda</h1>
-            <p className="text-sm text-white/40">
-              Tous vos calendriers en un seul endroit
-            </p>
+            <p className="ghost-meta-label mb-2">VIEW_STUB</p>
+            <h1 className="ghost-title-impact text-lg">Agenda</h1>
+            <p className="text-[11px] font-light text-[var(--text-muted)] mt-2">Calendriers agrégés.</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-white/30 bg-white/[0.05] px-3 py-1.5 rounded-full">
-              Bientôt disponible
-            </span>
-          </div>
+          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-1">ROADMAP</span>
         </div>
 
         {/* View Switcher */}
@@ -48,22 +40,11 @@ export default function CalendarPage() {
       </div>
 
       {/* Empty State */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mb-4">
-          <span className="text-2xl">📅</span>
-        </div>
-        <h2 className="text-lg font-medium text-white mb-2">
-          Agenda unifié
-        </h2>
-        <p className="text-sm text-white/40 max-w-md mb-6">
-          Cette vue agrégera vos événements Google Calendar, Outlook, et autres calendriers en une timeline unique.
-        </p>
-        <div className="flex items-center gap-3 text-xs text-white/30">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            Google Calendar connecté
-          </span>
-        </div>
+      <div className="flex-1 flex flex-col items-center justify-center p-12 text-center gap-4">
+        <p className="ghost-meta-label">NO_DATA</p>
+        <h2 className="ghost-title-impact text-sm">CAL_UNIFIED</h2>
+        <p className="text-[12px] font-light text-[var(--text-muted)] max-w-md">Timeline multi-calendriers — phase build.</p>
+        <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-[var(--text-faint)] border-b border-[var(--money)] pb-0.5">GCAL_ON</span>
       </div>
     </div>
   );

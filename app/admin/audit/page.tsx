@@ -4,10 +4,10 @@ import { getAuditLogs, type AuditLog } from "@/lib/admin/audit";
 export const dynamic = "force-dynamic";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  info: "text-blue-400 bg-blue-500/10",
-  warning: "text-amber-400 bg-amber-500/10",
-  error: "text-red-400 bg-red-500/10",
-  critical: "text-red-300 bg-red-600/20",
+  info: "text-[var(--cyan-accent)] bg-[var(--cykan)]/10",
+  warning: "text-[var(--warn)] bg-[var(--warn)]/10",
+  error: "text-[var(--danger)] bg-[var(--danger)]/10",
+  critical: "text-[var(--danger)] bg-[var(--danger)]/15",
 };
 
 export default async function AuditPage() {
@@ -36,7 +36,7 @@ export default async function AuditPage() {
       </div>
 
       {dbError && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-red-400 text-sm">
+        <div className="rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] text-sm">
           {dbError}
         </div>
       )}
@@ -72,9 +72,9 @@ export default async function AuditPage() {
             </span>
             <span>
               {log.success ? (
-                <span className="text-emerald-400 text-xs">OK</span>
+                <span className="text-[var(--money)] text-xs">OK</span>
               ) : (
-                <span className="text-red-400 text-xs">FAIL</span>
+                <span className="text-[var(--danger)] text-xs">FAIL</span>
               )}
             </span>
             <span

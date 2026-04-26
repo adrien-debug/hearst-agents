@@ -41,7 +41,7 @@ export async function executePlan(
   const store = new PlanStore(db);
   const completedSteps: string[] = [];
   const failedSteps: string[] = [];
-  const completedStepIndices = new Set<number>();
+  const completedStepIds = new Set<string>();
 
   const sortedSteps = [...plan.steps].sort((a, b) => a.order - b.order);
 
@@ -49,7 +49,7 @@ export async function executePlan(
     // ── Check dependencies ──────────────────────────────────
     if (planStep.depends_on.length > 0) {
       const unmetDeps = planStep.depends_on.filter(
-        (depId) => !completedStepIndices.has(Number(depId)),
+        (depId) => !completedStepIds.has(depId),
       );
       if (unmetDeps.length > 0) {
         if (planStep.optional) {
@@ -107,7 +107,7 @@ export async function executePlan(
           result.step_id,
         );
         completedSteps.push(planStep.id);
-        completedStepIndices.add(planStep.order - 1);
+        completedStepIds.add(planStep.id);
 
         // ── Artifact evaluation ──────────────────────────────
         await maybeCreateArtifact(engine, planStep, result);
@@ -117,7 +117,7 @@ export async function executePlan(
       case "enqueued": {
         // Don't block — mark as running and continue
         // The worker will complete it asynchronously
-        completedStepIndices.add(planStep.order - 1);
+        completedStepIds.add(planStep.id);
         break;
       }
 

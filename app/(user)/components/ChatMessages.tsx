@@ -31,42 +31,47 @@ export function ChatMessages({ messages, className, compact = false }: ChatMessa
   }
 
   const defaultClass = compact
-    ? "h-full overflow-y-auto px-4 py-3 space-y-3"
-    : "h-full overflow-y-auto px-4 py-6 space-y-4";
+    ? "h-full overflow-y-auto px-10 py-6 flex flex-col"
+    : "h-full overflow-y-auto px-12 py-12 flex flex-col";
 
   return (
     <div
       ref={scrollRef}
       className={className ?? defaultClass}
     >
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          className={`flex w-full ${
-            message.role === "user" ? "justify-end" : "justify-start"
-          }`}
-        >
+      <div className="flex-1 min-h-0" />
+      <div className={`flex flex-col shrink-0 ${compact ? 'gap-12' : 'gap-20'} mt-auto pb-24`}>
+        {messages.map((message) => (
           <div
-            className={`max-w-[85%] px-5 py-4 text-[15px] leading-relaxed rounded-[8px] border border-[var(--line-strong)] ${
-              message.role === "user"
-                ? "bg-[var(--bg-elev)] text-[var(--cykan)] font-bold"
-                : "bg-[var(--bg-elev)] text-[var(--text)] font-medium"
-            }`}
+            key={message.id}
+            className="flex w-full group"
           >
-            {message.content}
-          </div>
-        </div>
-      ))}
-      
-      {isRunning && messages[messages.length - 1]?.role === "user" && (
-        <div className="flex w-full justify-start">
-          <div className="px-5 py-4 border border-[var(--line-strong)] bg-[var(--bg-elev)] rounded-[8px]">
-            <div className="flex items-center gap-3">
-              <span className="text-[13px] text-[var(--text-muted)] font-mono tracking-widest uppercase">Traitement...</span>
+            <div className="w-16 shrink-0 font-mono text-[10px] text-white/10 pt-4 uppercase tracking-[0.5em]">
+              {message.role === "user" ? "USR" : "AI"}
+            </div>
+            <div
+              className={`flex-1 text-[19px] leading-[1.7] tracking-tight ${
+                message.role === "user"
+                  ? "text-[var(--cykan)] font-black uppercase"
+                  : "text-[var(--text-soft)] font-normal"
+              }`}
+            >
+              {message.content}
             </div>
           </div>
-        </div>
-      )}
+        ))}
+        
+        {isRunning && messages[messages.length - 1]?.role === "user" && (
+          <div className="flex w-full">
+            <div className="w-16 shrink-0 font-mono text-[10px] text-[var(--cykan)] pt-3 uppercase tracking-[0.5em] animate-pulse">RUN</div>
+            <div className="flex gap-3 pt-4">
+              <div className="w-1.5 h-1.5 bg-[var(--cykan)] shadow-[0_0_12px_var(--cykan)] animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-1.5 h-1.5 bg-[var(--cykan)] shadow-[0_0_12px_var(--cykan)] animate-bounce" style={{ animationDelay: "200ms" }} />
+              <div className="w-1.5 h-1.5 bg-[var(--cykan)] shadow-[0_0_12px_var(--cykan)] animate-bounce" style={{ animationDelay: "400ms" }} />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

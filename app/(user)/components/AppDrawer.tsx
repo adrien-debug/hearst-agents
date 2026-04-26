@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ServiceWithConnectionStatus, ServiceDefinition } from "@/lib/integrations/types";
 import { ConnectionStatusChip } from "./ConnectionStatusChip";
 import { getProviderIdForService } from "@/lib/integrations/service-map";
+import { GhostIconChevronRight, GhostIconX, ServiceIdGlyph } from "./ghost-icons";
 
 interface AppDrawerProps {
   service: ServiceWithConnectionStatus | ServiceDefinition | null;
@@ -14,15 +15,15 @@ interface AppDrawerProps {
 }
 
 const TYPE_BADGES = {
-  native: { label: "Native Hearst", bg: "bg-cyan-500/15", text: "text-cyan-400" },
-  hybrid: { label: "Hybrid", bg: "bg-purple-500/15", text: "text-purple-400" },
-  nango: { label: "Powered by Nango", bg: "bg-white/10", text: "text-white/50" },
+  native: { label: "TYPE_NATIVE", line: "border-[var(--cykan)]", text: "text-[var(--cykan)]" },
+  hybrid: { label: "TYPE_HYBRID", line: "border-[var(--warn)]", text: "text-[var(--warn)]" },
+  nango: { label: "TYPE_NANGO", line: "border-[var(--line-strong)]", text: "text-[var(--text-muted)]" },
 };
 
 const TIER_LABELS = {
-  tier_1: "Essentiel",
-  tier_2: "Recommandé",
-  tier_3: "Catalogue",
+  tier_1: "TIER_01",
+  tier_2: "TIER_02",
+  tier_3: "TIER_03",
 };
 
 export function AppDrawer({ service, isOpen, onClose, onConnect, isConnecting: externalIsConnecting }: AppDrawerProps) {
@@ -48,125 +49,103 @@ export function AppDrawer({ service, isOpen, onClose, onConnect, isConnecting: e
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 z-[55]"
-        onClick={onClose}
-      />
+      <div className="ghost-overlay-backdrop z-[55]" onClick={onClose} />
 
-      {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-[400px] max-w-full bg-[#0c0c10] border-l border-white/[0.06] z-[60] flex flex-col shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/[0.06]">
-          <button
-            onClick={onClose}
-            className="text-white/40 hover:text-white transition-colors"
-          >
-            ✕
+      <div className="fixed right-0 top-0 h-full w-[400px] max-w-full ghost-drawer-panel z-[60] flex flex-col border-t-0">
+        <div className="flex items-center justify-between p-4 border-t border-[var(--ghost-modal-top)] border-b border-[var(--line)]">
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text)] p-1" aria-label="Fermer">
+            <GhostIconX className="w-4 h-4" />
           </button>
           <ConnectionStatusChip status={status} type={service.type} />
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Icon & Title */}
-          <div className="flex items-center gap-4 mb-6">
-            <span className="text-4xl">{service.icon}</span>
-            <div>
-              <h2 className="text-lg font-medium text-white">{service.name}</h2>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`text-xs px-2 py-0.5 rounded-full ${typeBadge.bg} ${typeBadge.text}`}>
+          <div className="flex items-start gap-4 mb-8">
+            <ServiceIdGlyph id={service.id} icon={service.icon} size="lg" />
+            <div className="min-w-0">
+              <h2 className="ghost-title-impact text-[15px] tracking-tighter">{service.name}</h2>
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <span className={`font-mono text-[9px] uppercase tracking-[0.2em] border-b pb-0.5 ${typeBadge.line} ${typeBadge.text}`}>
                   {typeBadge.label}
                 </span>
-                <span className="text-xs text-white/30">{TIER_LABELS[service.tier]}</span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)]">{TIER_LABELS[service.tier]}</span>
               </div>
             </div>
           </div>
 
-          {/* Description */}
-          <p className="text-sm text-white/60 leading-relaxed mb-6">
-            {service.description}
-          </p>
+          <p className="text-[13px] font-light leading-relaxed text-[var(--text-soft)] mb-8">{service.description}</p>
 
-          {/* Use Cases */}
           {service.popularUseCases && service.popularUseCases.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
-                Exemples d&apos;utilisation
-              </h3>
-              <div className="space-y-2">
+            <div className="mb-8">
+              <h3 className="ghost-meta-label mb-4">USE_CASE_REF</h3>
+              <div className="space-y-0 divide-y divide-[var(--line)]">
                 {service.popularUseCases.map((useCase) => (
-                  <div
-                    key={useCase}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.02] border border-white/[0.04]"
-                  >
-                    <span className="text-cyan-400/60">→</span>
-                    <span className="text-sm text-white/70">{useCase}</span>
+                  <div key={useCase} className="flex items-center gap-3 py-3">
+                    <GhostIconChevronRight className="w-3.5 h-3.5 shrink-0 text-[var(--cykan)]" />
+                    <span className="text-[12px] font-light text-[var(--text-soft)]">{useCase}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Capabilities */}
-          <div className="mb-6">
-            <h3 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
-              Capacités
-            </h3>
+          <div className="mb-8">
+            <h3 className="ghost-meta-label mb-4">CAPABILITIES</h3>
             <div className="flex flex-wrap gap-2">
               {service.capabilities.map((cap) => (
                 <span
                   key={cap}
-                  className="text-xs bg-white/[0.05] text-white/50 px-3 py-1 rounded-full border border-white/[0.06]"
+                  className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--text-muted)] border-b border-[var(--line-strong)] pb-0.5"
                 >
-                  {cap.replace(/_/g, " ")}
+                  {cap.replace(/_/g, "_")}
                 </span>
               ))}
             </div>
           </div>
 
-          {/* Provider Info */}
           {providerId && providerId !== service.id && (
-            <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06] mb-6">
-              <p className="text-xs text-white/40 mb-1">Fourni via</p>
-              <p className="text-sm text-white/70 capitalize">{providerId}</p>
+            <div className="mb-6 pb-4 border-b border-[var(--line)]">
+              <p className="ghost-meta-label mb-2">PROVIDER_REF</p>
+              <p className="text-[12px] font-mono text-[var(--text-soft)] uppercase tracking-tight">{providerId}</p>
             </div>
           )}
 
-          {/* Connection Status Details */}
           {isConnected && "accountLabel" in service && service.accountLabel && (
-            <div className="p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20 mb-6">
-              <p className="text-xs text-emerald-400/60 mb-1">Compte connecté</p>
-              <p className="text-sm text-white/80">{service.accountLabel}</p>
+            <div className="mb-6 pb-4 border-b border-[var(--money)]">
+              <p className="ghost-meta-label mb-2 text-[var(--money)]">ACCOUNT_LINK</p>
+              <p className="text-[12px] font-light text-[var(--text)]">{service.accountLabel}</p>
             </div>
           )}
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-4 border-t border-white/[0.06] space-y-3">
+        <div className="p-4 border-t border-[var(--line)] space-y-2">
           {isConnected ? (
             <>
-              <button className="w-full py-2.5 px-4 bg-cyan-500/15 hover:bg-cyan-500/20 text-cyan-400 rounded-lg font-medium transition-colors border border-cyan-500/30">
-                Ouvrir {service.name}
+              <button
+                type="button"
+                className="ghost-btn-solid ghost-btn-cykan w-full rounded-sm"
+              >
+                OPEN_{service.id.toUpperCase().slice(0, 8)}
               </button>
-              <button className="w-full py-2.5 px-4 bg-white/[0.05] hover:bg-white/[0.08] text-white/60 rounded-lg text-sm transition-colors border border-white/[0.08]">
-                Gérer la connexion
+              <button
+                type="button"
+                className="ghost-btn-solid ghost-btn-ghost w-full rounded-sm"
+              >
+                MGMT_CONN
               </button>
             </>
           ) : (
             <>
               <button
+                type="button"
                 onClick={handleConnect}
                 disabled={isConnecting}
-                className="w-full py-2.5 px-4 bg-cyan-500 hover:bg-cyan-400 text-black rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="ghost-btn-solid ghost-btn-cykan w-full rounded-sm disabled:opacity-40"
               >
-                {isConnecting ? "Connexion..." : `Connecter ${service.name}`}
+                {isConnecting ? "AUTH_PENDING" : `LINK_${service.id.toUpperCase().slice(0, 8)}`}
               </button>
-              <button
-                onClick={onClose}
-                className="w-full py-2.5 px-4 bg-transparent hover:bg-white/[0.05] text-white/60 rounded-lg text-sm transition-colors"
-              >
-                Plus tard
+              <button type="button" onClick={onClose} className="ghost-btn-solid ghost-btn-ghost w-full rounded-sm">
+                DISMISS
               </button>
             </>
           )}

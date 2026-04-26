@@ -24,11 +24,9 @@ describe("design tokens (app/globals.css)", () => {
     expect(globalsCss).toContain("--color-rail:");
   });
 
-  it("minimalisme: pas de glow tokens (utiliser status-dot)", () => {
-    // Les glows sont maintenant uniquement dans .status-dot
-    // Pas de variables CSS globales pour éviter la duplication
+  it("minimalisme: status-dot sans halo décoratif (Ghost Protocol)", () => {
     expect(globalsCss).toContain(".status-dot");
-    expect(globalsCss).toContain("box-shadow: 0 0 6px");
+    expect(globalsCss).toMatch(/\.status-dot[\s\S]*?box-shadow:\s*none/);
   });
 
   it("garde le canvas et l'accent documentés", () => {

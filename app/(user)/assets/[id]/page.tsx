@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { AssetPreview } from "../../components/AssetPreview";
 import type { RuntimeAsset } from "@/lib/engine/runtime/assets/types";
 import { toast } from "@/app/hooks/use-toast";
+import { GhostIconChevronLeft } from "../../components/ghost-icons";
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -79,18 +80,20 @@ export default function AssetDetailPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a0a]">
-      {/* Header */}
-      <div className="border-b border-white/[0.06] p-6">
-        <div className="flex items-center gap-2 mb-2">
+    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
+      <div className="border-b border-[var(--line)] p-6">
+        <div className="flex items-center gap-2 mb-4">
           <button
+            type="button"
             onClick={() => router.back()}
-            className="text-white/40 hover:text-white/60 text-sm"
+            className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] hover:text-[var(--text)]"
           >
-            ← Retour
+            <GhostIconChevronLeft className="w-4 h-4" />
+            Back
           </button>
         </div>
-        <h1 className="text-xl font-medium text-white">Asset</h1>
+        <p className="ghost-meta-label mb-1">ASSET_VIEW</p>
+        <h1 className="ghost-title-impact text-lg">Asset</h1>
       </div>
 
       {/* Content */}

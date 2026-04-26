@@ -7,14 +7,14 @@ import { getServerSupabase } from "@/lib/supabase-server";
 export const dynamic = "force-dynamic";
 
 const traceKindColor: Record<string, string> = {
-  llm_call: "border-blue-700 text-blue-400",
+  llm_call: "border-[var(--cykan)]/50 text-[var(--cyan-accent)]",
   tool_call: "border-purple-700 text-purple-400",
-  memory_read: "border-cyan-700 text-cyan-400",
+  memory_read: "border-[var(--cykan)]/50 text-[var(--cykan)]",
   memory_write: "border-teal-700 text-teal-400",
-  skill_invoke: "border-amber-700 text-amber-400",
-  error: "border-red-700 text-red-400",
+  skill_invoke: "border-[var(--warn)]/50 text-[var(--warn)]",
+  error: "border-[var(--danger)]/70 text-[var(--danger)]",
   guard: "border-yellow-700 text-yellow-400",
-  custom: "border-zinc-700 text-zinc-400",
+  custom: "border-[var(--line-strong)] text-[var(--text-muted)]",
 };
 
 interface Props {
@@ -42,28 +42,28 @@ export default async function RunDetailPage({ params }: Props) {
   const agent = run.agents as { name: string; slug: string } | null;
 
   const statusColor: Record<string, string> = {
-    completed: "text-emerald-400",
-    running: "text-blue-400",
-    failed: "text-red-400",
-    pending: "text-zinc-500",
+    completed: "text-[var(--money)]",
+    running: "text-[var(--cyan-accent)]",
+    failed: "text-[var(--danger)]",
+    pending: "text-[var(--text-muted)]",
   };
 
   return (
     <div className="px-8 py-10">
       <div className="mb-8">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">
+        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
           Run
         </p>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-white">
+          <h1 className="text-2xl font-semibold text-[var(--text)]">
             {run.kind}
           </h1>
-          <span className={`text-sm font-medium ${statusColor[run.status] ?? "text-zinc-500"}`}>
+          <span className={`text-sm font-medium ${statusColor[run.status] ?? "text-[var(--text-muted)]"}`}>
             {run.status}
           </span>
         </div>
         {agent && (
-          <p className="mt-1 text-sm text-zinc-500">Agent: {agent.name}</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Agent: {agent.name}</p>
         )}
       </div>
 
@@ -76,57 +76,57 @@ export default async function RunDetailPage({ params }: Props) {
           { label: "Latency", value: `${run.latency_ms ?? 0}ms` },
           { label: "Traces", value: traces.length },
         ].map((s) => (
-          <div key={s.label} className="rounded-lg border border-zinc-800 bg-zinc-950/80 px-4 py-3">
-            <p className="text-[10px] font-medium uppercase text-zinc-600">{s.label}</p>
-            <p className="mt-0.5 text-lg font-semibold text-white">{s.value}</p>
+          <div key={s.label} className="rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
+            <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
+            <p className="mt-0.5 text-lg font-semibold text-[var(--text)]">{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Input / Output */}
       <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-5">
-          <h3 className="mb-2 text-xs font-semibold uppercase text-zinc-500">Input</h3>
-          <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-zinc-300">
+        <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+          <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Input</h3>
+          <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-[var(--text-soft)]">
             {JSON.stringify(run.input, null, 2)}
           </pre>
         </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-5">
-          <h3 className="mb-2 text-xs font-semibold uppercase text-zinc-500">Output</h3>
-          <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-zinc-300">
+        <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+          <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Output</h3>
+          <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-[var(--text-soft)]">
             {JSON.stringify(run.output, null, 2)}
           </pre>
         </div>
       </div>
 
       {run.error && (
-        <div className="mb-8 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+        <div className="mb-8 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
           {run.error}
         </div>
       )}
 
       {/* Traces timeline */}
-      <h2 className="mb-4 text-lg font-semibold text-white">Traces</h2>
+      <h2 className="mb-4 text-lg font-semibold text-[var(--text)]">Traces</h2>
       {traces.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aucune trace.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucune trace.</p>
       ) : (
         <div className="space-y-2">
           {traces.map((t, i) => (
             <div
               key={t.id}
-              className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-4"
+              className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-zinc-600">#{i + 1}</span>
+                  <span className="text-xs font-mono text-[var(--text-muted)]">#{i + 1}</span>
                   <span
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${traceKindColor[t.kind] ?? "border-zinc-700 text-zinc-400"}`}
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${traceKindColor[t.kind] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}
                   >
                     {t.kind}
                   </span>
-                  <span className="text-sm text-zinc-300">{t.name}</span>
+                  <span className="text-sm text-[var(--text-soft)]">{t.name}</span>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-zinc-600">
+                <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
                   {t.model_used && <span>{t.model_used}</span>}
                   {t.latency_ms != null && <span>{t.latency_ms}ms</span>}
                   {(t.tokens_in ?? 0) > 0 && (
@@ -136,19 +136,19 @@ export default async function RunDetailPage({ params }: Props) {
               </div>
 
               {t.error && (
-                <p className="mt-2 text-xs text-red-400">{t.error}</p>
+                <p className="mt-2 text-xs text-[var(--danger)]">{t.error}</p>
               )}
 
               <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <div>
-                  <p className="text-[10px] font-medium uppercase text-zinc-600">Input</p>
-                  <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-zinc-400">
+                  <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">Input</p>
+                  <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-[var(--text-muted)]">
                     {JSON.stringify(t.input, null, 2)}
                   </pre>
                 </div>
                 <div>
-                  <p className="text-[10px] font-medium uppercase text-zinc-600">Output</p>
-                  <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-zinc-400">
+                  <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">Output</p>
+                  <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-[var(--text-muted)]">
                     {JSON.stringify(t.output, null, 2)}
                   </pre>
                 </div>
@@ -159,7 +159,7 @@ export default async function RunDetailPage({ params }: Props) {
       )}
 
       {/* Raw run ID */}
-      <p className="mt-8 font-mono text-[10px] text-zinc-700">
+      <p className="mt-8 font-mono text-[10px] text-[var(--text-faint)]">
         run_id: {run.id}
       </p>
     </div>

@@ -42,13 +42,14 @@ RÈGLE CRITIQUE — PROVIDERS CONNECTÉS :
 L'utilisateur a Google connecté (Drive + Gmail). Quand il demande :
 - un document, fichier, résumé de fichier → KnowledgeRetriever avec retrieval_mode: "documents"
 - ses emails, messages, résumé d'emails → KnowledgeRetriever avec retrieval_mode: "messages"
+- son agenda, ses rendez-vous, ses événements, ses réunions → KnowledgeRetriever avec retrieval_mode: "structured_data"
 Tu DOIS TOUJOURS créer un plan avec au moins 1 step KnowledgeRetriever dans ces cas.
 Ne réponds JAMAIS directement via text_response si la demande implique des données utilisateur.
 
 HEURISTIQUE DE COMPLEXITÉ :
 - Réponse directe (salut, merci, question simple) → 0 steps, répondre directement via text_response
 - Question factuelle simple (quelle heure, quel jour) → 0 steps, répondre directement
-- Recherche de fichier/email → 1 step minimum (KnowledgeRetriever avec retrieval_mode)
+- Recherche de fichier/email/calendrier → 1 step minimum (KnowledgeRetriever avec retrieval_mode)
 - Recherche simple web → 1 step (KnowledgeRetriever avec retrieval_mode: "broad")
 - Recherche + synthèse → 2 steps
 - Document complet → 2-4 steps (retrieve → analyze → build)

@@ -34,38 +34,38 @@ export default function NewDatasetPage() {
 
   return (
     <div className="px-8 py-10">
-      <h1 className="mb-8 text-2xl font-semibold text-white">Nouveau dataset</h1>
+      <h1 className="mb-8 text-2xl font-semibold text-[var(--text)]">Nouveau dataset</h1>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+        <div className="mb-4 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
           {error}
         </div>
       )}
 
       <form onSubmit={submit} className="max-w-xl space-y-5">
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-zinc-400">Nom</span>
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Nom</span>
           <input
             required
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-zinc-400">Description</span>
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Description</span>
           <input
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-zinc-200 disabled:opacity-50"
+          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-6 py-2.5 text-sm disabled:opacity-50"
         >
           {saving ? "Création..." : "Créer le dataset"}
         </button>

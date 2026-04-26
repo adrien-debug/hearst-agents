@@ -73,6 +73,8 @@ interface OrchestrateInput {
   missionId?: string;
   tenantId?: string;
   workspaceId?: string;
+  /** Injected by runPipeline — formatted user data context for LLM */
+  _userDataContext?: string;
 }
 
 const DEV_TENANT_ID = "dev-tenant";
@@ -184,10 +186,14 @@ async function handleDirectAnswer(
     message: "Generating direct response…",
   });
 
+  const enrichedMessage = input._userDataContext
+    ? `${input._userDataContext}\n\n---\nQuestion de l'utilisateur: ${input.message}`
+    : input.message;
+
   const result = await planFromIntent(
     engine.getDb(),
     engine,
-    input.message,
+    enrichedMessage,
     input.conversationHistory ?? [],
     input.surface,
   );
@@ -230,10 +236,14 @@ async function handlePlanAndExecute(
     message: "Planning execution…",
   });
 
+  const enrichedMessage = input._userDataContext
+    ? `${input._userDataContext}\n\n---\nQuestion de l'utilisateur: ${input.message}`
+    : input.message;
+
   const planResult = await planFromIntent(
     engine.getDb(),
     engine,
-    input.message,
+    enrichedMessage,
     input.conversationHistory ?? [],
     input.surface,
   );
@@ -287,13 +297,29 @@ async function handlePlanAndExecute(
   }
 }
 
-function detectRetrievalMode(message: string): string | null {
+export function detectRetrievalMode(message: string): string | null {
   const lower = message.toLowerCase();
   const docKeywords = ["document", "fichier", "file", "drive", "doc", "rapport", "pdf", "spreadsheet", "slide"];
   const msgKeywords = ["email", "emails", "mail", "mails", "courrier", "inbox", "gmail", "message"];
+  const structuredKeywords = [
+    "agenda",
+    "calendrier",
+    "rendez-vous",
+    "réunion",
+    "meeting",
+    "événement",
+    "event",
+    "planning",
+    "disponible",
+    "créneau",
+    "aujourd'hui",
+    "demain",
+    "cette semaine",
+  ];
 
   if (docKeywords.some((k) => lower.includes(k))) return "documents";
   if (msgKeywords.some((k) => lower.includes(k))) return "messages";
+  if (structuredKeywords.some((k) => lower.includes(k))) return "structured_data";
   return null;
 }
 
@@ -524,33 +550,10 @@ async function handleManagedAgentExecution(
       message: `Backend selected: ${selectedBackend} (confidence: ${(selection.confidence * 100).toFixed(0)}%)`,
     });
 
-    // 3. Retrieve real user data if needed
-    const dataIntent = detectDataIntent(input.message);
-    let userDataContext = "";
-    
-    if (dataIntent.needsCalendar || dataIntent.needsGmail || dataIntent.needsDrive) {
-      try {
-        eventBus.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: "Retrieving user data from connected providers...",
-        });
-        
-        const dataContext = await retrieveUserDataContext(scope.userId);
-        userDataContext = dataContext.formattedForLLM;
-        
-        eventBus.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: `Retrieved data: Calendar=${dataContext.hasCalendarAccess}, Gmail=${dataContext.hasGmailAccess}, Drive=${dataContext.hasDriveAccess}`,
-        });
-      } catch (err) {
-        console.error("[Orchestrator] Failed to retrieve user data:", err);
-        // Continue without data - LLM will know from system prompt
-      }
-    }
+    // 3. Create session with unified SessionManager
+    // _userDataContext is injected by runPipeline before dispatch
+    const userDataContext = input._userDataContext ?? "";
 
-    // 4. Create session with unified SessionManager
     const manager = SessionManager.getInstance();
     session = await manager.createWithBackend(selectedBackend, {
       userId: scope.userId,
@@ -1215,6 +1218,27 @@ async function runPipeline(
           await engine.fail(`Provider required: ${providerReq.providers.join(" or ")}`);
           return;
         }
+      }
+    }
+
+    // ── User data retrieval (calendar, gmail, drive) ───────────
+    const dataIntent = detectDataIntent(input.message);
+    if (dataIntent.needsCalendar || dataIntent.needsGmail || dataIntent.needsDrive) {
+      try {
+        eventBus.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: "Retrieving user data from connected providers...",
+        });
+        const dataContext = await retrieveUserDataContext(scope.userId ?? input.userId);
+        input._userDataContext = dataContext.formattedForLLM;
+        eventBus.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: `Data retrieved — Calendar=${dataContext.hasCalendarAccess}, Gmail=${dataContext.hasGmailAccess}, Drive=${dataContext.hasDriveAccess}`,
+        });
+      } catch (err) {
+        console.error("[Orchestrator] Failed to retrieve user data:", err);
       }
     }
 

@@ -24,11 +24,11 @@ interface Props {
 }
 
 const stepTypeColor: Record<string, string> = {
-  chat: "border-blue-700 text-blue-400",
+  chat: "border-[var(--cykan)]/50 text-[var(--cyan-accent)]",
   tool_call: "border-purple-700 text-purple-400",
-  condition: "border-amber-700 text-amber-400",
-  loop: "border-cyan-700 text-cyan-400",
-  transform: "border-zinc-700 text-zinc-400",
+  condition: "border-[var(--warn)]/50 text-[var(--warn)]",
+  loop: "border-[var(--cykan)]/50 text-[var(--cykan)]",
+  transform: "border-[var(--line-strong)] text-[var(--text-muted)]",
 };
 
 export default async function WorkflowDetailPage({ params }: Props) {
@@ -57,36 +57,36 @@ export default async function WorkflowDetailPage({ params }: Props) {
   const runs = (runsRes.data ?? []) as unknown as RunRow[];
 
   const statusColor: Record<string, string> = {
-    active: "text-emerald-400",
-    draft: "text-zinc-500",
-    archived: "text-zinc-600",
+    active: "text-[var(--money)]",
+    draft: "text-[var(--text-muted)]",
+    archived: "text-[var(--text-muted)]",
   };
 
   return (
     <div className="px-8 py-10">
       <div className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">Workflow</p>
+        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Workflow</p>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-white">{workflow.name}</h1>
-          <span className={`text-xs font-medium ${statusColor[workflow.status] ?? "text-zinc-600"}`}>
+          <h1 className="text-2xl font-semibold text-[var(--text)]">{workflow.name}</h1>
+          <span className={`text-xs font-medium ${statusColor[workflow.status] ?? "text-[var(--text-muted)]"}`}>
             {workflow.status}
           </span>
         </div>
         {workflow.description && (
-          <p className="mt-1 text-sm text-zinc-500">{workflow.description}</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">{workflow.description}</p>
         )}
-        <div className="mt-2 flex items-center gap-3 text-xs text-zinc-600">
+        <div className="mt-2 flex items-center gap-3 text-xs text-[var(--text-muted)]">
           <span>Trigger: {workflow.trigger_type}</span>
           <span>{steps.length} étapes</span>
         </div>
       </div>
 
       {/* Steps pipeline */}
-      <h2 className="mb-4 text-lg font-semibold text-white">Pipeline</h2>
+      <h2 className="mb-4 text-lg font-semibold text-[var(--text)]">Pipeline</h2>
       {steps.length === 0 ? (
-        <div className="mb-8 rounded-lg border border-zinc-800 bg-zinc-950/80 p-6 text-center">
-          <p className="text-sm text-zinc-500">Aucune étape. Utilisez l&apos;API pour ajouter des steps.</p>
-          <pre className="mt-2 text-xs font-mono text-zinc-600">POST /api/workflows/{id}/steps</pre>
+        <div className="mb-8 rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] p-6 text-center">
+          <p className="text-sm text-[var(--text-muted)]">Aucune étape. Utilisez l&apos;API pour ajouter des steps.</p>
+          <pre className="mt-2 text-xs font-mono text-[var(--text-muted)]">POST /api/workflows/{id}/steps</pre>
         </div>
       ) : (
         <div className="mb-8 space-y-2">
@@ -94,33 +94,33 @@ export default async function WorkflowDetailPage({ params }: Props) {
             <div key={step.id} className="flex items-stretch gap-3">
               {/* Connector */}
               <div className="flex w-8 flex-col items-center">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-xs font-semibold text-zinc-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--bg-soft)] text-xs font-semibold text-[var(--text-muted)]">
                   {i + 1}
                 </div>
                 {i < steps.length - 1 && (
-                  <div className="w-px flex-1 bg-zinc-800" />
+                  <div className="w-px flex-1 bg-[var(--bg-soft)]" />
                 )}
               </div>
 
               {/* Step card */}
-              <div className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950/80 p-4">
+              <div className="flex-1 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${stepTypeColor[step.action_type] ?? "border-zinc-700 text-zinc-400"}`}>
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${stepTypeColor[step.action_type] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}>
                       {step.action_type}
                     </span>
                     {step.agents && (
-                      <span className="text-xs text-zinc-400">{step.agents.name}</span>
+                      <span className="text-xs text-[var(--text-muted)]">{step.agents.name}</span>
                     )}
                   </div>
                   {step.agents && (
-                    <span className="text-[10px] font-mono text-zinc-600">
+                    <span className="text-[10px] font-mono text-[var(--text-muted)]">
                       {step.agents.model_provider}/{step.agents.model_name}
                     </span>
                   )}
                 </div>
                 {Object.keys(step.config || {}).length > 0 && (
-                  <pre className="mt-2 max-h-20 overflow-auto text-[11px] font-mono text-zinc-600">
+                  <pre className="mt-2 max-h-20 overflow-auto text-[11px] font-mono text-[var(--text-muted)]">
                     {JSON.stringify(step.config, null, 2)}
                   </pre>
                 )}
@@ -131,22 +131,22 @@ export default async function WorkflowDetailPage({ params }: Props) {
       )}
 
       {/* Recent runs */}
-      <h2 className="mb-4 text-lg font-semibold text-white">Runs récents</h2>
+      <h2 className="mb-4 text-lg font-semibold text-[var(--text)]">Runs récents</h2>
       {runs.length === 0 ? (
-        <p className="text-sm text-zinc-500">Aucun run.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucun run.</p>
       ) : (
         <div className="space-y-2">
           {runs.map((r) => (
             <Link
               key={r.id}
               href={`/admin/runs/${r.id}`}
-              className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 transition-colors hover:border-zinc-700"
+              className="flex items-center justify-between rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4 transition-colors hover:border-[var(--line-strong)]"
             >
               <div className="flex items-center gap-3">
-                <span className={`h-2 w-2 rounded-full ${r.status === "completed" ? "bg-emerald-500" : r.status === "failed" ? "bg-red-500" : r.status === "running" ? "bg-blue-500" : "bg-zinc-600"}`} />
-                <span className="text-xs text-zinc-400">{r.status}</span>
+                <span className={`h-2 w-2 rounded-full ${r.status === "completed" ? "bg-[var(--money)]" : r.status === "failed" ? "bg-[var(--danger)]" : r.status === "running" ? "bg-[var(--cykan)]" : "bg-[var(--text-muted)]"}`} />
+                <span className="text-xs text-[var(--text-muted)]">{r.status}</span>
               </div>
-              <span className="text-xs text-zinc-600">
+              <span className="text-xs text-[var(--text-muted)]">
                 {new Date(r.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
             </Link>

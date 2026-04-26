@@ -26,7 +26,8 @@ export default function RootLayout({
       <head>
         <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&display=swap" rel="stylesheet" />
       </head>
-      <body className="h-full bg-black text-white font-satoshi">
+      <body className="h-full text-[var(--text)] font-satoshi overflow-hidden">
+        <div className="ghost-bg" />
         {children}
         <NoiseLayer />
       </body>

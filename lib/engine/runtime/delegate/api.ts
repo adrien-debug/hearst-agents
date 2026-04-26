@@ -1,7 +1,7 @@
 /**
  * delegate() — Dispatches work to Capability Agents.
  *
- * KnowledgeRetriever with retrieval_mode "documents" or "messages"
+ * KnowledgeRetriever with retrieval_mode "documents", "messages" or "structured_data"
  * calls real Google connectors first, then sends the raw data to
  * Claude for synthesis. All other agents use LLM-only execution.
  */
@@ -14,6 +14,7 @@ import type { StepActor } from "../engine/types";
 // Phase A: Router-first routing for all connector operations
 import { searchFiles, readFileContent, searchEmails } from "./connectors";
 import { getTokens } from "@/lib/platform/auth/tokens";
+import { getUpcomingEvents } from "@/lib/connectors/packs/productivity-pack/services/calendar";
 // Phase B: Finance Agent (Stripe)
 import { executeStripeAgentInRuntime, isStripeTask } from "@/lib/agents/specialized/finance";
 // Phase C: CRM, Productivity, Design Agents
@@ -161,6 +162,9 @@ async function fetchProviderData(
   if (retrievalMode === "messages") {
     return fetchGmailData(userId, task, engine);
   }
+  if (retrievalMode === "structured_data") {
+    return fetchCalendarData(userId, task);
+  }
   return null;
 }
 
@@ -264,6 +268,47 @@ async function fetchGmailData(
     }
     console.error("[Delegate/Gmail] error:", msg);
     return null; // Error = silent fail, no injection
+  }
+}
+
+async function fetchCalendarData(
+  userId: string,
+  task: string,
+): Promise<{ providerData: string; providerUsed: string } | null> {
+  try {
+    const days = /\b(mois|month)\b/i.test(task) ? 30 : 7;
+    const events = await getUpcomingEvents(userId, days, 10);
+
+    if (events.length === 0) {
+      return {
+        providerData: `[Google Calendar] Aucun événement trouvé sur les ${days} prochains jours.`,
+        providerUsed: "google_calendar",
+      };
+    }
+
+    const summaries = events.map((event, i) => {
+      const time = event.isAllDay ? "Toute la journée" : `${event.startTime} → ${event.endTime}`;
+      const location = event.location ? `\n  Lieu: ${event.location}` : "";
+      const attendees = event.attendees && event.attendees.length > 0
+        ? `\n  Participants: ${event.attendees.join(", ")}`
+        : "";
+      return `Événement ${i + 1}:\n  Titre: ${event.title}\n  Horaire: ${time}${location}${attendees}`;
+    });
+
+    return {
+      providerData: `[Google Calendar] ${events.length} événement(s) à venir:\n\n${summaries.join("\n\n")}`,
+      providerUsed: "google_calendar",
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg === "not_authenticated" || msg === "token_revoked") {
+      return {
+        providerData: "[Google Calendar] Accès non autorisé — veuillez reconnecter votre compte Google.",
+        providerUsed: "google_calendar",
+      };
+    }
+    console.error("[Delegate/Calendar] error:", msg);
+    return null;
   }
 }
 

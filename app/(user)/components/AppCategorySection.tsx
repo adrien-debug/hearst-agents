@@ -2,61 +2,41 @@
 
 import type { ServiceDefinition, ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { AppCard } from "./AppCard";
+import { CategoryRailIcon } from "./ghost-icons";
 
 interface AppCategorySectionProps {
   title: string;
+  /** Category id for Ghost icon (e.g. communication, crm). */
+  categoryId: string;
   services: (ServiceDefinition | ServiceWithConnectionStatus)[];
-  icon?: string;
   onServiceClick?: (service: ServiceDefinition | ServiceWithConnectionStatus) => void;
   collapsible?: boolean;
   defaultExpanded?: boolean;
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  communication: "💬",
-  productivity: "✅",
-  storage: "📦",
-  project: "📊",
-  crm: "🤝",
-  dev: "💻",
-  design: "🎨",
-  finance: "💰",
-  support: "🎧",
-  analytics: "📈",
-  automation: "⚡",
-  commerce: "🛍️",
-  other: "🧩",
-};
-
 export function AppCategorySection({
   title,
+  categoryId,
   services,
-  icon,
   onServiceClick,
 }: AppCategorySectionProps) {
   if (services.length === 0) return null;
 
-  const sectionIcon = icon || CATEGORY_ICONS[title.toLowerCase()] || "◈";
-
   return (
-    <section className="mb-8">
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-lg">{sectionIcon}</span>
-        <h2 className="text-sm font-medium text-white/80 uppercase tracking-wider">
-          {title}
-        </h2>
-        <span className="text-xs text-white/30 bg-white/[0.05] px-2 py-0.5 rounded-full">
-          {services.length}
+    <section className="mb-12">
+      <div className="flex items-center gap-4 mb-6 border-b border-[var(--line)] pb-4">
+        <CategoryRailIcon categoryId={categoryId} className="shrink-0" />
+        <h2 className="text-[11px] font-mono uppercase tracking-[0.35em] text-[var(--text-muted)]">{title}</h2>
+        <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-0.5">
+          COUNT_{services.length}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-[var(--line)]">
         {services.map((service) => (
-          <AppCard
-            key={service.id}
-            service={service}
-            onClick={() => onServiceClick?.(service)}
-          />
+          <div key={service.id} className="bg-[var(--bg)] min-h-0">
+            <AppCard service={service} onClick={() => onServiceClick?.(service)} />
+          </div>
         ))}
       </div>
     </section>

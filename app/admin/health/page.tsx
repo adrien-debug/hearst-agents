@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 function StatusDot({ ok }: { ok: boolean }) {
   return (
-    <span className={`inline-block w-2 h-2 rounded-full ${ok ? "bg-emerald-400" : "bg-red-400"}`} />
+    <span className={`inline-block w-2 h-2 rounded-full ${ok ? "bg-[var(--money)]" : "bg-[var(--danger)]"}`} />
   );
 }
 
@@ -26,9 +26,9 @@ export default async function HealthPage() {
 
   const overall = health?.status ?? "unknown";
   const overallColor: Record<string, string> = {
-    healthy: "text-emerald-400",
-    degraded: "text-amber-400",
-    unhealthy: "text-red-400",
+    healthy: "text-[var(--money)]",
+    degraded: "text-[var(--warn)]",
+    unhealthy: "text-[var(--danger)]",
     unknown: "text-white/40",
   };
 
@@ -46,7 +46,7 @@ export default async function HealthPage() {
       </div>
 
       {dbError && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-red-400 text-sm">
+        <div className="rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] text-sm">
           {dbError}
         </div>
       )}
@@ -72,7 +72,7 @@ export default async function HealthPage() {
                   </p>
                 )}
                 {health.details[name as keyof typeof health.details] && (
-                  <p className="text-xs text-red-400 truncate">
+                  <p className="text-xs text-[var(--danger)] truncate">
                     {health.details[name as keyof typeof health.details]}
                   </p>
                 )}

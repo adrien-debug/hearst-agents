@@ -12,11 +12,11 @@ import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
 import { CapabilityTabs, type CapabilityMode, getCapabilityFromSurface, isCapabilityAvailable } from "./components/CapabilityTabs";
 import { SourcePicker, type SourceSelection, getDefaultSelection } from "./components/SourcePicker";
-import { CapabilityBlockedBanner } from "./components/CapabilityBlockedBanner";
 import { getAllServices } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { toast } from "@/app/hooks/use-toast";
+
 // Analytics tracking helper (client-side)
 function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_failed", userId: string, properties?: Record<string, unknown>) {
   fetch("/api/analytics", {
@@ -35,7 +35,6 @@ function greeting() {
   return "Bonsoir";
 }
 
-// ChatControls component defined outside to avoid "created during render" warning
 interface ChatControlsProps {
   showBlockedBanner: boolean;
   capabilityMode: CapabilityMode;
@@ -54,32 +53,37 @@ interface ChatControlsProps {
 function ChatControls({
   showBlockedBanner,
   capabilityMode,
-  capabilityServices,
   connectedServices,
   services,
   sourceSelection,
   surface,
-  onConnect,
   onDismissBanner,
   onCapabilityChange,
   onNavigate,
   onSourceChange,
 }: ChatControlsProps) {
   return (
-    <div className="px-4 pt-3 space-y-2">
+    <div className="px-12 pt-12 space-y-10">
       {/* Blocked Capability Banner */}
       {showBlockedBanner && (
-        <CapabilityBlockedBanner
-          capability={capabilityMode}
-          requiredServices={capabilityServices}
-          connectedServices={connectedServices}
-          onConnect={onConnect}
-          onDismiss={onDismissBanner}
-        />
+        <div className="bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] p-10 flex items-center justify-between group shadow-[0_20px_40px_rgba(255,51,51,0.05)]">
+          <div className="flex items-center gap-10">
+            <span className="text-[10px] font-mono font-black text-[var(--danger)] uppercase tracking-[0.8em]">Access_Denied</span>
+            <p className="text-[18px] font-black text-white uppercase tracking-tighter">
+              {capabilityMode}_CAPABILITY REQUIRES CONNECTION
+            </p>
+          </div>
+          <button 
+            onClick={onDismissBanner}
+            className="text-[10px] font-mono text-white/20 hover:text-white transition-colors uppercase tracking-[0.4em]"
+          >
+            DISMISS_ [X]
+          </button>
+        </div>
       )}
 
       {/* Source Picker & Capability Tabs */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-white/10 pb-12">
         <CapabilityTabs
           connectedServices={connectedServices}
           activeMode={capabilityMode}
@@ -100,7 +104,6 @@ function ChatControls({
   );
 }
 
-// Initialize services with loading state — real status fetched on mount
 const initialServices = (() => {
   const baseServices = [...getAllServices(), ...getNangoServices()];
   return baseServices.map((s) => ({
@@ -109,7 +112,6 @@ const initialServices = (() => {
   }));
 })();
 
-// Service ID → Provider ID mapping for OAuth
 function getProviderForService(serviceId: string): string | null {
   const map: Record<string, string> = {
     gmail: "google",
@@ -147,7 +149,6 @@ export default function HomePage() {
   const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
   const firstName = session?.user?.name?.split(" ")[0];
 
-  // Rehydrate focal state from right-panel API on mount and thread switch
   useEffect(() => {
     if (!activeThreadId) {
       hydrateThreadState(null, []);
@@ -158,8 +159,6 @@ export default function HomePage() {
       try {
         const res = await fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`);
         if (!res.ok) {
-          console.error("[HomePage] Failed to fetch right-panel:", res.status);
-          // Silent fail for right-panel — user sees empty state, not blocking
           hydrateThreadState(null, []);
           return;
         }
@@ -179,16 +178,13 @@ export default function HomePage() {
           : null;
         hydrateThreadState(mappedFocal, secondary);
       } catch (_err) {
-        // Silent fail — user can continue with chat
         hydrateThreadState(null, []);
       }
     };
 
     fetchThreadState();
-    // One-shot focal on thread switch; live updates via RightPanel SSE → hydrateThreadState
   }, [activeThreadId, hydrateThreadState]);
 
-  // Services state with real connection status
   const [services, setServices] = useState<ServiceWithConnectionStatus[]>(initialServices);
   const [capabilityMode, setCapabilityMode] = useState<CapabilityMode>(
     getCapabilityFromSurface(surface)
@@ -199,19 +195,14 @@ export default function HomePage() {
   const [showBlockedBanner, setShowBlockedBanner] = useState(false);
   const [showFocal, setShowFocal] = useState(false);
 
-  // Fetch real connection status on mount
   useEffect(() => {
     async function loadConnections() {
       try {
         const res = await fetch("/api/v2/user/connections", { credentials: "include" });
-        if (!res.ok) {
-          toast.warning("Connecteurs indisponibles", "Impossible de charger l'état des connexions");
-          return;
-        }
+        if (!res.ok) return;
         const data = await res.json();
         if (data.services && Array.isArray(data.services)) {
           setServices(data.services as ServiceWithConnectionStatus[]);
-          // Update source selection with connected services
           const connected = data.services.filter(
             (s: ServiceWithConnectionStatus) => s.connectionStatus === "connected"
           );
@@ -219,32 +210,25 @@ export default function HomePage() {
             setSourceSelection(getDefaultSelection(connected));
           }
         }
-        console.log(`[HomePage] Loaded ${data.meta?.connected || 0}/${data.meta?.total || 0} connected services`);
-      } catch (_err) {
-        toast.warning("Connecteurs temporairement indisponibles");
-      }
+      } catch (_err) {}
     }
     loadConnections();
   }, []);
 
-  // Use refs to track previous values without triggering effects
   const prevSurfaceRef = useRef(surface);
   const prevCapabilityRef = useRef(capabilityMode);
 
-  // Update capability mode when surface changes - using setTimeout to break sync cycle
   useEffect(() => {
     if (surface !== prevSurfaceRef.current) {
       prevSurfaceRef.current = surface;
       const newMode = getCapabilityFromSurface(surface);
       if (newMode !== prevCapabilityRef.current) {
         prevCapabilityRef.current = newMode;
-        // Use timeout to avoid sync setState warning
         setTimeout(() => setCapabilityMode(newMode), 0);
       }
     }
   }, [surface]);
 
-  // Update blocked banner when capability or services change
   const prevServicesRef = useRef(services);
   useEffect(() => {
     if (services !== prevServicesRef.current || capabilityMode !== prevCapabilityRef.current) {
@@ -253,7 +237,6 @@ export default function HomePage() {
       const connectedServices = services.filter((s) => s.connectionStatus === "connected");
       const isAvailable = isCapabilityAvailable(capabilityMode, connectedServices);
       const shouldShow = !isAvailable && capabilityMode !== "general";
-      // Only update if different, using timeout to avoid sync warning
       setTimeout(() => {
         setShowBlockedBanner((prev) => (prev !== shouldShow ? shouldShow : prev));
       }, 0);
@@ -263,13 +246,11 @@ export default function HomePage() {
   const assistantBufferRef = useRef<string>("");
   const currentAssistantIdRef = useRef<string | null>(null);
 
-  // Connected services for SourcePicker
   const connectedServices = useMemo(
     () => services.filter((s) => s.connectionStatus === "connected"),
     [services]
   );
 
-  // Services matching current capability
   const capabilityServices = useMemo(() => {
     const capabilityMap: Record<string, string> = {
       messaging: "messaging",
@@ -288,11 +269,7 @@ export default function HomePage() {
 
   const handleSubmit = useCallback(async (message: string) => {
     if (!activeThreadId) return;
-
-    // Client token for correlation (not the canonical run_id)
     const clientToken = `client-${Date.now()}`;
-
-    // Add user message to current thread
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -300,7 +277,6 @@ export default function HomePage() {
     };
     addMessageToThread(activeThreadId, userMessage);
 
-    // Track first message (activation metric)
     if (messages.length === 0) {
       trackAnalytics("first_message_sent", session?.user?.email || "anonymous", {
         threadId: activeThreadId,
@@ -308,11 +284,9 @@ export default function HomePage() {
       });
     }
 
-    // Reset assistant buffer for new run
     assistantBufferRef.current = "";
     currentAssistantIdRef.current = `assistant-${Date.now()}`;
 
-    // Add initial empty assistant message
     const assistantMessage: Message = {
       id: currentAssistantIdRef.current,
       role: "assistant",
@@ -320,13 +294,11 @@ export default function HomePage() {
     };
     addMessageToThread(activeThreadId, assistantMessage);
 
-    // Build bounded conversation history (~10 last messages, user/assistant only, non-empty)
     const recentMessages = messages
       .filter((m) => (m.role === "user" || m.role === "assistant") && m.content.trim().length > 0)
       .slice(-10)
       .map((m) => ({ role: m.role, content: m.content }));
 
-    // Start run with client token (will be replaced by server run_id on run_started)
     startRun(clientToken);
 
     try {
@@ -337,7 +309,7 @@ export default function HomePage() {
           message,
           surface,
           thread_id: activeThreadId,
-          conversation_id: activeThreadId, // Canonique: thread_id === conversation_id
+          conversation_id: activeThreadId,
           history: recentMessages,
           capability_mode: capabilityMode,
           selected_providers: sourceSelection.providers,
@@ -365,19 +337,9 @@ export default function HomePage() {
           if (!line.startsWith("data: ")) continue;
           try {
             const event = JSON.parse(line.slice(6));
-
-            // Capture canonical run_id from run_started event
             if (event.type === "run_started" && event.run_id) {
               canonicalRunId = event.run_id as string;
-              console.log(`[Chat] Canonical run_id established: ${canonicalRunId}`);
             }
-
-            // Log warning if event has mismatched run_id
-            if (event.run_id && canonicalRunId && event.run_id !== canonicalRunId) {
-              console.warn(`[Chat] Event run_id mismatch: expected ${canonicalRunId}, got ${event.run_id}`);
-            }
-
-            // Handle text_delta events for streaming assistant responses
             if (event.type === "text_delta" && event.delta) {
               assistantBufferRef.current += event.delta;
               updateMessageInThread(
@@ -386,23 +348,12 @@ export default function HomePage() {
                 assistantBufferRef.current
               );
             }
-
-            // Use canonical run_id if available, otherwise client token
             const eventRunId = (event.run_id as string) || canonicalRunId || clientToken;
             addEvent({ ...event, run_id: eventRunId });
-          } catch (parseErr) {
-            console.error("[Chat] Failed to parse SSE event:", parseErr);
-            // Silently ignore parse errors during streaming
-          }
+          } catch (parseErr) {}
         }
       }
 
-      // Log final canonical run_id for debugging
-      if (canonicalRunId) {
-        console.log(`[Chat] Run completed with canonical id: ${canonicalRunId}`);
-      }
-
-      // Track run completion
       trackAnalytics("run_completed", session?.user?.email || "anonymous", {
         runId: canonicalRunId || clientToken,
         provider: capabilityMode,
@@ -410,11 +361,8 @@ export default function HomePage() {
       });
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Échec de la connexion";
-      console.error("[Chat] Orchestration failed:", err);
       toast.error("Erreur de connexion", errorMsg);
       addEvent({ type: "run_failed", error: errorMsg, run_id: clientToken });
-
-      // Track run failure
       trackAnalytics("run_failed", session?.user?.email || "anonymous", {
         runId: clientToken,
         provider: capabilityMode,
@@ -433,41 +381,19 @@ export default function HomePage() {
 
   const handleConnect = useCallback(async (serviceId: string) => {
     const provider = getProviderForService(serviceId);
-    if (!provider) {
-      console.error(`[HomePage] No provider mapping for service: ${serviceId}`);
-      return;
-    }
-
-    console.log(`[HomePage] Initiating OAuth for ${serviceId} via ${provider}`);
-
+    if (!provider) return;
     try {
-      // Get OAuth config from backend
       const res = await fetch("/api/nango/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ provider }),
       });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        toast.error("Échec de connexion", errData.message || "Configuration Nango manquante");
-        return;
-      }
-
+      if (!res.ok) return;
       const data = await res.json();
-      if (!data.success || !data.config) {
-        toast.error("Configuration invalide", "Impossible d'initialiser la connexion");
-        return;
-      }
-
-      // Redirect to apps page with pending connection
-      // The actual OAuth popup will be handled by Nango SDK on the apps page
-      console.log(`[HomePage] OAuth ready for ${provider}, redirecting to App Hub`);
+      if (!data.success || !data.config) return;
       window.location.href = `/apps?connecting=${encodeURIComponent(serviceId)}&provider=${encodeURIComponent(provider)}`;
-    } catch (_err) {
-      toast.error("Erreur de connexion", "Impossible d'initier la connexion OAuth");
-    }
+    } catch (_err) {}
   }, []);
 
   const handleDismissBanner = useCallback(() => {
@@ -476,7 +402,6 @@ export default function HomePage() {
 
   const isIdle = coreState === "idle" && messages.length === 0 && !focal;
 
-  // Auto-show focal when it first appears (user can then close it)
   const focalIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (focal && focal.id !== focalIdRef.current) {
@@ -504,30 +429,33 @@ export default function HomePage() {
     return (
       <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
         <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
-          <div className="text-center space-y-5">
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, rgba(163, 255, 0, 0.03) 0%, transparent 70%)" }} />
+          <div className="text-center space-y-12 relative z-10">
             <div
-              className="inline-flex items-center gap-3 px-4 py-2 mb-2 border-b border-[var(--line-strong)]"
+              className="inline-flex flex-col items-center gap-6"
             >
               <div
-                className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-[var(--cykan)] text-[var(--cykan)] rounded-[4px]"
+                className="w-20 h-20 flex items-center justify-center text-[24px] font-black bg-[var(--cykan)] text-black rounded-sm shadow-[0_0_60px_rgba(163,255,0,0.2)]"
               >
                 H
               </div>
-              <span className="halo-mono-label text-[var(--text-faint)]">Hearst OS</span>
+              <span className="text-[11px] font-mono tracking-[1.2em] text-white/10 uppercase ml-[1.2em]">Hearst_OS</span>
             </div>
 
-            <h1 className="text-[24px] font-bold text-[var(--text)]">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
-            <p className="text-[14px] text-[var(--text-soft)] max-w-md mx-auto font-medium">Comment puis-je vous aider aujourd&apos;hui ?</p>
+            <h1 className="text-[100px] font-black text-white tracking-tighter leading-[0.8] uppercase opacity-5">Ghost_Protocol</h1>
+            
+            <div className="h-px w-32 bg-white/5 mx-auto" />
 
             {/* Suggestion chips */}
-            <div className="flex flex-wrap justify-center gap-2 mt-10">
+            <div className="flex flex-wrap justify-center gap-12 mt-20">
               {["Résumer mes emails", "Planifier une réunion", "Analyser un document", "Créer un rapport"].map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSubmit(s)}
-                  className="px-3 py-1.5 text-[12px] font-medium border border-[var(--line-strong)] rounded-[4px] text-[var(--text-soft)] hover:text-[var(--cykan)] hover:border-[var(--cykan)] transition-colors"
+                  className="text-[11px] font-mono font-black tracking-[0.3em] text-white/20 hover:text-[var(--cykan)] transition-all duration-500 uppercase group relative"
                 >
                   {s}
+                  <span className="absolute -bottom-2 left-0 w-0 h-[1px] bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)] transition-all duration-500 group-hover:w-full" />
                 </button>
               ))}
             </div>
@@ -542,25 +470,23 @@ export default function HomePage() {
     );
   }
 
-  // Chat-first with focal as principal surface when present
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
       {/* Principal surface: Focal Stage - takes full height when active */}
       {focal && showFocal && (
-        <div className="flex-1 flex flex-col min-h-0 border-b border-[var(--line)]">
+        <div className="flex-1 flex flex-col min-h-0 border-b border-white/10">
           {/* Focal header - minimal, contextual */}
-          <div className="flex items-center justify-between px-4 py-2 bg-white/[0.02] border-b border-[var(--line)] flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--text-muted)] uppercase tracking-wider">{focal.type}</span>
-              <span className="text-xs text-[var(--text-faint)]">·</span>
-              <span className="text-xs text-[var(--text-soft)] truncate max-w-[300px]">{focal.title}</span>
+          <div className="flex items-center justify-between px-12 py-8 bg-transparent flex-shrink-0 relative z-10 border-b border-white/10">
+            <div className="flex items-center gap-8">
+              <span className="text-[11px] text-[var(--cykan)] font-mono font-black uppercase tracking-[0.6em]">{focal.type}_HUD</span>
+              <span className="text-[22px] font-black text-white uppercase tracking-tighter truncate max-w-[500px]">{focal.title}</span>
             </div>
             <button
               onClick={() => setShowFocal(false)}
-              className="text-xs text-[var(--text-muted)] hover:text-[var(--text)] px-2 py-1 rounded hover:bg-white/[0.05] transition-colors"
+              className="text-[10px] font-mono font-black uppercase tracking-[0.4em] text-white/20 hover:text-white transition-colors"
               title="Minimiser (rester dans le contexte)"
             >
-              Minimiser ✕
+              CLOSE_VIEW [X]
             </button>
           </div>
           {/* Focal content - principal reading surface */}
@@ -572,36 +498,36 @@ export default function HomePage() {
 
       {/* Collapsed focal indicator - contextual chip */}
       {focal && !showFocal && (
-        <div className="flex-shrink-0 px-4 py-2 border-b border-[var(--line)] bg-white/[0.02]">
+        <div className="flex-shrink-0 px-12 py-8 bg-transparent relative z-10">
           <button
             onClick={() => setShowFocal(true)}
-            className="inline-flex items-center gap-2 text-xs text-[var(--cykan)] hover:text-[var(--text)] transition-colors"
+            className="inline-flex items-center gap-8 group"
           >
-            <span>◉</span>
-            <span className="text-[var(--text-soft)]">
-              {focal.type === "brief" ? "Synthèse" : focal.type === "report" ? "Rapport" : "Document"} en cours
-            </span>
-            <span className="text-[var(--text-faint)]">·</span>
-            <span className="truncate max-w-[200px]">{focal.title}</span>
-            <span className="ml-2 text-[var(--cykan)]">▲</span>
+            <div className="w-2 h-2 rounded-full bg-[var(--cykan)] shadow-[0_0_15px_var(--cykan)] animate-pulse"></div>
+            <div className="flex flex-col items-start">
+              <span className="text-white/20 uppercase font-mono tracking-[0.6em] text-[10px] group-hover:text-[var(--cykan)] transition-colors">
+                {focal.type === "brief" ? "Active_Brief" : focal.type === "report" ? "Active_Report" : "Active_Document"}
+              </span>
+              <span className="text-white/70 font-black uppercase tracking-tighter text-[18px] group-hover:translate-x-3 group-hover:text-white transition-all duration-500">{focal.title}</span>
+            </div>
           </button>
         </div>
       )}
 
       {/* Chat messages - canonical renderer with conditional sizing - only render container when messages exist */}
       {messages.length > 0 && (
-        <div className={focal && showFocal ? "flex-shrink-0 h-[180px] border-b border-[var(--line)]" : "flex-1 min-h-0"}>
+        <div className={focal && showFocal ? "flex-shrink-0 h-[320px] border-t border-white/10" : "flex-1 min-h-0"}>
           <ChatMessages
             messages={messages}
             compact={!!(focal && showFocal)}
-            className={focal && showFocal ? "h-full overflow-y-auto px-4 py-3 space-y-3" : "h-full overflow-y-auto px-4 py-6 space-y-4"}
+            className={focal && showFocal ? "h-full overflow-y-auto px-12 py-8 flex flex-col" : "h-full overflow-y-auto px-12 py-12 flex flex-col"}
           />
         </div>
       )}
       <ChatControls {...chatControlsProps} />
       <ChatInput
         onSubmit={handleSubmit}
-        placeholder={focal ? `Continuer sur "${focal.title.slice(0, 30)}..."` : undefined}
+        placeholder={focal ? `CONTINUE_ON_CONTEXT_` : undefined}
         connectedServices={connectedServices}
       />
     </div>

@@ -33,7 +33,7 @@ export default async function SettingsPage() {
       </div>
 
       {dbError && (
-        <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-red-400 text-sm">
+        <div className="rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] text-sm">
           {dbError}
         </div>
       )}
@@ -51,7 +51,7 @@ export default async function SettingsPage() {
               <span
                 className={`text-xs px-2 py-0.5 rounded-full ${
                   enabled
-                    ? "bg-emerald-500/20 text-emerald-400"
+                    ? "bg-[var(--money)]/20 text-[var(--money)]"
                     : "bg-white/10 text-white/40"
                 }`}
               >

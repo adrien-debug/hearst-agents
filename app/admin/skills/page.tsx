@@ -37,44 +37,44 @@ export default async function SkillsPage() {
     <div className="px-8 py-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.35em] text-zinc-500">Hearst</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">Skills</h1>
-          <p className="mt-1 text-sm text-zinc-500">Capacités assignables aux agents.</p>
+          <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Hearst</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">Skills</h1>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Capacités assignables aux agents.</p>
         </div>
         <Link
           href="/admin/skills/new"
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-colors hover:bg-zinc-200"
+          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 text-sm"
         >
           + Nouveau skill
         </Link>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-400">
+        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
           {error}
         </div>
       )}
 
       {skills.length === 0 && !error ? (
-        <p className="text-sm text-zinc-500">Aucun skill créé.</p>
+        <p className="text-sm text-[var(--text-muted)]">Aucun skill créé.</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {skills.map((s) => (
             <Link
               key={s.id}
               href={`/skills/${s.id}`}
-              className="flex flex-col gap-2 rounded-xl border border-zinc-800 bg-zinc-950/80 p-5 transition-colors hover:border-zinc-700"
+              className="flex flex-col gap-2 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5 transition-colors hover:border-[var(--line-strong)]"
             >
               <div className="flex items-start justify-between">
-                <h3 className="text-sm font-semibold text-white">{s.name}</h3>
-                <span className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500">
+                <h3 className="text-sm font-semibold text-[var(--text)]">{s.name}</h3>
+                <span className="rounded-full border border-[var(--line-strong)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">
                   {s.category}
                 </span>
               </div>
               {s.description && (
-                <p className="line-clamp-2 text-xs text-zinc-500">{s.description}</p>
+                <p className="line-clamp-2 text-xs text-[var(--text-muted)]">{s.description}</p>
               )}
-              <span className="text-[10px] font-mono text-zinc-600">v{s.active_version}</span>
+              <span className="text-[10px] font-mono text-[var(--text-muted)]">v{s.active_version}</span>
             </Link>
           ))}
         </div>

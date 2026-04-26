@@ -4,8 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { RuntimeAsset } from "@/lib/engine/runtime/assets/types";
 import { toast } from "@/app/hooks/use-toast";
+import { GhostIconChevronLeft, GhostIconChevronRight, GhostIconDownload, GhostIconSearch, GhostIconX } from "../components/ghost-icons";
 
 type AssetFilterType = "all" | "report" | "pdf" | "excel" | "doc" | "csv" | "json";
+
+function typeRef(t: string) {
+  return `TYPE_${t.toUpperCase().slice(0, 6)}`;
+}
 
 export default function AssetsPage() {
   const router = useRouter();
@@ -25,11 +30,11 @@ export default function AssetsPage() {
           offset: offset.toString(),
           limit: limit.toString(),
         });
-        
+
         if (activeFilter !== "all") {
           params.set("type", activeFilter);
         }
-        
+
         if (searchQuery.trim()) {
           params.set("search", searchQuery.trim());
         }
@@ -43,7 +48,7 @@ export default function AssetsPage() {
           setTotal(0);
           return;
         }
-        
+
         const data = await res.json();
         setAssets(data.assets || []);
         setTotal(data.pagination?.total || 0);
@@ -68,7 +73,7 @@ export default function AssetsPage() {
         toast.error("Téléchargement échoué", `Impossible de télécharger ${assetName}`);
         return;
       }
-      
+
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -89,77 +94,80 @@ export default function AssetsPage() {
     router.push(`/assets/${assetId}`);
   };
 
-  // Note: Filter counts removed as they would be misleading
-  // (based on current page assets, not total across all pages)
-
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
 
   if (loading && assets.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg)" }}>
-        <div className="text-[var(--text-muted)] text-sm">Chargement des assets...</div>
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8" style={{ background: "var(--bg)" }}>
+        <p className="ghost-meta-label">LOAD_ASSETS</p>
+        <div className="w-full max-w-xs space-y-2">
+          <div className="ghost-skeleton-bar" />
+          <div className="ghost-skeleton-bar" />
+          <div className="ghost-skeleton-bar" />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
-      {/* Header */}
-      <div className="border-b border-[var(--line)] p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="border-b border-[var(--line)] p-8">
+        <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="text-xl font-medium text-[var(--text)] mb-1">Assets</h1>
-            <p className="text-sm text-[var(--text-muted)]">
-              {total} document{total !== 1 ? "s" : ""} généré{total !== 1 ? "s" : ""}
-            </p>
+            <p className="ghost-meta-label mb-2">REGISTRY</p>
+            <h1 className="ghost-title-impact text-xl">Assets</h1>
+            <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] mt-2">ROW_COUNT_{total}</p>
           </div>
         </div>
 
-        {/* Search & Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1 relative">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setOffset(0); // Reset to first page on search
+                setOffset(0);
               }}
-              placeholder="Rechercher un asset..."
-              className="w-full bg-white/[0.03] border border-[var(--line)] rounded-lg px-4 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--cykan)]/30"
+              placeholder="QUERY_STRING_"
+              className="ghost-input-line w-full pr-10"
             />
+            <GhostIconSearch className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-faint)] pointer-events-none" />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => {
                   setSearchQuery("");
                   setOffset(0);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-soft)]"
+                className="absolute right-8 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] p-1"
+                aria-label="Effacer"
               >
-                ✕
+                <GhostIconX className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto">
+          <div className="flex flex-wrap gap-2">
             {[
-              { id: "all", label: "Tous" },
-              { id: "report", label: "Reports" },
+              { id: "all", label: "ALL" },
+              { id: "report", label: "RPT" },
               { id: "pdf", label: "PDF" },
-              { id: "excel", label: "Excel" },
-              { id: "doc", label: "Docs" },
+              { id: "excel", label: "XLS" },
+              { id: "doc", label: "DOC" },
             ].map((filter) => (
               <button
                 key={filter.id}
+                type="button"
                 onClick={() => {
                   setActiveFilter(filter.id as AssetFilterType);
                   setOffset(0);
                 }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`font-mono text-[9px] uppercase tracking-[0.2em] pb-1 border-b-2 transition-colors ${
                   activeFilter === filter.id
-                    ? "bg-[var(--cykan)]/15 text-[var(--cykan)] border border-[var(--cykan)]/30"
-                    : "bg-white/[0.03] text-[var(--text-muted)] border border-[var(--line)] hover:bg-white/[0.05]"
+                    ? "text-[var(--cykan)] border-[var(--cykan)]"
+                    : "text-[var(--text-faint)] border-transparent hover:text-[var(--text-muted)]"
                 }`}
               >
                 {filter.label}
@@ -169,100 +177,80 @@ export default function AssetsPage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-2 py-6">
         {assets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-[var(--line)] flex items-center justify-center mb-4">
-              <span className="text-2xl">📄</span>
-            </div>
-            <h2 className="text-lg font-medium text-[var(--text)] mb-2">Aucun asset trouvé</h2>
-            <p className="text-sm text-[var(--text-muted)] max-w-md">
-              {searchQuery
-                ? `Aucun résultat pour "${searchQuery}"`
-                : activeFilter !== "all"
-                ? `Aucun asset de type "${activeFilter}"`
-                : "Les assets générés par l'orchestration apparaîtront ici."}
+          <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
+            <GhostIconSearch className="w-10 h-10 text-[var(--text-faint)]" />
+            <p className="ghost-meta-label">EMPTY_RESULT</p>
+            <p className="text-[13px] font-light text-[var(--text-muted)] max-w-md">
+              {searchQuery ? `NO_HIT_FOR "${searchQuery}"` : activeFilter !== "all" ? `NO_ROWS_${activeFilter}` : "Awaiting orchestration output."}
             </p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="border-t border-[var(--line)]">
+              <div className="grid grid-cols-[minmax(0,1.2fr)_auto_auto_auto] gap-x-6 px-4 py-3 text-[9px] font-mono uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line)]">
+                <span>ID / Name</span>
+                <span>Type</span>
+                <span>TS</span>
+                <span className="text-right">DL</span>
+              </div>
               {assets.map((asset) => (
-                <div
+                <button
                   key={asset.id}
-                  className="flex flex-col rounded-xl bg-white/[0.02] border border-[var(--line)] hover:bg-white/[0.03] transition-colors overflow-hidden cursor-pointer"
+                  type="button"
                   onClick={() => handleAssetClick(asset.id)}
+                  className="w-full grid grid-cols-[minmax(0,1.2fr)_auto_auto_auto] gap-x-6 items-center px-4 py-5 text-left border-b border-[var(--line)] hover:bg-[var(--bg-soft)] transition-colors"
                 >
-                  {/* Asset preview header */}
-                  <div className="p-4 border-b border-[var(--line)]">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">
-                        {asset.type === "pdf"
-                          ? "📄"
-                          : asset.type === "excel"
-                          ? "📊"
-                          : asset.type === "doc"
-                          ? "📝"
-                          : "📋"}
-                      </span>
-                      <span className="text-xs text-[var(--text-faint)] uppercase tracking-wider">
-                        {asset.type}
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-medium text-[var(--text)] line-clamp-2 mb-1">
-                      {asset.name}
-                    </h3>
-                    <p className="text-xs text-[var(--text-muted)] line-clamp-2">
-                      {(asset.metadata?.description as string) || "Aucune description"}
-                    </p>
+                  <div className="min-w-0">
+                    <p className="font-mono text-[9px] text-[var(--text-faint)] truncate">ID_{asset.id.slice(0, 10)}</p>
+                    <p className="text-[13px] font-medium text-[var(--text)] truncate">{asset.name}</p>
                   </div>
-
-                  {/* Asset metadata */}
-                  <div className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-[var(--text-faint)]">
-                      <span>{new Date(asset.created_at).toLocaleDateString()}</span>
-                      {asset.file?.sizeBytes && (
-                        <>
-                          <span>·</span>
-                          <span>{(asset.file.sizeBytes / 1024).toFixed(1)} KB</span>
-                        </>
-                      )}
-                    </div>
+                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--text-muted)] border-b border-[var(--line-strong)] pb-0.5 self-start mt-1">
+                    {typeRef(asset.type)}
+                  </span>
+                  <span className="font-mono text-[10px] text-[var(--text-muted)] self-start mt-1">
+                    {new Date(asset.created_at).toLocaleDateString()}
+                  </span>
+                  <span className="flex justify-end self-start mt-0.5">
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDownload(asset.id, asset.name);
                       }}
-                      className="p-1.5 text-[var(--text-muted)] hover:text-[var(--cykan)] transition-colors"
-                      title="Télécharger"
+                      className="inline-flex p-2 text-[var(--text-muted)] hover:text-[var(--cykan)]"
+                      aria-label="Télécharger"
                     >
-                      ↓
+                      <GhostIconDownload className="w-4 h-4" />
                     </button>
-                  </div>
-                </div>
+                  </span>
+                </button>
               ))}
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-8">
+              <div className="flex items-center justify-center gap-6 mt-10 font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)]">
                 <button
+                  type="button"
                   onClick={() => setOffset(Math.max(0, offset - limit))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 disabled:opacity-30 border-b border-transparent hover:border-[var(--line-strong)] pb-0.5"
                 >
-                  ← Précédent
+                  <GhostIconChevronLeft className="w-4 h-4" />
+                  Prev
                 </button>
-                <span className="text-sm text-[var(--text-soft)]">
-                  Page {currentPage} sur {totalPages}
+                <span>
+                  PAGE_{currentPage}/{totalPages}
                 </span>
                 <button
+                  type="button"
                   onClick={() => setOffset(offset + limit)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 disabled:opacity-30 border-b border-transparent hover:border-[var(--line-strong)] pb-0.5"
                 >
-                  Suivant →
+                  Next
+                  <GhostIconChevronRight className="w-4 h-4" />
                 </button>
               </div>
             )}

@@ -2,9 +2,6 @@
 
 /**
  * RightPanelContent — Panel internals (extracted for responsive wrapper)
- *
- * Separated from RightPanel.tsx to avoid "components during render" error.
- * This component contains all the logic and UI of the right panel.
  */
 
 import { useEffect, useState, useRef } from "react";
@@ -39,10 +36,9 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     activeThreadIdRef.current = activeThreadId;
   }, [activeThreadId]);
 
-  /** Live updates via SSE (~1s), same contract as GET /api/v2/right-panel */
+  /** Live updates via SSE (~1s) */
   useEffect(() => {
     if (!activeThreadId) {
-      // Use microtask to avoid synchronous setState in effect
       Promise.resolve().then(() => {
         setData(null);
         setLoading(false);
@@ -140,7 +136,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         throw new Error(data.error || `Action failed: ${res.status}`);
       }
 
-      // Refresh after action
       if (activeThreadId) {
         const refreshRes = await fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`);
         if (refreshRes.ok) {
@@ -171,11 +166,11 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
   const focalObjectType = focalObject ? getFocalProp(focalObject, "objectType") || "unknown" : "";
   const focalTitle = focalObject ? getFocalProp(focalObject, "title") || "Untitled" : "";
-  const focalStatus = focalObject ? getFocalProp(focalObject, "status") || "" : "";
 
   return (
     <aside
-      className="w-[280px] h-full flex flex-col z-10 bg-transparent"
+      className="w-[380px] h-full flex flex-col z-20 relative border-l border-white/[0.03] shadow-[-30px_0_60px_rgba(0,0,0,0.4)]"
+      style={{ background: "linear-gradient(to left, var(--mat-100), #020202)" }}
     >
       {/* Header with close button for mobile */}
       {onClose && (
@@ -183,7 +178,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           <p className="text-[13px] font-medium tracking-wide">Runtime</p>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/[0.05] transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-white/[0.05] transition-colors"
             aria-label="Fermer"
           >
             ✕
@@ -192,48 +187,32 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
       )}
 
       {/* Runtime Status */}
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Runtime</p>
-          <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-[var(--money)]" : "bg-[var(--danger)]"}`} />
+      <div className="p-10 bg-white/[0.01] border-b border-white/[0.03]">
+        <div className="flex items-center justify-between mb-10">
+          <p className="text-[10px] font-mono font-black uppercase tracking-[0.8em] text-white/10">System_HUD</p>
+          <div className={`w-1 h-1 rounded-full ${isConnected ? "bg-[var(--cykan)] shadow-[0_0_12px_var(--cykan)]" : "bg-[var(--danger)]"}`} />
         </div>
         {coreState === "awaiting_approval" ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-[var(--warn)]" />
-              <span className="text-[13px] font-bold text-[var(--warn)]">{flowLabel || "Validation requise"}</span>
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <span className="text-[18px] font-black uppercase tracking-tighter text-[var(--warn)]">{flowLabel || "Validation"}</span>
             </div>
-            <p className="text-[10px] font-mono text-[var(--text-faint)]">awaiting_approval</p>
-            <div className="h-[2px] bg-[var(--line-strong)] overflow-hidden">
-              <div className="h-full bg-[var(--warn)] w-full" />
-            </div>
-          </div>
-        ) : coreState === "awaiting_clarification" ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-violet-400" />
-              <span className="text-[13px] font-bold text-violet-400">{flowLabel || "Précision requise"}</span>
-            </div>
-            <p className="text-[10px] font-mono text-[var(--text-faint)]">awaiting_clarification</p>
-            <div className="h-[2px] bg-[var(--line-strong)] overflow-hidden">
-              <div className="h-full bg-violet-400 w-full" />
+            <div className="h-[2px] bg-white/[0.05] relative">
+              <div className="absolute inset-0 bg-[var(--warn)] w-full shadow-[0_0_20px_var(--warn)]" />
             </div>
           </div>
         ) : isRunning ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-[var(--cykan)]" />
-              <span className="text-[13px] font-bold text-[var(--cykan)]">{flowLabel || "En cours..."}</span>
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <span className="text-[18px] font-black uppercase tracking-tighter text-[var(--cykan)]">{flowLabel || "Processing"}</span>
             </div>
-            <p className="text-[10px] font-mono text-[var(--text-faint)]">{coreState}</p>
-            <div className="h-[2px] bg-[var(--line-strong)] overflow-hidden">
-              <div className="h-full bg-[var(--cykan)]" style={{ width: "66%" }} />
+            <div className="h-[2px] bg-white/[0.05] relative">
+              <div className="absolute inset-0 bg-[var(--cykan)] shadow-[0_0_30px_var(--cykan)] animate-pulse" style={{ width: "66%" }} />
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3 text-[var(--text-muted)]">
-            <div className="w-2 h-2 rounded-full bg-[var(--text-faint)]" />
-            <span className="text-[13px] font-bold">Inactif</span>
+          <div className="flex items-center gap-4 text-[var(--text-muted)] opacity-30">
+            <span className="text-[18px] font-black uppercase tracking-tighter">Standby</span>
           </div>
         )}
       </div>
@@ -241,113 +220,59 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
       {/* Focal Object */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {focalObject ? (
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Focal</p>
-              <span className={`text-[10px] font-bold uppercase ${
-                focalStatus === "ready" || focalStatus === "delivered" ? "text-[var(--money)]" :
-                focalStatus === "awaiting_approval" ? "text-[var(--warn)]" :
-                focalStatus === "active" ? "text-[var(--money)]" :
-                focalStatus === "paused" ? "text-yellow-500" :
-                focalStatus === "composing" || focalStatus === "delivering" ? "text-[var(--cykan)]" :
-                focalStatus === "failed" ? "text-[var(--danger)]" :
-                "text-[var(--text-muted)]"
-              }`}>
-                {focalStatus === "awaiting_approval" ? "validation" :
-                 focalStatus === "active" ? "actif" :
-                 focalStatus === "paused" ? "pause" :
-                 focalStatus}
-              </span>
+          <div className="px-10 py-16 bg-black/40 border-b border-white/[0.03]">
+            <div className="flex items-center justify-between mb-10">
+              <p className="text-[10px] font-mono font-black uppercase tracking-[0.8em] text-white/10">Focal_Object</p>
             </div>
-            <p className="text-[16px] font-bold text-[var(--text)] truncate mb-1">{focalTitle}</p>
-            <p className="text-[11px] font-mono text-[var(--text-faint)] mb-4">{focalObjectType}</p>
+            <p className="text-[24px] font-black text-white uppercase tracking-tighter mb-4 leading-[1.1]">{focalTitle}</p>
+            <p className="text-[11px] font-mono text-[var(--cykan)] uppercase tracking-[0.5em] mb-12 opacity-40">{focalObjectType}</p>
 
             {actionError && (
-              <p className="text-[11px] text-[var(--danger)] mb-3">{actionError}</p>
+              <p className="text-[11px] font-mono text-[var(--danger)] mb-10 p-8 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] uppercase tracking-widest">{actionError}</p>
             )}
 
             {(focalObject as FocalObjectView)?.primaryAction && (
-              (focalObject as FocalObjectView).primaryAction?.kind === "retry" ? (
-                <FocalRetryButton
-                  missionId={(focalObject as FocalObjectView).missionId}
-                  sourcePlanId={(focalObject as FocalObjectView).sourcePlanId}
-                  threadId={
-                    getFocalProp(focalObject, "threadId") ?? activeThreadId ?? undefined
-                  }
-                  focalTitle={getFocalProp(focalObject, "title")}
-                  focalObjectType={getFocalProp(focalObject, "objectType")}
-                  focalStatus={getFocalProp(focalObject, "status")}
-                  label={(focalObject as FocalObjectView).primaryAction?.label}
-                  onSuccess={() => {
-                    if (activeThreadId) {
-                      void fetch(
-                        `/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`,
-                        { credentials: "include" },
-                      )
-                        .then((res) => {
-                          if (!res.ok) {
-                            console.warn("[RightPanelContent] post-retry refresh failed:", res.status);
-                            return null;
-                          }
-                          return res.json();
-                        })
-                        .then((panelData) => {
-                          if (panelData) setData(panelData as RightPanelData);
-                        })
-                        .catch((e) => {
-                          console.error("[RightPanelContent] post-retry refresh error:", e);
-                        });
-                    }
-                    onClose?.();
-                  }}
-                  compact
-                  className="w-full py-2 rounded-[4px] text-[12px] font-bold uppercase transition-all duration-150 bg-[var(--cykan)] text-black"
-                />
-              ) : (
-                <button
-                  className={`w-full py-2 rounded-[4px] text-[12px] font-bold uppercase transition-all duration-150 ${
-                    (focalObject as FocalObjectView).primaryAction?.kind === "approve"
-                      ? "bg-[var(--warn)] text-black hover:bg-[var(--warn)]/80"
-                      : (focalObject as FocalObjectView).primaryAction?.kind === "pause"
-                      ? "bg-yellow-500 text-black hover:bg-yellow-500/80"
-                      : (focalObject as FocalObjectView).primaryAction?.kind === "resume"
-                      ? "bg-[var(--money)] text-black hover:bg-[var(--money)]/80"
-                      : "bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/80"
-                  }`}
-                  onClick={handlePrimaryAction}
-                  disabled={actionLoading}
-                >
-                  {actionLoading ? "…" : (focalObject as FocalObjectView).primaryAction?.label}
-                </button>
-              )
+              <button
+                className={`w-full py-6 text-[11px] font-mono font-black uppercase tracking-[0.5em] transition-all duration-700 hover:tracking-[0.7em] ${
+                  (focalObject as FocalObjectView).primaryAction?.kind === "approve"
+                    ? "bg-white text-black shadow-[0_30px_60px_rgba(255,255,255,0.08)]"
+                    : "bg-[var(--cykan)] text-black shadow-[0_30px_60px_rgba(163,255,0,0.15)]"
+                }`}
+                onClick={handlePrimaryAction}
+                disabled={actionLoading}
+              >
+                {actionLoading ? "RUNNING_" : (focalObject as FocalObjectView).primaryAction?.label}
+              </button>
             )}
           </div>
         ) : loading ? (
-          <div className="px-6 py-4">
-            <div className="h-16 bg-[var(--line-strong)] rounded-[4px] animate-pulse" />
+          <div className="px-10 py-16">
+            <div className="h-[2px] bg-white/[0.05] animate-pulse" />
           </div>
         ) : null}
 
         {/* Secondary Objects */}
         {secondaryObjects.length > 0 && (
-          <div className="px-6 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)] mb-3">Secondaire ({secondaryObjects.length})</p>
-            <div className="space-y-1.5">
+          <div className="px-10 py-12 border-b border-white/[0.03]">
+            <p className="text-[10px] font-mono font-black uppercase tracking-[0.8em] text-white/10 mb-8">Secondary_Nodes</p>
+            <div className="space-y-6">
               {secondaryObjects.map((obj, idx) => {
                 const objType = getFocalProp(obj, "objectType") || "unknown";
                 const objTitle = getFocalProp(obj, "title") || "Untitled";
                 const objStatus = getFocalProp(obj, "status") || "";
                 return (
-                  <div key={idx} className="flex items-center gap-3 p-2 rounded-[4px] hover:bg-white/[0.02] transition-colors">
-                    <span className="text-[10px] font-mono text-[var(--text-faint)] w-16 truncate">{objType}</span>
-                    <span className="text-[13px] font-bold text-[var(--text-soft)] truncate flex-1">{objTitle}</span>
-                    {objStatus && (
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        objStatus === "ready" ? "bg-[var(--money)]" :
-                        objStatus === "awaiting_approval" ? "bg-[var(--warn)]" :
-                        "bg-[var(--text-faint)]"
-                      }`} />
-                    )}
+                  <div key={idx} className="flex flex-col gap-2 group cursor-pointer">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-mono text-white/10 uppercase tracking-[0.4em] group-hover:text-[var(--cykan)] transition-colors">{objType}</span>
+                      {objStatus && (
+                        <span className={`w-1 h-1 rounded-full ${
+                          objStatus === "ready" ? "bg-[var(--cykan)] shadow-[0_0_8px_var(--cykan)]" :
+                          objStatus === "awaiting_approval" ? "bg-[var(--warn)]" :
+                          "bg-white/5"
+                        }`} />
+                      )}
+                    </div>
+                    <span className="text-[14px] font-black text-white/30 uppercase tracking-tighter group-hover:text-white transition-colors truncate">{objTitle}</span>
                   </div>
                 );
               })}
@@ -357,23 +282,23 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
         {/* Current Run */}
         {panelData?.currentRun && (
-          <div className="px-6 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)] mb-3">Run actif</p>
-            <div className="space-y-2 text-[12px] font-medium">
+          <div className="px-10 py-12 border-b border-white/[0.03] bg-white/[0.005]">
+            <p className="text-[10px] font-mono font-black uppercase tracking-[0.8em] text-white/10 mb-8">Process_Metrics</p>
+            <div className="space-y-4 text-[12px] font-mono uppercase tracking-[0.2em]">
               <div className="flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">ID</span>
-                <span className="font-mono text-[var(--text-soft)] truncate max-w-[120px]">
-                  {currentRunId?.slice(0, 8)}…
+                <span className="text-white/20">Run_ID</span>
+                <span className="text-white/60 truncate max-w-[140px]">
+                  {currentRunId?.slice(0, 16)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[var(--text-muted)]">Mode</span>
-                <span className="text-[var(--text-soft)]">{panelData.currentRun.executionMode}</span>
+                <span className="text-white/20">Mode</span>
+                <span className="text-[var(--cykan)] font-black opacity-80">{panelData.currentRun.executionMode}</span>
               </div>
               {(panelData.currentRun.pendingToolCalls ?? 0) > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[var(--text-muted)]">Tools</span>
-                  <span className="text-[var(--cykan)]">{panelData.currentRun.pendingToolCalls} pending</span>
+                  <span className="text-white/20">Stack</span>
+                  <span className="text-[var(--cykan)] font-black opacity-80">{panelData.currentRun.pendingToolCalls} PENDING_</span>
                 </div>
               )}
             </div>
@@ -382,13 +307,13 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
         {/* Assets */}
         {panelData?.assets && panelData.assets.length > 0 && (
-          <div className="px-6 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)] mb-3">Assets ({panelData.assets.length})</p>
-            <div className="space-y-2">
+          <div className="px-10 py-12 border-b border-white/[0.03]">
+            <p className="text-[10px] font-mono font-black uppercase tracking-[0.8em] text-white/10 mb-8">Data_Assets</p>
+            <div className="space-y-5">
               {panelData.assets.slice(0, 5).map((asset) => (
-                <div key={asset.id} className="flex items-center gap-3 text-[12px]">
-                  <span className="font-mono text-[10px] text-[var(--text-faint)]">{asset.type}</span>
-                  <span className="truncate font-bold text-[var(--text-soft)] flex-1">{asset.name}</span>
+                <div key={asset.id} className="flex flex-col gap-1.5 group cursor-pointer">
+                  <span className="font-mono text-[9px] text-white/10 uppercase tracking-[0.3em] group-hover:text-[var(--cykan)] transition-colors">{asset.type}</span>
+                  <span className="truncate font-black text-[13px] uppercase tracking-tighter text-white/30 group-hover:text-white transition-colors">{asset.name}</span>
                 </div>
               ))}
             </div>
@@ -397,15 +322,15 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
         {/* Missions */}
         {panelData?.missions && panelData.missions.length > 0 && (
-          <div className="px-6 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)] mb-3">Missions</p>
-            <div className="space-y-2">
+          <div className="px-10 py-12 border-b border-white/[0.03]">
+            <p className="text-[10px] font-mono font-black uppercase tracking-[0.8em] text-white/10 mb-8">Active_Missions</p>
+            <div className="space-y-6">
               {panelData.missions.slice(0, 3).map((mission) => (
-                <div key={mission.id} className="flex items-center justify-between p-2 rounded-[4px] hover:bg-white/[0.02] transition-colors text-[13px] font-bold">
-                  <span className="truncate text-[var(--text-soft)]">{mission.name}</span>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    mission.opsStatus === "running" ? "bg-[var(--cykan)]" :
-                    mission.enabled ? "bg-[var(--money)]" : "bg-[var(--text-faint)]"
+                <div key={mission.id} className="flex items-center justify-between group cursor-pointer">
+                  <span className="truncate text-[14px] font-black uppercase tracking-tighter text-white/30 group-hover:text-white transition-colors">{mission.name}</span>
+                  <span className={`w-1 h-1 rounded-full ${
+                    mission.opsStatus === "running" ? "bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)]" :
+                    mission.enabled ? "bg-[var(--cykan)]/30" : "bg-white/5"
                   }`} />
                 </div>
               ))}
@@ -415,8 +340,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-4 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-faint)] text-center">
-        Hearst OS
+      <div className="p-10 text-[10px] font-mono font-black uppercase tracking-[0.8em] text-white/5 text-center">
+        Hearst_OS_v3.0
       </div>
     </aside>
   );
