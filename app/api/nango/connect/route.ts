@@ -54,16 +54,26 @@ export async function POST(req: NextRequest) {
   // Return config for frontend — frontend uses @nangohq/frontend SDK
   // Note: Nango frontend SDK requires the PUBLIC key, not the secret key
   // The secret key is used server-side only
-  const publicKey = process.env.NEXT_PUBLIC_NANGO_PUBLIC_KEY || nangoConfig.secretKey;
+  const publicKey = process.env.NEXT_PUBLIC_NANGO_PUBLIC_KEY;
+  
+  if (!publicKey) {
+    console.error("[NangoConnect] NEXT_PUBLIC_NANGO_PUBLIC_KEY not configured");
+    return NextResponse.json(
+      { 
+        error: "nango_public_key_missing", 
+        message: "NEXT_PUBLIC_NANGO_PUBLIC_KEY must be set for OAuth" 
+      },
+      { status: 503 }
+    );
+  }
   
   return NextResponse.json({
     success: true,
     config: {
       provider,
       connectionId,
-      publicKey, // Frontend SDK needs the public key
+      publicKey,
       host: nangoConfig.host,
-      // Callback will be handled by Nango and redirected to /api/nango/callback
     },
   });
 }

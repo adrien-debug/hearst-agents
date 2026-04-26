@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AssetPreview } from "../components/AssetPreview";
 import type { RuntimeAsset } from "@/lib/engine/runtime/assets/types";
+import { toast } from "@/app/hooks/use-toast";
 
 type AssetFilterType = "all" | "report" | "pdf" | "excel" | "doc" | "csv" | "json";
 
@@ -35,13 +35,23 @@ export default function AssetsPage() {
         }
 
         const res = await fetch(`/api/v2/assets?${params.toString()}`);
-        if (!res.ok) throw new Error("Failed to load assets");
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Failed to load assets:", res.status, errorText);
+          toast.error("Échec du chargement", "Impossible de charger les assets");
+          setAssets([]);
+          setTotal(0);
+          return;
+        }
         
         const data = await res.json();
         setAssets(data.assets || []);
         setTotal(data.pagination?.total || 0);
       } catch (error) {
         console.error("Failed to load assets:", error);
+        toast.error("Erreur de chargement", "Une erreur est survenue");
+        setAssets([]);
+        setTotal(0);
       } finally {
         setLoading(false);
       }
@@ -53,7 +63,11 @@ export default function AssetsPage() {
   const handleDownload = async (assetId: string, assetName: string) => {
     try {
       const res = await fetch(`/api/v2/assets/${assetId}/download`);
-      if (!res.ok) throw new Error("Download failed");
+      if (!res.ok) {
+        console.error("Download failed:", res.status);
+        toast.error("Téléchargement échoué", `Impossible de télécharger ${assetName}`);
+        return;
+      }
       
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -64,9 +78,10 @@ export default function AssetsPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success("Téléchargement réussi", assetName);
     } catch (error) {
       console.error("Download failed:", error);
-      alert("Échec du téléchargement");
+      toast.error("Erreur de téléchargement", "Une erreur est survenue");
     }
   };
 
@@ -74,15 +89,14 @@ export default function AssetsPage() {
     router.push(`/assets/${assetId}`);
   };
 
-  const stats = useMemo(() => {
-    return {
-      total: assets.length,
-      reports: assets.filter((a) => a.type === "report").length,
-      pdfs: assets.filter((a) => a.type === "pdf").length,
-      excel: assets.filter((a) => a.type === "excel").length,
-      docs: assets.filter((a) => a.type === "doc").length,
-    };
-  }, [assets]);
+  // Note: Stats are based on current page assets, not total
+  // This is intentional as the API doesn't return counts by type
+  const statsCurrentPage = {
+    reports: assets.filter((a) => a.type === "report").length,
+    pdfs: assets.filter((a) => a.type === "pdf").length,
+    excel: assets.filter((a) => a.type === "excel").length,
+    docs: assets.filter((a) => a.type === "doc").length,
+  };
 
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
@@ -136,11 +150,11 @@ export default function AssetsPage() {
 
           <div className="flex items-center gap-2 overflow-x-auto">
             {[
-              { id: "all", label: "Tous", count: total },
-              { id: "report", label: "Reports", count: stats.reports },
-              { id: "pdf", label: "PDF", count: stats.pdfs },
-              { id: "excel", label: "Excel", count: stats.excel },
-              { id: "doc", label: "Docs", count: stats.docs },
+              { id: "all", label: "Tous" },
+              { id: "report", label: "Reports" },
+              { id: "pdf", label: "PDF" },
+              { id: "excel", label: "Excel" },
+              { id: "doc", label: "Docs" },
             ].map((filter) => (
               <button
                 key={filter.id}
@@ -155,7 +169,6 @@ export default function AssetsPage() {
                 }`}
               >
                 {filter.label}
-                <span className="ml-1.5 text-[var(--text-faint)]">{filter.count}</span>
               </button>
             ))}
           </div>

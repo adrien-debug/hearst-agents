@@ -11,6 +11,7 @@ import { getAllServices, getAllBundles } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import { enrichWithConnectionStatus } from "@/lib/integrations/catalog";
 import Nango from "@nangohq/frontend";
+import { toast } from "@/app/hooks/use-toast";
 
 const CATEGORY_ORDER = [
   "communication",
@@ -172,7 +173,7 @@ export default function AppsPage() {
     const provider = getProviderForService(serviceId);
     if (!provider) {
       console.error(`[AppsPage] No provider mapping for service: ${serviceId}`);
-      alert(`Service non supporté: ${serviceId}`);
+      toast.error("Service non supporté", `Impossible de connecter ${serviceId}`);
       return;
     }
 
@@ -191,14 +192,16 @@ export default function AppsPage() {
       if (!res.ok) {
         const err = await res.json();
         console.error("[AppsPage] OAuth init failed:", err);
-        alert(`Erreur de connexion: ${err.message || "Service temporairement indisponible"}`);
+        toast.error("Échec de connexion", err.message || "Service temporairement indisponible");
+        setIsConnecting(null);
         return;
       }
 
       const data = await res.json();
       if (!data.success || !data.config) {
         console.error("[AppsPage] Invalid OAuth config:", data);
-        alert("Configuration OAuth invalide");
+        toast.error("Configuration invalide", "Impossible d'initialiser l'authentification");
+        setIsConnecting(null);
         return;
       }
 
@@ -224,9 +227,10 @@ export default function AppsPage() {
           
           // Close drawer and show success message
           setIsDrawerOpen(false);
-          alert(`✓ ${serviceId} connecté avec succès !`);
+          toast.success("Connexion réussie", `${serviceId} est maintenant connecté`);
         } else {
           console.log(`[AppsPage] OAuth cancelled by user for ${provider}`);
+          // User cancelled, no error toast needed
         }
       } catch (oauthError) {
         console.error("[AppsPage] OAuth popup failed:", oauthError);
@@ -234,15 +238,15 @@ export default function AppsPage() {
         // Check if popup was blocked
         const errorMessage = (oauthError as Error).message || "";
         if (errorMessage.includes("popup") || errorMessage.includes("blocked")) {
-          alert("Popup bloquée par le navigateur. Veuillez autoriser les popups pour ce site.");
+          toast.warning("Popup bloquée", "Veuillez autoriser les popups pour ce site dans les paramètres du navigateur");
         } else {
-          alert(`Erreur OAuth: ${errorMessage}`);
+          toast.error("Erreur OAuth", errorMessage || "La connexion a échoué");
         }
       }
 
     } catch (err) {
       console.error("[AppsPage] OAuth initiation failed:", err);
-      alert("Erreur lors de l'initiation de la connexion");
+      toast.error("Erreur de connexion", "Impossible d'initier l'authentification");
     } finally {
       setIsConnecting(null);
     }
