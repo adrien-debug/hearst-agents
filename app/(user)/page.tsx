@@ -12,6 +12,7 @@ import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
 import { CapabilityTabs, type CapabilityMode, getCapabilityFromSurface, isCapabilityAvailable } from "./components/CapabilityTabs";
 import { SourcePicker, type SourceSelection, getDefaultSelection } from "./components/SourcePicker";
+import { Breadcrumb, type Crumb } from "./components/Breadcrumb";
 import { getAllServices } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
@@ -56,19 +57,19 @@ function ChatControls({
   onSourceChange,
 }: ChatControlsProps) {
   return (
-    <div className="px-12 pt-10 space-y-8 bg-gradient-to-b from-white/[0.02] to-transparent">
+    <div className="px-12 pt-10 space-y-8 bg-gradient-to-b from-[var(--surface-1)] to-transparent">
       {/* Blocked Capability Banner */}
       {showBlockedBanner && (
-        <div className="bg-gradient-to-r from-[var(--danger)]/10 to-transparent border-l-2 border-[var(--danger)] p-5 flex items-center justify-between group shadow-[0_20px_40px_rgba(255,51,51,0.05)] rounded-r-sm">
+        <div className="bg-gradient-to-r from-[var(--danger)]/10 to-transparent border-l-2 border-[var(--danger)] p-5 flex items-center justify-between group rounded-r-sm">
           <div className="flex items-center gap-6">
-            <span className="t-10 font-mono font-bold text-[var(--danger)] uppercase tracking-[0.15em]">Access Denied</span>
-            <p className="text-sm font-medium text-white tracking-tight">
+            <span className="t-10 font-mono font-bold text-[var(--danger)] uppercase tracking-[0.2em]">Access Denied</span>
+            <p className="text-sm font-medium text-[var(--text)] tracking-tight">
               {capabilityMode} capability requires connection
             </p>
           </div>
-          <button 
+          <button
             onClick={onDismissBanner}
-            className="t-10 font-mono text-white/40 hover:text-white transition-colors tracking-[0.15em]"
+            className="t-10 font-mono text-[var(--text-faint)] hover:text-[var(--text)] transition-colors tracking-[0.2em]"
           >
             Close [x]
           </button>
@@ -76,7 +77,7 @@ function ChatControls({
       )}
 
       {/* Source Picker & Capability Tabs */}
-      <div className="flex items-center justify-between border-b border-white/[0.08] pb-8">
+      <div className="flex items-center justify-between border-b border-[var(--line-strong)] pb-8">
         <CapabilityTabs
           connectedServices={connectedServices}
           activeMode={capabilityMode}
@@ -134,13 +135,16 @@ export default function HomePage() {
   const surface = useNavigationStore((s) => s.surface);
   const setSurface = useNavigationStore((s) => s.setSurface);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
+  const activeThread = useNavigationStore((s) =>
+    activeThreadId ? s.threads.find((t) => t.id === activeThreadId) : undefined
+  );
   const messagesRaw = useNavigationStore((s) =>
     activeThreadId ? s.messages[activeThreadId] : undefined
   );
   const messages = useMemo(() => messagesRaw ?? [], [messagesRaw]);
   const addMessageToThread = useNavigationStore((s) => s.addMessageToThread);
   const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
-  const _firstName = session?.user?.name?.split(" ")[0];
+  const firstName = session?.user?.name?.split(" ")[0];
 
   useEffect(() => {
     if (!activeThreadId) {
@@ -422,40 +426,87 @@ export default function HomePage() {
   };
 
   if (isIdle) {
+    const hour = new Date().getHours();
+    const greeting =
+      hour < 6 ? "Bonne nuit"
+      : hour < 12 ? "Bonjour"
+      : hour < 18 ? "Bon après-midi"
+      : "Bonsoir";
+    const connectedCount = connectedServices.length;
+    const suggestions = [
+      { id: "01", title: "Résumer mes emails", subtitle: "Synthèse 24h · Gmail" },
+      { id: "02", title: "Planifier une réunion", subtitle: "Trouver un créneau · Calendar" },
+      { id: "03", title: "Analyser un document", subtitle: "Lecture & synthèse · Drive" },
+      { id: "04", title: "Créer un rapport", subtitle: "Brief structuré · Multi-source" },
+    ];
+
     return (
       <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-gradient-to-b from-[var(--mat-050)] via-[var(--bg-soft)] to-[var(--mat-050)]">
-        <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at 30% 50%, rgba(163, 255, 0, 0.02) 0%, transparent 60%), radial-gradient(circle at 70% 80%, rgba(255,255,255,0.01) 0%, transparent 40%)" }} />
-          <div className="text-center space-y-12 relative z-10">
-            <div
-              className="inline-flex flex-col items-center gap-6"
-            >
-              <div
-                className="w-20 h-20 flex items-center justify-center t-24 font-black bg-[var(--cykan)] text-black rounded-sm"
-              >
-                H
-              </div>
-              <span className="t-11 font-mono tracking-[0.3em] text-white/30 uppercase">Hearst_OS</span>
+        <div className="absolute inset-0 bg-hero-aura" />
+
+        <div className="flex-1 flex flex-col items-center justify-center px-12 relative z-10">
+          <div className="w-full max-w-[640px] space-y-16">
+            {/* Wordmark — refined typographic identity with cyan halo */}
+            <div className="flex flex-col items-center gap-6 relative">
+              <span className="t-9 font-mono tracking-[0.3em] text-[var(--cykan)] uppercase halo-cyan-sm">
+                Ghost Protocol
+              </span>
+              <h1 className="t-30 font-extralight tracking-[0.3em] text-[var(--text)] uppercase select-none halo-cyan-lg">
+                Hearst
+              </h1>
+              <div className="h-px w-32 halo-rule" />
             </div>
 
-            <h1 className="t-60 font-light text-white tracking-tight leading-[1] opacity-[0.03]">Ghost Protocol</h1>
-            
-            <div className="h-px w-32 bg-white/5 mx-auto" />
+            {/* Contextual greeting */}
+            <div className="text-center space-y-3">
+              <p className="t-24 font-light text-[var(--text)] tracking-tight">
+                {greeting}{firstName ? <span className="halo-cyan-sm">, {firstName}</span> : ""}
+              </p>
+              <p className="t-11 font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase flex items-center justify-center gap-3">
+                <span className="inline-block w-1 h-1 rounded-full bg-[var(--cykan)] halo-dot" />
+                {connectedCount > 0
+                  ? `${connectedCount} source${connectedCount > 1 ? "s" : ""} connectée${connectedCount > 1 ? "s" : ""} · prêt à exécuter`
+                  : "Aucune source · connecte-en une pour commencer"}
+              </p>
+            </div>
 
-            {/* Suggestion chips */}
-            <div className="flex flex-wrap justify-center gap-6 mt-12">
-              {["Résumer mes emails", "Planifier une réunion", "Analyser un document", "Créer un rapport"].map((s) => (
+            {/* Editorial numbered suggestion cards */}
+            <div className="grid grid-cols-2 gap-px bg-[var(--surface-2)] border border-[var(--surface-2)]">
+              {suggestions.map((s) => (
                 <button
-                  key={s}
-                  onClick={() => handleSubmit(s)}
-                  className="px-4 py-2 t-13 font-medium tracking-normal text-white/40 hover:text-white hover:bg-white/5 rounded-full border border-white/10 hover:border-white/20 transition-all duration-300"
+                  key={s.id}
+                  onClick={() => handleSubmit(s.title)}
+                  className="halo-card group relative flex items-start gap-5 p-6 text-left bg-[var(--mat-050)] hover:bg-[var(--surface-1)] overflow-hidden"
                 >
-                  {s}
+                  <span className="halo-on-group-hover t-11 font-mono tracking-[0.2em] text-[var(--cykan)] opacity-50 group-hover:opacity-100 transition-all pt-1">
+                    {s.id}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="t-13 font-medium tracking-tight text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors">
+                      {s.title}
+                    </p>
+                    <p className="t-10 font-mono tracking-[0.2em] text-[var(--text-faint)] mt-1.5 uppercase">
+                      {s.subtitle}
+                    </p>
+                  </div>
+                  <span className="halo-on-group-hover absolute top-6 right-6 t-11 font-mono text-[var(--text-ghost)] group-hover:text-[var(--cykan)] group-hover:translate-x-1 transition-all duration-300">
+                    →
+                  </span>
                 </button>
               ))}
             </div>
           </div>
         </div>
+
+        {/* Telemetry footer — Ghost Protocol signature */}
+        <div className="px-12 pb-2 flex items-center justify-between t-9 font-mono tracking-[0.3em] text-[var(--text-ghost)] uppercase relative z-10 select-none">
+          <span>Hearst_OS · v0.4</span>
+          <span className="flex items-center gap-3">
+            <span className="w-1 h-1 rounded-full bg-[var(--cykan)] halo-dot" />
+            {connectedCount} sources · ready
+          </span>
+        </div>
+
         <ChatControls {...chatControlsProps} />
         <ChatInput
           onSubmit={handleSubmit}
@@ -468,17 +519,20 @@ export default function HomePage() {
   return (
     <div className="flex-1 flex flex-col min-h-0 relative bg-gradient-to-br from-[var(--surface)] via-[var(--bg-soft)] to-[var(--mat-050)]">
       {/* Principal surface: Focal Stage - takes full height when active */}
-      {focal && showFocal && (
-        <div className="flex-1 flex flex-col min-h-0 border-b border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent">
-          {/* Focal header - minimal, contextual */}
-          <div className="flex items-center justify-between px-12 py-8 bg-transparent flex-shrink-0 relative z-10 border-b border-white/10">
-            <div className="flex items-center gap-6">
-              <span className="t-10 text-[var(--cykan)] font-mono font-bold uppercase tracking-[0.2em]">{focal.type}_HUD</span>
-              <span className="t-18 font-bold text-white tracking-tight truncate max-w-[500px]">{focal.title}</span>
-            </div>
+      {focal && showFocal && (() => {
+        const trail: Crumb[] = [
+          { label: activeThread?.name || "Hearst" },
+          { label: `${focal.type}_HUD` },
+          { label: focal.title, accent: true },
+        ];
+        return (
+        <div className="flex-1 flex flex-col min-h-0 border-b border-[var(--surface-2)] bg-gradient-to-b from-[var(--surface-1)] to-transparent">
+          {/* Focal header — breadcrumb + close */}
+          <div className="flex items-center justify-between px-12 py-6 flex-shrink-0 relative z-10 border-b border-[var(--surface-2)]">
+            <Breadcrumb trail={trail} className="min-w-0 truncate" />
             <button
               onClick={() => setShowFocal(false)}
-              className="t-10 font-mono font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white transition-colors"
+              className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)] hover:text-[var(--text)] transition-colors shrink-0"
               title="Minimiser (rester dans le contexte)"
             >
               Close [x]
@@ -489,21 +543,22 @@ export default function HomePage() {
             <FocalStage />
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Collapsed focal indicator - contextual chip */}
       {focal && !showFocal && (
-        <div className="flex-shrink-0 px-12 py-8 bg-transparent relative z-10">
+        <div className="flex-shrink-0 px-12 py-8 relative z-10">
           <button
             onClick={() => setShowFocal(true)}
-            className="inline-flex items-center gap-8 group"
+            className="inline-flex items-center gap-6 group"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--cykan)] animate-pulse"></div>
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-pulse halo-dot" />
             <div className="flex flex-col items-start">
-              <span className="text-white/40 uppercase font-mono tracking-[0.2em] t-10 group-hover:text-[var(--cykan)] transition-colors">
+              <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors">
                 {focal.type === "brief" ? "Active Brief" : focal.type === "report" ? "Active Report" : "Active Document"}
               </span>
-              <span className="text-white/70 font-bold tracking-tight text-base group-hover:translate-x-2 group-hover:text-white transition-all duration-300">{focal.title}</span>
+              <span className="t-15 font-medium tracking-tight text-[var(--text-muted)] group-hover:translate-x-1 group-hover:text-[var(--text)] transition-all duration-300">{focal.title}</span>
             </div>
           </button>
         </div>
@@ -511,11 +566,11 @@ export default function HomePage() {
 
       {/* Chat messages - canonical renderer with conditional sizing - only render container when messages exist */}
       {messages.length > 0 && (
-        <div className={focal && showFocal ? "flex-shrink-0 h-[320px] border-t border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[var(--mat-050)] to-[var(--bg-soft)]"}>
+        <div className={focal && showFocal ? "flex-shrink-0 h-[320px] border-t border-[var(--surface-2)] bg-gradient-to-b from-[var(--surface-1)] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[var(--mat-050)] to-[var(--bg-soft)]"}>
           <ChatMessages
             messages={messages}
             compact={!!(focal && showFocal)}
-            className={focal && showFocal ? "h-full overflow-y-auto px-12 py-8 flex flex-col" : "h-full overflow-y-auto px-12 py-12 flex flex-col"}
+            className={focal && showFocal ? "h-full overflow-y-auto px-10 py-6 flex flex-col" : "h-full overflow-y-auto px-12 py-10 flex flex-col"}
           />
         </div>
       )}

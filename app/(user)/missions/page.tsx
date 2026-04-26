@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MissionEditor } from "../components/MissionEditor";
 import { toast } from "@/app/hooks/use-toast";
 import { GhostIconPencil, GhostIconPlay, GhostIconTrash, GhostIconX } from "../components/ghost-icons";
+import { useFocalStore } from "@/stores/focal";
+import { useNavigationStore } from "@/stores/navigation";
+import type { FocalObject } from "@/stores/focal";
+import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 
 type MissionOpsStatus = "idle" | "running" | "success" | "failed" | "blocked";
 
@@ -22,13 +27,56 @@ interface Mission {
   runningSince?: number;
 }
 
+function missionToFocal(mission: Mission, threadId: string | null): FocalObject {
+  const now = Date.now();
+  const status = mission.opsStatus === "running" ? "active"
+    : mission.opsStatus === "failed" ? "failed"
+    : mission.enabled ? "ready"
+    : "paused";
+  const summary = [
+    `Schedule: ${mission.frequency}`,
+    mission.lastRun ? `Last run: ${mission.lastRun}` : "Never run",
+    mission.enabled ? "Armed" : "Disabled",
+  ].join(" · ");
+  return {
+    id: mission.id,
+    type: mission.enabled ? "mission_active" : "mission_draft",
+    status,
+    title: mission.name,
+    body: mission.input || mission.description,
+    summary,
+    missionId: mission.id,
+    threadId: threadId ?? undefined,
+    createdAt: now,
+    updatedAt: now,
+    primaryAction: mission.enabled
+      ? { kind: "pause", label: "Pause mission" }
+      : { kind: "resume", label: "Resume mission" },
+  };
+}
+
 export default function MissionsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const setFocal = useFocalStore((s) => s.setFocal);
+  const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showEditor, setShowEditor] = useState(false);
+  const [showEditor, setShowEditor] = useState(() => searchParams.get("new") === "1");
   const [editingMission, setEditingMission] = useState<Mission | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      router.replace("/missions");
+    }
+  }, [searchParams, router]);
+
+  const handleRowOpen = (mission: Mission) => {
+    setFocal(missionToFocal(mission, activeThreadId));
+    router.push("/");
+  };
 
   useEffect(() => {
     async function loadMissions() {
@@ -239,6 +287,7 @@ export default function MissionsPage() {
     <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
       {/* Header */}
       <div className="border-b border-[var(--line)] p-6">
+        <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Missions" }] as Crumb[]} className="mb-4" />
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="ghost-title-impact text-lg mb-1">Missions</h1>
@@ -329,16 +378,21 @@ export default function MissionsPage() {
                       title={mission.enabled ? "Désactiver" : "Activer"}
                       aria-label={mission.enabled ? "Désactiver" : "Activer"}
                     />
-                    <div className="min-w-0">
-                      <p className="font-mono t-9 uppercase tracking-[0.15em] text-[var(--text-faint)] mb-1">ID_REF: {mission.id.slice(0, 8)}</p>
-                      <h3 className="t-13 font-medium text-[var(--text)] tracking-tight">{mission.name}</h3>
+                    <button
+                      type="button"
+                      onClick={() => handleRowOpen(mission)}
+                      className="min-w-0 text-left group/open cursor-pointer"
+                      title={`Open ${mission.name}`}
+                    >
+                      <p className="font-mono t-9 uppercase tracking-[0.2em] text-[var(--text-faint)] mb-1">ID_REF: {mission.id.slice(0, 8)}</p>
+                      <h3 className="t-13 font-medium text-[var(--text)] tracking-tight group-hover/open:text-[var(--cykan)] group-hover/open:halo-cyan-sm transition-colors">{mission.name}</h3>
                       <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] mt-1">{mission.description}</p>
                       {mission.lastError && (
                         <p className="t-10 font-mono text-[var(--danger)] truncate mt-2 border-b border-[var(--danger)] pb-0.5 inline-block max-w-full" title={mission.lastError}>
                           ERR_LOG: {mission.lastError}
                         </p>
                       )}
-                    </div>
+                    </button>
                   </div>
                   <div className="text-right space-y-2">
                     <span className={`inline-block font-mono t-9 uppercase tracking-[0.15em] border-b pb-0.5 ${statusLine}`}>

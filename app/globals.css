@@ -27,11 +27,16 @@
   --line-strong: rgba(255, 255, 255, 0.06);
   --line-active: rgba(45, 212, 191, 0.15);
 
+  /* Surface scale — translucent fill (above --mat-* opaque scale) */
+  --surface-1: rgba(255, 255, 255, 0.025);
+  --surface-2: rgba(255, 255, 255, 0.04);
+
   /* Text opacity scale — Mastered Contrast */
   --text: #ffffff;
   --text-soft: rgba(255, 255, 255, 0.88);
   --text-muted: rgba(255, 255, 255, 0.65);
   --text-faint: rgba(255, 255, 255, 0.45);
+  --text-ghost: rgba(255, 255, 255, 0.25);
 
   /* Accent colors */
   --cyan-accent: #2DD4BF;
@@ -67,8 +72,11 @@
   --color-text-soft: var(--text-soft);
   --color-text-muted: var(--text-muted);
   --color-text-faint: var(--text-faint);
+  --color-text-ghost: var(--text-ghost);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
   --color-money: var(--money);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
@@ -167,6 +175,128 @@ body {
 
 .bg-panel-gradient {
   background: linear-gradient(180deg, #080808 0%, #0a0a0a 30%, #060606 100%);
+}
+
+.bg-hero-aura {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 45%, rgba(45, 212, 191, 0.08) 0%, rgba(45, 212, 191, 0.02) 35%, transparent 70%),
+    radial-gradient(circle at 20% 90%, rgba(45, 212, 191, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.015) 0%, transparent 45%);
+  pointer-events: none;
+}
+
+/* ── Halo utilities ────────────────────── */
+
+.halo-cyan-sm {
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+}
+
+/* Group-hover halo: applies cyan glow when ancestor `.group` is hovered */
+.halo-on-group-hover {
+  transition: text-shadow 300ms ease;
+}
+
+.group:hover .halo-on-group-hover {
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
+}
+
+/* Self-hover halo: applies cyan glow on the element's own hover */
+.halo-on-hover {
+  transition: text-shadow 300ms ease;
+}
+
+.halo-on-hover:hover {
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
+}
+
+.halo-cyan-md {
+  text-shadow:
+    0 0 16px rgba(45, 212, 191, 0.4),
+    0 0 32px rgba(45, 212, 191, 0.2);
+}
+
+.halo-cyan-lg {
+  text-shadow:
+    0 0 24px rgba(45, 212, 191, 0.45),
+    0 0 60px rgba(45, 212, 191, 0.25),
+    0 0 100px rgba(45, 212, 191, 0.12);
+}
+
+.halo-rule {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(45, 212, 191, 0.6) 50%,
+    transparent 100%
+  );
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
+}
+
+.halo-dot {
+  box-shadow:
+    0 0 6px rgba(45, 212, 191, 0.6),
+    0 0 16px rgba(45, 212, 191, 0.35);
+}
+
+.halo-ring {
+  box-shadow:
+    0 0 0 1px rgba(45, 212, 191, 0.25),
+    0 0 24px rgba(45, 212, 191, 0.15);
+}
+
+.halo-card {
+  transition: box-shadow 300ms ease, background-color 300ms ease;
+}
+
+.halo-card:hover {
+  box-shadow:
+    inset 0 1px 0 0 rgba(45, 212, 191, 0.3),
+    0 -8px 32px -8px rgba(45, 212, 191, 0.18),
+    0 16px 32px -16px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Chat transcript utilities ────────── */
+
+/* Vertical cyan rule on AI turns — halo'd "living thread" */
+.chat-ai-rule {
+  background: linear-gradient(180deg,
+    rgba(45, 212, 191, 0) 0%,
+    rgba(45, 212, 191, 0.6) 20%,
+    rgba(45, 212, 191, 0.6) 80%,
+    rgba(45, 212, 191, 0) 100%);
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.3);
+}
+
+/* Streaming block cursor with halo */
+.chat-cursor {
+  width: 9px;
+  height: 16px;
+  background: var(--cykan);
+  margin-left: 4px;
+  animation: chat-cursor-blink 1s ease-in-out infinite;
+  box-shadow:
+    0 0 8px rgba(45, 212, 191, 0.6),
+    0 0 24px rgba(45, 212, 191, 0.3);
+}
+
+@keyframes chat-cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+/* Shimmer placeholder for AI preparing response */
+.chat-shimmer {
+  background: linear-gradient(90deg,
+    rgba(45, 212, 191, 0.05) 0%,
+    rgba(45, 212, 191, 0.15) 50%,
+    rgba(45, 212, 191, 0.05) 100%);
+  background-size: 200% 100%;
+  animation: chat-shimmer-slide 2s linear infinite;
+}
+
+@keyframes chat-shimmer-slide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* ── Scrollbar styling ────────────────── */

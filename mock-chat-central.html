@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<title>Hearst_OS — Chat Central Mock</title>
+<style>
+:root {
+  --bg: #000000;
+  --bg-soft: #080808;
+  --surface: #060606;
+  --mat-050: #050505;
+  --mat-100: #040404;
+  --mat-200: #070707;
+  --mat-300: #0a0a0a;
+  --line: rgba(255, 255, 255, 0.03);
+  --line-strong: rgba(255, 255, 255, 0.06);
+  --surface-1: rgba(255, 255, 255, 0.025);
+  --surface-2: rgba(255, 255, 255, 0.04);
+  --text: #ffffff;
+  --text-soft: rgba(255, 255, 255, 0.88);
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --text-faint: rgba(255, 255, 255, 0.45);
+  --text-ghost: rgba(255, 255, 255, 0.25);
+  --cykan: #2DD4BF;
+  --warn: #ffcc00;
+  --danger: #ff3333;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  padding: 48px 32px 96px;
+  min-height: 100vh;
+}
+
+.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+/* ── Halo utilities (mirror globals.css) ── */
+.halo-cyan-sm { text-shadow: 0 0 12px rgba(45, 212, 191, 0.35); }
+.halo-cyan-md { text-shadow: 0 0 16px rgba(45, 212, 191, 0.4), 0 0 32px rgba(45, 212, 191, 0.2); }
+.halo-dot {
+  box-shadow:
+    0 0 6px rgba(45, 212, 191, 0.6),
+    0 0 16px rgba(45, 212, 191, 0.35);
+}
+.halo-rule {
+  background: linear-gradient(90deg, transparent 0%, rgba(45, 212, 191, 0.6) 50%, transparent 100%);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
+}
+
+.bg-hero-aura {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 45%, rgba(45, 212, 191, 0.05) 0%, rgba(45, 212, 191, 0.015) 35%, transparent 70%),
+    radial-gradient(circle at 20% 90%, rgba(45, 212, 191, 0.03) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* ── Mock layout ── */
+.mock-header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+.mock-header .eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--cykan);
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+}
+.mock-header h1 {
+  font-size: 30px;
+  font-weight: 200;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin: 16px 0 8px;
+  text-shadow:
+    0 0 24px rgba(45, 212, 191, 0.45),
+    0 0 60px rgba(45, 212, 191, 0.25);
+}
+.mock-header .subtitle {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-family: ui-monospace, monospace;
+}
+
+.variants {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+  .variants { grid-template-columns: 1fr; }
+}
+
+.variant {
+  background: linear-gradient(180deg, var(--mat-050) 0%, var(--bg-soft) 50%, var(--mat-050) 100%);
+  border: 1px solid var(--surface-2);
+  position: relative;
+  overflow: hidden;
+  min-height: 720px;
+  display: flex;
+  flex-direction: column;
+}
+
+.variant-label {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--surface-2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+.variant-label .tag {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: var(--cykan);
+  text-transform: uppercase;
+  font-family: ui-monospace, monospace;
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+}
+.variant-label .name {
+  font-size: 13px;
+  color: var(--text-soft);
+  font-weight: 500;
+}
+
+/* ── Chat transcript — Variant A+B ── */
+.chat-stream {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Turn block — base */
+.turn {
+  display: flex;
+  gap: 16px;
+  position: relative;
+  align-items: flex-start;
+}
+
+/* AI turn — cyan rule + bracketed tag + provenance */
+.turn.ai {
+  padding-left: 18px;
+  position: relative;
+}
+.turn.ai::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: linear-gradient(180deg,
+    rgba(45, 212, 191, 0) 0%,
+    rgba(45, 212, 191, 0.6) 20%,
+    rgba(45, 212, 191, 0.6) 80%,
+    rgba(45, 212, 191, 0) 100%);
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.3);
+}
+
+/* User turn — surface card */
+.turn.user .body {
+  background: var(--surface-1);
+  border: 1px solid var(--surface-2);
+  padding: 14px 18px;
+  width: 100%;
+}
+
+.turn-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 9px;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+.turn.user .turn-meta {
+  color: var(--text-faint);
+}
+.turn.ai .turn-meta {
+  color: var(--cykan);
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+}
+.turn-meta .bracket { opacity: 0.6; }
+.turn-meta .role { font-weight: 600; }
+.turn-meta .meta-sep { color: var(--text-ghost); }
+.turn-meta .timestamp { color: var(--text-faint); }
+.turn-meta .source { color: var(--text-faint); }
+
+.turn-body {
+  font-size: 15px;
+  line-height: 1.65;
+  letter-spacing: -0.005em;
+}
+
+.turn.user .turn-body {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.turn.ai .turn-body {
+  color: var(--text-soft);
+  font-weight: 400;
+}
+
+.turn.ai .turn-body p + p { margin-top: 12px; }
+
+/* Action bar (hover-revealed) */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.turn.ai:hover .actions { opacity: 1; transform: translateY(0); }
+
+.action-chip {
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  cursor: pointer;
+  padding: 4px 8px;
+  border: 1px solid var(--surface-2);
+  background: transparent;
+  transition: all 200ms;
+}
+.action-chip:hover {
+  color: var(--cykan);
+  border-color: rgba(45, 212, 191, 0.3);
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+}
+
+/* Streaming cursor */
+.cursor {
+  display: inline-block;
+  width: 9px;
+  height: 16px;
+  background: var(--cykan);
+  margin-left: 4px;
+  vertical-align: text-bottom;
+  animation: blink 1s ease-in-out infinite;
+  box-shadow:
+    0 0 8px rgba(45, 212, 191, 0.6),
+    0 0 24px rgba(45, 212, 191, 0.3);
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+/* Streaming placeholder shimmer */
+.shimmer {
+  height: 12px;
+  background: linear-gradient(90deg,
+    rgba(45, 212, 191, 0.05) 0%,
+    rgba(45, 212, 191, 0.15) 50%,
+    rgba(45, 212, 191, 0.05) 100%);
+  background-size: 200% 100%;
+  animation: shimmerSlide 2s linear infinite;
+  margin-bottom: 8px;
+  width: 100%;
+}
+.shimmer.short { width: 60%; }
+.shimmer.medium { width: 80%; }
+@keyframes shimmerSlide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Compact variant footer (when focal is on top) ── */
+.compact-focal-bar {
+  padding: 16px 28px;
+  border-bottom: 1px solid var(--surface-2);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+  background: var(--surface-1);
+}
+.compact-focal-bar .focal-tag {
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cykan);
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+}
+.compact-focal-bar .focal-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+.compact-focal-bar .focal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cykan);
+  box-shadow:
+    0 0 6px rgba(45, 212, 191, 0.6),
+    0 0 16px rgba(45, 212, 191, 0.35);
+}
+
+/* ── Input footer ── */
+.chat-footer {
+  border-top: 1px solid var(--surface-2);
+  padding: 24px 28px;
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, transparent, var(--mat-050));
+}
+.chat-input {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--surface-1);
+  border: 1px solid var(--surface-2);
+  position: relative;
+}
+.chat-input::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.6), transparent);
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.3);
+}
+.chat-input .prompt {
+  font-family: ui-monospace, monospace;
+  color: var(--cykan);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  padding-top: 4px;
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+}
+.chat-input .field {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+  font-family: inherit;
+}
+.chat-input .field::placeholder {
+  color: var(--text-ghost);
+}
+.chat-input .send {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--surface-2);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 200ms;
+}
+.chat-input .send:hover {
+  background: var(--cykan);
+  color: var(--bg);
+  border-color: var(--cykan);
+  box-shadow: 0 0 24px rgba(45, 212, 191, 0.4);
+}
+
+.input-hint {
+  margin-top: 12px;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+}
+
+/* ── Captions ── */
+.caption {
+  margin-top: 24px;
+  padding: 16px 24px;
+  background: var(--mat-050);
+  border-left: 2px solid var(--cykan);
+}
+.caption .label {
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cykan);
+  margin-bottom: 8px;
+  display: block;
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+}
+.caption .text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.caption .text strong { color: var(--text-soft); font-weight: 500; }
+
+.section-divider {
+  max-width: 1600px;
+  margin: 80px auto 40px;
+  text-align: center;
+  position: relative;
+}
+.section-divider::before,
+.section-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.4), transparent);
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.2);
+}
+.section-divider::before { left: 0; }
+.section-divider::after { right: 0; }
+.section-divider span {
+  display: inline-block;
+  padding: 0 24px;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--cykan);
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
+  background: var(--bg);
+  position: relative;
+}
+</style>
+</head>
+<body>
+
+<header class="mock-header">
+  <span class="eyebrow">Mock · Chat Central</span>
+  <h1>Hearst</h1>
+  <p class="subtitle">Direction A + B · bracketed transcript with action bar</p>
+</header>
+
+<div class="variants">
+
+  <!-- ────────────────────────────────────────────────── -->
+  <!-- VARIANT 1: Chat plein écran (no focal active)     -->
+  <!-- ────────────────────────────────────────────────── -->
+  <article class="variant">
+    <div class="bg-hero-aura"></div>
+    <div class="variant-label">
+      <span class="tag">Variant 01 · Full</span>
+      <span class="name">Chat sans focal — plein écran</span>
+    </div>
+
+    <div class="chat-stream">
+      <!-- User turn 1 -->
+      <div class="turn user">
+        <div class="body">
+          <div class="turn-meta">
+            <span class="bracket">[</span>
+            <span class="role">YOU</span>
+            <span class="meta-sep">·</span>
+            <span class="timestamp">14:23</span>
+            <span class="bracket">]</span>
+          </div>
+          <div class="turn-body">Résume mes 12 derniers emails et identifie ceux qui demandent une action de ma part avant ce soir.</div>
+        </div>
+      </div>
+
+      <!-- AI turn 1 -->
+      <div class="turn ai">
+        <div style="flex:1">
+          <div class="turn-meta">
+            <span class="bracket">[</span>
+            <span class="role">HEARST</span>
+            <span class="meta-sep">·</span>
+            <span class="source">GMAIL</span>
+            <span class="meta-sep">·</span>
+            <span class="timestamp">14:23</span>
+            <span class="bracket">]</span>
+          </div>
+          <div class="turn-body">
+            <p>J'ai examiné les 12 derniers emails reçus depuis 09:00. Trois nécessitent une action avant 18:00 :</p>
+            <p>1. <strong style="color:var(--cykan);text-shadow:0 0 12px rgba(45,212,191,0.35)">Marie Dubois (Hearst Paris)</strong> — propose 3 créneaux pour le call vendredi · réponse attendue.<br/>
+            2. <strong style="color:var(--cykan);text-shadow:0 0 12px rgba(45,212,191,0.35)">Linear · INGEST-412</strong> — review du PR bloque le déploiement Q2.<br/>
+            3. <strong style="color:var(--cykan);text-shadow:0 0 12px rgba(45,212,191,0.35)">Stripe</strong> — facture en retard relance auto programmée à 17:00.</p>
+            <p>Les 9 autres sont des newsletters ou notifications passives — je peux te les classer si besoin.</p>
+          </div>
+          <div class="actions">
+            <button class="action-chip">Cite</button>
+            <button class="action-chip">Pin to focal</button>
+            <button class="action-chip">Re-run</button>
+            <button class="action-chip">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- User turn 2 -->
+      <div class="turn user">
+        <div class="body">
+          <div class="turn-meta">
+            <span class="bracket">[</span>
+            <span class="role">YOU</span>
+            <span class="meta-sep">·</span>
+            <span class="timestamp">14:24</span>
+            <span class="bracket">]</span>
+          </div>
+          <div class="turn-body">Pin la mission Linear et propose un brouillon de réponse à Marie pour le créneau de vendredi 15h.</div>
+        </div>
+      </div>
+
+      <!-- AI streaming turn -->
+      <div class="turn ai">
+        <div style="flex:1">
+          <div class="turn-meta">
+            <span class="bracket">[</span>
+            <span class="role">HEARST</span>
+            <span class="meta-sep">·</span>
+            <span class="source">GMAIL · CALENDAR</span>
+            <span class="meta-sep">·</span>
+            <span class="timestamp">14:24</span>
+            <span class="bracket">]</span>
+          </div>
+          <div class="turn-body">
+            <p>INGEST-412 épinglé au focal. Vérification du calendrier vendredi 15:00 — créneau libre confirmé. Voici un brouillon<span class="cursor"></span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-footer">
+      <div class="chat-input">
+        <span class="prompt">&gt;</span>
+        <input class="field" placeholder="CONTINUE_ON_CONTEXT_" />
+        <button class="send">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line · @ to mention</div>
+    </div>
+  </article>
+
+  <!-- ────────────────────────────────────────────────── -->
+  <!-- VARIANT 2: Chat compact (focal actif au-dessus)   -->
+  <!-- ────────────────────────────────────────────────── -->
+  <article class="variant">
+    <div class="bg-hero-aura"></div>
+    <div class="variant-label">
+      <span class="tag">Variant 02 · Compact</span>
+      <span class="name">Chat sous focal actif — transcript footer</span>
+    </div>
+
+    <div class="compact-focal-bar">
+      <span class="focal-dot"></span>
+      <span class="focal-tag">REPORT_HUD ·</span>
+      <span class="focal-title">Synthèse hebdomadaire — Q2 Pipeline</span>
+    </div>
+
+    <div class="chat-stream" style="gap: 20px; padding-top: 20px;">
+      <!-- Empty state with one preview turn -->
+      <div class="turn user">
+        <div class="body" style="padding: 10px 14px">
+          <div class="turn-meta" style="margin-bottom: 4px">
+            <span class="bracket">[</span>
+            <span class="role">YOU</span>
+            <span class="meta-sep">·</span>
+            <span class="timestamp">14:30</span>
+            <span class="bracket">]</span>
+          </div>
+          <div class="turn-body" style="font-size: 14px">Génère ce rapport en français et ajoute la prévision Q3.</div>
+        </div>
+      </div>
+
+      <!-- AI shimmer placeholder (streaming) -->
+      <div class="turn ai">
+        <div style="flex:1">
+          <div class="turn-meta">
+            <span class="bracket">[</span>
+            <span class="role">HEARST</span>
+            <span class="meta-sep">·</span>
+            <span class="source">DRIVE · HUBSPOT · STRIPE</span>
+            <span class="meta-sep">·</span>
+            <span class="timestamp">14:30</span>
+            <span class="bracket">]</span>
+          </div>
+          <div class="turn-body" style="margin-top: 10px">
+            <div class="shimmer"></div>
+            <div class="shimmer medium"></div>
+            <div class="shimmer short"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI completed turn -->
+      <div class="turn ai">
+        <div style="flex:1">
+          <div class="turn-meta">
+            <span class="bracket">[</span>
+            <span class="role">HEARST</span>
+            <span class="meta-sep">·</span>
+            <span class="source">DRIVE</span>
+            <span class="meta-sep">·</span>
+            <span class="timestamp">14:31</span>
+            <span class="bracket">]</span>
+          </div>
+          <div class="turn-body">
+            <p>Rapport généré (3 sections, 12 metrics). Section "Q3 forecast" ajoutée d'après les patterns Hubspot des 8 dernières semaines · confiance 78 %.</p>
+          </div>
+          <div class="actions" style="opacity:1; transform:translateY(0)">
+            <button class="action-chip">Cite</button>
+            <button class="action-chip">Pin to focal</button>
+            <button class="action-chip">Re-run</button>
+            <button class="action-chip">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-footer">
+      <div class="chat-input">
+        <span class="prompt">&gt;</span>
+        <input class="field" placeholder="CONTINUE_ON_CONTEXT_" />
+        <button class="send">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line · @ to mention</div>
+    </div>
+  </article>
+
+</div>
+
+<div class="section-divider"><span>Decisions</span></div>
+
+<div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+  <div class="caption">
+    <span class="label">01 · Bracketed tags</span>
+    <p class="text"><strong>Au lieu de</strong> "You" / "AI" en colonne fixe à gauche.<br/>
+    <strong>Maintenant</strong> : <span class="mono" style="color:var(--cykan)">[YOU · 14:23]</span> et <span class="mono" style="color:var(--cykan)">[HEARST · GMAIL · 14:23]</span> en haut de chaque turn. La provenance (sources mentionnées) est toujours visible — plus besoin de demander "tu as utilisé quoi ?".</p>
+  </div>
+
+  <div class="caption">
+    <span class="label">02 · Cyan rule on AI</span>
+    <p class="text">Trait cyan 1px halo'd à gauche des réponses AI uniquement. Le fil "vivant" du système — quand tu scrolles vite, ton œil suit la ligne sans avoir à lire les tags.</p>
+  </div>
+
+  <div class="caption">
+    <span class="label">03 · User card vs AI bare</span>
+    <p class="text">Les messages user prennent un cadre <span class="mono" style="color:var(--cykan)">--surface-1</span> + bordure hairline. Les AI restent à nu (juste le filet cyan). Hiérarchie visuelle : <strong>tu poses des cailloux, l'IA répond comme un livre</strong>.</p>
+  </div>
+
+  <div class="caption">
+    <span class="label">04 · Action bar au hover</span>
+    <p class="text">Sur les réponses AI : <span class="mono">cite</span> · <span class="mono">pin to focal</span> · <span class="mono">re-run</span> · <span class="mono">copy</span> apparaissent au hover. Permet de faire monter une réponse vers le focal stage sans quitter le flow.</p>
+  </div>
+
+  <div class="caption">
+    <span class="label">05 · Streaming cursor halo</span>
+    <p class="text">Le bloc cursor cyan <span style="display:inline-block;width:8px;height:14px;background:var(--cykan);box-shadow:0 0 8px rgba(45,212,191,0.6),0 0 24px rgba(45,212,191,0.3);vertical-align:text-bottom"></span> remplace les 3 dots qui sautillent. Plus typewriter, moins "loading spinner". Halo cyan visible.</p>
+  </div>
+
+  <div class="caption">
+    <span class="label">06 · Shimmer scanline (B)</span>
+    <p class="text">Quand l'IA prépare une réponse longue (rapport, synthèse multi-source), placeholder shimmer cyan en attendant les premiers tokens. Plus rassurant que le vide.</p>
+  </div>
+</div>
+
+<div class="section-divider"><span>Tradeoffs</span></div>
+
+<div style="max-width: 800px; margin: 0 auto; padding: 24px;">
+  <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">
+    <strong style="color: var(--text)">Pour</strong> · plus dense en signal (timestamps, sources toujours là), plus graphique (halos, filet cyan), plus actionnable (action bar). Lit comme un transcript éditorial plutôt qu'une conversation Slack.
+  </p>
+  <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7; margin-top: 16px;">
+    <strong style="color: var(--text)">Contre</strong> · les tags bracket prennent 1 ligne par turn (au lieu de 0 dans la version label-colonne). Sur des turns courts ça augmente le scroll. Mitigation : tags en <span class="mono" style="color:var(--cykan)">9px</span> très denses, ils prennent ~14 px de hauteur.
+  </p>
+  <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7; margin-top: 16px;">
+    <strong style="color: var(--text)">Si validé</strong> · l'implémentation touche uniquement <span class="mono" style="color:var(--cykan)">app/(user)/components/ChatMessages.tsx</span>. ~80 lignes modifiées. Aucun nouveau token (tout est déjà dans <span class="mono" style="color:var(--cykan)">globals.css</span>).
+  </p>
+</div>
+
+</body>
+</html>

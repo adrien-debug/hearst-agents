@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useRuntimeStore } from "@/stores/runtime";
 
 export interface Message {
@@ -13,9 +13,76 @@ interface ChatMessagesProps {
   messages: Message[];
   className?: string;
   compact?: boolean;
+  source?: string;
 }
 
-export function ChatMessages({ messages, className, compact = false }: ChatMessagesProps) {
+function tsFromId(id: string): number | null {
+  const match = id.match(/-(\d+)$/);
+  if (!match) return null;
+  const n = parseInt(match[1], 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatHHMM(ts: number | null): string {
+  if (!ts) return "--:--";
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function ActionChip({
+  label,
+  onClick,
+  done,
+}: {
+  label: string;
+  onClick?: () => void;
+  done?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="halo-on-hover t-9 font-mono tracking-[0.2em] uppercase px-2 py-1 border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan)]/30 transition-all bg-transparent"
+    >
+      {done ? "Copied" : label}
+    </button>
+  );
+}
+
+function AssistantActions({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    if (!navigator?.clipboard) return;
+    navigator.clipboard.writeText(content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
+  };
+  return (
+    <div className="flex gap-2 mt-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
+      <ActionChip label="Cite" />
+      <ActionChip label="Pin to focal" />
+      <ActionChip label="Re-run" />
+      <ActionChip label="Copy" onClick={handleCopy} done={copied} />
+    </div>
+  );
+}
+
+function StreamShimmer() {
+  return (
+    <div className="space-y-2 mt-2">
+      <div className="h-3 chat-shimmer w-full" />
+      <div className="h-3 chat-shimmer w-4/5" />
+      <div className="h-3 chat-shimmer w-3/5" />
+    </div>
+  );
+}
+
+export function ChatMessages({
+  messages,
+  className,
+  compact = false,
+  source,
+}: ChatMessagesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const coreState = useRuntimeStore((s) => s.coreState);
   const isRunning = coreState !== "idle";
@@ -31,46 +98,95 @@ export function ChatMessages({ messages, className, compact = false }: ChatMessa
   }
 
   const defaultClass = compact
-    ? "h-full overflow-y-auto px-8 py-5 flex flex-col bg-gradient-to-b from-transparent to-white/[0.01]"
-    : "h-full overflow-y-auto px-10 py-10 flex flex-col bg-gradient-to-b from-transparent via-white/[0.01] to-white/[0.02]";
+    ? "h-full overflow-y-auto px-7 py-4 flex flex-col"
+    : "h-full overflow-y-auto px-10 py-8 flex flex-col";
+
+  const turnGap = compact ? "gap-4" : "gap-6";
+  const bodyText = compact ? "t-13" : "t-15";
+
+  const lastMessage = messages[messages.length - 1];
+  const lastIsUser = lastMessage?.role === "user";
+  const lastIsEmptyAssistant = lastMessage?.role === "assistant" && lastMessage.content.length === 0;
 
   return (
-    <div
-      ref={scrollRef}
-      className={className ?? defaultClass}
-    >
+    <div ref={scrollRef} className={className ?? defaultClass}>
       <div className="flex-1 min-h-0" />
-      <div className={`flex flex-col shrink-0 ${compact ? 'gap-8' : 'gap-12'} mt-auto pb-16`}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className="flex w-full group"
-          >
-            <div className="w-12 shrink-0 font-mono t-10 text-white/40 pt-1 uppercase tracking-[0.15em]">
-              {message.role === "user" ? "You" : "AI"}
+      <div className={`flex flex-col shrink-0 ${turnGap} mt-auto pb-10 w-full max-w-[720px] mx-auto`}>
+        {messages.map((message, idx) => {
+          const ts = formatHHMM(tsFromId(message.id));
+          const isLastAssistant = message.role === "assistant" && idx === messages.length - 1;
+          const showCursor = isRunning && isLastAssistant && message.content.length > 0;
+
+          if (message.role === "user") {
+            return (
+              <div key={message.id} className="w-full">
+                <div className="flex items-center gap-2 mb-1 t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-faint)]">
+                  <span className="opacity-60">[</span>
+                  <span className="font-semibold">You</span>
+                  <span className="text-[var(--text-ghost)]">·</span>
+                  <span>{ts}</span>
+                  <span className="opacity-60">]</span>
+                </div>
+                <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text)] font-medium whitespace-pre-wrap`}>
+                  {message.content}
+                </div>
+              </div>
+            );
+          }
+
+          const showShimmer = isLastAssistant && message.content.length === 0 && isRunning;
+
+          return (
+            <div key={message.id} className="relative pl-5 group">
+              <div className="absolute left-0 top-2 bottom-2 w-px chat-ai-rule" />
+              <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)] halo-dot" />
+              <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--cykan)] halo-cyan-sm">
+                <span className="opacity-60">[</span>
+                <span className="font-semibold">Hearst</span>
+                {source && (
+                  <>
+                    <span className="text-[var(--text-ghost)]">·</span>
+                    <span className="text-[var(--text-faint)]">{source}</span>
+                  </>
+                )}
+                <span className="text-[var(--text-ghost)]">·</span>
+                <span className="text-[var(--text-faint)]">{ts}</span>
+                <span className="opacity-60">]</span>
+              </div>
+
+              {showShimmer ? (
+                <StreamShimmer />
+              ) : (
+                <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text-soft)] font-normal whitespace-pre-wrap`}>
+                  {message.content}
+                  {showCursor && <span className="chat-cursor inline-block align-text-bottom" />}
+                </div>
+              )}
+
+              {!showShimmer && message.content.length > 0 && (
+                <AssistantActions content={message.content} />
+              )}
             </div>
-            <div
-              className={`flex-1 t-15 leading-[1.6] tracking-normal ${
-                message.role === "user"
-                  ? "text-white font-medium"
-                  : "text-white/80 font-normal"
-              }`}
-            >
-              {message.content}
+          );
+        })}
+
+        {isRunning && lastIsUser && (
+          <div className="relative pl-5">
+            <div className="absolute left-0 top-2 bottom-2 w-px chat-ai-rule" />
+            <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)] halo-dot animate-pulse" />
+            <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--cykan)] halo-cyan-sm">
+              <span className="opacity-60">[</span>
+              <span className="font-semibold">Hearst</span>
+              <span className="text-[var(--text-ghost)]">·</span>
+              <span className="text-[var(--text-faint)]">en cours…</span>
+              <span className="opacity-60">]</span>
             </div>
-          </div>
-        ))}
-        
-        {isRunning && messages[messages.length - 1]?.role === "user" && (
-          <div className="flex w-full">
-            <div className="w-12 shrink-0 font-mono t-10 text-[var(--cykan)] pt-1 uppercase tracking-[0.15em] animate-pulse">Run</div>
-            <div className="flex gap-2 pt-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-bounce" style={{ animationDelay: "200ms" }} />
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-bounce" style={{ animationDelay: "400ms" }} />
-            </div>
+            <StreamShimmer />
           </div>
         )}
+
+        {/* Hidden when last assistant is empty — already handled inside loop via showShimmer */}
+        {!lastIsUser && !lastIsEmptyAssistant && null}
       </div>
     </div>
   );

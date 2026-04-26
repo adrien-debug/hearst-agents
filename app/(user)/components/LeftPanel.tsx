@@ -2,7 +2,7 @@
 
 import { useNavigationStore } from "@/stores/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 
@@ -11,9 +11,16 @@ interface LeftPanelProps {
   onAddApp?: () => void;
 }
 
+const LIBRARY_ITEMS = [
+  { id: "missions", path: "/missions", glyph: "M", label: "Missions" },
+  { id: "assets", path: "/assets", glyph: "A", label: "Assets" },
+  { id: "runs", path: "/runs", glyph: "R", label: "Runs" },
+];
+
 export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const { threads, activeThreadId, setActiveThread, addThread, removeThread } = useNavigationStore();
   const [showAllThreads, setShowAllThreads] = useState(false);
 
@@ -27,54 +34,69 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
 
   return (
     <aside
-      className="w-[72px] flex flex-col h-full relative z-20 border-r border-white/[0.05] transition-all duration-500"
+      className="w-[72px] flex flex-col h-full relative z-20 border-r border-[var(--surface-2)] transition-all duration-500"
       style={{ background: "linear-gradient(180deg, var(--mat-050) 0%, var(--bg-soft) 100%)" }}
     >
-      {/* Logo H cyan */}
-      <button 
+      {/* Logo H — halo signature */}
+      <button
         onClick={() => {
           router.push("/");
           setShowAllThreads(false);
         }}
-        className="p-4 flex justify-center hover:opacity-80 transition-opacity shrink-0"
+        className="p-4 flex justify-center hover:opacity-80 transition-opacity shrink-0 group"
+        title="Hearst — Home"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img 
-          src="/patterns/hcyan.svg" 
-          alt="Hearst" 
-          className="w-8 h-8 object-contain"
-        />
+        <span className="relative inline-flex items-center justify-center w-9 h-9 rounded-sm halo-ring">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/patterns/hcyan.svg"
+            alt="Hearst"
+            className="w-7 h-7 object-contain"
+          />
+        </span>
       </button>
 
-      <div className="h-px bg-white/[0.06] mx-3 shrink-0" />
+      <div className="h-px mx-3 shrink-0 halo-rule" />
 
-      {/* Apps Rail */}
+      {/* Apps Rail — monochrome editorial with state pip */}
       <div className={`flex flex-col items-center py-4 gap-4 overflow-hidden transition-all duration-500 ${showAllThreads ? 'h-0 opacity-0 py-0' : 'flex-1 min-h-0'}`}>
-        {connectedServices.map((service) => (
-          <button
-            key={service.id}
-            className="w-8 h-8 flex items-center justify-center hover:scale-110 transition-transform group relative shrink-0"
-            title={service.name}
-          >
-            {service.icon ? (
-              <img 
-                src={service.icon} 
-                alt={service.name}
-                className="w-7 h-7 object-contain opacity-70 hover:opacity-100 transition-opacity"
-              />
-            ) : (
-              <span className="text-lg font-bold text-white/50 hover:text-white transition-colors">{service.name.charAt(0).toUpperCase()}</span>
-            )}
-            <span className="absolute left-full ml-3 px-2 py-1 bg-black border border-white/10 t-10 font-mono tracking-wide text-white/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-              {service.name}
-            </span>
-          </button>
-        ))}
+        {connectedServices.map((service) => {
+          const status = service.connectionStatus;
+          const showPip = status === "pending" || status === "error";
+          const pipColor =
+            status === "error" ? "bg-[var(--danger)]" :
+            status === "pending" ? "bg-[var(--warn)]" : "";
+          return (
+            <button
+              key={service.id}
+              className="w-8 h-8 flex items-center justify-center transition-transform hover:scale-110 group relative shrink-0"
+              title={service.name}
+            >
+              {service.icon ? (
+                <img
+                  src={service.icon}
+                  alt={service.name}
+                  className="w-7 h-7 object-contain opacity-50 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+                />
+              ) : (
+                <span className="text-lg font-bold text-[var(--text-faint)] group-hover:text-[var(--text)] transition-colors">{service.name.charAt(0).toUpperCase()}</span>
+              )}
+
+              {showPip && (
+                <span className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${pipColor} ${status === "error" ? "animate-pulse" : ""}`} />
+              )}
+
+              <span className="absolute left-full ml-3 px-2 py-1 bg-[var(--bg)] border border-[var(--surface-2)] t-10 font-mono tracking-[0.2em] text-[var(--text-soft)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 uppercase">
+                {service.name}
+              </span>
+            </button>
+          );
+        })}
 
         {/* Add App */}
         <button
           onClick={onAddApp}
-          className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-[var(--cykan)] transition-colors shrink-0"
+          className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
           title="Connect new app"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -83,7 +105,33 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
         </button>
       </div>
 
-      <div className="h-px bg-white/[0.06] mx-3 shrink-0" />
+      <div className="h-px bg-[var(--surface-2)] mx-3 shrink-0" />
+
+      {/* Library — Missions / Assets / Runs entry points */}
+      <div className="flex flex-col items-center py-3 gap-3 shrink-0">
+        {LIBRARY_ITEMS.map((item) => {
+          const isActive = pathname === item.path || pathname?.startsWith(`${item.path}/`);
+          return (
+            <button
+              key={item.id}
+              onClick={() => router.push(item.path)}
+              className={`w-8 h-8 flex items-center justify-center t-13 font-mono tracking-tight font-bold transition-all shrink-0 group relative ${
+                isActive
+                  ? "text-[var(--cykan)] halo-cyan-sm"
+                  : "text-[var(--text-faint)] hover:text-[var(--text)]"
+              }`}
+              title={item.label}
+            >
+              {item.glyph}
+              <span className="absolute left-full ml-3 px-2 py-1 bg-[var(--bg)] border border-[var(--surface-2)] t-10 font-mono tracking-[0.2em] text-[var(--text-soft)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 uppercase">
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="h-px bg-[var(--surface-2)] mx-3 shrink-0" />
 
       {/* Sessions */}
       <div className={`flex flex-col items-center py-3 gap-3 overflow-y-auto scrollbar-hide transition-all duration-500 ${showAllThreads ? 'flex-1' : ''}`}>
@@ -93,21 +141,21 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
               onClick={() => setActiveThread(thread.id)}
               className={`w-8 h-8 flex items-center justify-center t-13 font-bold transition-all shrink-0 ${
                 activeThreadId === thread.id
-                  ? "text-[var(--cykan)]"
-                  : "text-white/50 hover:text-white"
+                  ? "text-[var(--cykan)] halo-cyan-sm"
+                  : "text-[var(--text-faint)] hover:text-[var(--text)]"
               }`}
               title={thread.name}
             >
               {thread.name.charAt(0).toUpperCase()}
             </button>
-            
+
             {/* Delete button - appears on hover */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 removeThread(thread.id);
               }}
-              className="absolute -right-6 w-5 h-5 flex items-center justify-center text-white/20 hover:text-[var(--danger)] opacity-0 group-hover/item:opacity-100 transition-all"
+              className="absolute -right-6 w-5 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover/item:opacity-100 transition-all"
               title="Delete conversation"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -116,20 +164,20 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
             </button>
           </div>
         ))}
-        
+
         {/* Voir tout */}
         {hasMoreThreads && (
           <button
             onClick={() => setShowAllThreads(!showAllThreads)}
-            className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors shrink-0"
+            className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)] transition-colors shrink-0"
             title={showAllThreads ? "Show less" : "View all"}
           >
-            <svg 
-              width="16" 
-              height="16" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
               strokeWidth="2"
               className={`transition-transform duration-300 ${showAllThreads ? 'rotate-180' : ''}`}
             >
@@ -141,11 +189,11 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
             </svg>
           </button>
         )}
-        
+
         {/* New Session */}
         <button
           onClick={() => addThread("New", "home")}
-          className="w-8 h-8 flex items-center justify-center text-white/30 hover:text-[var(--cykan)] transition-colors shrink-0"
+          className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
           title="New session"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -154,13 +202,13 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
         </button>
       </div>
 
-      <div className="h-px bg-white/[0.06] mx-3 shrink-0" />
+      <div className="h-px bg-[var(--surface-2)] mx-3 shrink-0" />
 
       {/* Logout */}
       <div className="p-3 flex flex-col items-center shrink-0">
         <button
           onClick={handleLogout}
-          className="w-8 h-8 flex items-center justify-center text-white/30 hover:text-[var(--danger)] transition-colors"
+          className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
           title={`Logout ${firstName}`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

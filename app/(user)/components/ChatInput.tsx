@@ -93,10 +93,10 @@ export function ChatInput({
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="absolute bottom-full mb-8 w-full bg-black rounded-lg border border-white/10 overflow-hidden z-50"
+            className="absolute bottom-full mb-8 w-full bg-[var(--bg)] rounded-lg border border-[var(--surface-2)] overflow-hidden z-50"
           >
             {matchingServices.length === 0 ? (
-              <div className="p-4 t-11 font-mono tracking-wide text-white/40">
+              <div className="p-4 t-11 font-mono tracking-[0.2em] text-[var(--text-faint)]">
                 {typeaheadQuery ? (
                   <>No source found: {typeaheadQuery}</>
                 ) : (
@@ -109,12 +109,12 @@ export function ChatInput({
                   <button
                     key={service.id}
                     onClick={() => selectService(service)}
-                    className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-white/5 transition-all duration-200 group"
+                    className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-[var(--surface-1)] transition-all duration-200 group"
                   >
                     <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
                     <div className="flex-1">
-                      <p className="text-sm font-medium tracking-tight text-white">@{service.id}</p>
-                      <p className="t-10 font-mono tracking-wide text-white/40">{service.name}</p>
+                      <p className="text-sm font-medium tracking-tight text-[var(--text)]">@{service.id}</p>
+                      <p className="t-10 font-mono tracking-[0.2em] text-[var(--text-faint)]">{service.name}</p>
                     </div>
                     <span className="t-10 font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">Link</span>
                   </button>
@@ -126,9 +126,9 @@ export function ChatInput({
 
         {/* Input Container */}
         <div
-          className="flex items-end gap-6 px-8 py-6 bg-white/[0.015] border border-white/[0.05] transition-all duration-500 group focus-within:bg-white/[0.03] focus-within:border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.5)] rounded-sm"
+          className="flex items-end gap-6 px-8 py-6 bg-[var(--surface-1)] border border-[var(--surface-2)] transition-all duration-500 group focus-within:bg-[var(--surface-2)] focus-within:border-[var(--line-active)] rounded-sm"
         >
-          <span className="t-11 font-mono text-[var(--cykan)] pt-2 opacity-30 group-focus-within:opacity-100 transition-opacity tracking-[0.2em]">&gt;</span>
+          <span className="t-11 font-mono text-[var(--cykan)] pt-2 opacity-30 group-focus-within:opacity-100 group-focus-within:halo-cyan-sm transition-all tracking-[0.2em]">&gt;</span>
           <textarea
             ref={inputRef}
             value={input}
@@ -152,22 +152,22 @@ export function ChatInput({
             }}
             placeholder={placeholder || surfacePlaceholders[surface] || "Type a message..."}
             rows={1}
-            className="flex-1 bg-transparent text-base font-normal tracking-normal text-white placeholder:text-white/[0.2] border-0 focus:ring-0 focus:outline-none resize-none min-h-[28px] max-h-[150px] leading-relaxed p-0 m-0"
+            className="flex-1 bg-transparent text-base font-normal tracking-normal text-[var(--text)] placeholder:text-[var(--text-ghost)] border-0 focus:ring-0 focus:outline-none resize-none min-h-[28px] max-h-[150px] leading-relaxed p-0 m-0"
           />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-white/[0.05] overflow-hidden">
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-[var(--surface-2)] overflow-hidden">
             <div className="h-full bg-[var(--cykan)] w-0 group-focus-within:w-full transition-all duration-500 ease-out" />
           </div>
           {isRunning ? (
             <div className="w-8 h-8 flex items-center justify-center shrink-0">
               <div
-                className="w-4 h-4 border-2 border-white/10 border-t-[var(--cykan)] rounded-full animate-spin"
+                className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-full animate-spin"
               />
             </div>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={!input.trim()}
-              className="w-8 h-8 flex items-center justify-center shrink-0 text-white/30 hover:text-black hover:bg-[var(--cykan)] transition-all duration-300 rounded-sm disabled:opacity-0"
+              className="w-8 h-8 flex items-center justify-center shrink-0 text-[var(--text-faint)] hover:text-[var(--bg)] hover:bg-[var(--cykan)] transition-all duration-300 rounded-sm disabled:opacity-0"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
@@ -176,7 +176,7 @@ export function ChatInput({
           )}
         </div>
         <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-30 hover:opacity-100 transition-opacity">
-          <p className="t-9 text-white font-mono tracking-[0.15em]">
+          <p className="t-9 text-[var(--text-soft)] font-mono tracking-[0.2em]">
             Enter to send · Shift+Enter for new line · @ to mention
           </p>
         </div>

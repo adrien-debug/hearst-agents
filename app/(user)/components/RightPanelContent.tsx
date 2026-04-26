@@ -3,9 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import type { RightPanelData, FocalObjectView } from "@/lib/core/types";
+import type { RightPanelData, RightPanelMission, RightPanelAsset, FocalObjectView } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
+import type { FocalObject } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
 
@@ -31,7 +32,7 @@ const StatusIcon = ({ state }: { state: string }) => {
     );
   }
   return (
-    <svg className="w-5 h-5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg className="w-5 h-5 text-[var(--text-faint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="10"/>
       <path d="M12 6v6l4 2"/>
     </svg>
@@ -68,6 +69,88 @@ const DatabaseIcon = () => (
     <path d="M3 12a9 3 0 0 0 18 0"/>
   </svg>
 );
+
+function formatRelativeTime(timestamp?: number): string {
+  if (!timestamp) return "—";
+  const diff = Date.now() - timestamp;
+  if (diff < 0) return "à venir";
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `il y a ${days}j`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 4) return `il y a ${weeks}sem`;
+  const months = Math.floor(days / 30);
+  return `il y a ${months}mo`;
+}
+
+const ASSET_TYPE_GLYPH: Record<string, string> = {
+  report: "▦",
+  brief: "≡",
+  message: "✉",
+  document: "▤",
+  synthesis: "◇",
+  plan: "◈",
+};
+
+function assetGlyph(type: string): string {
+  return ASSET_TYPE_GLYPH[type.toLowerCase()] || "·";
+}
+
+function missionToFocal(mission: RightPanelMission, threadId: string | null): FocalObject {
+  const now = Date.now();
+  const status = mission.opsStatus === "running" ? "active"
+    : mission.opsStatus === "failed" ? "failed"
+    : mission.enabled ? "ready"
+    : "paused";
+  const summaryParts = [
+    `Schedule: ${mission.schedule || "—"}`,
+    mission.lastRunAt ? `Last run: ${formatRelativeTime(mission.lastRunAt)}` : "Never run",
+    mission.enabled ? "Armed" : "Disabled",
+  ];
+  return {
+    id: mission.id,
+    type: mission.enabled ? "mission_active" : "mission_draft",
+    status,
+    title: mission.name,
+    body: mission.input,
+    summary: summaryParts.join(" · "),
+    missionId: mission.id,
+    threadId: threadId ?? undefined,
+    createdAt: now,
+    updatedAt: mission.lastRunAt ?? now,
+    primaryAction: mission.enabled
+      ? { kind: "pause", label: "Pause mission" }
+      : { kind: "resume", label: "Resume mission" },
+  };
+}
+
+function assetToFocal(asset: RightPanelAsset, threadId: string | null): FocalObject {
+  const now = Date.now();
+  const typeMap: Record<string, FocalObject["type"]> = {
+    report: "report",
+    brief: "brief",
+    document: "doc",
+    doc: "doc",
+    message: "message_receipt",
+    plan: "outline",
+    synthesis: "report",
+  };
+  return {
+    id: asset.id,
+    type: typeMap[asset.type.toLowerCase()] ?? "doc",
+    status: "ready",
+    title: asset.name,
+    summary: `Asset · ${asset.type.toUpperCase()}`,
+    sourceAssetId: asset.id,
+    threadId: threadId ?? undefined,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
 
 export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const router = useRouter();
@@ -221,13 +304,13 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   // Empty state when no thread
   if (!hasActiveThread) {
     return (
-      <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-white/[0.05] bg-gradient-to-b from-[var(--bg-soft)] to-[var(--mat-050)]">
+      <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-[var(--surface-2)] bg-gradient-to-b from-[var(--bg-soft)] to-[var(--mat-050)]">
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] flex items-center justify-center mb-4">
             <StatusIcon state="standby" />
           </div>
-          <h3 className="t-15 font-medium text-white/80 mb-2">No active session</h3>
-          <p className="text-xs text-white/40 leading-relaxed">
+          <h3 className="t-15 font-medium text-[var(--text-soft)] mb-2">No active session</h3>
+          <p className="text-xs text-[var(--text-faint)] leading-relaxed">
             Start a conversation to see context, assets, and missions here.
           </p>
         </div>
@@ -235,38 +318,43 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     );
   }
 
+  const stateLabel =
+    coreState === "awaiting_approval" ? (flowLabel || "Needs approval") :
+    isRunning ? (flowLabel || "Processing") : "Ready";
+
   return (
-    <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-white/[0.05] bg-gradient-to-b from-[var(--bg-soft)] via-[var(--surface)] to-[var(--mat-050)]">
+    <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-[var(--surface-2)] bg-gradient-to-b from-[var(--bg-soft)] via-[var(--surface)] to-[var(--mat-050)]">
       {/* Mobile header */}
       {onClose && (
-        <div className="p-4 flex items-center justify-between md:hidden border-b border-white/[0.05]">
+        <div className="p-4 flex items-center justify-between md:hidden border-b border-[var(--surface-2)]">
           <p className="text-sm font-medium">Context</p>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-white/60">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)]">
             ✕
           </button>
         </div>
       )}
 
-      {/* Status Card */}
-      <div className="p-5 border-b border-white/[0.05]">
-        <div className="flex items-center gap-3 mb-4">
-          <StatusIcon state={coreState === "awaiting_approval" ? "awaiting_approval" : isRunning ? "processing" : "standby"} />
-          <div>
-            <p className="t-13 font-medium text-white">
-              {coreState === "awaiting_approval" ? (flowLabel || "Needs approval") : 
-               isRunning ? (flowLabel || "Processing") : "Ready"}
-            </p>
-            <p className="t-11 text-white/40">
-              {isConnected ? "Connected" : "Disconnected"}
-            </p>
-          </div>
+      {/* Status Card — refined hierarchy */}
+      <div className="px-6 pt-7 pb-6 border-b border-[var(--surface-2)]">
+        <div className="flex items-center justify-between mb-3">
+          <span className="t-9 font-mono tracking-[0.3em] text-[var(--text-faint)] uppercase">Status</span>
+          <span className={`flex items-center gap-2 t-9 font-mono tracking-[0.2em] uppercase ${
+            coreState === "awaiting_approval" ? "text-[var(--warn)]" :
+            isRunning ? "text-[var(--cykan)] halo-cyan-sm" : "text-[var(--text-faint)]"
+          }`}>
+            <span className={`w-1 h-1 rounded-full ${
+              coreState === "awaiting_approval" ? "bg-[var(--warn)]" :
+              isRunning ? "bg-[var(--cykan)] animate-pulse halo-dot" : "bg-[var(--text-faint)]"
+            }`} />
+            {isConnected ? "live" : "offline"}
+          </span>
         </div>
-        
-        {/* Progress bar */}
+        <p className={`t-18 font-light tracking-tight ${isRunning ? "text-[var(--text)] halo-cyan-sm" : "text-[var(--text)]"}`}>{stateLabel}</p>
+
         {(isRunning || coreState === "awaiting_approval") && (
-          <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
-            <div 
-              className={`h-full ${coreState === "awaiting_approval" ? "bg-[var(--warn)]" : "bg-[var(--cykan)]"} ${isRunning ? "animate-pulse" : ""}`}
+          <div className="h-px bg-[var(--surface-2)] mt-5 overflow-hidden">
+            <div
+              className={`h-full ${coreState === "awaiting_approval" ? "bg-[var(--warn)]" : "bg-[var(--cykan)] halo-rule"} ${isRunning ? "animate-pulse" : ""}`}
               style={{ width: coreState === "awaiting_approval" ? "100%" : "66%" }}
             />
           </div>
@@ -275,25 +363,27 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        {/* Focal Object Card */}
+        {/* Focal Object Card — bracketed signature with halo */}
         {focalObject && (
-          <div className="p-5 border-b border-white/[0.05]">
-            <div className="flex items-center gap-2 text-[var(--cykan)] mb-3">
+          <div className="px-6 pt-7 pb-6 border-b border-[var(--surface-2)] relative">
+            <span className="absolute top-5 right-5 t-9 font-mono text-[var(--cykan)] opacity-60 halo-cyan-sm">]</span>
+            <span className="absolute top-5 left-5 t-9 font-mono text-[var(--cykan)] opacity-60 halo-cyan-sm">[</span>
+            <div className="flex items-center gap-2 text-[var(--cykan)] mb-3 pl-3 halo-cyan-sm">
               <FileIcon />
-              <span className="t-11 font-medium uppercase tracking-wide">{focalObjectType}</span>
+              <span className="t-9 font-mono tracking-[0.3em] uppercase">{focalObjectType}</span>
             </div>
-            <h3 className="t-15 font-medium text-white mb-1 leading-snug">{focalTitle}</h3>
-            
+            <h3 className="t-15 font-medium text-[var(--text)] mb-1 leading-snug pl-3">{focalTitle}</h3>
+
             {actionError && (
               <p className="mt-3 t-11 text-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 rounded">{actionError}</p>
             )}
 
             {(focalObject as FocalObjectView)?.primaryAction && (
               <button
-                className={`mt-4 w-full py-3 text-xs font-medium rounded transition-colors ${
+                className={`mt-5 w-full py-3 t-11 font-mono tracking-[0.2em] uppercase rounded-sm transition-colors ${
                   (focalObject as FocalObjectView).primaryAction?.kind === "approve"
-                    ? "bg-white text-black hover:bg-white/90"
-                    : "bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90"
+                    ? "bg-[var(--text)] text-[var(--bg)] hover:bg-[var(--text-soft)]"
+                    : "bg-[var(--cykan)] text-[var(--bg)] hover:bg-[var(--cykan)]/90"
                 }`}
                 onClick={handlePrimaryAction}
                 disabled={actionLoading}
@@ -306,29 +396,29 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
         {/* Secondary Nodes */}
         {secondaryObjects.length > 0 && (
-          <div className="p-5 border-b border-white/[0.05]">
-            <div className="flex items-center gap-2 text-white/40 mb-4">
-              <NodeIcon />
-              <span className="t-11 font-medium uppercase tracking-wide">Related</span>
+          <div className="px-6 pt-7 pb-6 border-b border-[var(--surface-2)]">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2 text-[var(--text-faint)]">
+                <NodeIcon />
+                <span className="t-9 font-mono tracking-[0.3em] uppercase">Related</span>
+              </div>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {secondaryObjects.map((obj, idx) => {
                 const objType = getFocalProp(obj, "objectType") || "unknown";
                 const objTitle = getFocalProp(obj, "title") || "Untitled";
                 const objStatus = getFocalProp(obj, "status") || "";
                 return (
-                  <div key={idx} className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors">
-                    <div>
-                      <p className="text-xs text-white/70 group-hover:text-white transition-colors">{objTitle}</p>
-                      <p className="t-10 text-white/30">{objType}</p>
-                    </div>
+                  <div key={idx} className="flex items-center gap-3 group cursor-pointer py-2 -mx-2 px-2 hover:bg-[var(--surface-1)] transition-colors">
                     {objStatus && (
-                      <span className={`w-2 h-2 rounded-full ${
+                      <span className={`w-1 h-1 rounded-full shrink-0 ${
                         objStatus === "ready" ? "bg-[var(--cykan)]" :
                         objStatus === "awaiting_approval" ? "bg-[var(--warn)]" :
-                        "bg-white/20"
+                        "bg-[var(--text-ghost)]"
                       }`} />
                     )}
+                    <p className="t-13 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors truncate flex-1">{objTitle}</p>
+                    <span className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase shrink-0">{objType}</span>
                   </div>
                 );
               })}
@@ -336,75 +426,115 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           </div>
         )}
 
-        {/* Assets */}
+        {/* Assets — editorial list */}
         {panelData?.assets && panelData.assets.length > 0 && (
-          <div className="p-5 border-b border-white/[0.05]">
-            <div className="flex items-center gap-2 text-white/40 mb-4">
-              <DatabaseIcon />
-              <span className="t-11 font-medium uppercase tracking-wide">Assets</span>
-              <span className="ml-auto t-10 text-white/30">{panelData.assets.length}</span>
-            </div>
-            <div className="space-y-2">
+          <div className="px-6 pt-7 pb-6 border-b border-[var(--surface-2)]">
+            <button
+              onClick={() => router.push("/assets")}
+              className="halo-on-hover w-full flex items-center justify-between mb-5 group/header text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+              title="View all assets"
+            >
+              <span className="flex items-center gap-2">
+                <DatabaseIcon />
+                <span className="t-9 font-mono tracking-[0.3em] uppercase">Assets</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="t-9 font-mono tracking-[0.2em]">{panelData.assets.length}</span>
+                <span className="t-9 font-mono opacity-0 group-hover/header:opacity-100 -translate-x-1 group-hover/header:translate-x-0 transition-all">→</span>
+              </span>
+            </button>
+            <div className="space-y-px">
               {panelData.assets.slice(0, 5).map((asset) => (
-                <div 
-                  key={asset.id} 
-                  onClick={() => router.push(`/assets?id=${asset.id}`)}
-                  className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors"
+                <div
+                  key={asset.id}
+                  onClick={() => useFocalStore.getState().setFocal(assetToFocal(asset, activeThreadId))}
+                  className="group cursor-pointer py-3 -mx-2 px-2 hover:bg-[var(--surface-1)] transition-colors flex items-start gap-3"
+                  title={`Open ${asset.name}`}
                 >
-                  <p className="text-xs text-white/60 group-hover:text-white transition-colors truncate pr-4">{asset.name}</p>
-                  <span className="t-10 text-white/30 uppercase">{asset.type}</span>
+                  <span className="t-13 text-[var(--cykan)] opacity-30 group-hover:opacity-100 transition-opacity shrink-0 leading-none mt-1">
+                    {assetGlyph(asset.type)}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="t-13 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors truncate">{asset.name}</p>
+                    <p className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase mt-1">{asset.type}</p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Missions */}
-        {panelData?.missions && panelData.missions.length > 0 && (
-          <div className="p-5 border-b border-white/[0.05]">
-            <div className="flex items-center gap-2 text-white/40 mb-4">
-              <MissionIcon />
-              <span className="t-11 font-medium uppercase tracking-wide">Missions</span>
-              <span className="ml-auto t-10 text-white/30">{panelData.missions.length}</span>
-            </div>
-            <div className="space-y-2">
-              {panelData.missions.slice(0, 3).map((mission) => (
-                <div 
-                  key={mission.id} 
-                  onClick={() => router.push(`/missions?id=${mission.id}`)}
-                  className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors"
-                >
-                  <p className="text-xs text-white/60 group-hover:text-white transition-colors truncate pr-4">{mission.name}</p>
-                  <span className={`w-2 h-2 rounded-full ${
-                    mission.opsStatus === "running" ? "bg-[var(--cykan)]" :
-                    mission.enabled ? "bg-[var(--cykan)]/50" : "bg-white/20"
-                  }`} />
-                </div>
-              ))}
-            </div>
+        {/* Missions — with relative time */}
+        {panelData?.missions && (
+          <div className="px-6 pt-7 pb-6 border-b border-[var(--surface-2)]">
+            <button
+              onClick={() => router.push("/missions")}
+              className="halo-on-hover w-full flex items-center justify-between mb-5 group/header text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+              title="View all missions"
+            >
+              <span className="flex items-center gap-2">
+                <MissionIcon />
+                <span className="t-9 font-mono tracking-[0.3em] uppercase">Missions</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="t-9 font-mono tracking-[0.2em]">{panelData.missions.length}</span>
+                <span className="t-9 font-mono opacity-0 group-hover/header:opacity-100 -translate-x-1 group-hover/header:translate-x-0 transition-all">→</span>
+              </span>
+            </button>
+            {panelData.missions.length > 0 && (
+              <div className="space-y-px mb-3">
+                {panelData.missions.slice(0, 3).map((mission) => (
+                  <div
+                    key={mission.id}
+                    onClick={() => useFocalStore.getState().setFocal(missionToFocal(mission, activeThreadId))}
+                    className="group cursor-pointer py-3 -mx-2 px-2 hover:bg-[var(--surface-1)] transition-colors flex items-center gap-3"
+                    title={`Open ${mission.name}`}
+                  >
+                    <span className={`w-1 h-1 rounded-full shrink-0 ${
+                      mission.opsStatus === "running" ? "bg-[var(--cykan)] animate-pulse halo-dot" :
+                      mission.opsStatus === "failed" ? "bg-[var(--danger)]" :
+                      mission.enabled ? "bg-[var(--cykan)] opacity-50" : "bg-[var(--text-ghost)]"
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="t-13 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors truncate">{mission.name}</p>
+                    </div>
+                    <span className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase shrink-0">
+                      {mission.lastRunAt ? formatRelativeTime(mission.lastRunAt) : (mission.enabled ? "armé" : "off")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={() => router.push("/missions?new=1")}
+              className="halo-on-hover w-full mt-2 flex items-center justify-center gap-2 py-2.5 t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)] hover:text-[var(--cykan)] border border-dashed border-[var(--surface-2)] hover:border-[var(--line-active)] transition-all"
+              title="New mission"
+            >
+              <span className="text-base leading-none">+</span> New mission
+            </button>
           </div>
         )}
 
         {/* Run Info */}
         {panelData?.currentRun && (
-          <div className="p-5">
-            <div className="flex items-center gap-2 text-white/40 mb-4">
+          <div className="px-6 pt-7 pb-7">
+            <div className="flex items-center gap-2 text-[var(--text-faint)] mb-5">
               <DatabaseIcon />
-              <span className="t-11 font-medium uppercase tracking-wide">Run details</span>
+              <span className="t-9 font-mono tracking-[0.3em] uppercase">Run details</span>
             </div>
-            <div className="space-y-2 t-11">
+            <div className="space-y-3 t-11">
               <div className="flex justify-between">
-                <span className="text-white/30">ID</span>
-                <span className="text-white/60 font-mono">{currentRunId?.slice(0, 12)}...</span>
+                <span className="font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase">ID</span>
+                <span className="text-[var(--text-muted)] font-mono">{currentRunId?.slice(0, 12)}...</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-white/30">Mode</span>
-                <span className="text-[var(--cykan)]">{panelData.currentRun.executionMode}</span>
+                <span className="font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase">Mode</span>
+                <span className="text-[var(--cykan)] font-mono">{panelData.currentRun.executionMode}</span>
               </div>
               {(panelData.currentRun.pendingToolCalls ?? 0) > 0 && (
                 <div className="flex justify-between">
-                  <span className="text-white/30">Pending</span>
-                  <span className="text-[var(--cykan)]">{panelData.currentRun.pendingToolCalls}</span>
+                  <span className="font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase">Pending</span>
+                  <span className="text-[var(--cykan)] font-mono">{panelData.currentRun.pendingToolCalls}</span>
                 </div>
               )}
             </div>
