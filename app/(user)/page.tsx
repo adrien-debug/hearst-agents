@@ -185,7 +185,7 @@ export default function HomePage() {
     };
 
     fetchThreadState();
-    // No polling here — live updates come via SSE through setFocal
+    // One-shot focal on thread switch; live updates via RightPanel SSE → hydrateThreadState
   }, [activeThreadId, hydrateThreadState]);
 
   // Services state with real connection status

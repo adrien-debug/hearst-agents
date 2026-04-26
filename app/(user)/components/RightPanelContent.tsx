@@ -38,51 +38,63 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     activeThreadIdRef.current = activeThreadId;
   }, [activeThreadId]);
 
-  // Polling for live updates
+  /** Live updates via SSE (~1s), same contract as GET /api/v2/right-panel */
   useEffect(() => {
-    let isActive = true;
-
-    const doFetch = async (threadId: string) => {
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(threadId)}`);
-        if (!isActive) return;
-        if (res.ok) {
-          const panelData: RightPanelData = await res.json();
-          setData(panelData);
-          setIsConnected(true);
-
-          // Sync with focalStore
-          const hydrateThreadState = useFocalStore.getState().hydrateThreadState;
-          const mappedFocal = panelData.focalObject
-            ? mapFocalObject(panelData.focalObject, threadId)
-            : null;
-          const secondary = panelData.secondaryObjects
-            ? mapFocalObjects(panelData.secondaryObjects as unknown[], threadId).slice(0, 3)
-            : [];
-          hydrateThreadState(mappedFocal, secondary);
-        } else {
-          setIsConnected(false);
-        }
-      } catch {
-        if (isActive) setIsConnected(false);
-      } finally {
-        if (isActive) setLoading(false);
-      }
-    };
-
-    if (activeThreadId) {
-      void doFetch(activeThreadId);
+    if (!activeThreadId) {
+      // Use microtask to avoid synchronous setState in effect
+      Promise.resolve().then(() => {
+        setData(null);
+        setLoading(false);
+        setIsConnected(false);
+      });
+      return;
     }
 
-    const interval = setInterval(() => {
-      const currentThreadId = activeThreadIdRef.current;
-      if (currentThreadId) void doFetch(currentThreadId);
-    }, 10000);
+    const streamThreadId = activeThreadId;
+    let cancelled = false;
+    
+    Promise.resolve().then(() => {
+      if (!cancelled) setLoading(true);
+    });
+
+    const url = `/api/v2/right-panel/stream?thread_id=${encodeURIComponent(streamThreadId)}`;
+    const es = new EventSource(url);
+
+    const applyPanel = (panelData: RightPanelData) => {
+      if (cancelled || activeThreadIdRef.current !== streamThreadId) return;
+      setData(panelData);
+      setIsConnected(true);
+      const hydrateThreadState = useFocalStore.getState().hydrateThreadState;
+      const tid = activeThreadIdRef.current;
+      const mappedFocal = panelData.focalObject ? mapFocalObject(panelData.focalObject, tid) : null;
+      const secondary = panelData.secondaryObjects
+        ? mapFocalObjects(panelData.secondaryObjects as unknown[], tid).slice(0, 3)
+        : [];
+      hydrateThreadState(mappedFocal, secondary);
+      setLoading(false);
+    };
+
+    es.addEventListener("panel", (ev: MessageEvent<string>) => {
+      try {
+        const panelData = JSON.parse(ev.data) as RightPanelData;
+        applyPanel(panelData);
+      } catch (e) {
+        console.error("[RightPanelContent] SSE panel parse failed:", e);
+      }
+    });
+
+    es.addEventListener("stream_error", () => {
+      if (!cancelled) setIsConnected(false);
+    });
+
+    es.onerror = () => {
+      if (cancelled) return;
+      setIsConnected(false);
+    };
 
     return () => {
-      isActive = false;
-      clearInterval(interval);
+      cancelled = true;
+      es.close();
     };
   }, [activeThreadId]);
 

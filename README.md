@@ -168,7 +168,7 @@ flowchart TD
   E --> H["FocalStage"]
   E --> I["ChatInput"]
   F --> J["stores/runtime.ts + stores/focal.ts"]
-  J --> K["GET /api/v2/right-panel + SSE"]
+  J --> K["GET /api/v2/right-panel/stream (SSE)"]
 ```
 
 ### Work Here — Chaîne de rendu réelle
@@ -192,7 +192,7 @@ flowchart TD
 ### Why Agents Get Confused
 
 - `FocalStage` est la surface centrale principale quand un objet focal existe ; il consomme `stores/focal.ts` (Zustand) partagé avec le RightPanel
-- `RightPanel` dépend d'un thread actif, du polling `/api/v2/right-panel`, et des événements SSE
+- `RightPanel` dépend d'un thread actif et du flux SSE `GET /api/v2/right-panel/stream` (event `panel`, ~1s), même contrat que `GET /api/v2/right-panel`
 - `RightPanel` est masqué sous le breakpoint `lg`
 - l'écran `/` passe d'abord par le shell authentifié, donc modifier un composant hors de cette chaîne ne change rien de visible
 
@@ -462,7 +462,8 @@ Routes V2 scopées
 ├── GET /api/v2/assets — filtré par tenant/workspace + user metadata
 ├── POST /api/v2/assets — créé avec scope courant
 ├── GET /api/v2/user/connections — scoped au user courant
-└── GET /api/v2/right-panel — scoped (via buildRightPanelData)
+├── GET /api/v2/right-panel — scoped (via buildRightPanelData)
+└── GET /api/v2/right-panel/stream — SSE live (event `panel`, ping keep-alive)
 ```
 
 **Logs de sécurité**:
@@ -859,6 +860,7 @@ Architecture : `lib/connectors/` (un connector par service), tokens chiffrés AE
 |-------|-------------|------|
 | `/api/orchestrate` | **Chat v2** — Pipeline SSE (Orchestrator → Plan → Agents) | User auth |
 | `/api/v2/right-panel` | Agrégat UI (runs, assets, missions, connectors) | User auth |
+| `/api/v2/right-panel/stream` | SSE — repousse le même agrégat (event `panel`, ~1s) | User auth (cookies) |
 | `/api/v2/runs`, `/api/v2/runs/{id}` | Runs v2 + timeline events | User auth |
 | `/api/v2/assets/{id}`, `.../download` | Asset detail + file download | User auth |
 | `/api/v2/missions`, `/api/v2/missions/[id]/run` | CRUD missions + Run Now | User auth |
