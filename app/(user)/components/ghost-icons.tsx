@@ -49,14 +49,6 @@ export function GhostIconChevronRight(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function GhostIconChevronDown(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgBox {...props}>
-      <path d="M6 9l6 6 6-6" />
-    </SvgBox>
-  );
-}
-
 export function GhostIconLogOut(props: SVGProps<SVGSVGElement>) {
   return (
     <SvgBox {...props}>
@@ -111,14 +103,6 @@ export function GhostIconCheck(props: SVGProps<SVGSVGElement>) {
   return (
     <SvgBox {...props}>
       <path d="M20 6L9 17l-5-5" />
-    </SvgBox>
-  );
-}
-
-export function GhostIconMinus(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgBox {...props}>
-      <path d="M5 12h14" />
     </SvgBox>
   );
 }
@@ -210,91 +194,5 @@ export function ServiceIdGlyph({
     >
       {label}
     </span>
-  );
-}
-
-/** Thin category glyph for section headers (stroke only). */
-export function CategoryRailIcon({ categoryId, className }: { categoryId: string; className?: string }) {
-  const c = categoryId.toLowerCase();
-  const common = `${className ?? ""} text-[var(--text-muted)]`;
-  if (c === "communication")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "productivity")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "storage")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "project")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M3 3v18h18M7 16l4-4 4 4 6-6" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "crm")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "dev")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "design")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M12 19l7-7 3 3-7 7-3-3zM18 13l-6-6a2 2 0 00-3 3l6 6M12 5l-2-2" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "finance")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "support")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M3 18v-6a9 9 0 0118 0v6M21 19a2 2 0 01-2 2h-2a2 2 0 01-2-2v-3M7 19a2 2 0 002 2h2a2 2 0 002-2v-3" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "analytics")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M18 20V10M12 20V4M6 20v-6" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "automation")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeWidth={stroke} />
-      </svg>
-    );
-  if (c === "commerce")
-    return (
-      <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-        <circle cx="9" cy="21" r="1" strokeWidth={stroke} />
-        <circle cx="20" cy="21" r="1" strokeWidth={stroke} />
-        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" strokeWidth={stroke} />
-      </svg>
-    );
-  return (
-    <svg className={common} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden>
-      <rect x="4" y="4" width="16" height="16" rx="1" strokeWidth={stroke} />
-      <path d="M9 9h6M9 15h6" strokeWidth={stroke} />
-    </svg>
   );
 }

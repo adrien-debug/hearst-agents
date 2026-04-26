@@ -123,12 +123,12 @@ export function SourcePicker({
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-4 text-[11px] font-mono font-black tracking-[0.4em] text-white/30 hover:text-[var(--cykan)] transition-all duration-500 uppercase"
         >
-          <span className="w-2 h-2 rounded-full bg-[var(--cykan)] shadow-[0_0_12px_var(--cykan)]" />
+          <span className="w-2 h-2 rounded-full bg-[var(--cykan)]" />
           <span>{getDisplayText()}</span>
         </button>
 
         {isOpen && (
-          <div className="absolute bottom-full left-0 mb-6 w-96 bg-black/95 backdrop-blur-3xl border border-white/10 rounded-[8px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] z-50 overflow-hidden">
+          <div className="absolute bottom-full left-0 mb-6 w-96 bg-black border border-white/10 rounded-[8px] z-50 overflow-hidden">
             <SourcePickerContent
               mode={selection.mode}
               onModeChange={handleModeChange}
@@ -154,7 +154,7 @@ export function SourcePicker({
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-6 w-96 bg-black/95 backdrop-blur-3xl border border-white/10 rounded-[8px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] z-50 overflow-hidden">
+        <div className="absolute bottom-full left-0 mb-6 w-96 bg-black border border-white/10 rounded-[8px] z-50 overflow-hidden">
           <SourcePickerContent
             mode={selection.mode}
             onModeChange={handleModeChange}
@@ -304,7 +304,7 @@ function ModeOption({ label, description, selected, onClick }: ModeOptionProps) 
           selected ? "border-[var(--cykan)]" : "border-white/20"
         }`}
       >
-        {selected && <div className="w-2 h-2 rounded-full bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)]" />}
+        {selected && <div className="w-2 h-2 rounded-full bg-[var(--cykan)]" />}
       </div>
       <div className="flex-1">
         <p className={`text-[16px] font-black uppercase tracking-tighter ${selected ? "text-white" : "text-white/50"}`}>{label}</p>

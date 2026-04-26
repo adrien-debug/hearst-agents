@@ -1,24 +1,76 @@
 "use client";
 
-/**
- * RightPanelContent — Panel internals (extracted for responsive wrapper)
- */
-
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import type { RightPanelData, FocalObjectView } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
-import { FocalRetryButton } from "./FocalRetryButton";
 
 interface RightPanelContentProps {
-  /** Called when user requests panel close (mobile drawer) */
   onClose?: () => void;
 }
 
+// Icon components
+const StatusIcon = ({ state }: { state: string }) => {
+  if (state === "awaiting_approval") {
+    return (
+      <svg className="w-5 h-5 text-[var(--warn)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4M12 16h.01"/>
+      </svg>
+    );
+  }
+  if (state === "processing" || state === "running") {
+    return (
+      <svg className="w-5 h-5 text-[var(--cykan)] animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      </svg>
+    );
+  }
+  return (
+    <svg className="w-5 h-5 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M12 6v6l4 2"/>
+    </svg>
+  );
+};
+
+const FileIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+  </svg>
+);
+
+const MissionIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M12 6v6l4 2"/>
+  </svg>
+);
+
+const NodeIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="12" cy="5" r="2"/>
+    <circle cx="5" cy="19" r="2"/>
+    <circle cx="19" cy="19" r="2"/>
+    <path d="M12 7v5M7 18h10"/>
+  </svg>
+);
+
+const DatabaseIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <ellipse cx="12" cy="5" rx="9" ry="3"/>
+    <path d="M3 5v14a9 3 0 0 0 18 0V5"/>
+    <path d="M3 12a9 3 0 0 0 18 0"/>
+  </svg>
+);
+
 export function RightPanelContent({ onClose }: RightPanelContentProps) {
+  const router = useRouter();
   const coreState = useRuntimeStore((s) => s.coreState);
   const currentRunId = useRuntimeStore((s) => s.currentRunId);
   const flowLabel = useRuntimeStore((s) => s.flowLabel);
@@ -27,7 +79,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
   const [data, setData] = useState<RightPanelData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -36,7 +88,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     activeThreadIdRef.current = activeThreadId;
   }, [activeThreadId]);
 
-  /** Live updates via SSE (~1s) */
   useEffect(() => {
     if (!activeThreadId) {
       Promise.resolve().then(() => {
@@ -167,112 +218,117 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const focalObjectType = focalObject ? getFocalProp(focalObject, "objectType") || "unknown" : "";
   const focalTitle = focalObject ? getFocalProp(focalObject, "title") || "Untitled" : "";
 
+  // Empty state when no thread
+  if (!hasActiveThread) {
+    return (
+      <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-white/[0.05] bg-gradient-to-b from-[#080808] to-[#050505]">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mb-4">
+            <StatusIcon state="standby" />
+          </div>
+          <h3 className="text-[15px] font-medium text-white/80 mb-2">No active session</h3>
+          <p className="text-[12px] text-white/40 leading-relaxed">
+            Start a conversation to see context, assets, and missions here.
+          </p>
+        </div>
+      </aside>
+    );
+  }
+
   return (
-    <aside
-      className="w-[380px] h-full flex flex-col z-20 relative border-l border-white/[0.08] shadow-[-30px_0_80px_rgba(0,0,0,0.5)]"
-      style={{ background: "linear-gradient(180deg, #080808 0%, #0a0a0a 30%, #060606 100%)" }}
-    >
-      {/* Header with close button for mobile */}
+    <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-white/[0.05] bg-gradient-to-b from-[#080808] via-[#060606] to-[#050505]">
+      {/* Mobile header */}
       {onClose && (
-        <div className="p-6 flex items-center justify-between md:hidden">
-          <p className="text-[13px] font-medium tracking-wide">Runtime</p>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-white/[0.05] transition-colors"
-            aria-label="Fermer"
-          >
+        <div className="p-4 flex items-center justify-between md:hidden border-b border-white/[0.05]">
+          <p className="text-[14px] font-medium">Context</p>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-white/60">
             ✕
           </button>
         </div>
       )}
 
-      {/* Runtime Status */}
-      <div className="p-6 bg-gradient-to-b from-white/[0.03] to-transparent border-b border-white/[0.05]">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/25">System_HUD</p>
-          <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-[var(--cykan)] shadow-[0_0_15px_var(--cykan)]" : "bg-[var(--danger)]"}`} />
+      {/* Status Card */}
+      <div className="p-5 border-b border-white/[0.05]">
+        <div className="flex items-center gap-3 mb-4">
+          <StatusIcon state={coreState === "awaiting_approval" ? "awaiting_approval" : isRunning ? "processing" : "standby"} />
+          <div>
+            <p className="text-[13px] font-medium text-white">
+              {coreState === "awaiting_approval" ? (flowLabel || "Needs approval") : 
+               isRunning ? (flowLabel || "Processing") : "Ready"}
+            </p>
+            <p className="text-[11px] text-white/40">
+              {isConnected ? "Connected" : "Disconnected"}
+            </p>
+          </div>
         </div>
-        {coreState === "awaiting_approval" ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="text-[15px] font-bold tracking-tight text-[var(--warn)]">{flowLabel || "Validation"}</span>
-            </div>
-            <div className="h-[2px] bg-white/[0.05] relative">
-              <div className="absolute inset-0 bg-[var(--warn)] w-full shadow-[0_0_15px_var(--warn)]" />
-            </div>
-          </div>
-        ) : isRunning ? (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="text-[15px] font-bold tracking-tight text-[var(--cykan)]">{flowLabel || "Processing"}</span>
-            </div>
-            <div className="h-[2px] bg-white/[0.05] relative">
-              <div className="absolute inset-0 bg-[var(--cykan)] shadow-[0_0_20px_var(--cykan)] animate-pulse" style={{ width: "66%" }} />
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 text-[var(--text-muted)] opacity-50">
-            <span className="text-[15px] font-bold tracking-tight">Standby</span>
+        
+        {/* Progress bar */}
+        {(isRunning || coreState === "awaiting_approval") && (
+          <div className="h-1 bg-white/[0.08] rounded-full overflow-hidden">
+            <div 
+              className={`h-full ${coreState === "awaiting_approval" ? "bg-[var(--warn)]" : "bg-[var(--cykan)]"} ${isRunning ? "animate-pulse" : ""}`}
+              style={{ width: coreState === "awaiting_approval" ? "100%" : "66%" }}
+            />
           </div>
         )}
       </div>
 
-      {/* Focal Object */}
+      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        {focalObject ? (
-          <div className="px-8 py-10 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border-b border-white/[0.06]">
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/25">Focal_Object</p>
+        {/* Focal Object Card */}
+        {focalObject && (
+          <div className="p-5 border-b border-white/[0.05]">
+            <div className="flex items-center gap-2 text-[var(--cykan)] mb-3">
+              <FileIcon />
+              <span className="text-[11px] font-medium uppercase tracking-wide">{focalObjectType}</span>
             </div>
-            <p className="text-[17px] font-bold text-white tracking-tight mb-2 leading-[1.3]">{focalTitle}</p>
-            <p className="text-[10px] font-mono text-[var(--cykan)] tracking-[0.15em] mb-8">{focalObjectType}</p>
-
+            <h3 className="text-[15px] font-medium text-white mb-1 leading-snug">{focalTitle}</h3>
+            
             {actionError && (
-              <p className="text-[10px] font-mono text-[var(--danger)] mb-6 p-4 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] tracking-wide">{actionError}</p>
+              <p className="mt-3 text-[11px] text-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 rounded">{actionError}</p>
             )}
 
             {(focalObject as FocalObjectView)?.primaryAction && (
               <button
-                className={`w-full py-4 text-[11px] font-mono font-bold uppercase tracking-[0.3em] transition-all duration-500 ${
+                className={`mt-4 w-full py-3 text-[12px] font-medium rounded transition-colors ${
                   (focalObject as FocalObjectView).primaryAction?.kind === "approve"
-                    ? "bg-white text-black shadow-[0_20px_40px_rgba(255,255,255,0.08)]"
-                    : "bg-[var(--cykan)] text-black shadow-[0_20px_40px_rgba(163,255,0,0.15)]"
+                    ? "bg-white text-black hover:bg-white/90"
+                    : "bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90"
                 }`}
                 onClick={handlePrimaryAction}
                 disabled={actionLoading}
               >
-                {actionLoading ? "RUNNING_" : (focalObject as FocalObjectView).primaryAction?.label}
+                {actionLoading ? "Processing..." : (focalObject as FocalObjectView).primaryAction?.label}
               </button>
             )}
           </div>
-        ) : loading ? (
-          <div className="px-8 py-10">
-            <div className="h-[2px] bg-white/[0.05] animate-pulse" />
-          </div>
-        ) : null}
+        )}
 
-        {/* Secondary Objects */}
+        {/* Secondary Nodes */}
         {secondaryObjects.length > 0 && (
-          <div className="px-8 py-8 bg-gradient-to-b from-white/[0.02] to-transparent border-b border-white/[0.05]">
-            <p className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/25 mb-6">Secondary_Nodes</p>
-            <div className="space-y-6">
+          <div className="p-5 border-b border-white/[0.05]">
+            <div className="flex items-center gap-2 text-white/40 mb-4">
+              <NodeIcon />
+              <span className="text-[11px] font-medium uppercase tracking-wide">Related</span>
+            </div>
+            <div className="space-y-3">
               {secondaryObjects.map((obj, idx) => {
                 const objType = getFocalProp(obj, "objectType") || "unknown";
                 const objTitle = getFocalProp(obj, "title") || "Untitled";
                 const objStatus = getFocalProp(obj, "status") || "";
                 return (
-                  <div key={idx} className="flex flex-col gap-2 group cursor-pointer">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono text-white/30 uppercase tracking-[0.15em] group-hover:text-[var(--cykan)] transition-colors">{objType}</span>
-                      {objStatus && (
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          objStatus === "ready" ? "bg-[var(--cykan)] shadow-[0_0_8px_var(--cykan)]" :
-                          objStatus === "awaiting_approval" ? "bg-[var(--warn)]" :
-                          "bg-white/10"
-                        }`} />
-                      )}
+                  <div key={idx} className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors">
+                    <div>
+                      <p className="text-[12px] text-white/70 group-hover:text-white transition-colors">{objTitle}</p>
+                      <p className="text-[10px] text-white/30">{objType}</p>
                     </div>
-                    <span className="text-[13px] font-medium text-white/60 tracking-tight group-hover:text-white transition-colors truncate">{objTitle}</span>
+                    {objStatus && (
+                      <span className={`w-2 h-2 rounded-full ${
+                        objStatus === "ready" ? "bg-[var(--cykan)]" :
+                        objStatus === "awaiting_approval" ? "bg-[var(--warn)]" :
+                        "bg-white/20"
+                      }`} />
+                    )}
                   </div>
                 );
               })}
@@ -280,40 +336,23 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           </div>
         )}
 
-        {/* Current Run */}
-        {panelData?.currentRun && (
-          <div className="px-8 py-8 border-b border-white/[0.05] bg-gradient-to-r from-white/[0.03] via-white/[0.01] to-transparent">
-            <p className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/25 mb-6">Process_Metrics</p>
-            <div className="space-y-3 text-[11px] font-mono tracking-wide">
-              <div className="flex items-center justify-between">
-                <span className="text-white/30">Run_ID</span>
-                <span className="text-white/60 truncate max-w-[140px]">
-                  {currentRunId?.slice(0, 16)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-white/30">Mode</span>
-                <span className="text-[var(--cykan)] font-medium">{panelData.currentRun.executionMode}</span>
-              </div>
-              {(panelData.currentRun.pendingToolCalls ?? 0) > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-white/30">Stack</span>
-                  <span className="text-[var(--cykan)] font-medium">{panelData.currentRun.pendingToolCalls} pending</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Assets */}
         {panelData?.assets && panelData.assets.length > 0 && (
-          <div className="px-8 py-8 border-b border-white/[0.05] bg-gradient-to-b from-transparent to-white/[0.02]">
-            <p className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/25 mb-6">Data_Assets</p>
-            <div className="space-y-4">
+          <div className="p-5 border-b border-white/[0.05]">
+            <div className="flex items-center gap-2 text-white/40 mb-4">
+              <DatabaseIcon />
+              <span className="text-[11px] font-medium uppercase tracking-wide">Assets</span>
+              <span className="ml-auto text-[10px] text-white/30">{panelData.assets.length}</span>
+            </div>
+            <div className="space-y-2">
               {panelData.assets.slice(0, 5).map((asset) => (
-                <div key={asset.id} className="flex flex-col gap-1 group cursor-pointer">
-                  <span className="font-mono text-[9px] text-white/30 uppercase tracking-[0.15em] group-hover:text-[var(--cykan)] transition-colors">{asset.type}</span>
-                  <span className="truncate font-medium text-[12px] tracking-tight text-white/60 group-hover:text-white transition-colors">{asset.name}</span>
+                <div 
+                  key={asset.id} 
+                  onClick={() => router.push(`/assets?id=${asset.id}`)}
+                  className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors"
+                >
+                  <p className="text-[12px] text-white/60 group-hover:text-white transition-colors truncate pr-4">{asset.name}</p>
+                  <span className="text-[10px] text-white/30 uppercase">{asset.type}</span>
                 </div>
               ))}
             </div>
@@ -322,26 +361,55 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
         {/* Missions */}
         {panelData?.missions && panelData.missions.length > 0 && (
-          <div className="px-8 py-8 border-b border-white/[0.05] bg-gradient-to-b from-white/[0.02] to-transparent">
-            <p className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-white/25 mb-6">Active_Missions</p>
-            <div className="space-y-4">
+          <div className="p-5 border-b border-white/[0.05]">
+            <div className="flex items-center gap-2 text-white/40 mb-4">
+              <MissionIcon />
+              <span className="text-[11px] font-medium uppercase tracking-wide">Missions</span>
+              <span className="ml-auto text-[10px] text-white/30">{panelData.missions.length}</span>
+            </div>
+            <div className="space-y-2">
               {panelData.missions.slice(0, 3).map((mission) => (
-                <div key={mission.id} className="flex items-center justify-between group cursor-pointer">
-                  <span className="truncate text-[13px] font-medium tracking-tight text-white/60 group-hover:text-white transition-colors">{mission.name}</span>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    mission.opsStatus === "running" ? "bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)]" :
-                    mission.enabled ? "bg-[var(--cykan)]/30" : "bg-white/10"
+                <div 
+                  key={mission.id} 
+                  onClick={() => router.push(`/missions?id=${mission.id}`)}
+                  className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors"
+                >
+                  <p className="text-[12px] text-white/60 group-hover:text-white transition-colors truncate pr-4">{mission.name}</p>
+                  <span className={`w-2 h-2 rounded-full ${
+                    mission.opsStatus === "running" ? "bg-[var(--cykan)]" :
+                    mission.enabled ? "bg-[var(--cykan)]/50" : "bg-white/20"
                   }`} />
                 </div>
               ))}
             </div>
           </div>
         )}
-      </div>
 
-      {/* Footer */}
-      <div className="p-6 text-[10px] font-mono uppercase tracking-[0.2em] text-white/20 text-center">
-        Hearst_OS_v3.0
+        {/* Run Info */}
+        {panelData?.currentRun && (
+          <div className="p-5">
+            <div className="flex items-center gap-2 text-white/40 mb-4">
+              <DatabaseIcon />
+              <span className="text-[11px] font-medium uppercase tracking-wide">Run details</span>
+            </div>
+            <div className="space-y-2 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-white/30">ID</span>
+                <span className="text-white/60 font-mono">{currentRunId?.slice(0, 12)}...</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/30">Mode</span>
+                <span className="text-[var(--cykan)]">{panelData.currentRun.executionMode}</span>
+              </div>
+              {(panelData.currentRun.pendingToolCalls ?? 0) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-white/30">Pending</span>
+                  <span className="text-[var(--cykan)]">{panelData.currentRun.pendingToolCalls}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );

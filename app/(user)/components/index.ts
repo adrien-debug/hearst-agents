@@ -1,4 +1,18 @@
 export { LeftPanel } from "./LeftPanel";
 export { RightPanel } from "./RightPanel";
+export { RightPanelContent } from "./RightPanelContent";
 export { FocalStage } from "./FocalStage";
 export { ChatInput } from "./ChatInput";
+export { ChatMessages } from "./ChatMessages";
+export { CapabilityTabs } from "./CapabilityTabs";
+export { SourcePicker } from "./SourcePicker";
+export { CapabilityBlockedBanner } from "./CapabilityBlockedBanner";
+export { ConnectionStatusChip } from "./ConnectionStatusChip";
+export { FocalRetryButton } from "./FocalRetryButton";
+export { AppCard } from "./AppCard";
+export { AppCategorySection } from "./AppCategorySection";
+export { AppDrawer } from "./AppDrawer";
+export { AssetPreview } from "./AssetPreview";
+export { MissionEditor } from "./MissionEditor";
+export { RunTimeline } from "./RunTimeline";
+export * from "./ghost-icons";

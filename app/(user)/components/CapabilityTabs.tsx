@@ -146,7 +146,7 @@ export function CapabilityTabs({
                 <span className="text-lg grayscale group-hover:grayscale-0 transition-all">{tab.icon}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
                 {isActive && (
-                  <span className="absolute -bottom-3 left-0 right-0 h-[2px] bg-[var(--cykan)] shadow-[0_0_15px_var(--cykan)]" />
+                  <span className="absolute -bottom-3 left-0 right-0 h-[2px] bg-[var(--cykan)]" />
                 )}
               </button>
             );
@@ -163,7 +163,7 @@ export function CapabilityTabs({
         )}
 
         {showMore && (
-          <div className="absolute top-full left-0 mt-6 bg-black/95 backdrop-blur-3xl border border-white/10 rounded-[8px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] z-50 p-4 min-w-[280px]">
+          <div className="absolute top-full left-0 mt-6 bg-black border border-white/10 rounded-[8px] z-50 p-4 min-w-[280px]">
             {allTabs.slice(4).map((tab) => (
               <button
                 key={tab.id}

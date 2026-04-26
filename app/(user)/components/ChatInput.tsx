@@ -93,7 +93,7 @@ export function ChatInput({
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="absolute bottom-full mb-8 w-full bg-black/95 backdrop-blur-xl rounded-lg shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden z-50"
+            className="absolute bottom-full mb-8 w-full bg-black rounded-lg border border-white/10 overflow-hidden z-50"
           >
             {matchingServices.length === 0 ? (
               <div className="p-4 text-[11px] font-mono tracking-wide text-white/40">

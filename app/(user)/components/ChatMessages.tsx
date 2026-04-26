@@ -65,9 +65,9 @@ export function ChatMessages({ messages, className, compact = false }: ChatMessa
           <div className="flex w-full">
             <div className="w-12 shrink-0 font-mono text-[10px] text-[var(--cykan)] pt-1 uppercase tracking-[0.15em] animate-pulse">Run</div>
             <div className="flex gap-2 pt-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)] animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)] animate-bounce" style={{ animationDelay: "200ms" }} />
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)] animate-bounce" style={{ animationDelay: "400ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-bounce" style={{ animationDelay: "200ms" }} />
+              <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-bounce" style={{ animationDelay: "400ms" }} />
             </div>
           </div>
         )}

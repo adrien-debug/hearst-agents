@@ -25,6 +25,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > ✅ Provider preflight unifié via `scopeRequiresProviders(capScope)`  
 > ✅ Keywords dédupliquées : `resolveDataIntent` centralisé, `isXTask` supprimés du pipeline  
 > ✅ Exports morts nettoyés : `getRetrievalModeForDomain`, `isXTask` dans barrel  
+> ✅ Suite intégration runtime capability-first : `__tests__/runtime/capability-runtime-integration.test.ts` (router, guard, planner mock, `delegate()`, backend v2, providers, contrat SSE)  
 > ✅ 491 tests passent (0 régression)
 
 > ✅ **Phase 1 — V2 Foundation TERMINÉE (23/04/2026)**  

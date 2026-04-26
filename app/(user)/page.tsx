@@ -28,13 +28,6 @@ function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_fail
   });
 }
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Bonjour";
-  if (h < 18) return "Bon après-midi";
-  return "Bonsoir";
-}
-
 interface ChatControlsProps {
   showBlockedBanner: boolean;
   capabilityMode: CapabilityMode;
@@ -147,7 +140,7 @@ export default function HomePage() {
   const messages = useMemo(() => messagesRaw ?? [], [messagesRaw]);
   const addMessageToThread = useNavigationStore((s) => s.addMessageToThread);
   const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
-  const firstName = session?.user?.name?.split(" ")[0];
+  const _firstName = session?.user?.name?.split(" ")[0];
 
   useEffect(() => {
     if (!activeThreadId) {
@@ -350,7 +343,7 @@ export default function HomePage() {
             }
             const eventRunId = (event.run_id as string) || canonicalRunId || clientToken;
             addEvent({ ...event, run_id: eventRunId });
-          } catch (parseErr) {}
+          } catch (_parseErr) {}
         }
       }
 
@@ -369,7 +362,7 @@ export default function HomePage() {
         error: errorMsg,
       });
     }
-  }, [surface, activeThreadId, capabilityMode, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread]);
+  }, [surface, activeThreadId, capabilityMode, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, session?.user?.email]);
 
   const handleCapabilityChange = useCallback((mode: CapabilityMode) => {
     setCapabilityMode(mode);
@@ -435,7 +428,7 @@ export default function HomePage() {
               className="inline-flex flex-col items-center gap-6"
             >
               <div
-                className="w-20 h-20 flex items-center justify-center text-[24px] font-black bg-[var(--cykan)] text-black rounded-sm shadow-[0_0_60px_rgba(163,255,0,0.2)]"
+                className="w-20 h-20 flex items-center justify-center text-[24px] font-black bg-[var(--cykan)] text-black rounded-sm"
               >
                 H
               </div>
@@ -502,7 +495,7 @@ export default function HomePage() {
             onClick={() => setShowFocal(true)}
             className="inline-flex items-center gap-8 group"
           >
-            <div className="w-2 h-2 rounded-full bg-[var(--cykan)] shadow-[0_0_15px_var(--cykan)] animate-pulse"></div>
+            <div className="w-2 h-2 rounded-full bg-[var(--cykan)] animate-pulse"></div>
             <div className="flex flex-col items-start">
               <span className="text-white/40 uppercase font-mono tracking-[0.2em] text-[10px] group-hover:text-[var(--cykan)] transition-colors">
                 {focal.type === "brief" ? "Active Brief" : focal.type === "report" ? "Active Report" : "Active Document"}
