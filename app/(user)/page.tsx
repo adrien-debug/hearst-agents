@@ -260,6 +260,9 @@ export default function HomePage() {
     return services.filter((s) => s.capabilities.includes(requiredCap as ServiceWithConnectionStatus["capabilities"][number]));
   }, [services, capabilityMode]);
 
+  // Extract user email for stable dependency
+  const userEmail = session?.user?.email || "anonymous";
+
   const handleSubmit = useCallback(async (message: string) => {
     if (!activeThreadId) return;
     const clientToken = `client-${Date.now()}`;
@@ -271,7 +274,7 @@ export default function HomePage() {
     addMessageToThread(activeThreadId, userMessage);
 
     if (messages.length === 0) {
-      trackAnalytics("first_message_sent", session?.user?.email || "anonymous", {
+      trackAnalytics("first_message_sent", userEmail, {
         threadId: activeThreadId,
         provider: capabilityMode,
       });
@@ -347,7 +350,7 @@ export default function HomePage() {
         }
       }
 
-      trackAnalytics("run_completed", session?.user?.email || "anonymous", {
+      trackAnalytics("run_completed", userEmail, {
         runId: canonicalRunId || clientToken,
         provider: capabilityMode,
         messageCount: messages.length,
@@ -356,13 +359,13 @@ export default function HomePage() {
       const errorMsg = err instanceof Error ? err.message : "Échec de la connexion";
       toast.error("Erreur de connexion", errorMsg);
       addEvent({ type: "run_failed", error: errorMsg, run_id: clientToken });
-      trackAnalytics("run_failed", session?.user?.email || "anonymous", {
+      trackAnalytics("run_failed", userEmail, {
         runId: clientToken,
         provider: capabilityMode,
         error: errorMsg,
       });
     }
-  }, [surface, activeThreadId, capabilityMode, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, session?.user?.email]);
+  }, [surface, activeThreadId, capabilityMode, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, userEmail]);
 
   const handleCapabilityChange = useCallback((mode: CapabilityMode) => {
     setCapabilityMode(mode);

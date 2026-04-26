@@ -38,6 +38,7 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
         }}
         className="p-4 flex justify-center hover:opacity-80 transition-opacity shrink-0"
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img 
           src="/patterns/hcyan.svg" 
           alt="Hearst" 

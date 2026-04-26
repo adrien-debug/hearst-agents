@@ -168,13 +168,16 @@ export function ServiceIdGlyph({
 
   if (icon) {
     return (
-      <img
-        src={icon}
-        alt={id}
-        title={id}
-        className={`${dim} object-contain shrink-0 ${className}`}
-        style={{ opacity: 0.85 }}
-      />
+      <>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={icon}
+          alt={id}
+          title={id}
+          className={`${dim} object-contain shrink-0 ${className}`}
+          style={{ opacity: 0.85 }}
+        />
+      </>
     );
   }
 
