@@ -272,15 +272,32 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                 <FocalRetryButton
                   missionId={(focalObject as FocalObjectView).missionId}
                   sourcePlanId={(focalObject as FocalObjectView).sourcePlanId}
-                  threadId={(focalObject as FocalObjectView).threadId}
+                  threadId={
+                    getFocalProp(focalObject, "threadId") ?? activeThreadId ?? undefined
+                  }
+                  focalTitle={getFocalProp(focalObject, "title")}
+                  focalObjectType={getFocalProp(focalObject, "objectType")}
+                  focalStatus={getFocalProp(focalObject, "status")}
                   label={(focalObject as FocalObjectView).primaryAction?.label}
                   onSuccess={() => {
-                    // Refresh after retry
                     if (activeThreadId) {
-                      fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`)
-                        .then((res) => res.json())
-                        .then((panelData) => setData(panelData))
-                        .catch(() => {});
+                      void fetch(
+                        `/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`,
+                        { credentials: "include" },
+                      )
+                        .then((res) => {
+                          if (!res.ok) {
+                            console.warn("[RightPanelContent] post-retry refresh failed:", res.status);
+                            return null;
+                          }
+                          return res.json();
+                        })
+                        .then((panelData) => {
+                          if (panelData) setData(panelData as RightPanelData);
+                        })
+                        .catch((e) => {
+                          console.error("[RightPanelContent] post-retry refresh error:", e);
+                        });
                     }
                     onClose?.();
                   }}

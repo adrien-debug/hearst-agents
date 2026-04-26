@@ -9,14 +9,19 @@
 
 import { useState } from "react";
 import { toast } from "@/app/hooks/use-toast";
+import { consumeOrchestrateSseResponse } from "@/lib/orchestrator/consume-sse-response";
 
 interface FocalRetryButtonProps {
   /** Mission ID if focal is a mission */
   missionId?: string;
   /** Source plan ID if focal is derived from a plan */
   sourcePlanId?: string;
-  /** Thread ID for orchestrate fallback */
+  /** Thread ID for orchestrate (conversation scope) */
   threadId?: string;
+  /** Fields for canonical `focal_context` on POST /api/orchestrate */
+  focalTitle?: string;
+  focalObjectType?: string;
+  focalStatus?: string;
   /** Optional: callback after successful retry */
   onSuccess?: () => void;
   /** Optional: custom label */
@@ -27,10 +32,36 @@ interface FocalRetryButtonProps {
   compact?: boolean;
 }
 
+function buildFocalContext(params: {
+  sourcePlanId?: string;
+  threadId?: string;
+  focalTitle?: string;
+  focalObjectType?: string;
+  focalStatus?: string;
+}): { id: string; objectType: string; title: string; status: string } | undefined {
+  const { sourcePlanId, threadId, focalTitle, focalObjectType, focalStatus } = params;
+  if (!sourcePlanId && !threadId) return undefined;
+
+  const id = sourcePlanId ?? threadId ?? "unknown";
+  const objectType =
+    focalObjectType?.trim() ||
+    (sourcePlanId ? "execution_plan" : "thread");
+
+  return {
+    id,
+    objectType,
+    title: (focalTitle ?? "Focal").slice(0, 200),
+    status: focalStatus ?? "failed",
+  };
+}
+
 export function FocalRetryButton({
   missionId,
   sourcePlanId,
   threadId,
+  focalTitle,
+  focalObjectType,
+  focalStatus,
   onSuccess,
   label = "Réessayer",
   className,
@@ -42,14 +73,14 @@ export function FocalRetryButton({
     setIsRetrying(true);
 
     try {
-      // Strategy 1: Mission retry
       if (missionId) {
         const res = await fetch(`/api/v2/missions/${missionId}/run`, {
           method: "POST",
+          credentials: "include",
         });
 
         if (!res.ok) {
-          const data = await res.json();
+          const data = (await res.json().catch(() => ({}))) as { error?: string };
           throw new Error(data.error || "Mission retry failed");
         }
 
@@ -58,20 +89,29 @@ export function FocalRetryButton({
         return;
       }
 
-      // Strategy 2: Plan/Run retry via orchestrate
       if (sourcePlanId || threadId) {
+        const focal_context = buildFocalContext({
+          sourcePlanId,
+          threadId,
+          focalTitle,
+          focalObjectType,
+          focalStatus,
+        });
+
         const res = await fetch("/api/orchestrate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             message: "Reprends depuis la dernière erreur",
             thread_id: threadId,
-            focal_context: sourcePlanId ? { sourcePlanId } : undefined,
+            focal_context,
           }),
         });
 
-        if (!res.ok) {
-          throw new Error("Orchestrate retry failed");
+        const outcome = await consumeOrchestrateSseResponse(res);
+        if (!outcome.ok) {
+          throw new Error(outcome.error);
         }
 
         toast.success("Reprise lancée", "Le système va réessayer l'opération");
@@ -79,7 +119,6 @@ export function FocalRetryButton({
         return;
       }
 
-      // No retry strategy available
       toast.warning("Réessai non disponible", "Impossible de déterminer comment réessayer cette opération");
     } catch (error) {
       console.error("[FocalRetryButton] Retry failed:", error);
@@ -95,6 +134,7 @@ export function FocalRetryButton({
 
   return (
     <button
+      type="button"
       onClick={handleRetry}
       disabled={isRetrying}
       className={

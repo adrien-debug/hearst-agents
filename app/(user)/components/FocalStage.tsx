@@ -183,7 +183,10 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
             <FocalRetryButton
               missionId={focal.missionId}
               sourcePlanId={focal.sourcePlanId}
-              threadId={focal.threadId}
+              threadId={focal.threadId ?? activeThreadId ?? undefined}
+              focalTitle={focal.title}
+              focalObjectType={focal.type}
+              focalStatus={focal.status}
               label={focal.primaryAction.label}
               onSuccess={onActionComplete}
               className="px-5 py-2.5 text-sm font-medium bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-lg"
