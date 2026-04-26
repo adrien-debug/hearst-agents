@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireScope } from "@/lib/scope";
 import { ok, err, parseBody } from "@/lib/domain/api-helpers";
 import { listAdapters } from "@/lib/integrations";
 import type { Json } from "@/lib/database.types";
@@ -17,6 +18,9 @@ const createConnectionSchema = z.object({
 });
 
 export async function GET() {
+  const auth = await requireScope({ context: "GET /api/integrations" });
+  if (auth.error) return err(auth.error.message, auth.error.status);
+
   const sb = requireServerSupabase();
 
   const { data, error } = await sb
@@ -33,6 +37,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireScope({ context: "POST /api/integrations" });
+  if (auth.error) return err(auth.error.message, auth.error.status);
+
   let body: unknown;
   try { body = await req.json(); } catch { return err("Invalid JSON", 400); }
 

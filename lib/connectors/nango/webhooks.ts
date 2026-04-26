@@ -8,6 +8,7 @@
  * - auth.error
  */
 
+import { createHmac, timingSafeEqual } from "crypto";
 import type { NangoWebhookPayload, NangoProvider } from "./types";
 import { syncNangoConnection, removeConnection } from "./credentials";
 import { parseConnectionId } from "./proxy";
@@ -96,15 +97,26 @@ function extractUserIdFromConnectionId(connectionId: string): string | null {
 }
 
 /**
- * Verify webhook signature (if Nango provides signing)
- * Placeholder — implement based on Nango docs
+ * Verify a Nango webhook signature.
+ *
+ * Matches Nango's secure scheme: HMAC-SHA256 of the raw request body using
+ * NANGO_WEBHOOK_SECRET as the key, hex-encoded, sent in the
+ * `x-nango-hmac-sha256` header. Reference:
+ * https://github.com/NangoHQ/nango/blob/master/packages/webhooks/lib/utils.ts
+ *
+ * `rawBody` MUST be the exact bytes received — do not parse and re-stringify.
  */
 export function verifyWebhookSignature(
-  _payload: string,
-  _signature: string,
-  _secret: string
+  rawBody: string,
+  signature: string | null | undefined,
+  secret: string
 ): boolean {
-  // TODO: Implement HMAC signature verification when Nango supports it
-  // For now, rely on IP allowlist and HTTPS
-  return true;
+  if (!signature || !secret) return false;
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  if (expected.length !== signature.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(signature, "hex"));
+  } catch {
+    return false;
+  }
 }

@@ -13,9 +13,14 @@ import { SessionManager } from "@/lib/agents/sessions";
 
 export const dynamic = "force-dynamic";
 
-// Create Supabase client
+// Create Supabase client — fail loudly if service-role key is missing.
+// A silent fallback would let the orchestrator run with degraded permissions
+// and obscure the misconfiguration in production logs.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:54321";
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "dummy-key";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseKey) {
+  throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for /api/test/orchestrate-v2");
+}
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // GET — Status check

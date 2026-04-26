@@ -9,18 +9,28 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { handleNangoWebhook, type NangoWebhookPayload } from "@/lib/connectors/nango";
+import { handleNangoWebhook, verifyWebhookSignature, type NangoWebhookPayload } from "@/lib/connectors/nango";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  // Verify webhook signature (if Nango provides signing)
-  // const signature = req.headers.get("x-nango-signature");
-  // const secret = process.env.NANGO_WEBHOOK_SECRET;
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-nango-hmac-sha256");
+  const secret = process.env.NANGO_WEBHOOK_SECRET;
+
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[NangoWebhook] NANGO_WEBHOOK_SECRET unset — rejecting in production");
+      return NextResponse.json({ error: "server_misconfigured" }, { status: 500 });
+    }
+    console.warn("[NangoWebhook] NANGO_WEBHOOK_SECRET unset — allowing in non-production only");
+  } else if (!verifyWebhookSignature(rawBody, signature, secret)) {
+    return NextResponse.json({ error: "invalid_signature" }, { status: 401 });
+  }
 
   let payload: unknown;
   try {
-    payload = await req.json();
+    payload = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
   }

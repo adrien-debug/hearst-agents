@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireScope } from "@/lib/scope";
 import { ok, err, dbErr, parseBody } from "@/lib/domain";
 import { slugify } from "@/lib/domain/slugify";
 import { z } from "zod";
@@ -26,6 +27,9 @@ const createPromptSchema = z.object({
 
 export async function GET() {
   try {
+    const auth = await requireScope({ context: "GET /api/prompts" });
+    if (auth.error) return err(auth.error.message, auth.error.status);
+
     const sb = requireServerSupabase();
     const { data, error } = await sb
       .from("prompt_artifacts")
@@ -43,6 +47,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireScope({ context: "POST /api/prompts" });
+    if (auth.error) return err(auth.error.message, auth.error.status);
+
     const body = await req.json();
     const parsed = parseBody(createPromptSchema, body);
     if (!parsed.success) return parsed.response;
