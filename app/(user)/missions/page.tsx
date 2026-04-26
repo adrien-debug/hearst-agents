@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { MissionEditor } from "../components/MissionEditor";
+import { toast } from "@/app/hooks/use-toast";
+
+type MissionOpsStatus = "idle" | "running" | "success" | "failed" | "blocked";
 
 interface Mission {
   id: string;
@@ -13,6 +16,9 @@ interface Mission {
   frequency: string;
   enabled: boolean;
   input?: string; // From API - mapped to prompt in editor
+  opsStatus?: MissionOpsStatus;
+  lastError?: string;
+  runningSince?: number;
 }
 
 export default function MissionsPage() {
@@ -21,22 +27,80 @@ export default function MissionsPage() {
   const [showEditor, setShowEditor] = useState(false);
   const [editingMission, setEditingMission] = useState<Mission | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   useEffect(() => {
     async function loadMissions() {
       try {
+        // Load base missions
         const res = await fetch("/api/v2/missions");
-        if (res.ok) {
-          const data = await res.json();
-          setMissions(data.missions || []);
+        if (!res.ok) {
+          toast.error("Échec du chargement", "Impossible de charger les missions");
+          return;
+        }
+        const data = await res.json();
+        const baseMissions = data.missions || [];
+
+        // Enrich with ops status
+        const opsRes = await fetch("/api/v2/missions/ops");
+        if (opsRes.ok) {
+          const opsData = await opsRes.json();
+          const opsMap = new Map(
+            opsData.missions?.map((op: { missionId: string; status: MissionOpsStatus; lastError?: string; runningSince?: number }) => [
+              op.missionId,
+              { opsStatus: op.status, lastError: op.lastError, runningSince: op.runningSince },
+            ]) || []
+          );
+
+          const enriched = baseMissions.map((m: Mission) => ({
+            ...m,
+            ...(opsMap.get(m.id) || {}),
+          }));
+          setMissions(enriched);
+        } else {
+          setMissions(baseMissions);
         }
       } catch (error) {
         console.error("Failed to load missions:", error);
+        toast.error("Erreur de chargement", "Une erreur est survenue");
       } finally {
         setLoading(false);
       }
     }
     loadMissions();
+
+    // Refresh ops status every 5s
+    const opsInterval = setInterval(() => {
+      fetch("/api/v2/missions/ops")
+        .then((res) => res.json())
+        .then((opsData) => {
+          const opsMap = new Map(
+            opsData.missions?.map((op: { missionId: string; status: MissionOpsStatus; lastError?: string; runningSince?: number }) => [
+              op.missionId,
+              { opsStatus: op.status, lastError: op.lastError, runningSince: op.runningSince },
+            ]) || []
+          );
+          setMissions((prev) =>
+            prev.map((m) => ({
+              ...m,
+              ...(opsMap.get(m.id) || {}),
+            }))
+          );
+        })
+        .catch(() => {
+          // Silent fail for background refresh
+        });
+    }, 5000);
+
+    // Update current time every second for running duration
+    const timeInterval = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => {
+      clearInterval(opsInterval);
+      clearInterval(timeInterval);
+    };
   }, []);
 
   const handleSave = async (formData: {
@@ -127,10 +191,14 @@ export default function MissionsPage() {
         method: "POST",
       });
       if (res.ok) {
-        alert("Mission lancée !");
+        toast.success("Mission lancée", "La mission a été démarrée avec succès");
+      } else {
+        const data = await res.json();
+        toast.error("Échec du lancement", data.error || "Impossible de lancer la mission");
       }
     } catch (error) {
       console.error("Failed to run mission:", error);
+      toast.error("Erreur de lancement", "Une erreur est survenue");
     }
   };
 
@@ -177,16 +245,20 @@ export default function MissionsPage() {
         {/* Stats */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span className="text-white/50">{missions.filter((m) => m.status === "active").length} actives</span>
+            <span className="w-2 h-2 rounded-full bg-[var(--money)]" />
+            <span className="text-white/50">{missions.filter((m) => m.enabled).length} activées</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span className="text-white/50">{missions.filter((m) => m.status === "paused").length} en pause</span>
+            <span className="w-2 h-2 rounded-full bg-[var(--cykan)] animate-pulse" />
+            <span className="text-white/50">{missions.filter((m) => m.opsStatus === "running").length} en cours</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-red-400" />
-            <span className="text-white/50">{missions.filter((m) => m.status === "error").length} erreurs</span>
+            <span className="w-2 h-2 rounded-full bg-[var(--danger)]" />
+            <span className="text-white/50">{missions.filter((m) => m.opsStatus === "failed").length} échecs</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="w-2 h-2 rounded-full bg-[var(--warn)]" />
+            <span className="text-white/50">{missions.filter((m) => m.opsStatus === "blocked").length} bloqués</span>
           </div>
         </div>
       </div>
@@ -211,51 +283,106 @@ export default function MissionsPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {missions.map((mission) => (
-              <div
-                key={mission.id}
-                className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-[var(--line)] hover:bg-white/[0.03] transition-colors"
-              >
-                <button
-                  onClick={() => handleToggle(mission)}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    mission.status === "active" ? "bg-[var(--money)]" : mission.status === "paused" ? "bg-[var(--warn)]" : "bg-[var(--danger)]"
-                  }`}
-                  title={mission.enabled ? "Désactiver" : "Activer"}
-                />
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-[var(--text)] mb-0.5">{mission.name}</h3>
-                  <p className="text-xs text-[var(--text-muted)] truncate">{mission.description}</p>
-                </div>
-                <div className="flex items-center gap-4 text-xs text-[var(--text-faint)]">
-                  <span>{mission.frequency}</span>
-                  {mission.nextRun && <span>Prochain: {new Date(mission.nextRun).toLocaleDateString()}</span>}
-                </div>
-                <div className="flex items-center gap-1">
+            {missions.map((mission) => {
+              const opsStatusColor =
+                mission.opsStatus === "running"
+                  ? "bg-[var(--cykan)]"
+                  : mission.opsStatus === "success"
+                  ? "bg-[var(--money)]"
+                  : mission.opsStatus === "failed"
+                  ? "bg-[var(--danger)]"
+                  : mission.opsStatus === "blocked"
+                  ? "bg-[var(--warn)]"
+                  : "bg-[var(--text-faint)]";
+
+              const opsStatusLabel =
+                mission.opsStatus === "running"
+                  ? "En cours"
+                  : mission.opsStatus === "success"
+                  ? "Succès"
+                  : mission.opsStatus === "failed"
+                  ? "Échec"
+                  : mission.opsStatus === "blocked"
+                  ? "Bloqué"
+                  : "Inactif";
+
+              return (
+                <div
+                  key={mission.id}
+                  className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.02] border border-[var(--line)] hover:bg-white/[0.03] transition-colors"
+                >
                   <button
-                    onClick={() => handleRunNow(mission.id)}
-                    className="p-2 text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
-                    title="Exécuter maintenant"
-                  >
-                    ▶
-                  </button>
-                  <button
-                    onClick={() => openEditMission(mission)}
-                    className="p-2 text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
-                    title="Modifier"
-                  >
-                    ✎
-                  </button>
-                  <button
-                    onClick={() => handleDelete(mission.id)}
-                    className="p-2 text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
-                    title="Supprimer"
-                  >
-                    🗑
-                  </button>
+                    onClick={() => handleToggle(mission)}
+                    className={`w-2 h-2 rounded-full mt-1.5 transition-colors ${
+                      mission.enabled ? "bg-[var(--money)]" : "bg-[var(--text-faint)]"
+                    }`}
+                    title={mission.enabled ? "Désactiver" : "Activer"}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-sm font-medium text-[var(--text)]">{mission.name}</h3>
+                      {mission.opsStatus && (
+                        <span
+                          className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            mission.opsStatus === "running"
+                              ? "bg-[var(--cykan)]/20 text-[var(--cykan)]"
+                              : mission.opsStatus === "success"
+                              ? "bg-[var(--money)]/20 text-[var(--money)]"
+                              : mission.opsStatus === "failed"
+                              ? "bg-[var(--danger)]/20 text-[var(--danger)]"
+                              : mission.opsStatus === "blocked"
+                              ? "bg-[var(--warn)]/20 text-[var(--warn)]"
+                              : "bg-white/5 text-[var(--text-faint)]"
+                          }`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${opsStatusColor} ${mission.opsStatus === "running" ? "animate-pulse" : ""}`} />
+                          {opsStatusLabel}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-[var(--text-muted)] mb-2">{mission.description}</p>
+                    {mission.lastError && (
+                      <p className="text-[10px] text-[var(--danger)] truncate" title={mission.lastError}>
+                        ⚠ {mission.lastError}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1 text-xs text-[var(--text-faint)]">
+                    <span>{mission.frequency}</span>
+                    {mission.runningSince && (
+                      <span className="text-[10px] text-[var(--cykan)]">
+                        Depuis {Math.floor((currentTime - mission.runningSince) / 1000)}s
+                      </span>
+                    )}
+                    {mission.nextRun && <span className="text-[10px]">Prochain: {new Date(mission.nextRun).toLocaleDateString()}</span>}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleRunNow(mission.id)}
+                      disabled={mission.opsStatus === "running"}
+                      className="p-2 text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                      title="Exécuter maintenant"
+                    >
+                      ▶
+                    </button>
+                    <button
+                      onClick={() => openEditMission(mission)}
+                      className="p-2 text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
+                      title="Modifier"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={() => handleDelete(mission.id)}
+                      className="p-2 text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
+                      title="Supprimer"
+                    >
+                      🗑
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
