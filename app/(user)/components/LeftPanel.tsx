@@ -15,6 +15,7 @@ const SURFACES: { id: Surface; label: string; icon: string; path: string }[] = [
 const SECONDARY_LINKS: { label: string; icon: string; path: string }[] = [
   { label: "Missions", icon: "◈", path: "/missions" },
   { label: "Assets", icon: "📄", path: "/assets" },
+  { label: "Planner", icon: "◉", path: "/planner" },
   { label: "Apps", icon: "⚡", path: "/apps" },
 ];
 

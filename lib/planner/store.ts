@@ -53,6 +53,10 @@ export function getPlansForThread(threadId: string): ExecutionPlan[] {
     .filter((p): p is ExecutionPlan => p !== undefined);
 }
 
+export function getAllPlans(): ExecutionPlan[] {
+  return Array.from(plans.values());
+}
+
 export function getActivePlans(): ExecutionPlan[] {
   return Array.from(plans.values()).filter(
     (p) => p.status === "executing" || p.status === "awaiting_approval" || p.status === "ready",
