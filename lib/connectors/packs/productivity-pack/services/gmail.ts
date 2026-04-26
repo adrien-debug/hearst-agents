@@ -1,6 +1,6 @@
 import { google } from "googleapis";
-import { getGoogleAuth } from "./google-auth";
-import type { EmailConnector, ConnectorResult, EmailMessage } from "./types";
+import { getGoogleAuth } from "../auth/google";
+import type { EmailConnector, ConnectorResult, EmailMessage } from "@/lib/connectors/types";
 
 interface GmailHeader {
   name?: string;

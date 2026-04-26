@@ -10,17 +10,17 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Plan, PlanStep } from "../plans/types";
-import type { RunEngine } from "../engine/runtime/engine";
+import type { Plan, PlanStep } from "@/lib/engine/runtime/plans/types";
+import type { RunEngine } from "@/lib/engine/runtime/engine";
 import type {
   DelegateResult,
   DelegateSuccess,
   CapabilityAgent,
   ExpectedOutput,
-} from "../engine/runtime/delegate/types";
-import { delegate } from "../engine/runtime/delegate/api";
-import { PlanStore } from "../plans/store";
-import { evaluateForArtifact } from "../artifacts/evaluator";
+} from "@/lib/engine/runtime/delegate/types";
+import { delegate } from "@/lib/engine/runtime/delegate/api";
+import { PlanStore } from "@/lib/engine/runtime/plans/store";
+import { evaluateForArtifact } from "@/lib/artifacts/evaluator";
 
 export interface ExecutionResult {
   status: "completed" | "suspended" | "failed";

@@ -237,9 +237,8 @@ async function executeStripeOperation<T>(
   credentials: Record<string, string>,
   _context: RouterContext
 ): Promise<{ success: boolean; data?: T; error?: string }> {
-  const { StripeApiService, mapStripeChargesToPayments } = await import(
-    "./packs/finance-pack"
-  );
+  const { StripeApiService } = await import("./packs/finance-pack/services/stripe");
+  const { mapStripeChargesToPayments } = await import("./packs/finance-pack/mappers/stripe");
 
   const stripe = new StripeApiService({
     apiKey: credentials.accessToken || credentials.apiKey || "",
@@ -326,9 +325,8 @@ async function executeHubSpotOperation<T>(
   credentials: Record<string, string>,
   _context: RouterContext
 ): Promise<{ success: boolean; data?: T; error?: string }> {
-  const { HubSpotApiService, mapHubSpotContactsToUnified, mapHubSpotCompaniesToUnified, mapHubSpotDealsToUnified } = await import(
-    "./packs/crm-pack"
-  );
+  const { HubSpotApiService } = await import("./packs/crm-pack/services/hubspot");
+  const { mapHubSpotContactsToUnified, mapHubSpotCompaniesToUnified, mapHubSpotDealsToUnified } = await import("./packs/crm-pack/mappers/hubspot");
 
   const hubspot = new HubSpotApiService({
     accessToken: credentials.accessToken || "",
@@ -401,7 +399,7 @@ async function handleNotion<T>(
   params: unknown,
   credentials: Record<string, string>
 ): Promise<{ success: boolean; data?: T; error?: string }> {
-  const { NotionApiService } = await import("./packs/productivity-pack");
+  const { NotionApiService } = await import("./packs/productivity-pack/services/notion");
 
   const notion = new NotionApiService({
     accessToken: credentials.accessToken || "",
@@ -480,9 +478,8 @@ async function executeGitHubOperation<T>(
   credentials: Record<string, string>,
   _context: RouterContext
 ): Promise<{ success: boolean; data?: T; error?: string }> {
-  const { GitHubApiService, mapGitHubReposToUnified, mapGitHubIssuesToUnified, mapGitHubPullRequestsToUnified, mapGitHubCommitsToUnified, mapGitHubCodeSearchItemsToUnified } = await import(
-    "./packs/developer-pack"
-  );
+  const { GitHubApiService } = await import("./packs/developer-pack/services/github");
+  const { mapGitHubReposToUnified, mapGitHubIssuesToUnified, mapGitHubPullRequestsToUnified, mapGitHubCommitsToUnified, mapGitHubCodeSearchItemsToUnified } = await import("./packs/developer-pack/mappers/github");
 
   const github = new GitHubApiService({
     accessToken: credentials.accessToken || "",
@@ -576,7 +573,7 @@ async function handleFigma<T>(
   params: unknown,
   credentials: Record<string, string>
 ): Promise<{ success: boolean; data?: T; error?: string }> {
-  const { FigmaApiService } = await import("./packs/design-pack");
+  const { FigmaApiService } = await import("./packs/design-pack/services/figma");
 
   const figma = new FigmaApiService({
     accessToken: credentials.accessToken || "",

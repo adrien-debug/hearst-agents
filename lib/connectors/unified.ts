@@ -6,10 +6,10 @@
  * New providers = add one fetch + mapper, zero UI changes.
  */
 
-import { gmailConnector } from "./gmail";
-import { slackConnector } from "./slack";
-import { calendarConnector } from "./calendar";
-import { driveConnector } from "./drive";
+import { gmailConnector } from "./packs/productivity-pack/services/gmail";
+import { slackConnector } from "./packs/productivity-pack/services/slack";
+import { calendarConnector } from "./packs/productivity-pack/services/calendar";
+import { driveConnector } from "./packs/productivity-pack/services/drive";
 import { getTokens } from "@/lib/platform/auth/tokens";
 import {
   gmailToUnifiedMessage,

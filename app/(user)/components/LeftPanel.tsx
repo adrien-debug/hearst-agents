@@ -43,13 +43,12 @@ export function LeftPanel() {
 
   return (
     <aside
-      className={`${isExpanded ? "w-[240px]" : "w-[60px]"} border-r border-[var(--line)] flex flex-col transition-all duration-200 h-full`}
-      style={{ background: "rgba(255,255,255,0.008)" }}
+      className={`${isExpanded ? "w-[260px]" : "w-[68px]"} flex flex-col transition-all duration-300 h-full bg-transparent`}
     >
       {/* Brand Header */}
-      <div className="p-3 border-b border-[var(--line)]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center text-sm font-bold bg-[var(--cykan)] text-black">
+      <div className="p-6">
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 flex items-center justify-center text-[10px] font-bold border border-[var(--cykan)] text-[var(--cykan)] rounded-[4px]">
             H
           </div>
           {isExpanded && (
@@ -91,7 +90,7 @@ export function LeftPanel() {
       </div>
 
       {/* Primary Navigation */}
-      <nav className="p-2 space-y-0.5">
+      <nav className="p-3 space-y-1">
         {SURFACES.map((s) => {
           const isActive = pathname === s.path || (s.path !== "/" && pathname?.startsWith(s.path));
           return (
@@ -101,21 +100,21 @@ export function LeftPanel() {
                 setSurface(s.id);
                 router.push(s.path);
               }}
-              className={`w-full flex items-center gap-3 px-2 py-1.5 text-sm transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-all duration-150 rounded-[4px] ${
                 isActive
-                  ? "bg-[var(--cykan)]/[0.04] text-[var(--cykan)] border-l-2 border-[var(--cykan)]"
-                  : "text-[var(--text-soft)] hover:text-[var(--text)] hover:bg-white/[0.02] border-l-2 border-transparent"
+                  ? "text-[var(--cykan)]"
+                  : "text-[var(--text-soft)] hover:text-[var(--text)]"
               }`}
             >
-              <span className="w-5 text-center">{s.icon}</span>
-              {isExpanded && <span className="truncate font-medium">{s.label}</span>}
+              <span className="w-6 text-center text-lg">{s.icon}</span>
+              {isExpanded && <span className="truncate font-medium tracking-wide">{s.label}</span>}
             </button>
           );
         })}
 
         {/* Divider */}
-        <div className="py-1">
-          <div className="h-px bg-[var(--line)]" />
+        <div className="py-4 px-3">
+          <div className="h-px bg-transparent" />
         </div>
 
         {/* Secondary Links */}
@@ -125,14 +124,14 @@ export function LeftPanel() {
             <button
               key={link.path}
               onClick={() => router.push(link.path)}
-              className={`w-full flex items-center gap-3 px-2 py-1.5 text-sm transition-colors ${
+              className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-all duration-150 rounded-[4px] ${
                 isActive
-                  ? "bg-[var(--cykan)]/[0.04] text-[var(--cykan)] border-l-2 border-[var(--cykan)]"
-                  : "text-[var(--text-soft)] hover:text-[var(--text)] hover:bg-white/[0.02] border-l-2 border-transparent"
+                  ? "text-[var(--cykan)]"
+                  : "text-[var(--text-soft)] hover:text-[var(--text)]"
               }`}
             >
-              <span className="w-5 text-center">{link.icon}</span>
-              {isExpanded && <span className="truncate font-medium">{link.label}</span>}
+              <span className="w-6 text-center text-lg">{link.icon}</span>
+              {isExpanded && <span className="truncate font-medium tracking-wide">{link.label}</span>}
             </button>
           );
         })}
@@ -140,45 +139,47 @@ export function LeftPanel() {
 
       {/* Conversations Section */}
       {isExpanded && (
-        <>
-          <div className="mt-4 px-3 py-2 border-t border-[var(--line)]">
+        <div className="flex-1 flex flex-col min-h-0 mt-4">
+          <div className="px-6 py-2">
             <div className="flex items-center justify-between">
-              <p className="halo-mono-label">Conversations</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">Conversations</p>
               <button
                 onClick={() => addThread("Nouveau", surface)}
-                className="text-xs text-[var(--cykan)] hover:text-[var(--cykan)]/80 transition-colors"
+                className="w-4 h-4 flex items-center justify-center text-[12px] text-[var(--cykan)] hover:text-[var(--text)] transition-colors"
               >
                 +
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
+          <div className="flex-1 overflow-y-auto px-3 pb-6 space-y-1 scrollbar-hide">
             {activeThreads.map((thread) => (
               <button
                 key={thread.id}
                 onClick={() => setActiveThread(thread.id)}
-                className={`w-full text-left px-2 py-2 text-xs transition-colors ${
+                className={`w-full text-left px-3 py-2 text-[13px] transition-all duration-150 rounded-[4px] ${
                   activeThreadId === thread.id
-                    ? "bg-[var(--cykan)]/[0.04] text-[var(--cykan)] border-l-2 border-[var(--cykan)]"
-                    : "text-[var(--text-muted)] hover:text-[var(--text-soft)] hover:bg-white/[0.02] border-l-2 border-transparent"
+                    ? "text-[var(--cykan)]"
+                    : "text-[var(--text-muted)] hover:text-[var(--text-soft)]"
                 }`}
               >
-                <p className="truncate font-medium">{thread.name}</p>
-                <p className="truncate text-[10px] text-[var(--text-faint)] mt-0.5">
+                <p className={`truncate ${activeThreadId === thread.id ? 'font-bold' : 'font-medium'}`}>{thread.name}</p>
+                <p className={`truncate text-[10px] mt-0.5 transition-colors ${activeThreadId === thread.id ? 'text-[var(--cykan)]' : 'text-[var(--text-faint)]'}`}>
                   {SURFACES.find(s => s.id === thread.surface)?.label}
                 </p>
               </button>
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {/* Toggle Button */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="p-3 border-t border-[var(--line)] text-[var(--text-muted)] hover:text-[var(--text-soft)] transition-colors"
+        className="p-4 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
       >
-        {isExpanded ? "◀" : "▶"}
+        <div className="flex items-center justify-center">
+          {isExpanded ? "◀" : "▶"}
+        </div>
       </button>
     </aside>
   );

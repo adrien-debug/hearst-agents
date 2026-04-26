@@ -9,8 +9,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireScope } from "@/lib/scope";
 import { getMission as getRuntimeMission, disableMission } from "@/lib/engine/runtime/missions/store";
 import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
-import { pauseMission as pausePlannerMission } from "@/lib/planner/mission-engine";
-import { getMission as getPlannerMission } from "@/lib/planner/store";
+import { pauseMission as pausePlannerMission } from "@/lib/engine/planner/mission-engine";
+import { getMission as getPlannerMission } from "@/lib/engine/planner/store";
 import { manifestMission } from "@/lib/ui/right-panel/manifestation";
 
 export async function POST(

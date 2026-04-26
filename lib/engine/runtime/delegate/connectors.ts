@@ -7,8 +7,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { routeConnectorRequest } from "@/lib/connectors/router";
-import { searchDriveFiles as legacySearchDrive, readDriveFileContent as legacyReadDrive } from "@/lib/connectors/drive";
-import { searchEmails as legacySearchGmail } from "@/lib/connectors/gmail";
+import { searchDriveFiles as legacySearchDrive, readDriveFileContent as legacyReadDrive } from "@/lib/connectors/packs/productivity-pack/services/drive";
+import { searchEmails as legacySearchGmail } from "@/lib/connectors/packs/productivity-pack/services/gmail";
 
 interface ConnectorContext {
   db: SupabaseClient;

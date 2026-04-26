@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
-import { orchestrateV2 } from "@/lib/orchestrator/entry";
+import { orchestrateV2 } from "@/lib/engine/orchestrator/entry";
 import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { updateMissionLastRun, getMission } from "@/lib/engine/runtime/missions/store";
 import { requireScope } from "@/lib/scope";

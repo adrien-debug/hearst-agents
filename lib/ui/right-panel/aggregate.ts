@@ -18,7 +18,7 @@ import { getSchedulerMode } from "@/lib/engine/runtime/missions/scheduler-init";
 import { getServerSupabase } from "@/lib/supabase-server";
 import { manifestAsset, resolveFocalObject } from "./manifestation";
 import { formatOutput, type OutputTier } from "@/lib/engine/runtime/formatting/pipeline";
-import { getPlansForThread, getMissionsForThread } from "@/lib/planner/store";
+import { getPlansForThread, getMissionsForThread } from "@/lib/engine/planner/store";
 import type { Asset, AssetKind, AssetProvenance } from "@/lib/assets/types";
 import type { RightPanelData, FocalObjectView } from "./types";
 

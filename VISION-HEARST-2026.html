@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEARST OS — Vision & Direction 2026</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #14141f;
+            --cyan: #00e5ff;
+            --cyan-dim: rgba(0, 229, 255, 0.1);
+            --gold: #ffd700;
+            --green: #00d084;
+            --orange: #ff9f43;
+            --red: #ff4757;
+            --purple: #a855f7;
+            --text: #f0f0f5;
+            --text-muted: #6b7280;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 60px 24px; }
+        
+        .header {
+            text-align: center;
+            padding-bottom: 48px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 48px;
+        }
+        .header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--cyan), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            margin: 48px 0 24px;
+            color: var(--cyan);
+            border-left: 4px solid var(--cyan);
+            padding-left: 16px;
+        }
+        h3 {
+            font-size: 1.2rem;
+            margin: 32px 0 16px;
+            color: var(--gold);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 32px 0;
+        }
+        .status-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .status-card h4 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .status-card .number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .status-card .label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        .green { color: var(--green); }
+        .orange { color: var(--orange); }
+        .red { color: var(--red); }
+
+        .problem-list {
+            list-style: none;
+            margin: 24px 0;
+        }
+        .problem-list li {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .problem-list .icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+        .problem-list .content h4 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .problem-list .content p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .roadmap {
+            margin: 32px 0;
+        }
+        .phase {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        .phase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .phase-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .phase-duration {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--cyan-dim);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+        .phase-goals {
+            list-style: none;
+        }
+        .phase-goals li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+        .phase-goals li:last-child {
+            border-bottom: none;
+        }
+        .phase-goals li::before {
+            content: "→";
+            color: var(--cyan);
+            margin-right: 8px;
+        }
+
+        .decision-box {
+            background: linear-gradient(135deg, var(--cyan-dim), transparent);
+            border: 2px solid var(--cyan);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 48px 0;
+            text-align: center;
+        }
+        .decision-box h3 {
+            color: var(--cyan);
+            margin-bottom: 16px;
+        }
+        .decision-box p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 48px;
+            border-top: 1px solid var(--border);
+            margin-top: 48px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .highlight {
+            color: var(--gold);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🏛️ HEARST OS — Vision & Direction 2026</h1>
+            <p>Document de synthèse stratégique — Validation avant implémentation</p>
+        </header>
+
+        <h2>📊 État Actuel (Factuel)</h2>
+        <div class="status-grid">
+            <div class="status-card">
+                <h4>Architecture</h4>
+                <div class="number green">90%</div>
+                <div class="label">Structure V2 en place<br>240+ fichiers propres</div>
+            </div>
+            <div class="status-card">
+                <h4>Tests</h4>
+                <div class="number green">407</div>
+                <div class="label">Tests passants<br>Coverage inconnu</div>
+            </div>
+            <div class="status-card">
+                <h4>Fonctionnalités Core</h4>
+                <div class="number orange">50%</div>
+                <div class="label">Connectés mais données<br>non exploitées</div>
+            </div>
+        </div>
+
+        <h3>✅ Ce qui existe et fonctionne</h3>
+        <ul class="problem-list">
+            <li>
+                <span class="icon">✅</span>
+                <div class="content">
+                    <h4>Infrastructure technique solide</h4>
+                    <p>Backend V2, Session Manager, Orchestrateur, Planner, Multi-tenant, Auth Nango</p>
+                </div>
+            </li>
+            <li>
+                <span class="icon">✅</span>
+                <div class="content">
+                    <h4>Connecteurs OAuth opérationnels</h4>
+                    <p>Google (Gmail, Drive, Calendar), GitHub, Slack connectés via Nango</p>
+                </div>
+            </li>
+            <li>
+                <span class="icon">✅</span>
+                <div class="content">
+                    <h4>UI complète et moderne</h4>
+                    <p>Right Panel, Focal Stage, Chat, Admin dashboard — 100% fonctionnel</p>
+                </div>
+            </li>
+        </ul>
+
+        <h3>❌ Les vrais problèmes bloquants</h3>
+        <ul class="problem-list">
+            <li>
+                <span class="icon red">🔴</span>
+                <div class="content">
+                    <h4>Le LLM ne reçoit pas les données</h4>
+                    <p>Le system prompt dit "tu peux accéder" mais aucune donnée réelle n'est injectée. Résultat : "Je ne peux pas accéder à votre calendrier" malgré la connexion.</p>
+                </div>
+            </li>
+            <li>
+                <span class="icon red">🔴</span>
+                <div class="content">
+                    <h4>Les missions automatiques ne s'exécutent pas</h4>
+                    <p>Le scheduler détecte les patterns "tous les matins" mais la création réelle de mission depuis le chat est inactive.</p>
+                </div>
+            </li>
+            <li>
+                <span class="icon red">🔴</span>
+                <div class="content">
+                    <h4>Focal objects avec mocks uniquement</h4>
+                    <p>Les focal objects affichent des données de démo, pas les vraies données utilisateur.</p>
+                </div>
+            </li>
+        </ul>
+
+        <h2>🎯 Vision Proposée</h2>
+        <p>HEARST OS doit être un <span class="highlight">OS de productivité conversationnel</span> où l'utilisateur gère sa bureautique (emails, calendrier, tâches, documents) via des dialogues naturels avec des agents spécialisés.</p>
+
+        <h3>Core Value Proposition</h3>
+        <p><em>"Parle à ton travail comme tu parles à ton assistant. HEARST comprend, découpe, délègue aux bons agents, et te présente le résultat dans une interface focalisée."</em></p>
+
+        <h3>Non-Scope (Ce qu'on ne fait PAS)</h3>
+        <ul class="problem-list">
+            <li>
+                <span class="icon">🚫</span>
+                <div class="content">
+                    <h4>Pas d'infrastructure cloud (OpenCloud)</h4>
+                    <p>Gérer AWS/GCP/Azure via HEARST = trop complexe, pas le core business productivité.</p>
+                </div>
+            </li>
+            <li>
+                <span class="icon">🚫</span>
+                <div class="content">
+                    <h4>Pas de messaging multi-canal (OpenClaw)</h4>
+                    <p>WhatsApp/Telegram/Signal via HEARST = complexité ops énorme pour un use case marginal.</p>
+                </div>
+            </li>
+            <li>
+                <span class="icon">🚫</span>
+                <div class="content">
+                    <h4>Pas de CRM/Finance avancé</h4>
+                    <p>Stripe/HubSpot basiques OK, mais pas de remplacement Salesforce/NetSuite.</p>
+                </div>
+            </li>
+        </ul>
+
+        <h2>🗓️ Roadmap Proposée</h2>
+        <div class="roadmap">
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">Phase 1 : Core Fonctionnel</span>
+                    <span class="phase-duration">Semaines 1-3</span>
+                </div>
+                <ul class="phase-goals">
+                    <li>Récupération réelle des events Google Calendar et injection dans le contexte LLM</li>
+                    <li>Récupération réelle des emails Gmail et résumé intelligents</li>
+                    <li>Création automatique de missions depuis le langage naturel</li>
+                    <li>Fix : "Je ne peux pas accéder" → "Voici tes 5 meetings d'aujourd'hui..."</li>
+                </ul>
+            </div>
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">Phase 2 : Focal Objects Actifs</span>
+                    <span class="phase-duration">Semaines 4-6</span>
+                </div>
+                <ul class="phase-goals">
+                    <li>Focal objects avec vraies données (pas de mocks)</li>
+                    <li>Actions interactives : approve, reject, snooze, delegate</li>
+                    <li>Morphing des objects (plan → draft → final → archived)</li>
+                    <li>Right Panel contextuel et utile</li>
+                </ul>
+            </div>
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">Phase 3 : Beta Privée</span>
+                    <span class="phase-duration">Semaines 7-10</span>
+                </div>
+                <ul class="phase-goals">
+                    <li>Onboarding 10 utilisateurs beta</li>
+                    <li>Feedback loop : observabilité complète des usages</li>
+                    <li>Fix des bugs edge cases</li>
+                    <li>Documentation utilisateur et guides</li>
+                </ul>
+            </div>
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">Phase 4 : Public Launch</span>
+                    <span class="phase-duration">Semaines 11-14</span>
+                </div>
+                <ul class="phase-goals">
+                    <li>Pricing tiers : Free / Pro ($19) / Team ($49)</li>
+                    <li>Site marketing et vidéo de démo</li>
+                    <li>Support et documentation complète</li>
+                    <li>Product Hunt / BetaList launch</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="decision-box">
+            <h3>🤝 Prochaine Étape</h3>
+            <p>Valide cette vision et cette roadmap avant toute implémentation.<br>
+            Une fois validé, on commence par la Phase 1 (injection des données réelles).</p>
+            <p style="margin-top: 20px; font-size: 0.9rem; color: var(--text-muted);">
+                Ce document est un point de départ pour discussion.<br>
+                Qu'est-ce que tu veux ajuster, supprimer, ou prioriser différemment ?
+            </p>
+        </div>
+
+        <footer class="footer">
+            <p>HEARST OS — Vision 2026 | Document de travail | À valider avant action</p>
+        </footer>
+    </div>
+</body>
+</html>

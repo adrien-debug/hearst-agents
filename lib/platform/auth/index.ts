@@ -28,3 +28,11 @@ export {
   requireAuth,
   type HearstSession,
 } from "./session";
+
+export { getUserId } from "./get-user-id";
+
+export {
+  resolveScope,
+  requireScope,
+  type CanonicalScope,
+} from "./scope";

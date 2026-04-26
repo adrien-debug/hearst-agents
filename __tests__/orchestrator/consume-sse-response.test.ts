@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { consumeOrchestrateSseResponse } from "@/lib/orchestrator/consume-sse-response";
+import { consumeOrchestrateSseResponse } from "@/lib/engine/orchestrator/consume-sse-response";
 
 describe("consumeOrchestrateSseResponse", () => {
   it("returns ok false on HTTP error", async () => {

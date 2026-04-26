@@ -1,15 +1,32 @@
-/**
- * Supabase Client — Architecture Finale
- *
- * Server-side Supabase client with types.
- * Path: lib/platform/db/supabase.ts
- * Re-exports from lib/supabase-server.ts for architecture alignment.
- */
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../../database.types";
 
-export {
-  getServerSupabase,
-  requireServerSupabase,
-} from "../../supabase-server";
+let _client: SupabaseClient<Database> | null = null;
 
-export type { SupabaseClient } from "@supabase/supabase-js";
-export type { Database } from "../../database.types";
+export function getServerSupabase(): SupabaseClient<Database> | null {
+  if (_client) return _client;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) return null;
+
+  _client = createClient<Database>(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  return _client;
+}
+
+export function requireServerSupabase(): SupabaseClient<Database> {
+  const sb = getServerSupabase();
+  if (!sb) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
+    );
+  }
+  return sb;
+}
+
+export type { SupabaseClient };
+export type { Database };

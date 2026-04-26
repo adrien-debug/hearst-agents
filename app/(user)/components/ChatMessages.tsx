@@ -42,15 +42,15 @@ export function ChatMessages({ messages, className, compact = false }: ChatMessa
       {messages.map((message) => (
         <div
           key={message.id}
-          className={`flex ${
+          className={`flex w-full ${
             message.role === "user" ? "justify-end" : "justify-start"
           }`}
         >
           <div
-            className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
+            className={`max-w-[85%] px-5 py-4 text-[15px] leading-relaxed rounded-[8px] border border-[var(--line-strong)] ${
               message.role === "user"
-                ? "bg-cyan-500/20 text-white border border-cyan-500/30"
-                : "bg-white/[0.05] text-white/90 border border-white/[0.08]"
+                ? "bg-[var(--bg-elev)] text-[var(--cykan)] font-bold"
+                : "bg-[var(--bg-elev)] text-[var(--text)] font-medium"
             }`}
           >
             {message.content}
@@ -59,11 +59,10 @@ export function ChatMessages({ messages, className, compact = false }: ChatMessa
       ))}
       
       {isRunning && messages[messages.length - 1]?.role === "user" && (
-        <div className="flex justify-start">
-          <div className="bg-white/[0.05] text-white/90 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-white/60">En réflexion...</span>
+        <div className="flex w-full justify-start">
+          <div className="px-5 py-4 border border-[var(--line-strong)] bg-[var(--bg-elev)] rounded-[8px]">
+            <div className="flex items-center gap-3">
+              <span className="text-[13px] text-[var(--text-muted)] font-mono tracking-widest uppercase">Traitement...</span>
             </div>
           </div>
         </div>

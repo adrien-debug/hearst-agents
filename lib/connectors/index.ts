@@ -6,10 +6,10 @@ export type { UnifiedMessage, UnifiedEvent, UnifiedFile, UnifiedTask, SourceInfo
 export { gmailToUnifiedMessage, slackToUnifiedMessage, calendarToUnifiedEvent, driveToUnifiedFile } from "./unified-types";
 export { getUnifiedMessages, getUnifiedEvents, getUnifiedFiles } from "./unified";
 
-export { gmailConnector } from "./gmail";
-export { calendarConnector } from "./calendar";
-export { driveConnector } from "./drive";
-export { slackConnector } from "./slack";
+export { gmailConnector } from "./packs/productivity-pack/services/gmail";
+export { calendarConnector } from "./packs/productivity-pack/services/calendar";
+export { driveConnector } from "./packs/productivity-pack/services/drive";
+export { slackConnector } from "./packs/productivity-pack/services/slack";
 
 export { CORE_CONNECTORS, EXTERNAL_CONNECTORS, ALL_CONNECTORS, getConnector } from "./registry";
 

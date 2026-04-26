@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import { toast } from "@/app/hooks/use-toast";
-import { consumeOrchestrateSseResponse } from "@/lib/orchestrator/consume-sse-response";
+import { consumeOrchestrateSseResponse } from "@/lib/engine/orchestrator/consume-sse-response";
 
 interface FocalRetryButtonProps {
   /** Mission ID if focal is a mission */

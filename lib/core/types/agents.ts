@@ -9,7 +9,7 @@ export type { AgentDefinition } from "@/lib/agents/types";
 export type {
   AgentBackend,
   AgentBackendDecision,
-} from "@/lib/agents/backend/types";
+} from "@/lib/agents/backends/types";
 
 export type {
   AgentBackendV2,

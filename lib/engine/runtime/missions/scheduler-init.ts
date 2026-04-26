@@ -16,7 +16,7 @@ import { startScheduler, type SchedulerTriggerFn, type IsLeaderFn } from "./sche
 import type { ScheduledMission } from "./types";
 import type { SchedulerMode } from "./ops-types";
 import { requireServerSupabase } from "@/lib/supabase-server";
-import { orchestrate } from "@/lib/orchestrator/index";
+import { orchestrate } from "@/lib/engine/orchestrator/index";
 import {
   tryAcquireSchedulerLeadership,
   renewSchedulerLeadership,

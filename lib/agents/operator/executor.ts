@@ -14,8 +14,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RunEngine } from "../../engine/runtime/engine";
 import { getProviderForTool } from "@/lib/providers/registry";
-import type { ActionPlan } from "../../plans/types";
-import { PlanStore } from "../../plans/store";
+import type { ActionPlan } from "@/lib/engine/runtime/plans/types";
+import { PlanStore } from "@/lib/engine/runtime/plans/store";
 import { validateToolCall, type ToolCallAttempt } from "./guard";
 
 // ── Types ────────────────────────────────────────────────

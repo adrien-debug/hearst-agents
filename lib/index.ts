@@ -86,10 +86,10 @@ export { CleanupScheduler } from "./engine/runtime/assets/cleanup/scheduler";
 export { getCleanupScheduler } from "./engine/runtime/assets/cleanup/boot";
 
 // ── Planner ───────────────────────────────────────────────
-export { executeIntent, approveAndResume } from "./planner/pipeline";
+export { executeIntent, approveAndResume } from "./engine/planner/pipeline";
 
 // ── LLM ───────────────────────────────────────────────────
-export { getProvider as getLLMProvider, chatWithProfile } from "./llm/router";
+export { chatWithProfile } from "./llm/router";
 
 // ── Tools ─────────────────────────────────────────────────
 export { searchWeb } from "./tools/handlers/web-search";

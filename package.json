@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "mkdir -p .next && xattr -w com.apple.fileprovider.ignore#P 1 .next 2>/dev/null; next dev -p 9000",
+    "dev": "lsof -ti tcp:9000 | xargs kill -9 2>/dev/null || true; sleep 1; mkdir -p .next && xattr -w com.apple.fileprovider.ignore#P 1 .next 2>/dev/null; next dev -p 9000",
     "dev:solo": "npm run dev",
     "dev:stack": "bash scripts/dev-stack.sh",
     "dev:fresh": "lsof -ti tcp:9000 | xargs kill -9 2>/dev/null || true; sleep 1; rm -rf .next && npm run dev",

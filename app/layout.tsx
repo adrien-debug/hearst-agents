@@ -1,12 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NoiseLayer } from "./components/system/NoiseLayer";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -26,9 +21,12 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geistMono.variable} h-full antialiased`}
     >
-      <body className="h-full bg-black text-white">
+      <head>
+        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&display=swap" rel="stylesheet" />
+      </head>
+      <body className="h-full bg-black text-white font-satoshi">
         {children}
         <NoiseLayer />
       </body>

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/supabase-server";
-import { orchestrateV2 } from "@/lib/orchestrator/entry";
+import { orchestrateV2 } from "@/lib/engine/orchestrator/entry";
 import { ensureSchedulerStarted } from "@/lib/engine/runtime/missions/scheduler-init";
 import { requireScope } from "@/lib/scope";
 

@@ -7,7 +7,7 @@
  * This is NOT a prompt-level guard — it's a deterministic runtime gate.
  */
 
-import type { ActionStep, ActionPlan } from "../../plans/types";
+import type { ActionStep, ActionPlan } from "@/lib/engine/runtime/plans/types";
 
 export interface ToolCallAttempt {
   tool: string;

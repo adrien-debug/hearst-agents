@@ -1,5 +1,5 @@
 /**
- * Test endpoint for Orchestrator V2
+ * Test endpoint for Unified Orchestrator
  *
  * Routes:
  * - GET /api/test/orchestrate-v2 — Status check
@@ -8,12 +8,7 @@
 
 import { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import {
-  orchestrateV2,
-  orchestrateV2Blocking,
-  isV2Enabled,
-  shouldUseV2,
-} from "@/lib/orchestrator/orchestrate-v2";
+import { orchestrateV2 } from "@/lib/engine/orchestrator/entry";
 import { SessionManager } from "@/lib/agents/sessions";
 
 export const dynamic = "force-dynamic";
@@ -32,8 +27,8 @@ export async function GET() {
 
   return Response.json({
     ok: true,
-    v2Enabled: isV2Enabled(),
-    rolloutPercentage: 100,
+    version: "unified",
+    note: "Orchestrator V2 has been unified with V1",
     activeSessions: sessions.length,
     sessions: sessions.map(s => ({
       id: s.id,
@@ -51,136 +46,48 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const mode = body.mode ?? "blocking"; // "blocking" | "streaming"
+    const { userId, message, conversationId, surface, tenantId, workspaceId } = body;
 
-    const input = {
-      userId: body.userId ?? "test-user",
-      message: body.message ?? "Hello",
-      conversationId: body.conversationId,
-      threadId: body.threadId,
-      surface: body.surface ?? "home",
-      conversationHistory: body.conversationHistory,
-      forceBackend: body.forceBackend,
-      streaming: mode === "streaming",
-      tenantId: body.tenantId ?? "dev-tenant",
-      workspaceId: body.workspaceId ?? "dev-workspace",
-    };
-
-    // Check if user should use V2
-    const useV2 = shouldUseV2(input.userId);
-
-    switch (mode) {
-      case "blocking": {
-        const result = await orchestrateV2Blocking(supabase, input);
-
-        return Response.json({
-          ok: result.success,
-          mode: "blocking",
-          v2Enabled: useV2,
-          result: {
-            sessionId: result.sessionId,
-            backend: result.backend,
-            response: result.response,
-            error: result.error,
-            metrics: result.metrics,
-          },
-          duration_ms: Date.now() - startTime,
-        });
-      }
-
-      case "streaming": {
-        const stream = orchestrateV2(supabase, input);
-
-        // Collect all events for the response (not true streaming for test)
-        const events: Array<{
-          type: string;
-          timestamp: number;
-          delta?: string;
-          message?: string;
-          error?: string;
-          metrics?: unknown;
-        }> = [];
-
-        const reader = stream.getReader();
-        let fullResponse = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          // Parse SSE data
-          const text = new TextDecoder().decode(value);
-          const lines = text.split("\n");
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                events.push({
-                  ...data,
-                  timestamp: Date.now(),
-                });
-
-                if (data.type === "text_delta" && data.delta) {
-                  fullResponse += data.delta;
-                }
-              } catch {
-                // Ignore parse errors
-              }
-            }
-          }
-        }
-
-        return Response.json({
-          ok: true,
-          mode: "streaming",
-          v2Enabled: useV2,
-          events_count: events.length,
-          events: events.slice(0, 100), // Limit for response size
-          fullResponse,
-          duration_ms: Date.now() - startTime,
-        });
-      }
-
-      case "compare": {
-        // Test both V1 and V2 for comparison
-        const v2Start = Date.now();
-        const v2Result = await orchestrateV2Blocking(supabase, input);
-        const v2Duration = Date.now() - v2Start;
-
-        return Response.json({
-          ok: true,
-          mode: "compare",
-          v2: {
-            success: v2Result.success,
-            backend: v2Result.backend,
-            response: v2Result.response?.substring(0, 200),
-            error: v2Result.error,
-            metrics: v2Result.metrics,
-            duration_ms: v2Duration,
-          },
-          comparison: {
-            v2Selected: v2Result.success,
-            v2Backend: v2Result.backend,
-          },
-          duration_ms: Date.now() - startTime,
-        });
-      }
-
-      default:
-        return Response.json(
-          { ok: false, error: `Invalid mode: ${mode}. Use: blocking, streaming, compare` },
-          { status: 400 },
-        );
+    if (!userId || !message) {
+      return Response.json(
+        { error: "Missing required fields: userId, message" },
+        { status: 400 }
+      );
     }
+
+    // Use unified orchestrator
+    const stream = orchestrateV2(supabase, {
+      userId,
+      message,
+      conversationId,
+      surface,
+      tenantId,
+      workspaceId,
+    });
+
+    // Collect stream for response
+    const reader = stream.getReader();
+    const chunks: string[] = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+
+    return Response.json({
+      ok: true,
+      version: "unified",
+      chunks: chunks.length,
+      preview: chunks.slice(0, 5),
+      duration_ms: Date.now() - startTime,
+    });
+
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     return Response.json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-        stack: error instanceof Error ? error.stack : undefined,
-        duration_ms: Date.now() - startTime,
-      },
-      { status: 500 },
+      { error: message },
+      { status: 500 }
     );
   }
 }

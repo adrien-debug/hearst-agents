@@ -8,9 +8,9 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Plan, PlanStep } from "../plans/types";
-import type { RunEngine } from "../engine/runtime/engine";
-import { PlanStore } from "../plans/store";
+import type { Plan, PlanStep } from "@/lib/engine/runtime/plans/types";
+import type { RunEngine } from "@/lib/engine/runtime/engine";
+import { PlanStore } from "@/lib/engine/runtime/plans/store";
 import {
   ORCHESTRATOR_SYSTEM_PROMPT,
   ORCHESTRATOR_MODEL,

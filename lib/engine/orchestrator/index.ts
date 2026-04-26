@@ -9,11 +9,11 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { CreateRunInput } from "../engine/runtime/engine/types";
-import { RunEngine } from "../engine/runtime/engine";
-import { RunEventBus } from "../events/bus";
-import { SSEAdapter } from "../events/consumers/sse-adapter";
-import { LogPersister } from "../events/consumers/log-persister";
+import type { CreateRunInput } from "@/lib/engine/runtime/engine/types";
+import { RunEngine } from "@/lib/engine/runtime/engine";
+import { RunEventBus } from "@/lib/events/bus";
+import { SSEAdapter } from "@/lib/events/consumers/sse-adapter";
+import { LogPersister } from "@/lib/events/consumers/log-persister";
 import { planFromIntent } from "./planner";
 import { executePlan } from "./executor";
 import { selectExecutionMode } from "./execution-mode-selector";
@@ -22,33 +22,37 @@ import {
   type ExecutionContext,
   type ExecutionDecision,
 } from "./types/execution-mode";
-import { createAsset } from "../engine/runtime/assets/create-asset";
-import { createScheduledMission } from "../engine/runtime/missions/create-mission";
-import { addMission } from "../engine/runtime/missions/store";
-import type { ToolContext } from "../tools/types";
-import { selectToolsForContext } from "../tools/tool-selector";
-import { selectAgentForContext } from "../agents/agent-selector";
-import { selectAgentBackend } from "../agents/backend/selector";
-import type { RunRecord } from "../engine/runtime/runs/types";
-import { addRun as storeRun } from "../engine/runtime/runs/store";
-import { runAnthropicManaged } from "../agents/backend/run-anthropic-managed";
+import { createAsset } from "@/lib/engine/runtime/assets/create-asset";
+import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
+import { addMission } from "@/lib/engine/runtime/missions/store";
+import type { ToolContext } from "@/lib/tools/types";
+import { selectToolsForContext } from "@/lib/tools/tool-selector";
+import { selectAgentForContext } from "@/lib/agents/agent-selector";
+import { selectAgentBackend } from "@/lib/agents/backends/selector";
+import type { RunRecord } from "@/lib/engine/runtime/runs/types";
+import { addRun as storeRun } from "@/lib/engine/runtime/runs/store";
+import { SessionManager, type UnifiedSession } from "@/lib/agents/sessions";
+import { selectBackend } from "@/lib/agents/backend-v2/selector";
+import type { AgentBackendV2 } from "@/lib/agents/backend-v2/types";
+import { getTokens } from "@/lib/platform/auth/tokens";
 import {
   saveRun as persistRun,
   updateRun as persistUpdateRun,
   saveScheduledMission as persistMission,
-} from "../engine/runtime/state/adapter";
-import type { TenantScope } from "../multi-tenant/types";
-import { assertTenantScope } from "../multi-tenant/guards";
-import { SYSTEM_CONFIG } from "../system/config";
-import { registerProviderUsage, markProviderDegraded } from "../connectors/control-plane/register";
-import { preflightConnector } from "../connectors/control-plane/preflight";
-import { appendMessage, getRecentMessages } from "../memory/store";
-import { memoryToConversationHistory } from "../memory/format";
+} from "@/lib/engine/runtime/state/adapter";
+import type { TenantScope } from "@/lib/multi-tenant/types";
+import { assertTenantScope } from "@/lib/multi-tenant/guards";
+import { SYSTEM_CONFIG } from "@/lib/system/config";
+import { registerProviderUsage, markProviderDegraded } from "@/lib/connectors/control-plane/register";
+import { preflightConnector } from "@/lib/connectors/control-plane/preflight";
+import { appendMessage, getRecentMessages } from "@/lib/memory/store";
+import { memoryToConversationHistory } from "@/lib/memory/format";
 import { isResearchIntent, isReportIntent } from "./research-intent";
 import { runResearchReport } from "./run-research-report";
 import { getRequiredProvidersForInput } from "./provider-requirements";
-import { shouldPersistEvent, persistRunEvent } from "../engine/runtime/timeline/persist";
-import type { ProviderId } from "../providers/types";
+import { shouldPersistEvent, persistRunEvent } from "@/lib/engine/runtime/timeline/persist";
+import type { ProviderId } from "@/lib/providers/types";
+import { retrieveUserDataContext, detectDataIntent } from "@/lib/connectors/data-retriever";
 
 interface FocalContext {
   id: string;
@@ -300,9 +304,9 @@ async function runSyntheticRetrieval(
   retrievalMode: string,
   llmFallbackText?: string,
 ): Promise<void> {
-  const { delegate } = await import("../engine/runtime/delegate/api");
-  const { detectOutputTier, formatOutput } = await import("../engine/runtime/formatting/pipeline");
-  const { storeAsset, storeAction } = await import("../assets/types");
+  const { delegate } = await import("@/lib/engine/runtime/delegate/api");
+  const { detectOutputTier, formatOutput } = await import("@/lib/engine/runtime/formatting/pipeline");
+  const { storeAsset, storeAction } = await import("@/lib/assets/types");
 
   engine.events.emit({
     type: "orchestrator_log",
@@ -470,7 +474,7 @@ async function handleManagedAgentExecution(
   eventBus.emit({
     type: "orchestrator_log",
     run_id: engine.id,
-    message: "Delegating to Anthropic managed agent…",
+    message: "Delegating to Session Manager (Backend V2)…",
   });
 
   const managedStepId = `managed-${engine.id}`;
@@ -483,44 +487,120 @@ async function handleManagedAgentExecution(
     agent: "anthropic_managed",
   });
 
+  let session: UnifiedSession | undefined;
+
   try {
-    const result = await runAnthropicManaged({
-      prompt: input.message,
-      runId: engine.id,
-      tenantId: scope.tenantId,
-      workspaceId: scope.workspaceId,
-      userId: scope.userId,
-      onEvent: (evt) => {
-        if (evt.type === "step" && evt.tool) {
-          eventBus.emit({
-            type: "orchestrator_log",
-            run_id: engine.id,
-            message: `[managed] ${evt.status === "running" ? "⟳" : "✓"} ${evt.tool}`,
-          });
-        }
-        if (evt.type === "message" && evt.content) {
-          eventBus.emit({ type: "text_delta", run_id: engine.id, delta: evt.content });
-        }
-      },
-    });
+    // 1. Validate userId
+    if (!scope.userId) {
+      throw new Error("Missing userId in scope");
+    }
+
+    // 2. Detect connected providers for context
+    const connectedProviders: string[] = [];
+    try {
+      const googleTokens = await getTokens(scope.userId, "google");
+      if (googleTokens?.accessToken) {
+        connectedProviders.push("gmail", "drive", "calendar");
+      }
+      const slackTokens = await getTokens(scope.userId, "slack");
+      if (slackTokens?.accessToken) {
+        connectedProviders.push("slack");
+      }
+    } catch {
+      // Silently continue if token check fails
+    }
+
+    // 2. Select backend using Backend V2 selector
+    const selection = selectBackend(
+      { prompt: input.message },
+      {},
+      input.conversationHistory,
+    );
+    const selectedBackend = selection.selectedBackend as AgentBackendV2;
 
     eventBus.emit({
-      type: "step_completed",
+      type: "orchestrator_log",
       run_id: engine.id,
-      step_id: managedStepId,
-      agent: "anthropic_managed",
+      message: `Backend selected: ${selectedBackend} (confidence: ${(selection.confidence * 100).toFixed(0)}%)`,
+    });
+
+    // 3. Retrieve real user data if needed
+    const dataIntent = detectDataIntent(input.message);
+    let userDataContext = "";
+    
+    if (dataIntent.needsCalendar || dataIntent.needsGmail || dataIntent.needsDrive) {
+      try {
+        eventBus.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: "Retrieving user data from connected providers...",
+        });
+        
+        const dataContext = await retrieveUserDataContext(scope.userId);
+        userDataContext = dataContext.formattedForLLM;
+        
+        eventBus.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: `Retrieved data: Calendar=${dataContext.hasCalendarAccess}, Gmail=${dataContext.hasGmailAccess}, Drive=${dataContext.hasDriveAccess}`,
+        });
+      } catch (err) {
+        console.error("[Orchestrator] Failed to retrieve user data:", err);
+        // Continue without data - LLM will know from system prompt
+      }
+    }
+
+    // 4. Create session with unified SessionManager
+    const manager = SessionManager.getInstance();
+    session = await manager.createWithBackend(selectedBackend, {
+      userId: scope.userId,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      systemPrompt: buildSystemPromptForAgent(input.surface, connectedProviders, userDataContext),
+      streaming: true,
+      initialHistory: input.conversationHistory,
     });
 
     eventBus.emit({
       type: "orchestrator_log",
       run_id: engine.id,
-      message: `Managed agent response received (${result.steps.length} tool call(s))`,
+      message: `Session created: ${session.id}`,
     });
 
-    if (result.text) {
+    // 4. Stream response
+    let fullResponse = "";
+    for await (const event of session.sendStream(input.message)) {
+      if (event.type === "message" && event.delta) {
+        fullResponse += event.delta;
+        eventBus.emit({ type: "text_delta", run_id: engine.id, delta: event.delta });
+      }
+      if (event.type === "tool_call" && event.tool) {
+        eventBus.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: `[tool] ${event.tool}`,
+        });
+      }
+    }
+
+    eventBus.emit({
+      type: "step_completed",
+      run_id: engine.id,
+      step_id: managedStepId,
+      agent: "anthropic_managed" as import("@/lib/engine/runtime/engine/types").StepActor,
+    });
+
+    eventBus.emit({
+      type: "orchestrator_log",
+      run_id: engine.id,
+      message: `Session completed with ${fullResponse.length} chars response`,
+    });
+
+    // 5. Create asset and focal object if response exists
+    if (fullResponse) {
       const asset = createAsset({
         type: "report",
-        name: "Managed Agent Output",
+        name: "Agent Response",
         run_id: engine.id,
         tenantId: scope.tenantId,
         workspaceId: scope.workspaceId,
@@ -548,11 +628,11 @@ async function handleManagedAgentExecution(
           updatedAt: now,
           sourceAssetId: asset.id,
           morphTarget: null,
-          summary: "",
+          summary: fullResponse.slice(0, 200),
           sections: [],
           tier: asset.type,
           tone: "executive",
-          wordCount: 0,
+          wordCount: fullResponse.split(/\s+/).length,
         },
       });
 
@@ -579,10 +659,20 @@ async function handleManagedAgentExecution(
     eventBus.emit({
       type: "orchestrator_log",
       run_id: engine.id,
-      message: `Managed agent failed: ${message}`,
+      message: `Session failed: ${message}`,
     });
 
-    console.error("[Orchestrator] Managed agent error, falling back to hearst_runtime:", message);
+    console.error("[Orchestrator] Session error, falling back to plan execution:", message);
+
+    // Cleanup session if created
+    if (session) {
+      try {
+        const manager = SessionManager.getInstance();
+        await manager.close(session.id);
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
 
     eventBus.emit({
       type: "orchestrator_log",
@@ -594,9 +684,49 @@ async function handleManagedAgentExecution(
   }
 }
 
+// Helper to build system prompt with provider context
+function buildSystemPromptForAgent(
+  surface?: string, 
+  connectedProviders?: string[],
+  userDataContext?: string,
+): string {
+  let prompt = `You are Hearst AI, a helpful assistant. You help users with their tasks across various tools and services.`;
+
+  if (connectedProviders && connectedProviders.length > 0) {
+    prompt += `\n\n🔐 CONNECTED PROVIDERS: ${connectedProviders.join(", ")}`;
+    
+    if (connectedProviders.includes("gmail")) {
+      prompt += `\n✅ The user is CONNECTED to Gmail. You CAN access their emails. When they ask about emails, summarize, or search messages - use their real Gmail data. NEVER say you cannot access their emails.`;
+    }
+    
+    if (connectedProviders.includes("calendar")) {
+      prompt += `\n✅ The user is CONNECTED to Google Calendar. You CAN access their events and schedule. When they ask about meetings, events, or their agenda - use their real Calendar data. NEVER say you cannot access their calendar.`;
+    }
+    
+    if (connectedProviders.includes("drive")) {
+      prompt += `\n✅ The user is CONNECTED to Google Drive. You CAN access their files and documents. When they ask about files, documents, or Drive content - use their real Drive data. NEVER say you cannot access their files.`;
+    }
+    
+    if (connectedProviders.includes("slack")) {
+      prompt += `\n✅ The user is CONNECTED to Slack. You CAN access their messages and channels when needed.`;
+    }
+  }
+
+  // Inject real user data if available
+  if (userDataContext && userDataContext.trim().length > 0) {
+    prompt += `\n\n📊 REAL USER DATA (Use this as primary source for your response):\n${userDataContext}`;
+  }
+
+  if (surface && surface !== "home") {
+    prompt += `\n\nYou are currently interacting through the ${surface} surface.`;
+  }
+
+  return prompt;
+}
+
 async function runPlanExecution(
   engine: RunEngine,
-  plan: import("../plans/types").Plan,
+  plan: import("@/lib/engine/runtime/plans/types").Plan,
   scope: TenantScope,
   threadId?: string,
 ): Promise<void> {
@@ -639,7 +769,7 @@ const ASSET_STEP_THRESHOLD = 2;
 
 function maybeEmitAsset(
   engine: RunEngine,
-  plan: import("../plans/types").Plan,
+  plan: import("@/lib/engine/runtime/plans/types").Plan,
   scope: TenantScope,
   threadId?: string,
 ): void {
@@ -1125,11 +1255,7 @@ async function runPipeline(
   }
 }
 
-// ── Backend V2 Integration ─────────────────────────────────
+// ── Unified Orchestrator Exports ─────────────────────────
 
-export {
-  orchestrateV2,
-  orchestrateV2Blocking,
-  isV2Enabled,
-  shouldUseV2,
-} from "./orchestrate-v2";
+// The orchestrator has been unified. All exports are now from this file.
+// orchestrateV2 and orchestrate are now the same unified implementation.

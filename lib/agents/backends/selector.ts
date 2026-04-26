@@ -6,7 +6,7 @@
  * - selectBackend: v2 multi-criteria scoring
  */
 
-export { selectAgentBackend } from "../backend/selector";
+export { selectAgentBackend } from "./hearst";
 
 export {
   analyzeTask,

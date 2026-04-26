@@ -6,8 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { approvePlan } from "@/lib/planner/index";
-import { approveAndResume, PipelineContext } from "@/lib/planner/pipeline";
+import { approvePlan } from "@/lib/engine/planner/index";
+import { approveAndResume, PipelineContext } from "@/lib/engine/planner/pipeline";
 import { requireScope } from "@/lib/scope";
 
 export async function POST(

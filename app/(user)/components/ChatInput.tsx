@@ -87,13 +87,13 @@ export function ChatInput({
   };
 
   return (
-    <div className="p-4 border-t border-[var(--line)]" style={{ background: "var(--bg)" }}>
-      <div className="max-w-3xl mx-auto">
+    <div className="px-6 py-6 bg-[var(--bg)]">
+      <div className="max-w-4xl mx-auto relative">
         {/* @mention Typeahead */}
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="mb-2 bg-[var(--bg-soft)] border border-[var(--line)] rounded-xl shadow-2xl overflow-hidden"
+            className="absolute bottom-full mb-4 w-full bg-[var(--bg-elev)] border border-[var(--line-strong)] rounded-[8px] overflow-hidden z-50"
           >
             {matchingServices.length === 0 ? (
               <div className="p-3 text-xs text-[var(--text-muted)]">
@@ -131,10 +131,9 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Container — Halo command bar style */}
+        {/* Input Container */}
         <div
-          className="flex items-end gap-2 border border-[var(--line-strong)] rounded-xl px-4 py-3 focus-within:border-[var(--cykan)]/30 focus-within:shadow-[var(--glow-cyan-sm)] transition-all"
-          style={{ background: "var(--bg-soft)" }}
+          className="flex items-end gap-3 border border-[var(--line-strong)] px-5 py-4 rounded-[8px] focus-within:border-[var(--cykan)] bg-[var(--bg-elev)] transition-all duration-150"
         >
           <textarea
             ref={inputRef}
@@ -159,30 +158,32 @@ export function ChatInput({
             }}
             placeholder={placeholder || surfacePlaceholders[surface] || "Que puis-je faire pour vous ?"}
             rows={1}
-            className="flex-1 bg-transparent text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none resize-none min-h-[20px] max-h-[200px] leading-relaxed"
+            className="flex-1 bg-transparent text-[15px] font-medium tracking-wide text-[var(--text)] placeholder:text-[var(--text-faint)] border-0 focus:ring-0 focus:outline-none resize-none min-h-[24px] max-h-[200px] leading-relaxed p-0 m-0"
           />
           {isRunning ? (
-            <div className="w-8 h-8 flex items-center justify-center">
+            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
               <div
-                className="w-4 h-4 border-2 border-[var(--text-faint)] border-t-[var(--cykan)] rounded-full animate-spin"
-                style={{ boxShadow: "0 0 4px var(--cykan)" }}
+                className="w-5 h-5 border-2 border-[var(--text-faint)] border-t-[var(--cykan)] rounded-full animate-spin"
+                style={{ boxShadow: "var(--glow-cyan-sm)" }}
               />
             </div>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={!input.trim()}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-[var(--text-muted)] hover:bg-[var(--cykan)] hover:text-black disabled:opacity-30 transition-all"
+              className="w-10 h-10 flex items-center justify-center flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--cykan)] disabled:opacity-30 disabled:hover:text-[var(--text-muted)] transition-colors"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </button>
           )}
         </div>
-        <p className="text-[10px] text-[var(--text-faint)] text-center mt-2">
-          Entrée pour envoyer · Maj+Entrée pour nouvelle ligne · @ pour mentionner
-        </p>
+        <div className="absolute left-0 right-0 -bottom-5 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
+          <p className="text-[11px] text-[var(--text-faint)] font-medium tracking-widest uppercase">
+            Entrée <span className="text-[var(--text-muted)]">pour envoyer</span> <span className="mx-2">·</span> Maj+Entrée <span className="text-[var(--text-muted)]">pour nouvelle ligne</span> <span className="mx-2">·</span> @ <span className="text-[var(--text-muted)]">pour lier</span>
+          </p>
+        </div>
       </div>
     </div>
   );

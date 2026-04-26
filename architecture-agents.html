@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearst OS - Architecture Agents Orchestrateurs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header h1 {
+            color: #fff;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 1.1rem;
+        }
+
+        .diagram-container {
+            padding: 40px 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: 200px 280px 280px 280px 280px;
+            gap: 30px;
+            align-items: start;
+            justify-content: center;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .column-title {
+            text-align: center;
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .agent-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            position: relative;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .agent-card.user {
+            border-color: #1976D2;
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+        }
+
+        .agent-card.orchestrator {
+            border-color: #3F51B5;
+            background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%);
+        }
+
+        .agent-card.office {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        }
+
+        .agent-card.tasks {
+            border-color: #FF9800;
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+        }
+
+        .agent-card.mcp {
+            border-color: #9C27B0;
+            background: linear-gradient(135deg, #F3E5F5 0%, #E1BEE7 100%);
+        }
+
+        .agent-card.nango {
+            border-color: #FBC02D;
+            background: linear-gradient(135deg, #FFFDE7 0%, #FFF9C4 100%);
+        }
+
+        .agent-card.memory {
+            border-color: #616161;
+            background: linear-gradient(135deg, #F5F5F5 0%, #E0E0E0 100%);
+        }
+
+        .agent-card.security {
+            border-color: #D32F2F;
+            background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
+        }
+
+        .agent-card.db {
+            border-color: #455A64;
+            background: linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 100%);
+        }
+
+        .agent-card.apps {
+            border-color: #00796B;
+            background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);
+        }
+
+        .agent-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .user .agent-avatar { background: linear-gradient(135deg, #64B5F6, #1976D2); }
+        .orchestrator .agent-avatar { background: linear-gradient(135deg, #7986CB, #3F51B5); }
+        .office .agent-avatar { background: linear-gradient(135deg, #81C784, #4CAF50); }
+        .tasks .agent-avatar { background: linear-gradient(135deg, #FFB74D, #FF9800); }
+        .mcp .agent-avatar { background: linear-gradient(135deg, #BA68C8, #9C27B0); }
+        .nango .agent-avatar { background: linear-gradient(135deg, #FFF176, #FBC02D); }
+        .memory .agent-avatar { background: linear-gradient(135deg, #9E9E9E, #616161); }
+        .security .agent-avatar { background: linear-gradient(135deg, #E57373, #D32F2F); }
+        .db .agent-avatar { background: linear-gradient(135deg, #78909C, #455A64); }
+        .apps .agent-avatar { background: linear-gradient(135deg, #4DB6AC, #00796B); }
+
+        .agent-name {
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #222;
+            line-height: 1.3;
+        }
+
+        .agent-role {
+            font-size: 0.8rem;
+            color: #555;
+            line-height: 1.5;
+            text-align: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.6);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .agent-bubble {
+            font-size: 0.75rem;
+            font-style: italic;
+            color: #666;
+            text-align: center;
+            padding: 8px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 15px;
+            border-left: 3px solid currentColor;
+        }
+
+        .tools-list {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(0,0,0,0.2);
+        }
+
+        .tools-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #777;
+            margin-bottom: 8px;
+        }
+
+        .tool-tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 12px;
+            margin: 2px;
+            color: #555;
+        }
+
+        .connections-layer {
+            position: relative;
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .flow-title {
+            color: #fff;
+            font-size: 1.3rem;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .flow-step {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 15px 20px;
+            color: #fff;
+            text-align: center;
+            min-width: 180px;
+        }
+
+        .flow-step-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #64B5F6;
+            margin-bottom: 8px;
+        }
+
+        .flow-step-text {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .legend {
+            margin-top: 40px;
+            padding: 25px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 15px;
+            color: #fff;
+        }
+
+        .legend-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .legend-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .example-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .example-title {
+            color: #fff;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .example-scenario {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            color: #fff;
+        }
+
+        .example-user-request {
+            background: linear-gradient(135deg, #1976D2, #1565C0);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .example-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .example-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+
+        .example-step.orchestrator { border-left-color: #3F51B5; }
+        .example-step.memory { border-left-color: #616161; }
+        .example-step.office { border-left-color: #4CAF50; }
+        .example-step.tasks { border-left-color: #FF9800; }
+        .example-step.mcp { border-left-color: #9C27B0; }
+        .example-step.nango { border-left-color: #FBC02D; }
+        .example-step.security { border-left-color: #D32F2F; }
+
+        .step-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 1400px) {
+            .architecture-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .architecture-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .architecture-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .glow {
+            box-shadow: 0 0 20px rgba(100, 181, 246, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🏛️ Hearst OS - Architecture Agents Orchestrateurs</h1>
+        <p>Système d'agents IA pour la bureautique, les tâches, et les intégrations SaaS</p>
+    </header>
+
+    <main class="diagram-container">
+        <div class="architecture-grid">
+            <!-- COLONNE 1: UTILISATEUR -->
+            <div class="column">
+                <div class="column-title">👤 Utilisateur</div>
+                <div class="agent-card user pulse">
+                    <div class="agent-avatar">👤</div>
+                    <div class="agent-name">UTILISATEUR / CLIENT</div>
+                    <div class="agent-role">
+                        Donne une demande en langage naturel
+                    </div>
+                    <div class="agent-bubble">
+                        "Prépare mon reporting"<br>
+                        "Planifie cette réunion"<br>
+                        "Crée une tâche"<br>
+                        "Va chercher les infos"
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLONNE 2: ORCHESTRATION -->
+            <div class="column">
+                <div class="column-title">🎼 Orchestration</div>
+                <div class="agent-card orchestrator glow">
+                    <div class="agent-avatar">🎼</div>
+                    <div class="agent-name">AGENT ORCHESTRATEUR PRINCIPAL</div>
+                    <div class="agent-role">
+                        📋 Comprend la demande<br>
+                        ✂️ Découpe en sous-tâches<br>
+                        🎯 Choisit les agents<br>
+                        🔒 Vérifie permissions<br>
+                        🔧 Coordonne MCP<br>
+                        📦 Assemble la réponse
+                    </div>
+                    <div class="agent-bubble">
+                        "Je comprends, je répartis,<br>je supervise, je valide."
+                    </div>
+                </div>
+
+                <div class="agent-card memory">
+                    <div class="agent-avatar">🧠</div>
+                    <div class="agent-name">AGENT MÉMOIRE / CONTEXTE</div>
+                    <div class="agent-role">
+                        💭 Conserve le contexte utilisateur<br>
+                        🎭 Récupère les préférences<br>
+                        📜 Maintient l'historique<br>
+                        🎯 Fournit les infos nécessaires
+                    </div>
+                    <div class="agent-bubble">
+                        "Je donne le contexte aux bons agents."
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">Sources</div>
+                        <span class="tool-tag">🗄️ Vector DB</span>
+                        <span class="tool-tag">🐘 PostgreSQL</span>
+                        <span class="tool-tag">📝 Historique</span>
+                        <span class="tool-tag">🎭 Profil</span>
+                    </div>
+                </div>
+
+                <div class="agent-card security">
+                    <div class="agent-avatar">🛡️</div>
+                    <div class="agent-name">AGENT VALIDATION / SÉCURITÉ</div>
+                    <div class="agent-role">
+                        ✅ Vérifie les droits d'accès<br>
+                        ⚠️ Contrôle actions sensibles<br>
+                        📝 Valide avant écriture<br>
+                        🔒 Demande confirmation<br>
+                        📋 Journalise les actions
+                    </div>
+                    <div class="agent-bubble">
+                        "Je vérifie avant d'agir."
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">Actions à risque ⚡</div>
+                        <span class="tool-tag">📧 Envoyer email</span>
+                        <span class="tool-tag">🗑️ Supprimer fichier</span>
+                        <span class="tool-tag">✏️ Modifier doc</span>
+                        <span class="tool-tag">📋 Créer tâche</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLONNE 3: AGENTS SPÉCIALISÉS -->
+            <div class="column">
+                <div class="column-title">🤖 Agents Spécialisés</div>
+                <div class="agent-card office">
+                    <div class="agent-avatar">📄</div>
+                    <div class="agent-name">AGENT BUREAUTIQUE</div>
+                    <div class="agent-role">
+                        📝 Crée, lit, modifie documents<br>
+                        📧 Gère emails & fichiers<br>
+                        📊 Prépare rapports & PDFs<br>
+                        💾 Gère Drive/OneDrive
+                    </div>
+                    <div class="agent-bubble">
+                        "Je manipule les documents et les fichiers."
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">Outils connectés</div>
+                        <span class="tool-tag">📄 Google Docs</span>
+                        <span class="tool-tag">📊 Google Sheets</span>
+                        <span class="tool-tag">🎞️ Google Slides</span>
+                        <span class="tool-tag">📧 Gmail</span>
+                        <span class="tool-tag">💾 Drive</span>
+                        <span class="tool-tag">📦 Office 365</span>
+                    </div>
+                </div>
+
+                <div class="agent-card tasks">
+                    <div class="agent-avatar">📋</div>
+                    <div class="agent-name">AGENT TÂCHES / PM</div>
+                    <div class="agent-role">
+                        ✅ Crée & met à jour les tâches<br>
+                        📊 Suit les statuts projets<br>
+                        👤 Assigne responsables<br>
+                        🔄 Transforme en plan d'action
+                    </div>
+                    <div class="agent-bubble">
+                        "Je transforme les demandes en actions suivables."
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">Outils connectés</div>
+                        <span class="tool-tag">📝 Notion</span>
+                        <span class="tool-tag">⚡ Linear</span>
+                        <span class="tool-tag">🎯 Jira</span>
+                        <span class="tool-tag">📋 Asana</span>
+                        <span class="tool-tag">📌 Trello</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLONNE 4: MCP & ROUTAGE -->
+            <div class="column">
+                <div class="column-title">🌐 Routing & MCP</div>
+                <div class="agent-card mcp">
+                    <div class="agent-avatar">🌐</div>
+                    <div class="agent-name">AGENT MCP ROUTER</div>
+                    <div class="agent-role">
+                        🎯 Choisit le bon serveur MCP<br>
+                        🔄 Traduit intention → outil<br>
+                        📡 Gère appels aux tools MCP<br>
+                        ⚠️ Signale erreurs & permissions
+                    </div>
+                    <div class="agent-bubble">
+                        "Je route chaque action vers le bon MCP."
+                    </div>
+                </div>
+
+                <div class="agent-card mcp" style="transform: scale(0.9);">
+                    <div class="agent-avatar">📦</div>
+                    <div class="agent-name">MCP SERVERS</div>
+                    <div class="tools-list">
+                        <span class="tool-tag">🔵 Google</span>
+                        <span class="tool-tag">🔷 Microsoft</span>
+                        <span class="tool-tag">📝 Notion</span>
+                        <span class="tool-tag">💬 Slack</span>
+                        <span class="tool-tag">👥 CRM</span>
+                        <span class="tool-tag">📅 Calendar</span>
+                        <span class="tool-tag">📧 Email</span>
+                        <span class="tool-tag">🗄️ Database</span>
+                        <span class="tool-tag">📁 Files</span>
+                    </div>
+                </div>
+
+                <div class="agent-card nango">
+                    <div class="agent-avatar">🔐</div>
+                    <div class="agent-name">NANGO INTEGRATION LAYER</div>
+                    <div class="agent-role">
+                        🔑 Gère les connexions OAuth<br>
+                        🔄 Stocke & rafraîchit tokens<br>
+                        ☁️ Centralise les credentials<br>
+                        🔌 Connecte les apps SaaS
+                    </div>
+                    <div class="agent-bubble">
+                        "Nango = couche d'auth, tokens, connexions SaaS."
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">200+ Intégrations</div>
+                        <span class="tool-tag">🔵 Google</span>
+                        <span class="tool-tag">🔷 Microsoft</span>
+                        <span class="tool-tag">💬 Slack</span>
+                        <span class="tool-tag">📝 Notion</span>
+                        <span class="tool-tag">👥 Salesforce</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLONNE 5: INFRASTRUCTURE -->
+            <div class="column">
+                <div class="column-title">⚙️ Infrastructure</div>
+                <div class="agent-card db">
+                    <div class="agent-avatar">💾</div>
+                    <div class="agent-name">DONNÉES INTERNES</div>
+                    <div class="agent-role">
+                        📋 Logs d'exécution<br>
+                        📜 Historique des actions<br>
+                        📊 États des tâches<br>
+                        🎯 Résultats MCP<br>
+                        ⚠️ Erreurs & Permissions
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">Stockage</div>
+                        <span class="tool-tag">🐘 Supabase</span>
+                        <span class="tool-tag">📊 PostgreSQL</span>
+                        <span class="tool-tag">🗄️ Vector DB</span>
+                    </div>
+                </div>
+
+                <div class="agent-card apps">
+                    <div class="agent-avatar">🌐</div>
+                    <div class="agent-name">APPLICATIONS EXTERNES</div>
+                    <div class="agent-role">
+                        Apps finales connectées via MCP + Nango
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">Communication 📧</div>
+                        <span class="tool-tag">Gmail</span>
+                        <span class="tool-tag">Outlook</span>
+                        <span class="tool-tag">Slack</span>
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">Documents 📄</div>
+                        <span class="tool-tag">Google Docs</span>
+                        <span class="tool-tag">Office 365</span>
+                        <span class="tool-tag">Drive</span>
+                    </div>
+                    <div class="tools-list">
+                        <div class="tools-title">Tâches 📋</div>
+                        <span class="tool-tag">Notion</span>
+                        <span class="tool-tag">Linear</span>
+                        <span class="tool-tag">Jira</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FLUX PRINCIPAL -->
+        <div class="connections-layer">
+            <h2 class="flow-title">➡️ Flux Principal d'Exécution</h2>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-step-number">1</div>
+                    <div class="flow-step-text">L'utilisateur fait une demande</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">2</div>
+                    <div class="flow-step-text">L'Orchestrateur analyse l'intention</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">3</div>
+                    <div class="flow-step-text">Consulte l'Agent Mémoire</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">4</div>
+                    <div class="flow-step-text">Vérifie droits via Sécurité</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">5</div>
+                    <div class="flow-step-text">Délègue aux agents spécialisés</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">6</div>
+                    <div class="flow-step-text">Les agents passent par MCP Router</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">7</div>
+                    <div class="flow-step-text">MCP Router appelle les bons MCP</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">8</div>
+                    <div class="flow-step-text">MCP utilise Nango pour les apps</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">9</div>
+                    <div class="flow-step-text">Résultats reviennent aux agents</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">10</div>
+                    <div class="flow-step-text">L'Orchestrateur assemble la réponse</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">11</div>
+                    <div class="flow-step-text">Logs et actions enregistrés</div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-step-number">12</div>
+                    <div class="flow-step-text">L'utilisateur reçoit le résultat</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LÉGENDE -->
+        <div class="legend">
+            <h3 class="legend-title">📖 Légende des Connexions</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <span class="legend-icon" style="background: #4CAF50;">→</span>
+                    Flèche verte = appel direct
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background: #FF9800;">⇄</span>
+                    Flèche orange = synchronisation bidirectionnelle
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background: #9C27B0;">··▶</span>
+                    Pointillés = validation ou permission
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background: #FBC02D;">🔑</span>
+                    Icône jaune = authentification via Nango
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background: #D32F2F;">🛡️</span>
+                    Icône rouge = validation sécurité
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background: #616161;">🧠</span>
+                    Icône grise = contexte utilisateur
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background: #9C27B0;">🌐</span>
+                    Icône violette = connexion MCP
+                </div>
+            </div>
+        </div>
+
+        <!-- EXEMPLE CONCRET -->
+        <div class="example-section">
+            <h2 class="example-title">📌 Exemple Concret d'Exécution</h2>
+            <div class="example-scenario">
+                <div class="example-user-request">
+                    <strong>🗣️ Demande utilisateur :</strong><br>
+                    "Prépare un compte rendu de réunion, crée les tâches dans Linear, envoie le résumé par email et range le document dans Drive."
+                </div>
+                <div class="example-flow">
+                    <div class="example-step orchestrator">
+                        <div class="step-icon" style="background: #3F51B5;">🎼</div>
+                        <div class="step-text"><strong>Orchestrateur</strong> comprend la demande multi-parties</div>
+                    </div>
+                    <div class="example-step memory">
+                        <div class="step-icon" style="background: #616161;">🧠</div>
+                        <div class="step-text"><strong>Agent Mémoire</strong> récupère le contexte projet et préférences utilisateur</div>
+                    </div>
+                    <div class="example-step office">
+                        <div class="step-icon" style="background: #4CAF50;">📄</div>
+                        <div class="step-text"><strong>Agent Bureautique</strong> crée le compte rendu formaté</div>
+                    </div>
+                    <div class="example-step tasks">
+                        <div class="step-icon" style="background: #FF9800;">📋</div>
+                        <div class="step-text"><strong>Agent Tâches</strong> crée les tickets Linear avec les bonnes priorités</div>
+                    </div>
+                    <div class="example-step mcp">
+                        <div class="step-icon" style="background: #9C27B0;">🌐</div>
+                        <div class="step-text"><strong>MCP Router</strong> appelle les serveurs Google Drive, Gmail et Linear</div>
+                    </div>
+                    <div class="example-step nango">
+                        <div class="step-icon" style="background: #FBC02D;">🔐</div>
+                        <div class="step-text"><strong>Nango</strong> fournit les tokens OAuth pour accéder aux APIs</div>
+                    </div>
+                    <div class="example-step security">
+                        <div class="step-icon" style="background: #D32F2F;">🛡️</div>
+                        <div class="step-text"><strong>Agent Sécurité</strong> demande confirmation avant l'envoi de l'email</div>
+                    </div>
+                    <div class="example-step orchestrator">
+                        <div class="step-icon" style="background: #3F51B5;">✅</div>
+                        <div class="step-text"><strong>Orchestrateur</strong> assemble le résumé final et l'envoie à l'utilisateur</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Animation simple au scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.agent-card, .flow-step, .example-step').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'all 0.5s ease';
+            observer.observe(el);
+        });
+
+        // Effet de survol sur les connexions
+        document.querySelectorAll('.agent-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.zIndex = '10';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.zIndex = '1';
+            });
+        });
+    </script>
+</body>
+</html>

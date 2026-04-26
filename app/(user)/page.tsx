@@ -503,46 +503,29 @@ export default function HomePage() {
   if (isIdle) {
     return (
       <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
-        {/* Halo idle glow background */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: "radial-gradient(ellipse at 50% 40%, rgba(0, 229, 255, 0.06) 0%, transparent 60%)",
-          }}
-        />
-
         <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
           <div className="text-center space-y-5">
-            {/* Halo-style greeting with gradient accent */}
             <div
-              className="inline-flex items-center gap-3 px-4 py-2 mb-2"
-              style={{
-                background: "linear-gradient(180deg, rgba(0,229,255,0.05) 0%, transparent 100%)",
-                borderBottom: "1px solid rgba(0,229,255,0.15)",
-              }}
+              className="inline-flex items-center gap-3 px-4 py-2 mb-2 border-b border-[var(--line-strong)]"
             >
               <div
-                className="w-5 h-5 flex items-center justify-center text-xs font-bold"
-                style={{
-                  background: "var(--cykan)",
-                  color: "#000",
-                }}
+                className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-[var(--cykan)] text-[var(--cykan)] rounded-[4px]"
               >
                 H
               </div>
-              <span className="halo-mono-label" style={{ color: "var(--text-faint)" }}>Hearst OS</span>
+              <span className="halo-mono-label text-[var(--text-faint)]">Hearst OS</span>
             </div>
 
-            <h1 className="halo-title-lg">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
-            <p className="halo-body max-w-md mx-auto">Comment puis-je vous aider aujourd&apos;hui ?</p>
+            <h1 className="text-[24px] font-bold text-[var(--text)]">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
+            <p className="text-[14px] text-[var(--text-soft)] max-w-md mx-auto font-medium">Comment puis-je vous aider aujourd&apos;hui ?</p>
 
-            {/* Suggestion chips — Halo style */}
+            {/* Suggestion chips */}
             <div className="flex flex-wrap justify-center gap-2 mt-10">
               {["Résumer mes emails", "Planifier une réunion", "Analyser un document", "Créer un rapport"].map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSubmit(s)}
-                  className="px-3 py-1.5 text-xs border border-[var(--line)] text-[var(--text-soft)] hover:text-[var(--text)] hover:border-[var(--cykan)]/30 hover:bg-[var(--cykan)]/[0.04] transition-all"
+                  className="px-3 py-1.5 text-[12px] font-medium border border-[var(--line-strong)] rounded-[4px] text-[var(--text-soft)] hover:text-[var(--cykan)] hover:border-[var(--cykan)] transition-colors"
                 >
                   {s}
                 </button>

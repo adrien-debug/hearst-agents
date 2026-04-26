@@ -21,38 +21,38 @@
 
 :root {
   /* Core surfaces — deep dark hierarchy */
-    --bg: #0a0a0b;
-    --bg-elev: #111114;
-    --bg-soft: #16161a;
-  --background: #000000;
-  --foreground: #ededed;
-  --surface: #14141a;
-  --rail: #0c0c10;
+    --bg: #050505;
+    --bg-elev: #0a0a0a;
+    --bg-soft: #0f0f0f;
+  --background: #050505;
+  --foreground: #ffffff;
+  --surface: #0a0a0a;
+  --rail: #050505;
 /* Text opacity scale */
-  --text: rgba(255, 255, 255, 0.9);
+  --text: rgba(255, 255, 255, 0.92);
   --text-soft: rgba(255, 255, 255, 0.55);
-  --text-muted: rgba(255, 255, 255, 0.32);
-  --text-faint: rgba(255, 255, 255, 0.18);
+  --text-muted: rgba(255, 255, 255, 0.35);
+  --text-faint: rgba(255, 255, 255, 0.15);
 
   /* Accent colors */
-  --cyan-accent: #00e5ff;
-  --cykan: #00e5ff;
+  --cyan-accent: #a3ff00;
+  --cykan: #a3ff00;
     --money: #4ade80;
     --warn: #fbbf24;
     --danger: #ef4444;
   
     /* Border / line opacities */
     --line: rgba(255, 255, 255, 0.06);
-    --line-strong: rgba(255, 255, 255, 0.12);
+    --line-strong: rgba(255, 255, 255, 0.08);
 
   /* Glow shadows */
-  --glow-cyan-sm: 0 0 4px rgba(0, 229, 255, 0.3);
-  --glow-cyan-md: 0 0 8px rgba(0, 229, 255, 0.4);
-  --glow-cyan-lg: 0 0 12px rgba(0, 229, 255, 0.5);
-  --glow-cyan-xl: 0 0 20px rgba(0, 229, 255, 0.15);
+  --glow-cyan-sm: none;
+  --glow-cyan-md: none;
+  --glow-cyan-lg: none;
+  --glow-cyan-xl: none;
 
-  --glow-money-sm: 0 0 4px rgba(74, 222, 128, 0.3);
-    --glow-money-md: 0 0 8px rgba(74, 222, 128, 0.4);
+  --glow-money-sm: none;
+  --glow-money-md: none;
   /* Z-index scale */
   --z-base: 0;
   --z-nav: 30;
@@ -230,8 +230,8 @@ body {
 }
 
 .action-button:hover {
-  background: rgba(0, 229, 255, 0.15);
-  box-shadow: var(--glow-cyan-md);
+  background: rgba(163, 255, 0, 0.15);
+  box-shadow: none;
 }
 
 .action-button:active {
@@ -267,23 +267,23 @@ body {
   height: 6px;
   border-radius: 9999px;
   background: var(--cyan-accent);
-  box-shadow: var(--glow-cyan-md);
+  box-shadow: none;
 }
 
 .status-dot-amber {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: rgba(251, 191, 36, 0.5);
-  box-shadow: 0 0 6px rgba(251, 191, 36, 0.45);
+  background: var(--warn);
+  box-shadow: none;
 }
 
 .status-dot-red {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: rgba(248, 113, 113, 0.5);
-  box-shadow: 0 0 6px rgba(248, 113, 113, 0.6);
+  background: var(--danger);
+  box-shadow: none;
 }
 
 /* ── Menu Item ────────────────────────────────────────────── */
@@ -395,28 +395,19 @@ body {
 }
 
 .halo-idle-glow::before {
-  content: '';
-  position: absolute;
-  inset: -100px;
-  background: radial-gradient(ellipse at center,
-      rgba(0, 229, 255, 0.08) 0%,
-      rgba(0, 229, 255, 0.02) 40%,
-      transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-  animation: halo-breathe 4s ease-in-out infinite;
+  display: none;
 }
 
 /* Premium card surface */
 .halo-card {
-  background: var(--bg-soft);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
 }
 
 /* Active/selected state with cyan accent */
 .halo-active {
-  background: rgba(0, 229, 255, 0.04);
+  background: rgba(163, 255, 0, 0.04);
   border-left: 2px solid var(--cykan);
   color: var(--cykan);
 }
@@ -453,9 +444,9 @@ body {
 
 /* Halo command bar */
 .halo-command-bar {
-  border-top: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-elev);
+  border-radius: 8px;
 }
 
 /* Halo kicker/label */

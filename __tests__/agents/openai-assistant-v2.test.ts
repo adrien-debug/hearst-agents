@@ -34,7 +34,7 @@ describeIf("OpenAI Assistants V2 — Tools", () => {
       const openaiTools = toOpenAITools();
       expect(openaiTools.length).toBeGreaterThan(0);
       expect(openaiTools[0].type).toBe("function");
-      expect(openaiTools[0].function.name).toBeDefined();
+      expect((openaiTools[0] as { type: string; function: { name: string } }).function.name).toBeDefined();
     });
 
     it("should execute calculate tool", async () => {

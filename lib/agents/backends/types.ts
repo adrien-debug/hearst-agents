@@ -5,8 +5,13 @@
  * backend v2 (openai_assistants, openai_responses, openai_computer_use, hybrid).
  */
 
-// V1 types
-export type { AgentBackend, AgentBackendDecision } from "../backend/types";
+// V1 types (inlined after backend/ removal)
+export type AgentBackend = "hearst_runtime" | "anthropic_managed";
+
+export interface AgentBackendDecision {
+  backend: AgentBackend;
+  reason: string;
+}
 
 // V2 types (comprehensive)
 export type {

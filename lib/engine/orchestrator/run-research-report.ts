@@ -5,12 +5,12 @@
  * Uses real web search → structured synthesis → asset creation.
  */
 
-import type { RunEngine } from "../engine/runtime/engine";
-import type { RunEventBus } from "../events/bus";
-import type { TenantScope } from "../multi-tenant/types";
-import { searchWeb, type WebSearchResult } from "../tools/handlers/web-search";
-import { createAsset } from "../engine/runtime/assets/create-asset";
-import { generatePdfArtifact } from "../engine/runtime/assets/generators/pdf";
+import type { RunEngine } from "@/lib/engine/runtime/engine";
+import type { RunEventBus } from "@/lib/events/bus";
+import type { TenantScope } from "@/lib/multi-tenant/types";
+import { searchWeb, type WebSearchResult } from "@/lib/tools/handlers/web-search";
+import { createAsset } from "@/lib/engine/runtime/assets/create-asset";
+import { generatePdfArtifact } from "@/lib/engine/runtime/assets/generators/pdf";
 import { extractResearchQuery, isReportIntent } from "./research-intent";
 import Anthropic from "@anthropic-ai/sdk";
 

@@ -13,6 +13,7 @@ import type { StepActor } from "../engine/types";
 // Router-wrapped connectors (Pack → Nango → Legacy)
 // Phase A: Router-first routing for all connector operations
 import { searchFiles, readFileContent, searchEmails } from "./connectors";
+import { getTokens } from "@/lib/platform/auth/tokens";
 // Phase B: Finance Agent (Stripe)
 import { executeStripeAgentInRuntime, isStripeTask } from "@/lib/agents/specialized/finance";
 // Phase C: CRM, Productivity, Design Agents
@@ -295,6 +296,25 @@ async function executeAgentSync(
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const userId = engine.getUserId();
 
+  // ── Get connected providers for context ──
+  const connectedProviders: string[] = [];
+  try {
+    const googleTokens = await getTokens(userId, "google");
+    if (googleTokens?.accessToken) {
+      connectedProviders.push("gmail", "drive", "calendar");
+    }
+    const slackTokens = await getTokens(userId, "slack");
+    if (slackTokens?.accessToken) {
+      connectedProviders.push("slack");
+    }
+    const notionTokens = await getTokens(userId, "notion");
+    if (notionTokens?.accessToken) {
+      connectedProviders.push("notion");
+    }
+  } catch {
+    // Silently continue if token check fails
+  }
+
   // ── Try real provider data first ──
   let providerPayload: { providerData: string; providerUsed: string } | null = null;
 
@@ -309,7 +329,7 @@ async function executeAgentSync(
     }
   }
 
-  const systemPrompt = buildAgentPrompt(input.agent, input.expected_output);
+  const systemPrompt = buildAgentPrompt(input.agent, input.expected_output, connectedProviders);
 
   const contextSummary = Object.entries(input.context)
     .filter(([, v]) => v !== undefined)
@@ -394,10 +414,26 @@ async function executeAgentSync(
   };
 }
 
-function buildAgentPrompt(agent: string, expectedOutput: string): string {
+function buildAgentPrompt(agent: string, expectedOutput: string, connectedProviders: string[] = []): string {
+  const providerStatus = connectedProviders.length > 0
+    ? `\n🔐 CONNECTEURS ACTIFS : ${connectedProviders.join(", ")}`
+    : "\n🔐 Aucun connecteur actif";
+
+  const gmailAccess = connectedProviders.includes("gmail")
+    ? "\n✅ L'utilisateur EST CONNECTÉ à Gmail. Tu PEUX accéder à ses emails. Ne dis JAMAIS que tu n'as pas accès."
+    : "";
+
+  const driveAccess = connectedProviders.includes("drive")
+    ? "\n✅ L'utilisateur EST CONNECTÉ à Google Drive. Tu PEUX accéder à ses fichiers."
+    : "";
+
+  const slackAccess = connectedProviders.includes("slack")
+    ? "\n✅ L'utilisateur EST CONNECTÉ à Slack. Tu PEUX accéder à ses messages."
+    : "";
+
   const base: Record<string, string> = {
     KnowledgeRetriever:
-      "Tu es un agent de recherche d'information de HEARST OS. Quand des données réelles de provider sont fournies (Google Drive, Gmail), tu dois les utiliser comme source primaire. Analyse, synthétise et structure l'information de façon factuelle. Ne fabrique jamais d'information non présente dans les données.",
+      `Tu es un agent de recherche d'information de HEARST OS.${providerStatus}${gmailAccess}${driveAccess}${slackAccess}\n\nQuand des données réelles de provider sont fournies, tu dois les utiliser comme source primaire. Analyse, synthétise et structure l'information de façon factuelle. Ne fabrique jamais d'information non présente dans les données.`,
     Analyst:
       "Tu es un analyste. Structure les données, identifie les patterns, produis des insights clairs et actionnables.",
     DocBuilder:

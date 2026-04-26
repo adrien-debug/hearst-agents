@@ -132,8 +132,8 @@ describeIf("OpenAI Assistants Backend", () => {
 
   describe("Integration: Full Session", () => {
     it("should complete full assistant session", async () => {
-      const { ManagedSessionConfig } = await import("@/lib/agents/backend-v2/types");
       const { runOpenAIAssistantSession } = await import("@/lib/agents/backend-v2/openai-assistant");
+      type ManagedSessionConfig = import("@/lib/agents/backend-v2/types").ManagedSessionConfig;
 
       const config: ManagedSessionConfig = {
         backend: "openai_assistants",

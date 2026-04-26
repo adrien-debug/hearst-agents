@@ -12,7 +12,7 @@ import {
   manifestAsset,
   manifestMission,
 } from "@/lib/ui/right-panel/manifestation";
-import type { ExecutionPlan, MissionDefinition } from "@/lib/planner/types";
+import type { ExecutionPlan, MissionDefinition } from "@/lib/engine/planner/types";
 import type { Asset } from "@/lib/assets/types";
 import type { ProviderId } from "@/lib/providers/types";
 
@@ -31,6 +31,7 @@ describe("resolveFocalObject — Canonical Priority", () => {
     type: "one_shot",
     intent: "Test plan intent",
     status: "draft",
+    requiresApproval: false,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     steps: [],
@@ -44,11 +45,12 @@ describe("resolveFocalObject — Canonical Priority", () => {
     workspaceId: mockWorkspaceId,
     userId: mockUserId,
     naturalLanguageRule: "Test mission rule",
+    mode: "recurring",
     status: "active",
     createdAt: Date.now(),
     updatedAt: Date.now(),
     schedule: "0 9 * * *",
-    sourcePlanId: undefined,
+    sourcePlanId: "plan-seed",
     ...overrides,
   });
 
@@ -59,8 +61,6 @@ describe("resolveFocalObject — Canonical Priority", () => {
     title: "Test Asset",
     createdAt: Date.now(),
     provenance: {
-      runId: "run-1",
-      agentId: "agent-1",
       providerId: "openai" as ProviderId,
     },
     ...overrides,
@@ -218,7 +218,7 @@ describe("resolveFocalObject — Canonical Priority", () => {
     });
     const result = manifestMission(mission);
     expect(result.objectType).toBe("watcher_active");
-    expect(result.condition).toBe("New leads");
+    expect((result as { condition?: string }).condition).toBe("New leads");
   });
 
   it("should handle paused missions", () => {
@@ -238,8 +238,6 @@ describe("manifestAsset — Asset Type Mapping", () => {
     title: "Test",
     createdAt: Date.now(),
     provenance: {
-      runId: "run-1",
-      agentId: "agent-1",
       providerId: "openai" as ProviderId,
     },
   };
@@ -247,13 +245,13 @@ describe("manifestAsset — Asset Type Mapping", () => {
   it("should manifest brief asset correctly", () => {
     const result = manifestAsset({ ...baseAsset, kind: "brief" });
     expect(result?.objectType).toBe("brief");
-    expect(result?.tier).toBe("brief");
+    expect((result as { tier?: string })?.tier).toBe("brief");
   });
 
   it("should manifest report asset correctly", () => {
     const result = manifestAsset({ ...baseAsset, kind: "report" });
     expect(result?.objectType).toBe("report");
-    expect(result?.tier).toBe("report");
+    expect((result as { tier?: string })?.tier).toBe("report");
   });
 
   it("should manifest message asset as receipt", () => {
@@ -274,8 +272,8 @@ describe("manifestAsset — Asset Type Mapping", () => {
   it("should include wordCount when available", () => {
     const result = manifestAsset(
       { ...baseAsset, kind: "report" },
-      { wordCount: 1500, title: "Test", summary: "Test summary", sections: [] }
+      { wordCount: 1500, title: "Test", summary: "Test summary", sections: [], tier: "report", tone: "executive", truncated: false }
     );
-    expect(result?.wordCount).toBe(1500);
+    expect((result as { wordCount?: number })?.wordCount).toBe(1500);
   });
 });

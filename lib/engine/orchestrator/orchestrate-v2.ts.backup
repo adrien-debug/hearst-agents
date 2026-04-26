@@ -9,26 +9,27 @@
 
 import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { SessionManager, type UnifiedSession } from "../agents/sessions";
-import { selectBackend } from "../agents/backend-v2/selector";
-import type { ManagedAgentEvent, AgentBackendV2 } from "../agents/backend-v2/types";
-import { RunEventBus } from "../events/bus";
-import { SSEAdapter } from "../events/consumers/sse-adapter";
-import { SYSTEM_CONFIG } from "../system/config";
-import { saveRun, updateRun, updateRunMetrics } from "../engine/runtime/state/adapter";
-import { addRun } from "../engine/runtime/runs/store";
-import type { RunRecord, RunAssetRef } from "../engine/runtime/runs/types";
-import type { RunEvent } from "../events/types";
-import { shouldPersistEvent, persistRunEvent } from "../engine/runtime/timeline/persist";
-import { storeAsset, type Asset, type AssetKind } from "../assets/types";
-import { manifestAsset } from "../right-panel/manifestation";
-import { detectOutputTier, formatOutput } from "../engine/runtime/formatting/pipeline";
-import type { AssetType } from "../engine/runtime/assets/types";
-import { getRecentMessages, appendMessage } from "../memory/store";
-import type { TenantScope } from "../multi-tenant/types";
-import { createScheduledMission } from "../engine/runtime/missions/create-mission";
-import { addMission } from "../engine/runtime/missions/store";
-import { saveScheduledMission as persistMission } from "../engine/runtime/state/adapter";
+import { SessionManager, type UnifiedSession } from "@/lib/agents/sessions";
+import { selectBackend } from "@/lib/agents/backend-v2/selector";
+import type { ManagedAgentEvent, AgentBackendV2 } from "@/lib/agents/backend-v2/types";
+import { RunEventBus } from "@/lib/events/bus";
+import { SSEAdapter } from "@/lib/events/consumers/sse-adapter";
+import { SYSTEM_CONFIG } from "@/lib/system/config";
+import { saveRun, updateRun, updateRunMetrics } from "@/lib/engine/runtime/state/adapter";
+import { addRun } from "@/lib/engine/runtime/runs/store";
+import type { RunRecord, RunAssetRef } from "@/lib/engine/runtime/runs/types";
+import type { RunEvent } from "@/lib/events/types";
+import { shouldPersistEvent, persistRunEvent } from "@/lib/engine/runtime/timeline/persist";
+import { storeAsset, type Asset, type AssetKind } from "@/lib/assets/types";
+import { manifestAsset } from "@/lib/ui/right-panel/manifestation";
+import { detectOutputTier, formatOutput } from "@/lib/engine/runtime/formatting/pipeline";
+import type { AssetType } from "@/lib/engine/runtime/assets/types";
+import { getRecentMessages, appendMessage } from "@/lib/memory/store";
+import type { TenantScope } from "@/lib/multi-tenant/types";
+import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
+import { getTokens } from "@/lib/platform/auth/tokens";
+import { addMission } from "@/lib/engine/runtime/missions/store";
+import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -140,20 +141,35 @@ export async function orchestrateV2Blocking(
       selectedBackend = selection.selectedBackend;
     }
 
-    // 2. Create session with initial history for continuity
+    // 2. Detect connected providers
+    const connectedProviders: string[] = [];
+    try {
+      const googleTokens = await getTokens(input.userId, "google");
+      if (googleTokens?.accessToken) {
+        connectedProviders.push("gmail", "drive", "calendar");
+      }
+      const slackTokens = await getTokens(input.userId, "slack");
+      if (slackTokens?.accessToken) {
+        connectedProviders.push("slack");
+      }
+    } catch {
+      // Silently continue if token check fails
+    }
+
+    // 3. Create session with initial history for continuity
     const manager = SessionManager.getInstance();
     const session = await manager.createWithBackend(selectedBackend as AgentBackendV2, {
       userId: input.userId,
       tenantId: input.tenantId,
       workspaceId: input.workspaceId,
-      systemPrompt: buildSystemPrompt(input.surface),
+      systemPrompt: buildSystemPrompt(input.surface, connectedProviders),
       initialHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
     });
 
-    // 3. Send message
+    // 5. Send message
     const response = await session.send(input.message);
 
-    // 4. Persist to memory (non-blocking)
+    // 6. Persist to memory (non-blocking)
     void persistConversation(input, input.message, response.message.content);
 
     // 5. Get metrics
@@ -437,7 +453,22 @@ async function runV2Pipeline(
       }
     }
 
-    // 2. Session Creation with initial history for continuity
+    // 2. Detect connected providers for system prompt context
+    const connectedProviders: string[] = [];
+    try {
+      const googleTokens = await getTokens(input.userId, "google");
+      if (googleTokens?.accessToken) {
+        connectedProviders.push("gmail", "drive", "calendar");
+      }
+      const slackTokens = await getTokens(input.userId, "slack");
+      if (slackTokens?.accessToken) {
+        connectedProviders.push("slack");
+      }
+    } catch {
+      // Silently continue if token check fails
+    }
+
+    // 3. Session Creation with initial history for continuity
     const sessionStart = Date.now();
     const manager = SessionManager.getInstance();
 
@@ -445,7 +476,7 @@ async function runV2Pipeline(
       userId: input.userId,
       tenantId: input.tenantId,
       workspaceId: input.workspaceId,
-      systemPrompt: buildSystemPrompt(input.surface),
+      systemPrompt: buildSystemPrompt(input.surface, connectedProviders),
       streaming: input.streaming ?? true,
       initialHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
     });
@@ -460,24 +491,15 @@ async function runV2Pipeline(
 
     // 3. Stream Response
     let fullResponse = "";
-    let lastEmittedDelta = ""; // Deduplication tracking
 
     for await (const event of session.sendStream(input.message)) {
-      // Map ManagedAgentEvent to SSE events
+      // Map ManagedAgentEvent to SSE events (handles text_delta emission)
       mapAndEmitEvent(eventBus, runId, event);
 
-      // Track response
+      // Track response for final metrics (no duplicate emission)
       if (event.type === "message") {
-        if (event.delta && event.delta !== lastEmittedDelta) {
+        if (event.delta) {
           fullResponse += event.delta;
-          lastEmittedDelta = event.delta;
-          const deltaEvent: RunEvent = {
-            type: "text_delta",
-            run_id: runId,
-            timestamp: new Date().toISOString(),
-            delta: event.delta,
-          };
-          eventBus.emit(deltaEvent);
         }
         if (event.content) {
           fullResponse = event.content;
@@ -485,6 +507,7 @@ async function runV2Pipeline(
         // Token usage tracked via session.getMetrics() at completion
       }
 
+      // Tool calls already handled by mapAndEmitEvent, but keep for backwards compat
       if (event.type === "tool_call") {
         const toolEvent: RunEvent = {
           type: "tool_call_started",
@@ -737,21 +760,27 @@ function generateRunId(): string {
   return `v2_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
 
-function buildSystemPrompt(surface?: string, hasConnector?: boolean, toolContext?: string | null): string {
+function buildSystemPrompt(surface?: string, connectedProviders?: string[]): string {
   let prompt = `You are Hearst AI, a helpful assistant. You help users with their tasks across various tools and services.`;
 
   // Add connector availability info
-  if (hasConnector && toolContext) {
-    switch (toolContext) {
-      case "inbox":
-        prompt += `\n\n🔧 CONNECTOR AVAILABLE: The user is connected to Gmail. You can help them with their emails - summarize, search, analyze, or extract information from their inbox. Do not say you cannot access their emails - you can access them through the Gmail connection.`;
-        break;
-      case "calendar":
-        prompt += `\n\n🔧 CONNECTOR AVAILABLE: The user is connected to Google Calendar. You can help them with their schedule, events, and meetings.`;
-        break;
-      case "files":
-        prompt += `\n\n🔧 CONNECTOR AVAILABLE: The user is connected to Google Drive. You can help them search, analyze, and work with their documents and files.`;
-        break;
+  if (connectedProviders && connectedProviders.length > 0) {
+    prompt += `\n\n🔐 CONNECTED PROVIDERS: ${connectedProviders.join(", ")}`;
+    
+    if (connectedProviders.includes("gmail")) {
+      prompt += `\n✅ The user is CONNECTED to Gmail. You CAN access their emails. When they ask about emails, summarize, or search messages - use their real Gmail data. NEVER say you cannot access their emails.`;
+    }
+    
+    if (connectedProviders.includes("calendar")) {
+      prompt += `\n✅ The user is CONNECTED to Google Calendar. You CAN access their events and schedule. When they ask about meetings, events, or their agenda - use their real Calendar data. NEVER say you cannot access their calendar.`;
+    }
+    
+    if (connectedProviders.includes("drive")) {
+      prompt += `\n✅ The user is CONNECTED to Google Drive. You CAN access their files and documents. When they ask about files, documents, or Drive content - use their real Drive data. NEVER say you cannot access their files.`;
+    }
+    
+    if (connectedProviders.includes("slack")) {
+      prompt += `\n✅ The user is CONNECTED to Slack. You CAN access their messages and channels when needed.`;
     }
   }
 
