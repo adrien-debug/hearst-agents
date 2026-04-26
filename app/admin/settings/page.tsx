@@ -89,7 +89,7 @@ export default async function SettingsPage() {
                         : String(s.value)}
                     </p>
                     {s.tenantId && (
-                      <p className="text-[10px] text-white/20 mt-0.5">
+                      <p className="t-10 text-white/20 mt-0.5">
                         tenant: {s.tenantId.slice(0, 8)}
                       </p>
                     )}

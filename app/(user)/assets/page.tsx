@@ -53,7 +53,7 @@ export default function AssetsPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="animate-pulse text-white/30 font-mono text-[11px] uppercase tracking-widest">
+        <div className="animate-pulse text-white/30 font-mono t-11 uppercase tracking-widest">
           Loading assets...
         </div>
       </div>
@@ -62,11 +62,11 @@ export default function AssetsPage() {
 
   if (selectedAsset) {
     return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#060606]">
+      <div className="flex-1 flex flex-col h-full overflow-hidden bg-gradient-to-br from-[var(--mat-300)] via-[var(--bg-soft)] to-[var(--surface)]">
         <div className="p-6 border-b border-white/[0.05] flex items-center justify-between">
           <div>
-            <h1 className="text-[20px] font-bold text-white tracking-tight">{selectedAsset.name}</h1>
-            <p className="text-[11px] font-mono text-white/40 uppercase mt-1">{selectedAsset.type} · {(selectedAsset.size / 1024).toFixed(1)} KB</p>
+            <h1 className="text-xl font-bold text-white tracking-tight">{selectedAsset.name}</h1>
+            <p className="t-11 font-mono text-white/40 uppercase mt-1">{selectedAsset.type} · {(selectedAsset.size / 1024).toFixed(1)} KB</p>
           </div>
           <div className="flex items-center gap-3">
             {selectedAsset.url && (
@@ -74,14 +74,14 @@ export default function AssetsPage() {
                 href={selectedAsset.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-[var(--cykan)] text-black text-[12px] font-medium rounded-sm hover:opacity-90 transition-opacity"
+                className="px-4 py-2 bg-[var(--cykan)] text-black text-xs font-medium rounded-sm hover:opacity-90 transition-opacity"
               >
                 Download
               </a>
             )}
             <Link
               href="/assets"
-              className="px-4 py-2 border border-white/20 text-white/70 text-[12px] font-medium rounded-sm hover:bg-white/5 transition-colors"
+              className="px-4 py-2 border border-white/20 text-white/70 text-xs font-medium rounded-sm hover:bg-white/5 transition-colors"
             >
               Back
             </Link>
@@ -90,9 +90,9 @@ export default function AssetsPage() {
         <div className="flex-1 p-8 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white/[0.02] border border-white/[0.05] rounded-sm p-8">
-              <p className="text-[14px] text-white/60">Asset details view</p>
-              <p className="text-[12px] font-mono text-white/40 mt-4">ID: {selectedAsset.id}</p>
-              <p className="text-[12px] font-mono text-white/40">Created: {new Date(selectedAsset.createdAt).toLocaleString()}</p>
+              <p className="text-sm text-white/60">Asset details view</p>
+              <p className="text-xs font-mono text-white/40 mt-4">ID: {selectedAsset.id}</p>
+              <p className="text-xs font-mono text-white/40">Created: {new Date(selectedAsset.createdAt).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -101,12 +101,12 @@ export default function AssetsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#060606]">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-gradient-to-br from-[var(--mat-300)] via-[var(--bg-soft)] to-[var(--surface)]">
       <div className="p-6 border-b border-white/[0.05]">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[20px] font-bold text-white tracking-tight">Assets</h1>
-            <p className="text-[11px] font-mono text-white/40 uppercase mt-1 tracking-wide">
+            <h1 className="text-xl font-bold text-white tracking-tight">Assets</h1>
+            <p className="t-11 font-mono text-white/40 uppercase mt-1 tracking-wide">
               {assets.length} files stored
             </p>
           </div>
@@ -117,11 +117,11 @@ export default function AssetsPage() {
         <div className="max-w-6xl mx-auto">
           {assets.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-[14px] text-white/40">No assets found</p>
+              <p className="text-sm text-white/40">No assets found</p>
             </div>
           ) : (
             <div className="border border-white/[0.05] rounded-sm overflow-hidden">
-              <div className="grid grid-cols-[minmax(0,1.2fr)_auto_auto_auto] gap-x-4 items-center px-4 py-3 bg-white/[0.02] border-b border-white/[0.05] text-[10px] font-mono uppercase tracking-wider text-white/40">
+              <div className="grid grid-cols-[minmax(0,1.2fr)_auto_auto_auto] gap-x-4 items-center px-4 py-3 bg-white/[0.02] border-b border-white/[0.05] t-10 font-mono uppercase tracking-wider text-white/40">
                 <span>Name</span>
                 <span className="text-right">Type</span>
                 <span className="text-right">Size</span>
@@ -135,14 +135,14 @@ export default function AssetsPage() {
                 >
                   <Link
                     href={`/assets?id=${asset.id}`}
-                    className="text-[13px] text-white/80 hover:text-white truncate"
+                    className="t-13 text-white/80 hover:text-white truncate"
                   >
                     {asset.name}
                   </Link>
-                  <span className="text-[11px] font-mono text-white/40 uppercase text-right">
+                  <span className="t-11 font-mono text-white/40 uppercase text-right">
                     {asset.type}
                   </span>
-                  <span className="text-[11px] font-mono text-white/40 text-right">
+                  <span className="t-11 font-mono text-white/40 text-right">
                     {(asset.size / 1024).toFixed(1)} KB
                   </span>
                   <div className="flex justify-end gap-2">

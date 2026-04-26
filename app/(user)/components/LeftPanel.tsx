@@ -28,7 +28,7 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
   return (
     <aside
       className="w-[72px] flex flex-col h-full relative z-20 border-r border-white/[0.05] transition-all duration-500"
-      style={{ background: "linear-gradient(180deg, #050505 0%, #080808 100%)" }}
+      style={{ background: "linear-gradient(180deg, var(--mat-050) 0%, var(--bg-soft) 100%)" }}
     >
       {/* Logo H cyan */}
       <button 
@@ -65,7 +65,7 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
             ) : (
               <span className="text-lg font-bold text-white/50 hover:text-white transition-colors">{service.name.charAt(0).toUpperCase()}</span>
             )}
-            <span className="absolute left-full ml-3 px-2 py-1 bg-black border border-white/10 text-[10px] font-mono tracking-wide text-white/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            <span className="absolute left-full ml-3 px-2 py-1 bg-black border border-white/10 t-10 font-mono tracking-wide text-white/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
               {service.name}
             </span>
           </button>
@@ -91,7 +91,7 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
           <div key={thread.id} className="relative group/item flex items-center">
             <button
               onClick={() => setActiveThread(thread.id)}
-              className={`w-8 h-8 flex items-center justify-center text-[13px] font-bold transition-all shrink-0 ${
+              className={`w-8 h-8 flex items-center justify-center t-13 font-bold transition-all shrink-0 ${
                 activeThreadId === thread.id
                   ? "text-[var(--cykan)]"
                   : "text-white/50 hover:text-white"

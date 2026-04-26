@@ -6,15 +6,15 @@ export default function InboxPage() {
   const [filter, setFilter] = useState<"all" | "unread" | "important">("all");
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-br from-[#060606] via-[#080808] to-[#050505]">
+    <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-br from-[var(--surface)] via-[var(--bg-soft)] to-[var(--mat-050)]">
       <div className="bg-gradient-to-b from-white/[0.03] to-transparent border-b border-white/[0.06] p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/30 mb-2">Inbox</p>
-            <h1 className="text-[20px] font-bold tracking-tight text-white">Messages</h1>
-            <p className="text-[12px] font-normal text-white/50 mt-2">Agrégation Gmail, Slack.</p>
+            <p className="t-10 font-mono uppercase tracking-[0.15em] text-white/30 mb-2">Inbox</p>
+            <h1 className="text-xl font-bold tracking-tight text-white">Messages</h1>
+            <p className="text-xs font-normal text-white/50 mt-2">Agrégation Gmail, Slack.</p>
           </div>
-          <span className="font-mono text-[10px] tracking-[0.1em] text-white/30 border-b border-white/10 pb-1">Roadmap</span>
+          <span className="font-mono t-10 tracking-[0.1em] text-white/30 border-b border-white/10 pb-1">Roadmap</span>
         </div>
 
         {/* Filters */}
@@ -46,10 +46,10 @@ export default function InboxPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
-        <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/30">No data</p>
-        <h2 className="text-[16px] font-bold tracking-tight text-white/70">Unified Inbox</h2>
-        <p className="text-[13px] font-normal text-white/50 max-w-md">Flux conversationnel — phase build.</p>
-        <div className="flex flex-wrap gap-4 text-[10px] font-mono tracking-[0.1em] text-white/30 mt-2">
+        <p className="t-10 font-mono uppercase tracking-[0.15em] text-white/30">No data</p>
+        <h2 className="text-base font-bold tracking-tight text-white/70">Unified Inbox</h2>
+        <p className="t-13 font-normal text-white/50 max-w-md">Flux conversationnel — phase build.</p>
+        <div className="flex flex-wrap gap-4 t-10 font-mono tracking-[0.1em] text-white/30 mt-2">
           <span className="px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.06]">Gmail</span>
           <span className="px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.06]">Slack</span>
         </div>

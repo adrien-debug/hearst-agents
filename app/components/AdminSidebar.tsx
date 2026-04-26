@@ -55,16 +55,16 @@ export default function AdminSidebar() {
 
   return (
     <aside
-      className="w-56 fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-white/[0.06] bg-gradient-to-b from-[#050505] via-[#0a0a0a] to-[#050505]"
+      className="w-56 fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-white/[0.06] bg-gradient-to-b from-[var(--mat-050)] via-[var(--mat-300)] to-[var(--mat-050)]"
     >
       <div className="p-4 border-b border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent">
         <span className="text-lg font-light text-white">Hearst</span>
-        <span className="ml-2 text-[10px] font-mono uppercase tracking-[0.15em] text-white/40">Admin</span>
+        <span className="ml-2 t-10 font-mono uppercase tracking-[0.15em] text-white/40">Admin</span>
       </div>
       <nav className="p-2 space-y-4">
         {SECTIONS.map((section) => (
           <div key={section.title}>
-            <p className="px-3 mb-1 text-[10px] font-mono uppercase tracking-[0.15em] text-white/30">{section.title}</p>
+            <p className="px-3 mb-1 t-10 font-mono uppercase tracking-[0.15em] text-white/30">{section.title}</p>
             {section.links.map((link) => (
               <Link
                 key={link.href}

@@ -145,27 +145,27 @@ export default function SchedulerAdminPage() {
         <div className="mb-8 rounded-sm border border-[var(--line)] bg-[var(--bg-soft)] p-5">
           <div className="mb-3 flex items-center gap-3">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Scheduler Status</h2>
-            <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[10px] font-medium ${MODE_CHIP[scheduler.mode]?.cls ?? MODE_CHIP.standby.cls}`}>
+            <span className={`inline-flex items-center rounded border px-2 py-0.5 t-10 font-medium ${MODE_CHIP[scheduler.mode]?.cls ?? MODE_CHIP.standby.cls}`}>
               {MODE_CHIP[scheduler.mode]?.label ?? scheduler.mode}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
-              <p className="text-[10px] uppercase text-[var(--text-muted)]">Instance</p>
+              <p className="t-10 uppercase text-[var(--text-muted)]">Instance</p>
               <p className="mt-0.5 truncate font-mono text-xs text-[var(--text-soft)]">{scheduler.instanceId}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase text-[var(--text-muted)]">Leader</p>
+              <p className="t-10 uppercase text-[var(--text-muted)]">Leader</p>
               <p className="mt-0.5 truncate font-mono text-xs text-[var(--text-soft)]">{scheduler.leaderInstanceId ?? "—"}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase text-[var(--text-muted)]">Lease Expiry</p>
+              <p className="t-10 uppercase text-[var(--text-muted)]">Lease Expiry</p>
               <p className="mt-0.5 text-xs text-[var(--text-soft)]">
                 {scheduler.leadershipExpiresAt ? new Date(scheduler.leadershipExpiresAt).toLocaleTimeString("fr-FR") : "—"}
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase text-[var(--text-muted)]">Is Leader</p>
+              <p className="t-10 uppercase text-[var(--text-muted)]">Is Leader</p>
               <p className="mt-0.5 text-xs text-[var(--text-soft)]">{scheduler.isLeader ? "Yes" : "No"}</p>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function SchedulerAdminPage() {
                 <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--cykan)]" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-[var(--text)]">{m.name}</p>
-                  <p className="text-[10px] text-[var(--text-muted)]">
+                  <p className="t-10 text-[var(--text-muted)]">
                     Running for {formatDuration(m.runningSince)}
                     {m.lastRunId && <span className="ml-2 font-mono text-[var(--text-muted)]">{m.lastRunId.slice(0, 8)}</span>}
                   </p>
@@ -207,9 +207,9 @@ export default function SchedulerAdminPage() {
                   <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${s.dot}`} />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-[var(--text-soft)]">{m.name}</p>
-                    {m.lastError && <p className="mt-0.5 truncate text-[10px] text-[var(--danger)]/70">{m.lastError.length > 100 ? m.lastError.slice(0, 100) + "…" : m.lastError}</p>}
+                    {m.lastError && <p className="mt-0.5 truncate t-10 text-[var(--danger)]/70">{m.lastError.length > 100 ? m.lastError.slice(0, 100) + "…" : m.lastError}</p>}
                   </div>
-                  <span className="shrink-0 text-[10px] text-[var(--text-muted)]">{formatTime(m.lastRunAt)}</span>
+                  <span className="shrink-0 t-10 text-[var(--text-muted)]">{formatTime(m.lastRunAt)}</span>
                 </div>
               );
             })}
@@ -222,7 +222,7 @@ export default function SchedulerAdminPage() {
           <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             All Missions<span className="ml-2 text-[var(--text-muted)]">{missions.length}</span>
           </h2>
-          <button onClick={refresh} className="text-[10px] text-[var(--text-muted)] transition-colors hover:text-[var(--text-soft)]">Refresh</button>
+          <button onClick={refresh} className="t-10 text-[var(--text-muted)] transition-colors hover:text-[var(--text-soft)]">Refresh</button>
         </div>
 
         {missions.length === 0 ? (
@@ -231,7 +231,7 @@ export default function SchedulerAdminPage() {
           <div className="overflow-x-auto rounded-lg border border-[var(--line)]">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[var(--line)] text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
+                <tr className="border-b border-[var(--line)] t-10 uppercase tracking-wider text-[var(--text-muted)]">
                   <th className="px-4 py-2.5">Mission</th>
                   <th className="px-3 py-2.5">Status</th>
                   <th className="px-3 py-2.5">Enabled</th>
@@ -266,8 +266,8 @@ export default function SchedulerAdminPage() {
                       <td className="max-w-[160px] truncate px-3 py-2.5 text-[var(--danger)]/60">{m.lastError ?? "—"}</td>
                       <td className="px-3 py-2.5 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button onClick={() => handleRunNow(m.missionId || m.id)} disabled={isLoading} className="rounded border border-[var(--line-strong)] px-2 py-1 text-[10px] text-[var(--text-muted)] transition-colors hover:border-[var(--cykan)]/40 hover:text-[var(--cykan)] disabled:opacity-40">Run</button>
-                          <button onClick={() => handleToggle(m.missionId || m.id, !m.enabled)} disabled={isLoading} className="rounded border border-[var(--line-strong)] px-2 py-1 text-[10px] text-[var(--text-muted)] transition-colors hover:border-[var(--cykan)] hover:text-[var(--text-soft)] disabled:opacity-40">{m.enabled ? "Disable" : "Enable"}</button>
+                          <button onClick={() => handleRunNow(m.missionId || m.id)} disabled={isLoading} className="rounded border border-[var(--line-strong)] px-2 py-1 t-10 text-[var(--text-muted)] transition-colors hover:border-[var(--cykan)]/40 hover:text-[var(--cykan)] disabled:opacity-40">Run</button>
+                          <button onClick={() => handleToggle(m.missionId || m.id, !m.enabled)} disabled={isLoading} className="rounded border border-[var(--line-strong)] px-2 py-1 t-10 text-[var(--text-muted)] transition-colors hover:border-[var(--cykan)] hover:text-[var(--text-soft)] disabled:opacity-40">{m.enabled ? "Disable" : "Enable"}</button>
                         </div>
                       </td>
                     </tr>

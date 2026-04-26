@@ -24,7 +24,7 @@ export function AppCard({ service, onClick, variant = "default" }: AppCardProps)
       >
         <ServiceIdGlyph id={service.id} icon={service.icon} size="sm" />
         <div className="flex-1 min-w-0">
-          <p className={`text-[13px] font-medium tracking-tight truncate ${isConnected ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
+          <p className={`t-13 font-medium tracking-tight truncate ${isConnected ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
             {service.name}
           </p>
         </div>
@@ -51,12 +51,12 @@ export function AppCard({ service, onClick, variant = "default" }: AppCardProps)
               </div>
             ))}
           </div>
-          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--warn)] pb-0.5">
+          <span className="font-mono t-9 uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--warn)] pb-0.5">
             BND_{(service as ServiceDefinition).popularUseCases?.length || 0}
           </span>
         </div>
-        <h3 className="text-[13px] font-black uppercase tracking-tighter text-[var(--text)] mb-1">{service.name}</h3>
-        <p className="text-[11px] font-light leading-relaxed text-[var(--text-muted)] line-clamp-2">{service.description}</p>
+        <h3 className="t-13 font-black uppercase tracking-tighter text-[var(--text)] mb-1">{service.name}</h3>
+        <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] line-clamp-2">{service.description}</p>
       </button>
     );
   }
@@ -73,17 +73,17 @@ export function AppCard({ service, onClick, variant = "default" }: AppCardProps)
         <ConnectionStatusChip status={status} type={service.type} compact />
       </div>
 
-      <h3 className={`text-[13px] font-black uppercase tracking-tighter mb-1 ${isConnected ? "text-[var(--text)]" : "text-[var(--text-soft)]"}`}>
+      <h3 className={`t-13 font-black uppercase tracking-tighter mb-1 ${isConnected ? "text-[var(--text)]" : "text-[var(--text-soft)]"}`}>
         {service.name}
       </h3>
-      <p className="text-[11px] font-light leading-relaxed text-[var(--text-muted)] line-clamp-2 mb-3">{service.description}</p>
+      <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] line-clamp-2 mb-3">{service.description}</p>
 
       {service.tier === "tier_1" && (
         <div className="flex flex-wrap gap-2 mt-auto">
           {service.popularUseCases?.slice(0, 2).map((useCase) => (
             <span
               key={useCase}
-              className="text-[9px] font-mono uppercase tracking-[0.12em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-0.5 truncate max-w-full"
+              className="t-9 font-mono uppercase tracking-[0.12em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-0.5 truncate max-w-full"
             >
               UC_{useCase.slice(0, 24)}
             </span>
@@ -92,12 +92,12 @@ export function AppCard({ service, onClick, variant = "default" }: AppCardProps)
       )}
 
       {isConnected ? (
-        <div className="mt-4 pt-4 border-t border-[var(--line)] flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.16em]">
+        <div className="mt-4 pt-4 border-t border-[var(--line)] flex items-center justify-between font-mono t-9 uppercase tracking-[0.16em]">
           <span className="text-[var(--money)] border-b border-[var(--money)] pb-0.5">STATUS_READY</span>
           <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">OPEN_R</span>
         </div>
       ) : (
-        <div className="mt-4 pt-4 border-t border-[var(--line)] flex items-center justify-between font-mono text-[9px] uppercase tracking-[0.16em]">
+        <div className="mt-4 pt-4 border-t border-[var(--line)] flex items-center justify-between font-mono t-9 uppercase tracking-[0.16em]">
           <span className="text-[var(--text-faint)]">STATUS_OFF</span>
           <span className="text-[var(--cykan)] border-b border-[var(--cykan)] pb-0.5">LINK_R</span>
         </div>

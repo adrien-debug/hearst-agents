@@ -282,11 +282,11 @@ export default function AppsPage() {
           <div>
             <p className="ghost-meta-label mb-2">CTRL_PLANE</p>
             <h1 className="ghost-title-impact text-xl">App Hub</h1>
-            <p className="text-[11px] font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] mt-2">
+            <p className="t-11 font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] mt-2">
               LINK_OK_{stats.connected}_TOTAL_{stats.total}
             </p>
           </div>
-          <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-1">
+          <span className="font-mono t-9 uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-1">
             SHORTCUT_MOD_K
           </span>
         </div>
@@ -325,7 +325,7 @@ export default function AppsPage() {
               <button
                 key={filter.id}
                 onClick={() => setActiveFilter(filter.id as typeof activeFilter)}
-                className={`font-mono text-[9px] uppercase tracking-[0.15em] whitespace-nowrap pb-1 border-b-2 transition-colors ${
+                className={`font-mono t-9 uppercase tracking-[0.15em] whitespace-nowrap pb-1 border-b-2 transition-colors ${
                   activeFilter === filter.id
                     ? "text-[var(--cykan)] border-[var(--cykan)]"
                     : "text-[var(--text-faint)] border-transparent hover:text-[var(--text-muted)]"
@@ -346,8 +346,8 @@ export default function AppsPage() {
           <section className="mb-8">
             <div className="flex items-center gap-4 mb-6 border-b border-[var(--line)] pb-4">
               <span className="w-1.5 h-1.5 bg-[var(--money)] shrink-0" />
-              <h2 className="text-[11px] font-mono uppercase tracking-[0.35em] text-[var(--text-muted)]">Linked</h2>
-              <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--money)] pb-0.5">
+              <h2 className="t-11 font-mono uppercase tracking-[0.35em] text-[var(--text-muted)]">Linked</h2>
+              <span className="ml-auto font-mono t-9 uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--money)] pb-0.5">
                 N_{connectedServices.length}
               </span>
             </div>
@@ -365,7 +365,7 @@ export default function AppsPage() {
           <section className="mb-12">
             <div className="flex items-center gap-4 mb-6 border-b border-[var(--line)] pb-4">
               <GhostIconLayers className="w-5 h-5 text-[var(--text-muted)]" />
-              <h2 className="text-[11px] font-mono uppercase tracking-[0.35em] text-[var(--text-muted)]">Bundles</h2>
+              <h2 className="t-11 font-mono uppercase tracking-[0.35em] text-[var(--text-muted)]">Bundles</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-[var(--line)]">
               {bundles.map((bundle) => (
@@ -410,7 +410,7 @@ export default function AppsPage() {
           <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
             <GhostIconSearch className="w-12 h-12 text-[var(--text-faint)]" />
             <p className="ghost-meta-label">NO_MATCH</p>
-            <p className="text-[12px] font-light text-[var(--text-muted)]">Adjust QUERY or FILTER.</p>
+            <p className="text-xs font-light text-[var(--text-muted)]">Adjust QUERY or FILTER.</p>
           </div>
         )}
       </div>

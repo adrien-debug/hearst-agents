@@ -46,11 +46,11 @@ export function ChatMessages({ messages, className, compact = false }: ChatMessa
             key={message.id}
             className="flex w-full group"
           >
-            <div className="w-12 shrink-0 font-mono text-[10px] text-white/40 pt-1 uppercase tracking-[0.15em]">
+            <div className="w-12 shrink-0 font-mono t-10 text-white/40 pt-1 uppercase tracking-[0.15em]">
               {message.role === "user" ? "You" : "AI"}
             </div>
             <div
-              className={`flex-1 text-[15px] leading-[1.6] tracking-normal ${
+              className={`flex-1 t-15 leading-[1.6] tracking-normal ${
                 message.role === "user"
                   ? "text-white font-medium"
                   : "text-white/80 font-normal"
@@ -63,7 +63,7 @@ export function ChatMessages({ messages, className, compact = false }: ChatMessa
         
         {isRunning && messages[messages.length - 1]?.role === "user" && (
           <div className="flex w-full">
-            <div className="w-12 shrink-0 font-mono text-[10px] text-[var(--cykan)] pt-1 uppercase tracking-[0.15em] animate-pulse">Run</div>
+            <div className="w-12 shrink-0 font-mono t-10 text-[var(--cykan)] pt-1 uppercase tracking-[0.15em] animate-pulse">Run</div>
             <div className="flex gap-2 pt-2">
               <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-bounce" style={{ animationDelay: "0ms" }} />
               <div className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-bounce" style={{ animationDelay: "200ms" }} />

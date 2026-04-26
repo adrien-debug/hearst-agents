@@ -88,7 +88,7 @@ export default async function RunsPage() {
               className="flex items-center justify-between rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4 transition-colors hover:border-[var(--line-strong)]"
             >
               <div className="flex items-center gap-4">
-                <span className="rounded-md border border-[var(--line-strong)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
+                <span className="rounded-md border border-[var(--line-strong)] px-2 py-0.5 t-10 font-medium text-[var(--text-muted)]">
                   {kindLabel[run.kind] ?? run.kind}
                 </span>
                 <span className={`text-xs font-medium ${statusColor[run.status] ?? "text-[var(--text-muted)]"}`}>

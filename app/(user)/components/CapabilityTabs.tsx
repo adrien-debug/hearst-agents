@@ -137,7 +137,7 @@ export function CapabilityTabs({
                 key={tab.id}
                 onClick={() => handleTabClick(tab)}
                 title={tab.description}
-                className={`text-[11px] font-mono font-black uppercase tracking-[0.4em] transition-all duration-500 flex items-center gap-4 relative group ${
+                className={`t-11 font-mono font-black uppercase tracking-[0.4em] transition-all duration-500 flex items-center gap-4 relative group ${
                   isActive
                     ? "text-[var(--cykan)]"
                     : "text-white/30 hover:text-white"
@@ -156,7 +156,7 @@ export function CapabilityTabs({
         {hasMore && !showMore && (
           <button
             onClick={() => setShowMore(true)}
-            className="text-[11px] font-mono font-black tracking-[0.3em] text-white/20 hover:text-white transition-colors"
+            className="t-11 font-mono font-black tracking-[0.3em] text-white/20 hover:text-white transition-colors"
           >
             +{allTabs.length - 4}
           </button>
@@ -177,14 +177,14 @@ export function CapabilityTabs({
               >
                 <span className="text-2xl grayscale group-hover:grayscale-0">{tab.icon}</span>
                 <div>
-                  <p className="text-[15px] font-black uppercase tracking-tighter">{tab.label}</p>
-                  <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40">{tab.description}</p>
+                  <p className="t-15 font-black uppercase tracking-tighter">{tab.label}</p>
+                  <p className="t-10 font-mono uppercase tracking-[0.2em] opacity-40">{tab.description}</p>
                 </div>
               </button>
             ))}
             <button
               onClick={() => setShowMore(false)}
-              className="w-full text-center text-[11px] font-mono font-black uppercase tracking-[0.5em] text-white/20 hover:text-white py-6 border-t border-white/10 mt-4"
+              className="w-full text-center t-11 font-mono font-black uppercase tracking-[0.5em] text-white/20 hover:text-white py-6 border-t border-white/10 mt-4"
             >
               Close_Menu
             </button>
@@ -196,7 +196,7 @@ export function CapabilityTabs({
 
   return (
     <div className="space-y-8 bg-gradient-to-b from-white/[0.02] to-transparent p-8 rounded-lg border border-white/[0.05]">
-      <p className="text-[11px] font-mono font-bold text-white/30 uppercase tracking-[0.3em]">
+      <p className="t-11 font-mono font-bold text-white/30 uppercase tracking-[0.3em]">
         Capability Mode
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -214,10 +214,10 @@ export function CapabilityTabs({
             >
               <span className="text-2xl grayscale group-hover:grayscale-0">{tab.icon}</span>
               <div>
-                <p className={`text-[16px] font-bold tracking-tight ${isActive ? "text-white" : "text-white/60"}`}>
+                <p className={`text-base font-bold tracking-tight ${isActive ? "text-white" : "text-white/60"}`}>
                   {tab.label}
                 </p>
-                <p className="text-[10px] font-mono tracking-wide text-white/30 line-clamp-2 mt-1">{tab.description}</p>
+                <p className="t-10 font-mono tracking-wide text-white/30 line-clamp-2 mt-1">{tab.description}</p>
               </div>
             </button>
           );

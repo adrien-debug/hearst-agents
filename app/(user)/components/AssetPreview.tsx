@@ -45,13 +45,13 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
   return (
     <div className="border-t border-[var(--ghost-modal-top)] bg-[var(--bg)] overflow-hidden">
       <div className="p-6 border-b border-[var(--line)] flex flex-wrap items-start gap-6">
-        <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[var(--text-muted)] border-b border-[var(--cykan)] pb-1">{typeRef}</span>
+        <span className="font-mono t-9 uppercase tracking-[0.25em] text-[var(--text-muted)] border-b border-[var(--cykan)] pb-1">{typeRef}</span>
         <div className="flex-1 min-w-0">
-          <h3 className="text-[15px] font-black uppercase tracking-tighter text-[var(--text)] truncate">{asset.name}</h3>
-          <p className="text-[11px] font-light text-[var(--text-muted)] mt-2">
+          <h3 className="t-15 font-black uppercase tracking-tighter text-[var(--text)] truncate">{asset.name}</h3>
+          <p className="t-11 font-light text-[var(--text-muted)] mt-2">
             {MIME_TYPE_LABELS[asset.file?.mimeType || ""] || asset.type.toUpperCase()}
             {asset.file?.sizeBytes && (
-              <span className="ml-3 font-mono text-[10px]">SIZE_{(asset.file.sizeBytes / 1024).toFixed(1)}KB</span>
+              <span className="ml-3 font-mono t-10">SIZE_{(asset.file.sizeBytes / 1024).toFixed(1)}KB</span>
             )}
           </p>
         </div>
@@ -67,13 +67,13 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
 
       <div className="p-6 min-h-[200px] flex items-center justify-center border-b border-[var(--line)]">
         {canPreviewInline ? (
-          <div className="w-full max-h-96 overflow-auto bg-[var(--bg-elev)] p-4 font-mono text-[11px] text-[var(--text-muted)] border border-[var(--line)]">
+          <div className="w-full max-h-96 overflow-auto bg-[var(--bg-elev)] p-4 font-mono t-11 text-[var(--text-muted)] border border-[var(--line)]">
             <p className="text-[var(--text-faint)] italic">PREVIEW_PENDING</p>
           </div>
         ) : (
           <div className="text-center space-y-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-[var(--text-faint)]">{typeRef}_VIEW</p>
-            <p className="text-[12px] font-light text-[var(--text-muted)]">
+            <p className="font-mono t-10 uppercase tracking-[0.3em] text-[var(--text-faint)]">{typeRef}_VIEW</p>
+            <p className="text-xs font-light text-[var(--text-muted)]">
               {asset.type === "pdf" && "PDF — téléchargement requis"}
               {asset.type === "excel" && "Excel — téléchargement requis"}
               {asset.type === "doc" && "Document — téléchargement requis"}
@@ -85,7 +85,7 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
 
       <div className="p-6 bg-[var(--bg-soft)]">
         <p className="ghost-meta-label mb-4">META_ROW</p>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-[11px] font-mono text-[var(--text-muted)]">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-3 t-11 font-mono text-[var(--text-muted)]">
           <div>
             <span className="text-[var(--text-faint)]">ID_REF</span>
             <span className="ml-2">{asset.id.slice(0, 8)}…</span>

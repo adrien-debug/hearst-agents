@@ -77,7 +77,7 @@ export default async function RunDetailPage({ params }: Props) {
           { label: "Traces", value: traces.length },
         ].map((s) => (
           <div key={s.label} className="rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
-            <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
+            <p className="t-10 font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
             <p className="mt-0.5 text-lg font-semibold text-[var(--text)]">{s.value}</p>
           </div>
         ))}
@@ -120,7 +120,7 @@ export default async function RunDetailPage({ params }: Props) {
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-mono text-[var(--text-muted)]">#{i + 1}</span>
                   <span
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${traceKindColor[t.kind] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}
+                    className={`rounded-full border px-2 py-0.5 t-10 font-medium ${traceKindColor[t.kind] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}
                   >
                     {t.kind}
                   </span>
@@ -141,14 +141,14 @@ export default async function RunDetailPage({ params }: Props) {
 
               <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <div>
-                  <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">Input</p>
-                  <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-[var(--text-muted)]">
+                  <p className="t-10 font-medium uppercase text-[var(--text-muted)]">Input</p>
+                  <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap font-mono t-11 text-[var(--text-muted)]">
                     {JSON.stringify(t.input, null, 2)}
                   </pre>
                 </div>
                 <div>
-                  <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">Output</p>
-                  <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap font-mono text-[11px] text-[var(--text-muted)]">
+                  <p className="t-10 font-medium uppercase text-[var(--text-muted)]">Output</p>
+                  <pre className="mt-1 max-h-24 overflow-auto whitespace-pre-wrap font-mono t-11 text-[var(--text-muted)]">
                     {JSON.stringify(t.output, null, 2)}
                   </pre>
                 </div>
@@ -159,7 +159,7 @@ export default async function RunDetailPage({ params }: Props) {
       )}
 
       {/* Raw run ID */}
-      <p className="mt-8 font-mono text-[10px] text-[var(--text-faint)]">
+      <p className="mt-8 font-mono t-10 text-[var(--text-faint)]">
         run_id: {run.id}
       </p>
     </div>

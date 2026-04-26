@@ -221,13 +221,13 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   // Empty state when no thread
   if (!hasActiveThread) {
     return (
-      <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-white/[0.05] bg-gradient-to-b from-[#080808] to-[#050505]">
+      <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-white/[0.05] bg-gradient-to-b from-[var(--bg-soft)] to-[var(--mat-050)]">
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
           <div className="w-12 h-12 rounded-full bg-white/[0.03] flex items-center justify-center mb-4">
             <StatusIcon state="standby" />
           </div>
-          <h3 className="text-[15px] font-medium text-white/80 mb-2">No active session</h3>
-          <p className="text-[12px] text-white/40 leading-relaxed">
+          <h3 className="t-15 font-medium text-white/80 mb-2">No active session</h3>
+          <p className="text-xs text-white/40 leading-relaxed">
             Start a conversation to see context, assets, and missions here.
           </p>
         </div>
@@ -236,11 +236,11 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   }
 
   return (
-    <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-white/[0.05] bg-gradient-to-b from-[#080808] via-[#060606] to-[#050505]">
+    <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-white/[0.05] bg-gradient-to-b from-[var(--bg-soft)] via-[var(--surface)] to-[var(--mat-050)]">
       {/* Mobile header */}
       {onClose && (
         <div className="p-4 flex items-center justify-between md:hidden border-b border-white/[0.05]">
-          <p className="text-[14px] font-medium">Context</p>
+          <p className="text-sm font-medium">Context</p>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-white/60">
             ✕
           </button>
@@ -252,11 +252,11 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         <div className="flex items-center gap-3 mb-4">
           <StatusIcon state={coreState === "awaiting_approval" ? "awaiting_approval" : isRunning ? "processing" : "standby"} />
           <div>
-            <p className="text-[13px] font-medium text-white">
+            <p className="t-13 font-medium text-white">
               {coreState === "awaiting_approval" ? (flowLabel || "Needs approval") : 
                isRunning ? (flowLabel || "Processing") : "Ready"}
             </p>
-            <p className="text-[11px] text-white/40">
+            <p className="t-11 text-white/40">
               {isConnected ? "Connected" : "Disconnected"}
             </p>
           </div>
@@ -280,17 +280,17 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           <div className="p-5 border-b border-white/[0.05]">
             <div className="flex items-center gap-2 text-[var(--cykan)] mb-3">
               <FileIcon />
-              <span className="text-[11px] font-medium uppercase tracking-wide">{focalObjectType}</span>
+              <span className="t-11 font-medium uppercase tracking-wide">{focalObjectType}</span>
             </div>
-            <h3 className="text-[15px] font-medium text-white mb-1 leading-snug">{focalTitle}</h3>
+            <h3 className="t-15 font-medium text-white mb-1 leading-snug">{focalTitle}</h3>
             
             {actionError && (
-              <p className="mt-3 text-[11px] text-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 rounded">{actionError}</p>
+              <p className="mt-3 t-11 text-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 rounded">{actionError}</p>
             )}
 
             {(focalObject as FocalObjectView)?.primaryAction && (
               <button
-                className={`mt-4 w-full py-3 text-[12px] font-medium rounded transition-colors ${
+                className={`mt-4 w-full py-3 text-xs font-medium rounded transition-colors ${
                   (focalObject as FocalObjectView).primaryAction?.kind === "approve"
                     ? "bg-white text-black hover:bg-white/90"
                     : "bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90"
@@ -309,7 +309,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           <div className="p-5 border-b border-white/[0.05]">
             <div className="flex items-center gap-2 text-white/40 mb-4">
               <NodeIcon />
-              <span className="text-[11px] font-medium uppercase tracking-wide">Related</span>
+              <span className="t-11 font-medium uppercase tracking-wide">Related</span>
             </div>
             <div className="space-y-3">
               {secondaryObjects.map((obj, idx) => {
@@ -319,8 +319,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                 return (
                   <div key={idx} className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors">
                     <div>
-                      <p className="text-[12px] text-white/70 group-hover:text-white transition-colors">{objTitle}</p>
-                      <p className="text-[10px] text-white/30">{objType}</p>
+                      <p className="text-xs text-white/70 group-hover:text-white transition-colors">{objTitle}</p>
+                      <p className="t-10 text-white/30">{objType}</p>
                     </div>
                     {objStatus && (
                       <span className={`w-2 h-2 rounded-full ${
@@ -341,8 +341,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           <div className="p-5 border-b border-white/[0.05]">
             <div className="flex items-center gap-2 text-white/40 mb-4">
               <DatabaseIcon />
-              <span className="text-[11px] font-medium uppercase tracking-wide">Assets</span>
-              <span className="ml-auto text-[10px] text-white/30">{panelData.assets.length}</span>
+              <span className="t-11 font-medium uppercase tracking-wide">Assets</span>
+              <span className="ml-auto t-10 text-white/30">{panelData.assets.length}</span>
             </div>
             <div className="space-y-2">
               {panelData.assets.slice(0, 5).map((asset) => (
@@ -351,8 +351,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                   onClick={() => router.push(`/assets?id=${asset.id}`)}
                   className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors"
                 >
-                  <p className="text-[12px] text-white/60 group-hover:text-white transition-colors truncate pr-4">{asset.name}</p>
-                  <span className="text-[10px] text-white/30 uppercase">{asset.type}</span>
+                  <p className="text-xs text-white/60 group-hover:text-white transition-colors truncate pr-4">{asset.name}</p>
+                  <span className="t-10 text-white/30 uppercase">{asset.type}</span>
                 </div>
               ))}
             </div>
@@ -364,8 +364,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           <div className="p-5 border-b border-white/[0.05]">
             <div className="flex items-center gap-2 text-white/40 mb-4">
               <MissionIcon />
-              <span className="text-[11px] font-medium uppercase tracking-wide">Missions</span>
-              <span className="ml-auto text-[10px] text-white/30">{panelData.missions.length}</span>
+              <span className="t-11 font-medium uppercase tracking-wide">Missions</span>
+              <span className="ml-auto t-10 text-white/30">{panelData.missions.length}</span>
             </div>
             <div className="space-y-2">
               {panelData.missions.slice(0, 3).map((mission) => (
@@ -374,7 +374,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                   onClick={() => router.push(`/missions?id=${mission.id}`)}
                   className="flex items-center justify-between group cursor-pointer py-2 hover:bg-white/[0.02] -mx-2 px-2 rounded transition-colors"
                 >
-                  <p className="text-[12px] text-white/60 group-hover:text-white transition-colors truncate pr-4">{mission.name}</p>
+                  <p className="text-xs text-white/60 group-hover:text-white transition-colors truncate pr-4">{mission.name}</p>
                   <span className={`w-2 h-2 rounded-full ${
                     mission.opsStatus === "running" ? "bg-[var(--cykan)]" :
                     mission.enabled ? "bg-[var(--cykan)]/50" : "bg-white/20"
@@ -390,9 +390,9 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           <div className="p-5">
             <div className="flex items-center gap-2 text-white/40 mb-4">
               <DatabaseIcon />
-              <span className="text-[11px] font-medium uppercase tracking-wide">Run details</span>
+              <span className="t-11 font-medium uppercase tracking-wide">Run details</span>
             </div>
-            <div className="space-y-2 text-[11px]">
+            <div className="space-y-2 t-11">
               <div className="flex justify-between">
                 <span className="text-white/30">ID</span>
                 <span className="text-white/60 font-mono">{currentRunId?.slice(0, 12)}...</span>

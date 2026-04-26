@@ -61,14 +61,14 @@ function ChatControls({
       {showBlockedBanner && (
         <div className="bg-gradient-to-r from-[var(--danger)]/10 to-transparent border-l-2 border-[var(--danger)] p-5 flex items-center justify-between group shadow-[0_20px_40px_rgba(255,51,51,0.05)] rounded-r-sm">
           <div className="flex items-center gap-6">
-            <span className="text-[10px] font-mono font-bold text-[var(--danger)] uppercase tracking-[0.15em]">Access Denied</span>
-            <p className="text-[14px] font-medium text-white tracking-tight">
+            <span className="t-10 font-mono font-bold text-[var(--danger)] uppercase tracking-[0.15em]">Access Denied</span>
+            <p className="text-sm font-medium text-white tracking-tight">
               {capabilityMode} capability requires connection
             </p>
           </div>
           <button 
             onClick={onDismissBanner}
-            className="text-[10px] font-mono text-white/40 hover:text-white transition-colors tracking-[0.15em]"
+            className="t-10 font-mono text-white/40 hover:text-white transition-colors tracking-[0.15em]"
           >
             Close [x]
           </button>
@@ -423,7 +423,7 @@ export default function HomePage() {
 
   if (isIdle) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-gradient-to-b from-[#050505] via-[#080808] to-[#050505]">
+      <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-gradient-to-b from-[var(--mat-050)] via-[var(--bg-soft)] to-[var(--mat-050)]">
         <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at 30% 50%, rgba(163, 255, 0, 0.02) 0%, transparent 60%), radial-gradient(circle at 70% 80%, rgba(255,255,255,0.01) 0%, transparent 40%)" }} />
           <div className="text-center space-y-12 relative z-10">
@@ -431,14 +431,14 @@ export default function HomePage() {
               className="inline-flex flex-col items-center gap-6"
             >
               <div
-                className="w-20 h-20 flex items-center justify-center text-[24px] font-black bg-[var(--cykan)] text-black rounded-sm"
+                className="w-20 h-20 flex items-center justify-center t-24 font-black bg-[var(--cykan)] text-black rounded-sm"
               >
                 H
               </div>
-              <span className="text-[11px] font-mono tracking-[0.3em] text-white/30 uppercase">Hearst_OS</span>
+              <span className="t-11 font-mono tracking-[0.3em] text-white/30 uppercase">Hearst_OS</span>
             </div>
 
-            <h1 className="text-[60px] font-light text-white tracking-tight leading-[1] opacity-[0.03]">Ghost Protocol</h1>
+            <h1 className="t-60 font-light text-white tracking-tight leading-[1] opacity-[0.03]">Ghost Protocol</h1>
             
             <div className="h-px w-32 bg-white/5 mx-auto" />
 
@@ -448,7 +448,7 @@ export default function HomePage() {
                 <button
                   key={s}
                   onClick={() => handleSubmit(s)}
-                  className="px-4 py-2 text-[13px] font-medium tracking-normal text-white/40 hover:text-white hover:bg-white/5 rounded-full border border-white/10 hover:border-white/20 transition-all duration-300"
+                  className="px-4 py-2 t-13 font-medium tracking-normal text-white/40 hover:text-white hover:bg-white/5 rounded-full border border-white/10 hover:border-white/20 transition-all duration-300"
                 >
                   {s}
                 </button>
@@ -466,19 +466,19 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 relative bg-gradient-to-br from-[#060606] via-[#080808] to-[#050505]">
+    <div className="flex-1 flex flex-col min-h-0 relative bg-gradient-to-br from-[var(--surface)] via-[var(--bg-soft)] to-[var(--mat-050)]">
       {/* Principal surface: Focal Stage - takes full height when active */}
       {focal && showFocal && (
         <div className="flex-1 flex flex-col min-h-0 border-b border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent">
           {/* Focal header - minimal, contextual */}
           <div className="flex items-center justify-between px-12 py-8 bg-transparent flex-shrink-0 relative z-10 border-b border-white/10">
             <div className="flex items-center gap-6">
-              <span className="text-[10px] text-[var(--cykan)] font-mono font-bold uppercase tracking-[0.2em]">{focal.type}_HUD</span>
-              <span className="text-[18px] font-bold text-white tracking-tight truncate max-w-[500px]">{focal.title}</span>
+              <span className="t-10 text-[var(--cykan)] font-mono font-bold uppercase tracking-[0.2em]">{focal.type}_HUD</span>
+              <span className="t-18 font-bold text-white tracking-tight truncate max-w-[500px]">{focal.title}</span>
             </div>
             <button
               onClick={() => setShowFocal(false)}
-              className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white transition-colors"
+              className="t-10 font-mono font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white transition-colors"
               title="Minimiser (rester dans le contexte)"
             >
               Close [x]
@@ -500,10 +500,10 @@ export default function HomePage() {
           >
             <div className="w-2 h-2 rounded-full bg-[var(--cykan)] animate-pulse"></div>
             <div className="flex flex-col items-start">
-              <span className="text-white/40 uppercase font-mono tracking-[0.2em] text-[10px] group-hover:text-[var(--cykan)] transition-colors">
+              <span className="text-white/40 uppercase font-mono tracking-[0.2em] t-10 group-hover:text-[var(--cykan)] transition-colors">
                 {focal.type === "brief" ? "Active Brief" : focal.type === "report" ? "Active Report" : "Active Document"}
               </span>
-              <span className="text-white/70 font-bold tracking-tight text-[16px] group-hover:translate-x-2 group-hover:text-white transition-all duration-300">{focal.title}</span>
+              <span className="text-white/70 font-bold tracking-tight text-base group-hover:translate-x-2 group-hover:text-white transition-all duration-300">{focal.title}</span>
             </div>
           </button>
         </div>
@@ -511,7 +511,7 @@ export default function HomePage() {
 
       {/* Chat messages - canonical renderer with conditional sizing - only render container when messages exist */}
       {messages.length > 0 && (
-        <div className={focal && showFocal ? "flex-shrink-0 h-[320px] border-t border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[#050505] to-[#080808]"}>
+        <div className={focal && showFocal ? "flex-shrink-0 h-[320px] border-t border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[var(--mat-050)] to-[var(--bg-soft)]"}>
           <ChatMessages
             messages={messages}
             compact={!!(focal && showFocal)}

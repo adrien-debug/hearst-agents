@@ -86,7 +86,7 @@ export default function AssetDetailPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] hover:text-[var(--text)]"
+            className="flex items-center gap-2 t-10 font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] hover:text-[var(--text)]"
           >
             <GhostIconChevronLeft className="w-4 h-4" />
             Back

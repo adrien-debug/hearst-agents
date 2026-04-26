@@ -63,17 +63,17 @@ export function AppDrawer({ service, isOpen, onClose, onConnect, isConnecting: e
           <div className="flex items-start gap-4 mb-8">
             <ServiceIdGlyph id={service.id} icon={service.icon} size="lg" />
             <div className="min-w-0">
-              <h2 className="text-[16px] font-bold tracking-tight text-white">{service.name}</h2>
+              <h2 className="text-base font-bold tracking-tight text-white">{service.name}</h2>
               <div className="flex flex-wrap items-center gap-3 mt-2">
-                <span className={`font-mono text-[9px] uppercase tracking-[0.2em] border-b pb-0.5 ${typeBadge.line} ${typeBadge.text}`}>
+                <span className={`font-mono t-9 uppercase tracking-[0.2em] border-b pb-0.5 ${typeBadge.line} ${typeBadge.text}`}>
                   {typeBadge.label}
                 </span>
-                <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--text-faint)]">{TIER_LABELS[service.tier]}</span>
+                <span className="font-mono t-9 uppercase tracking-[0.2em] text-[var(--text-faint)]">{TIER_LABELS[service.tier]}</span>
               </div>
             </div>
           </div>
 
-          <p className="text-[13px] font-light leading-relaxed text-[var(--text-soft)] mb-8">{service.description}</p>
+          <p className="t-13 font-light leading-relaxed text-[var(--text-soft)] mb-8">{service.description}</p>
 
           {service.popularUseCases && service.popularUseCases.length > 0 && (
             <div className="mb-8">
@@ -82,7 +82,7 @@ export function AppDrawer({ service, isOpen, onClose, onConnect, isConnecting: e
                 {service.popularUseCases.map((useCase) => (
                   <div key={useCase} className="flex items-center gap-3 py-3">
                     <GhostIconChevronRight className="w-3.5 h-3.5 shrink-0 text-[var(--cykan)]" />
-                    <span className="text-[12px] font-light text-[var(--text-soft)]">{useCase}</span>
+                    <span className="text-xs font-light text-[var(--text-soft)]">{useCase}</span>
                   </div>
                 ))}
               </div>
@@ -95,7 +95,7 @@ export function AppDrawer({ service, isOpen, onClose, onConnect, isConnecting: e
               {service.capabilities.map((cap) => (
                 <span
                   key={cap}
-                  className="font-mono text-[9px] uppercase tracking-[0.12em] text-[var(--text-muted)] border-b border-[var(--line-strong)] pb-0.5"
+                  className="font-mono t-9 uppercase tracking-[0.12em] text-[var(--text-muted)] border-b border-[var(--line-strong)] pb-0.5"
                 >
                   {cap.replace(/_/g, "_")}
                 </span>
@@ -106,14 +106,14 @@ export function AppDrawer({ service, isOpen, onClose, onConnect, isConnecting: e
           {providerId && providerId !== service.id && (
             <div className="mb-6 pb-4 border-b border-[var(--line)]">
               <p className="ghost-meta-label mb-2">PROVIDER_REF</p>
-              <p className="text-[12px] font-mono text-[var(--text-soft)] uppercase tracking-tight">{providerId}</p>
+              <p className="text-xs font-mono text-[var(--text-soft)] uppercase tracking-tight">{providerId}</p>
             </div>
           )}
 
           {isConnected && "accountLabel" in service && service.accountLabel && (
             <div className="mb-6 pb-4 border-b border-[var(--money)]">
               <p className="ghost-meta-label mb-2 text-[var(--money)]">ACCOUNT_LINK</p>
-              <p className="text-[12px] font-light text-[var(--text)]">{service.accountLabel}</p>
+              <p className="text-xs font-light text-[var(--text)]">{service.accountLabel}</p>
             </div>
           )}
         </div>

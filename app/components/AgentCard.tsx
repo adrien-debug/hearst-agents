@@ -20,7 +20,7 @@ export default function AgentCard({ agent }: AgentCardProps) {
     >
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-white">{agent.name}</h3>
-        <span className="text-[10px] font-mono tracking-wide text-white/40">{agent.model_provider}</span>
+        <span className="t-10 font-mono tracking-wide text-white/40">{agent.model_provider}</span>
       </div>
       {agent.description && (
         <p className="mt-2 text-sm font-normal text-white/60 line-clamp-2">{agent.description}</p>

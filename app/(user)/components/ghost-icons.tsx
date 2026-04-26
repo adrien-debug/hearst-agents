@@ -186,10 +186,10 @@ export function ServiceIdGlyph({
   const label = raw.slice(0, 4).toUpperCase() || "SRC";
   const sz =
     size === "sm"
-      ? "text-[9px] min-w-[2rem] px-1.5 py-0.5"
+      ? "t-9 min-w-[2rem] px-1.5 py-0.5"
       : size === "lg"
-        ? "text-[11px] min-w-[3rem] px-2.5 py-2"
-        : "text-[10px] min-w-[2.25rem] px-2 py-1";
+        ? "t-11 min-w-[3rem] px-2.5 py-2"
+        : "t-10 min-w-[2.25rem] px-2 py-1";
   return (
     <span
       className={`inline-flex items-center justify-center border font-mono uppercase tracking-[0.12em] text-[var(--text-muted)] border-[var(--line-strong)] bg-transparent shrink-0 ${sz} ${className}`}

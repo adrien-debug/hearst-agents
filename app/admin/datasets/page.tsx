@@ -68,7 +68,7 @@ export default async function DatasetsPage() {
               {d.description && (
                 <p className="line-clamp-2 text-xs text-[var(--text-muted)]">{d.description}</p>
               )}
-              <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
+              <div className="flex items-center gap-3 t-10 text-[var(--text-muted)]">
                 {d.agents && <span>Agent: {d.agents.name}</span>}
                 <span>
                   {new Date(d.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}

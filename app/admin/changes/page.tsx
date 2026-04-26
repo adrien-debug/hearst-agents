@@ -54,12 +54,12 @@ export default function ChangesPage() {
       </div>
 
       <div className="mb-6 flex items-center gap-1">
-        <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">Type</span>
+        <span className="mr-1 t-10 font-semibold uppercase text-[var(--text-muted)]">Type</span>
         {CHANGE_TYPES.map((opt) => (
           <button
             key={opt}
             onClick={() => setChangeType(opt)}
-            className={`rounded px-2 py-1 text-[11px] transition-colors ${
+            className={`rounded px-2 py-1 t-11 transition-colors ${
               changeType === opt
                 ? "bg-[var(--bg-soft)] text-[var(--text)]"
                 : "text-[var(--text-muted)] hover:text-[var(--text-soft)]"
@@ -82,7 +82,7 @@ export default function ChangesPage() {
                 onClick={() => setExpanded(expanded === c.id ? null : c.id)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left"
               >
-                <span className="rounded bg-[var(--bg-soft)] px-2 py-0.5 text-[10px] font-semibold uppercase text-[var(--text-soft)]">
+                <span className="rounded bg-[var(--bg-soft)] px-2 py-0.5 t-10 font-semibold uppercase text-[var(--text-soft)]">
                   {c.change_type}
                 </span>
                 <span className="text-xs text-[var(--text-muted)]">{c.target_type}</span>
@@ -91,7 +91,7 @@ export default function ChangesPage() {
                   {c.reason ?? "—"}
                 </span>
                 <span className="text-xs text-[var(--text-muted)]">{c.actor}</span>
-                <span className="text-[10px] text-[var(--text-faint)]">{new Date(c.created_at).toLocaleString()}</span>
+                <span className="t-10 text-[var(--text-faint)]">{new Date(c.created_at).toLocaleString()}</span>
               </button>
 
               {expanded === c.id && (
@@ -103,13 +103,13 @@ export default function ChangesPage() {
                   )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="mb-1 text-[10px] font-semibold uppercase text-[var(--danger)]">Avant</p>
+                      <p className="mb-1 t-10 font-semibold uppercase text-[var(--danger)]">Avant</p>
                       <pre className="max-h-40 overflow-auto rounded-lg bg-[var(--bg-soft)] p-2 text-xs text-[var(--text-muted)]">
                         {JSON.stringify(c.before_value, null, 2)}
                       </pre>
                     </div>
                     <div>
-                      <p className="mb-1 text-[10px] font-semibold uppercase text-green-500">Après</p>
+                      <p className="mb-1 t-10 font-semibold uppercase text-green-500">Après</p>
                       <pre className="max-h-40 overflow-auto rounded-lg bg-[var(--bg-soft)] p-2 text-xs text-[var(--text-muted)]">
                         {JSON.stringify(c.after_value, null, 2)}
                       </pre>

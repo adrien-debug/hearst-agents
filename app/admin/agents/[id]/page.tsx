@@ -96,7 +96,7 @@ export default async function AgentDetailPage({ params }: Props) {
           )}
           <div className="mt-2 flex items-center gap-3">
             <ModelBadge provider={agent.model_provider} model={agent.model_name} />
-            <span className="text-[10px] font-mono text-[var(--text-muted)]">v{agent.version}</span>
+            <span className="t-10 font-mono text-[var(--text-muted)]">v{agent.version}</span>
           </div>
         </div>
       </div>
@@ -111,9 +111,9 @@ export default async function AgentDetailPage({ params }: Props) {
           { label: "Succès", value: `${successRate}%`, sub: `avg ${avgLatency}ms` },
         ].map((s) => (
           <div key={s.label} className="rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
-            <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
+            <p className="t-10 font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
             <p className="mt-0.5 text-lg font-semibold text-[var(--text)]">{s.value}</p>
-            {s.sub && <p className="text-[10px] text-[var(--text-muted)]">{s.sub}</p>}
+            {s.sub && <p className="t-10 text-[var(--text-muted)]">{s.sub}</p>}
           </div>
         ))}
       </div>
@@ -164,7 +164,7 @@ export default async function AgentDetailPage({ params }: Props) {
                 {skills.map((s) => {
                   const skill = s.skills as unknown as { id: string; name: string; category: string } | null;
                   return skill ? (
-                    <span key={skill.id} className="rounded-full border border-[var(--line-strong)] px-2.5 py-0.5 text-[10px] font-medium text-[var(--text-muted)]">
+                    <span key={skill.id} className="rounded-full border border-[var(--line-strong)] px-2.5 py-0.5 t-10 font-medium text-[var(--text-muted)]">
                       {skill.name}
                     </span>
                   ) : null;
@@ -196,7 +196,7 @@ export default async function AgentDetailPage({ params }: Props) {
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase text-[var(--text-muted)]">Runs récents</h3>
-              <Link href={`/admin/runs?agent_id=${id}`} className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-muted)]">
+              <Link href={`/admin/runs?agent_id=${id}`} className="t-10 text-[var(--text-muted)] hover:text-[var(--text-muted)]">
                 Tout voir →
               </Link>
             </div>

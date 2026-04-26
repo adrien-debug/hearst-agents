@@ -81,7 +81,7 @@ const CATEGORY_COLOR: Record<NodeCategory, string> = {
 
 function StatusBadge({ status }: { status: NodeStatus }) {
   return (
-    <span className={`inline-block rounded border px-1.5 py-0.5 text-[10px] font-medium ${STATUS_COLOR[status]}`}>
+    <span className={`inline-block rounded border px-1.5 py-0.5 t-10 font-medium ${STATUS_COLOR[status]}`}>
       {status}
     </span>
   );
@@ -183,7 +183,7 @@ export default function ArchitecturePage() {
 
       {/* Footer */}
       <footer className="border-t border-[var(--line)] px-6 py-2">
-        <p className="text-[10px] text-[var(--text-faint)]">
+        <p className="t-10 text-[var(--text-faint)]">
           Generated from docs/architecture-map.json
         </p>
       </footer>
@@ -202,7 +202,7 @@ function SystemView({ nodes, onSelect, selected }: { nodes: GraphNode[]; onSelec
         const catNodes = nodes.filter((n) => n.category === cat);
         return (
           <div key={cat}>
-            <h3 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            <h3 className="mb-3 t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               {CATEGORY_LABEL[cat]}
               <span className="ml-1.5 text-[var(--text-faint)]">{catNodes.length}</span>
             </h3>
@@ -256,22 +256,22 @@ function AgentsView({ agents, onSelect, selected }: { agents: AgentData[]; onSel
                   <span className="text-sm font-medium text-[var(--text)]">{a.label}</span>
                   <StatusBadge status={a.status} />
                 </div>
-                <p className="mb-2 text-[11px] text-[var(--text-muted)]">{a.role}</p>
+                <p className="mb-2 t-11 text-[var(--text-muted)]">{a.role}</p>
                 <div className="flex flex-wrap gap-1">
-                  <span className="rounded bg-[var(--bg-soft)] px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">
+                  <span className="rounded bg-[var(--bg-soft)] px-1.5 py-0.5 t-9 text-[var(--text-muted)]">
                     ctx: {a.context}
                   </span>
                   {a.backends.map((b) => (
-                    <span key={b} className="rounded bg-[var(--bg-soft)] px-1.5 py-0.5 text-[9px] text-[var(--text-muted)]">{b}</span>
+                    <span key={b} className="rounded bg-[var(--bg-soft)] px-1.5 py-0.5 t-9 text-[var(--text-muted)]">{b}</span>
                   ))}
                 </div>
                 {a.tools.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {a.tools.slice(0, 4).map((t) => (
-                      <span key={t} className="rounded bg-[var(--warn)]/10 px-1.5 py-0.5 text-[9px] text-[var(--warn)]/80">{t}</span>
+                      <span key={t} className="rounded bg-[var(--warn)]/10 px-1.5 py-0.5 t-9 text-[var(--warn)]/80">{t}</span>
                     ))}
                     {a.tools.length > 4 && (
-                      <span className="text-[9px] text-[var(--text-muted)]">+{a.tools.length - 4}</span>
+                      <span className="t-9 text-[var(--text-muted)]">+{a.tools.length - 4}</span>
                     )}
                   </div>
                 )}
@@ -292,7 +292,7 @@ function FlowsView({ flows, nodeMap, onSelect, selected }: { flows: FlowData[]; 
       {flows.map((flow) => (
         <div key={flow.id} className="rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-4">
           <h3 className="text-sm font-medium text-[var(--text)]">{flow.label}</h3>
-          <p className="mb-3 text-[11px] text-[var(--text-muted)]">{flow.description}</p>
+          <p className="mb-3 t-11 text-[var(--text-muted)]">{flow.description}</p>
           <div className="flex flex-wrap items-center gap-1">
             {flow.steps.map((stepId, i) => {
               const node = nodeMap.get(stepId);
@@ -302,7 +302,7 @@ function FlowsView({ flows, nodeMap, onSelect, selected }: { flows: FlowData[]; 
                 <div key={`${flow.id}-${stepId}`} className="flex items-center gap-1">
                   <button
                     onClick={() => onSelect(stepId)}
-                    className={`rounded px-2.5 py-1.5 text-[11px] transition-colors ${
+                    className={`rounded px-2.5 py-1.5 t-11 transition-colors ${
                       selected === stepId ? "bg-[var(--cykan)]/15 text-[var(--cykan)]" :
                       isDeprecated ? "bg-[var(--danger)]/10 text-[var(--danger)]/80 line-through" :
                       isCritical ? "bg-[var(--warn)]/10 text-[var(--warn)]" :
@@ -312,7 +312,7 @@ function FlowsView({ flows, nodeMap, onSelect, selected }: { flows: FlowData[]; 
                     {node?.label ?? stepId}
                   </button>
                   {i < flow.steps.length - 1 && (
-                    <span className="text-[10px] text-[var(--text-faint)]">→</span>
+                    <span className="t-10 text-[var(--text-faint)]">→</span>
                   )}
                 </div>
               );
@@ -332,7 +332,7 @@ function DependenciesView({ nodes, onSelect, selected }: { nodes: GraphNode[]; o
 
   return (
     <div className="space-y-1">
-      <div className="mb-4 grid grid-cols-[1fr_80px_80px_80px_100px] gap-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+      <div className="mb-4 grid grid-cols-[1fr_80px_80px_80px_100px] gap-2 t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         <span>Component</span>
         <span className="text-center">Status</span>
         <span className="text-center">Upstream</span>
@@ -349,14 +349,14 @@ function DependenciesView({ nodes, onSelect, selected }: { nodes: GraphNode[]; o
         >
           <div>
             <span className="text-xs text-[var(--text-soft)]">{n.label}</span>
-            <span className="ml-2 text-[10px] text-[var(--text-muted)]">{CATEGORY_LABEL[n.category]}</span>
+            <span className="ml-2 t-10 text-[var(--text-muted)]">{CATEGORY_LABEL[n.category]}</span>
           </div>
           <div className="text-center"><StatusBadge status={n.status} /></div>
           <div className="text-center text-xs text-[var(--text-muted)]">{n.upstream.length}</div>
           <div className="text-center text-xs text-[var(--text-muted)]">{n.downstream.length}</div>
           <div className="text-center">
             {n.critical && (
-              <span className="rounded bg-[var(--warn)]/20 px-1.5 py-0.5 text-[10px] text-[var(--warn)]">critical</span>
+              <span className="rounded bg-[var(--warn)]/20 px-1.5 py-0.5 t-10 text-[var(--warn)]">critical</span>
             )}
           </div>
         </button>
@@ -373,7 +373,7 @@ function RawView({ raw }: { raw: unknown }) {
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         Source — docs/architecture-map.json
       </h3>
-      <pre className="max-h-[70vh] overflow-auto text-[11px] leading-relaxed text-[var(--text-muted)]">
+      <pre className="max-h-[70vh] overflow-auto t-11 leading-relaxed text-[var(--text-muted)]">
         {JSON.stringify(raw, null, 2)}
       </pre>
     </div>
@@ -387,16 +387,16 @@ function DetailPanel({ node, nodeMap }: { node: GraphNode; nodeMap: Map<string, 
     <div className="p-5">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-[var(--text)]">{node.label}</h3>
-        <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">{node.role}</p>
+        <p className="mt-0.5 t-11 text-[var(--text-muted)]">{node.role}</p>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
         <StatusBadge status={node.status} />
-        <span className={`inline-block rounded border border-[var(--line-strong)] bg-[var(--bg-soft)] px-1.5 py-0.5 text-[10px] text-[var(--text-muted)]`}>
+        <span className={`inline-block rounded border border-[var(--line-strong)] bg-[var(--bg-soft)] px-1.5 py-0.5 t-10 text-[var(--text-muted)]`}>
           {CATEGORY_LABEL[node.category]}
         </span>
         {node.critical && (
-          <span className="rounded border border-[var(--warn)]/30 bg-[var(--warn)]/20 px-1.5 py-0.5 text-[10px] text-[var(--warn)]">
+          <span className="rounded border border-[var(--warn)]/30 bg-[var(--warn)]/20 px-1.5 py-0.5 t-10 text-[var(--warn)]">
             critical
           </span>
         )}
@@ -410,17 +410,17 @@ function DetailPanel({ node, nodeMap }: { node: GraphNode; nodeMap: Map<string, 
 
       {/* Impact */}
       <div className="mt-5 rounded-lg border border-[var(--line)] bg-[var(--bg-elev)] p-3">
-        <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+        <h4 className="mb-2 t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
           Impact if changed
         </h4>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="text-lg font-semibold text-[var(--text)]">{node.downstream.length}</div>
-            <div className="text-[10px] text-[var(--text-muted)]">downstream</div>
+            <div className="t-10 text-[var(--text-muted)]">downstream</div>
           </div>
           <div>
             <div className="text-lg font-semibold text-[var(--text)]">{node.upstream.length}</div>
-            <div className="text-[10px] text-[var(--text-muted)]">upstream</div>
+            <div className="t-10 text-[var(--text-muted)]">upstream</div>
           </div>
         </div>
       </div>
@@ -428,12 +428,12 @@ function DetailPanel({ node, nodeMap }: { node: GraphNode; nodeMap: Map<string, 
       {/* Metadata */}
       {Object.keys(node.metadata).length > 0 && (
         <div className="mt-5">
-          <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+          <h4 className="mb-2 t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             Metadata
           </h4>
           <div className="space-y-1">
             {Object.entries(node.metadata).map(([k, v]) => (
-              <div key={k} className="flex items-start gap-2 text-[11px]">
+              <div key={k} className="flex items-start gap-2 t-11">
                 <span className="shrink-0 text-[var(--text-muted)]">{k}:</span>
                 <span className="text-[var(--text-muted)]">
                   {Array.isArray(v) ? v.join(", ") : String(v)}
@@ -451,7 +451,7 @@ function Section({ title, items, nodeMap }: { title: string; items: string[]; no
   if (items.length === 0) return null;
   return (
     <div className="mt-3">
-      <h4 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+      <h4 className="mb-1.5 t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
         {title}
         <span className="ml-1 text-[var(--text-faint)]">{items.length}</span>
       </h4>
@@ -459,7 +459,7 @@ function Section({ title, items, nodeMap }: { title: string; items: string[]; no
         {items.map((id) => {
           const n = nodeMap.get(id);
           return (
-            <div key={id} className="flex items-center gap-2 rounded px-2 py-1 text-[11px]">
+            <div key={id} className="flex items-center gap-2 rounded px-2 py-1 t-11">
               <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${n?.status === "deprecated" ? "bg-[var(--danger)]" : n?.critical ? "bg-[var(--warn)]" : "bg-[var(--text-muted)]"}`} />
               <span className={n?.status === "deprecated" ? "text-[var(--danger)]/80 line-through" : "text-[var(--text-muted)]"}>
                 {n?.label ?? id}
@@ -493,7 +493,7 @@ function NodeCard({ node, onClick, isSelected }: { node: GraphNode; onClick: () 
           <StatusBadge status={node.status} />
         </div>
       </div>
-      <p className="mt-0.5 text-[10px] leading-tight text-[var(--text-muted)]">{node.role.length > 80 ? node.role.slice(0, 80) + "…" : node.role}</p>
+      <p className="mt-0.5 t-10 leading-tight text-[var(--text-muted)]">{node.role.length > 80 ? node.role.slice(0, 80) + "…" : node.role}</p>
     </button>
   );
 }

@@ -104,7 +104,7 @@ export default function RunDetailPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] hover:text-[var(--text)]"
+            className="flex items-center gap-2 t-10 font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] hover:text-[var(--text)]"
           >
             <GhostIconChevronLeft className="w-4 h-4" />
             Back
@@ -190,7 +190,7 @@ export default function RunDetailPage() {
                       <ServiceIdGlyph id={asset.id} size="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-[var(--text)] truncate">{asset.name}</p>
-                        <p className="text-[10px] font-mono uppercase text-[var(--text-muted)]">{asset.type}</p>
+                        <p className="t-10 font-mono uppercase text-[var(--text-muted)]">{asset.type}</p>
                       </div>
                       <GhostIconChevronRight className="w-4 h-4 shrink-0 text-[var(--cykan)]" />
                     </button>

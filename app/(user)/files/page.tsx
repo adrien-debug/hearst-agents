@@ -6,17 +6,17 @@ export default function FilesPage() {
   const [view, setView] = useState<"list" | "grid">("list");
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-br from-[#060606] via-[#080808] to-[#050505]">
+    <div className="flex-1 flex flex-col min-h-0 bg-gradient-to-br from-[var(--surface)] via-[var(--bg-soft)] to-[var(--mat-050)]">
       <div className="bg-gradient-to-b from-white/[0.03] to-transparent border-b border-white/[0.06] p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/30 mb-2">Files</p>
-            <h1 className="text-[20px] font-bold tracking-tight text-white">Fichiers</h1>
-            <p className="text-[12px] font-normal text-white/50 mt-2 max-w-lg">
+            <p className="t-10 font-mono uppercase tracking-[0.15em] text-white/30 mb-2">Files</p>
+            <h1 className="text-xl font-bold tracking-tight text-white">Fichiers</h1>
+            <p className="text-xs font-normal text-white/50 mt-2 max-w-lg">
               Recherche unifiée Drive, Notion, autres sources.
             </p>
           </div>
-          <span className="font-mono text-[10px] tracking-[0.1em] text-white/30 border-b border-white/10 pb-1">
+          <span className="font-mono t-10 tracking-[0.1em] text-white/30 border-b border-white/10 pb-1">
             Roadmap
           </span>
         </div>
@@ -58,12 +58,12 @@ export default function FilesPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         </div>
-        <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/30">No data</p>
-        <h2 className="text-[16px] font-bold tracking-tight text-white/70">Unified Files</h2>
-        <p className="text-[13px] font-normal text-white/50 max-w-md">
+        <p className="t-10 font-mono uppercase tracking-[0.15em] text-white/30">No data</p>
+        <h2 className="text-base font-bold tracking-tight text-white/70">Unified Files</h2>
+        <p className="t-13 font-normal text-white/50 max-w-md">
           Prévisualisation multi-sources — phase build.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3 text-[10px] font-mono tracking-[0.1em] text-white/30 mt-2">
+        <div className="flex flex-wrap items-center justify-center gap-3 t-10 font-mono tracking-[0.1em] text-white/30 mt-2">
           <span className="px-3 py-1 rounded-full bg-white/[0.03] border border-[var(--cykan)]/20 text-[var(--cykan)]/70">Drive</span>
           <span className="px-3 py-1 rounded-full bg-white/[0.03] border border-white/[0.06]">Notion</span>
         </div>

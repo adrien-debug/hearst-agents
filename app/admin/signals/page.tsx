@@ -132,7 +132,7 @@ export default function SignalsPage() {
                 onClick={() => setExpanded(expanded === s.id ? null : s.id)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left"
               >
-                <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase border ${priorityColor[s.priority] ?? priorityColor.low}`}>
+                <span className={`rounded px-2 py-0.5 t-10 font-semibold uppercase border ${priorityColor[s.priority] ?? priorityColor.low}`}>
                   {s.priority}
                 </span>
                 <span className={`text-xs font-medium ${statusColor[s.status] ?? "text-[var(--text-muted)]"}`}>
@@ -140,27 +140,27 @@ export default function SignalsPage() {
                 </span>
                 <span className="text-xs text-[var(--text-muted)]">{s.kind}</span>
                 <span className="flex-1 truncate text-sm text-[var(--text)]">{s.title}</span>
-                <span className="text-[10px] text-[var(--text-muted)]">{s.target_type}:{s.target_id.slice(0, 8)}</span>
-                <span className="text-[10px] text-[var(--text-faint)]">{new Date(s.created_at).toLocaleDateString()}</span>
+                <span className="t-10 text-[var(--text-muted)]">{s.target_type}:{s.target_id.slice(0, 8)}</span>
+                <span className="t-10 text-[var(--text-faint)]">{new Date(s.created_at).toLocaleDateString()}</span>
               </button>
 
               {expanded === s.id && (
                 <div className="border-t border-[var(--line-strong)] px-4 py-4">
                   {s.description && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">Description</p>
+                      <p className="t-10 font-semibold uppercase text-[var(--text-muted)]">Description</p>
                       <p className="text-sm text-[var(--text-soft)]">{s.description}</p>
                     </div>
                   )}
                   {s.suggestion && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">Suggestion</p>
+                      <p className="t-10 font-semibold uppercase text-[var(--text-muted)]">Suggestion</p>
                       <p className="text-sm text-[var(--money)]">{s.suggestion}</p>
                     </div>
                   )}
                   {s.data && Object.keys(s.data).length > 0 && (
                     <div className="mb-3">
-                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">Data</p>
+                      <p className="t-10 font-semibold uppercase text-[var(--text-muted)]">Data</p>
                       <pre className="mt-1 max-h-40 overflow-auto rounded-lg bg-[var(--bg-soft)] p-2 text-xs text-[var(--text-muted)]">
                         {JSON.stringify(s.data, null, 2)}
                       </pre>
@@ -206,12 +206,12 @@ function FilterGroup({
 }) {
   return (
     <div className="flex items-center gap-1">
-      <span className="mr-1 text-[10px] font-semibold uppercase text-[var(--text-muted)]">{label}</span>
+      <span className="mr-1 t-10 font-semibold uppercase text-[var(--text-muted)]">{label}</span>
       {options.map((opt) => (
         <button
           key={opt}
           onClick={() => onChange(opt)}
-          className={`rounded px-2 py-1 text-[11px] transition-colors ${
+          className={`rounded px-2 py-1 t-11 transition-colors ${
             value === opt
               ? "bg-[var(--bg-soft)] text-[var(--text)]"
               : "text-[var(--text-muted)] hover:text-[var(--text-soft)]"

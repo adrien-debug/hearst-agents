@@ -69,7 +69,7 @@ function StatusDot({ status }: { status: string }) {
 function StatusBadge({ status }: { status: string }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   return (
-    <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase border ${cfg.badge}`}>
+    <span className={`rounded px-2 py-0.5 t-10 font-semibold uppercase border ${cfg.badge}`}>
       {cfg.label}
     </span>
   );
@@ -205,7 +205,7 @@ export default function ReportsPage() {
                   : "border-[var(--line-strong)] bg-[var(--bg-elev)]"
               }`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${ts.color}`}>
+                  <span className={`rounded px-2 py-0.5 t-10 font-semibold border ${ts.color}`}>
                     {ts.label}
                   </span>
                   <StatusDot status={h.today.status} />
@@ -213,7 +213,7 @@ export default function ReportsPage() {
                     {STATUS_CONFIG[h.today.status]?.label ?? h.today.status}
                   </span>
                 </div>
-                <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
+                <div className="flex items-center gap-4 t-10 text-[var(--text-muted)]">
                   <span>Streak: <strong className="text-[var(--text-soft)]">{h.streak_consecutive_success}</strong></span>
                   <span>14j: <strong className="text-[var(--text-soft)]">{h.recent_14d.success_rate ?? "—"}%</strong></span>
                   <span>{h.recent_14d.success}/{h.recent_14d.total} ok</span>
@@ -235,7 +235,7 @@ export default function ReportsPage() {
                 ? "border-[var(--danger)]/40 bg-[var(--danger)]/8"
                 : "border-[var(--line-strong)] bg-[var(--bg-elev)]"
           }`}>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            <p className="t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               {"Aujourd'hui"}
             </p>
             <div className="mt-2 flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function ReportsPage() {
               </span>
             </div>
             {health.today.generated_at && (
-              <p className="mt-1 text-[10px] text-[var(--text-muted)]">
+              <p className="mt-1 t-10 text-[var(--text-muted)]">
                 {new Date(health.today.generated_at).toLocaleTimeString()}
               </p>
             )}
@@ -253,7 +253,7 @@ export default function ReportsPage() {
 
           {/* Streak */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            <p className="t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               Streak succès
             </p>
             <p className="mt-2 text-2xl font-bold text-[var(--text)]">
@@ -264,7 +264,7 @@ export default function ReportsPage() {
 
           {/* Success rate */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            <p className="t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               Taux 14j
             </p>
             <p className="mt-2 text-2xl font-bold text-[var(--text)]">
@@ -272,14 +272,14 @@ export default function ReportsPage() {
                 ? `${health.recent_14d.success_rate}%`
                 : "—"}
             </p>
-            <p className="mt-1 text-[10px] text-[var(--text-muted)]">
+            <p className="mt-1 t-10 text-[var(--text-muted)]">
               {health.recent_14d.success}/{health.recent_14d.total} réussis
             </p>
           </div>
 
           {/* Last failure */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+            <p className="t-10 font-semibold uppercase tracking-wider text-[var(--text-muted)]">
               Dernier échec
             </p>
             {health.last_failure ? (
@@ -287,7 +287,7 @@ export default function ReportsPage() {
                 <p className="mt-2 text-sm font-medium text-[var(--danger)]">
                   {health.last_failure.report_date}
                 </p>
-                <p className="mt-1 truncate text-[10px] text-[var(--text-muted)]" title={health.last_failure.error ?? ""}>
+                <p className="mt-1 truncate t-10 text-[var(--text-muted)]" title={health.last_failure.error ?? ""}>
                   {health.last_failure.error?.slice(0, 60) ?? "—"}
                 </p>
               </>
@@ -314,7 +314,7 @@ export default function ReportsPage() {
                 <span className="min-w-[90px] text-sm font-medium text-[var(--text)]">
                   {r.report_date}
                 </span>
-                <span className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${
+                <span className={`rounded px-2 py-0.5 t-10 font-semibold border ${
                   TYPE_STYLE[r.report_type]?.color ?? "text-[var(--text-muted)] bg-[var(--bg-soft)] border-[var(--line-strong)]"
                 }`}>
                   {TYPE_STYLE[r.report_type]?.label ?? r.report_type}
@@ -325,16 +325,16 @@ export default function ReportsPage() {
                   if (!sev) return null;
                   const s = SEVERITY_STYLE[sev];
                   return s ? (
-                    <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase border ${s.color}`}>
+                    <span className={`rounded px-2 py-0.5 t-10 font-semibold uppercase border ${s.color}`}>
                       {s.label}
                     </span>
                   ) : null;
                 })()}
-                <span className="rounded bg-[var(--bg-soft)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">
+                <span className="rounded bg-[var(--bg-soft)] px-2 py-0.5 t-10 text-[var(--text-muted)]">
                   {r.triggered_by}
                 </span>
                 {r.idempotency_decision && !["run", "cooldown_passed"].includes(r.idempotency_decision) && (
-                  <span className="rounded bg-yellow-950/30 px-2 py-0.5 text-[10px] text-yellow-500 border border-yellow-900/30">
+                  <span className="rounded bg-yellow-950/30 px-2 py-0.5 t-10 text-yellow-500 border border-yellow-900/30">
                     {r.idempotency_decision}
                   </span>
                 )}
@@ -344,11 +344,11 @@ export default function ReportsPage() {
                     : r.summary?.slice(0, 100) ?? "—"}
                 </span>
                 {r.run_id && (
-                  <span className="font-mono text-[10px] text-[var(--text-faint)]">
+                  <span className="font-mono t-10 text-[var(--text-faint)]">
                     run:{r.run_id.slice(0, 8)}
                   </span>
                 )}
-                <span className="text-[10px] text-[var(--text-faint)]">
+                <span className="t-10 text-[var(--text-faint)]">
                   {new Date(r.created_at).toLocaleTimeString()}
                 </span>
                 <svg
@@ -364,7 +364,7 @@ export default function ReportsPage() {
                   {/* Error - prominent */}
                   {r.error_message && (
                     <div className="mb-4 rounded-lg border border-[var(--danger)]/30 bg-[var(--danger)]/10 p-4">
-                      <p className="text-[10px] font-semibold uppercase text-[var(--danger)] mb-1">
+                      <p className="t-10 font-semibold uppercase text-[var(--danger)] mb-1">
                         Erreur
                       </p>
                       <p className="text-sm text-[var(--danger)] font-mono break-all">
@@ -399,7 +399,7 @@ export default function ReportsPage() {
                   {/* Highlights */}
                   {r.highlights && r.highlights.filter((h) => !h.startsWith("severity: ") && !h.startsWith("signal_types: ")).length > 0 && (
                     <div className="mb-4 rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] p-4">
-                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)] mb-2">
+                      <p className="t-10 font-semibold uppercase text-[var(--text-muted)] mb-2">
                         Points clés
                       </p>
                       <ul className="space-y-1.5">
@@ -416,7 +416,7 @@ export default function ReportsPage() {
                   {/* Content */}
                   {r.content_markdown && (
                     <div>
-                      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)] mb-2">
+                      <p className="t-10 font-semibold uppercase text-[var(--text-muted)] mb-2">
                         Rapport complet
                       </p>
                       <div className="max-h-[500px] overflow-auto rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] p-4">
@@ -450,7 +450,7 @@ function MetaField({
   const display = value ?? "—";
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase text-[var(--text-muted)]">{label}</p>
+      <p className="t-10 font-semibold uppercase text-[var(--text-muted)]">{label}</p>
       {link ? (
         <a href={link} className={`text-[var(--cyan-accent)] hover:underline ${mono ? "font-mono" : ""}`}>
           {display.length > 16 ? `${display.slice(0, 12)}…` : display}

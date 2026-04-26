@@ -87,7 +87,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="px-10 py-12 bg-gradient-to-t from-[#050505] via-[#080808] to-transparent">
+    <div className="px-10 py-12 bg-gradient-to-t from-[var(--mat-050)] via-[var(--bg-soft)] to-transparent">
       <div className="max-w-4xl mx-auto relative">
         {/* @mention Typeahead */}
         {showTypeahead && (
@@ -96,7 +96,7 @@ export function ChatInput({
             className="absolute bottom-full mb-8 w-full bg-black rounded-lg border border-white/10 overflow-hidden z-50"
           >
             {matchingServices.length === 0 ? (
-              <div className="p-4 text-[11px] font-mono tracking-wide text-white/40">
+              <div className="p-4 t-11 font-mono tracking-wide text-white/40">
                 {typeaheadQuery ? (
                   <>No source found: {typeaheadQuery}</>
                 ) : (
@@ -113,10 +113,10 @@ export function ChatInput({
                   >
                     <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
                     <div className="flex-1">
-                      <p className="text-[14px] font-medium tracking-tight text-white">@{service.id}</p>
-                      <p className="text-[10px] font-mono tracking-wide text-white/40">{service.name}</p>
+                      <p className="text-sm font-medium tracking-tight text-white">@{service.id}</p>
+                      <p className="t-10 font-mono tracking-wide text-white/40">{service.name}</p>
                     </div>
-                    <span className="text-[10px] font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">Link</span>
+                    <span className="t-10 font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">Link</span>
                   </button>
                 ))}
               </div>
@@ -128,7 +128,7 @@ export function ChatInput({
         <div
           className="flex items-end gap-6 px-8 py-6 bg-white/[0.015] border border-white/[0.05] transition-all duration-500 group focus-within:bg-white/[0.03] focus-within:border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.5)] rounded-sm"
         >
-          <span className="text-[11px] font-mono text-[var(--cykan)] pt-2 opacity-30 group-focus-within:opacity-100 transition-opacity tracking-[0.2em]">&gt;</span>
+          <span className="t-11 font-mono text-[var(--cykan)] pt-2 opacity-30 group-focus-within:opacity-100 transition-opacity tracking-[0.2em]">&gt;</span>
           <textarea
             ref={inputRef}
             value={input}
@@ -152,7 +152,7 @@ export function ChatInput({
             }}
             placeholder={placeholder || surfacePlaceholders[surface] || "Type a message..."}
             rows={1}
-            className="flex-1 bg-transparent text-[16px] font-normal tracking-normal text-white placeholder:text-white/[0.2] border-0 focus:ring-0 focus:outline-none resize-none min-h-[28px] max-h-[150px] leading-relaxed p-0 m-0"
+            className="flex-1 bg-transparent text-base font-normal tracking-normal text-white placeholder:text-white/[0.2] border-0 focus:ring-0 focus:outline-none resize-none min-h-[28px] max-h-[150px] leading-relaxed p-0 m-0"
           />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-white/[0.05] overflow-hidden">
             <div className="h-full bg-[var(--cykan)] w-0 group-focus-within:w-full transition-all duration-500 ease-out" />
@@ -176,7 +176,7 @@ export function ChatInput({
           )}
         </div>
         <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-30 hover:opacity-100 transition-opacity">
-          <p className="text-[9px] text-white font-mono tracking-[0.15em]">
+          <p className="t-9 text-white font-mono tracking-[0.15em]">
             Enter to send · Shift+Enter for new line · @ to mention
           </p>
         </div>

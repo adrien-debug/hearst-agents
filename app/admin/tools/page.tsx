@@ -76,14 +76,14 @@ export default async function ToolsPage() {
             >
               <div className="flex items-start justify-between">
                 <h3 className="text-sm font-semibold text-[var(--text)]">{t.name}</h3>
-                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-mono font-medium ${methodColor[t.http_method] ?? "text-[var(--text-muted)] border-[var(--line-strong)]"}`}>
+                <span className={`rounded-full border px-2 py-0.5 t-10 font-mono font-medium ${methodColor[t.http_method] ?? "text-[var(--text-muted)] border-[var(--line-strong)]"}`}>
                   {t.http_method}
                 </span>
               </div>
               {t.description && (
                 <p className="line-clamp-2 text-xs text-[var(--text-muted)]">{t.description}</p>
               )}
-              <div className="flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
+              <div className="flex items-center gap-3 t-10 text-[var(--text-muted)]">
                 {t.endpoint_url && (
                   <span className="truncate max-w-[200px] font-mono">{t.endpoint_url}</span>
                 )}

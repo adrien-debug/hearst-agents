@@ -178,7 +178,7 @@ export default function PlannerPage() {
                       {plan.steps.map((step) => (
                         <div
                           key={step.id}
-                          className={`px-2 py-1 rounded text-[10px] font-medium ${
+                          className={`px-2 py-1 rounded t-10 font-medium ${
                             step.status === "done"
                               ? "bg-[var(--money)]/20 text-[var(--money)]"
                               : step.status === "running"

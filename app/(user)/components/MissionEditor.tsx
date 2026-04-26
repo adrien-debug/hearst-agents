@@ -91,8 +91,8 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
                   selected ? "bg-[var(--bg-soft)] text-[var(--cykan)]" : "bg-[var(--bg)] text-[var(--text-muted)] hover:bg-[var(--bg-elev)]"
                 }`}
               >
-                <p className={`text-[12px] font-black uppercase tracking-tighter ${selected ? "" : "text-[var(--text-soft)]"}`}>{option.label}</p>
-                <p className="text-[10px] font-mono uppercase tracking-[0.08em] text-[var(--text-faint)] mt-1">{option.description}</p>
+                <p className={`text-xs font-black uppercase tracking-tighter ${selected ? "" : "text-[var(--text-soft)]"}`}>{option.label}</p>
+                <p className="t-10 font-mono uppercase tracking-[0.08em] text-[var(--text-faint)] mt-1">{option.description}</p>
               </button>
             );
           })}
@@ -107,16 +107,16 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
             value={formData.customCron}
             onChange={(e) => setFormData({ ...formData, customCron: e.target.value })}
             placeholder="0 9 * * 1"
-            className="ghost-input-line w-full font-mono text-[12px]"
+            className="ghost-input-line w-full font-mono text-xs"
           />
-          <p className="text-[10px] font-mono text-[var(--text-faint)] mt-2 uppercase tracking-[0.1em]">FMT_MIN HOUR DOM MON DOW</p>
+          <p className="t-10 font-mono text-[var(--text-faint)] mt-2 uppercase tracking-[0.1em]">FMT_MIN HOUR DOM MON DOW</p>
         </div>
       )}
 
       <div className="flex items-center justify-between py-4 border-y border-[var(--line)]">
         <div>
-          <p className="text-[12px] font-medium text-[var(--text-soft)]">FLAG_ENABLED</p>
-          <p className="text-[10px] font-mono text-[var(--text-faint)] mt-1 uppercase tracking-[0.12em]">Exécution selon fréquence</p>
+          <p className="text-xs font-medium text-[var(--text-soft)]">FLAG_ENABLED</p>
+          <p className="t-10 font-mono text-[var(--text-faint)] mt-1 uppercase tracking-[0.12em]">Exécution selon fréquence</p>
         </div>
         <button
           type="button"

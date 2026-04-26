@@ -106,7 +106,7 @@ export default async function WorkflowDetailPage({ params }: Props) {
               <div className="flex-1 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${stepTypeColor[step.action_type] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}>
+                    <span className={`rounded-full border px-2 py-0.5 t-10 font-medium ${stepTypeColor[step.action_type] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}>
                       {step.action_type}
                     </span>
                     {step.agents && (
@@ -114,13 +114,13 @@ export default async function WorkflowDetailPage({ params }: Props) {
                     )}
                   </div>
                   {step.agents && (
-                    <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                    <span className="t-10 font-mono text-[var(--text-muted)]">
                       {step.agents.model_provider}/{step.agents.model_name}
                     </span>
                   )}
                 </div>
                 {Object.keys(step.config || {}).length > 0 && (
-                  <pre className="mt-2 max-h-20 overflow-auto text-[11px] font-mono text-[var(--text-muted)]">
+                  <pre className="mt-2 max-h-20 overflow-auto t-11 font-mono text-[var(--text-muted)]">
                     {JSON.stringify(step.config, null, 2)}
                   </pre>
                 )}

@@ -55,23 +55,23 @@ export function RunTimeline({ timeline, isLive }: RunTimelineProps) {
 
         return (
           <div key={item.id} className={`flex items-start gap-4 py-3 px-2 ${isLast && isLive ? "bg-[var(--bg-soft)]" : ""}`}>
-            <span className={`font-mono text-[8px] uppercase tracking-[0.12em] shrink-0 pt-0.5 border-b pb-0.5 ${severityClass} border-current`}>
+            <span className={`font-mono t-8 uppercase tracking-[0.12em] shrink-0 pt-0.5 border-b pb-0.5 ${severityClass} border-current`}>
               {sevRef}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-[var(--text-faint)] mb-1">{typeRef}</p>
-              <p className={`text-[13px] font-light leading-snug ${severityClass}`}>{item.title}</p>
+              <p className="font-mono t-9 uppercase tracking-[0.1em] text-[var(--text-faint)] mb-1">{typeRef}</p>
+              <p className={`t-13 font-light leading-snug ${severityClass}`}>{item.title}</p>
               {item.description && (
-                <p className="text-[11px] text-[var(--text-muted)] truncate mt-1">{item.description}</p>
+                <p className="t-11 text-[var(--text-muted)] truncate mt-1">{item.description}</p>
               )}
               {item.backend && (
-                <p className="text-[10px] font-mono text-[var(--text-faint)] mt-1">BACKEND_{item.backend}</p>
+                <p className="t-10 font-mono text-[var(--text-faint)] mt-1">BACKEND_{item.backend}</p>
               )}
               {item.provider && (
-                <p className="text-[10px] font-mono text-[var(--text-faint)]">PROVIDER_{item.provider}</p>
+                <p className="t-10 font-mono text-[var(--text-faint)]">PROVIDER_{item.provider}</p>
               )}
               {item.assetName && (
-                <p className="text-[10px] font-mono text-[var(--money)] mt-1">ASSET_{item.assetName}</p>
+                <p className="t-10 font-mono text-[var(--money)] mt-1">ASSET_{item.assetName}</p>
               )}
             </div>
             {isLast && isLive && <span className="w-1.5 h-1.5 shrink-0 mt-1 bg-[var(--cykan)] animate-pulse" />}

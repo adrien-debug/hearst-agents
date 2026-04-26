@@ -121,7 +121,7 @@ export function SourcePicker({
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-4 text-[11px] font-mono font-black tracking-[0.4em] text-white/30 hover:text-[var(--cykan)] transition-all duration-500 uppercase"
+          className="flex items-center gap-4 t-11 font-mono font-black tracking-[0.4em] text-white/30 hover:text-[var(--cykan)] transition-all duration-500 uppercase"
         >
           <span className="w-2 h-2 rounded-full bg-[var(--cykan)]" />
           <span>{getDisplayText()}</span>
@@ -147,7 +147,7 @@ export function SourcePicker({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-6 text-[11px] font-mono font-black tracking-[0.4em] text-white/30 hover:text-[var(--cykan)] transition-all duration-500 uppercase"
+        className="flex items-center gap-6 t-11 font-mono font-black tracking-[0.4em] text-white/30 hover:text-[var(--cykan)] transition-all duration-500 uppercase"
       >
         <span className="text-white/10 uppercase">Sources:</span>
         <span>{getDisplayText()}</span>
@@ -192,7 +192,7 @@ function SourcePickerContent({
       <div className="flex items-center gap-6 mb-6 border-b border-white/10 pb-6">
         <button
           onClick={() => setActiveTab("mode")}
-          className={`text-[11px] font-mono font-black uppercase tracking-[0.3em] transition-colors ${
+          className={`t-11 font-mono font-black uppercase tracking-[0.3em] transition-colors ${
             activeTab === "mode" ? "text-[var(--cykan)]" : "text-white/30 hover:text-white"
           }`}
         >
@@ -200,7 +200,7 @@ function SourcePickerContent({
         </button>
         <button
           onClick={() => setActiveTab("services")}
-          className={`text-[11px] font-mono font-black uppercase tracking-[0.3em] transition-colors ${
+          className={`t-11 font-mono font-black uppercase tracking-[0.3em] transition-colors ${
             activeTab === "services" ? "text-[var(--cykan)]" : "text-white/30 hover:text-white"
           }`}
         >
@@ -237,7 +237,7 @@ function SourcePickerContent({
       {activeTab === "services" && (
         <div className="space-y-2 max-h-80 overflow-y-auto scrollbar-hide">
           {services.length === 0 ? (
-            <p className="text-[11px] font-mono uppercase tracking-[0.3em] text-white/20 text-center py-16">
+            <p className="t-11 font-mono uppercase tracking-[0.3em] text-white/20 text-center py-16">
               No_Connected_Sources
             </p>
           ) : (
@@ -255,12 +255,12 @@ function SourcePickerContent({
                 >
                   <span className="text-2xl grayscale">{service.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[15px] font-black uppercase tracking-tighter ${isSelected ? "text-white" : "text-white/50"}`}>
+                    <p className={`t-15 font-black uppercase tracking-tighter ${isSelected ? "text-white" : "text-white/50"}`}>
                       {service.name}
                     </p>
-                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40 truncate">{service.description}</p>
+                    <p className="t-10 font-mono uppercase tracking-[0.2em] opacity-40 truncate">{service.description}</p>
                   </div>
-                  {isSelected && <span className="text-[var(--cykan)] text-[11px] font-mono font-black tracking-widest">LINKED_</span>}
+                  {isSelected && <span className="text-[var(--cykan)] t-11 font-mono font-black tracking-widest">LINKED_</span>}
                 </button>
               );
             })
@@ -269,12 +269,12 @@ function SourcePickerContent({
       )}
 
       <div className="mt-6 pt-6 border-t border-white/10 flex items-center justify-between">
-        <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/20">
+        <span className="t-10 font-mono uppercase tracking-[0.3em] text-white/20">
           {services.length}_Available
         </span>
         <button
           onClick={onClose}
-          className="text-[11px] font-mono font-black uppercase tracking-[0.4em] text-white/30 hover:text-white transition-colors"
+          className="t-11 font-mono font-black uppercase tracking-[0.4em] text-white/30 hover:text-white transition-colors"
         >
           Close_
         </button>
@@ -307,8 +307,8 @@ function ModeOption({ label, description, selected, onClick }: ModeOptionProps) 
         {selected && <div className="w-2 h-2 rounded-full bg-[var(--cykan)]" />}
       </div>
       <div className="flex-1">
-        <p className={`text-[16px] font-black uppercase tracking-tighter ${selected ? "text-white" : "text-white/50"}`}>{label}</p>
-        <p className="text-[10px] font-mono uppercase tracking-[0.2em] opacity-40">{description}</p>
+        <p className={`text-base font-black uppercase tracking-tighter ${selected ? "text-white" : "text-white/50"}`}>{label}</p>
+        <p className="t-10 font-mono uppercase tracking-[0.2em] opacity-40">{description}</p>
       </div>
     </button>
   );

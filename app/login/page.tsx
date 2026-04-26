@@ -102,7 +102,7 @@ function LoginContent() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
-          <p className="text-[13px] text-white/70">
+          <p className="t-13 text-white/70">
             {status === "authenticated" ? "Redirection\u2026" : "Chargement\u2026"}
           </p>
         </div>
@@ -119,22 +119,22 @@ function LoginContent() {
         <div className="rounded-[22px] border border-white/6 bg-white/2 px-6 py-8 sm:px-7 sm:py-9 md:px-8 md:py-10">
           {/* Brand */}
           <div className="flex flex-col items-center">
-            <span className="text-[13px] font-medium uppercase tracking-[0.2em] text-white/70">
+            <span className="t-13 font-medium uppercase tracking-[0.2em] text-white/70">
               Hearst OS
             </span>
 
             {/* Secure access label */}
-            <span className="mt-3 text-[11px] font-medium uppercase tracking-[0.15em] text-white/25">
+            <span className="mt-3 t-11 font-medium uppercase tracking-[0.15em] text-white/25">
               Accès sécurisé
             </span>
 
             {/* Title */}
-            <h1 className="mt-4 text-center text-[26px] font-semibold leading-[1.15] tracking-tight text-white sm:text-[30px] md:text-[34px]">
+            <h1 className="mt-4 text-center t-26 font-semibold leading-[1.15] tracking-tight text-white sm:t-30 md:t-34">
               Accédez à votre espace de travail
             </h1>
 
             {/* Description */}
-            <p className="mt-4 max-w-[340px] text-center text-[15px] leading-[1.55] text-white/70 sm:text-[16px]">
+            <p className="mt-4 max-w-[340px] text-center t-15 leading-[1.55] text-white/70 sm:text-base">
               Connectez-vous via votre fournisseur d&apos;identité professionnel.
             </p>
           </div>
@@ -151,7 +151,7 @@ function LoginContent() {
                   onClick={() => handleSignIn(provider.id)}
                   disabled={isDisabled}
                   aria-label={provider.label}
-                  className="group relative flex h-[50px] w-full items-center justify-center gap-3 rounded-[13px] border border-white/8 bg-white/3 text-[14px] font-medium text-white/80 transition-[color,background-color,border-color,transform,opacity] duration-200 hover:border-white/14 hover:bg-white/6 hover:text-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50"
+                  className="group relative flex h-[50px] w-full items-center justify-center gap-3 rounded-[13px] border border-white/8 bg-white/3 text-sm font-medium text-white/80 transition-[color,background-color,border-color,transform,opacity] duration-200 hover:border-white/14 hover:bg-white/6 hover:text-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-white/10 border-t-white/50" />
@@ -166,7 +166,7 @@ function LoginContent() {
 
           {/* Error */}
           {error && (
-            <div className="mt-5 rounded-lg border border-red-500/10 bg-red-500/4 px-4 py-3 text-center text-[13px] leading-normal text-red-400/70">
+            <div className="mt-5 rounded-lg border border-red-500/10 bg-red-500/4 px-4 py-3 text-center t-13 leading-normal text-red-400/70">
               {error === "OAuthCallback"
                 ? "L'authentification a été annulée ou a échoué. Veuillez réessayer."
                 : "Nous n'avons pas pu vous connecter. Veuillez réessayer ou utiliser l'autre fournisseur."}
@@ -174,13 +174,13 @@ function LoginContent() {
           )}
 
           {/* Micro-copy */}
-          <p className="mt-6 text-center text-[12px] leading-[1.6] text-white/50">
+          <p className="mt-6 text-center text-xs leading-[1.6] text-white/50">
             En continuant, vous vous authentifiez via votre fournisseur d&apos;entreprise.
           </p>
         </div>
 
         {/* Footer */}
-        <div className="mt-6 flex items-center justify-center gap-4 text-[11px] text-white/30">
+        <div className="mt-6 flex items-center justify-center gap-4 t-11 text-white/30">
           <span>Confidentialité</span>
           <span className="text-white/8">&middot;</span>
           <span>Conditions</span>

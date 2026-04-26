@@ -51,7 +51,7 @@ export function ConnectionStatusChip({ status, type, compact }: ConnectionStatus
   if (compact) {
     return (
       <span
-        className={`inline-flex items-center justify-center min-w-[1.75rem] px-1 py-0.5 font-mono text-[8px] uppercase tracking-[0.12em] border-b ${config.line} ${config.text}`}
+        className={`inline-flex items-center justify-center min-w-[1.75rem] px-1 py-0.5 font-mono t-8 uppercase tracking-[0.12em] border-b ${config.line} ${config.text}`}
         title={config.label}
       >
         {config.compactLabel}
@@ -62,13 +62,13 @@ export function ConnectionStatusChip({ status, type, compact }: ConnectionStatus
   return (
     <div className="flex items-center gap-2">
       <span
-        className={`inline-flex items-center gap-2 px-0 py-0.5 font-mono text-[9px] uppercase tracking-[0.14em] border-b ${config.line} ${config.text}`}
+        className={`inline-flex items-center gap-2 px-0 py-0.5 font-mono t-9 uppercase tracking-[0.14em] border-b ${config.line} ${config.text}`}
       >
         <span className={`w-1 h-1 shrink-0 ${config.dot}`} />
         STATUS_{config.compactLabel}
       </span>
       {type && (
-        <span className="text-[9px] font-mono text-[var(--text-faint)] uppercase tracking-[0.2em]">{TYPE_LABELS[type]}</span>
+        <span className="t-9 font-mono text-[var(--text-faint)] uppercase tracking-[0.2em]">{TYPE_LABELS[type]}</span>
       )}
     </div>
   );

@@ -84,7 +84,7 @@ export default function DatasetDetailPage() {
         <form onSubmit={addEntry} className="space-y-3">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <label className="block">
-              <span className="mb-1 block text-[10px] font-medium text-[var(--text-muted)]">Input</span>
+              <span className="mb-1 block t-10 font-medium text-[var(--text-muted)]">Input</span>
               <textarea
                 rows={3}
                 value={newInput}
@@ -94,7 +94,7 @@ export default function DatasetDetailPage() {
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-[10px] font-medium text-[var(--text-muted)]">Expected output</span>
+              <span className="mb-1 block t-10 font-medium text-[var(--text-muted)]">Expected output</span>
               <textarea
                 rows={3}
                 value={newExpected}
@@ -124,16 +124,16 @@ export default function DatasetDetailPage() {
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xs font-mono text-[var(--text-muted)]">#{i + 1}</span>
                 {entry.tags.length > 0 && entry.tags.map((t) => (
-                  <span key={t} className="rounded-full border border-[var(--line-strong)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">{t}</span>
+                  <span key={t} className="rounded-full border border-[var(--line-strong)] px-2 py-0.5 t-10 text-[var(--text-muted)]">{t}</span>
                 ))}
               </div>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <div>
-                  <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">Input</p>
+                  <p className="t-10 font-medium uppercase text-[var(--text-muted)]">Input</p>
                   <p className="mt-1 text-xs text-[var(--text-soft)] whitespace-pre-wrap">{entry.input}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-medium uppercase text-[var(--text-muted)]">Expected</p>
+                  <p className="t-10 font-medium uppercase text-[var(--text-muted)]">Expected</p>
                   <p className="mt-1 text-xs text-[var(--text-soft)] whitespace-pre-wrap">{entry.expected_output}</p>
                 </div>
               </div>

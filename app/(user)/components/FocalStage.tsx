@@ -103,30 +103,30 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
             style={focal.status === "composing" || focal.status === "delivering" ? { boxShadow: "0 0 15px var(--cykan)" } : undefined}
           />
           <div className="flex items-center gap-4">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white/30">{TYPE_LABELS[focal.type]}</span>
+            <span className="t-10 font-mono font-bold uppercase tracking-[0.2em] text-white/30">{TYPE_LABELS[focal.type]}</span>
             <span className="w-1 h-1 rounded-full bg-white/10" />
-            <span className={`text-[10px] font-mono font-bold uppercase tracking-[0.2em] ${focal.status === "awaiting_approval" ? "text-[var(--warn)]" : focal.status === "failed" ? "text-[var(--danger)]" : "text-white/50"}`}>
+            <span className={`t-10 font-mono font-bold uppercase tracking-[0.2em] ${focal.status === "awaiting_approval" ? "text-[var(--warn)]" : focal.status === "failed" ? "text-[var(--danger)]" : "text-white/50"}`}>
               {STATUS_LABELS[focal.status]}
             </span>
           </div>
         </div>
-        <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/20">
+        <div className="font-mono t-9 uppercase tracking-[0.2em] text-white/20">
           {focal.sourcePlanId && (
             <span>ID: {focal.sourcePlanId.slice(0, 8)}</span>
           )}
         </div>
       </header>
 
-      <h1 className="text-[28px] font-bold text-white leading-[1.2] mb-10 tracking-tight">{focal.title}</h1>
+      <h1 className="t-28 font-bold text-white leading-[1.2] mb-10 tracking-tight">{focal.title}</h1>
 
       {focal.body && (
         <div className="prose prose-invert max-w-none">
-          <div className="text-[15px] leading-[1.7] text-white/70 font-normal whitespace-pre-wrap">{focal.body}</div>
+          <div className="t-15 leading-[1.7] text-white/70 font-normal whitespace-pre-wrap">{focal.body}</div>
         </div>
       )}
 
       {!focal.body && focal.summary && (
-        <p className="text-[15px] leading-[1.7] text-white/70 font-normal">{focal.summary}</p>
+        <p className="t-15 leading-[1.7] text-white/70 font-normal">{focal.summary}</p>
       )}
 
       {focal.sections && focal.sections.length > 0 && (
@@ -134,22 +134,22 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
           {focal.sections.map((section, i) => (
             <div key={i} className="border-t border-white/[0.05] pt-8">
               {section.heading && (
-                <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-[var(--cykan)] mb-4">{section.heading}</h3>
+                <h3 className="t-10 font-mono font-bold uppercase tracking-[0.3em] text-[var(--cykan)] mb-4">{section.heading}</h3>
               )}
-              <div className="text-[15px] leading-[1.7] text-white/70 font-normal">{section.body}</div>
+              <div className="t-15 leading-[1.7] text-white/70 font-normal">{section.body}</div>
             </div>
           ))}
         </div>
       )}
 
       {error && (
-        <div className="mt-8 p-4 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] font-mono text-[10px] tracking-wide text-[var(--danger)]">
+        <div className="mt-8 p-4 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] font-mono t-10 tracking-wide text-[var(--danger)]">
           {error}
         </div>
       )}
 
       <footer className="mt-12 pt-8 border-t border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-6 text-[9px] font-mono uppercase tracking-[0.15em] text-white/30">
+        <div className="flex items-center gap-6 t-9 font-mono uppercase tracking-[0.15em] text-white/30">
           {focal.wordCount ? <span>METRIC: {focal.wordCount}_WORDS</span> : null}
           {focal.provider ? <span>SOURCE: {focal.provider}</span> : null}
         </div>
@@ -165,11 +165,11 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               focalStatus={focal.status}
               label={focal.primaryAction.label}
               onSuccess={onActionComplete}
-              className="px-6 py-3 text-[11px] font-mono font-bold uppercase tracking-[0.2em] bg-[var(--cykan)] text-black hover:tracking-[0.3em] transition-all duration-300 shadow-xl"
+              className="px-6 py-3 t-11 font-mono font-bold uppercase tracking-[0.2em] bg-[var(--cykan)] text-black hover:tracking-[0.3em] transition-all duration-300 shadow-xl"
             />
           ) : (
             <button
-              className={`px-6 py-3 text-[11px] font-mono font-bold uppercase tracking-[0.2em] transition-all duration-300 hover:tracking-[0.3em] shadow-xl ${
+              className={`px-6 py-3 t-11 font-mono font-bold uppercase tracking-[0.2em] transition-all duration-300 hover:tracking-[0.3em] shadow-xl ${
                 focal.primaryAction.kind === "approve"
                   ? "bg-white text-black"
                   : "bg-[var(--cykan)] text-black"
@@ -227,7 +227,7 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
           >
             <span className="text-4xl text-[var(--cykan)] opacity-20">◉</span>
           </div>
-          <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white/30">Waiting_For_Data</p>
+          <p className="t-10 font-mono font-bold uppercase tracking-[0.2em] text-white/30">Waiting_For_Data</p>
         </div>
       </div>
     );
@@ -235,14 +235,14 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
 
   if (compact) {
 return (
-    <div className="max-w-none px-8 py-6 bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#060606]">
+    <div className="max-w-none px-8 py-6 bg-gradient-to-br from-[var(--mat-300)] via-[var(--bg-soft)] to-[var(--surface)]">
       <FocalContent focal={focal} onActionComplete={handleActionComplete} />
     </div>
   );
   }
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#060606]">
+    <div className="h-full w-full bg-gradient-to-br from-[var(--mat-300)] via-[var(--bg-soft)] to-[var(--surface)]">
       <div className="max-w-4xl mx-auto px-12 py-12 min-h-full">
         <FocalContent focal={focal} onActionComplete={handleActionComplete} />
       </div>

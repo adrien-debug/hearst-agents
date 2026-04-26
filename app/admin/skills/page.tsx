@@ -67,14 +67,14 @@ export default async function SkillsPage() {
             >
               <div className="flex items-start justify-between">
                 <h3 className="text-sm font-semibold text-[var(--text)]">{s.name}</h3>
-                <span className="rounded-full border border-[var(--line-strong)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">
+                <span className="rounded-full border border-[var(--line-strong)] px-2 py-0.5 t-10 text-[var(--text-muted)]">
                   {s.category}
                 </span>
               </div>
               {s.description && (
                 <p className="line-clamp-2 text-xs text-[var(--text-muted)]">{s.description}</p>
               )}
-              <span className="text-[10px] font-mono text-[var(--text-muted)]">v{s.active_version}</span>
+              <span className="t-10 font-mono text-[var(--text-muted)]">v{s.active_version}</span>
             </Link>
           ))}
         </div>

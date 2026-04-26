@@ -242,7 +242,7 @@ export default function MissionsPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="ghost-title-impact text-lg mb-1">Missions</h1>
-            <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-[var(--text-muted)]">SCHED_AUTOMATION</p>
+            <p className="t-11 font-mono uppercase tracking-[0.2em] text-[var(--text-muted)]">SCHED_AUTOMATION</p>
           </div>
           <button type="button" onClick={openNewMission} className="ghost-btn-solid ghost-btn-cykan rounded-sm px-5">
             NEW_MISSION
@@ -276,7 +276,7 @@ export default function MissionsPage() {
           <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
             <p className="ghost-meta-label">EMPTY_REGISTRY</p>
             <h2 className="ghost-title-impact text-base">Aucune mission</h2>
-            <p className="text-[13px] font-light leading-relaxed text-[var(--text-muted)] max-w-md">
+            <p className="t-13 font-light leading-relaxed text-[var(--text-muted)] max-w-md">
               Les missions sont des tâches récurrentes planifiées. Exécution automatique selon calendrier.
             </p>
             <button type="button" onClick={openNewMission} className="ghost-btn-solid ghost-btn-ghost rounded-sm px-6">
@@ -285,7 +285,7 @@ export default function MissionsPage() {
           </div>
         ) : (
           <div className="border-t border-[var(--line)]">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 text-[9px] font-mono uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line)]">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-9 font-mono uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line)]">
               <span>ID_REF / Descriptor</span>
               <span className="text-right">STATUS_OPS</span>
               <span className="text-right">CMD</span>
@@ -330,21 +330,21 @@ export default function MissionsPage() {
                       aria-label={mission.enabled ? "Désactiver" : "Activer"}
                     />
                     <div className="min-w-0">
-                      <p className="font-mono text-[9px] uppercase tracking-[0.15em] text-[var(--text-faint)] mb-1">ID_REF: {mission.id.slice(0, 8)}</p>
-                      <h3 className="text-[13px] font-medium text-[var(--text)] tracking-tight">{mission.name}</h3>
-                      <p className="text-[11px] font-light leading-relaxed text-[var(--text-muted)] mt-1">{mission.description}</p>
+                      <p className="font-mono t-9 uppercase tracking-[0.15em] text-[var(--text-faint)] mb-1">ID_REF: {mission.id.slice(0, 8)}</p>
+                      <h3 className="t-13 font-medium text-[var(--text)] tracking-tight">{mission.name}</h3>
+                      <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] mt-1">{mission.description}</p>
                       {mission.lastError && (
-                        <p className="text-[10px] font-mono text-[var(--danger)] truncate mt-2 border-b border-[var(--danger)] pb-0.5 inline-block max-w-full" title={mission.lastError}>
+                        <p className="t-10 font-mono text-[var(--danger)] truncate mt-2 border-b border-[var(--danger)] pb-0.5 inline-block max-w-full" title={mission.lastError}>
                           ERR_LOG: {mission.lastError}
                         </p>
                       )}
                     </div>
                   </div>
                   <div className="text-right space-y-2">
-                    <span className={`inline-block font-mono text-[9px] uppercase tracking-[0.15em] border-b pb-0.5 ${statusLine}`}>
+                    <span className={`inline-block font-mono t-9 uppercase tracking-[0.15em] border-b pb-0.5 ${statusLine}`}>
                       STATUS_{opsStatusLabel}
                     </span>
-                    <div className="text-[10px] font-mono text-[var(--text-faint)] space-y-1">
+                    <div className="t-10 font-mono text-[var(--text-faint)] space-y-1">
                       <div>{mission.frequency}</div>
                       {mission.runningSince && (
                         <div className="text-[var(--cykan)]">ELAPSED_{Math.floor((currentTime - mission.runningSince) / 1000)}S</div>

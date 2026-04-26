@@ -25,6 +25,9 @@ jobs:
       - name: Run linter
         run: npm run lint
 
+      - name: Run visual lint (no hardcoded hex / text sizes)
+        run: npm run lint:visual
+
       - name: Run unit tests
         run: npm run test
 
