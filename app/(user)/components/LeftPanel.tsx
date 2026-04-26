@@ -6,9 +6,16 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 // Chat-first navigation: primary surface is Home only
-// Legacy routes (/inbox, /calendar, /files, /apps) remain accessible but are not exposed in primary nav
+// Secondary routes (missions, assets, apps) accessible via dedicated links
+// Legacy routes (/inbox, /calendar, /files) remain accessible but are not exposed in primary nav
 const SURFACES: { id: Surface; label: string; icon: string; path: string }[] = [
   { id: "home", label: "Accueil", icon: "◉", path: "/" },
+];
+
+const SECONDARY_LINKS: { label: string; icon: string; path: string }[] = [
+  { label: "Missions", icon: "◈", path: "/missions" },
+  { label: "Assets", icon: "📄", path: "/assets" },
+  { label: "Apps", icon: "⚡", path: "/apps" },
 ];
 
 /**
@@ -101,6 +108,30 @@ export function LeftPanel() {
             >
               <span className="w-5 text-center">{s.icon}</span>
               {isExpanded && <span className="truncate font-medium">{s.label}</span>}
+            </button>
+          );
+        })}
+
+        {/* Divider */}
+        <div className="py-1">
+          <div className="h-px bg-[var(--line)]" />
+        </div>
+
+        {/* Secondary Links */}
+        {SECONDARY_LINKS.map((link) => {
+          const isActive = pathname === link.path || pathname?.startsWith(link.path);
+          return (
+            <button
+              key={link.path}
+              onClick={() => router.push(link.path)}
+              className={`w-full flex items-center gap-3 px-2 py-1.5 text-sm transition-colors ${
+                isActive
+                  ? "bg-[var(--cykan)]/[0.04] text-[var(--cykan)] border-l-2 border-[var(--cykan)]"
+                  : "text-[var(--text-soft)] hover:text-[var(--text)] hover:bg-white/[0.02] border-l-2 border-transparent"
+              }`}
+            >
+              <span className="w-5 text-center">{link.icon}</span>
+              {isExpanded && <span className="truncate font-medium">{link.label}</span>}
             </button>
           );
         })}
