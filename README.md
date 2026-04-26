@@ -976,6 +976,7 @@ Architecture canonique pour les missions planifiées/autonomes.
 | Scheduler | `lib/engine/runtime/missions/scheduler.ts` + `scheduler-init.ts` | Polling loop, leader lease, distributed dedup |
 | UI client (canonical) | `app/lib/missions-v2.ts` | Frontend helpers (fetch, create, toggle, run) |
 | Admin | `/admin/scheduler` | Leadership, ops table, run/toggle actions |
+| **Missions Page** | `app/(user)/missions/page.tsx` | **Live ops status UI** — running/idle/success/failed/blocked, auto-refresh 5s, duration counter |
 | Right Panel | `MissionsSection` + `MissionDetailSection` | Live status, schedule, errors |
 | ~~Legacy~~ | ~~`app/lib/missions/*`~~ | ❌ **REMOVED** — migrated to `app/lib/missions-v2.ts` |
 
