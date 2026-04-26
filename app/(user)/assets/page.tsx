@@ -89,14 +89,8 @@ export default function AssetsPage() {
     router.push(`/assets/${assetId}`);
   };
 
-  // Note: Stats are based on current page assets, not total
-  // This is intentional as the API doesn't return counts by type
-  const statsCurrentPage = {
-    reports: assets.filter((a) => a.type === "report").length,
-    pdfs: assets.filter((a) => a.type === "pdf").length,
-    excel: assets.filter((a) => a.type === "excel").length,
-    docs: assets.filter((a) => a.type === "doc").length,
-  };
+  // Note: Filter counts removed as they would be misleading
+  // (based on current page assets, not total across all pages)
 
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
