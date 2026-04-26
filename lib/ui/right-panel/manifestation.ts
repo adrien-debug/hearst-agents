@@ -441,6 +441,32 @@ export function morphObject(
 // ── Resolve focal object for a thread ───────────────────────
 
 /**
+ * Augments a focal object with retry action if status === "failed" and retry is applicable.
+ */
+function augmentWithRetryAction(obj: FocalObject): FocalObject {
+  if (obj.status !== "failed") return obj;
+  if (obj.primaryAction) return obj; // Already has an action
+
+  // Mission failed → can retry via POST /api/v2/missions/{id}/run
+  if (obj.missionId) {
+    return {
+      ...obj,
+      primaryAction: { kind: "retry", label: "Réessayer" },
+    };
+  }
+
+  // Plan/Run failed → can retry via POST /api/orchestrate
+  if (obj.sourcePlanId || obj.threadId) {
+    return {
+      ...obj,
+      primaryAction: { kind: "retry", label: "Réessayer" },
+    };
+  }
+
+  return obj;
+}
+
+/**
  * Given available context, resolve which focal object the right panel should show.
  *
  * Priority:
@@ -459,27 +485,27 @@ export function resolveFocalObject(
   const awaitingPlan = plans.find((p) => p.status === "awaiting_approval");
   if (awaitingPlan) {
     const obj = manifestPlan(awaitingPlan);
-    if (obj) return obj;
+    if (obj) return augmentWithRetryAction(obj);
   }
 
   // 2. Executing plan with visible output
   const executingPlan = plans.find((p) => p.status === "executing");
   if (executingPlan) {
     const obj = manifestPlan(executingPlan);
-    if (obj) return obj;
+    if (obj) return augmentWithRetryAction(obj);
   }
 
   // 3. Latest asset
   if (assets.length > 0) {
     const latest = assets[assets.length - 1];
     const obj = manifestAsset(latest);
-    if (obj) return obj;
+    if (obj) return augmentWithRetryAction(obj);
   }
 
   // 4. Active mission
   const activeMission = missions.find((m) => m.status === "active");
   if (activeMission) {
-    return manifestMission(activeMission);
+    return augmentWithRetryAction(manifestMission(activeMission));
   }
 
   return null;

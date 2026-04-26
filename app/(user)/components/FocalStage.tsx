@@ -6,6 +6,7 @@ import { useNavigationStore } from "@/stores/navigation";
 import { useSession } from "next-auth/react";
 import type { FocalObject, FocalStatus } from "@/lib/core/types";
 import { mapFocalObject } from "@/lib/core/types/focal";
+import { FocalRetryButton } from "./FocalRetryButton";
 
 // Status labels for user-facing display
 const STATUS_LABELS: Record<FocalStatus, string> = {
@@ -178,21 +179,32 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
 
         {/* Primary action — contextual, minimal */}
         {focal.primaryAction ? (
-          <button
-            className={`px-5 py-2.5 text-sm font-medium transition-colors ${
-              focal.primaryAction.kind === "approve"
-                ? "bg-[var(--warn)] text-black hover:bg-[var(--warn)]/90 disabled:opacity-50"
-                : focal.primaryAction.kind === "pause"
-                ? "bg-yellow-500 text-black hover:bg-yellow-500/90 disabled:opacity-50"
-                : focal.primaryAction.kind === "resume"
-                ? "bg-[var(--money)] text-black hover:bg-[var(--money)]/90 disabled:opacity-50"
-                : "bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90 disabled:opacity-50"
-            }`}
-            onClick={handlePrimaryAction}
-            disabled={isLoading}
-          >
-            {isLoading ? "…" : focal.primaryAction.label}
-          </button>
+          focal.primaryAction.kind === "retry" ? (
+            <FocalRetryButton
+              missionId={focal.missionId}
+              sourcePlanId={focal.sourcePlanId}
+              threadId={focal.threadId}
+              label={focal.primaryAction.label}
+              onSuccess={onActionComplete}
+              className="px-5 py-2.5 text-sm font-medium bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-lg"
+            />
+          ) : (
+            <button
+              className={`px-5 py-2.5 text-sm font-medium transition-colors ${
+                focal.primaryAction.kind === "approve"
+                  ? "bg-[var(--warn)] text-black hover:bg-[var(--warn)]/90 disabled:opacity-50"
+                  : focal.primaryAction.kind === "pause"
+                  ? "bg-yellow-500 text-black hover:bg-yellow-500/90 disabled:opacity-50"
+                  : focal.primaryAction.kind === "resume"
+                  ? "bg-[var(--money)] text-black hover:bg-[var(--money)]/90 disabled:opacity-50"
+                  : "bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90 disabled:opacity-50"
+              }`}
+              onClick={handlePrimaryAction}
+              disabled={isLoading}
+            >
+              {isLoading ? "…" : focal.primaryAction.label}
+            </button>
+          )
         ) : null}
       </footer>
     </div>

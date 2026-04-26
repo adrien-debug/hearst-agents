@@ -48,7 +48,7 @@ interface FocalObjectBase {
 
 // ── Actions (anti-button: max 1) ────────────────────────────
 
-export type FocalActionKind = "approve" | "discard" | "send" | "pause" | "resume";
+export type FocalActionKind = "approve" | "discard" | "send" | "pause" | "resume" | "retry";
 
 export interface FocalAction {
   kind: FocalActionKind;

@@ -14,6 +14,7 @@ import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
+import { FocalRetryButton } from "./FocalRetryButton";
 
 interface RightPanelContentProps {
   /** Called when user requests panel close (mobile drawer) */
@@ -267,21 +268,42 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
             )}
 
             {(focalObject as FocalObjectView)?.primaryAction && (
-              <button
-                className={`w-full py-1.5 rounded text-[10px] font-medium uppercase tracking-wider transition-colors disabled:opacity-50 ${
-                  (focalObject as FocalObjectView).primaryAction?.kind === "approve"
-                    ? "bg-[var(--warn)] text-black hover:bg-[var(--warn)]/90"
-                    : (focalObject as FocalObjectView).primaryAction?.kind === "pause"
-                    ? "bg-yellow-500 text-black hover:bg-yellow-500/90"
-                    : (focalObject as FocalObjectView).primaryAction?.kind === "resume"
-                    ? "bg-[var(--money)] text-black hover:bg-[var(--money)]/90"
-                    : "bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90"
-                }`}
-                onClick={handlePrimaryAction}
-                disabled={actionLoading}
-              >
-                {actionLoading ? "…" : (focalObject as FocalObjectView).primaryAction?.label}
-              </button>
+              (focalObject as FocalObjectView).primaryAction?.kind === "retry" ? (
+                <FocalRetryButton
+                  missionId={(focalObject as FocalObjectView).missionId}
+                  sourcePlanId={(focalObject as FocalObjectView).sourcePlanId}
+                  threadId={(focalObject as FocalObjectView).threadId}
+                  label={(focalObject as FocalObjectView).primaryAction?.label}
+                  onSuccess={() => {
+                    // Refresh after retry
+                    if (activeThreadId) {
+                      fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`)
+                        .then((res) => res.json())
+                        .then((panelData) => setData(panelData))
+                        .catch(() => {});
+                    }
+                    onClose?.();
+                  }}
+                  compact
+                  className="w-full py-1.5 rounded text-[10px] font-medium uppercase tracking-wider transition-colors disabled:opacity-50 bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90"
+                />
+              ) : (
+                <button
+                  className={`w-full py-1.5 rounded text-[10px] font-medium uppercase tracking-wider transition-colors disabled:opacity-50 ${
+                    (focalObject as FocalObjectView).primaryAction?.kind === "approve"
+                      ? "bg-[var(--warn)] text-black hover:bg-[var(--warn)]/90"
+                      : (focalObject as FocalObjectView).primaryAction?.kind === "pause"
+                      ? "bg-yellow-500 text-black hover:bg-yellow-500/90"
+                      : (focalObject as FocalObjectView).primaryAction?.kind === "resume"
+                      ? "bg-[var(--money)] text-black hover:bg-[var(--money)]/90"
+                      : "bg-[var(--cykan)] text-black hover:bg-[var(--cykan)]/90"
+                  }`}
+                  onClick={handlePrimaryAction}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? "…" : (focalObject as FocalObjectView).primaryAction?.label}
+                </button>
+              )
             )}
           </div>
         ) : loading ? (
