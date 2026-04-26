@@ -50,12 +50,19 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 >
 > **Métriques** : 267+ fichiers • 404 tests pass • 5 Connector Packs validés • 5 Specialized Agents • Build ✅
 >
-> **Phase 0–4 Complete (25/04/2026)**:
-> - Phase 0 — Infrastructure alignment (connectors, settings, sidebar, v2 security)
-> - Phase 1 — 5 Admin API routes with RBAC
-> - Phase 2 — 3 Admin UI pages (settings, health, audit)
-> - Phase 3 — 2 Platform settings routes (flags, preferences)
-> - Phase 4 — Agents capabilities endpoint + Developer Pack
+> **Phase 0–4 + Priorités 2-5 COMPLÈTES (26/04/2026)**:
+> - **Phase 0** — Infrastructure alignment (connectors, settings, sidebar, v2 security)
+> - **Phase 1** — 5 Admin API routes with RBAC (`app/api/admin/{settings,health,permissions,audit,connectors}`)
+> - **Phase 2** — 3 Admin UI pages (settings, health, audit)
+> - **Phase 3** — 2 Platform settings routes (flags, preferences)
+> - **Phase 4** — Agents capabilities endpoint + Developer Pack
+> - **Priorité 2** — Planner stubs → Real API calls (Gmail, Calendar, Drive, PDF, XLSX, Web Search)
+> - **Priorité 3** — Stripe OAuth via Nango + Health checks réels (9 providers)
+> - **Priorité 4** — Redis cache (`ioredis`) + Asset cleanup scheduler (cron boot)
+> - **Priorité 5** — Structure refactor (`token-store` → `lib/platform/auth/tokens`, `right-panel` → `lib/ui/right-panel/`)
+> - **Corrections finales** — Barrel export exhaustif (`lib/index.ts`), Vrai LRU cache (move-to-end), Types Asset unifiés (`RuntimeAsset`)
+>
+> **Documentation audits** : 3 rapports détaillés (2,267 lignes) — [`docs/AUDIT_PRIORITIES_2_3.md`](./docs/AUDIT_PRIORITIES_2_3.md), [`docs/AUDIT_PRIORITIES_2_5_COMPLETE.md`](./docs/AUDIT_PRIORITIES_2_5_COMPLETE.md), [`docs/AUDIT_FINAL_CORRECTIONS.md`](./docs/AUDIT_FINAL_CORRECTIONS.md)
 
 ## 📚 Documentation Architecture (HTML)
 
@@ -499,7 +506,9 @@ npm install
 
 # 2. Config
 cp .env.example .env.local
-# Remplir : SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY (et optionnellement COMPOSER_*, GEMINI_API_KEY — voir `.env.example`)
+# Remplir : SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY
+# Pour OAuth connectors: NANGO_SECRET_KEY, NEXT_PUBLIC_NANGO_PUBLIC_KEY
+# (optionnellement COMPOSER_*, GEMINI_API_KEY — voir `.env.example`)
 
 # 3. Database
 npx supabase db push

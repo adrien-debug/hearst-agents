@@ -10,6 +10,7 @@ import { AppCategorySection } from "../components/AppCategorySection";
 import { getAllServices, getAllBundles } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import { enrichWithConnectionStatus } from "@/lib/integrations/catalog";
+import Nango from "@nangohq/frontend";
 
 const CATEGORY_ORDER = [
   "communication",
@@ -171,6 +172,7 @@ export default function AppsPage() {
     const provider = getProviderForService(serviceId);
     if (!provider) {
       console.error(`[AppsPage] No provider mapping for service: ${serviceId}`);
+      alert(`Service non supporté: ${serviceId}`);
       return;
     }
 
@@ -178,6 +180,7 @@ export default function AppsPage() {
     console.log(`[AppsPage] Initiating OAuth for ${serviceId} via ${provider}`);
 
     try {
+      // Step 1: Get OAuth config from backend
       const res = await fetch("/api/nango/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -195,23 +198,47 @@ export default function AppsPage() {
       const data = await res.json();
       if (!data.success || !data.config) {
         console.error("[AppsPage] Invalid OAuth config:", data);
+        alert("Configuration OAuth invalide");
         return;
       }
 
-      // For now, redirect to callback URL pattern
-      // In a full implementation, we would open a popup with Nango SDK
-      console.log(`[AppsPage] OAuth config received, connectionId: ${data.config.connectionId.slice(0, 20)}...`);
+      console.log(`[AppsPage] OAuth config received for ${provider}`);
 
-      // Open Nango OAuth in a popup (simplified version)
-      const nangoHost = data.config.host || "https://api.nango.dev";
-      const oauthUrl = `${nangoHost}/oauth/connect/${provider}?connection_id=${encodeURIComponent(data.config.connectionId)}&public_key=${encodeURIComponent(data.config.publicKey)}`;
+      // Step 2: Initialize Nango SDK and open OAuth popup
+      const nango = new Nango({ 
+        publicKey: data.config.publicKey,
+        host: data.config.host 
+      });
 
-      // For now, just log and close drawer — the actual OAuth would require the Nango frontend SDK
-      console.log(`[AppsPage] OAuth URL: ${oauthUrl}`);
-
-      // Close drawer and show message
-      setIsDrawerOpen(false);
-      alert(`Connexion à ${serviceId} initiée. (Nango OAuth flow ready — integration SDK implementation needed for popup)`);
+      try {
+        // Open OAuth popup and wait for completion
+        const result = await nango.auth(provider, data.config.connectionId);
+        
+        if (result) {
+          console.log(`[AppsPage] OAuth successful for ${provider}`);
+          
+          // Step 3: Refresh services list to show updated connection status
+          const baseServices = [...getAllServices(), ...getNangoServices()];
+          const enriched = await enrichWithConnectionStatus(baseServices, userId || "anonymous");
+          setServices(enriched);
+          
+          // Close drawer and show success message
+          setIsDrawerOpen(false);
+          alert(`✓ ${serviceId} connecté avec succès !`);
+        } else {
+          console.log(`[AppsPage] OAuth cancelled by user for ${provider}`);
+        }
+      } catch (oauthError) {
+        console.error("[AppsPage] OAuth popup failed:", oauthError);
+        
+        // Check if popup was blocked
+        const errorMessage = (oauthError as Error).message || "";
+        if (errorMessage.includes("popup") || errorMessage.includes("blocked")) {
+          alert("Popup bloquée par le navigateur. Veuillez autoriser les popups pour ce site.");
+        } else {
+          alert(`Erreur OAuth: ${errorMessage}`);
+        }
+      }
 
     } catch (err) {
       console.error("[AppsPage] OAuth initiation failed:", err);
