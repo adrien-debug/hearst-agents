@@ -63,27 +63,27 @@ function ChatControls({
   onSourceChange,
 }: ChatControlsProps) {
   return (
-    <div className="px-12 pt-12 space-y-10">
+    <div className="px-12 pt-10 space-y-8 bg-gradient-to-b from-white/[0.02] to-transparent">
       {/* Blocked Capability Banner */}
       {showBlockedBanner && (
-        <div className="bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] p-10 flex items-center justify-between group shadow-[0_20px_40px_rgba(255,51,51,0.05)]">
-          <div className="flex items-center gap-10">
-            <span className="text-[10px] font-mono font-black text-[var(--danger)] uppercase tracking-[0.8em]">Access_Denied</span>
-            <p className="text-[18px] font-black text-white uppercase tracking-tighter">
-              {capabilityMode}_CAPABILITY REQUIRES CONNECTION
+        <div className="bg-gradient-to-r from-[var(--danger)]/10 to-transparent border-l-2 border-[var(--danger)] p-5 flex items-center justify-between group shadow-[0_20px_40px_rgba(255,51,51,0.05)] rounded-r-sm">
+          <div className="flex items-center gap-6">
+            <span className="text-[10px] font-mono font-bold text-[var(--danger)] uppercase tracking-[0.15em]">Access Denied</span>
+            <p className="text-[14px] font-medium text-white tracking-tight">
+              {capabilityMode} capability requires connection
             </p>
           </div>
           <button 
             onClick={onDismissBanner}
-            className="text-[10px] font-mono text-white/20 hover:text-white transition-colors uppercase tracking-[0.4em]"
+            className="text-[10px] font-mono text-white/40 hover:text-white transition-colors tracking-[0.15em]"
           >
-            DISMISS_ [X]
+            Close [x]
           </button>
         </div>
       )}
 
       {/* Source Picker & Capability Tabs */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-12">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-8">
         <CapabilityTabs
           connectedServices={connectedServices}
           activeMode={capabilityMode}
@@ -427,9 +427,9 @@ export default function HomePage() {
 
   if (isIdle) {
     return (
-      <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-gradient-to-b from-[#050505] via-[#080808] to-[#050505]">
         <div className="flex-1 flex flex-col items-center justify-center px-8 relative z-10">
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, rgba(163, 255, 0, 0.03) 0%, transparent 70%)" }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at 30% 50%, rgba(163, 255, 0, 0.02) 0%, transparent 60%), radial-gradient(circle at 70% 80%, rgba(255,255,255,0.01) 0%, transparent 40%)" }} />
           <div className="text-center space-y-12 relative z-10">
             <div
               className="inline-flex flex-col items-center gap-6"
@@ -439,23 +439,22 @@ export default function HomePage() {
               >
                 H
               </div>
-              <span className="text-[11px] font-mono tracking-[1.2em] text-white/10 uppercase ml-[1.2em]">Hearst_OS</span>
+              <span className="text-[11px] font-mono tracking-[0.3em] text-white/30 uppercase">Hearst_OS</span>
             </div>
 
-            <h1 className="text-[100px] font-black text-white tracking-tighter leading-[0.8] uppercase opacity-5">Ghost_Protocol</h1>
+            <h1 className="text-[60px] font-light text-white tracking-tight leading-[1] opacity-[0.03]">Ghost Protocol</h1>
             
             <div className="h-px w-32 bg-white/5 mx-auto" />
 
             {/* Suggestion chips */}
-            <div className="flex flex-wrap justify-center gap-12 mt-20">
+            <div className="flex flex-wrap justify-center gap-6 mt-12">
               {["Résumer mes emails", "Planifier une réunion", "Analyser un document", "Créer un rapport"].map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSubmit(s)}
-                  className="text-[11px] font-mono font-black tracking-[0.3em] text-white/20 hover:text-[var(--cykan)] transition-all duration-500 uppercase group relative"
+                  className="px-4 py-2 text-[13px] font-medium tracking-normal text-white/40 hover:text-white hover:bg-white/5 rounded-full border border-white/10 hover:border-white/20 transition-all duration-300"
                 >
                   {s}
-                  <span className="absolute -bottom-2 left-0 w-0 h-[1px] bg-[var(--cykan)] shadow-[0_0_10px_var(--cykan)] transition-all duration-500 group-hover:w-full" />
                 </button>
               ))}
             </div>
@@ -471,22 +470,22 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 relative">
+    <div className="flex-1 flex flex-col min-h-0 relative bg-gradient-to-br from-[#060606] via-[#080808] to-[#050505]">
       {/* Principal surface: Focal Stage - takes full height when active */}
       {focal && showFocal && (
-        <div className="flex-1 flex flex-col min-h-0 border-b border-white/10">
+        <div className="flex-1 flex flex-col min-h-0 border-b border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent">
           {/* Focal header - minimal, contextual */}
           <div className="flex items-center justify-between px-12 py-8 bg-transparent flex-shrink-0 relative z-10 border-b border-white/10">
-            <div className="flex items-center gap-8">
-              <span className="text-[11px] text-[var(--cykan)] font-mono font-black uppercase tracking-[0.6em]">{focal.type}_HUD</span>
-              <span className="text-[22px] font-black text-white uppercase tracking-tighter truncate max-w-[500px]">{focal.title}</span>
+            <div className="flex items-center gap-6">
+              <span className="text-[10px] text-[var(--cykan)] font-mono font-bold uppercase tracking-[0.2em]">{focal.type}_HUD</span>
+              <span className="text-[18px] font-bold text-white tracking-tight truncate max-w-[500px]">{focal.title}</span>
             </div>
             <button
               onClick={() => setShowFocal(false)}
-              className="text-[10px] font-mono font-black uppercase tracking-[0.4em] text-white/20 hover:text-white transition-colors"
+              className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white/40 hover:text-white transition-colors"
               title="Minimiser (rester dans le contexte)"
             >
-              CLOSE_VIEW [X]
+              Close [x]
             </button>
           </div>
           {/* Focal content - principal reading surface */}
@@ -505,10 +504,10 @@ export default function HomePage() {
           >
             <div className="w-2 h-2 rounded-full bg-[var(--cykan)] shadow-[0_0_15px_var(--cykan)] animate-pulse"></div>
             <div className="flex flex-col items-start">
-              <span className="text-white/20 uppercase font-mono tracking-[0.6em] text-[10px] group-hover:text-[var(--cykan)] transition-colors">
-                {focal.type === "brief" ? "Active_Brief" : focal.type === "report" ? "Active_Report" : "Active_Document"}
+              <span className="text-white/40 uppercase font-mono tracking-[0.2em] text-[10px] group-hover:text-[var(--cykan)] transition-colors">
+                {focal.type === "brief" ? "Active Brief" : focal.type === "report" ? "Active Report" : "Active Document"}
               </span>
-              <span className="text-white/70 font-black uppercase tracking-tighter text-[18px] group-hover:translate-x-3 group-hover:text-white transition-all duration-500">{focal.title}</span>
+              <span className="text-white/70 font-bold tracking-tight text-[16px] group-hover:translate-x-2 group-hover:text-white transition-all duration-300">{focal.title}</span>
             </div>
           </button>
         </div>
@@ -516,7 +515,7 @@ export default function HomePage() {
 
       {/* Chat messages - canonical renderer with conditional sizing - only render container when messages exist */}
       {messages.length > 0 && (
-        <div className={focal && showFocal ? "flex-shrink-0 h-[320px] border-t border-white/10" : "flex-1 min-h-0"}>
+        <div className={focal && showFocal ? "flex-shrink-0 h-[320px] border-t border-white/10 bg-gradient-to-b from-white/[0.02] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[#050505] to-[#080808]"}>
           <ChatMessages
             messages={messages}
             compact={!!(focal && showFocal)}

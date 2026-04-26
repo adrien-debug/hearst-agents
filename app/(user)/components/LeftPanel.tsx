@@ -1,31 +1,25 @@
 "use client";
 
-import { useNavigationStore, type Surface } from "@/stores/navigation";
+import { useNavigationStore } from "@/stores/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 
-const SURFACES: { id: Surface; label: string; icon: JSX.Element; path: string }[] = [
-  { id: "home", label: "Accueil", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, path: "/" },
-];
+interface LeftPanelProps {
+  connectedServices?: ServiceWithConnectionStatus[];
+  onAddApp?: () => void;
+}
 
-const SECONDARY_LINKS: { label: string; icon: JSX.Element; path: string }[] = [
-  { label: "Missions", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>, path: "/missions" },
-  { label: "Assets", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>, path: "/assets" },
-  { label: "Planner", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, path: "/planner" },
-  { label: "Apps", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, path: "/apps" },
-];
-
-export function LeftPanel() {
+export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) {
   const { data: session } = useSession();
-  const { surface, setSurface, threads, activeThreadId, setActiveThread, addThread } = useNavigationStore();
-  const [isExpanded, setIsExpanded] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
+  const { threads, activeThreadId, setActiveThread, addThread } = useNavigationStore();
+  const [showAllThreads, setShowAllThreads] = useState(false);
 
   const firstName = session?.user?.name?.split(" ")[0] || "Utilisateur";
-  const [now] = useState(() => Date.now());
-  const activeThreads = threads.filter(t => t.lastActivity > now - 7 * 24 * 60 * 60 * 1000);
+  const recentThreads = threads.slice(0, 3);
+  const hasMoreThreads = threads.length > 3;
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
@@ -33,139 +27,137 @@ export function LeftPanel() {
 
   return (
     <aside
-      className={`${isExpanded ? "w-[300px]" : "w-[90px]"} flex flex-col transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] h-full relative z-20 border-r border-white/[0.03] shadow-[30px_0_60px_rgba(0,0,0,0.4)]`}
-      style={{ background: "linear-gradient(to right, var(--rail), #020202)" }}
+      className="w-[72px] flex flex-col h-full relative z-20 border-r border-white/[0.05] shadow-[20px_0_60px_rgba(0,0,0,0.4)] transition-all duration-500"
+      style={{ background: "linear-gradient(180deg, #050505 0%, #080808 100%)" }}
     >
-      {/* Brand Header */}
-      <div className="p-10">
-        <div className="flex items-center gap-6">
-          <div className="w-14 h-14 flex items-center justify-center text-[16px] font-black bg-[var(--cykan)] text-black rounded-sm shadow-[0_0_40px_rgba(163,255,0,0.25)] hover:scale-105 transition-transform duration-500">
-            H
-          </div>
-          {isExpanded && (
-            <div className="flex-1 min-w-0">
-              <p className="text-[16px] font-black uppercase tracking-tighter text-white">Hearst OS</p>
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-mono text-[var(--text-muted)] uppercase tracking-[0.3em]">{firstName}</p>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* Logo */}
+      <button 
+        onClick={() => {
+          router.push("/");
+          setShowAllThreads(false);
+        }}
+        className="p-4 flex justify-center hover:bg-white/[0.03] transition-colors shrink-0"
+      >
+        <img 
+          src="/assets/hearst-ai-logo.png" 
+          alt="Hearst AI" 
+          className="w-10 h-auto object-contain"
+        />
+      </button>
 
-        {/* Toggle expand/collapse — always visible */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="mt-10 w-full py-2 flex items-center justify-center gap-2 text-[11px] font-mono uppercase tracking-[0.2em] text-[var(--text-faint)] hover:text-[var(--text-muted)] hover:bg-white/[0.02] rounded transition-colors border-t border-white/5 pt-6"
-          title={isExpanded ? "Réduire" : "Développer"}
-        >
-          <span>{isExpanded ? "←" : "→"}</span>
-          {isExpanded && <span>Collapse</span>}
-        </button>
+      <div className="h-px bg-white/[0.06] mx-3 shrink-0" />
 
-        {!isExpanded && (
+      {/* Apps Rail - disparaît quand on affiche toutes les conversations */}
+      <div className={`flex flex-col items-center py-4 gap-3 overflow-hidden transition-all duration-500 ${showAllThreads ? 'h-0 opacity-0 py-0' : 'flex-1 min-h-0'}`}>
+        {connectedServices.map((service) => (
           <button
-            onClick={handleLogout}
-            className="mt-4 w-full text-center text-[11px] text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
-            title="Déconnexion"
+            key={service.id}
+            className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-[var(--cykan)]/40 hover:bg-white/[0.06] transition-all group relative shrink-0"
+            title={service.name}
           >
-            →
+            {service.icon ? (
+              <img 
+                src={service.icon} 
+                alt={service.name}
+                className="w-7 h-7 object-contain"
+              />
+            ) : (
+              <span className="text-lg font-bold text-white/50">{service.name.charAt(0).toUpperCase()}</span>
+            )}
+            <span className="absolute left-full ml-3 px-2 py-1 bg-black/90 border border-white/10 rounded text-[10px] font-mono tracking-wide text-white/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              {service.name}
+            </span>
           </button>
-        )}
+        ))}
+
+        {/* Add App Button */}
+        <button
+          onClick={onAddApp}
+          className="w-10 h-10 flex items-center justify-center rounded-lg border border-dashed border-white/[0.15] text-white/40 hover:text-[var(--cykan)] hover:border-[var(--cykan)]/50 hover:bg-[var(--cykan)]/5 transition-all shrink-0"
+          title="Connect new app"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
       </div>
 
-      {/* Primary Navigation */}
-      <nav className="p-0 space-y-2">
-        {SURFACES.map((s) => {
-          const isActive = pathname === s.path || (s.path !== "/" && pathname?.startsWith(s.path));
-          return (
-            <button
-              key={s.id}
-              onClick={() => {
-                setSurface(s.id);
-                router.push(s.path);
-              }}
-              className={`w-full flex items-center gap-6 px-8 py-5 text-[14px] transition-all duration-700 border-l-[2px] ${
-                isActive
-                  ? "bg-white/[0.02] text-white border-[var(--cykan)] shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
-                  : "text-white/20 hover:text-white/60 hover:bg-white/[0.01] border-transparent"
-              }`}
+      <div className="h-px bg-white/[0.06] mx-3 shrink-0" />
+
+      {/* Sessions / Threads */}
+      <div className={`flex flex-col items-center py-3 gap-2 overflow-y-auto scrollbar-hide transition-all duration-500 ${showAllThreads ? 'flex-1' : ''}`}>
+        {/* Affiche 3 récentes ou toutes selon l'état */}
+        {(showAllThreads ? threads : recentThreads).map((thread) => (
+          <button
+            key={thread.id}
+            onClick={() => setActiveThread(thread.id)}
+            className={`w-10 h-10 flex items-center justify-center rounded-full text-[12px] font-bold transition-all group relative shrink-0 ${
+              activeThreadId === thread.id
+                ? "bg-[var(--cykan)] text-black shadow-[0_0_12px_var(--cykan)]"
+                : "bg-white/[0.05] text-white/60 hover:bg-white/[0.1] hover:text-white"
+            }`}
+            title={thread.name}
+          >
+            {thread.name.charAt(0).toUpperCase()}
+            <span className="absolute left-full ml-3 px-2 py-1 bg-black/90 border border-white/10 rounded text-[10px] font-mono tracking-wide text-white/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 max-w-[150px] truncate">
+              {thread.name}
+            </span>
+          </button>
+        ))}
+        
+        {/* Bouton Voir tout / Réduire */}
+        {hasMoreThreads && (
+          <button
+            onClick={() => setShowAllThreads(!showAllThreads)}
+            className="w-10 h-10 flex items-center justify-center rounded-full border border-white/[0.15] text-white/40 hover:text-white hover:border-white/30 hover:bg-white/[0.05] transition-all shrink-0 mt-1"
+            title={showAllThreads ? "Show less" : "View all"}
+          >
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              className={`transition-transform duration-300 ${showAllThreads ? 'rotate-180' : ''}`}
             >
-              <span className={`w-6 flex justify-center text-xl transition-colors ${isActive ? 'text-[var(--cykan)]' : ''}`}>{s.icon}</span>
-              {isExpanded && <span className="truncate font-black uppercase tracking-tighter">{s.label}</span>}
-            </button>
-          );
-        })}
+              {showAllThreads ? (
+                <path d="M18 15l-6-6-6 6" />
+              ) : (
+                <path d="M6 9l6 6 6-6" />
+              )}
+            </svg>
+          </button>
+        )}
+        
+        {/* New Session Button */}
+        <button
+          onClick={() => addThread("New", "home")}
+          className="w-10 h-10 flex items-center justify-center rounded-full border border-dashed border-white/[0.2] text-white/30 hover:text-[var(--cykan)] hover:border-[var(--cykan)]/40 transition-all shrink-0"
+          title="New session"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+      </div>
 
-        {/* Divider */}
-        <div className="py-6 px-10">
-          <div className="h-px bg-white/10" />
-        </div>
+      <div className="h-px bg-white/[0.06] mx-3 shrink-0" />
 
-        {/* Secondary Links */}
-        {SECONDARY_LINKS.map((link) => {
-          const isActive = pathname === link.path || pathname?.startsWith(link.path);
-          return (
-            <button
-              key={link.path}
-              onClick={() => router.push(link.path)}
-              className={`w-full flex items-center gap-6 px-8 py-5 text-[14px] transition-all duration-700 border-l-[2px] ${
-                isActive
-                  ? "bg-white/[0.02] text-white border-[var(--cykan)] shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
-                  : "text-white/20 hover:text-white/60 hover:bg-white/[0.01] border-transparent"
-              }`}
-            >
-              <span className={`w-6 flex justify-center text-xl transition-colors ${isActive ? 'text-[var(--cykan)]' : ''}`}>{link.icon}</span>
-              {isExpanded && <span className="truncate font-black uppercase tracking-tighter">{link.label}</span>}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* Conversations Section */}
-      {isExpanded && (
-        <div className="flex-1 flex flex-col min-h-0 mt-12">
-          <div className="px-10 py-6">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-mono font-black uppercase tracking-[0.6em] text-white/20">Sessions</p>
-              <button
-                onClick={() => addThread("Nouveau", surface)}
-                className="w-8 h-8 flex items-center justify-center border border-white/10 text-white/30 hover:bg-[var(--cykan)] hover:text-black hover:border-[var(--cykan)] transition-all duration-300"
-                aria-label="Nouvelle session"
-              >
-                +
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto px-0 pb-12 space-y-2 scrollbar-hide">
-            {activeThreads.map((thread) => (
-              <button
-                key={thread.id}
-                onClick={() => setActiveThread(thread.id)}
-                className={`w-full text-left px-8 py-5 text-[13px] transition-all duration-700 border-l-[2px] group ${
-                  activeThreadId === thread.id
-                    ? "bg-white/[0.02] text-white border-[var(--cykan)] shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
-                    : "text-white/10 hover:text-white/40 hover:bg-white/[0.01] border-transparent"
-                }`}
-              >
-                <p className={`truncate uppercase tracking-tighter ${activeThreadId === thread.id ? 'font-black' : 'font-medium'}`}>{thread.name}</p>
-                <p className={`truncate font-mono text-[10px] mt-1.5 uppercase tracking-[0.3em] transition-colors ${activeThreadId === thread.id ? 'text-[var(--cykan)]' : 'text-white/10'}`}>
-                  {SURFACES.find(s => s.id === thread.surface)?.label}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="p-10 bg-transparent hover:bg-white/[0.03] text-white/10 hover:text-white transition-colors border-t border-white/10"
-      >
-        <div className="flex items-center justify-center font-mono text-[11px] tracking-[0.3em] uppercase">
-          {isExpanded ? "Collapse_HUD" : "HUD"}
-        </div>
-      </button>
+      {/* Logout */}
+      <div className="p-3 flex flex-col items-center shrink-0">
+        <button
+          onClick={handleLogout}
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-[var(--danger)] hover:bg-white/[0.05] transition-all"
+          title={`Logout ${firstName}`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      </div>
     </aside>
   );
 }

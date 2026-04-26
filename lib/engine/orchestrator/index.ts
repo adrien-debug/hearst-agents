@@ -2,7 +2,7 @@
  * Orchestrator — Public façade.
  *
  * Entry point for the v2 pipeline:
- * 1. Build ExecutionContext → select ExecutionMode (pure router)
+ * 1. Resolve CapabilityScope → ExecutionMode (capability-first router)
  * 2. Create RunEngine
  * 3. Dispatch to the appropriate handler based on mode
  * 4. Stream results via SSE
@@ -16,16 +16,10 @@ import { SSEAdapter } from "@/lib/events/consumers/sse-adapter";
 import { LogPersister } from "@/lib/events/consumers/log-persister";
 import { planFromIntent } from "./planner";
 import { executePlan } from "./executor";
-import { selectExecutionMode } from "./execution-mode-selector";
-import {
-  ExecutionMode,
-  type ExecutionContext,
-  type ExecutionDecision,
-} from "./types/execution-mode";
+import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, type ExecutionDecision } from "@/lib/capabilities/router";
 import { createAsset } from "@/lib/engine/runtime/assets/create-asset";
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
-import type { ToolContext } from "@/lib/tools/types";
 import { selectToolsForContext } from "@/lib/tools/tool-selector";
 import { selectAgentForContext } from "@/lib/agents/agent-selector";
 import { selectAgentBackend } from "@/lib/agents/backends/selector";
@@ -49,10 +43,10 @@ import { appendMessage, getRecentMessages } from "@/lib/memory/store";
 import { memoryToConversationHistory } from "@/lib/memory/format";
 import { isResearchIntent, isReportIntent } from "./research-intent";
 import { runResearchReport } from "./run-research-report";
-import { getRequiredProvidersForInput } from "./provider-requirements";
+import { getRequiredProvidersForInput, getBlockedReasonForProviders } from "./provider-requirements";
 import { shouldPersistEvent, persistRunEvent } from "@/lib/engine/runtime/timeline/persist";
 import type { ProviderId } from "@/lib/providers/types";
-import { retrieveUserDataContext, detectDataIntent } from "@/lib/connectors/data-retriever";
+import { retrieveUserDataContext } from "@/lib/connectors/data-retriever";
 
 interface FocalContext {
   id: string;
@@ -75,6 +69,12 @@ interface OrchestrateInput {
   workspaceId?: string;
   /** Injected by runPipeline — formatted user data context for LLM */
   _userDataContext?: string;
+  /** Injected by runPipeline — resolved capability domain */
+  _capabilityDomain?: string;
+  /** Injected by runPipeline — tools allowed for the current capability scope */
+  _allowedTools?: string[];
+  /** Injected by runPipeline — resolved retrieval mode from capability scope */
+  _retrievalMode?: string | null;
 }
 
 const DEV_TENANT_ID = "dev-tenant";
@@ -132,46 +132,6 @@ export function orchestrate(
 
 // ── Execution Context builder ────────────────────────────────
 
-const AUTONOMOUS_PATTERNS = [
-  "analyse", "analyser", "recherche", "scrape", "crawl",
-  "surveille", "monitore", "scan",
-];
-const MEMORY_PATTERNS = ["souviens", "rappelle", "mémorise", "retiens"];
-const PROVIDER_KEYWORDS: Record<string, string[]> = {
-  messages: ["email", "message", "inbox", "slack", "mail", "courrier"],
-  calendar: ["agenda", "réunion", "calendrier", "événement", "planning"],
-  files: ["fichier", "document", "drive"],
-};
-
-function buildExecutionContext(message: string, surface?: string, focalContext?: FocalContext): ExecutionContext {
-  const lower = message.toLowerCase();
-
-  const needsAutonomy = AUTONOMOUS_PATTERNS.some((p) => lower.includes(p));
-  const needsMemory = MEMORY_PATTERNS.some((p) => lower.includes(p));
-
-  let providersNeeded = 0;
-  for (const keywords of Object.values(PROVIDER_KEYWORDS)) {
-    if (keywords.some((k) => lower.includes(k))) providersNeeded++;
-  }
-
-  const wordCount = message.split(/\s+/).filter(Boolean).length;
-  let complexity = 1;
-  if (providersNeeded > 0) complexity += 2;
-  if (providersNeeded > 1) complexity += 1;
-  if (needsAutonomy) complexity += 3;
-  if (wordCount > 30) complexity += 1;
-  if (surface && surface !== "home") complexity += 1;
-  if (focalContext) complexity += 2;
-
-  return {
-    intent: lower.slice(0, 120),
-    complexity,
-    providersNeeded,
-    needsAutonomy,
-    needsMemory,
-  };
-}
-
 // ── Mode handlers ────────────────────────────────────────────
 
 async function handleDirectAnswer(
@@ -196,6 +156,7 @@ async function handleDirectAnswer(
     enrichedMessage,
     input.conversationHistory ?? [],
     input.surface,
+    input._capabilityDomain,
   );
 
   if (result.kind === "direct_response") {
@@ -221,7 +182,7 @@ async function handleDirectAnswer(
       run_id: engine.id,
       message: `Plan created with ${result.plan.steps.length} step(s)`,
     });
-    await runPlanExecution(engine, result.plan, scope, input.threadId);
+    await runPlanExecution(engine, result.plan, scope, input.threadId, input._capabilityDomain);
   }
 }
 
@@ -246,18 +207,18 @@ async function handlePlanAndExecute(
     enrichedMessage,
     input.conversationHistory ?? [],
     input.surface,
+    input._capabilityDomain,
   );
 
   switch (planResult.kind) {
     case "direct_response": {
-      const retrieval = detectRetrievalMode(input.message);
-      if (retrieval) {
+      if (input._retrievalMode) {
         engine.events.emit({
           type: "orchestrator_log",
           run_id: engine.id,
-          message: `Planner returned direct response but provider data needed — creating synthetic plan (${retrieval})`,
+          message: `Planner returned direct response but provider data needed — creating synthetic plan (${input._retrievalMode})`,
         });
-        await runSyntheticRetrieval(engine, input, scope, retrieval, planResult.text);
+        await runSyntheticRetrieval(engine, input, scope, input._retrievalMode, planResult.text);
         return;
       }
       engine.events.emit({ type: "text_delta", run_id: engine.id, delta: planResult.text });
@@ -275,53 +236,25 @@ async function handlePlanAndExecute(
       return;
 
     case "plan":
-      if (planResult.plan.steps.length === 0) {
-        const retrieval = detectRetrievalMode(input.message);
-        if (retrieval) {
-          engine.events.emit({
-            type: "orchestrator_log",
-            run_id: engine.id,
-            message: `Plan has 0 steps but provider data needed — creating synthetic plan (${retrieval})`,
-          });
-          await runSyntheticRetrieval(engine, input, scope, retrieval);
-          return;
-        }
+      if (planResult.plan.steps.length === 0 && input._retrievalMode) {
+        engine.events.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: `Plan has 0 steps but provider data needed — creating synthetic plan (${input._retrievalMode})`,
+        });
+        await runSyntheticRetrieval(engine, input, scope, input._retrievalMode);
+        return;
       }
       engine.events.emit({
         type: "orchestrator_log",
         run_id: engine.id,
         message: `Plan created with ${planResult.plan.steps.length} step(s) — executing`,
       });
-      await runPlanExecution(engine, planResult.plan, scope, input.threadId);
+      await runPlanExecution(engine, planResult.plan, scope, input.threadId, input._capabilityDomain);
       return;
   }
 }
 
-export function detectRetrievalMode(message: string): string | null {
-  const lower = message.toLowerCase();
-  const docKeywords = ["document", "fichier", "file", "drive", "doc", "rapport", "pdf", "spreadsheet", "slide"];
-  const msgKeywords = ["email", "emails", "mail", "mails", "courrier", "inbox", "gmail", "message"];
-  const structuredKeywords = [
-    "agenda",
-    "calendrier",
-    "rendez-vous",
-    "réunion",
-    "meeting",
-    "événement",
-    "event",
-    "planning",
-    "disponible",
-    "créneau",
-    "aujourd'hui",
-    "demain",
-    "cette semaine",
-  ];
-
-  if (docKeywords.some((k) => lower.includes(k))) return "documents";
-  if (msgKeywords.some((k) => lower.includes(k))) return "messages";
-  if (structuredKeywords.some((k) => lower.includes(k))) return "structured_data";
-  return null;
-}
 
 async function runSyntheticRetrieval(
   engine: RunEngine,
@@ -349,6 +282,7 @@ async function runSyntheticRetrieval(
         intent: input.message,
         surface: input.surface ?? "chat",
         retrieval_mode: retrievalMode,
+        ...(input._capabilityDomain ? { capability_domain: input._capabilityDomain } : {}),
       },
       expected_output: "summary",
       retrieval_mode: retrievalMode,
@@ -559,7 +493,7 @@ async function handleManagedAgentExecution(
       userId: scope.userId,
       tenantId: scope.tenantId,
       workspaceId: scope.workspaceId,
-      systemPrompt: buildSystemPromptForAgent(input.surface, connectedProviders, userDataContext),
+      systemPrompt: buildSystemPromptForAgent(input.surface, connectedProviders, userDataContext, input._allowedTools),
       streaming: true,
       initialHistory: input.conversationHistory,
     });
@@ -692,6 +626,7 @@ function buildSystemPromptForAgent(
   surface?: string, 
   connectedProviders?: string[],
   userDataContext?: string,
+  allowedTools?: string[],
 ): string {
   let prompt = `You are Hearst AI, a helpful assistant. You help users with their tasks across various tools and services.`;
 
@@ -720,6 +655,10 @@ function buildSystemPromptForAgent(
     prompt += `\n\n📊 REAL USER DATA (Use this as primary source for your response):\n${userDataContext}`;
   }
 
+  if (allowedTools && allowedTools.length > 0) {
+    prompt += `\n\n🔧 ALLOWED TOOLS FOR THIS REQUEST: ${allowedTools.join(", ")}. Do NOT attempt to use tools outside this list.`;
+  }
+
   if (surface && surface !== "home") {
     prompt += `\n\nYou are currently interacting through the ${surface} surface.`;
   }
@@ -732,8 +671,9 @@ async function runPlanExecution(
   plan: import("@/lib/engine/runtime/plans/types").Plan,
   scope: TenantScope,
   threadId?: string,
+  capabilityDomain?: string,
 ): Promise<void> {
-  const execResult = await executePlan(engine.getDb(), engine, plan);
+  const execResult = await executePlan(engine.getDb(), engine, plan, capabilityDomain);
 
   switch (execResult.status) {
     case "completed": {
@@ -831,29 +771,6 @@ function maybeEmitAsset(
   });
 }
 
-// ── Tool context inference ───────────────────────────────────
-
-const CONTEXT_KEYWORDS: Array<{ context: ToolContext; keywords: string[] }> = [
-  { context: "inbox", keywords: ["email", "message", "mail", "inbox", "slack", "courrier"] },
-  { context: "calendar", keywords: ["agenda", "réunion", "calendrier", "événement", "planning"] },
-  { context: "files", keywords: ["fichier", "document", "drive"] },
-  { context: "finance", keywords: ["crypto", "bitcoin", "revenue", "marché", "portfolio", "finance", "prix", "trading"] },
-  { context: "research", keywords: ["recherche", "analyse", "étude", "compare", "investigate"] },
-];
-
-function inferToolContext(message: string, surface?: string): ToolContext {
-  if (surface && surface !== "home") {
-    const mapped = surface as ToolContext;
-    if (["inbox", "calendar", "files"].includes(mapped)) return mapped;
-  }
-
-  const lower = message.toLowerCase();
-  for (const { context, keywords } of CONTEXT_KEYWORDS) {
-    if (keywords.some((k) => lower.includes(k))) return context;
-  }
-
-  return "general";
-}
 
 // ── Schedule detection ───────────────────────────────────────
 
@@ -969,22 +886,24 @@ async function runPipeline(
     return;
   }
 
-  // ── 1. Route: build context → select execution mode ────────
-  const ctx = buildExecutionContext(input.message, input.surface, input.focalContext);
-  const decision: ExecutionDecision = selectExecutionMode(ctx);
+  // ── 1. Capability-first routing ─────────────────────────────
+  const capScope = resolveCapabilityScope(input.message, input.surface);
+  const decision: ExecutionDecision = resolveExecutionMode(capScope, input.message, input.focalContext);
 
-  // ── Research intent override ──────────────────────────────
   const researchDetected = isResearchIntent(input.message);
   const reportDetected = isReportIntent(input.message);
 
-  if (researchDetected && decision.mode === ExecutionMode.DIRECT_ANSWER) {
-    decision.mode = ExecutionMode.WORKFLOW;
+  if (researchDetected && decision.mode === "direct_answer") {
+    decision.mode = "workflow";
     decision.reason = "Research intent detected — promoted from DIRECT_ANSWER";
     decision.backend = "hearst_runtime";
-    console.log("[ExecutionMode] Research override: DIRECT_ANSWER → WORKFLOW");
+    console.log("[ExecutionMode] Research override: direct_answer → workflow");
   }
 
-  console.log("[ExecutionMode]", decision.mode, decision.reason);
+  input._capabilityDomain = capScope.domain;
+  input._allowedTools = capScope.allowedTools;
+  input._retrievalMode = capScope.retrievalMode;
+  console.log("[ExecutionMode]", decision.mode, decision.reason, `[domain: ${capScope.domain}]`);
 
   // ── 2. Create Run ──────────────────────────────────────────
   const createInput: CreateRunInput = {
@@ -996,7 +915,7 @@ async function runPipeline(
       surface: input.surface,
       context: {
         execution_mode: decision.mode,
-        tool_context: inferToolContext(input.message, input.surface),
+        tool_context: capScope.toolContext,
         ...(decision.agentId ? { agent_id: decision.agentId } : {}),
         ...(decision.backend ? { agent_backend: decision.backend } : {}),
         ...(input.missionId ? { mission_id: input.missionId } : {}),
@@ -1089,7 +1008,7 @@ async function runPipeline(
   });
 
   // ── Emit tool surface (first event for UI) ─────────────────
-  const toolContext = inferToolContext(input.message, input.surface);
+  const toolContext = capScope.toolContext;
   const surfaceTools = selectToolsForContext(toolContext);
 
   eventBus.emit({
@@ -1100,15 +1019,15 @@ async function runPipeline(
   });
 
   // ── Select agent + backend (CUSTOM_AGENT mode) ──────────────
-  if (decision.mode === ExecutionMode.CUSTOM_AGENT) {
+  if (decision.mode === "custom_agent") {
     const agent = selectAgentForContext(toolContext);
     if (agent) {
       const backendDecision = selectAgentBackend({
         agent,
         context: toolContext,
         userInput: input.message,
-        complexity: ctx.complexity,
-        needsAutonomy: ctx.needsAutonomy,
+        complexity: capScope.capabilities.length * 2,
+        needsAutonomy: decision.mode === "custom_agent",
       });
 
       decision.agentId = agent.id;
@@ -1182,48 +1101,53 @@ async function runPipeline(
   // ── 4. Dispatch by execution mode ──────────────────────────
   try {
     // ── Provider preflight (skip for research — uses web, not user providers) ──
-    if (!researchDetected) {
+    if (!researchDetected && scopeRequiresProviders(capScope)) {
       const providerReq = getRequiredProvidersForInput(input.message);
-      if (providerReq) {
+      const providersToCheck = providerReq?.providers ?? capScope.providers;
+
+      if (providersToCheck.length > 0) {
         const preflightResults = await Promise.all(
-          providerReq.providers.map((p) =>
+          providersToCheck.map((p) =>
             preflightConnector({ provider: p, scope, userId: input.userId }),
           ),
         );
         const anyConnected = preflightResults.some((r) => r.ok);
 
         if (!anyConnected) {
-          console.log(`[Orchestrator] Capability blocked: ${providerReq.capability} — no provider connected`);
+          const capability = providerReq?.capability ?? capScope.capabilities[0] ?? capScope.domain;
+          const userMessage = providerReq?.userMessage ?? getBlockedReasonForProviders(providersToCheck);
+
+          console.log(`[Orchestrator] Capability blocked: ${capability} — no provider connected`);
 
           eventBus.emit({
             type: "capability_blocked",
             run_id: engine.id,
-            capability: providerReq.capability,
-            requiredProviders: providerReq.providers,
-            message: providerReq.userMessage,
+            capability,
+            requiredProviders: providersToCheck,
+            message: userMessage,
           });
 
           eventBus.emit({
             type: "orchestrator_log",
             run_id: engine.id,
-            message: `Blocked: ${providerReq.capability} requires ${providerReq.providers.join(" or ")}`,
+            message: `Blocked: ${capability} requires ${providersToCheck.join(" or ")}`,
           });
 
           eventBus.emit({
             type: "text_delta",
             run_id: engine.id,
-            delta: providerReq.userMessage,
+            delta: userMessage,
           });
 
-          await engine.fail(`Provider required: ${providerReq.providers.join(" or ")}`);
+          await engine.fail(`Provider required: ${providersToCheck.join(" or ")}`);
           return;
         }
       }
     }
 
     // ── User data retrieval (calendar, gmail, drive) ───────────
-    const dataIntent = detectDataIntent(input.message);
-    if (dataIntent.needsCalendar || dataIntent.needsGmail || dataIntent.needsDrive) {
+    const dataNeeds = capScope.needsProviderData;
+    if (dataNeeds.calendar || dataNeeds.gmail || dataNeeds.drive) {
       try {
         eventBus.emit({
           type: "orchestrator_log",
@@ -1243,8 +1167,7 @@ async function runPipeline(
     }
 
     // ── Deterministic research path (skip if user data retrieval needed) ──
-    const userDataRetrieval = detectRetrievalMode(input.message);
-    if (researchDetected && !userDataRetrieval) {
+    if (researchDetected && !capScope.retrievalMode) {
       const pathLabel = reportDetected ? "research + report" : "research";
       eventBus.emit({
         type: "orchestrator_log",
@@ -1256,21 +1179,21 @@ async function runPipeline(
     }
 
     switch (decision.mode) {
-      case ExecutionMode.DIRECT_ANSWER:
+      case "direct_answer":
         await handleDirectAnswer(engine, eventBus, input, scope);
         break;
-      case ExecutionMode.TOOL_CALL:
-      case ExecutionMode.WORKFLOW:
+      case "tool_call":
+      case "workflow":
         await handlePlanAndExecute(engine, input, scope);
         break;
-      case ExecutionMode.CUSTOM_AGENT:
+      case "custom_agent":
         if (decision.backend === "anthropic_managed") {
           await handleManagedAgentExecution(engine, eventBus, input, scope);
         } else {
           await handlePlanAndExecute(engine, input, scope);
         }
         break;
-      case ExecutionMode.MANAGED_AGENT:
+      case "managed_agent":
         await handleManagedAgentExecution(engine, eventBus, input, scope);
         break;
     }

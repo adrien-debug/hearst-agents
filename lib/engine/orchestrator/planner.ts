@@ -17,6 +17,7 @@ import {
   PLAN_TOOL,
   RESPOND_TOOL,
 } from "./system-prompt";
+import { isAgentValidForDomain, getValidAgentsForDomain, type Domain } from "@/lib/capabilities/taxonomy";
 
 export type PlanningResult =
   | { kind: "plan"; plan: Plan }
@@ -45,6 +46,7 @@ export async function planFromIntent(
   userMessage: string,
   conversationHistory: ConversationMessage[],
   surface?: string,
+  capabilityDomain?: string,
 ): Promise<PlanningResult> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
@@ -116,16 +118,27 @@ export async function planFromIntent(
     const planSteps: Omit<
       PlanStep,
       "id" | "plan_id" | "status" | "run_step_id" | "completed_at"
-    >[] = input.steps.map((s, i) => ({
-      order: i + 1,
-      intent: s.intent,
-      agent: s.agent,
-      task_description: s.task_description,
-      expected_output: s.expected_output,
-      retrieval_mode: s.retrieval_mode,
-      depends_on: (s.depends_on ?? []).map(String),
-      optional: s.optional ?? false,
-    }));
+    >[] = input.steps.map((s, i) => {
+      let agent = s.agent;
+
+      if (capabilityDomain && !isAgentValidForDomain(agent, capabilityDomain as Domain)) {
+        const validAgents = getValidAgentsForDomain(capabilityDomain as Domain);
+        const fallback = validAgents[0] ?? "KnowledgeRetriever";
+        console.warn(`[Planner] Agent "${agent}" invalid for domain "${capabilityDomain}" — remapped to "${fallback}"`);
+        agent = fallback;
+      }
+
+      return {
+        order: i + 1,
+        intent: s.intent,
+        agent,
+        task_description: s.task_description,
+        expected_output: s.expected_output,
+        retrieval_mode: s.retrieval_mode,
+        depends_on: (s.depends_on ?? []).map(String),
+        optional: s.optional ?? false,
+      };
+    });
 
     const store = new PlanStore(db);
     const plan = await store.createPlan(

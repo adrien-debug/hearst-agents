@@ -18,54 +18,62 @@ export type CapabilityMode =
 interface CapabilityTab {
   id: CapabilityMode;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   surface: Surface;
   description: string;
 }
+
+const GeneralIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>;
 
 const STATIC_TABS: CapabilityTab[] = [
   {
     id: "general",
     label: "Général",
-    icon: "◉",
+    icon: <GeneralIcon />,
     surface: "home",
     description: "Discussion générale avec toutes les capacités",
   },
 ];
 
+const CRMIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+const SupportIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="1" fill="currentColor"/></svg>;
+const FinanceIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+const DevIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>;
+const DesignIcon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>;
+
 const DYNAMIC_TABS: CapabilityTab[] = [
   {
     id: "crm",
     label: "CRM",
-    icon: "🤝",
+    icon: <CRMIcon />,
     surface: "home",
     description: "HubSpot, Salesforce, contacts",
   },
   {
     id: "support",
     label: "Support",
-    icon: "🎧",
+    icon: <SupportIcon />,
     surface: "home",
     description: "Zendesk, Intercom, tickets",
   },
   {
     id: "finance",
     label: "Finance",
-    icon: "💰",
+    icon: <FinanceIcon />,
     surface: "home",
     description: "Stripe, QuickBooks, revenus",
   },
   {
     id: "developer",
     label: "Dev",
-    icon: "💻",
+    icon: <DevIcon />,
     surface: "home",
     description: "GitHub, Jira, Linear",
   },
   {
     id: "design",
     label: "Design",
-    icon: "🎨",
+    icon: <DesignIcon />,
     surface: "home",
     description: "Figma, maquettes, créatifs",
   },
@@ -187,29 +195,29 @@ export function CapabilityTabs({
   }
 
   return (
-    <div className="space-y-10">
-      <p className="text-[11px] font-mono font-black text-white/30 uppercase tracking-[0.8em]">
-        Capability_Mode
+    <div className="space-y-8 bg-gradient-to-b from-white/[0.02] to-transparent p-8 rounded-lg border border-white/[0.05]">
+      <p className="text-[11px] font-mono font-bold text-white/30 uppercase tracking-[0.3em]">
+        Capability Mode
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {allTabs.map((tab) => {
           const isActive = activeMode === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab)}
-              className={`flex flex-col items-start gap-6 p-10 rounded-sm border transition-all text-left ${
+              className={`flex flex-col items-start gap-4 p-6 rounded-sm border transition-all text-left ${
                 isActive
-                  ? "bg-white/[0.04] border-[var(--cykan)]/50 text-[var(--cykan)] shadow-[0_40px_80px_rgba(0,0,0,0.6)]"
-                  : "bg-white/[0.02] border-white/10 hover:bg-white/[0.03] hover:border-white/20"
+                  ? "bg-gradient-to-br from-white/[0.06] to-white/[0.02] border-[var(--cykan)]/50 text-[var(--cykan)] shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+                  : "bg-gradient-to-br from-white/[0.03] to-transparent border-white/10 hover:bg-white/[0.04] hover:border-white/20"
               }`}
             >
-              <span className="text-3xl grayscale group-hover:grayscale-0">{tab.icon}</span>
+              <span className="text-2xl grayscale group-hover:grayscale-0">{tab.icon}</span>
               <div>
-                <p className={`text-[18px] font-black uppercase tracking-tighter ${isActive ? "text-white" : "text-white/50"}`}>
+                <p className={`text-[16px] font-bold tracking-tight ${isActive ? "text-white" : "text-white/60"}`}>
                   {tab.label}
                 </p>
-                <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/30 line-clamp-2 mt-2">{tab.description}</p>
+                <p className="text-[10px] font-mono tracking-wide text-white/30 line-clamp-2 mt-1">{tab.description}</p>
               </div>
             </button>
           );

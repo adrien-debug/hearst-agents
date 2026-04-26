@@ -96,60 +96,60 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
 
   return (
     <div className="w-full">
-      <header className="flex items-center justify-between mb-20 pb-10 border-b border-white/[0.05]">
-        <div className="flex items-center gap-8">
+      <header className="flex items-center justify-between mb-10 pb-6 border-b border-white/[0.05]">
+        <div className="flex items-center gap-6">
           <div
             className={`w-2 h-2 rounded-full ${STATUS_COLORS[focal.status]} ${focal.status === "composing" || focal.status === "delivering" ? "animate-pulse" : ""}`}
             style={focal.status === "composing" || focal.status === "delivering" ? { boxShadow: "0 0 15px var(--cykan)" } : undefined}
           />
-          <div className="flex items-center gap-6">
-            <span className="text-[11px] font-mono font-black uppercase tracking-[0.6em] text-white/20">{TYPE_LABELS[focal.type]}</span>
-            <span className="w-1 h-1 rounded-full bg-white/5" />
-            <span className={`text-[11px] font-mono font-black uppercase tracking-[0.6em] ${focal.status === "awaiting_approval" ? "text-[var(--warn)]" : focal.status === "failed" ? "text-[var(--danger)]" : "text-white/40"}`}>
+          <div className="flex items-center gap-4">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white/30">{TYPE_LABELS[focal.type]}</span>
+            <span className="w-1 h-1 rounded-full bg-white/10" />
+            <span className={`text-[10px] font-mono font-bold uppercase tracking-[0.2em] ${focal.status === "awaiting_approval" ? "text-[var(--warn)]" : focal.status === "failed" ? "text-[var(--danger)]" : "text-white/50"}`}>
               {STATUS_LABELS[focal.status]}
             </span>
           </div>
         </div>
-        <div className="font-mono text-[10px] uppercase tracking-[0.4em] text-white/10">
+        <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/20">
           {focal.sourcePlanId && (
-            <span>PLAN_ID: {focal.sourcePlanId.slice(0, 12)}</span>
+            <span>ID: {focal.sourcePlanId.slice(0, 8)}</span>
           )}
         </div>
       </header>
 
-      <h1 className="text-[56px] font-black text-white leading-[1] mb-16 tracking-tighter uppercase">{focal.title}</h1>
+      <h1 className="text-[28px] font-bold text-white leading-[1.2] mb-10 tracking-tight">{focal.title}</h1>
 
       {focal.body && (
         <div className="prose prose-invert max-w-none">
-          <div className="text-[19px] leading-[1.8] text-white/80 font-normal whitespace-pre-wrap">{focal.body}</div>
+          <div className="text-[15px] leading-[1.7] text-white/70 font-normal whitespace-pre-wrap">{focal.body}</div>
         </div>
       )}
 
       {!focal.body && focal.summary && (
-        <p className="text-[19px] leading-[1.8] text-white/80 font-normal">{focal.summary}</p>
+        <p className="text-[15px] leading-[1.7] text-white/70 font-normal">{focal.summary}</p>
       )}
 
       {focal.sections && focal.sections.length > 0 && (
-        <div className="mt-24 space-y-16">
+        <div className="mt-16 space-y-10">
           {focal.sections.map((section, i) => (
-            <div key={i} className="border-t border-white/[0.05] pt-12">
+            <div key={i} className="border-t border-white/[0.05] pt-8">
               {section.heading && (
-                <h3 className="text-[11px] font-mono font-black uppercase tracking-[0.8em] text-[var(--cykan)] mb-8 opacity-50">{section.heading}</h3>
+                <h3 className="text-[10px] font-mono font-bold uppercase tracking-[0.3em] text-[var(--cykan)] mb-4">{section.heading}</h3>
               )}
-              <div className="text-[17px] leading-[1.8] text-white/70 font-normal">{section.body}</div>
+              <div className="text-[15px] leading-[1.7] text-white/70 font-normal">{section.body}</div>
             </div>
           ))}
         </div>
       )}
 
       {error && (
-        <div className="mt-12 p-6 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] font-mono text-[11px] uppercase tracking-[0.2em] text-[var(--danger)]">
-          ERROR_LOG: {error}
+        <div className="mt-8 p-4 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] font-mono text-[10px] tracking-wide text-[var(--danger)]">
+          {error}
         </div>
       )}
 
-      <footer className="mt-20 pt-10 border-t border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-8 text-[9px] font-mono uppercase tracking-[0.2em] text-white/10">
+      <footer className="mt-12 pt-8 border-t border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-6 text-[9px] font-mono uppercase tracking-[0.15em] text-white/30">
           {focal.wordCount ? <span>METRIC: {focal.wordCount}_WORDS</span> : null}
           {focal.provider ? <span>SOURCE: {focal.provider}</span> : null}
         </div>
@@ -165,11 +165,11 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               focalStatus={focal.status}
               label={focal.primaryAction.label}
               onSuccess={onActionComplete}
-              className="px-8 py-4 text-[11px] font-mono font-black uppercase tracking-[0.3em] bg-[var(--cykan)] text-black hover:tracking-[0.5em] transition-all duration-500 shadow-2xl"
+              className="px-6 py-3 text-[11px] font-mono font-bold uppercase tracking-[0.2em] bg-[var(--cykan)] text-black hover:tracking-[0.3em] transition-all duration-300 shadow-xl"
             />
           ) : (
             <button
-              className={`px-8 py-4 text-[11px] font-mono font-black uppercase tracking-[0.3em] transition-all duration-500 hover:tracking-[0.5em] shadow-2xl ${
+              className={`px-6 py-3 text-[11px] font-mono font-bold uppercase tracking-[0.2em] transition-all duration-300 hover:tracking-[0.3em] shadow-xl ${
                 focal.primaryAction.kind === "approve"
                   ? "bg-white text-black"
                   : "bg-[var(--cykan)] text-black"
@@ -227,23 +227,23 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
           >
             <span className="text-4xl text-[var(--cykan)] opacity-20">◉</span>
           </div>
-          <p className="text-[10px] font-mono font-black uppercase tracking-[0.5em] text-white/10">Waiting_For_Data</p>
+          <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-white/30">Waiting_For_Data</p>
         </div>
       </div>
     );
   }
 
   if (compact) {
-    return (
-      <div className="max-w-none px-10 py-10">
-        <FocalContent focal={focal} onActionComplete={handleActionComplete} />
-      </div>
-    );
+return (
+    <div className="max-w-none px-8 py-6 bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#060606]">
+      <FocalContent focal={focal} onActionComplete={handleActionComplete} />
+    </div>
+  );
   }
 
   return (
-    <div className="h-full w-full bg-black">
-      <div className="max-w-5xl mx-auto px-16 py-20 min-h-full">
+    <div className="h-full w-full bg-gradient-to-br from-[#0a0a0a] via-[#080808] to-[#060606]">
+      <div className="max-w-4xl mx-auto px-12 py-12 min-h-full">
         <FocalContent focal={focal} onActionComplete={handleActionComplete} />
       </div>
     </div>

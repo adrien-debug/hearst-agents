@@ -55,26 +55,25 @@ export default function AdminSidebar() {
 
   return (
     <aside
-      className="w-56 fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-[var(--line)]"
-      style={{ background: "var(--rail)" }}
+      className="w-56 fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-white/[0.06] bg-gradient-to-b from-[#050505] via-[#0a0a0a] to-[#050505]"
     >
-      <div className="p-4 border-b border-[var(--line)]">
-        <span className="text-lg font-light text-[var(--text)]">Hearst</span>
-        <span className="ml-2 text-[10px] font-mono uppercase tracking-[0.2em] text-[var(--text-muted)]">Admin</span>
+      <div className="p-4 border-b border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent">
+        <span className="text-lg font-light text-white">Hearst</span>
+        <span className="ml-2 text-[10px] font-mono uppercase tracking-[0.15em] text-white/40">Admin</span>
       </div>
       <nav className="p-2 space-y-4">
         {SECTIONS.map((section) => (
           <div key={section.title}>
-            <p className="px-3 mb-1 ghost-meta-label">{section.title}</p>
+            <p className="px-3 mb-1 text-[10px] font-mono uppercase tracking-[0.15em] text-white/30">{section.title}</p>
             {section.links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 className={`
-                  block px-3 py-2 text-sm transition-colors border-l-2 rounded-none
+                  block px-3 py-2 text-sm transition-all border-l-2 rounded-none
                   ${pathname === link.href || (link.href !== "/admin" && pathname?.startsWith(link.href + "/"))
-                    ? "border-[var(--cykan)] text-[var(--text)] bg-[var(--bg-soft)]"
-                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-soft)]"
+                    ? "border-[var(--cykan)] text-white bg-gradient-to-r from-white/[0.05] to-transparent"
+                    : "border-transparent text-white/50 hover:text-white hover:bg-white/[0.03]"
                   }
                 `}
               >

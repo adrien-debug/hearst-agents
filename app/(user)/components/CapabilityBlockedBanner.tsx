@@ -80,7 +80,7 @@ export function CapabilityBlockedBanner({
         <div className="flex items-start gap-3 min-w-0">
           <GhostIconAlert className="w-5 h-5 shrink-0 text-[var(--warn)] mt-0.5" />
           <div className="min-w-0">
-            <p className="ghost-meta-label text-[var(--warn)] mb-1">CAPABILITY_LOCK</p>
+            <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--warn)] mb-1">Capability Locked</p>
             <h3 className="text-[13px] font-black uppercase tracking-tighter text-[var(--text)]">Refus: {label}</h3>
             <p className="text-[11px] font-light text-[var(--text-muted)] mt-1">Connecter une source pour déverrouiller.</p>
           </div>
@@ -101,7 +101,7 @@ export function CapabilityBlockedBanner({
       {draftMessage && onRestoreDraft && (
         <div className="px-4 py-3 border-b border-[var(--line)] flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <span className="ghost-meta-label">DRAFT_BUF</span>
+            <span className="text-[9px] font-mono uppercase tracking-[0.1em] text-white/30">Draft</span>
             <p className="text-[11px] font-mono text-[var(--text-muted)] truncate mt-1">{draftMessage}</p>
           </div>
           <button
@@ -115,7 +115,7 @@ export function CapabilityBlockedBanner({
       )}
 
       <div className="p-4">
-        <p className="ghost-meta-label mb-4">SRC_RECO</p>
+        <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/30 mb-4">Source Recognition</p>
         <div className="divide-y divide-[var(--line)]">
           {missingServices.slice(0, 2).map((service) => (
             <div key={service.id} className="flex flex-wrap items-center gap-4 py-4 first:pt-0">

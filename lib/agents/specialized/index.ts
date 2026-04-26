@@ -7,7 +7,6 @@
 export {
   executeStripeAgent,
   executeStripeAgentInRuntime,
-  isStripeTask,
   type StripeAgentInput,
   type StripeAgentOutput,
   type PaymentSummary,
@@ -18,7 +17,6 @@ export {
 export {
   executeCRMAgent,
   executeCRMAgentInRuntime,
-  isCRMTask,
   type CRMAgentInput,
   type CRMAgentOutput,
   type ContactSummary,
@@ -28,7 +26,6 @@ export {
 export {
   executeProductivityAgent,
   executeProductivityAgentInRuntime,
-  isProductivityTask,
   type ProductivityAgentInput,
   type ProductivityAgentOutput,
   type NotionSummary,
@@ -37,7 +34,6 @@ export {
 export {
   executeDesignAgent,
   executeDesignAgentInRuntime,
-  isDesignTask,
   type DesignAgentInput,
   type DesignAgentOutput,
   type FigmaSummary,
@@ -46,7 +42,6 @@ export {
 export {
   executeDeveloperAgent,
   executeDeveloperAgentInRuntime,
-  isDeveloperTask,
   type DeveloperAgentInput,
   type DeveloperAgentOutput,
   type RepoSummary,

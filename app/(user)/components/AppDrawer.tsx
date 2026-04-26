@@ -63,7 +63,7 @@ export function AppDrawer({ service, isOpen, onClose, onConnect, isConnecting: e
           <div className="flex items-start gap-4 mb-8">
             <ServiceIdGlyph id={service.id} icon={service.icon} size="lg" />
             <div className="min-w-0">
-              <h2 className="ghost-title-impact text-[15px] tracking-tighter">{service.name}</h2>
+              <h2 className="text-[16px] font-bold tracking-tight text-white">{service.name}</h2>
               <div className="flex flex-wrap items-center gap-3 mt-2">
                 <span className={`font-mono text-[9px] uppercase tracking-[0.2em] border-b pb-0.5 ${typeBadge.line} ${typeBadge.text}`}>
                   {typeBadge.label}

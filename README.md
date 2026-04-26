@@ -14,9 +14,18 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > ✅ Nango configuré (200+ OAuth providers)  
 > ✅ 407 tests pass • Build ✅ • TypeScript 0 erreur
 >
-> **🆕 Mise à jour 26/04/2026 — Provider routing** :  
-> ✅ Intent Google Calendar aligné entre orchestrateur, planner et fallback synthétique  
-> ✅ `KnowledgeRetriever` supporte aussi `retrieval_mode: "structured_data"` pour les événements calendrier
+> **🆕 Mise à jour 26/04/2026 — Capability-First Runtime** :  
+> ✅ Taxonomie centralisée (`lib/capabilities/taxonomy.ts`) — domaines, capabilities, tools, agents  
+> ✅ Capability Router (`lib/capabilities/router.ts`) — résolution unifiée domaine/mode/providers  
+> ✅ Capability Guard hard block dans `delegate()` — `PERMISSION_DENIED` si agent hors domaine  
+> ✅ Planner contraint — `step.agent` validé contre taxonomie, remappé si invalide  
+> ✅ Heuristiques spécialisées remplacées par routage domain-first (`DOMAIN_AGENT_ROUTES`)  
+> ✅ `detectRetrievalMode` supprimé — remplacé par `resolveRetrievalMode` (taxonomie)  
+> ✅ `execution-mode-selector.ts` + `types/execution-mode.ts` supprimés — remplacés par `resolveExecutionMode` (router)  
+> ✅ Provider preflight unifié via `scopeRequiresProviders(capScope)`  
+> ✅ Keywords dédupliquées : `resolveDataIntent` centralisé, `isXTask` supprimés du pipeline  
+> ✅ Exports morts nettoyés : `getRetrievalModeForDomain`, `isXTask` dans barrel  
+> ✅ 491 tests passent (0 régression)
 
 > ✅ **Phase 1 — V2 Foundation TERMINÉE (23/04/2026)**  
 > Legacy supprimé : `app/api/chat/route.ts`, `lib/orchestrator.ts`, `app/lib/missions/*`  
@@ -437,10 +446,13 @@ Le système utilise une nomenclature unifiée pour les états d'attente:
           └── Pour usage non-chat ou migration
 ```
 
-**Routing** (`lib/orchestrator/entry.ts`):
-1. `forceLegacyV1: true` → V1 (opt-out explicite)
-2. V2 enabled + rollout match → V2 (canonique)
-3. Sinon → V1 (safe fallback)
+**Routing** (`lib/engine/orchestrator/entry.ts`):
+- Unified orchestrator: all requests go through the capability-first runtime.
+- `resolveCapabilityScope()` → domain/capability/provider resolution.
+- `resolveExecutionMode()` → maps scope to execution mode (direct_answer, workflow, custom_agent, managed_agent).
+- `capabilityGuard()` in `delegate()` → hard block (PERMISSION_DENIED) if agent is out-of-domain.
+- Planner validation: `step.agent` checked against taxonomy, remapped to valid agent if needed.
+- Dead code removed: `execution-mode-selector.ts`, `types/execution-mode.ts`, `detectRetrievalMode`, `buildExecutionContext`.
 
 **État de convergence**:
 | Feature | V2 Canonique | V1 Legacy |

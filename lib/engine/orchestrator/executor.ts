@@ -37,6 +37,7 @@ export async function executePlan(
   db: SupabaseClient,
   engine: RunEngine,
   plan: Plan,
+  capabilityDomain?: string,
 ): Promise<ExecutionResult> {
   const store = new PlanStore(db);
   const completedSteps: string[] = [];
@@ -78,6 +79,7 @@ export async function executePlan(
           plan_id: plan.id,
           plan_step_id: planStep.id,
           completed_steps: completedSteps,
+          ...(capabilityDomain ? { capability_domain: capabilityDomain } : {}),
         },
         expected_output: planStep.expected_output as ExpectedOutput,
         retrieval_mode: planStep.retrieval_mode,

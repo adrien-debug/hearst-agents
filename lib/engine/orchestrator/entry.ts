@@ -19,8 +19,6 @@ export interface OrchestrateInput {
   missionId?: string;
   tenantId?: string;
   workspaceId?: string;
-  /** Force legacy V1 execution (for explicit backward compatibility) */
-  forceLegacyV1?: boolean;
 }
 
 /**

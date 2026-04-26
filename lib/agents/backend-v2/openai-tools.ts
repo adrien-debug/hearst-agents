@@ -69,6 +69,26 @@ export function toOpenAITools(): OpenAI.Beta.AssistantTool[] {
 }
 
 /**
+ * Convertit en format OpenAI Assistants, filtered by allowed tool names.
+ * Used by the capability-first runtime to restrict tools per domain.
+ */
+export function toOpenAIToolsFiltered(allowedNames: string[]): OpenAI.Beta.AssistantTool[] {
+  if (allowedNames.length === 0) return toOpenAITools();
+
+  const allowed = new Set(allowedNames);
+  return Array.from(tools.values())
+    .filter(t => allowed.has(t.definition.function.name))
+    .map(t => ({
+      type: "function" as const,
+      function: {
+        name: t.definition.function.name,
+        description: t.definition.function.description,
+        parameters: t.definition.function.parameters,
+      },
+    }));
+}
+
+/**
  * Exécute un outil par nom.
  */
 export async function executeTool(

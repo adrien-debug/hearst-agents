@@ -78,45 +78,45 @@ export function ChatInput({
   }
 
   const surfacePlaceholders: Record<string, string> = {
-    home: "ENTER_COMMAND_",
-    inbox: "SEARCH_MESSAGES_",
-    calendar: "QUERY_SCHEDULE_",
-    files: "LOCATE_DOCUMENTS_",
-    tasks: "INIT_MISSION_",
-    apps: "CONFIG_CONNECTORS_",
+    home: "Ask anything...",
+    inbox: "Search messages...",
+    calendar: "Ask about your schedule...",
+    files: "Find documents...",
+    tasks: "Create a mission...",
+    apps: "Configure connectors...",
   };
 
   return (
-    <div className="px-12 py-20 bg-transparent">
-      <div className="max-w-6xl mx-auto relative">
+    <div className="px-10 py-12 bg-gradient-to-t from-[#050505] via-[#080808] to-transparent">
+      <div className="max-w-4xl mx-auto relative">
         {/* @mention Typeahead */}
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="absolute bottom-full mb-12 w-full bg-black/95 backdrop-blur-3xl rounded-[12px] shadow-[0_40px_100px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden z-50"
+            className="absolute bottom-full mb-8 w-full bg-black/95 backdrop-blur-xl rounded-lg shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-white/10 overflow-hidden z-50"
           >
             {matchingServices.length === 0 ? (
-              <div className="p-8 text-[12px] font-mono uppercase tracking-[0.3em] text-white/30">
+              <div className="p-4 text-[11px] font-mono tracking-wide text-white/40">
                 {typeaheadQuery ? (
-                  <>No_Source_Found: {typeaheadQuery}</>
+                  <>No source found: {typeaheadQuery}</>
                 ) : (
-                  <>Mention_Source: @</>
+                  <>Type @ to mention a source</>
                 )}
               </div>
             ) : (
-              <div className="py-4">
+              <div className="py-2">
                 {matchingServices.map((service) => (
                   <button
                     key={service.id}
                     onClick={() => selectService(service)}
-                    className="w-full flex items-center gap-8 px-8 py-5 text-left hover:bg-white/5 transition-all duration-300 group"
+                    className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-white/5 transition-all duration-200 group"
                   >
-                    <span className="text-3xl grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
+                    <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
                     <div className="flex-1">
-                      <p className="text-[16px] font-black uppercase tracking-tighter text-white">@{service.id}</p>
-                      <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-white/30">{service.name}</p>
+                      <p className="text-[14px] font-medium tracking-tight text-white">@{service.id}</p>
+                      <p className="text-[10px] font-mono tracking-wide text-white/40">{service.name}</p>
                     </div>
-                    <span className="text-[11px] font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity tracking-widest">LINK_</span>
+                    <span className="text-[10px] font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">Link</span>
                   </button>
                 ))}
               </div>
@@ -126,16 +126,16 @@ export function ChatInput({
 
         {/* Input Container */}
         <div
-          className="flex items-end gap-10 px-12 py-12 bg-white/[0.015] border border-white/[0.05] transition-all duration-1000 group focus-within:bg-white/[0.03] focus-within:border-white/[0.1] shadow-[0_40px_100px_rgba(0,0,0,0.6)] rounded-sm"
+          className="flex items-end gap-6 px-8 py-6 bg-white/[0.015] border border-white/[0.05] transition-all duration-500 group focus-within:bg-white/[0.03] focus-within:border-white/[0.1] shadow-[0_20px_60px_rgba(0,0,0,0.5)] rounded-sm"
         >
-          <span className="text-[12px] font-mono text-[var(--cykan)] pt-5 opacity-20 group-focus-within:opacity-100 transition-opacity tracking-[0.4em]">HEARST_OS &gt;</span>
+          <span className="text-[11px] font-mono text-[var(--cykan)] pt-2 opacity-30 group-focus-within:opacity-100 transition-opacity tracking-[0.2em]">&gt;</span>
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
               e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -150,34 +150,34 @@ export function ChatInput({
                 setHideTypeahead(true);
               }
             }}
-            placeholder={placeholder || surfacePlaceholders[surface] || "ENTER_COMMAND_"}
+            placeholder={placeholder || surfacePlaceholders[surface] || "Type a message..."}
             rows={1}
-            className="flex-1 bg-transparent text-[38px] font-light tracking-tighter text-white placeholder:text-white/[0.04] border-0 focus:ring-0 focus:outline-none resize-none min-h-[48px] max-h-[200px] leading-tight p-0 m-0"
+            className="flex-1 bg-transparent text-[16px] font-normal tracking-normal text-white placeholder:text-white/[0.2] border-0 focus:ring-0 focus:outline-none resize-none min-h-[28px] max-h-[150px] leading-relaxed p-0 m-0"
           />
-          <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-white/[0.03] overflow-hidden">
-            <div className="h-full bg-[var(--cykan)] w-0 group-focus-within:w-full transition-all duration-1000 ease-in-out shadow-[0_0_30px_var(--cykan)]" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-white/[0.05] overflow-hidden">
+            <div className="h-full bg-[var(--cykan)] w-0 group-focus-within:w-full transition-all duration-500 ease-out" />
           </div>
           {isRunning ? (
-            <div className="w-12 h-12 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 flex items-center justify-center shrink-0">
               <div
-                className="w-6 h-6 border-[3px] border-white/5 border-t-[var(--cykan)] rounded-full animate-spin shadow-[0_0_20px_var(--cykan)]"
+                className="w-4 h-4 border-2 border-white/10 border-t-[var(--cykan)] rounded-full animate-spin"
               />
             </div>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={!input.trim()}
-              className="w-12 h-12 flex items-center justify-center shrink-0 text-white/10 hover:text-black hover:bg-[var(--cykan)] transition-all duration-500 rounded-sm disabled:opacity-0"
+              className="w-8 h-8 flex items-center justify-center shrink-0 text-white/30 hover:text-black hover:bg-[var(--cykan)] transition-all duration-300 rounded-sm disabled:opacity-0"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </button>
           )}
         </div>
-        <div className="absolute left-0 right-0 -bottom-10 flex justify-center opacity-20 hover:opacity-100 transition-opacity">
-          <p className="text-[10px] text-white font-mono tracking-[0.6em] uppercase">
-            [ENT] SEND_ [SHIFT+ENT] LINE_ [@] LINK_
+        <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-30 hover:opacity-100 transition-opacity">
+          <p className="text-[9px] text-white font-mono tracking-[0.15em]">
+            Enter to send · Shift+Enter for new line · @ to mention
           </p>
         </div>
       </div>

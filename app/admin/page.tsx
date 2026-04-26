@@ -83,17 +83,17 @@ export default async function DashboardPage() {
     : 0;
 
   return (
-    <div className="px-8 py-10">
-      <div className="mb-8 border-b border-[var(--line)] pb-8">
-        <p className="ghost-meta-label">Hearst</p>
-        <h1 className="mt-2 ghost-title-impact text-2xl">Command Center</h1>
-        <p className="mt-2 text-[13px] font-light leading-relaxed text-[var(--text-muted)]">
+    <div className="px-8 py-10 bg-gradient-to-br from-[#050505] via-[#080808] to-[#060606] min-h-screen">
+      <div className="mb-8 border-b border-white/[0.06] pb-8 bg-gradient-to-r from-white/[0.03] to-transparent p-6 rounded-lg">
+        <p className="text-[10px] font-mono uppercase tracking-[0.15em] text-white/30">Hearst</p>
+        <h1 className="mt-2 text-[28px] font-bold tracking-tight text-white">Command Center</h1>
+        <p className="mt-2 text-[13px] font-normal leading-relaxed text-white/50">
           Vue d&apos;ensemble de la plateforme d&apos;orchestration.
         </p>
       </div>
 
       {dbError && (
-        <div className="mb-6 border-t border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)] font-mono text-[12px]">
+        <div className="mb-6 border border-[var(--danger)]/30 bg-gradient-to-r from-[var(--danger)]/10 to-transparent px-4 py-3 rounded-lg text-sm text-[var(--danger)] font-mono">
           {dbError}
         </div>
       )}
@@ -110,9 +110,9 @@ export default async function DashboardPage() {
       </div>
 
       {/* Recent agents */}
-      <div className="mb-8 flex items-center justify-between">
-        <h2 className="text-[11px] font-mono uppercase tracking-[0.25em] text-[var(--text-muted)]">Agents</h2>
-        <Link href="/admin/agents" className="text-[10px] font-mono uppercase tracking-[0.15em] text-[var(--text-faint)] border-b border-[var(--line-strong)] pb-0.5 hover:text-[var(--cykan)] hover:border-[var(--cykan)] transition-colors">
+      <div className="mb-6 flex items-center justify-between bg-gradient-to-r from-white/[0.02] to-transparent p-4 rounded-lg border border-white/[0.05]">
+        <h2 className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/40">Agents</h2>
+        <Link href="/admin/agents" className="text-[10px] font-mono tracking-[0.1em] text-white/30 border-b border-white/10 pb-0.5 hover:text-[var(--cykan)] hover:border-[var(--cykan)] transition-colors">
           View all
         </Link>
       </div>
