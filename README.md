@@ -276,15 +276,20 @@ Le système utilise une nomenclature unifiée pour les états d'attente:
 - `approve` — Approuve un plan en `awaiting_approval` et reprend l'exécution
 - `pause` — Met en pause une mission/watcher active
 - `resume` — Reprend une mission/watcher en pause
+- **`retry`** — Réessaie un focal en statut `failed` (mission ou plan/run)
 
 **API endpoints**:
 - `POST /api/v2/plans/[id]/approve` — Approuve et exécute un plan
 - `POST /api/v2/missions/[id]/pause` — Met en pause une mission
 - `POST /api/v2/missions/[id]/resume` — Reprend une mission
+- **`POST /api/v2/missions/[id]/run`** — Relance une mission (retry)
+- **`POST /api/orchestrate`** — Relance un plan/run (retry avec message "Reprends depuis la dernière erreur")
 
 **Implémentation**:
 - `FocalStage.tsx` et `RightPanel.tsx` appellent les APIs via `fetch()`
-- Les identifiants canoniques (`sourcePlanId`, `missionId`) sont portés par le contrat focal
+- **`FocalRetryButton`** — Composant partagé pour actions retry (mission vs orchestrate)
+- **Manifestation automatique** — `augmentWithRetryAction()` ajoute `primaryAction.kind = "retry"` aux focaux `status === "failed"`
+- Les identifiants canoniques (`sourcePlanId`, `missionId`, `threadId`) sont portés par le contrat focal
 - Refresh automatique du RightPanel après succès
 - États de loading et erreur gérés côté client
 - Le centre (`FocalStage`) et le RightPanel consomment le même contrat enrichi via `/api/v2/right-panel`
