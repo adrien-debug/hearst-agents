@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react";
 import { LeftPanel } from "./components/LeftPanel";
 import { RightPanel } from "./components/RightPanel";
+import { TopBar } from "./components/TopBar";
 import { ToastContainer } from "@/app/components/ToastContainer";
 import { useToast } from "@/app/hooks/use-toast";
 function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -20,16 +21,19 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     <SessionProvider>
       <ToastProvider>
         <div
-          className="h-screen w-full text-white flex overflow-hidden"
-          style={{ background: "var(--bg)" }}
+          data-theme="light"
+          className="h-screen w-full flex overflow-hidden"
+          style={{ background: "var(--bg-center)", color: "var(--text)" }}
         >
-          {/* LeftPanel: conversations — hidden on mobile */}
           <div className="hidden md:block">
             <LeftPanel />
           </div>
 
-          {/* Main content: always visible, full width on mobile */}
-          <main className="flex-1 flex flex-col min-w-0 relative">{children}</main>
+          {/* Main content: TopBar puis surface */}
+          <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
+            <TopBar />
+            {children}
+          </main>
 
           {/* RightPanel: drawer on mobile, fixed width on desktop */}
           <RightPanel />

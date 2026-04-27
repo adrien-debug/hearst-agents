@@ -76,6 +76,51 @@
   --space-24: 120px;
   --space-32: 160px;
 
+  /* ─── Hearst Connect — Layout shell (3 zones) ─────────────────
+   * Sidebars : largeurs égales, fluides ~20vw (18–22% selon viewport),
+   * bornées pour rester lisibles à toute taille. Le centre prend le
+   * reste de l'espace via flex-1 → ratio ~20/60/20 cohérent à toutes
+   * les tailles, sans zones mortes en grand écran. */
+  --width-threads: clamp(220px, 20vw, 480px);
+  --width-threads-collapsed: 64px;
+  --width-context: clamp(220px, 20vw, 480px);
+  --width-center-max: 960px;
+  --width-actions: clamp(440px, 36vw, 720px);
+  --height-topbar: 48px;
+
+  /* ─── Hearst Connect — Halo core (idle home centerpiece) ────── */
+  --size-halo-core: 112px;
+
+  /* ─── Hearst Connect — Cards (suggestion grid) ─────────────── */
+  --card-width: 312px;
+  --card-height: 88px;
+  --card-gap: 8px;
+  --card-pad: 16px;
+
+  /* ─── Hearst Connect — Input (chat) ─────────────────────────── */
+  --input-max-width: 960px;
+  --input-height: 64px;
+
+  /* ─── Hearst Connect — Surface levels (cockpit dark) ──────────
+   * Variante par défaut = dark cockpit. Le user surface bascule en
+   * light via [data-theme="light"] plus bas dans ce fichier. */
+  --bg-center: #0A0D10;
+  --bg-rail: #16191D;
+
+  /* ─── Hearst Connect — Borders alpha (UI overhaul) ──────────── */
+  --border-shell: rgba(255, 255, 255, 0.06);
+  --border-soft: rgba(255, 255, 255, 0.04);
+  --border-input: rgba(255, 255, 255, 0.08);
+  --card-flat-bg: rgba(255, 255, 255, 0.02);
+  --card-flat-border: rgba(255, 255, 255, 0.06);
+  --surface-card: rgba(255, 255, 255, 0.035);
+  --cykan-bg-active: rgba(45, 212, 191, 0.08);
+  --cykan-bg-hover: rgba(45, 212, 191, 0.05);
+  --cykan-border-hover: rgba(45, 212, 191, 0.22);
+  --text-inactive: #8a8a8a;
+  --text-subtitle: #9a9a9a;
+  --text-placeholder: #777777;
+
   /* ─── Hearst Connect — Radius scale ─────────────────────────── */
   --radius-none: 0px;
   --radius-xs: 4px;
@@ -117,8 +162,10 @@
   --tracking-subtle: 0.03em;
   --tracking-caption: 0.08em;
   --tracking-wide: 0.12em;
+  --tracking-label: 0.14em;
   --tracking-stretch: 0.18em;
   --tracking-display: 0.20em;
+  --tracking-section: 0.22em;
   --tracking-banner: 0.25em;
   --tracking-marquee: 0.30em;
   --tracking-brand: 0.32em;
@@ -158,7 +205,6 @@
   --color-info-bg: rgba(59, 130, 246, 0.10);
   --color-info-border: rgba(59, 130, 246, 0.20);
 
-  /* ─── Hearst Connect — Cinematic stage gradients (cyan) ─────── */
   --stage-shoulder: radial-gradient(ellipse 160% 100% at 50% -30%, rgba(255, 255, 255, 0.045) 0%, transparent 55%);
   --stage-veil: linear-gradient(180deg, rgba(255, 255, 255, 0.008) 0%, transparent 55%);
   --stage-carbon: radial-gradient(ellipse at 25% 15%, rgba(15, 15, 15, 0.6) 0%, transparent 45%),
@@ -166,6 +212,79 @@
                   radial-gradient(ellipse at 50% 50%, rgba(5, 5, 5, 0.8) 0%, transparent 70%);
   --stage-halo-cyan: radial-gradient(ellipse 160% 100% at 50% -30%, rgba(45, 212, 191, 0.06) 0%, transparent 55%);
   --stage-dot-grid: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.025) 1px, transparent 0);
+}
+
+/* ─── Light theme — variant 10 "Linear day" ────────────────────
+ * Activé via [data-theme="light"] sur la racine du layout user.
+ * On flip surfaces / texte / bordures vers le light cool neutre, on
+ * conserve le cykan turquoise (#2DD4BF) comme accent — il porte sur
+ * fond clair grâce à sa saturation. Les pages non-scopées (admin,
+ * etc.) restent en dark par défaut. */
+[data-theme="light"] {
+  /* Surfaces */
+  --bg: #F4F4F6;
+  --bg-elev: #FAFAFB;
+  --bg-soft: #ECECEE;
+  --background: #F4F4F6;
+  --foreground: #1C1D20;
+  --surface: #FFFFFF;
+  --rail: #FFFFFF;
+
+  --bg-center: #F4F4F6;
+  --bg-rail: #FFFFFF;
+
+  /* Material scale (light) — utilisé par les cards admin/dashboard */
+  --mat-050: #FAFAFB;
+  --mat-100: #F4F4F6;
+  --mat-200: #EFEFF1;
+  --mat-300: #E9E9EC;
+  --mat-400: #E2E2E5;
+  --mat-gray: #DCDCE0;
+
+  /* Text scale — sombre sur fond clair */
+  --text: #1C1D20;
+  --text-soft: rgba(28, 29, 32, 0.88);
+  --text-muted: rgba(28, 29, 32, 0.68);
+  --text-faint: rgba(28, 29, 32, 0.46);
+  --text-ghost: rgba(28, 29, 32, 0.26);
+  --text-inactive: rgba(28, 29, 32, 0.55);
+  --text-subtitle: rgba(28, 29, 32, 0.55);
+  --text-placeholder: rgba(28, 29, 32, 0.42);
+
+  /* Lines / borders */
+  --line: rgba(28, 29, 32, 0.06);
+  --line-strong: rgba(28, 29, 32, 0.10);
+  --line-active: rgba(45, 212, 191, 0.30);
+
+  --border-shell: rgba(28, 29, 32, 0.08);
+  --border-soft: rgba(28, 29, 32, 0.05);
+  --border-input: rgba(28, 29, 32, 0.12);
+  --border-subtle: rgba(28, 29, 32, 0.08);
+  --border-default: rgba(28, 29, 32, 0.14);
+  --border-strong: rgba(28, 29, 32, 0.20);
+  --border-focus: rgba(28, 29, 32, 0.40);
+
+  /* Translucent surfaces */
+  --surface-1: rgba(28, 29, 32, 0.025);
+  --surface-2: rgba(28, 29, 32, 0.045);
+  --surface-card: rgba(28, 29, 32, 0.035);
+  --card-flat-bg: rgba(28, 29, 32, 0.025);
+  --card-flat-border: rgba(28, 29, 32, 0.08);
+
+  /* Cykan turquoise conservé — opacités lift pour passer sur clair */
+  --cykan-bg-active: rgba(45, 212, 191, 0.14);
+  --cykan-bg-hover: rgba(45, 212, 191, 0.08);
+  --cykan-border-hover: rgba(45, 212, 191, 0.45);
+  --cykan-surface: rgba(45, 212, 191, 0.06);
+  --cykan-border: rgba(45, 212, 191, 0.35);
+
+  /* Shadows — plus discrètes sur clair */
+  --shadow-sm: 0 1px 2px rgba(28, 29, 32, 0.06);
+  --shadow-md: 0 4px 12px rgba(28, 29, 32, 0.08);
+  --shadow-lg: 0 12px 32px rgba(28, 29, 32, 0.10);
+  --shadow-card: 0 1px 2px rgba(28, 29, 32, 0.04),
+                 0 12px 24px rgba(28, 29, 32, 0.06);
+  --shadow-input-focus: 4px 4px 0px var(--cyan-accent);
 }
 
 @theme inline {
@@ -404,46 +523,36 @@ body {
 
 /* ── Chat transcript utilities ────────── */
 
-/* Vertical cyan rule on AI turns — halo'd "living thread" */
-.chat-ai-rule {
-  background: linear-gradient(180deg,
-    rgba(45, 212, 191, 0) 0%,
-    rgba(45, 212, 191, 0.6) 20%,
-    rgba(45, 212, 191, 0.6) 80%,
-    rgba(45, 212, 191, 0) 100%);
-  box-shadow: 0 0 8px rgba(45, 212, 191, 0.3);
+/* Caret discret — fin trait, pas de halo, pulsation douce */
+.chat-caret {
+  width: 1px;
+  height: 14px;
+  background: var(--text-faint);
+  margin-left: 3px;
+  animation: chat-caret-fade 1.2s ease-in-out infinite;
 }
 
-/* Streaming block cursor with halo */
-.chat-cursor {
-  width: 9px;
-  height: 16px;
-  background: var(--cykan);
-  margin-left: 4px;
-  animation: chat-cursor-blink 1s ease-in-out infinite;
-  box-shadow:
-    0 0 8px rgba(45, 212, 191, 0.6),
-    0 0 24px rgba(45, 212, 191, 0.3);
+@keyframes chat-caret-fade {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.85; }
 }
 
-@keyframes chat-cursor-blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0.3; }
+/* Trois points "en train d'écrire" — fade simple, pas de gradient animé */
+.chat-typing-dots {
+  display: inline-block;
+  letter-spacing: 0.25em;
+  animation: chat-typing-fade 1.6s ease-in-out infinite;
 }
 
-/* Shimmer placeholder for AI preparing response */
+@keyframes chat-typing-fade {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.85; }
+}
+
+/* Legacy shimmer — gardé sans animation pour ne pas casser d'autres écrans
+   qui pourraient s'en servir (e.g. skeleton génériques). */
 .chat-shimmer {
-  background: linear-gradient(90deg,
-    rgba(45, 212, 191, 0.05) 0%,
-    rgba(45, 212, 191, 0.15) 50%,
-    rgba(45, 212, 191, 0.05) 100%);
-  background-size: 200% 100%;
-  animation: chat-shimmer-slide 2s linear infinite;
-}
-
-@keyframes chat-shimmer-slide {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  background: var(--surface-2);
 }
 
 /* ── Scrollbar styling ────────────────── */
@@ -546,110 +655,83 @@ body {
    in the top-left, animated bottom accent line, deeper hover halo. */
 .halo-suggestion {
   position: relative;
-  background-color: var(--mat-300);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  isolation: isolate;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 8px 32px -8px rgba(0, 0, 0, 0.5);
-  transition:
-    transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    border-color 200ms ease,
-    background-color 200ms ease;
+  width: 100%;
+  height: var(--card-height);
+  padding: var(--card-pad);
+  background: var(--card-flat-bg);
+  border: 1px solid var(--card-flat-border);
+  border-radius: 0;
+  box-shadow: none;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
 }
 
-/* Ambient cyan halo, top-left, behind the content */
-.halo-suggestion::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 65% 55% at 0% 0%,
-    rgba(45, 212, 191, 0.08) 0%,
-    transparent 65%
-  );
-  opacity: 0.6;
-  z-index: -1;
-  transition: opacity 300ms ease;
-  pointer-events: none;
-}
-
-/* Bottom accent line — dim by default, illuminates on hover */
+.halo-suggestion::before,
 .halo-suggestion::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(45, 212, 191, 0.25) 25%,
-    rgba(45, 212, 191, 0.55) 50%,
-    rgba(45, 212, 191, 0.25) 75%,
-    transparent 100%
-  );
-  opacity: 0.3;
-  transition: opacity 300ms ease, height 250ms ease;
-  pointer-events: none;
+  content: none;
 }
 
 .halo-suggestion:hover {
-  transform: translateY(-3px);
-  background-color: var(--mat-gray);
-  border-color: rgba(45, 212, 191, 0.18);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 4px 12px rgba(0, 0, 0, 0.5),
-    0 24px 48px -16px rgba(45, 212, 191, 0.18),
-    0 32px 64px -20px rgba(0, 0, 0, 0.6);
-}
-
-.halo-suggestion:hover::before {
-  opacity: 1;
-}
-
-.halo-suggestion:hover::after {
-  opacity: 1;
-  height: 1.5px;
+  background: var(--cykan-bg-hover);
+  box-shadow: inset 2px 0 0 var(--cykan);
 }
 
 .halo-suggestion:active {
-  transform: translateY(-1px);
-  transition-duration: 80ms;
+  background: var(--cykan-bg-active);
 }
 
-/* Subtle frame for service logos (white-on-dark contrast) */
+.halo-suggestion:focus-visible {
+  outline: none;
+  box-shadow: inset 2px 0 0 var(--cykan), inset 0 0 0 1px var(--cykan-border-hover);
+}
+
+/* Action row — flat list item, OS-cockpit style.
+ * Height = 64px : 2 lignes (titre t-15 + sous-label t-11) confortables,
+ * grille 8px préservée. Pas de cards, pas de radius, pas de logos. */
+.halo-action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  height: 64px;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border-shell);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.halo-action-row:first-child {
+  border-top: 1px solid var(--border-shell);
+}
+
+.halo-action-row:hover {
+  background: var(--cykan-bg-hover);
+  box-shadow: inset 2px 0 0 var(--cykan);
+}
+
+.halo-action-row:focus-visible {
+  outline: none;
+  background: var(--cykan-bg-hover);
+  box-shadow: inset 2px 0 0 var(--cykan), inset 0 0 0 1px var(--cykan-border-hover);
+}
+
+/* Flat frame for service logos — terminal feel, no glass / no glow */
 .halo-suggestion-logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.96) 0%,
-    rgba(245, 250, 250, 0.92) 100%
-  );
-  border-radius: 10px;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
-    0 2px 8px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(45, 212, 191, 0.05);
-  transition: box-shadow 300ms ease, transform 300ms ease;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--card-flat-border);
+  border-radius: 0;
+  box-shadow: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
   flex-shrink: 0;
 }
 
 .halo-suggestion:hover .halo-suggestion-logo {
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.4),
-    0 4px 14px rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(45, 212, 191, 0.18),
-    0 0 24px -4px rgba(45, 212, 191, 0.25);
-  transform: scale(1.03);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--cykan-border-hover);
 }
 
 /* Signature input focus — offset cyan shadow (non-blurred) */
@@ -814,4 +896,185 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
     opacity: 1;
     transform: translate3d(0, 0, 0);
   }
+}
+
+/* ── Halo Core ──────────────────────────────────────────────────
+ * Centerpiece visuel de l'idle home — orbe lumineux cyan qui remplace
+ * le wordmark "Hearst" t-48. Cf. mock-vision lignes 199-247.
+ * Trois couches : halo radial soft (background), anneau rotatif lent
+ * (::before), pulse central discret (::after).
+ * ──────────────────────────────────────────────────────────────── */
+.halo-core {
+  position: relative;
+  width: var(--size-halo-core);
+  height: var(--size-halo-core);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(45, 212, 191, 0.11) 0%,
+      rgba(45, 212, 191, 0.036) 35%,
+      transparent 70%);
+  pointer-events: none;
+}
+
+.halo-core::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(45, 212, 191, 0.15);
+  animation: halo-core-rotate 24s linear infinite;
+}
+
+.halo-core::after {
+  content: "";
+  position: absolute;
+  inset: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--cyan-accent);
+  box-shadow:
+    0 0 8px rgba(45, 212, 191, 0.36),
+    0 0 20px rgba(45, 212, 191, 0.21);
+  animation: halo-core-pulse 4s ease-in-out infinite;
+}
+
+@keyframes halo-core-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes halo-core-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.7; }
+}
+
+/* ── Run halo indicator ────────────────────────────────────────
+ * Indicateur circulaire (RightPanel header) symétrique au bloc logo.
+ * 4 régimes visuels : idle / running / awaiting / error. Pilotés par
+ * data-state lu sur le runtime store. pathLength=100 sur le SVG arc
+ * permet d'exprimer la longueur en % indépendamment du rayon. */
+.halo-runs {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* currentColor pilote le track de fond — suit le texte du thème */
+  color: var(--text);
+}
+
+.halo-runs-spinner {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);  /* arc démarre à midi */
+}
+
+.halo-runs-spinner svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.halo-runs-arc {
+  stroke: var(--cykan);
+  stroke-dasharray: 100 100;
+  stroke-dashoffset: 88;        /* idle ≈ 12% d'arc visible */
+  opacity: 0.95;                /* visible sur dark ET light */
+  transition:
+    stroke-dasharray var(--duration-slow) var(--ease-out-soft),
+    stroke-dashoffset var(--duration-slow) var(--ease-out-soft),
+    stroke var(--duration-base) var(--ease-standard),
+    opacity var(--duration-base) var(--ease-standard);
+}
+
+/* Idle — petit arc + rotation très lente (signe de vie) */
+.halo-runs[data-state="idle"] .halo-runs-spinner {
+  animation: halo-runs-rotate 14s linear infinite;
+}
+
+/* Running (streaming / connecting / processing) — arc plus long, rotation rapide */
+.halo-runs[data-state="streaming"]   .halo-runs-arc,
+.halo-runs[data-state="connecting"]  .halo-runs-arc,
+.halo-runs[data-state="processing"]  .halo-runs-arc {
+  stroke-dashoffset: 68;        /* ≈ 32% d'arc */
+  opacity: 1;
+}
+
+.halo-runs[data-state="streaming"]   .halo-runs-spinner,
+.halo-runs[data-state="connecting"]  .halo-runs-spinner,
+.halo-runs[data-state="processing"]  .halo-runs-spinner {
+  animation: halo-runs-rotate 1.6s linear infinite;
+}
+
+/* Awaiting — anneau plein "100%", warn color, rotation arrêtée */
+.halo-runs[data-state="awaiting_approval"]      .halo-runs-arc,
+.halo-runs[data-state="awaiting_clarification"] .halo-runs-arc {
+  stroke: var(--warn);
+  stroke-dashoffset: 0;
+  opacity: 1;
+}
+
+.halo-runs[data-state="awaiting_approval"]      .halo-runs-spinner,
+.halo-runs[data-state="awaiting_clarification"] .halo-runs-spinner {
+  animation: none;
+}
+
+/* Error — demi-arc danger, statique */
+.halo-runs[data-state="error"] .halo-runs-arc {
+  stroke: var(--danger);
+  stroke-dashoffset: 50;
+  opacity: 0.95;
+}
+
+.halo-runs[data-state="error"] .halo-runs-spinner {
+  animation: none;
+}
+
+@keyframes halo-runs-rotate {
+  from { transform: rotate(-90deg); }
+  to   { transform: rotate(270deg); }
+}
+
+/* Centre — dot pulsant, change de couleur selon l'état */
+.halo-runs-dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cykan);
+  box-shadow: 0 0 6px rgba(45, 212, 191, 0.5);
+  animation: halo-runs-dot-pulse 3.2s ease-in-out infinite;
+}
+
+.halo-runs[data-state="streaming"]  .halo-runs-dot,
+.halo-runs[data-state="connecting"] .halo-runs-dot,
+.halo-runs[data-state="processing"] .halo-runs-dot {
+  animation: halo-runs-dot-pulse 1.1s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.7);
+}
+
+.halo-runs[data-state="awaiting_approval"]      .halo-runs-dot,
+.halo-runs[data-state="awaiting_clarification"] .halo-runs-dot {
+  background: var(--warn);
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.55);
+  animation: none;
+}
+
+.halo-runs[data-state="error"] .halo-runs-dot {
+  background: var(--danger);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes halo-runs-dot-pulse {
+  0%, 100% { transform: scale(1);   opacity: 0.85; }
+  50%      { transform: scale(1.4); opacity: 1; }
 }

@@ -87,8 +87,11 @@ export function ChatInput({
   };
 
   return (
-    <div className="px-10 py-12 bg-gradient-to-t from-[var(--mat-050)] via-[var(--bg-soft)] to-transparent">
-      <div className="max-w-4xl mx-auto relative">
+    <div className="px-10 pt-5 pb-8 border-t border-[var(--border-shell)]">
+      <div
+        className="mx-auto relative"
+        style={{ maxWidth: "var(--input-max-width)" }}
+      >
         {/* @mention Typeahead */}
         {showTypeahead && (
           <div
@@ -98,9 +101,9 @@ export function ChatInput({
             {matchingServices.length === 0 ? (
               <div className="p-4 t-11 font-mono tracking-[0.2em] text-[var(--text-faint)]">
                 {typeaheadQuery ? (
-                  <>No source found: {typeaheadQuery}</>
+                  <>Aucune source trouvée&nbsp;: {typeaheadQuery}</>
                 ) : (
-                  <>Type @ to mention a source</>
+                  <>Tapez @ pour mentionner une source</>
                 )}
               </div>
             ) : (
@@ -126,9 +129,10 @@ export function ChatInput({
 
         {/* Input Container */}
         <div
-          className="flex items-end gap-6 px-8 py-6 bg-[var(--surface-1)] border border-[var(--surface-2)] transition-all duration-500 group focus-within:bg-[var(--surface-2)] focus-within:border-[var(--line-active)] rounded-sm"
+          className="flex items-center gap-4 px-5 bg-[var(--card-flat-bg)] border border-[var(--border-input)] transition-colors duration-200 group focus-within:bg-[var(--surface-2)] focus-within:border-[var(--cykan-border-hover)]"
+          style={{ height: "var(--input-height)" }}
         >
-          <span className="t-11 font-mono text-[var(--cykan)] pt-2 opacity-30 group-focus-within:opacity-100 group-focus-within:halo-cyan-sm transition-all tracking-[0.2em]">&gt;</span>
+          <span className="t-11 font-mono text-[var(--cykan)] opacity-30 group-focus-within:opacity-100 group-focus-within:halo-cyan-sm transition-all tracking-[0.2em] self-center">&gt;</span>
           <textarea
             ref={inputRef}
             value={input}
@@ -152,7 +156,7 @@ export function ChatInput({
             }}
             placeholder={placeholder || surfacePlaceholders[surface] || "Type a message..."}
             rows={1}
-            className="flex-1 bg-transparent text-base font-normal tracking-normal text-[var(--text)] placeholder:text-[var(--text-ghost)] border-0 focus:ring-0 focus:outline-none resize-none min-h-[28px] max-h-[150px] leading-relaxed p-0 m-0"
+            className="flex-1 bg-transparent text-base font-normal tracking-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none min-h-[28px] max-h-[150px] leading-relaxed p-0 m-0"
           />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-[var(--surface-2)] overflow-hidden">
             <div className="h-full bg-[var(--cykan)] w-0 group-focus-within:w-full transition-all duration-500 ease-out" />
@@ -175,9 +179,9 @@ export function ChatInput({
             </button>
           )}
         </div>
-        <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-30 hover:opacity-100 transition-opacity">
+        <div className="absolute left-0 right-0 -bottom-5 flex justify-center opacity-30 hover:opacity-100 transition-opacity">
           <p className="t-9 text-[var(--text-soft)] font-mono tracking-[0.2em]">
-            Enter to send · Shift+Enter for new line · @ to mention
+            Entrée pour envoyer · Maj+Entrée nouvelle ligne · @ pour mentionner
           </p>
         </div>
       </div>

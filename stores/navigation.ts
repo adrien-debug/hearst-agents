@@ -29,6 +29,10 @@ interface NavigationState {
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
 
+  // Left rail collapse (desktop)
+  leftCollapsed: boolean;
+  toggleLeftCollapsed: () => void;
+
   // Surface
   surface: Surface;
   setSurface: (surface: Surface) => void;
@@ -54,6 +58,7 @@ export const useNavigationStore = create<NavigationState>()(
     (set, get) => ({
       // Initial state
       isOpen: true,
+      leftCollapsed: false,
       surface: "home",
       threads: [{ id: "default", name: "Accueil", surface: "home", lastActivity: Date.now() }],
       activeThreadId: "default",
@@ -62,6 +67,9 @@ export const useNavigationStore = create<NavigationState>()(
       // Sidebar
       toggleSidebar: () => set((state) => ({ isOpen: !state.isOpen })),
       setSidebarOpen: (open) => set({ isOpen: open }),
+
+      // Left rail collapse
+      toggleLeftCollapsed: () => set((state) => ({ leftCollapsed: !state.leftCollapsed })),
 
       // Surface
       setSurface: (surface) => {
@@ -160,6 +168,7 @@ export const useNavigationStore = create<NavigationState>()(
         activeThreadId: state.activeThreadId,
         surface: state.surface,
         messages: state.messages,
+        leftCollapsed: state.leftCollapsed,
       }),
     }
   )

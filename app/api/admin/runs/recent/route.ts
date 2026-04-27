@@ -1,18 +1,12 @@
-/**
- * GET /api/admin/runs/recent — last N orchestrator_v2 runs.
- *
- * Powers the run rail in the admin canvas (sidebar of replay-able runs).
- */
-
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin, isError } from "../../_helpers";
+import { requireScope } from "@/lib/scope";
 import { getRuns } from "@/lib/engine/runtime/state/adapter";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const guard = await requireAdmin("GET /api/admin/runs/recent", { resource: "runs", action: "read" });
-  if (isError(guard)) return guard;
+  const { error } = await requireScope({ context: "GET /api/admin/runs/recent" });
+  if (error) return NextResponse.json({ error: error.message }, { status: error.status });
 
   const url = new URL(req.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "10", 10) || 10, 50);

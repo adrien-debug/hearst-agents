@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Hearst OS — Variantes centre × sidebars (étendu)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --cykan: #2DD4BF;
+    --grid-page-bg: #050608;
+    --grid-page-fg: #E6E6E8;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--grid-page-bg);
+    color: var(--grid-page-fg);
+    font-family: 'Satoshi Variable', 'Satoshi', -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 56px 32px 96px;
+  }
+
+  .page > header { margin-bottom: 48px; }
+
+  .page h1 {
+    font-size: 28px; font-weight: 600; letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+
+  .page p.lede {
+    font-size: 14px;
+    color: rgba(230,230,232,0.6);
+    line-height: 1.55;
+    max-width: 760px;
+    margin: 0;
+  }
+
+  /* ── Section dividers (Dark / Light) ─── */
+  h3.section {
+    font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: rgba(230,230,232,0.45);
+    margin: 56px 0 24px;
+    padding: 0 4px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ── Variant block ───────────────────── */
+  .variant { margin-bottom: 40px; }
+
+  .variant-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 12px;
+    padding: 0 4px;
+    flex-wrap: wrap;
+  }
+
+  .variant-head .left h2 {
+    font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
+    margin: 0 0 4px;
+  }
+
+  .variant-head .left p {
+    font-size: 12px;
+    color: rgba(230,230,232,0.5);
+    margin: 0;
+    max-width: 680px;
+  }
+
+  .variant-head .swatches {
+    display: flex; gap: 12px; align-items: center;
+    font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    color: rgba(230,230,232,0.55);
+    letter-spacing: 0.04em;
+  }
+
+  .swatches .chip { display: inline-flex; align-items: center; gap: 6px; }
+
+  .swatches .dot {
+    width: 14px; height: 14px; border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+
+  /* ── Mini cockpit preview ─────────────── */
+  .preview {
+    display: flex;
+    height: 280px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    color: var(--p-text);
+    background: var(--p-center);
+  }
+
+  .preview .rail {
+    width: 20%;
+    display: flex; flex-direction: column;
+    padding: 14px 12px;
+    gap: 10px;
+    background: var(--p-rail);
+    color: var(--p-text);
+  }
+
+  .preview .rail.left  { border-right: 1px solid var(--p-border); }
+  .preview .rail.right { border-left:  1px solid var(--p-border); }
+
+  .preview .center {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    gap: 14px;
+  }
+
+  /* ── Sub-elements ────────────────────── */
+  .logo {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--p-accent, var(--cykan));
+  }
+
+  .label {
+    font-size: 9px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--p-muted);
+  }
+
+  .conv {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 8px;
+    font-size: 12px;
+    color: var(--p-muted);
+  }
+
+  .conv.active {
+    background: var(--p-accent-bg, rgba(45,212,191,0.08));
+    box-shadow: inset 2px 0 0 var(--p-accent, var(--cykan));
+    color: var(--p-text);
+  }
+
+  .conv .pin {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: rgba(255,255,255,0.16);
+  }
+
+  .conv.active .pin { background: var(--p-accent, var(--cykan)); }
+
+  .greet-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--p-accent, var(--cykan));
+    box-shadow: 0 0 10px color-mix(in srgb, var(--p-accent, var(--cykan)) 45%, transparent);
+  }
+
+  .greet {
+    font-size: 18px; font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  .sub { font-size: 11px; color: var(--p-muted); }
+
+  .actions {
+    width: 100%; max-width: 360px;
+    margin-top: 6px;
+  }
+
+  .actions .row {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 38px;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--p-border);
+    font-size: 11px;
+  }
+
+  .actions .row .title { color: var(--p-text); }
+  .actions .row .arrow { color: var(--p-muted); font-family: ui-monospace, monospace; }
+
+  /* ─── Variantes ─────────────────────── */
+
+  /* DARK ─────────────────────────────── */
+
+  /* 1 — Stage noire / panneaux Nardo (état actuel) */
+  .preview[data-v="1"] {
+    --p-center: #0A0D10;
+    --p-rail:   #16191D;
+    --p-text:   #FFFFFF;
+    --p-muted:  rgba(255,255,255,0.45);
+    --p-border: rgba(255,255,255,0.06);
+  }
+
+  /* 2 — Inversée Nardo */
+  .preview[data-v="2"] {
+    --p-center: #16191D;
+    --p-rail:   #0A0D10;
+    --p-text:   #FFFFFF;
+    --p-muted:  rgba(255,255,255,0.45);
+    --p-border: rgba(255,255,255,0.06);
+  }
+
+  /* 3 — Charbon profond / panneaux ardoise */
+  .preview[data-v="3"] {
+    --p-center: #0C0C0E;
+    --p-rail:   #1B1F23;
+    --p-text:   #FFFFFF;
+    --p-muted:  rgba(255,255,255,0.48);
+    --p-border: rgba(255,255,255,0.05);
+  }
+
+  /* 4 — Stage Nardo lift / cadre profond (inversion exagérée) */
+  .preview[data-v="4"] {
+    --p-center: #1E2226;
+    --p-rail:   #0A0C0F;
+    --p-text:   #FFFFFF;
+    --p-muted:  rgba(255,255,255,0.50);
+    --p-border: rgba(255,255,255,0.06);
+  }
+
+  /* 5 — Mastic tabac (warm beige-brown dark) */
+  .preview[data-v="5"] {
+    --p-center: #14110D;          /* expresso très foncé, légère teinte chaude */
+    --p-rail:   #251F18;          /* mastic chaud, beige-brun assombri */
+    --p-text:   #F1ECE2;
+    --p-muted:  rgba(241,236,226,0.45);
+    --p-border: rgba(241,236,226,0.06);
+    --p-accent: #D9B27A;          /* on switch l'accent en cuivre / laiton chaud */
+    --p-accent-bg: rgba(217,178,122,0.10);
+  }
+
+  /* 6 — Bleu nuit / slate (cool navy) */
+  .preview[data-v="6"] {
+    --p-center: #0A0F18;
+    --p-rail:   #151C28;
+    --p-text:   #EAEEF6;
+    --p-muted:  rgba(234,238,246,0.45);
+    --p-border: rgba(234,238,246,0.06);
+    --p-accent: #62B5FF;          /* accent bleu glacier */
+    --p-accent-bg: rgba(98,181,255,0.10);
+  }
+
+  /* 7 — Forêt nuit / mousse (deep moss/green) */
+  .preview[data-v="7"] {
+    --p-center: #0B100E;
+    --p-rail:   #161D18;
+    --p-text:   #ECEFEA;
+    --p-muted:  rgba(236,239,234,0.45);
+    --p-border: rgba(236,239,234,0.05);
+    --p-accent: #7FD7A4;          /* accent vert céladon */
+    --p-accent-bg: rgba(127,215,164,0.10);
+  }
+
+  /* 8 — Graphite homogène (gris sur gris, faible contraste) */
+  .preview[data-v="8"] {
+    --p-center: #131418;
+    --p-rail:   #191B20;
+    --p-text:   #FFFFFF;
+    --p-muted:  rgba(255,255,255,0.5);
+    --p-border: rgba(255,255,255,0.05);
+  }
+
+  /* 9 — Nardots dual (deux gris Nardo distincts, mid-dark) */
+  .preview[data-v="9"] {
+    --p-center: #1A1D21;          /* Nardo medium-dark */
+    --p-rail:   #262B33;          /* Nardo lift, plus présent */
+    --p-text:   #F2F2F4;
+    --p-muted:  rgba(242,242,244,0.50);
+    --p-border: rgba(255,255,255,0.06);
+  }
+
+  /* LIGHT ────────────────────────────── */
+
+  /* 10 — Linear day (cool neutral light) */
+  .preview[data-v="10"] {
+    --p-center: #F4F4F6;
+    --p-rail:   #FFFFFF;
+    --p-text:   #1C1D20;
+    --p-muted:  rgba(28,29,32,0.55);
+    --p-border: rgba(28,29,32,0.08);
+    --p-accent: #0E8F80;
+    --p-accent-bg: rgba(14,143,128,0.10);
+  }
+
+  /* 11 — Mastic ivoire (warm cream paper) */
+  .preview[data-v="11"] {
+    --p-center: #F2EFE8;          /* mastic clair, papier crémé */
+    --p-rail:   #FBF9F4;          /* ivoire chaud */
+    --p-text:   #1F1B14;
+    --p-muted:  rgba(31,27,20,0.55);
+    --p-border: rgba(31,27,20,0.08);
+    --p-accent: #8C6230;          /* accent cuivre / café */
+    --p-accent-bg: rgba(140,98,48,0.10);
+  }
+
+  /* 12 — Brume ardoise clair (cool slate light) */
+  .preview[data-v="12"] {
+    --p-center: #E8ECEF;
+    --p-rail:   #F6F8FA;
+    --p-text:   #14181D;
+    --p-muted:  rgba(20,24,29,0.55);
+    --p-border: rgba(20,24,29,0.08);
+    --p-accent: #1E6E64;
+    --p-accent-bg: rgba(30,110,100,0.10);
+  }
+
+  /* Footer note */
+  footer.note {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 12px;
+    color: rgba(230,230,232,0.45);
+    line-height: 1.7;
+  }
+
+  footer.note strong { color: rgba(230,230,232,0.78); font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <header>
+      <h1>Hearst OS — variantes centre × sidebars (12 pistes)</h1>
+      <p class="lede">
+        Trois familles : Nardo (gris neutre), Mastic (beige chaud), et hues atypiques (bleu nuit, forêt).
+        Chaque mini-aperçu reproduit la grammaire cockpit (3 colonnes, item actif, liste d'actions plate).
+        L'accent est adapté au ton dominant — cykan en neutre, cuivre en mastic, glacier en navy, céladon en forêt.
+      </p>
+    </header>
+
+    <h3 class="section">Dark — variantes</h3>
+
+    <!-- 1 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>1 — Stage noire / panneaux Nardo <span style="opacity:.55;font-weight:400;">(état actuel)</span></h2>
+          <p>Centre = le vide. Rails = panneaux gris actifs posés dessus. Cockpit canonique, accent cykan.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#0A0D10"></span>centre #0A0D10</span>
+          <span class="chip"><span class="dot" style="background:#16191D"></span>rails #16191D</span>
+        </div>
+      </div>
+      <div class="preview" data-v="1">
+        <div class="rail left">
+          <div class="logo">HEARST</div>
+          <div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>2 — Inversée Nardo</h2>
+          <p>Scène centrale liftée, rails fondus dans le décor. Le focus va au contenu, les panneaux s'effacent.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#16191D"></span>centre #16191D</span>
+          <span class="chip"><span class="dot" style="background:#0A0D10"></span>rails #0A0D10</span>
+        </div>
+      </div>
+      <div class="preview" data-v="2">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>3 — Charbon profond / panneaux ardoise</h2>
+          <p>Contraste plus appuyé. Les rails virent ardoise (légère teinte fraîche), lecture nette.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#0C0C0E"></span>centre #0C0C0E</span>
+          <span class="chip"><span class="dot" style="background:#1B1F23"></span>rails #1B1F23</span>
+        </div>
+      </div>
+      <div class="preview" data-v="3">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>4 — Stage Nardo lift / cadre profond</h2>
+          <p>Inversion poussée : le centre est clairement gris lifté, les rails plongent en quasi-noir. La scène devient bulle pilotage.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#1E2226"></span>centre #1E2226</span>
+          <span class="chip"><span class="dot" style="background:#0A0C0F"></span>rails #0A0C0F</span>
+        </div>
+      </div>
+      <div class="preview" data-v="4">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>5 — Mastic tabac</h2>
+          <p>Famille mastic : beige-brun très foncé, espresso au centre. Accent passe en cuivre / laiton chaud. Vibe "carnet cuir / cabine bois".</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#14110D"></span>centre #14110D</span>
+          <span class="chip"><span class="dot" style="background:#251F18"></span>rails #251F18</span>
+          <span class="chip"><span class="dot" style="background:#D9B27A"></span>accent #D9B27A</span>
+        </div>
+      </div>
+      <div class="preview" data-v="5">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>6 — Bleu nuit / slate</h2>
+          <p>Bleu nuit profond, rails slate. Accent glacier. Vibe sous-marin / aviation tableau de bord.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#0A0F18"></span>centre #0A0F18</span>
+          <span class="chip"><span class="dot" style="background:#151C28"></span>rails #151C28</span>
+          <span class="chip"><span class="dot" style="background:#62B5FF"></span>accent #62B5FF</span>
+        </div>
+      </div>
+      <div class="preview" data-v="6">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>7 — Forêt nuit / mousse</h2>
+          <p>Vert anglais très sombre, rails mousse. Accent céladon. Atmosphère bibliothèque / studio.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#0B100E"></span>centre #0B100E</span>
+          <span class="chip"><span class="dot" style="background:#161D18"></span>rails #161D18</span>
+          <span class="chip"><span class="dot" style="background:#7FD7A4"></span>accent #7FD7A4</span>
+        </div>
+      </div>
+      <div class="preview" data-v="7">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>8 — Graphite homogène</h2>
+          <p>Gris sur gris, écart minimal. Très feutré, premium subtil — la hiérarchie passe par les bordures, pas par le ton.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#131418"></span>centre #131418</span>
+          <span class="chip"><span class="dot" style="background:#191B20"></span>rails #191B20</span>
+        </div>
+      </div>
+      <div class="preview" data-v="8">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>9 — Nardots dual (mid-dark)</h2>
+          <p>Deux gris Nardo distincts plus clairs que les autres dark. Lecture quasi "Linear night" — moins sombre, plus produit.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#1A1D21"></span>centre #1A1D21</span>
+          <span class="chip"><span class="dot" style="background:#262B33"></span>rails #262B33</span>
+        </div>
+      </div>
+      <div class="preview" data-v="9">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <h3 class="section">Light — variantes</h3>
+
+    <!-- 10 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>10 — Linear day (cool neutral)</h2>
+          <p>Mode jour propre. Centre off-white, rails blancs. L'accent cykan vire vert-eau plus assumé pour passer la lisibilité.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#F4F4F6"></span>centre #F4F4F6</span>
+          <span class="chip"><span class="dot" style="background:#FFFFFF"></span>rails #FFFFFF</span>
+          <span class="chip"><span class="dot" style="background:#0E8F80"></span>accent #0E8F80</span>
+        </div>
+      </div>
+      <div class="preview" data-v="10">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>11 — Mastic ivoire</h2>
+          <p>Famille mastic en mode jour : centre crémé, rails ivoire chaud. Accent café. Vibe "papier carnet / studio édition".</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#F2EFE8"></span>centre #F2EFE8</span>
+          <span class="chip"><span class="dot" style="background:#FBF9F4"></span>rails #FBF9F4</span>
+          <span class="chip"><span class="dot" style="background:#8C6230"></span>accent #8C6230</span>
+        </div>
+      </div>
+      <div class="preview" data-v="11">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section class="variant">
+      <div class="variant-head">
+        <div class="left">
+          <h2>12 — Brume ardoise clair</h2>
+          <p>Light cool : centre brume ardoise, rails presque blancs. Accent vert profond. Plus "produit data" qu'éditorial.</p>
+        </div>
+        <div class="swatches">
+          <span class="chip"><span class="dot" style="background:#E8ECEF"></span>centre #E8ECEF</span>
+          <span class="chip"><span class="dot" style="background:#F6F8FA"></span>rails #F6F8FA</span>
+          <span class="chip"><span class="dot" style="background:#1E6E64"></span>accent #1E6E64</span>
+        </div>
+      </div>
+      <div class="preview" data-v="12">
+        <div class="rail left">
+          <div class="logo">HEARST</div><div class="label">Conversations</div>
+          <div class="conv active"><span class="pin"></span> Accueil</div>
+          <div class="conv"><span class="pin"></span> Brief Q4</div>
+          <div class="conv"><span class="pin"></span> Pipeline ventes</div>
+        </div>
+        <div class="center">
+          <span class="greet-dot"></span>
+          <div class="greet">Bonsoir, Adrien</div>
+          <div class="sub">Que puis-je faire pour vous ?</div>
+          <div class="actions">
+            <div class="row"><span class="title">Résumer mes emails non lus</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mon agenda d'aujourd'hui</span><span class="arrow">→</span></div>
+            <div class="row"><span class="title">Mes derniers documents</span><span class="arrow">→</span></div>
+          </div>
+        </div>
+        <div class="rail right">
+          <div class="label">Status</div><div class="label">Focal</div>
+          <div class="label">Activity</div><div class="label">Assets</div><div class="label">Missions</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="note">
+      <p>
+        <strong>Familles :</strong>
+        Nardots = 1, 2, 3, 4, 8, 9 (gris neutres, écart variable centre↔rails) ·
+        Mastics = 5, 11 (chaud beige/brun, accent cuivre) ·
+        Hue atypique = 6 bleu nuit, 7 forêt ·
+        Light = 10, 11, 12.
+      </p>
+      <p>
+        <strong>Reco perso :</strong>
+        si tu veux pousser la signature OS, regarde la 4 (stage liftée, rails plongés) — c'est la plus "cabine pilote".
+        La 5 (mastic tabac) est la plus singulière, vraiment à part — accent cuivre fort.
+        La 9 (Nardots dual mid-dark) est la plus "produit moderne" — proche Linear/Raycast.
+        Pour un mode jour, la 11 (mastic ivoire) tient mieux que la 10 si tu veux garder une personnalité.
+      </p>
+    </footer>
+
+  </div>
+</body>
+</html>

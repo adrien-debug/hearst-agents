@@ -27,8 +27,8 @@ export function ChatToolStream() {
         // something" instantly.
         const accent = isWrite ? "text-[var(--warn)]" : "text-[var(--cykan)]";
         const dot = isWrite ? "bg-[var(--warn)]" : "bg-[var(--cykan)]";
-        const labelTone = isDone ? "text-[var(--text-soft)]" : "text-[var(--text)]";
-        const statusTone = isDone ? `${accent} halo-cyan-sm` : "text-[var(--text-faint)]";
+        const labelTone = isDone ? "text-[var(--text-muted)]" : "text-[var(--text)]";
+        const statusTone = isDone ? accent : "text-[var(--text-faint)]";
 
         return (
           <li

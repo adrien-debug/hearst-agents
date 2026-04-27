@@ -80,11 +80,9 @@ function AssistantActions({ content }: { content: string }) {
 
 function StreamShimmer() {
   return (
-    <div className="space-y-2 mt-2">
-      <div className="h-3 chat-shimmer w-full" />
-      <div className="h-3 chat-shimmer w-4/5" />
-      <div className="h-3 chat-shimmer w-3/5" />
-    </div>
+    <p className="mt-2 t-13 font-light text-[var(--text-faint)] tracking-tight">
+      <span className="chat-typing-dots" aria-hidden>···</span>
+    </p>
   );
 }
 
@@ -166,7 +164,7 @@ export function ChatMessages({
                   <span>{ts}</span>
                   <span className="opacity-60">]</span>
                 </div>
-                <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text)] font-medium whitespace-pre-wrap`}>
+                <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--cykan)] font-medium whitespace-pre-wrap`}>
                   {message.content}
                 </div>
               </div>
@@ -177,19 +175,17 @@ export function ChatMessages({
 
           return (
             <div key={message.id} className="relative pl-5 group">
-              <div className="absolute left-0 top-2 bottom-2 w-px chat-ai-rule" />
-              <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)] halo-dot" />
-              <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--cykan)] halo-cyan-sm">
+              <div className="absolute left-0 top-2 bottom-2 w-px bg-[var(--border-shell)]" />
+              <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)]" />
+              <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-faint)]">
                 <span className="opacity-60">[</span>
-                <span className="font-semibold">Hearst</span>
                 {source && (
                   <>
+                    <span>{source}</span>
                     <span className="text-[var(--text-ghost)]">·</span>
-                    <span className="text-[var(--text-faint)]">{source}</span>
                   </>
                 )}
-                <span className="text-[var(--text-ghost)]">·</span>
-                <span className="text-[var(--text-faint)]">{ts}</span>
+                <span>{ts}</span>
                 <span className="opacity-60">]</span>
               </div>
 
@@ -199,9 +195,9 @@ export function ChatMessages({
                   <StreamShimmer />
                 </>
               ) : (
-                <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text-soft)] font-normal whitespace-pre-wrap`}>
+                <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text)] font-normal whitespace-pre-wrap`}>
                   {message.content}
-                  {showCursor && <span className="chat-cursor inline-block align-text-bottom" />}
+                  {showCursor && <span className="chat-caret inline-block align-text-bottom" />}
                 </div>
               )}
 
@@ -226,13 +222,11 @@ export function ChatMessages({
 
         {isRunning && lastIsUser && (
           <div className="relative pl-5">
-            <div className="absolute left-0 top-2 bottom-2 w-px chat-ai-rule" />
-            <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)] halo-dot animate-pulse" />
-            <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--cykan)] halo-cyan-sm">
+            <div className="absolute left-0 top-2 bottom-2 w-px bg-[var(--border-shell)]" />
+            <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)]" />
+            <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-faint)]">
               <span className="opacity-60">[</span>
-              <span className="font-semibold">Hearst</span>
-              <span className="text-[var(--text-ghost)]">·</span>
-              <span className="text-[var(--text-faint)]">en cours…</span>
+              <span>en cours…</span>
               <span className="opacity-60">]</span>
             </div>
             <ChatToolStream />

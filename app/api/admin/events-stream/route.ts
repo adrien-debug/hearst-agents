@@ -1,20 +1,14 @@
-/**
- * GET /api/admin/events-stream — SSE proxy of the global run bus.
- *
- * Tails every event emitted by every run in this process. Used by the admin
- * canvas to animate the pipeline in real time.
- */
-
 import { NextRequest } from "next/server";
-import { requireAdmin, isError } from "../_helpers";
+import { NextResponse } from "next/server";
+import { requireScope } from "@/lib/scope";
 import { globalRunBus } from "@/lib/events/global-bus";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const guard = await requireAdmin("GET /api/admin/events-stream", { resource: "runs", action: "read" });
-  if (isError(guard)) return guard;
+  const { error } = await requireScope({ context: "GET /api/admin/events-stream" });
+  if (error) return NextResponse.json({ error: error.message }, { status: error.status });
 
   const encoder = new TextEncoder();
 
@@ -30,7 +24,6 @@ export async function GET(req: NextRequest) {
 
       safeEnqueue(`data: ${JSON.stringify({ type: "stream_open" })}\n\n`);
 
-      // Replay the ring buffer so a late-attaching client sees recent context.
       for (const event of globalRunBus.getRecent()) {
         safeEnqueue(`data: ${JSON.stringify(event)}\n\n`);
       }
@@ -39,7 +32,6 @@ export async function GET(req: NextRequest) {
         safeEnqueue(`data: ${JSON.stringify(event)}\n\n`);
       });
 
-      // Keep-alive every 15 s — defends against idle timeouts on proxies.
       const heartbeat = setInterval(() => {
         safeEnqueue(`: ping\n\n`);
       }, 15000);
