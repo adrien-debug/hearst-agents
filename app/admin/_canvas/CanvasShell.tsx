@@ -101,7 +101,7 @@ export default function CanvasShell() {
               ? "tail global event bus"
               : selectedRunId
                 ? "replay d'un run persisté"
-                : "11 stages • 8 colonnes • flow gauche → droite"}
+                : `${NODES.length} stages • flow gauche → droite`}
           </span>
         </div>
 

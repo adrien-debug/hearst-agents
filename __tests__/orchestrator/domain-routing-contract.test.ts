@@ -2,8 +2,8 @@
  * Domain Routing Contract Tests
  *
  * Captures the current keyword-based domain routing behavior across
- * all the dispersed heuristics: detectRetrievalMode, detectDataIntent,
- * getRequiredProvidersForInput, inferToolContext.
+ * the dispersed heuristics: resolveRetrievalMode, getRequiredProvidersForInput,
+ * isResearchIntent / isReportIntent.
  *
  * These snapshots protect against regressions when we consolidate
  * all keyword logic into a single capability taxonomy.
@@ -11,7 +11,6 @@
 
 import { describe, it, expect } from "vitest";
 import { resolveRetrievalMode } from "@/lib/capabilities/taxonomy";
-import { detectDataIntent } from "@/lib/connectors/data-retriever";
 import { getRequiredProvidersForInput } from "@/lib/engine/orchestrator/provider-requirements";
 import { isResearchIntent, isReportIntent } from "@/lib/engine/orchestrator/research-intent";
 
@@ -34,34 +33,6 @@ describe("resolveRetrievalMode — contract", () => {
       expect(resolveRetrievalMode(input)).toBe(expected);
     });
   }
-});
-
-// ── detectDataIntent ────────────────────────────────────────
-
-describe("detectDataIntent — contract", () => {
-  it("email prompt → needsGmail", () => {
-    const r = detectDataIntent("Montre-moi mes emails");
-    expect(r.needsGmail).toBe(true);
-    expect(r.needsCalendar).toBe(false);
-  });
-
-  it("calendar prompt → needsCalendar", () => {
-    const r = detectDataIntent("Quels sont mes rendez-vous demain ?");
-    expect(r.needsCalendar).toBe(true);
-    expect(r.needsGmail).toBe(false);
-  });
-
-  it("drive prompt → needsDrive", () => {
-    const r = detectDataIntent("Cherche dans mes fichiers Drive");
-    expect(r.needsDrive).toBe(true);
-  });
-
-  it("generic prompt → no data needed", () => {
-    const r = detectDataIntent("Bonjour comment vas-tu");
-    expect(r.needsCalendar).toBe(false);
-    expect(r.needsGmail).toBe(false);
-    expect(r.needsDrive).toBe(false);
-  });
 });
 
 // ── getRequiredProvidersForInput ─────────────────────────────

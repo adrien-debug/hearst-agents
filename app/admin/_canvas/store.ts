@@ -45,7 +45,6 @@ const ALL_NODES: NodeId[] = [
   "safety",
   "intent",
   "preflight",
-  "userdata",
   "tools",
   "agent",
   "research",

@@ -72,7 +72,6 @@ export function reduceEvent(event: MinEvent): CanvasOp[] {
       return [
         { kind: "node", id: "intent", state: "success" },
         { kind: "node", id: "preflight", state: "success" },
-        { kind: "node", id: "userdata", state: "success" },
         { kind: "node", id: "tools", state: "active" },
       ];
 

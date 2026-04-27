@@ -223,27 +223,21 @@ export const REQUEST_CONNECTION_TOOL = {
 
 interface AgentSystemPromptOpts {
   composioTools: DiscoveredTool[];
-  hasGoogle: boolean;
-  userDataContext?: string;
   surface?: string;
+  /** When true, prepends a forcing directive to call create_scheduled_mission first. */
+  scheduleDirective?: boolean;
 }
 
 /**
  * System prompt for the streamText-based AI pipeline.
  *
- * Unlike the planner prompt (which decomposes into agent steps), this
- * prompt drives a single agentic loop that can directly call action tools.
- * It lists only the actions the user has actually connected.
- *
- * Note: the prompt deliberately separates "lecture Google" (OAuth direct,
- * data already injected in CONTEXTE UTILISATEUR) from "actions" (write
- * tools listed in ACTIONS DISPONIBLES). The two paths are independent —
- * a user can have Google connected for reads but no Gmail action tool,
- * and vice-versa. Conflating them led the model to say "Gmail est connecté
- * mais pas d'outil d'envoi" instead of calling `request_connection`.
+ * Single agentic loop : the model directly calls connected tools (Gmail,
+ * Calendar, Drive, Slack, Notion…) when it needs data or wants to act.
+ * No orchestrator-level pre-fetch — read and write live in the same tool
+ * surface and the model decides what to call.
  */
 export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
-  const { composioTools, hasGoogle, userDataContext, surface } = opts;
+  const { composioTools, surface, scheduleDirective } = opts;
 
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -254,18 +248,10 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
 
   const connectedApps = [...new Set(composioTools.map((t) => t.app))];
 
-  // Lecture Google — OAuth direct, sert UNIQUEMENT à enrichir le contexte
-  // (résumés d'agenda, d'emails reçus, de fichiers récents). Ne donne
-  // AUCUN moyen d'envoyer/créer/modifier — pour ça il faut un outil
-  // d'action listé plus bas.
-  const readSection = hasGoogle
-    ? "Lecture Google (Gmail / Drive / Calendar) : disponible pour récupérer les données récentes de l'utilisateur. Les données pertinentes sont injectées dans CONTEXTE UTILISATEUR ci-dessous quand elles sont nécessaires. Cette lecture ne permet PAS d'envoyer, créer, modifier ou supprimer quoi que ce soit."
-    : "Lecture Google (Gmail / Drive / Calendar) : non connectée. Si l'utilisateur demande un résumé de ses emails / agenda / fichiers, appelle `request_connection` avec le slug `google`.";
-
-  const actionsHeader =
+  const toolsHeader =
     connectedApps.length > 0
-      ? `Outils d'action disponibles ce tour-ci (${composioTools.length} au total, apps : ${connectedApps.join(", ")}) :`
-      : "Outils d'action disponibles ce tour-ci : aucun.";
+      ? `Outils disponibles ce tour-ci (${composioTools.length} au total, apps : ${connectedApps.join(", ")}) :`
+      : "Outils disponibles ce tour-ci : aucun.";
 
   const toolListSection =
     composioTools.length > 0
@@ -274,32 +260,37 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
           .map((t) => `- ${t.name} : ${t.description.slice(0, 100)}`)
           .join("\n") +
         (composioTools.length > 60 ? `\n(+${composioTools.length - 60} autres actions)` : "")
-      : "(liste vide)";
-
-  const dataSection = userDataContext
-    ? `\n\nCONTEXTE UTILISATEUR (données temps réel) :\n${userDataContext}`
-    : "";
+      : "(aucun outil tiers connecté pour ce tour)";
 
   const surfaceNote = surface ? `\nSurface active : ${surface}` : "";
 
-  return `Tu es Hearst, un assistant exécutif intelligent pour les professionnels des médias.
+  const scheduleHeader = scheduleDirective
+    ? `[DIRECTIVE PRIORITAIRE — INTENT RÉCURRENT]
+Le message utilisateur décrit une AUTOMATION RÉCURRENTE (par ex. « tous les matins à 8h », « chaque vendredi à 17h »).
+Tu DOIS appeler le tool \`create_scheduled_mission\` avec \`_preview: true\` comme PREMIÈRE action — avant tout autre tool, avant toute synthèse.
+Tu ne dois PAS exécuter la tâche maintenant en mode ponctuel. La valeur attendue est la création de l'automation récurrente.
+Déduis les paramètres directement depuis le message :
+  - name : titre court de la mission
+  - input : la consigne que la mission devra exécuter à chaque tick
+  - schedule : expression cron 5 champs (minute heure jour mois jour-semaine)
+  - label : récurrence en français lisible
+
+`
+    : "";
+
+  return `${scheduleHeader}Tu es Hearst, un assistant exécutif intelligent pour les professionnels des médias.
 Aujourd'hui : ${today}${surfaceNote}
 
-LECTURE DES DONNÉES UTILISATEUR
-${readSection}
-
-ACTIONS DISPONIBLES
-${actionsHeader}
-${toolListSection}${dataSection}
+OUTILS
+${toolsHeader}
+${toolListSection}
 
 RÈGLES :
-1. Utilise les outils disponibles pour agir directement — ne décris pas ce que tu ferais, fais-le.
-2. ACTIONS WRITE vs LECTURE — règle critique :
-   - Pouvoir lire les emails, l'agenda ou les fichiers (section LECTURE ci-dessus) ne signifie PAS que tu peux envoyer / créer / modifier. L'écriture passe TOUJOURS par un outil listé dans ACTIONS DISPONIBLES.
-   - Si l'utilisateur demande une action d'écriture (envoyer un mail, créer un événement, ajouter un fichier, déplacer, supprimer…) et que l'outil correspondant N'EST PAS dans la liste ACTIONS DISPONIBLES, appelle IMMÉDIATEMENT \`request_connection\` avec le slug de l'app (\`gmail\`, \`googlecalendar\`, \`googledrive\`, \`slack\`, \`notion\`, \`github\`…). N'utilise jamais "la lecture Google" pour justifier une action.
+1. Utilise les outils disponibles pour agir directement — ne décris pas ce que tu ferais, fais-le. Pour répondre à une question sur les emails, l'agenda, les fichiers ou tout autre donnée tierce, appelle l'outil de lecture correspondant (\`gmail_fetch_emails\`, \`googlecalendar_events_list\`, \`googledrive_list_files\`, \`slack_list_messages\`, etc.) — n'invente pas de données, ne dis pas « je ne vois pas tes emails », appelle l'outil.
+2. OUTIL ABSENT — si l'utilisateur demande une action (lire OU écrire) et qu'aucun outil pour l'app cible n'est listé ci-dessus, appelle IMMÉDIATEMENT \`request_connection\` avec le slug de l'app (\`gmail\`, \`googlecalendar\`, \`googledrive\`, \`slack\`, \`notion\`, \`github\`…). Sont INTERDITES toutes les variantes texte du type : "X n'est pas connecté", "je n'ai pas d'outil pour X", "je ne dispose pas d'outil X", "outil X indisponible", "lag de propagation", "rafraîchis la page", "contacte le support", "ces actions nécessitent une connexion dédiée que je peux déclencher à la demande". À chaque fois que tu serais tenté de produire une de ces phrases, appelle \`request_connection\` à la place. Le tool est sûr et idempotent.
 3. WORKFLOW MULTI-ÉTAPES — règle absolue :
    Si le message utilisateur contient des connecteurs de séquence (« puis », « ensuite », « et puis », « et après », « then », « after that ») OU plusieurs verbes d'action séparés par « et », tu DOIS planifier TOUTES les étapes et tenter chacune dans l'ordre :
-     - Étape de read/retrieval : exécute-la complètement.
+     - Étape de read : exécute-la complètement (appel d'outil read).
      - Étape de write : passe par preview tool, ne saute PAS l'étape même si un tool n'est pas connecté — appelle alors \`request_connection\` pour la cible de l'étape.
    Tu ne dois jamais t'arrêter après la première étape en disant « voici le résumé » et ignorer le reste. Recopie en fin de réponse un mini-statut style :
      « 1. [done] résumé de tes mails — voir au-dessus.
@@ -311,8 +302,7 @@ RÈGLES :
    d. Seulement après confirmation : rappelle EXACTEMENT le même outil que tu viens de proposer avec EXACTEMENT les MÊMES paramètres + \`_preview: false\`. NE CHANGE PAS d'app, NE CHANGE PAS de paramètres entre la preview et l'exécution.
    JAMAIS d'appel \`_preview: false\` sans confirmation. Si l'utilisateur dit "annuler" / "non" / "stop", n'exécute pas et acquitte simplement.
 5. APP MENTIONNÉE PAR L'UTILISATEUR — règle absolue :
-   - Utilise EXCLUSIVEMENT le nom d'app que l'utilisateur a écrit dans son dernier message ou dans le tour précédent. Si l'utilisateur dit "Slack", l'app cible est "slack" — JAMAIS Figma, Notion, ou autre. N'invente pas, ne dévie pas.
-   - Si tu ne vois pas d'outil pour cette app, appelle IMMÉDIATEMENT \`request_connection\` avec le slug exact mentionné. Sont INTERDITES toutes les variantes texte du type : "X n'est pas connecté", "je n'ai pas d'outil pour X", "je ne dispose pas d'outil X", "outil X indisponible", "lag de propagation", "rafraîchis et réessaie", "contacte le support". À chaque fois que tu serais tenté de produire une de ces phrases, appelle \`request_connection\` à la place. Le tool est sûr et idempotent dans tous les cas.
+   Utilise EXCLUSIVEMENT le nom d'app que l'utilisateur a écrit dans son dernier message ou dans le tour précédent. Si l'utilisateur dit "Slack", l'app cible est "slack" — JAMAIS Figma, Notion, ou autre. N'invente pas, ne dévie pas.
 6. AUTOMATISATIONS RÉCURRENTES : si l'utilisateur demande qu'une tâche soit exécutée automatiquement à intervalle régulier ("tous les matins", "chaque vendredi à 17h", "every day at 9am"…), appelle \`create_scheduled_mission\` avec le même protocole en 2 étapes (recopie le draft → confirmation → exécution).
    N'appelle PAS ce tool pour une tâche unique ou ponctuelle.
 7. ERREUR D'AUTHENTIFICATION : si un appel d'outil retourne \`{ok: false, errorCode: "AUTH_REQUIRED"}\`, la connexion à l'app a expiré. Une carte de reconnexion s'affiche automatiquement — explique brièvement à l'utilisateur et attends qu'il se reconnecte.

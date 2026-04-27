@@ -16,13 +16,12 @@ import { SSEAdapter } from "@/lib/events/consumers/sse-adapter";
 import { LogPersister } from "@/lib/events/consumers/log-persister";
 import { globalRunBus } from "@/lib/events/global-bus";
 import { runAiPipeline } from "./ai-pipeline";
-import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, shouldInjectUserData, type ExecutionDecision } from "@/lib/capabilities/router";
+import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, type ExecutionDecision } from "@/lib/capabilities/router";
 
 import { selectToolsForContext } from "@/lib/tools/tool-selector";
 import { selectAgentForContext } from "@/lib/agents/agent-selector";
 import type { RunRecord } from "@/lib/engine/runtime/runs/types";
 import { addRun as storeRun } from "@/lib/engine/runtime/runs/store";
-import { getTokens } from "@/lib/platform/auth/tokens";
 import {
   saveRun as persistRun,
   updateRun as persistUpdateRun,
@@ -34,14 +33,11 @@ import { preflightConnector } from "@/lib/connectors/control-plane/preflight";
 import { appendMessage, getRecentMessages } from "@/lib/memory/store";
 import { memoryToConversationHistory } from "@/lib/memory/format";
 import { isResearchIntent, isReportIntent } from "./research-intent";
-import { isWriteIntent } from "./write-intent";
 import { isScheduleIntent } from "./schedule-intent";
 import { checkSafetyGate } from "./safety-gate";
 import { runResearchReport } from "./run-research-report";
 import { getRequiredProvidersForInput, getBlockedReasonForProviders } from "./provider-requirements";
 import { shouldPersistEvent, persistRunEvent } from "@/lib/engine/runtime/timeline/persist";
-import type { ProviderId } from "@/lib/providers/types";
-import { retrieveUserDataContext } from "@/lib/connectors/data-retriever";
 import { isFeatureEnabled } from "@/lib/admin/settings";
 
 interface FocalContext {
@@ -63,16 +59,12 @@ interface OrchestrateInput {
   missionId?: string;
   tenantId?: string;
   workspaceId?: string;
-  /** Injected by runPipeline — formatted user data context for LLM */
-  _userDataContext?: string;
   /** Injected by runPipeline — resolved capability domain */
   _capabilityDomain?: string;
   /** Injected by runPipeline — tools allowed for the current capability scope */
   _allowedTools?: string[];
-  /** Injected by runPipeline — resolved retrieval mode from capability scope */
-  _retrievalMode?: string | null;
-  /** Caller opt-out for user-data injection (cron missions, tests). */
-  skipUserData?: boolean;
+  /** Injected by runPipeline — recurring intent detected, force schedule preview. */
+  _scheduleDirective?: boolean;
 }
 
 const DEV_TENANT_ID = "dev-tenant";
@@ -129,23 +121,13 @@ export function orchestrate(
   return stream;
 }
 
-// ── Execution Context builder ────────────────────────────────
-
-async function resolveHasGoogle(userId: string): Promise<boolean> {
-  try {
-    const tokens = await getTokens(userId, "google");
-    return Boolean(tokens?.accessToken);
-  } catch {
-    return false;
-  }
-}
-
 // ── Mode handler ─────────────────────────────────────────────
 //
 // Every execution mode (direct_answer, tool_call, workflow, custom_agent,
-// managed_agent) flows through the same AI pipeline. The retrieval mode
-// short-circuit fetches live Google data and synthesises it deterministically
-// — the streamText path doesn't run in that case.
+// managed_agent) flows through the same AI pipeline. Reading user data
+// (Gmail, Calendar, Drive, Slack, Notion…) is the model's job: it calls the
+// relevant Composio tool when it actually needs the data. There is no
+// orchestrator-level pre-fetch.
 
 async function handleAiPipeline(
   engine: RunEngine,
@@ -153,16 +135,6 @@ async function handleAiPipeline(
   input: OrchestrateInput,
   scope: TenantScope,
 ): Promise<void> {
-  if (input._retrievalMode) {
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Retrieval mode: ${input._retrievalMode} — using provider data path`,
-    });
-    await runSyntheticRetrieval(engine, input, scope, input._retrievalMode);
-    return;
-  }
-
   eventBus.emit({
     type: "orchestrator_log",
     run_id: engine.id,
@@ -172,11 +144,10 @@ async function handleAiPipeline(
   await runAiPipeline(engine, eventBus, {
     userId: input.userId,
     message: input.message,
-    userDataContext: input._userDataContext,
     conversationHistory: input.conversationHistory,
-    hasGoogle: await resolveHasGoogle(input.userId),
     surface: input.surface,
     domain: input._capabilityDomain,
+    scheduleDirective: input._scheduleDirective ?? false,
     tenantId: scope.tenantId,
     workspaceId: scope.workspaceId,
     conversationId: input.conversationId,
@@ -184,196 +155,11 @@ async function handleAiPipeline(
 }
 
 
-async function runSyntheticRetrieval(
-  engine: RunEngine,
-  input: OrchestrateInput,
-  scope: TenantScope,
-  retrievalMode: string,
-  llmFallbackText?: string,
-): Promise<void> {
-  const { delegate } = await import("@/lib/engine/runtime/delegate/api");
-  const { detectOutputTier, formatOutput } = await import("@/lib/engine/runtime/formatting/pipeline");
-  const { storeAsset, storeAction } = await import("@/lib/assets/types");
-
-  engine.events.emit({
-    type: "orchestrator_log",
-    run_id: engine.id,
-    message: `Executing synthetic retrieval: ${retrievalMode}`,
-  });
-
-  try {
-    const result = await delegate(engine, {
-      run_id: engine.id,
-      agent: "KnowledgeRetriever",
-      task: input.message,
-      context: {
-        intent: input.message,
-        surface: input.surface ?? "chat",
-        retrieval_mode: retrievalMode,
-        ...(input._capabilityDomain ? { capability_domain: input._capabilityDomain } : {}),
-      },
-      expected_output: "summary",
-      retrieval_mode: retrievalMode,
-    });
-
-    if (result.status === "success") {
-      const data = result.data as Record<string, unknown>;
-      const content = (data.content as string) ?? "";
-      const providerUsed = (data.providerUsed as string) ?? "unknown";
-
-      if (content) {
-        // Quality gate: don't promote a refusal/short reply into a persistent
-        // asset. The right panel was getting flooded with "Je ne peux pas…"
-        // entries because every retrieval call unconditionally created one.
-        // Heuristic: ≥ 400 chars AND doesn't open with a refusal stem.
-        const trimmed = content.trim();
-        const refusalStems = [
-          "je ne peux pas", "je ne suis pas en mesure", "je n'ai pas",
-          "je n'arrive pas", "désolé", "impossible de",
-          "i can't", "i cannot", "i'm unable", "i don't", "sorry",
-        ];
-        const head = trimmed.toLowerCase().slice(0, 80);
-        const looksLikeRefusal = refusalStems.some((s) => head.includes(s));
-        const tooShortForAsset = trimmed.length < 400;
-
-        if (looksLikeRefusal || tooShortForAsset) {
-          // Surface the body inline as a regular text response, no asset.
-          engine.events.emit({
-            type: "orchestrator_log",
-            run_id: engine.id,
-            message: `Synthetic retrieval ${looksLikeRefusal ? "refused" : "short"} (${trimmed.length} chars) — skipping asset, streaming inline`,
-          });
-          engine.events.emit({ type: "text_delta", run_id: engine.id, delta: trimmed });
-          await engine.complete();
-          return;
-        }
-
-        engine.events.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: `Synthetic retrieval completed (${content.length} chars) — creating asset`,
-        });
-
-        const threadId = input.threadId ?? engine.id;
-
-        // Action: document_read
-        storeAction({
-          id: `action_read_${engine.id}_${Date.now()}`,
-          threadId,
-          type: "document_read",
-          provider: providerUsed as ProviderId,
-          status: "completed",
-          timestamp: Date.now(),
-          metadata: {
-            query: input.message.slice(0, 200),
-            sourceChars: content.length,
-            retrievalMode,
-          },
-        });
-
-        const tier = detectOutputTier(input.message);
-        const formatted = formatOutput(content, tier);
-        const assetKind = tier === "report" ? "report" as const : "brief" as const;
-
-        const assetId = `asset_${engine.id}_${Date.now()}`;
-        const now = Date.now();
-
-        const asset = {
-          id: assetId,
-          threadId,
-          kind: assetKind,
-          title: formatted.title || `Synthèse : ${input.message.slice(0, 50)}`,
-          summary: formatted.summary,
-          outputTier: tier,
-          provenance: {
-            providerId: providerUsed as ProviderId,
-            sentAt: now,
-          },
-          createdAt: now,
-          contentRef: content,
-          runId: engine.id,
-        };
-
-        storeAsset(asset);
-
-        // Action: brief_generated or report_generated
-        // assetId only in metadata — FK write deferred to avoid race with async storeAsset
-        storeAction({
-          id: `action_gen_${engine.id}_${Date.now()}`,
-          threadId,
-          type: assetKind === "report" ? "report_generated" : "brief_generated",
-          provider: providerUsed as ProviderId,
-          status: "completed",
-          timestamp: Date.now(),
-          metadata: {
-            assetId,
-            wordCount: formatted.wordCount,
-            sectionCount: formatted.sections.length,
-            tier,
-          },
-        });
-
-        engine.events.emit({
-          type: "asset_generated",
-          run_id: engine.id,
-          asset_id: assetId,
-          asset_type: "report" as const,
-          name: asset.title,
-        });
-
-        const focalObject = {
-          objectType: assetKind,
-          id: `fo_${assetId}`,
-          threadId: asset.threadId,
-          title: asset.title,
-          status: "delivered",
-          createdAt: now,
-          updatedAt: now,
-          sourceAssetId: assetId,
-          sourceProviderId: providerUsed,
-          morphTarget: null,
-          summary: formatted.summary,
-          sections: formatted.sections,
-          tier: assetKind,
-          tone: formatted.tone,
-          wordCount: formatted.wordCount,
-        };
-
-        engine.events.emit({
-          type: "focal_object_ready",
-          run_id: engine.id,
-          focal_object: focalObject as Record<string, unknown>,
-        });
-
-        engine.events.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: `Focal object created: ${assetKind} (${formatted.wordCount} words, provider: ${providerUsed})`,
-        });
-      }
-      await engine.complete();
-    } else {
-      if (llmFallbackText) {
-        engine.events.emit({ type: "text_delta", run_id: engine.id, delta: llmFallbackText });
-      }
-      await engine.complete();
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[Orchestrator] Synthetic retrieval failed:", msg);
-    if (llmFallbackText) {
-      engine.events.emit({ type: "text_delta", run_id: engine.id, delta: llmFallbackText });
-    }
-    await engine.complete();
-  }
-}
-
 // ── Main pipeline ────────────────────────────────────────────
 //
 // Mission scheduling is handled by the `create_scheduled_mission` tool in the
 // AI pipeline (preview + confirm). Schedule intent is detected pre-LLM in
-// `runPipeline` so the model gets a forcing directive instead of doing a
-// one-shot retrieval.
+// `runPipeline` so the prompt receives a forcing directive at build time.
 
 async function runPipeline(
   db: SupabaseClient,
@@ -407,27 +193,11 @@ async function runPipeline(
   }
 
   // ── Pre-LLM signal injection ──────────────────────────────
-  // Recurring intent detected → bypass user-data fetch (Gmail/Calendar/Drive
-  // are irrelevant when the user wants to *schedule* an action, not run it
-  // now), and inject a top-priority directive that forces the model to
-  // call `create_scheduled_mission` preview.
+  // Schedule intent is detected here so `buildAgentSystemPrompt` can
+  // prepend a forcing directive — without it the model treats a recurring
+  // request ("tous les matins à 8h") as a one-shot.
   const scheduleDetected = isScheduleIntent(input.message);
-  if (scheduleDetected) {
-    input.skipUserData = true;
-    input._userDataContext =
-      "[DIRECTIVE PRIORITAIRE — SCHEDULE INTENT]\n" +
-      "Le message utilisateur décrit une AUTOMATION RÉCURRENTE (par ex. " +
-      "« tous les matins à 8h », « chaque vendredi à 17h »).\n" +
-      "Tu DOIS appeler le tool `create_scheduled_mission` avec `_preview: true` " +
-      "comme PREMIÈRE action — avant tout autre tool, avant toute synthèse.\n" +
-      "Tu ne dois PAS exécuter la tâche maintenant en mode ponctuel. La " +
-      "valeur attendue est la création de l'automation récurrente.\n" +
-      "Déduis les paramètres directement depuis le message :\n" +
-      "  - name : titre court de la mission\n" +
-      "  - input : la consigne que la mission devra exécuter à chaque tick\n" +
-      "  - schedule : expression cron 5 champs (minute heure jour mois jour-semaine)\n" +
-      "  - label : récurrence en français lisible\n";
-  }
+  input._scheduleDirective = scheduleDetected;
 
   // ── 1. Capability-first routing ─────────────────────────────
   const capScope = resolveCapabilityScope(input.message, input.surface);
@@ -446,23 +216,11 @@ async function runPipeline(
   input._capabilityDomain = capScope.domain;
   input._allowedTools = capScope.allowedTools;
 
-  // Three classes of intent skip the synthetic-retrieval short-circuit and
-  // route through the AI pipeline so the model can call Composio tools and
-  // run multi-step plans:
-  //   - WRITE: "envoie un slack" → preview tool, not Gmail summary.
-  //   - SCHEDULE: "tous les matins à 8h" → create_scheduled_mission preview.
-  //   - MULTI-STEP: "résume … puis envoie …" → step 2 must be reachable.
-  const writeIntent = isWriteIntent(input.message);
-  const multiStepIntent =
-    /\b(puis|ensuite|et\s+ensuite|et\s+puis|après\s+ça|then|after\s+that)\b/i.test(input.message);
-  const bypassRetrieval = writeIntent || scheduleDetected || multiStepIntent;
-  input._retrievalMode = bypassRetrieval ? null : capScope.retrievalMode;
-
   console.log(
     "[ExecutionMode]",
     decision.mode,
     decision.reason,
-    `[domain: ${capScope.domain}, retrieval: ${input._retrievalMode ?? "none"}, write: ${writeIntent}, schedule: ${scheduleDetected}, multistep: ${multiStepIntent}]`,
+    `[domain: ${capScope.domain}, schedule: ${scheduleDetected}]`,
   );
 
   // ── 2. Create Run ──────────────────────────────────────────
@@ -758,85 +516,11 @@ async function runPipeline(
       }
     }
 
-    // ── User data retrieval (calendar, gmail, drive) ───────────
-    // Default-on for user-data-likely domains so vague-but-personal questions
-    // ("résume ma journée", "qu'est-ce que j'ai aujourd'hui") still inject.
-    if (!input.skipUserData && shouldInjectUserData(capScope, input.message)) {
-      const userId = scope.userId ?? input.userId;
-      let hasGoogle = false;
-      try {
-        const googleTokens = await getTokens(userId, "google");
-        hasGoogle = !!googleTokens?.accessToken;
-      } catch {
-        hasGoogle = false;
-      }
-
-      if (hasGoogle) {
-        try {
-          const keywordHit =
-            capScope.needsProviderData.calendar ||
-            capScope.needsProviderData.gmail ||
-            capScope.needsProviderData.drive;
-          eventBus.emit({
-            type: "orchestrator_log",
-            run_id: engine.id,
-            message: `Retrieving user data — domain=${capScope.domain}, keywordHit=${keywordHit}`,
-          });
-
-          const PROVIDER_TO_TOOL: Record<"calendar" | "gmail" | "drive", string> = {
-            calendar: "google.calendar.list_today_events",
-            gmail: "google.gmail.list_recent_messages",
-            drive: "google.drive.list_recent_files",
-          };
-
-          const dataContext = await retrieveUserDataContext(userId, {
-            start: (provider) => {
-              eventBus.emit({
-                type: "tool_call_started",
-                run_id: engine.id,
-                step_id: `data_retrieve_${provider}_${engine.id}`,
-                tool: PROVIDER_TO_TOOL[provider],
-                providerId: "google",
-                providerLabel: "Google",
-              });
-            },
-            end: (provider, ok) => {
-              eventBus.emit({
-                type: "tool_call_completed",
-                run_id: engine.id,
-                step_id: `data_retrieve_${provider}_${engine.id}`,
-                tool: PROVIDER_TO_TOOL[provider],
-                providerId: "google",
-              });
-              if (!ok) {
-                eventBus.emit({
-                  type: "orchestrator_log",
-                  run_id: engine.id,
-                  message: `Provider read failed for ${provider} — continuing without it`,
-                });
-              }
-            },
-          });
-          input._userDataContext = dataContext.formattedForLLM;
-          eventBus.emit({
-            type: "orchestrator_log",
-            run_id: engine.id,
-            message: `Data retrieved — Calendar=${dataContext.hasCalendarAccess}, Gmail=${dataContext.hasGmailAccess}, Drive=${dataContext.hasDriveAccess}`,
-          });
-        } catch (err) {
-          console.error("[Orchestrator] Failed to retrieve user data:", err);
-        }
-      } else {
-        eventBus.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: `User data injection skipped — Google not connected (domain=${capScope.domain})`,
-        });
-      }
-    }
-
-    // ── Deterministic research path (skip if user data retrieval needed) ──
-    if (researchDetected && !capScope.retrievalMode) {
+    // ── Deterministic research path ────────────────────────────
+    // Research / report intents (« cherche … », « rapport sur … ») use a
+    // deterministic web-search pipeline rather than streamText. Everything
+    // else routes to the AI pipeline below.
+    if (researchDetected) {
       const pathLabel = reportDetected ? "research + report" : "research";
       eventBus.emit({
         type: "orchestrator_log",
@@ -847,8 +531,9 @@ async function runPipeline(
       return;
     }
 
-    // Every execution mode flows through the same AI pipeline. The retrieval
-    // mode short-circuit (real Google data fetch) is handled inside.
+    // Every other execution mode flows through the same AI pipeline. The
+    // model decides which provider tools to call (Gmail, Calendar, Slack…)
+    // — there is no orchestrator-level pre-fetch of user data.
     await handleAiPipeline(engine, eventBus, input, scope);
   } finally {
     storeAssistantMemory();

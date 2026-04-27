@@ -29,12 +29,12 @@ import { buildAgentSystemPrompt } from "./system-prompt";
 export interface AiPipelineInput {
   userId: string;
   message: string;
-  userDataContext?: string;
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
-  hasGoogle?: boolean;
   surface?: string;
   /** Resolved capability domain — used to filter Composio tools to relevant apps only. */
   domain?: string;
+  /** Recurring intent detected — prepends a forcing schedule directive to the prompt. */
+  scheduleDirective?: boolean;
   /** Tenant scope for multi-tenant operations (mission creation etc.). */
   tenantId?: string;
   workspaceId?: string;
@@ -239,9 +239,8 @@ export async function runAiPipeline(
   // ── 3. Build system prompt ──────────────────────────────────
   const systemPrompt = buildAgentSystemPrompt({
     composioTools: filteredTools,
-    hasGoogle: input.hasGoogle ?? false,
-    userDataContext: input.userDataContext,
     surface: input.surface,
+    scheduleDirective: input.scheduleDirective ?? false,
   });
 
   // ── 4. Build message history ────────────────────────────────
@@ -411,6 +410,11 @@ export async function runAiPipeline(
         "lag (de )?(propagation|composio)",
         "rafra[iî]chis( la page)? et (retente|r[eé]essaie)",
         "contacte (le )?support",
+        "connexion (suppl[eé]mentaire|d[eé]di[eé]e|s[eé]par[eé]e)",
+        "n[eé]cessitent? une connexion",
+        "que je peux d[eé]clencher (à la demande)?",
+        "ces? actions? n[eé]cessitent",
+        "ce que je (ne )?peux (pas|faire) sans",
       ].join("|"),
       "i",
     );

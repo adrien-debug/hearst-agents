@@ -15,7 +15,6 @@ export type NodeId =
   | "safety"
   | "intent"
   | "preflight"
-  | "userdata"
   | "tools"
   | "agent"
   | "research"
@@ -63,10 +62,10 @@ export const VIEWBOX = { width: 1500, height: 600 } as const;
 
 export const NODE_SIZE = { w: 168, h: 80 } as const;
 
-// Y-axis canon: top branch / main row / bottom branch
-const Y_TOP = 180;
+// Y-axis canon: top branch (agent) / main row / bottom branch (pipeline)
+const Y_TOP = 220;
 const Y_MID = 320;
-const Y_BOT = 460;
+const Y_BOT = 420;
 
 // 8 columns, 180px gap between most nodes (final gap tighter to anchor `complete`).
 const X = [110, 300, 490, 680, 870, 1060, 1250, 1400] as const;
@@ -126,16 +125,16 @@ export const NODES: CanvasNode[] = [
     sublabel: "détection pré-LLM",
     x: X[3],
     y: Y_MID,
-    fileHint: "lib/engine/orchestrator/{write,schedule,research}-intent.ts",
+    fileHint: "lib/engine/orchestrator/{schedule,research}-intent.ts",
     description:
-      "Quatre détecteurs heuristiques en parallèle : isWriteIntent (envoyer/créer/supprimer), isScheduleIntent (« tous les matins », « chaque vendredi »), isResearchIntent / isReportIntent (« cherche », « rapport sur »), multiStepIntent (« puis », « ensuite »). Le résultat injecte des directives prioritaires dans _userDataContext et active bypassRetrieval pour court-circuiter la lecture synthétique.",
+      "Deux détecteurs heuristiques pré-LLM : isScheduleIntent (« tous les matins », « chaque vendredi ») injecte une directive prioritaire dans le system prompt pour forcer create_scheduled_mission ; isResearchIntent / isReportIntent (« cherche », « rapport sur ») route vers le path déterministe research. Toutes les autres intents (write, lecture, multi-étapes) passent par le pipeline IA — c'est au model de choisir les bons tools.",
     inputs: "message",
-    outputs: "flags { write, schedule, research, multistep } + directives",
-    events: ["—  (pré-LLM, pas d'event SSE direct)"],
+    outputs: "flags { schedule, research } + directive optionnelle",
+    events: ["— (pré-LLM, pas d'event SSE direct)"],
     branches: [
-      "schedule → directive create_scheduled_mission",
-      "write|multistep → bypass synthetic retrieval",
+      "schedule → scheduleDirective injectée dans le prompt",
       "research → branche Research deterministic",
+      "défaut → Préflight + Surface outils",
     ],
   },
   {
@@ -143,10 +142,10 @@ export const NODES: CanvasNode[] = [
     label: "Préflight",
     sublabel: "providers",
     x: X[4],
-    y: Y_TOP,
+    y: Y_MID,
     fileHint: "lib/connectors/control-plane/preflight.ts",
     description:
-      "Vérifie que les providers requis par le scope ont des tokens OAuth valides. Si l'utilisateur a explicitement nommé l'app (« envoie un Slack ») et qu'elle n'est pas connectée → émet app_connect_required (carte OAuth inline). Si le routing l'a juste inféré sans mention explicite → fallthrough vers le pipeline IA (le model peut clarifier).",
+      "Vérifie que les providers requis par le scope ont des tokens OAuth valides. Si l'utilisateur a explicitement nommé l'app (« envoie un Slack ») et qu'elle n'est pas connectée → émet app_connect_required (carte OAuth inline). Si le routing l'a juste inféré sans mention explicite → fallthrough vers le pipeline IA (le model peut clarifier ou appeler request_connection).",
     inputs: "providers requis, scope, userId",
     outputs: "carte OAuth | fallthrough",
     events: ["app_connect_required"],
@@ -157,34 +156,19 @@ export const NODES: CanvasNode[] = [
     ],
   },
   {
-    id: "userdata",
-    label: "Données user",
-    sublabel: "context Google",
-    x: X[4],
-    y: Y_BOT,
-    fileHint: "lib/connectors/data-retriever.ts",
-    description:
-      "Lecture native Calendar/Gmail/Drive via OAuth direct (pas via Composio). Active si Google connecté ET shouldInjectUserData(scope, message). Skip explicite si skipUserData=true (schedule intent). Le résultat formaté est injecté dans le system prompt sous CONTEXTE UTILISATEUR.",
-    inputs: "Google access token, scope",
-    outputs: "formattedForLLM (résumé Calendar+Gmail+Drive)",
-    events: ["tool_call_started/completed (data_retrieve_*)"],
-    branches: ["→ Surface outils"],
-  },
-  {
     id: "tools",
     label: "Surface outils",
-    sublabel: "Composio + meta",
+    sublabel: "tiers + meta",
     x: X[5],
     y: Y_MID,
     fileHint: "lib/connectors/composio/discovery.ts + to-ai-tools.ts",
     description:
-      "Discovery par user via composio.tools.get(userId, { toolkits, limit }). Filtré par domaine via filterToolsByDomain (cap 40 outils). Ajoute deux meta-tools : request_connection (carte OAuth inline) et create_scheduled_mission (preview/confirm). Les write-actions sont injectées avec un paramètre _preview pour forcer le pattern 2-étapes.",
+      "Discovery par user via composio.tools.get(userId, { toolkits, limit: 100 }). Filtré par domaine via filterToolsByDomain (cap 40 outils). C'est ICI que le model trouve les actions de lecture ET d'écriture (gmail_fetch, slack_send, etc.) — il n'y a plus de pré-fetch orchestrator. Ajoute deux meta-tools : request_connection (carte OAuth inline) et create_scheduled_mission (preview/confirm). Les write-actions reçoivent un paramètre _preview pour forcer le pattern 2-étapes.",
     inputs: "userId, domain, toolkits ACTIVE",
     outputs: "AiToolMap { tools + request_connection + scheduler }",
     events: ["tool_surface"],
     branches: [
       "mode custom_agent → Agent custom",
-      "research detected → Research deterministic",
       "défaut → AI pipeline streamText",
     ],
   },
@@ -224,12 +208,12 @@ export const NODES: CanvasNode[] = [
     y: Y_BOT,
     fileHint: "lib/engine/orchestrator/ai-pipeline.ts",
     description:
-      "streamText() Anthropic claude-sonnet-4-6 avec system prompt dynamique (LECTURE / ACTIONS séparées), tool map (Composio + request_connection + create_scheduled_mission), stopWhen=stepCountIs(10), maxOutputTokens=8000, temperature=0.3. Auto-trigger app_connect_required sur AUTH_REQUIRED. Persiste turn structuré (user + assistant + tool calls/results) pour cross-turn confirmation.",
+      "streamText() Anthropic claude-sonnet-4-6 avec system prompt unifié (une seule section OUTILS read+write), tool map (provider tools + request_connection + create_scheduled_mission), stopWhen=stepCountIs(10), maxOutputTokens=8000, temperature=0.3. Quand le model a besoin d'une donnée tierce, il appelle l'outil correspondant (gmail_fetch_emails, googlecalendar_events_list, etc.) — c'est lui qui décide. Auto-trigger app_connect_required sur AUTH_REQUIRED. Sentinel refusalPattern logge si le model émet une variante de refus textuel au lieu d'appeler request_connection.",
     inputs: "system prompt + messages + AiToolMap",
     outputs: "text_delta stream + tool calls",
     events: ["tool_call_started", "tool_call_completed", "text_delta", "app_connect_required"],
     branches: [
-      "tool call → exécution Composio ou meta tool",
+      "tool call → exécution provider ou meta tool",
       "stream end → Run terminé",
     ],
   },
@@ -259,11 +243,9 @@ export const EDGES: CanvasEdge[] = [
   { id: "router-safety", from: "router", to: "safety" },
   { id: "safety-intent", from: "safety", to: "intent" },
   { id: "intent-preflight", from: "intent", to: "preflight" },
-  { id: "intent-userdata", from: "intent", to: "userdata" },
+  { id: "intent-research", from: "intent", to: "research", branch: "research" },
   { id: "preflight-tools", from: "preflight", to: "tools" },
-  { id: "userdata-tools", from: "userdata", to: "tools" },
   { id: "tools-agent", from: "tools", to: "agent", branch: "agent" },
-  { id: "tools-research", from: "tools", to: "research", branch: "research" },
   { id: "tools-pipeline", from: "tools", to: "pipeline", branch: "pipeline" },
   { id: "agent-complete", from: "agent", to: "complete" },
   { id: "research-complete", from: "research", to: "complete" },
