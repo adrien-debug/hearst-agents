@@ -157,9 +157,8 @@ async function findExpiredAssets(
       (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    // Check tenant-specific TTL
+    // Check tenant-specific archive window
     const tenantOverride = config.tenantOverrides?.[row.thread_id || "global"];
-    const effectiveTtl = tenantOverride?.ttlDays || config.defaultTtlDays;
     const effectiveArchive = tenantOverride?.archiveAfterDays || config.archiveAfterDays;
 
     return {
@@ -206,8 +205,8 @@ async function deleteAsset(
  * Find orphaned files in storage (not referenced in DB)
  */
 async function findOrphanedFiles(
-  db: SupabaseClient,
-  storage: StorageProvider
+  _db: SupabaseClient,
+  _storage: StorageProvider
 ): Promise<Array<{ key: string; size: number; lastModified: Date }>> {
   // This is provider-specific and may require listing all storage files
   // For now, return empty - implement per-provider

@@ -12,7 +12,6 @@ import {
   resolveDataIntent,
   isAgentValidForDomain,
   getProvidersForDomain,
-  getToolsForDomain,
   DOMAIN_TAXONOMY,
 } from "@/lib/capabilities/taxonomy";
 

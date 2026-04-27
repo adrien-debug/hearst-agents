@@ -8,8 +8,6 @@
  */
 
 import { LocalStorageProvider, R2StorageProvider } from "../lib/engine/runtime/assets/storage";
-import fs from "fs/promises";
-import path from "path";
 
 interface MigrationOptions {
   sourcePath: string;
@@ -193,7 +191,7 @@ async function listAllFilesRecursive(
           files.push({ key: relativePath, size: stats.size });
         }
       }
-    } catch (err) {
+    } catch {
       // Directory doesn't exist or permission error
     }
   }

@@ -36,3 +36,13 @@ export function disableMission(id: string): void {
   const m = missions.get(id);
   if (m) m.enabled = false;
 }
+
+/** Drop a single mission from the in-memory store. Called by DELETE API. */
+export function evictMission(id: string): void {
+  missions.delete(id);
+}
+
+/** Wipe every mission from the in-memory store. Server-only cleanup. */
+export function clearAllMissions(): void {
+  missions.clear();
+}

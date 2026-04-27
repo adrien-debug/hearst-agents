@@ -5,7 +5,7 @@
  * 3. latest asset → 4. active mission → 5. null
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   resolveFocalObject,
   manifestPlan,

@@ -33,6 +33,7 @@ import { preflightConnector } from "@/lib/connectors/control-plane/preflight";
 import { appendMessage, getRecentMessages } from "@/lib/memory/store";
 import { memoryToConversationHistory } from "@/lib/memory/format";
 import { isResearchIntent, isReportIntent } from "./research-intent";
+import { isWriteIntent } from "./write-intent";
 import { runResearchReport } from "./run-research-report";
 import { getRequiredProvidersForInput, getBlockedReasonForProviders } from "./provider-requirements";
 import { shouldPersistEvent, persistRunEvent } from "@/lib/engine/runtime/timeline/persist";
@@ -216,6 +217,32 @@ async function runSyntheticRetrieval(
       const providerUsed = (data.providerUsed as string) ?? "unknown";
 
       if (content) {
+        // Quality gate: don't promote a refusal/short reply into a persistent
+        // asset. The right panel was getting flooded with "Je ne peux pas…"
+        // entries because every retrieval call unconditionally created one.
+        // Heuristic: ≥ 400 chars AND doesn't open with a refusal stem.
+        const trimmed = content.trim();
+        const refusalStems = [
+          "je ne peux pas", "je ne suis pas en mesure", "je n'ai pas",
+          "je n'arrive pas", "désolé", "impossible de",
+          "i can't", "i cannot", "i'm unable", "i don't", "sorry",
+        ];
+        const head = trimmed.toLowerCase().slice(0, 80);
+        const looksLikeRefusal = refusalStems.some((s) => head.includes(s));
+        const tooShortForAsset = trimmed.length < 400;
+
+        if (looksLikeRefusal || tooShortForAsset) {
+          // Surface the body inline as a regular text response, no asset.
+          engine.events.emit({
+            type: "orchestrator_log",
+            run_id: engine.id,
+            message: `Synthetic retrieval ${looksLikeRefusal ? "refused" : "short"} (${trimmed.length} chars) — skipping asset, streaming inline`,
+          });
+          engine.events.emit({ type: "text_delta", run_id: engine.id, delta: trimmed });
+          await engine.complete();
+          return;
+        }
+
         engine.events.emit({
           type: "orchestrator_log",
           run_id: engine.id,
@@ -390,8 +417,20 @@ async function runPipeline(
 
   input._capabilityDomain = capScope.domain;
   input._allowedTools = capScope.allowedTools;
-  input._retrievalMode = capScope.retrievalMode;
-  console.log("[ExecutionMode]", decision.mode, decision.reason, `[domain: ${capScope.domain}]`);
+
+  // Write intents must NOT route through synthetic retrieval — that path
+  // is read-only (Gmail/Calendar/Drive fetch + summarise). Sending a Slack
+  // message, creating a Notion page, etc., need the AI pipeline so the
+  // model can call Composio tools. Strip retrievalMode in that case.
+  const writeIntent = isWriteIntent(input.message);
+  input._retrievalMode = writeIntent ? null : capScope.retrievalMode;
+
+  console.log(
+    "[ExecutionMode]",
+    decision.mode,
+    decision.reason,
+    `[domain: ${capScope.domain}, retrieval: ${input._retrievalMode ?? "none"}, write: ${writeIntent}]`,
+  );
 
   // ── 2. Create Run ──────────────────────────────────────────
   const createInput: CreateRunInput = {

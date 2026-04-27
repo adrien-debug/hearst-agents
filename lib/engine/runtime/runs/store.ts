@@ -34,3 +34,8 @@ export function getRunsByUserId(userId: string, limit = 50): RunRecord[] {
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, limit);
 }
+
+/** Wipe every run from the in-memory store. Server-only cleanup. */
+export function clearAllRuns(): void {
+  runs.clear();
+}

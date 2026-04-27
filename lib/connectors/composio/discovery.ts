@@ -2,14 +2,22 @@
  * Composio Discovery — per-user tool resolution against the new SDK.
  *
  * Strategy:
- *  - List the user's connected toolkits via `connectedAccounts.list`.
- *  - For each connected toolkit, list the tools via `tools.list({toolkits, userId})`.
+ *  1. List the user's ACTIVE connected toolkits via `connectedAccounts.list`.
+ *     This is the source-of-truth — `tools.list({userId})` alone has been
+ *     observed returning empty sets after a fresh OAuth (eventual consistency
+ *     on Composio's side), which produced "Slack n'est pas connecté"
+ *     hallucinations even when the toolkit was ACTIVE.
+ *  2. Fetch tool definitions via `tools.list({userId, toolkits: [active]})`.
+ *  3. If a toolkit is ACTIVE but the SDK returns no tools for it, the
+ *     discrepancy is logged so we can detect propagation lag.
  *
- * Cached per (userId × toolkit-filter) for 5 minutes — invalidated on
- * connect / disconnect.
+ * Cache: 60s TTL (reduced from 5min). We also refuse to cache empty results
+ * — a freshly-connected user would otherwise be locked out for the full TTL.
+ * Invalidated explicitly on connect / disconnect / OAuth return.
  */
 
-import { getComposio, isComposioConfigured } from "./client";
+import { getComposio } from "./client";
+import { listConnections } from "./connections";
 
 export interface DiscoveredTool {
   /** Composio tool slug, e.g. "GMAIL_SEND_EMAIL". Stable identifier. */
@@ -25,7 +33,7 @@ interface CacheEntry {
   expiresAt: number;
 }
 
-const TTL_MS = 5 * 60_000;
+const TTL_MS = 60_000;
 const cache = new Map<string, CacheEntry>();
 
 export function resetDiscoveryCache(userId?: string): void {
@@ -84,15 +92,64 @@ export async function getToolsForUser(
   if (!composio) return [];
 
   try {
-    const filter = opts.apps && opts.apps.length > 0
-      ? { userId, toolkits: opts.apps.map((a) => a.toLowerCase()) }
-      : { userId };
-    const raw = (await composio.tools.list(filter)) as { items?: RawTool[] } | RawTool[];
+    // 1. Source-of-truth: which toolkits does the user actually have ACTIVE?
+    //    `apps` filter (if provided) intersects with the active set so we
+    //    never query for toolkits the user hasn't connected.
+    const accounts = await listConnections(userId);
+    const activeSlugs = Array.from(
+      new Set(
+        accounts
+          .filter((a) => a.status === "ACTIVE")
+          .map((a) => a.appName.toLowerCase())
+          .filter(Boolean),
+      ),
+    );
+
+    const requestedSlugs = (opts.apps ?? []).map((a) => a.toLowerCase());
+    const targetSlugs =
+      requestedSlugs.length > 0
+        ? activeSlugs.filter((s) => requestedSlugs.includes(s))
+        : activeSlugs;
+
+    if (targetSlugs.length === 0) {
+      console.log(
+        `[Composio/Discovery] userId=${userId} — no ACTIVE toolkits ` +
+          `(connectedAccounts: ${accounts.length} total, statuses: ${accounts.map((a) => `${a.appName}:${a.status}`).join(", ") || "none"})`,
+      );
+      // Don't cache an empty result — the user might be mid-OAuth.
+      return [];
+    }
+
+    // 2. Fetch tool definitions for the toolkits we know are ACTIVE.
+    const raw = (await composio.tools.list({
+      userId,
+      toolkits: targetSlugs,
+    })) as { items?: RawTool[] } | RawTool[];
     const items = Array.isArray(raw) ? raw : (raw.items ?? []);
     const tools = items
       .map(toDiscoveredTool)
       .filter((t): t is DiscoveredTool => t !== null);
-    cache.set(cacheKey, { tools, expiresAt: now + TTL_MS });
+
+    // 3. Detect Composio propagation lag: toolkit ACTIVE but no tools listed.
+    const slugsInTools = new Set(tools.map((t) => t.app));
+    const missing = targetSlugs.filter((s) => !slugsInTools.has(s));
+    if (missing.length > 0) {
+      console.warn(
+        `[Composio/Discovery] userId=${userId} — ACTIVE toolkits with no tools: ${missing.join(", ")} ` +
+          `(tools.list returned ${tools.length} tools across ${slugsInTools.size} toolkits). ` +
+          `Likely Composio eventual-consistency lag — retry shortly.`,
+      );
+    }
+
+    console.log(
+      `[Composio/Discovery] userId=${userId} — ${tools.length} tools across [${[...slugsInTools].join(", ")}]`,
+    );
+
+    // Only cache when we actually got tools — avoid pinning an empty
+    // response right after OAuth completion.
+    if (tools.length > 0) {
+      cache.set(cacheKey, { tools, expiresAt: now + TTL_MS });
+    }
     return tools;
   } catch (err) {
     console.error(`[Composio/Discovery] tools.list failed for ${userId}:`, err);

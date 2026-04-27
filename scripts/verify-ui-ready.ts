@@ -59,7 +59,7 @@ async function verifyUI(): Promise<CheckResult[]> {
   if (SUPABASE_URL && SUPABASE_KEY) {
     const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
     try {
-      const { data, error } = await sb.from("system_settings").select("count").single();
+      const { error } = await sb.from("system_settings").select("count").single();
       if (!error) {
         results.push({ component: "Database", status: "✅", message: "Connected" });
       } else {

@@ -215,14 +215,13 @@ registerTool(
     try {
       // Safe evaluation - only allow numbers and basic operators
       const sanitized = expression.replace(/[^0-9+\-*/.()\s\*\*]/g, "");
-      // eslint-disable-next-line no-eval
       const result = eval(sanitized);
       return JSON.stringify({
         expression,
         result,
         type: typeof result,
       });
-    } catch (error) {
+    } catch {
       return JSON.stringify({
         error: `Invalid expression: ${expression}`,
         result: null,

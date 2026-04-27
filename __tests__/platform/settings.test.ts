@@ -11,7 +11,6 @@ import {
   getAllSettings,
   invalidateSettingsCache,
 } from "@/lib/platform/settings";
-import type { SystemSetting } from "@/lib/platform/settings";
 
 // Mock Supabase
 const mockSelect = vi.fn();

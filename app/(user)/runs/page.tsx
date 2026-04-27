@@ -93,7 +93,7 @@ export default function RunsPage() {
     return (
       <div className="flex-1 flex items-center justify-center">
         <p className="t-11 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)] animate-pulse">
-          Loading runs…
+          Chargement des runs…
         </p>
       </div>
     );

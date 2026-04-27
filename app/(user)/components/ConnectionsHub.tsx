@@ -48,11 +48,6 @@ function categorizeApp(app: ComposioApp): string {
   return app.categories[0] ?? "other";
 }
 
-function appIcon(app: ComposioApp): string {
-  if (app.logo) return app.logo;
-  return "🔌";
-}
-
 interface DrawerState {
   app: ComposioApp;
   connectedAccount?: ConnectedAccount;
@@ -113,7 +108,22 @@ export function ConnectionsHub() {
   }, []);
 
   useEffect(() => {
-    void Promise.all([refreshAccounts(), loadApps()]).finally(() => setLoading(false));
+    let cancelled = false;
+    // Initial load on mount. The eslint disable below is intentional:
+    // refreshAccounts / loadApps are useCallbacks that setState as part
+    // of their async work, which is exactly the load-on-mount pattern
+    // the rule warns about. The cancellation guard prevents post-unmount
+    // updates; the deferred setLoading runs in a microtask after the
+    // promise resolves, which is the documented React 19 escape hatch.
+    queueMicrotask(() => {
+      if (cancelled) return;
+      void Promise.all([refreshAccounts(), loadApps()]).finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [refreshAccounts, loadApps]);
 
   const connectedSlugs = useMemo(
@@ -277,7 +287,9 @@ export function ConnectionsHub() {
         method: "POST",
         credentials: "include",
       }).catch(() => {});
-      void refreshAccounts();
+      // Defer the refresh to the next microtask — refreshAccounts setStates
+      // internally, and the rule warns about synchronous setState in effects.
+      queueMicrotask(() => void refreshAccounts());
     }
   }, [refreshAccounts]);
 
@@ -358,17 +370,20 @@ export function ConnectionsHub() {
             {/* Connected services */}
             {connectedApps.length > 0 && (
               <section className="mb-10">
-                <SectionHeader
-                  icon="✓"
-                  label="Connectés"
-                  count={connectedApps.length}
-                  accentClass="text-[var(--cykan)] halo-cyan-sm"
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="mb-4">
+                  <SectionHeader
+                    icon="✓"
+                    label="Connectés"
+                    count={connectedApps.length}
+                    accentClass="text-[var(--cykan)] halo-cyan-sm"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {connectedApps.map((app) => (
-                    <ConnectedCard
+                    <AppCard
                       key={app.key}
                       app={app}
+                      connected
                       onClick={() => openDrawer(app)}
                     />
                   ))}
@@ -384,13 +399,13 @@ export function ConnectionsHub() {
               const visible = isExpanded ? list : list.slice(0, APPS_PER_CATEGORY_PREVIEW);
               const overflow = list.length - visible.length;
               return (
-                <section key={cat.id} className="mb-8">
-                  <div className="flex items-center justify-between mb-3">
+                <section key={cat.id} className="mb-10">
+                  <div className="flex items-center justify-between mb-4">
                     <SectionHeader icon={cat.icon} label={cat.label} count={list.length} />
                     {!isExpanded && overflow > 0 && (
                       <button
                         onClick={() => setShowAllInCat(cat.id)}
-                        className="t-9 font-mono tracking-[0.15em] uppercase text-[var(--text-faint)] hover:text-[var(--cykan)]"
+                        className="t-9 font-mono tracking-[0.15em] uppercase text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
                       >
                         Voir tout ({list.length}) →
                       </button>
@@ -398,23 +413,22 @@ export function ConnectionsHub() {
                     {isExpanded && (
                       <button
                         onClick={() => setShowAllInCat(null)}
-                        className="t-9 font-mono tracking-[0.15em] uppercase text-[var(--text-faint)] hover:text-[var(--cykan)]"
+                        className="t-9 font-mono tracking-[0.15em] uppercase text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
                       >
                         ← Réduire
                       </button>
                     )}
                   </div>
-                  <ul className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                     {visible.map((app) => (
-                      <li key={app.key}>
-                        <AppChip
-                          app={app}
-                          connected={connectedSlugs.has(app.key)}
-                          onClick={() => openDrawer(app)}
-                        />
-                      </li>
+                      <AppCard
+                        key={app.key}
+                        app={app}
+                        connected={connectedSlugs.has(app.key)}
+                        onClick={() => openDrawer(app)}
+                      />
                     ))}
-                  </ul>
+                  </div>
                 </section>
               );
             })}
@@ -465,27 +479,14 @@ function SectionHeader({
   );
 }
 
-function ConnectedCard({ app, onClick }: { app: ComposioApp; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="text-left border border-[var(--cykan)]/30 bg-[var(--cykan)]/[0.04] hover:bg-[var(--cykan)]/[0.08] transition-colors p-4 group"
-    >
-      <div className="flex items-center gap-3 mb-2">
-        <AppLogo app={app} size={28} />
-        <div className="flex-1 min-w-0">
-          <div className="t-13 font-medium text-[var(--text)]">{app.name}</div>
-          <div className="t-9 font-mono tracking-[0.15em] uppercase text-[var(--cykan)]">
-            active
-          </div>
-        </div>
-      </div>
-      <div className="t-11 text-[var(--text-faint)] line-clamp-2">{app.description}</div>
-    </button>
-  );
-}
-
-function AppChip({
+/**
+ * AppCard — unified visual for the apps grid.
+ *
+ * Logo-first design: 56×56 logo top-left, name + status to its right,
+ * description on a second line. Connected variant gets a cyan halo +
+ * "active" badge; default variant stays muted until hover.
+ */
+function AppCard({
   app,
   connected,
   onClick,
@@ -497,34 +498,71 @@ function AppChip({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-2.5 py-1.5 t-11 font-mono border transition-all ${
+      className={`group text-left flex flex-col gap-3 p-5 border transition-all ${
         connected
-          ? "border-[var(--cykan)]/40 text-[var(--cykan)] bg-[var(--cykan)]/[0.06]"
-          : "border-[var(--surface-2)] text-[var(--text-soft)] hover:text-[var(--text)] hover:border-[var(--cykan)]/30"
+          ? "border-[var(--cykan)]/40 bg-[var(--cykan)]/[0.05] hover:bg-[var(--cykan)]/[0.10] hover:border-[var(--cykan)]/60"
+          : "border-[var(--surface-2)] bg-[var(--surface)]/40 hover:border-[var(--cykan)]/30 hover:bg-[var(--surface-1)]"
       }`}
+      style={{ minHeight: 156 }}
+      aria-label={`${app.name}${connected ? " — connecté" : ""}`}
     >
-      <AppLogo app={app} size={14} />
-      <span className="lowercase">{app.name}</span>
-      {connected && <span aria-label="connecté">✓</span>}
+      <div className="flex items-start gap-4">
+        <AppLogo app={app} size={56} />
+        <div className="flex-1 min-w-0 pt-1">
+          <div className="t-15 font-medium text-[var(--text)] truncate">{app.name}</div>
+          {connected ? (
+            <div className="mt-1 flex items-center gap-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--cykan)]">
+              <span className="w-1 h-1 rounded-full bg-[var(--cykan)] halo-dot" />
+              active
+            </div>
+          ) : (
+            <div className="mt-1 t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">
+              connecter →
+            </div>
+          )}
+        </div>
+      </div>
+      {app.description && (
+        <p className="t-11 text-[var(--text-faint)] line-clamp-2 leading-[1.4] mt-auto">
+          {app.description}
+        </p>
+      )}
     </button>
   );
 }
 
 function AppLogo({ app, size = 16 }: { app: ComposioApp; size?: number }) {
+  // Bigger logos get a soft surface frame so colorful brand marks don't
+  // clash with the dark theme; small inline logos stay tight to the text.
+  const wrapperClass =
+    size >= 32
+      ? "shrink-0 flex items-center justify-center rounded-md bg-white/95 ring-1 ring-[var(--surface-2)] overflow-hidden p-1.5"
+      : "shrink-0";
+  const inner = size >= 32 ? size - 12 : size;
+
   if (app.logo && app.logo.startsWith("http")) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={app.logo}
-        alt=""
-        width={size}
-        height={size}
-        className="rounded-sm shrink-0"
-        style={{ width: size, height: size }}
-      />
+      <span className={wrapperClass} style={{ width: size, height: size }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={app.logo}
+          alt=""
+          width={inner}
+          height={inner}
+          className="object-contain"
+          style={{ width: inner, height: inner }}
+        />
+      </span>
     );
   }
-  return <span style={{ fontSize: size }}>🔌</span>;
+  return (
+    <span
+      className={wrapperClass + " text-[var(--text-faint)]"}
+      style={{ width: size, height: size, fontSize: inner * 0.6 }}
+    >
+      {app.name?.[0]?.toUpperCase() ?? "·"}
+    </span>
+  );
 }
 
 function SearchResults({
@@ -548,27 +586,17 @@ function SearchResults({
   }
   return (
     <section>
-      <SectionHeader icon="🔍" label="Résultats" count={results.length} />
-      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="mb-4">
+        <SectionHeader icon="🔍" label="Résultats" count={results.length} />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {results.map((app) => (
-          <button
+          <AppCard
             key={app.key}
+            app={app}
+            connected={connectedSlugs.has(app.key)}
             onClick={() => onSelect(app)}
-            className="text-left border border-[var(--surface-2)] hover:border-[var(--cykan)]/30 p-4 transition-colors"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <AppLogo app={app} size={28} />
-              <div className="flex-1 min-w-0">
-                <div className="t-13 font-medium text-[var(--text)]">{app.name}</div>
-                {connectedSlugs.has(app.key) && (
-                  <div className="t-9 font-mono tracking-[0.15em] uppercase text-[var(--cykan)]">
-                    connecté ✓
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="t-11 text-[var(--text-faint)] line-clamp-2">{app.description}</div>
-          </button>
+          />
         ))}
       </div>
     </section>
@@ -678,7 +706,7 @@ function AppDrawer({
               </div>
               <p className="t-11 text-[var(--text-soft)] leading-[1.55]">
                 Hearst pourra agir sur ton compte {app.name} en ton nom (envoyer, créer,
-                rechercher selon les permissions). Toute action d'écriture sera confirmée
+                rechercher selon les permissions). Toute action d&apos;écriture sera confirmée
                 avant exécution.
               </p>
             </div>

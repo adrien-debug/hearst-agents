@@ -298,7 +298,7 @@ export async function getUploadStatus(
  */
 async function getMaxUploadSize(
   db: SupabaseClient,
-  tenantId?: string
+  _tenantId?: string
 ): Promise<number> {
   try {
     // Try to get from system settings

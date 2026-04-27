@@ -97,19 +97,29 @@ const FALLBACK_SUGGESTIONS = [
   { serviceId: "_",  title: "Faire une recherche web",        subtitle: "Veille · web" },
 ];
 
+interface BuiltSuggestion {
+  id: string;
+  title: string;
+  subtitle: string;
+  /** Logo URL pulled from the matched service (when available). */
+  iconPath?: string;
+}
+
 function buildSuggestions(
   connectedServices: ServiceWithConnectionStatus[],
-): Array<{ id: string; title: string; subtitle: string }> {
-  const connectedIds = new Set(connectedServices.map((s) => s.id));
+): BuiltSuggestion[] {
+  const byId = new Map(connectedServices.map((s) => [s.id, s]));
   const matched = SUGGESTION_TEMPLATES
-    .filter((t) => connectedIds.has(t.serviceId))
-    .slice(0, 4);
+    .filter((t) => byId.has(t.serviceId))
+    .slice(0, 4)
+    .map((t) => ({ ...t, iconPath: byId.get(t.serviceId)?.icon }));
 
   const list = matched.length > 0 ? matched : FALLBACK_SUGGESTIONS;
   return list.map((s, i) => ({
     id: String(i + 1).padStart(2, "0"),
     title: s.title,
     subtitle: s.subtitle,
+    iconPath: "iconPath" in s ? (s.iconPath as string | undefined) : undefined,
   }));
 }
 
@@ -172,6 +182,7 @@ export default function HomePage() {
   }, [activeThreadId, hydrateThreadState]);
 
   const [services, setServices] = useState<ServiceWithConnectionStatus[]>(initialServices);
+  const [connectionsLoaded, setConnectionsLoaded] = useState(false);
   const [showFocal, setShowFocal] = useState(false);
   const router = useRouter();
 
@@ -184,7 +195,11 @@ export default function HomePage() {
         if (data.services && Array.isArray(data.services)) {
           setServices(data.services as ServiceWithConnectionStatus[]);
         }
-      } catch (_err) {}
+      } catch (_err) {
+        // Non-fatal — services stay at default disconnected state.
+      } finally {
+        setConnectionsLoaded(true);
+      }
     }
 
     // Detect OAuth return: ?connected=<app> means the user just authorised
@@ -354,7 +369,10 @@ export default function HomePage() {
       : hour < 18 ? "Bon après-midi"
       : "Bonsoir";
     const connectedCount = connectedServices.length;
-    const suggestions = buildSuggestions(connectedServices);
+    // Only build suggestions once the connections list is in. Otherwise we
+    // render the fallback set ("Faire une recherche web", …) for ~200ms,
+    // then the matched set replaces it — flicker that the user noticed.
+    const suggestions = connectionsLoaded ? buildSuggestions(connectedServices) : null;
 
     return (
       <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden cinematic-stage panel-enter">
@@ -410,53 +428,88 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Suggestion cards — Connect card-depth with hover lift */}
+            {/* Suggestion cards — halo-style cinematic.
+                Skeleton during initial load, then real cards in one render
+                so the user never sees the fallback flash through. */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {suggestions.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => handleSubmit(s.title)}
-                  className="card-depth group relative flex items-start gap-4 text-left overflow-hidden cursor-pointer"
-                  style={{ padding: "var(--space-6) var(--space-6)" }}
-                >
-                  <span
-                    className="halo-on-group-hover pt-0.5 shrink-0 t-10 opacity-55 uppercase"
-                    style={{
-                      letterSpacing: "var(--tracking-wide)",
-                      color: "var(--cykan)",
-                    }}
-                  >
-                    {s.id}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="t-15"
-                      style={{
-                        fontWeight: 600,
-                        letterSpacing: "-0.01em",
-                        color: "var(--text)",
-                      }}
+              {suggestions === null
+                ? Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={`skel-${i}`}
+                      className="halo-suggestion flex items-center gap-5 px-6 py-5"
+                      aria-hidden
                     >
-                      {s.title}
-                    </p>
-                    <p
-                      className="mt-1.5 t-13"
-                      style={{
-                        fontWeight: 400,
-                        color: "var(--text-muted)",
-                      }}
+                      <div className="halo-suggestion-logo" style={{ width: 44, height: 44 }} />
+                      <div className="flex-1 min-w-0 space-y-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="t-9 font-mono tracking-[0.25em] uppercase opacity-30 text-[var(--cykan)]">
+                            [ {String(i + 1).padStart(2, "0")} ]
+                          </span>
+                        </div>
+                        <div className="h-3.5 chat-shimmer w-3/4" />
+                        <div className="h-2.5 chat-shimmer w-1/2" />
+                      </div>
+                    </div>
+                  ))
+                : suggestions.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => handleSubmit(s.title)}
+                      className="halo-suggestion group flex items-center gap-5 px-6 py-5 text-left cursor-pointer"
                     >
-                      {s.subtitle}
-                    </p>
-                  </div>
-                  <span
-                    className="halo-on-group-hover absolute right-5 top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:translate-x-1 text-base"
-                    style={{ color: "var(--text-ghost)" }}
-                  >
-                    →
-                  </span>
-                </button>
-              ))}
+                      {/* Logo frame — service icon when matched, bracketed
+                          numeral fallback otherwise. Same footprint either way
+                          so the grid never shifts between states. */}
+                      <span
+                        className="halo-suggestion-logo"
+                        style={{ width: 44, height: 44 }}
+                        aria-hidden
+                      >
+                        {s.iconPath ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={s.iconPath}
+                            alt=""
+                            width={26}
+                            height={26}
+                            className="object-contain"
+                            style={{ width: 26, height: 26 }}
+                          />
+                        ) : (
+                          <span className="t-13 font-mono tracking-[0.15em] text-[var(--cykan)]">
+                            {s.id}
+                          </span>
+                        )}
+                      </span>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.3em] uppercase">
+                          <span className="text-[var(--cykan)]/70 group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-all">
+                            [ {s.id} ]
+                          </span>
+                          <span className="text-[var(--text-ghost)]">·</span>
+                          <span className="text-[var(--text-faint)] truncate">{s.subtitle}</span>
+                        </div>
+                        <p
+                          className="t-15 leading-snug group-hover:halo-cyan-sm transition-all"
+                          style={{
+                            fontWeight: 600,
+                            letterSpacing: "-0.01em",
+                            color: "var(--text)",
+                          }}
+                        >
+                          {s.title}
+                        </p>
+                      </div>
+
+                      <span
+                        className="t-13 font-mono text-[var(--text-ghost)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm group-hover:translate-x-1 transition-all duration-300 shrink-0"
+                        aria-hidden
+                      >
+                        →
+                      </span>
+                    </button>
+                  ))}
             </div>
           </div>
         </div>
@@ -480,7 +533,7 @@ export default function HomePage() {
             }}
           >
             <span className="w-1 h-1 rounded-full bg-[var(--cykan)] halo-dot" />
-            {connectedCount} sources · ready
+            {connectedCount} sources · prêt
           </span>
         </div>
 
@@ -497,11 +550,26 @@ export default function HomePage() {
     <div className="flex-1 flex flex-col min-h-0 relative bg-gradient-to-br from-[var(--surface)] via-[var(--bg-soft)] to-[var(--mat-050)]">
       {/* Principal surface: Focal Stage - takes full height when active */}
       {focal && showFocal && (() => {
-        const trail: Crumb[] = [
-          { label: activeThread?.name || "Hearst" },
-          { label: `${focal.type}_HUD` },
-          { label: focal.title, accent: true },
-        ];
+        // Breadcrumb: skip the thread name when it's a near-duplicate of
+        // the focal title (auto-named threads are seeded from the first
+        // message, which usually matches the focal title verbatim).
+        const threadLabel = activeThread?.name?.trim() ?? "";
+        const titleLabel = focal.title?.trim() ?? "";
+        const looksLikeDuplicate =
+          !!threadLabel &&
+          !!titleLabel &&
+          (titleLabel.toLowerCase().includes(threadLabel.toLowerCase()) ||
+            threadLabel.toLowerCase().includes(titleLabel.toLowerCase().slice(0, 32)));
+        const trail: Crumb[] = looksLikeDuplicate
+          ? [
+              { label: focal.type.toUpperCase() },
+              { label: focal.title, accent: true },
+            ]
+          : [
+              { label: threadLabel || "Hearst" },
+              { label: focal.type.toUpperCase() },
+              { label: focal.title, accent: true },
+            ];
         return (
         <div className="flex-1 flex flex-col min-h-0 border-b border-[var(--surface-2)] bg-gradient-to-b from-[var(--surface-1)] to-transparent">
           {/* Focal header — breadcrumb + close */}

@@ -3,8 +3,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getMission, disableMission } from "@/lib/engine/runtime/missions/store";
-import { updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
+import { getMission, disableMission, evictMission } from "@/lib/engine/runtime/missions/store";
+import { updateScheduledMission, deleteScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { requireScope } from "@/lib/scope";
 
 export const dynamic = "force-dynamic";
@@ -113,16 +113,22 @@ export async function DELETE(
     return NextResponse.json({ error: "mission_not_found" }, { status: 404 });
   }
 
-  // Note: Deletion requires a delete method in the adapter
-  // For now, we disable the mission as soft-delete
-  const memMission = getMission(id);
-  if (memMission) {
-    disableMission(id);
+  // Hard-delete: remove the row from Supabase + drop the in-memory cache.
+  // Previous soft-delete (enabled=false) left the mission visible on the
+  // dashboard, which read like a UI bug.
+  const dbResult = await deleteScheduledMission(id);
+  evictMission(id);
+
+  if (!dbResult.ok) {
+    return NextResponse.json(
+      { error: dbResult.error ?? "delete_failed" },
+      { status: 502 },
+    );
   }
 
-  await updateScheduledMission(id, { enabled: false });
+  console.log(
+    `[MissionsAPI] Mission ${id} deleted (db: ${dbResult.deletedCount}, mem: evicted) (user: ${scope.userId.slice(0, 8)})`,
+  );
 
-  console.log(`[MissionsAPI] Mission ${id} deleted (soft) (user: ${scope.userId.slice(0, 8)})`);
-
-  return NextResponse.json({ ok: true, id, deleted: true });
+  return NextResponse.json({ ok: true, id, deleted: true, dbDeleted: dbResult.deletedCount });
 }

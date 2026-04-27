@@ -127,6 +127,13 @@ export async function getAssets(params?: {
  * Storage cleanup is intentionally NOT done here: storage is async/eventually
  * consistent and the cleanup worker also handles orphaned blobs. Removing
  * the DB row is enough to make the asset disappear from the user's view.
+ *
+ * Tenant scoping is enforced via a 2-step pattern (fetch + verify + delete)
+ * because the `assets` table doesn't carry `tenant_id` / `workspace_id`
+ * columns — multi-tenant data lives inside the `provenance` JSONB. Doing
+ * a single `eq("tenant_id", ...)` filter would target a non-existent
+ * column and PostgREST would reject the whole query, leaving the user
+ * with assets that look un-deletable.
  */
 export async function deleteAssetById(
   id: string,
@@ -138,14 +145,36 @@ export async function deleteAssetById(
   }
 
   try {
-    let query = sb.from("assets").delete({ count: "exact" }).eq("id", id);
+    // 1. Fetch the asset to verify ownership via provenance JSON.
     if (scope?.tenantId) {
-      query = query.eq("tenant_id", scope.tenantId);
+      const { data: existing, error: fetchError } = await sb
+        .from("assets")
+        .select("provenance")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("[AssetsAdapter] delete preflight failed:", fetchError.message);
+        return { ok: false, deletedCount: 0, error: fetchError.message };
+      }
+      if (!existing) {
+        return { ok: true, deletedCount: 0 };
+      }
+      const provenance = (existing.provenance ?? {}) as { tenantId?: string; workspaceId?: string };
+      if (provenance.tenantId && provenance.tenantId !== scope.tenantId) {
+        // Out of scope — pretend it doesn't exist (no info leak).
+        return { ok: true, deletedCount: 0 };
+      }
+      if (scope.workspaceId && provenance.workspaceId && provenance.workspaceId !== scope.workspaceId) {
+        return { ok: true, deletedCount: 0 };
+      }
     }
-    if (scope?.workspaceId) {
-      query = query.eq("workspace_id", scope.workspaceId);
-    }
-    const { error, count } = await query;
+
+    // 2. Delete by id (preflight already enforced ownership).
+    const { error, count } = await sb
+      .from("assets")
+      .delete({ count: "exact" })
+      .eq("id", id);
     if (error) {
       console.error("[AssetsAdapter] delete failed:", error.message);
       return { ok: false, deletedCount: 0, error: error.message };

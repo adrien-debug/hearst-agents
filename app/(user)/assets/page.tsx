@@ -111,7 +111,7 @@ export default function AssetsPage() {
     return (
       <div className="flex-1 flex items-center justify-center">
         <p className="t-11 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)] animate-pulse">
-          Loading assets…
+          Chargement des assets…
         </p>
       </div>
     );
@@ -182,7 +182,7 @@ export default function AssetsPage() {
                     disabled={!asset.url}
                     className="t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-ghost)] hover:text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                   >
-                    Download
+                    Télécharger
                   </button>
                   <button
                     type="button"
@@ -191,7 +191,7 @@ export default function AssetsPage() {
                     title={`Supprimer ${asset.name}`}
                     aria-label={`Supprimer ${asset.name}`}
                   >
-                    Delete
+                    Supprimer
                   </button>
                 </div>
               ))}

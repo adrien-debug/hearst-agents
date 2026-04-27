@@ -177,7 +177,7 @@ export class R2StorageProvider implements StorageProvider {
       });
       await this.client.send(command);
       return true;
-    } catch (err) {
+    } catch {
       return false;
     }
   }

@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
+import { describe, it, expect } from "vitest";
 
 describe("Capability Runtime Full Integration", () => {
   it("should pass placeholder test", () => {

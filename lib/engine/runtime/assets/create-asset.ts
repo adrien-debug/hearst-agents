@@ -44,3 +44,13 @@ export function getAsset(id: string): Asset | undefined {
 export function getAllAssets(): Asset[] {
   return Array.from(assetStore.values());
 }
+
+/** Drop a single asset from the in-memory store. Called by DELETE API. */
+export function evictAsset(id: string): void {
+  assetStore.delete(id);
+}
+
+/** Wipe every asset from the in-memory store. Server-only cleanup. */
+export function clearAllAssets(): void {
+  assetStore.clear();
+}

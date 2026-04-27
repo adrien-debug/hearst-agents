@@ -15,6 +15,8 @@ type MockBuilder = {
   select: ReturnType<typeof vi.fn>;
   delete: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
+  is: ReturnType<typeof vi.fn>;
+  not: ReturnType<typeof vi.fn>;
   order: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
 };
@@ -40,6 +42,8 @@ function buildBuilder(): MockBuilder {
     select: vi.fn(),
     delete: vi.fn(),
     eq: vi.fn(),
+    is: vi.fn(),
+    not: vi.fn(),
     order: vi.fn(),
     limit: vi.fn().mockImplementation(async () => state.selectResult),
   };
@@ -47,6 +51,8 @@ function buildBuilder(): MockBuilder {
   builder.select.mockReturnValue(builder);
   builder.delete.mockReturnValue(builder);
   builder.eq.mockReturnValue(builder);
+  builder.is.mockReturnValue(builder);
+  builder.not.mockReturnValue(builder);
   builder.order.mockReturnValue(builder);
   return builder;
 }

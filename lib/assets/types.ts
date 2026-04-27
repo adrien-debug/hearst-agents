@@ -95,6 +95,36 @@ function rawDb(sb: ReturnType<typeof getServerSupabase>): SupabaseClient<any> | 
 const assetCache = new Map<string, Asset[]>();
 const actionCache = new Map<string, Action[]>();
 
+/**
+ * Remove an asset (by id) and its referencing actions from the in-memory
+ * cache. Called by the DELETE API after the Supabase row is gone, so the
+ * UI's fallback reads don't keep returning a row that no longer exists.
+ */
+export function evictAssetById(assetId: string): void {
+  for (const [threadId, list] of assetCache.entries()) {
+    const filtered = list.filter((a) => a.id !== assetId);
+    if (filtered.length === list.length) continue;
+    if (filtered.length === 0) assetCache.delete(threadId);
+    else assetCache.set(threadId, filtered);
+  }
+  for (const [threadId, list] of actionCache.entries()) {
+    const filtered = list.filter((a) => {
+      const meta = (a.metadata ?? {}) as { assetId?: string };
+      return meta.assetId !== assetId;
+    });
+    if (filtered.length !== list.length) {
+      if (filtered.length === 0) actionCache.delete(threadId);
+      else actionCache.set(threadId, filtered);
+    }
+  }
+}
+
+/** Wipe every cached asset and action across all threads. Server-only. */
+export function clearAllAssetCaches(): void {
+  assetCache.clear();
+  actionCache.clear();
+}
+
 export function storeAsset(asset: Asset): void {
   // Reject assets without a meaningful title at the source rather than
   // letting them land in the DB and filtering them out everywhere downstream.

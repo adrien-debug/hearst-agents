@@ -115,3 +115,11 @@ export function deleteMission(missionId: string): void {
     missions.delete(missionId);
   }
 }
+
+/** Wipe every plan and planner-mission from memory. Server-only cleanup. */
+export function clearAllPlannerStores(): void {
+  plans.clear();
+  plansByThread.clear();
+  missions.clear();
+  missionsByThread.clear();
+}

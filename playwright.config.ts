@@ -14,7 +14,6 @@ let defineConfig: any;
 let devices: any;
 
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const playwright = require("@playwright/test");
   defineConfig = playwright.defineConfig;
   devices = playwright.devices;

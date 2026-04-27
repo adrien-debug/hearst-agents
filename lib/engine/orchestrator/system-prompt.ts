@@ -252,8 +252,8 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
 
   const composioSection =
     connectedApps.length > 0
-      ? `✅ Composio apps connectées : ${connectedApps.join(", ")}\n   ${composioTools.length} action(s) disponible(s)`
-      : "❌ Aucune app Composio connectée";
+      ? `✅ Composio apps détectées : ${connectedApps.join(", ")}\n   ${composioTools.length} action(s) disponible(s) ce tour-ci`
+      : "ℹ️ Aucune action Composio détectée pour ce tour. Si l'utilisateur demande une action via Slack, Notion, GitHub, etc., NE DÉCLARE PAS l'app non-connectée — appelle directement l'outil `request_connection` avec le slug de l'app : si elle est vraiment non-connectée, la carte OAuth s'affiche ; si elle est connectée mais l'outil n'est pas encore propagé (lag Composio), l'utilisateur pourra retenter.";
 
   const toolListSection =
     composioTools.length > 0
@@ -284,7 +284,7 @@ RÈGLES :
    c. Attends la confirmation explicite ("confirmer", "oui", "yes", "go") OU le clic sur le bouton Confirmer.
    d. Seulement après confirmation : rappelle EXACTEMENT le même outil avec les MÊMES paramètres + \`_preview: false\` pour exécuter.
    JAMAIS d'appel \`_preview: false\` sans confirmation. Si l'utilisateur dit "annuler" / "non" / "stop", n'exécute pas et acquitte simplement.
-3. Si l'utilisateur demande une action via une app NON connectée (ex. Slack, Notion, GitHub, Jira…) : appelle IMMÉDIATEMENT l'outil \`request_connection\` avec le slug de l'app et une phrase expliquant pourquoi. Ne tente PAS de répondre par texte — utilise le tool.
+3. Si l'utilisateur demande une action via une app pour laquelle tu ne vois PAS d'outil dans la liste ci-dessus (ex. Slack, Notion, GitHub, Jira…) : appelle IMMÉDIATEMENT l'outil \`request_connection\` avec le slug de l'app et une phrase expliquant pourquoi. JAMAIS répondre par texte « X n'est pas connecté » — l'absence d'outil ne prouve pas l'absence de connexion (il peut y avoir un délai de propagation Composio). Le tool \`request_connection\` est sûr : si l'app est déjà connectée, l'utilisateur retentera ; sinon, la carte OAuth s'affiche.
 4. AUTOMATISATIONS RÉCURRENTES : si l'utilisateur demande qu'une tâche soit exécutée automatiquement à intervalle régulier ("tous les matins", "chaque vendredi à 17h", "every day at 9am"…), appelle \`create_scheduled_mission\` avec le même protocole en 2 étapes (recopie le draft → confirmation → exécution).
    N'appelle PAS ce tool pour une tâche unique ou ponctuelle.
 5. ERREUR D'AUTHENTIFICATION : si un appel d'outil retourne \`{ok: false, errorCode: "AUTH_REQUIRED"}\`, la connexion à l'app a expiré. Une carte de reconnexion s'affiche automatiquement — explique brièvement à l'utilisateur et attends qu'il se reconnecte.

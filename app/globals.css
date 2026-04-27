@@ -528,6 +528,117 @@ body {
     0 30px 60px -16px rgba(0, 0, 0, 0.6);
 }
 
+/* ── Halo Suggestion Card ───────────────────────────
+   Premium variant for the homepage suggestion grid: ambient cyan glow
+   in the top-left, animated bottom accent line, deeper hover halo. */
+.halo-suggestion {
+  position: relative;
+  background-color: var(--mat-300);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 350ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+/* Ambient cyan halo, top-left, behind the content */
+.halo-suggestion::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 65% 55% at 0% 0%,
+    rgba(45, 212, 191, 0.08) 0%,
+    transparent 65%
+  );
+  opacity: 0.6;
+  z-index: -1;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+}
+
+/* Bottom accent line — dim by default, illuminates on hover */
+.halo-suggestion::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(45, 212, 191, 0.25) 25%,
+    rgba(45, 212, 191, 0.55) 50%,
+    rgba(45, 212, 191, 0.25) 75%,
+    transparent 100%
+  );
+  opacity: 0.3;
+  transition: opacity 300ms ease, height 250ms ease;
+  pointer-events: none;
+}
+
+.halo-suggestion:hover {
+  transform: translateY(-3px);
+  background-color: var(--mat-gray);
+  border-color: rgba(45, 212, 191, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 24px 48px -16px rgba(45, 212, 191, 0.18),
+    0 32px 64px -20px rgba(0, 0, 0, 0.6);
+}
+
+.halo-suggestion:hover::before {
+  opacity: 1;
+}
+
+.halo-suggestion:hover::after {
+  opacity: 1;
+  height: 1.5px;
+}
+
+.halo-suggestion:active {
+  transform: translateY(-1px);
+  transition-duration: 80ms;
+}
+
+/* Subtle frame for service logos (white-on-dark contrast) */
+.halo-suggestion-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(245, 250, 250, 0.92) 100%
+  );
+  border-radius: 10px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(45, 212, 191, 0.05);
+  transition: box-shadow 300ms ease, transform 300ms ease;
+  flex-shrink: 0;
+}
+
+.halo-suggestion:hover .halo-suggestion-logo {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4),
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(45, 212, 191, 0.18),
+    0 0 24px -4px rgba(45, 212, 191, 0.25);
+  transform: scale(1.03);
+}
+
 /* Signature input focus — offset cyan shadow (non-blurred) */
 .input-focus-signature:focus,
 .input-focus-signature:focus-visible {

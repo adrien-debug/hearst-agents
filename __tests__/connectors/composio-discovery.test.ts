@@ -1,20 +1,34 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-const { toolsList, toolsExecute } = vi.hoisted(() => ({
+const { toolsList, toolsExecute, connectedAccountsList } = vi.hoisted(() => ({
   toolsList: vi.fn(),
   toolsExecute: vi.fn(),
+  connectedAccountsList: vi.fn(),
 }));
 
 vi.mock("@composio/core", () => {
   class Composio {
     tools = { list: toolsList, execute: toolsExecute };
     toolkits = { list: vi.fn(), get: vi.fn(), authorize: vi.fn() };
-    connectedAccounts = { list: vi.fn(), delete: vi.fn() };
+    connectedAccounts = { list: connectedAccountsList, delete: vi.fn() };
     create = vi.fn();
     constructor(_opts: { apiKey?: string }) {}
   }
   return { Composio };
 });
+
+// Helper: pre-stub connectedAccounts.list to return ACTIVE accounts for the
+// toolkits we expect tools.list to be queried for. Without this, the new
+// cross-check short-circuits at "no ACTIVE toolkits" and returns [].
+function stubActiveAccounts(slugs: string[]): void {
+  connectedAccountsList.mockResolvedValue({
+    items: slugs.map((slug, i) => ({
+      id: `acc-${i}`,
+      toolkit: { slug },
+      status: "ACTIVE",
+    })),
+  });
+}
 
 import {
   getToolsForUser,
@@ -44,6 +58,7 @@ describe("Composio discovery (new SDK)", () => {
     resetDiscoveryCache();
     resetComposioClient();
     toolsList.mockReset();
+    connectedAccountsList.mockReset();
     process.env.COMPOSIO_API_KEY = "ak_test";
   });
   afterEach(() => {
@@ -59,6 +74,7 @@ describe("Composio discovery (new SDK)", () => {
   });
 
   it("forwards { userId } to the SDK so multi-tenant isolation is preserved", async () => {
+    stubActiveAccounts(["gmail"]);
     toolsList.mockResolvedValueOnce({ items: [sampleGmail] });
     await getToolsForUser("user-marie");
 
@@ -66,6 +82,7 @@ describe("Composio discovery (new SDK)", () => {
   });
 
   it("normalizes raw tools into DiscoveredTool with derived app slug", async () => {
+    stubActiveAccounts(["gmail", "slackbot"]);
     toolsList.mockResolvedValueOnce({ items: [sampleGmail, sampleSlack] });
     const out = await getToolsForUser("u1");
     expect(out).toEqual([
@@ -75,6 +92,7 @@ describe("Composio discovery (new SDK)", () => {
   });
 
   it("caches per-user — second call within TTL doesn't hit the SDK", async () => {
+    stubActiveAccounts(["gmail"]);
     toolsList.mockResolvedValueOnce({ items: [sampleGmail] });
     await getToolsForUser("u1");
     await getToolsForUser("u1");
@@ -82,9 +100,11 @@ describe("Composio discovery (new SDK)", () => {
   });
 
   it("invalidateUserDiscovery forces a refetch", async () => {
+    stubActiveAccounts(["gmail"]);
     toolsList.mockResolvedValueOnce({ items: [sampleGmail] });
     await getToolsForUser("u1");
     invalidateUserDiscovery("u1");
+    stubActiveAccounts(["gmail", "slackbot"]);
     toolsList.mockResolvedValueOnce({ items: [sampleGmail, sampleSlack] });
     const out = await getToolsForUser("u1");
     expect(out).toHaveLength(2);
@@ -92,8 +112,10 @@ describe("Composio discovery (new SDK)", () => {
   });
 
   it("isolates cache between users", async () => {
+    stubActiveAccounts(["gmail"]);
     toolsList.mockResolvedValueOnce({ items: [sampleGmail] });
     await getToolsForUser("u1");
+    stubActiveAccounts(["slackbot"]);
     toolsList.mockResolvedValueOnce({ items: [sampleSlack] });
     const out = await getToolsForUser("u2");
     expect(out[0].name).toBe("SLACKBOT_SEND_MESSAGE");
@@ -101,9 +123,41 @@ describe("Composio discovery (new SDK)", () => {
   });
 
   it("returns [] without throwing when SDK throws", async () => {
+    stubActiveAccounts(["gmail"]);
     toolsList.mockRejectedValueOnce(new Error("Composio rate-limit"));
     const out = await getToolsForUser("u1");
     expect(out).toEqual([]);
+  });
+
+  it("returns [] without hitting tools.list when the user has no ACTIVE accounts", async () => {
+    connectedAccountsList.mockResolvedValueOnce({ items: [] });
+    const out = await getToolsForUser("u1");
+    expect(out).toEqual([]);
+    expect(toolsList).not.toHaveBeenCalled();
+  });
+
+  it("does NOT cache empty results — re-queries on the next call", async () => {
+    // First call: no ACTIVE accounts (mid-OAuth, propagation lag).
+    connectedAccountsList.mockResolvedValueOnce({ items: [] });
+    const first = await getToolsForUser("u1");
+    expect(first).toEqual([]);
+    // Second call: connection finally registered.
+    stubActiveAccounts(["slackbot"]);
+    toolsList.mockResolvedValueOnce({ items: [sampleSlack] });
+    const second = await getToolsForUser("u1");
+    expect(second).toHaveLength(1);
+    // Both calls must hit the SDK — empty was not cached.
+    expect(connectedAccountsList).toHaveBeenCalledTimes(2);
+  });
+
+  it("intersects opts.apps with ACTIVE accounts", async () => {
+    stubActiveAccounts(["gmail", "slackbot"]);
+    toolsList.mockResolvedValueOnce({ items: [sampleSlack] });
+    await getToolsForUser("u1", { apps: ["slackbot", "github"] });
+    // tools.list should be called with only the intersection: slackbot.
+    expect(toolsList).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "u1", toolkits: ["slackbot"] }),
+    );
   });
 
   it("converts to Anthropic tool format", () => {

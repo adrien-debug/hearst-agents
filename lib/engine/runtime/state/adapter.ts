@@ -391,6 +391,35 @@ export async function updateScheduledMission(
   }
 }
 
+/**
+ * Hard-delete a scheduled mission row from Supabase. Used by the DELETE
+ * endpoint when the user clicks the cross — the previous soft-delete
+ * (enabled = false) left the row visible on the dashboard, which read
+ * like a bug from the user's POV.
+ */
+export async function deleteScheduledMission(
+  missionId: string,
+): Promise<{ ok: boolean; deletedCount: number; error?: string }> {
+  const sb = db();
+  if (!sb) return { ok: false, deletedCount: 0, error: "no_supabase_client" };
+
+  try {
+    const { error, count } = await sb
+      .from("missions")
+      .delete({ count: "exact" })
+      .eq("id", missionId);
+    if (error) {
+      console.error("[RuntimeState] deleteScheduledMission error:", error.message);
+      return { ok: false, deletedCount: 0, error: error.message };
+    }
+    return { ok: true, deletedCount: count ?? 0 };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[RuntimeState] deleteScheduledMission exception:", msg);
+    return { ok: false, deletedCount: 0, error: msg };
+  }
+}
+
 export async function getScheduledMissions(params?: {
   userId?: string;
   tenantId?: string;

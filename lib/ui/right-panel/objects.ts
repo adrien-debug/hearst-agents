@@ -12,7 +12,6 @@ import type { OutputTone, FormattedSection } from "@/lib/engine/runtime/formatti
 import type {
   FocalType,
   FocalStatus,
-  FocalObject as StoreFocalObject,
 } from "@/stores/focal";
 
 // ── Re-exports from canonical source ────────────────────────

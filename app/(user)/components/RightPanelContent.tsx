@@ -9,6 +9,7 @@ import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore, type StreamEvent } from "@/stores/runtime";
 import { missionToFocal, assetToFocal } from "@/lib/ui/focal-mappers";
+import { toast } from "@/app/hooks/use-toast";
 import { getToolCatalogEntry } from "./tool-catalog";
 
 interface RightPanelContentProps {
@@ -127,7 +128,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
   const [data, setData] = useState<RightPanelData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [_loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -159,7 +160,11 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     // dedicated LIBRARY_ITEMS rail in the LeftPanel.
     if (!activeThreadId) {
       let cancelled = false;
-      setLoading(true);
+      // Defer setLoading to next microtask to avoid the synchronous setState
+      // cascade React 19 flags inside effects.
+      Promise.resolve().then(() => {
+        if (!cancelled) setLoading(true);
+      });
       void Promise.all([
         fetch("/api/v2/missions", { credentials: "include" })
           .then((r) => (r.ok ? r.json() : { missions: [] }))
@@ -321,19 +326,19 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   // standby label and the rest of the UI (Missions / Assets sections)
   // continues to render — fed by the global APIs in the effect above.
   const stateLabel = !hasActiveThread
-    ? "Library"
+    ? "Bibliothèque"
     : coreState === "awaiting_approval"
-      ? (flowLabel || "Needs approval")
+      ? (flowLabel || "Validation requise")
       : isRunning
-        ? (flowLabel || "Processing")
-        : "Ready";
+        ? (flowLabel || "Traitement")
+        : "Prêt";
 
   return (
     <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-[var(--surface-2)] bg-gradient-to-b from-[var(--bg-soft)] via-[var(--surface)] to-[var(--mat-050)]">
       {/* Mobile header */}
       {onClose && (
         <div className="p-4 flex items-center justify-between md:hidden border-b border-[var(--surface-2)]">
-          <p className="text-sm font-medium">Context</p>
+          <p className="text-sm font-medium">Contexte</p>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)]">
             ✕
           </button>
@@ -398,7 +403,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                 onClick={handlePrimaryAction}
                 disabled={actionLoading}
               >
-                {actionLoading ? "Processing..." : (focalObject as FocalObjectView).primaryAction?.label}
+                {actionLoading ? "Traitement…" : (focalObject as FocalObjectView).primaryAction?.label}
               </button>
             )}
           </div>
@@ -473,10 +478,25 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
+                      if (!window.confirm(`Supprimer "${asset.name}" ?`)) return;
+
+                      // Optimistic remove from UI; restore on failure.
+                      const previous = panelData?.assets ?? [];
+                      setData((prev) => prev ? { ...prev, assets: prev.assets.filter((a) => a.id !== asset.id) } : prev);
+
                       try {
                         const res = await fetch(`/api/v2/assets/${encodeURIComponent(asset.id)}`, { method: "DELETE" });
-                        if (res.ok) setData((prev) => prev ? { ...prev, assets: prev.assets.filter((a) => a.id !== asset.id) } : prev);
-                      } catch { /* silent */ }
+                        if (!res.ok) {
+                          const body = (await res.json().catch(() => ({}))) as { error?: string };
+                          throw new Error(body.error ?? `HTTP ${res.status}`);
+                        }
+                        toast.success("Asset supprimé", asset.name);
+                      } catch (err) {
+                        // Roll back the optimistic delete and surface the error.
+                        setData((prev) => prev ? { ...prev, assets: previous } : prev);
+                        const msg = err instanceof Error ? err.message : "Erreur inconnue";
+                        toast.error("Suppression impossible", msg);
+                      }
                     }}
                     className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all shrink-0"
                     title="Supprimer"
@@ -609,8 +629,23 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           </div>
         )}
 
+        {/* Loading skeleton — shown while initial data fetches */}
+        {loading && !panelData && (
+          <div className="px-6 pt-7 pb-6 space-y-3" aria-label="Chargement">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3 py-3 -mx-2 px-2">
+                <div className="w-1 h-1 rounded-full bg-[var(--text-ghost)] opacity-40 shrink-0" />
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="h-3 chat-shimmer w-3/4" />
+                  <div className="h-2 chat-shimmer w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Empty idle state */}
-        {!isRunning && activityEvents.length === 0 && !focalObject && !panelData?.assets?.length && !panelData?.missions?.length && (
+        {!loading && !isRunning && activityEvents.length === 0 && !focalObject && !panelData?.assets?.length && !panelData?.missions?.length && (
           <div className="px-6 pt-10 pb-6 flex flex-col items-center text-center gap-2">
             <span className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-ghost)]">Prêt</span>
           </div>
