@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { saveTokens } from "@/lib/platform/auth/tokens";
 import { registerProviderUsage } from "@/lib/connectors/control-plane/register";
+import { bootstrapComposioForUser } from "@/lib/platform/auth/composio-bootstrap";
 
 export const authOptions: AuthOptions = {
   pages: {
@@ -65,6 +66,15 @@ export const authOptions: AuthOptions = {
         void registerProviderUsage({
           provider: providerName as "google",
           scope: { tenantId, workspaceId, userId },
+        });
+
+        // Bootstrap Composio email+calendar for the SSO provider — fire and
+        // forget so a slow Composio call doesn't block sign-in. The
+        // resulting redirectUrls are exposed via /api/auth/composio-pending.
+        const composioProvider: "google" | "microsoft" =
+          account.provider === "azure-ad" ? "microsoft" : "google";
+        void bootstrapComposioForUser(userId, composioProvider).catch((err) => {
+          console.error("[auth] composio bootstrap failed:", err);
         });
       }
       return token;
