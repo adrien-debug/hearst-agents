@@ -107,6 +107,14 @@ export async function getComposio(): Promise<ComposioClient | null> {
 }
 
 /**
+ * Returns the last initialization failure (if any) so callers can surface
+ * a real error to the UI instead of silently returning empty results.
+ */
+export function getComposioInitError(): { code: string; message: string } | null {
+  return initFailed;
+}
+
+/**
  * Execute a single Composio action (tool) for a user. Always returns a
  * `{ ok, data?, error?, errorCode? }` envelope — never throws.
  *

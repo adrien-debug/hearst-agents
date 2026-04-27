@@ -8,7 +8,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getUserId } from "@/lib/platform/auth/get-user-id";
-import { getToolsForUser, isComposioConfigured } from "@/lib/connectors/composio";
+import {
+  getToolsForUser,
+  isComposioConfigured,
+  getComposio,
+  getComposioInitError,
+} from "@/lib/connectors/composio";
 
 export async function GET(req: NextRequest) {
   const userId = await getUserId();
@@ -17,7 +22,18 @@ export async function GET(req: NextRequest) {
   }
 
   if (!isComposioConfigured()) {
-    return NextResponse.json({ ok: true, tools: [] });
+    return NextResponse.json(
+      { ok: false, error: "composio_not_configured", message: "COMPOSIO_API_KEY not set" },
+      { status: 503 },
+    );
+  }
+  const client = await getComposio();
+  if (!client) {
+    const err = getComposioInitError();
+    return NextResponse.json(
+      { ok: false, error: err?.code ?? "composio_unavailable", message: err?.message ?? "Composio SDK could not be loaded" },
+      { status: 503 },
+    );
   }
 
   const appsParam = req.nextUrl.searchParams.get("apps");

@@ -170,9 +170,15 @@ export async function listConnections(
   if (!composio) return [];
 
   try {
+    // We pull *all* statuses by default so the UI can flag EXPIRED /
+    // FAILED connections as "needs reconnect" instead of hiding them
+    // (which made the user think they were never connected at all).
+    // `includeInactive: false` still drops fully terminal states.
     const raw = (await composio.connectedAccounts.list({
       userIds: [userId],
-      ...(opts.includeInactive ? {} : { statuses: ["ACTIVE", "INITIATED"] }),
+      ...(opts.includeInactive
+        ? {}
+        : { statuses: ["ACTIVE", "INITIATED", "EXPIRED", "FAILED"] }),
     })) as ListResponse;
     const items = raw.items ?? [];
     return items

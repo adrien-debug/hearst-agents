@@ -2,7 +2,7 @@
 
 import { useNavigationStore } from "@/stores/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 
@@ -11,16 +11,9 @@ interface LeftPanelProps {
   onAddApp?: () => void;
 }
 
-const LIBRARY_ITEMS = [
-  { id: "missions", path: "/missions", glyph: "M", label: "Missions" },
-  { id: "assets", path: "/assets", glyph: "A", label: "Assets" },
-  { id: "runs", path: "/runs", glyph: "R", label: "Runs" },
-];
-
 export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const pathname = usePathname();
   const { threads, activeThreadId, setActiveThread, addThread, removeThread } = useNavigationStore();
   const [showAllThreads, setShowAllThreads] = useState(false);
 
@@ -135,31 +128,11 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
 
       <div className="h-px bg-[var(--surface-2)] mx-3 shrink-0" />
 
-      {/* Library — Missions / Assets / Runs entry points */}
-      <div className="flex flex-col items-center py-3 gap-3 shrink-0">
-        {LIBRARY_ITEMS.map((item) => {
-          const isActive = pathname === item.path || pathname?.startsWith(`${item.path}/`);
-          return (
-            <button
-              key={item.id}
-              onClick={() => router.push(item.path)}
-              className={`w-8 h-8 flex items-center justify-center t-13 font-mono tracking-tight font-bold transition-all shrink-0 group relative ${
-                isActive
-                  ? "text-[var(--cykan)] halo-cyan-sm"
-                  : "text-[var(--text-faint)] hover:text-[var(--text)]"
-              }`}
-              title={item.label}
-            >
-              {item.glyph}
-              <span className="absolute left-full ml-3 px-2 py-1 bg-[var(--bg)] border border-[var(--surface-2)] t-10 font-mono tracking-[0.2em] text-[var(--text-soft)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 uppercase">
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="h-px bg-[var(--surface-2)] mx-3 shrink-0" />
+      {/* Library nav (Missions / Assets / Runs) was removed:
+          the RightPanel is now persistent and exposes those sections
+          (with previews + counts) at all times — no need for a duplicate
+          rail here. URLs /missions, /assets, /runs remain accessible via
+          the RightPanel section headers and direct navigation. */}
 
       {/* Sessions */}
       <div className={`flex flex-col items-center py-3 gap-3 overflow-y-auto scrollbar-hide transition-all duration-500 ${showAllThreads ? 'flex-1' : ''}`}>

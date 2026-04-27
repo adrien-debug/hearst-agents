@@ -11,6 +11,11 @@ import { getServiceDefinition } from "@/lib/integrations/catalog";
 import { getProviderIdForService, getAllServiceIds } from "@/lib/integrations/service-map";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { requireScope } from "@/lib/scope";
+import {
+  isComposioConfigured,
+  listConnections,
+  listAvailableApps,
+} from "@/lib/connectors/composio";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +76,81 @@ export async function GET(_req: NextRequest) {
         connectionStatus,
         accountLabel,
       });
+    }
+
+    // ── Composio bridge ─────────────────────────────────────
+    // Composio is a parallel source of truth: a user can connect Slack,
+    // Notion, Linear, … via the /apps page and those connections live
+    // only at Composio. Without this merge the LeftPanel rail and any
+    // other consumer of this endpoint would never see them.
+    //
+    // For each connected Composio account we either (a) upgrade the
+    // existing service entry to "connected" if its slug matches our
+    // static service-map, or (b) synthesize a ServiceWithConnectionStatus
+    // on the fly using the Composio toolkit catalog for icon + name.
+    if (isComposioConfigured()) {
+      try {
+        const [composioAccounts, composioApps] = await Promise.all([
+          listConnections(scope.userId, { includeInactive: false }),
+          listAvailableApps(),
+        ]);
+        const appBySlug = new Map(composioApps.map((a) => [a.key, a]));
+        const knownSlugs = new Set(services.map((s) => s.id));
+
+        const statusFromComposio = (
+          composioStatus: string,
+        ): ServiceWithConnectionStatus["connectionStatus"] => {
+          if (composioStatus === "ACTIVE") return "connected";
+          if (composioStatus === "INITIATED") return "pending";
+          // EXPIRED / FAILED → surface as `error` so the UI shows a
+          // reconnect affordance instead of pretending nothing exists.
+          return "error";
+        };
+
+        for (const account of composioAccounts) {
+          const slug = account.appName;
+          if (!slug) continue;
+          const composioStatus = statusFromComposio(account.status);
+
+          const existing = services.find((s) => s.id === slug);
+          if (existing) {
+            // Composio is the authoritative source for slugs it tracks:
+            // upgrade `connected`, downgrade to `error` for expired tokens.
+            if (composioStatus === "connected" && existing.connectionStatus !== "connected") {
+              existing.connectionStatus = "connected";
+              existing.accountLabel = existing.accountLabel ?? "Composio";
+            } else if (composioStatus === "error" && existing.connectionStatus === "disconnected") {
+              existing.connectionStatus = "error";
+              existing.accountLabel = "Composio (reconnect)";
+            }
+            continue;
+          }
+
+          if (!knownSlugs.has(slug)) {
+            const meta = appBySlug.get(slug);
+            services.push({
+              id: slug,
+              name: meta?.name ?? slug,
+              description: meta?.description ?? `Connected via Composio`,
+              icon: meta?.logo ?? "",
+              category: meta?.categories[0] ?? "other",
+              tier: "tier_2",
+              type: "hybrid",
+              status: "active",
+              providerId: slug,
+              capabilities: [],
+              isConnectable: true,
+              connectionStatus: composioStatus,
+              accountLabel:
+                composioStatus === "error" ? "Composio (reconnect)" : "Composio",
+            });
+            knownSlugs.add(slug);
+          }
+        }
+      } catch (err) {
+        console.error("[UserConnections] Composio merge failed:", err);
+        // Non-fatal — return whatever we have without Composio data.
+      }
     }
 
     // Log for debugging

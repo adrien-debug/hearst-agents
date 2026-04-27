@@ -63,6 +63,7 @@ export function ConnectionsHub() {
   const [apps, setApps] = useState<ComposioApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [enabled, setEnabled] = useState(true);
+  const [sdkError, setSdkError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
@@ -74,20 +75,35 @@ export function ConnectionsHub() {
     try {
       const res = await fetch("/api/composio/connections", { credentials: "include" });
       if (res.status === 503) {
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
         setEnabled(false);
+        setSdkError(data.message ?? "Composio not configured");
         return;
       }
-      if (!res.ok) return;
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setSdkError(data.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      setSdkError(null);
       const data = (await res.json()) as { connections?: ConnectedAccount[] };
       setAccounts(data.connections ?? []);
     } catch (err) {
       console.error("[Composio] failed to load connections", err);
+      setSdkError(err instanceof Error ? err.message : "network_error");
     }
   }, []);
 
   const loadApps = useCallback(async () => {
     try {
       const res = await fetch("/api/composio/apps", { credentials: "include" });
+      if (res.status === 503) {
+        // refreshAccounts already surfaced the error; no double-toast.
+        return;
+      }
       if (!res.ok) return;
       const data = (await res.json()) as { apps?: ComposioApp[] };
       setApps(data.apps ?? []);
@@ -261,11 +277,22 @@ export function ConnectionsHub() {
   if (!enabled) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8 py-24">
-        <p className="ghost-meta-label">COMPOSIO_NOT_CONFIGURED</p>
-        <p className="t-13 text-[var(--text-soft)] max-w-md text-center">
-          Ajoutez <code className="text-[var(--cykan)]">COMPOSIO_API_KEY</code> à votre{" "}
-          <code>.env.local</code> pour activer 1500+ actions agent.
+        <p className="ghost-meta-label">COMPOSIO_UNAVAILABLE</p>
+        <p className="t-13 text-[var(--text-soft)] max-w-md text-center leading-relaxed">
+          {sdkError ?? "Composio n'est pas configuré."}
         </p>
+        <p className="t-11 text-[var(--text-faint)] max-w-md text-center leading-relaxed">
+          Vérifie <code className="text-[var(--cykan)]">COMPOSIO_API_KEY</code> dans{" "}
+          <code>.env.local</code>, ou ouvre le diagnostic pour un app spécifique :
+        </p>
+        <a
+          href="/api/composio/diagnose?app=slack"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="t-11 font-mono tracking-[0.15em] uppercase text-[var(--cykan)] hover:underline"
+        >
+          /api/composio/diagnose →
+        </a>
       </div>
     );
   }

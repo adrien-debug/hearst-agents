@@ -12,7 +12,9 @@
 import {
   SERVICE_MAP,
   getAllServiceIds,
+  getProviderIdForService,
 } from "./service-map";
+import { getUnifiedConnectors } from "@/lib/connectors/unified/reconcile";
 import type {
   ServiceDefinition,
   ServiceWithConnectionStatus,
@@ -305,12 +307,7 @@ export async function enrichWithConnectionStatus(
     }
   }
 
-  // Server-side: use unified reconciler directly
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getUnifiedConnectors } = require("@/lib/connectors/unified/reconcile");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getProviderIdForService } = require("@/lib/integrations/service-map");
-
+  // Server-side: use unified reconciler directly.
   // Resolve scope from env (consistent with lib/scope.ts)
   const tenantId = process.env.HEARST_TENANT_ID ?? "dev-tenant";
   const workspaceId = process.env.HEARST_WORKSPACE_ID ?? "dev-workspace";

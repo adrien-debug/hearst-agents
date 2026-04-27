@@ -64,6 +64,12 @@ function normalize(raw: RawToolkit): ComposioApp | null {
   };
 }
 
+interface PaginatedResponse {
+  items?: RawToolkit[];
+  nextCursor?: string | null;
+  next_cursor?: string | null;
+}
+
 export async function listAvailableApps(opts: { force?: boolean } = {}): Promise<ComposioApp[]> {
   if (!isComposioConfigured()) return [];
 
@@ -76,9 +82,25 @@ export async function listAvailableApps(opts: { force?: boolean } = {}): Promise
   if (!composio) return [];
 
   try {
-    const raw = (await composio.toolkits.list()) as { items?: RawToolkit[] } | RawToolkit[];
-    const items = Array.isArray(raw) ? raw : (raw.items ?? []);
-    const apps = items
+    // Composio's toolkit catalog has 250+ entries. The default page size
+    // (~20) means a naive single call misses common toolkits like "slack"
+    // which sit further down. We paginate via `cursor` until exhaustion,
+    // capped to 20 pages so a misbehaving SDK can't loop forever.
+    const all: RawToolkit[] = [];
+    let cursor: string | undefined;
+    const MAX_PAGES = 20;
+    for (let i = 0; i < MAX_PAGES; i++) {
+      const query: Record<string, unknown> = { limit: 100 };
+      if (cursor) query.cursor = cursor;
+      const raw = (await composio.toolkits.list(query)) as PaginatedResponse | RawToolkit[];
+      const page = Array.isArray(raw) ? raw : (raw.items ?? []);
+      all.push(...page);
+      const next = !Array.isArray(raw) ? (raw.nextCursor ?? raw.next_cursor ?? null) : null;
+      if (!next) break;
+      cursor = next;
+    }
+
+    const apps = all
       .map(normalize)
       .filter((a): a is ComposioApp => a !== null)
       .sort((a, b) => a.name.localeCompare(b.name));

@@ -7,7 +7,12 @@
 
 import { NextResponse } from "next/server";
 import { getUserId } from "@/lib/platform/auth/get-user-id";
-import { listAvailableApps, isComposioConfigured } from "@/lib/connectors/composio";
+import {
+  listAvailableApps,
+  isComposioConfigured,
+  getComposio,
+  getComposioInitError,
+} from "@/lib/connectors/composio";
 
 export async function GET() {
   const userId = await getUserId();
@@ -15,7 +20,19 @@ export async function GET() {
     return NextResponse.json({ error: "not_authenticated" }, { status: 401 });
   }
   if (!isComposioConfigured()) {
-    return NextResponse.json({ ok: true, apps: [] });
+    return NextResponse.json(
+      { ok: false, error: "composio_not_configured", message: "COMPOSIO_API_KEY not set" },
+      { status: 503 },
+    );
+  }
+  // Force-init so we surface SDK errors as 503 instead of an empty list.
+  const client = await getComposio();
+  if (!client) {
+    const err = getComposioInitError();
+    return NextResponse.json(
+      { ok: false, error: err?.code ?? "composio_unavailable", message: err?.message ?? "Composio SDK could not be loaded" },
+      { status: 503 },
+    );
   }
   const apps = await listAvailableApps();
   return NextResponse.json({ ok: true, apps });

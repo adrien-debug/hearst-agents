@@ -7,7 +7,12 @@
 
 import { NextResponse } from "next/server";
 import { getUserId } from "@/lib/platform/auth/get-user-id";
-import { listConnections, isComposioConfigured } from "@/lib/connectors/composio";
+import {
+  listConnections,
+  isComposioConfigured,
+  getComposio,
+  getComposioInitError,
+} from "@/lib/connectors/composio";
 
 export async function GET() {
   const userId = await getUserId();
@@ -16,7 +21,18 @@ export async function GET() {
   }
 
   if (!isComposioConfigured()) {
-    return NextResponse.json({ ok: true, connections: [] });
+    return NextResponse.json(
+      { ok: false, error: "composio_not_configured", message: "COMPOSIO_API_KEY not set" },
+      { status: 503 },
+    );
+  }
+  const client = await getComposio();
+  if (!client) {
+    const err = getComposioInitError();
+    return NextResponse.json(
+      { ok: false, error: err?.code ?? "composio_unavailable", message: err?.message ?? "Composio SDK could not be loaded" },
+      { status: 503 },
+    );
   }
 
   const connections = await listConnections(userId);

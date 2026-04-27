@@ -124,18 +124,48 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   }, [activeThreadId]);
 
   useEffect(() => {
+    // ── No active thread: render the panel as a "library home"
+    // by pulling missions + assets from the global APIs (not the
+    // per-thread SSE stream). Keeps the panel useful before the
+    // user opens any conversation, and removes the need for the
+    // dedicated LIBRARY_ITEMS rail in the LeftPanel.
     if (!activeThreadId) {
-      Promise.resolve().then(() => {
-        setData(null);
-        setLoading(false);
+      let cancelled = false;
+      setLoading(true);
+      void Promise.all([
+        fetch("/api/v2/missions", { credentials: "include" })
+          .then((r) => (r.ok ? r.json() : { missions: [] }))
+          .catch(() => ({ missions: [] })),
+        fetch("/api/v2/assets", { credentials: "include" })
+          .then((r) => (r.ok ? r.json() : { assets: [] }))
+          .catch(() => ({ assets: [] })),
+      ]).then(([mResp, aResp]) => {
+        if (cancelled) return;
+        const missions = (mResp.missions ?? []) as RightPanelData["missions"];
+        const rawAssets = (aResp.assets ?? []) as Array<Record<string, unknown>>;
+        const assets = rawAssets.map((a): RightPanelData["assets"][number] => ({
+          id: String(a.id ?? ""),
+          name: String(a.name ?? a.title ?? "Untitled"),
+          type: String(a.type ?? a.kind ?? "doc"),
+          runId: String(a.run_id ?? a.runId ?? ""),
+        }));
+        setData({
+          assets,
+          missions,
+          focalObject: undefined,
+          secondaryObjects: undefined,
+        } as RightPanelData);
         setIsConnected(false);
+        setLoading(false);
       });
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     const streamThreadId = activeThreadId;
     let cancelled = false;
-    
+
     Promise.resolve().then(() => {
       if (!cancelled) setLoading(true);
     });
@@ -253,26 +283,17 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const focalObjectType = focalObject ? getFocalProp(focalObject, "objectType") || "unknown" : "";
   const focalTitle = focalObject ? getFocalProp(focalObject, "title") || "Untitled" : "";
 
-  // Empty state when no thread
-  if (!hasActiveThread) {
-    return (
-      <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-[var(--surface-2)] bg-gradient-to-b from-[var(--bg-soft)] to-[var(--mat-050)]">
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <div className="w-12 h-12 rounded-full bg-[var(--surface-2)] flex items-center justify-center mb-4">
-            <StatusIcon state="standby" />
-          </div>
-          <h3 className="t-15 font-medium text-[var(--text-soft)] mb-2">No active session</h3>
-          <p className="text-xs text-[var(--text-faint)] leading-relaxed">
-            Start a conversation to see context, assets, and missions here.
-          </p>
-        </div>
-      </aside>
-    );
-  }
-
-  const stateLabel =
-    coreState === "awaiting_approval" ? (flowLabel || "Needs approval") :
-    isRunning ? (flowLabel || "Processing") : "Ready";
+  // The panel is *persistent*: it stays mounted even when no thread is
+  // active. In that "library mode" the status card switches to a softer
+  // standby label and the rest of the UI (Missions / Assets sections)
+  // continues to render — fed by the global APIs in the effect above.
+  const stateLabel = !hasActiveThread
+    ? "Library"
+    : coreState === "awaiting_approval"
+      ? (flowLabel || "Needs approval")
+      : isRunning
+        ? (flowLabel || "Processing")
+        : "Ready";
 
   return (
     <aside className="w-[320px] h-full flex flex-col z-20 relative border-l border-[var(--surface-2)] bg-gradient-to-b from-[var(--bg-soft)] via-[var(--surface)] to-[var(--mat-050)]">
@@ -289,16 +310,20 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
       {/* Status Card — refined hierarchy */}
       <div className="px-6 pt-7 pb-6 border-b border-[var(--surface-2)]">
         <div className="flex items-center justify-between mb-3">
-          <span className="t-9 font-mono tracking-[0.3em] text-[var(--text-faint)] uppercase">Status</span>
+          <span className="t-9 font-mono tracking-[0.3em] text-[var(--text-faint)] uppercase">
+            {hasActiveThread ? "Status" : "Mode"}
+          </span>
           <span className={`flex items-center gap-2 t-9 font-mono tracking-[0.2em] uppercase ${
+            !hasActiveThread ? "text-[var(--text-faint)]" :
             coreState === "awaiting_approval" ? "text-[var(--warn)]" :
             isRunning ? "text-[var(--cykan)] halo-cyan-sm" : "text-[var(--text-faint)]"
           }`}>
             <span className={`w-1 h-1 rounded-full ${
+              !hasActiveThread ? "bg-[var(--text-ghost)]" :
               coreState === "awaiting_approval" ? "bg-[var(--warn)]" :
               isRunning ? "bg-[var(--cykan)] animate-pulse halo-dot" : "bg-[var(--text-faint)]"
             }`} />
-            {isConnected ? "live" : "offline"}
+            {!hasActiveThread ? "standby" : isConnected ? "live" : "offline"}
           </span>
         </div>
         <p className={`t-18 font-light tracking-tight ${isRunning ? "text-[var(--text)] halo-cyan-sm" : "text-[var(--text)]"}`}>{stateLabel}</p>
