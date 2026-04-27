@@ -162,38 +162,114 @@ export default function CanvasShell() {
         <RunRail onSelect={onSelectRun} />
       </div>
 
-      {/* Selected node detail */}
+      {/* Selected node detail — slide-out panel ancré à droite, scrollable. */}
       {selectedNode && (
-        <div className="fixed top-28 right-[300px] max-w-sm rounded-md border border-[var(--cykan)]/30 bg-[var(--bg-elev)]/95 backdrop-blur p-4 shadow-[var(--glow-cyan-md)] z-50">
-          <div className="flex items-center justify-between mb-2 gap-3">
-            <span className="t-13 font-medium text-[var(--text)]">
-              {selectedNode.label}
-            </span>
+        <aside
+          className={[
+            "fixed top-[88px] right-[300px] z-50",
+            "w-[360px] max-h-[calc(100vh-120px)] overflow-y-auto",
+            "rounded-md border border-[var(--cykan)]/30",
+            "bg-[var(--bg-elev)]/95 backdrop-blur",
+            "shadow-[var(--glow-cyan-md)]",
+          ].join(" ")}
+        >
+          <header className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--line)] bg-[var(--bg-elev)]/95 backdrop-blur">
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="t-13 font-medium text-[var(--text)] truncate">
+                {selectedNode.label}
+              </span>
+              <span className="t-10 font-mono uppercase tracking-[0.14em] text-[var(--text-faint)]/80">
+                {selectedNode.sublabel}
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => setSelectedNodeId(null)}
-              className="t-10 font-mono uppercase tracking-[0.1em] text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
+              className="t-10 font-mono uppercase tracking-[0.12em] text-[var(--text-faint)] hover:text-[var(--text)] transition-colors shrink-0"
             >
               fermer
             </button>
-          </div>
-          <p className="t-11 text-[var(--text-muted)] mb-3">{selectedNode.sublabel}</p>
-          <div className="rounded-sm bg-[var(--bg-soft)] px-2 py-1.5 mb-3">
-            <p className="t-10 font-mono tracking-[0.05em] text-[var(--cykan)] break-all">
-              {selectedNode.fileHint}
+          </header>
+
+          <div className="flex flex-col gap-4 px-4 py-4">
+            <p className="t-12 leading-relaxed text-[var(--text-muted)]">
+              {selectedNode.description}
             </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+                  Inputs
+                </span>
+                <span className="t-11 text-[var(--text)]">{selectedNode.inputs}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+                  Outputs
+                </span>
+                <span className="t-11 text-[var(--text)]">{selectedNode.outputs}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+                Source
+              </span>
+              <div className="rounded-sm bg-[var(--bg-soft)] px-2 py-1.5">
+                <p className="t-10 font-mono tracking-[0.04em] text-[var(--cykan)] break-all leading-snug">
+                  {selectedNode.fileHint}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+                Events SSE
+              </span>
+              <ul className="flex flex-col gap-1">
+                {selectedNode.events.map((e) => (
+                  <li
+                    key={e}
+                    className="t-10 font-mono tracking-[0.02em] text-[var(--text-soft)] before:content-['—_'] before:text-[var(--text-faint)]/60"
+                  >
+                    {e}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {selectedNode.branches && selectedNode.branches.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+                  Branchements
+                </span>
+                <ul className="flex flex-col gap-1">
+                  {selectedNode.branches.map((b) => (
+                    <li
+                      key={b}
+                      className="t-11 text-[var(--text-soft)] leading-snug"
+                    >
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-[var(--line)]">
+              <span
+                className={[
+                  "t-9 font-mono uppercase tracking-[0.18em]",
+                  selectedNode.toggleable ? "text-[var(--cykan)]/80" : "text-[var(--text-faint)]/60",
+                ].join(" ")}
+              >
+                {selectedNode.toggleable && selectedNode.flagKey
+                  ? `toggle actif — flag « ${selectedNode.flagKey} »`
+                  : "stage non toggleable"}
+              </span>
+            </div>
           </div>
-          <p
-            className={[
-              "t-9 font-mono uppercase tracking-[0.18em]",
-              selectedNode.toggleable ? "text-[var(--cykan)]/80" : "text-[var(--text-faint)]/70",
-            ].join(" ")}
-          >
-            {selectedNode.toggleable
-              ? "toggle actif via feature flag"
-              : "toggle on/off — bientôt"}
-          </p>
-        </div>
+        </aside>
       )}
     </div>
   );
