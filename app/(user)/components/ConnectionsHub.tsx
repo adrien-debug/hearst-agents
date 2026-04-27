@@ -270,6 +270,13 @@ export function ConnectionsHub() {
       );
       // Clean up URL so refresh doesn't re-toast
       window.history.replaceState({}, "", window.location.pathname);
+      // Invalidate the server-side Composio discovery cache so the next chat
+      // turn sees the new toolkit immediately (otherwise the user would wait
+      // up to 5 minutes for the cache to expire on warm instances).
+      void fetch("/api/composio/invalidate-cache", {
+        method: "POST",
+        credentials: "include",
+      }).catch(() => {});
       void refreshAccounts();
     }
   }, [refreshAccounts]);

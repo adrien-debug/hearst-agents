@@ -437,7 +437,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         )}
 
         {/* Assets — editorial list */}
-        {panelData?.assets && panelData.assets.filter((a) => a.name && a.name !== "Untitled").length > 0 && (
+        {panelData?.assets && panelData.assets.length > 0 && (
           <div className="px-6 pt-7 pb-6 border-b border-[var(--surface-2)]">
             <button
               onClick={() => router.push("/assets")}
@@ -449,13 +449,12 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                 <span className="t-9 font-mono tracking-[0.3em] uppercase">Assets</span>
               </span>
               <span className="flex items-center gap-2">
-                <span className="t-9 font-mono tracking-[0.2em]">{panelData.assets.filter((a) => a.name && a.name !== "Untitled").length}</span>
+                <span className="t-9 font-mono tracking-[0.2em]">{panelData.assets.length}</span>
                 <span className="t-9 font-mono opacity-0 group-hover/header:opacity-100 -translate-x-1 group-hover/header:translate-x-0 transition-all">→</span>
               </span>
             </button>
             <div className="space-y-px">
               {panelData.assets
-                .filter((a) => a.name && a.name !== "Untitled")
                 .slice(0, 5)
                 .map((asset) => (
                 <div

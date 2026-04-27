@@ -69,6 +69,50 @@ const initialServices = (() => {
   }));
 })();
 
+// Suggestion templates — surfaced when the matching service is connected.
+// Each entry's `serviceId` matches the value used by `getAllServices()` /
+// the connection status payload, so we only show actionable suggestions.
+const SUGGESTION_TEMPLATES: Array<{
+  serviceId: string;
+  title: string;
+  subtitle: string;
+}> = [
+  { serviceId: "gmail",     title: "Résumer mes emails non lus",         subtitle: "Synthèse 24h · Gmail" },
+  { serviceId: "calendar",  title: "Mon agenda d'aujourd'hui",            subtitle: "Événements & créneaux · Calendar" },
+  { serviceId: "drive",     title: "Mes derniers documents",              subtitle: "Fichiers récents · Drive" },
+  { serviceId: "slack",     title: "Mes messages Slack non lus",          subtitle: "Synthèse channels · Slack" },
+  { serviceId: "notion",    title: "Mes pages récentes",                  subtitle: "Workspace · Notion" },
+  { serviceId: "github",    title: "Mes PRs à reviewer",                  subtitle: "Code review · GitHub" },
+  { serviceId: "linear",    title: "Mes issues assignées",                subtitle: "Backlog · Linear" },
+  { serviceId: "jira",      title: "Mes tickets en cours",                subtitle: "Sprint · Jira" },
+  { serviceId: "hubspot",   title: "Mes leads à relancer",                subtitle: "Pipeline · HubSpot" },
+  { serviceId: "stripe",    title: "Mon revenu de la semaine",            subtitle: "Métriques · Stripe" },
+];
+
+// Fallback shown when nothing is connected — generic discovery prompts.
+const FALLBACK_SUGGESTIONS = [
+  { serviceId: "_",  title: "Connecter mes outils",          subtitle: "Gmail, Slack, Notion, GitHub…" },
+  { serviceId: "_",  title: "Que peux-tu faire ?",            subtitle: "Tour des capacités" },
+  { serviceId: "_",  title: "Planifier une automation",       subtitle: "Brief récurrent" },
+  { serviceId: "_",  title: "Faire une recherche web",        subtitle: "Veille · web" },
+];
+
+function buildSuggestions(
+  connectedServices: ServiceWithConnectionStatus[],
+): Array<{ id: string; title: string; subtitle: string }> {
+  const connectedIds = new Set(connectedServices.map((s) => s.id));
+  const matched = SUGGESTION_TEMPLATES
+    .filter((t) => connectedIds.has(t.serviceId))
+    .slice(0, 4);
+
+  const list = matched.length > 0 ? matched : FALLBACK_SUGGESTIONS;
+  return list.map((s, i) => ({
+    id: String(i + 1).padStart(2, "0"),
+    title: s.title,
+    subtitle: s.subtitle,
+  }));
+}
+
 export default function HomePage() {
   const { data: session } = useSession();
   const focal = useFocalStore((s) => s.focal);
@@ -86,6 +130,7 @@ export default function HomePage() {
   );
   const messages = useMemo(() => messagesRaw ?? [], [messagesRaw]);
   const addMessageToThread = useNavigationStore((s) => s.addMessageToThread);
+  const addThread = useNavigationStore((s) => s.addThread);
   const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
   const updateThreadName = useNavigationStore((s) => s.updateThreadName);
   const firstName = session?.user?.name?.split(" ")[0];
@@ -182,22 +227,24 @@ export default function HomePage() {
   const userEmail = session?.user?.email || "anonymous";
 
   const handleSubmit = useCallback(async (message: string) => {
-    if (!activeThreadId) return;
+    // If the user deleted every thread, recover by creating a fresh one
+    // instead of silently swallowing the message.
+    const threadId = activeThreadId ?? addThread("New", surface);
     const clientToken = `client-${Date.now()}`;
     const userMessage: Message = {
       id: `user-${Date.now()}`,
       role: "user",
       content: message,
     };
-    addMessageToThread(activeThreadId, userMessage);
+    addMessageToThread(threadId, userMessage);
 
     if (messages.length === 0) {
-      trackAnalytics("first_message_sent", userEmail, { threadId: activeThreadId });
+      trackAnalytics("first_message_sent", userEmail, { threadId });
       const raw = message.slice(0, 50);
       const name = message.length > 40
         ? (raw.lastIndexOf(" ") > 15 ? raw.slice(0, raw.lastIndexOf(" ")) : raw.slice(0, 40))
         : message;
-      updateThreadName(activeThreadId, name);
+      updateThreadName(threadId, name);
     }
 
     assistantBufferRef.current = "";
@@ -208,7 +255,7 @@ export default function HomePage() {
       role: "assistant",
       content: "",
     };
-    addMessageToThread(activeThreadId, assistantMessage);
+    addMessageToThread(threadId, assistantMessage);
 
     const recentMessages = messages
       .filter((m) => (m.role === "user" || m.role === "assistant") && m.content.trim().length > 0)
@@ -224,8 +271,8 @@ export default function HomePage() {
         body: JSON.stringify({
           message,
           surface,
-          thread_id: activeThreadId,
-          conversation_id: activeThreadId,
+          thread_id: threadId,
+          conversation_id: threadId,
           history: recentMessages,
           capability_mode: "general",
         }),
@@ -258,7 +305,7 @@ export default function HomePage() {
             if (event.type === "text_delta" && event.delta) {
               assistantBufferRef.current += event.delta;
               updateMessageInThread(
-                activeThreadId,
+                threadId,
                 currentAssistantIdRef.current!,
                 assistantBufferRef.current
               );
@@ -282,7 +329,7 @@ export default function HomePage() {
         error: errorMsg,
       });
     }
-  }, [surface, activeThreadId, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, updateThreadName, userEmail]);
+  }, [surface, activeThreadId, addThread, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, updateThreadName, userEmail]);
 
   const isIdle = coreState === "idle" && messages.length === 0 && !focal;
 
@@ -307,12 +354,7 @@ export default function HomePage() {
       : hour < 18 ? "Bon après-midi"
       : "Bonsoir";
     const connectedCount = connectedServices.length;
-    const suggestions = [
-      { id: "01", title: "Résumer mes emails", subtitle: "Synthèse 24h · Gmail" },
-      { id: "02", title: "Planifier une réunion", subtitle: "Trouver un créneau · Calendar" },
-      { id: "03", title: "Analyser un document", subtitle: "Lecture & synthèse · Drive" },
-      { id: "04", title: "Créer un rapport", subtitle: "Brief structuré · Multi-source" },
-    ];
+    const suggestions = buildSuggestions(connectedServices);
 
     return (
       <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden cinematic-stage panel-enter">

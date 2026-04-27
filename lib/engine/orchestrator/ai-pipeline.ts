@@ -22,6 +22,8 @@ import { filterToolsByDomain, isWriteAction } from "@/lib/connectors/composio/wr
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
+import { appendModelMessages, getRecentModelMessages } from "@/lib/memory/store";
+import type { TenantScope } from "@/lib/multi-tenant/types";
 import { buildAgentSystemPrompt } from "./system-prompt";
 
 export interface AiPipelineInput {
@@ -36,6 +38,8 @@ export interface AiPipelineInput {
   /** Tenant scope for multi-tenant operations (mission creation etc.). */
   tenantId?: string;
   workspaceId?: string;
+  /** Conversation id used to load/persist structured ModelMessages history. */
+  conversationId?: string;
 }
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
@@ -244,12 +248,22 @@ export async function runAiPipeline(
   });
 
   // ── 4. Build message history ────────────────────────────────
-  const messages: ModelMessage[] = [
-    ...(input.conversationHistory ?? []).map(
+  // Prefer structured (ModelMessage) memory when a conversationId is set —
+  // it preserves tool calls and tool results across turns so cross-turn
+  // confirmation flows ("confirmer" 3 messages later) stay reliable.
+  // Fall back to the text-only client history otherwise.
+  let priorMessages: ModelMessage[] = [];
+  if (input.conversationId) {
+    priorMessages = await getRecentModelMessages(input.conversationId, 20);
+  }
+  if (priorMessages.length === 0) {
+    priorMessages = (input.conversationHistory ?? []).map(
       (m): ModelMessage => ({ role: m.role, content: m.content }),
-    ),
-    { role: "user" as const, content: input.message },
-  ];
+    );
+  }
+
+  const userMessage: ModelMessage = { role: "user" as const, content: input.message };
+  const messages: ModelMessage[] = [...priorMessages, userMessage];
 
   // ── 5. Run streamText ───────────────────────────────────────
   try {
@@ -261,6 +275,10 @@ export async function runAiPipeline(
       // Allow up to 10 tool-call → result cycles before forcing a stop
       stopWhen: stepCountIs(10),
       temperature: 0.3,
+      // Cost guard. Chat replies and drafts fit comfortably in 8k tokens.
+      // Long-form reports go through the deterministic research path with
+      // its own budget — they don't hit this code path.
+      maxOutputTokens: 8000,
     });
 
     // Track active tool calls for event emission pairing.
@@ -325,6 +343,23 @@ export async function runAiPipeline(
             tool: name ?? event.toolCallId,
             providerId: "composio",
           });
+
+          // Auto-trigger OAuth card on Composio AUTH_REQUIRED. The token has
+          // expired or was revoked — the model would otherwise just relay the
+          // raw error to the user. Surfacing the connect card here makes the
+          // recovery path one click instead of one chat turn.
+          const out = event.output as { ok?: boolean; errorCode?: string; error?: string } | undefined;
+          if (out && out.ok === false && out.errorCode === "AUTH_REQUIRED" && name) {
+            const app = name.split("_")[0]?.toLowerCase();
+            if (app) {
+              eventBus.emit({
+                type: "app_connect_required",
+                run_id: engine.id,
+                app,
+                reason: `La connexion à ${app} a expiré ou été révoquée. Reconnecte-toi pour continuer.`,
+              });
+            }
+          }
           break;
         }
 
@@ -346,6 +381,27 @@ export async function runAiPipeline(
         tool_calls: toolCallNames.size,
         latency_ms: 0,
       });
+    }
+
+    // Persist the full structured turn (user message + assistant + tool
+    // messages with tool-call/tool-result parts) so the next turn — which
+    // may say only "confirmer" — has the original tool args available.
+    if (input.conversationId) {
+      try {
+        const responseMessages = (await result.response).messages;
+        const scope: TenantScope = {
+          tenantId: input.tenantId ?? "dev-tenant",
+          workspaceId: input.workspaceId ?? "dev-workspace",
+          userId: input.userId,
+        };
+        appendModelMessages(
+          input.conversationId,
+          [userMessage, ...responseMessages],
+          scope,
+        );
+      } catch (err) {
+        console.error("[AiPipeline] Failed to persist structured messages:", err);
+      }
     }
 
     await engine.complete();

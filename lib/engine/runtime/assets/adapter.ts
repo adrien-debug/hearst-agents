@@ -31,6 +31,15 @@ export async function saveAsset(asset: Asset): Promise<boolean> {
     return false;
   }
 
+  // Reject assets without a meaningful title — same guard as the orchestrator
+  // path (lib/assets/types.ts:storeAsset). Keeps the DB free of placeholders
+  // that would resurface as "Untitled" rows in the right panel.
+  const cleanTitle = (asset.name ?? "").trim();
+  if (!cleanTitle || cleanTitle.toLowerCase() === "untitled") {
+    console.warn(`[AssetsAdapter] Refusing to persist asset ${asset.id} — empty or 'Untitled' title`);
+    return false;
+  }
+
   try {
     // Map AssetType to DB kind
     const kind = mapTypeToKind(asset.type);
@@ -40,7 +49,7 @@ export async function saveAsset(asset: Asset): Promise<boolean> {
       thread_id: asset.metadata?.threadId ?? "default",
       run_id: asset.run_id,
       kind,
-      title: asset.name,
+      title: cleanTitle,
       summary: asset.metadata?.summary as string | undefined,
       content_ref: asset.url,
       output_tier: asset.metadata?.outputTier as string | undefined,

@@ -96,6 +96,16 @@ const assetCache = new Map<string, Asset[]>();
 const actionCache = new Map<string, Action[]>();
 
 export function storeAsset(asset: Asset): void {
+  // Reject assets without a meaningful title at the source rather than
+  // letting them land in the DB and filtering them out everywhere downstream.
+  // Avoids the previous "Untitled" rows that polluted the right-panel and
+  // /assets list.
+  const cleanTitle = (asset.title ?? "").trim();
+  if (!cleanTitle || cleanTitle.toLowerCase() === "untitled") {
+    console.warn(`[AssetStore] Refusing to persist asset ${asset.id} — empty or 'Untitled' title`);
+    return;
+  }
+
   // In-memory cache
   const list = assetCache.get(asset.threadId) ?? [];
   list.push(asset);
@@ -110,7 +120,7 @@ export function storeAsset(asset: Asset): void {
         thread_id: asset.threadId,
         run_id: asset.runId ?? null,
         kind: asset.kind,
-        title: asset.title,
+        title: cleanTitle,
         summary: asset.summary ?? null,
         content_ref: asset.contentRef ?? null,
         output_tier: asset.outputTier ?? null,

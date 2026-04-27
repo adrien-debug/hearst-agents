@@ -173,6 +173,7 @@ async function handleAiPipeline(
     domain: input._capabilityDomain,
     tenantId: scope.tenantId,
     workspaceId: scope.workspaceId,
+    conversationId: input.conversationId,
   });
 }
 
