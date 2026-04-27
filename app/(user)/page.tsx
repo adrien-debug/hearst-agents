@@ -14,7 +14,6 @@ import { CapabilityTabs, type CapabilityMode, getCapabilityFromSurface, isCapabi
 import { SourcePicker, type SourceSelection, getDefaultSelection } from "./components/SourcePicker";
 import { Breadcrumb, type Crumb } from "./components/Breadcrumb";
 import { getAllServices } from "@/lib/integrations/catalog";
-import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { toast } from "@/app/hooks/use-toast";
 
@@ -99,7 +98,7 @@ function ChatControls({
 }
 
 const initialServices = (() => {
-  const baseServices = [...getAllServices(), ...getNangoServices()];
+  const baseServices = getAllServices();
   return baseServices.map((s) => ({
     ...s,
     connectionStatus: "disconnected" as const,
@@ -383,16 +382,20 @@ export default function HomePage() {
     const provider = getProviderForService(serviceId);
     if (!provider) return;
     try {
-      const res = await fetch("/api/nango/connect", {
+      const res = await fetch("/api/composio/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ provider }),
+        body: JSON.stringify({
+          appName: provider,
+          redirectUri: `${window.location.origin}/apps?connected=${encodeURIComponent(serviceId)}`,
+        }),
       });
       if (!res.ok) return;
-      const data = await res.json();
-      if (!data.success || !data.config) return;
-      window.location.href = `/apps?connecting=${encodeURIComponent(serviceId)}&provider=${encodeURIComponent(provider)}`;
+      const data = (await res.json()) as { ok?: boolean; redirectUrl?: string };
+      if (data.ok && data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      }
     } catch (_err) {}
   }, []);
 

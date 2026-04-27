@@ -19,15 +19,18 @@ describe("capabilityGuard", () => {
   it("blocks FinanceAgent for communication domain with suggested agents", () => {
     const r = capabilityGuard({ agent: "FinanceAgent", task: "emails", domain: "communication" });
     expect(r.allowed).toBe(false);
-    expect(r.suggestedAgents).toBeDefined();
-    expect(r.suggestedAgents!.length).toBeGreaterThan(0);
-    expect(r.reason).toContain("not allowed");
+    if (!r.allowed) {
+      expect(r.suggestedAgents.length).toBeGreaterThan(0);
+      expect(r.reason).toContain("not allowed");
+    }
   });
 
   it("blocks DeveloperAgent for finance domain", () => {
     const r = capabilityGuard({ agent: "DeveloperAgent", task: "balance", domain: "finance" });
     expect(r.allowed).toBe(false);
-    expect(r.suggestedAgents).toContain("FinanceAgent");
+    if (!r.allowed) {
+      expect(r.suggestedAgents).toContain("FinanceAgent");
+    }
   });
 
   it("allows general agents (DocBuilder) in any domain", () => {

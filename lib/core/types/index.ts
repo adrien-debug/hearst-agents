@@ -21,27 +21,7 @@ export type { ConnectorCapability, ConnectorDefinition } from "@/lib/connectors/
 export type { DiscoveredTool, ConnectedAccount } from "@/lib/connectors/composio";
 
 // ── Agents ──────────────────────────────────────────────────
-export type {
-  AgentDefinition,
-  AgentBackend,
-  AgentBackendDecision,
-  AgentBackendV2,
-  BackendCapabilities,
-  ManagedSessionConfig,
-  ManagedSessionContext,
-  ManagedAgentEvent,
-  ManagedAgentEventType,
-  ManagedAgentResult,
-  ManagedAgentStep,
-  BackendSelectionInput,
-  BackendSelectionResult,
-  HybridExecutionPlan,
-  HybridStep,
-  HandoffContext,
-  HandoffResult,
-  CapabilityAgent,
-  StepActor,
-} from "./agents";
+export type { AgentDefinition, CapabilityAgent, StepActor } from "./agents";
 
 // ── Runtime ─────────────────────────────────────────────────
 export type {

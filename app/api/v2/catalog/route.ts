@@ -17,7 +17,6 @@ import {
   enrichWithConnectionStatus,
   SERVICE_BUNDLES,
 } from "@/lib/integrations/catalog";
-import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import type { CatalogFilters, ServiceDefinition } from "@/lib/integrations/types";
 
 export const dynamic = "force-dynamic";
@@ -87,11 +86,9 @@ export async function GET(req: NextRequest) {
       services = getAllServices();
     }
 
-    // Add Nango Tier 3 services if requested
-    if (includeNango && !tier && !category) {
-      const nangoServices = getNangoServices();
-      services = [...services, ...nangoServices];
-    }
+    // Tier 3 long-tail services are now served by Composio's per-user
+    // discovery layer; the static Nango catalog has been retired.
+    void includeNango;
 
     // Enrich with connection status (placeholder — will use control-plane)
     const servicesWithStatus = await enrichWithConnectionStatus(services, userId);

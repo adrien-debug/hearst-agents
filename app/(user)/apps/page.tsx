@@ -9,9 +9,7 @@ import { AppDrawer } from "../components/AppDrawer";
 import { AppCategorySection } from "../components/AppCategorySection";
 import { ComposioConnectionsCard } from "../components/ComposioConnectionsCard";
 import { getAllServices, getAllBundles } from "@/lib/integrations/catalog";
-import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import { enrichWithConnectionStatus } from "@/lib/integrations/catalog";
-import Nango from "@nangohq/frontend";
 import { toast } from "@/app/hooks/use-toast";
 import { GhostIconLayers, GhostIconSearch, GhostIconX } from "../components/ghost-icons";
 
@@ -64,7 +62,7 @@ export default function AppsPage() {
     async function loadServices() {
       try {
         // Get all services (Tier 1/2 + Tier 3 Nango)
-        const baseServices = [...getAllServices(), ...getNangoServices()];
+        const baseServices = getAllServices();
 
         // Use real user ID from session
         const enriched = await enrichWithConnectionStatus(baseServices, userId || "anonymous");
@@ -74,7 +72,7 @@ export default function AppsPage() {
         console.error("[AppsPage] Failed to load services:", error);
         toast.error("Échec du chargement", "Impossible de charger les services");
         // Set services to base list without connection status
-        const baseServices = [...getAllServices(), ...getNangoServices()];
+        const baseServices = getAllServices();
         setServices(baseServices.map(s => ({ ...s, connectionStatus: "disconnected" as const })));
       } finally {
         setLoading(false);
@@ -174,7 +172,7 @@ export default function AppsPage() {
     return map[serviceId] || null;
   };
 
-  // Handle connect — initiate OAuth via Nango
+  // Handle connect — initiate OAuth via Composio
   const handleConnect = async (serviceId: string) => {
     const provider = getProviderForService(serviceId);
     if (!provider) {
@@ -184,48 +182,39 @@ export default function AppsPage() {
     }
 
     setIsConnecting(serviceId);
-    console.log(`[AppsPage] Initiating OAuth for ${serviceId} via ${provider}`);
+    console.log(`[AppsPage] Initiating Composio OAuth for ${serviceId} via ${provider}`);
 
     try {
-      // Step 1: Get OAuth config from backend
-      const res = await fetch("/api/nango/connect", {
+      const res = await fetch("/api/composio/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ provider }),
+        body: JSON.stringify({
+          appName: provider,
+          redirectUri: `${window.location.origin}/apps?connected=${encodeURIComponent(serviceId)}`,
+        }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        console.error("[AppsPage] OAuth init failed:", err);
-        toast.error("Échec de connexion", err.message || "Service temporairement indisponible");
+      const data = (await res.json()) as { ok?: boolean; redirectUrl?: string; error?: string };
+      if (!res.ok || !data.ok) {
+        toast.error("Échec de connexion", data.error ?? "Service temporairement indisponible");
         return;
       }
 
-      const data = await res.json();
-      if (!data.success || !data.config) {
-        console.error("[AppsPage] Invalid OAuth config:", data);
-        toast.error("Configuration invalide", "Impossible d'initialiser l'authentification");
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
         return;
       }
-
-      console.log(`[AppsPage] OAuth config received for ${provider}`);
-
-      // Step 2: Initialize Nango SDK and open OAuth popup
-      const nango = new Nango({ 
-        publicKey: data.config.publicKey,
-        host: data.config.host 
-      });
 
       try {
-        // Open OAuth popup and wait for completion
-        const result = await nango.auth(provider, data.config.connectionId);
+        // Composio finished without an OAuth round-trip (API-key apps, …).
+        const result: unknown = true;
         
         if (result) {
           console.log(`[AppsPage] OAuth successful for ${provider}`);
           
           // Step 3: Refresh services list to show updated connection status
-          const baseServices = [...getAllServices(), ...getNangoServices()];
+          const baseServices = getAllServices();
           const enriched = await enrichWithConnectionStatus(baseServices, userId || "anonymous");
           setServices(enriched);
           

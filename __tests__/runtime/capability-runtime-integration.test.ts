@@ -23,12 +23,6 @@ import {
 import { capabilityGuard } from "@/lib/capabilities/guard";
 import { getRequiredProvidersForInput, getBlockedReasonForProviders } from "@/lib/engine/orchestrator/provider-requirements";
 import { isResearchIntent, isReportIntent } from "@/lib/engine/orchestrator/research-intent";
-import {
-  analyzeTask,
-  selectBackend,
-  scoreBackends,
-} from "@/lib/agents/backend-v2/selector";
-import { BACKEND_CAPABILITIES } from "@/lib/agents/backend-v2/types";
 
 const hoisted = vi.hoisted(() => ({
   messagesCreate: vi.fn(),
@@ -330,66 +324,6 @@ describe("D — Delegate routing", () => {
     const types = engine.emitted.map((e) => e.type);
     expect(types).toContain("runtime_warning");
     expect(types).toContain("step_failed");
-  });
-});
-
-// ── E — Backend selector ───────────────────────────────────
-
-describe("E — Backend selector (v2)", () => {
-  it("analyzeTask: fichier / code / vision / computer use", () => {
-    const file = analyzeTask({ prompt: "Cherche ce document PDF dans mon drive" });
-    expect(file.needsFileSearch).toBe(true);
-
-    const code = analyzeTask({ prompt: "Calcule avec Python ce CSV json" });
-    expect(code.needsCodeInterpreter).toBe(true);
-
-    const vision = analyzeTask({ prompt: "Décris cette image screenshot" });
-    expect(vision.needsVision).toBe(true);
-
-    const cu = analyzeTask({ prompt: "Clique sur le bouton login et remplis le formulaire" });
-    expect(cu.needsComputerUse).toBe(true);
-  });
-
-  it("selectBackend: recherche fichiers → openai_assistants", () => {
-    const r = selectBackend({ prompt: "Search for PDF documents about sales" }, {});
-    expect(r.selectedBackend).toBe("openai_assistants");
-  });
-
-  it("scoreBackends: ordre décroissant par score", () => {
-    const analysis = analyzeTask({ prompt: "simple hello" });
-    const ranked = scoreBackends(analysis, BACKEND_CAPABILITIES, {});
-    for (let i = 0; i < ranked.length - 1; i++) {
-      expect(ranked[i].score).toBeGreaterThanOrEqual(ranked[i + 1].score);
-    }
-  });
-
-  it("forceBackend bypass le scoring", () => {
-    const r = selectBackend(
-      { prompt: "n’importe quelle tâche complexe avec fichiers et code" },
-      { forceBackend: "openai_responses" },
-    );
-    expect(r.selectedBackend).toBe("openai_responses");
-    expect(r.routingDecision).toBe("forced");
-    expect(r.confidence).toBe(1);
-  });
-
-  it("priorités cost / speed / quality modifient les scores (pas toujours le même ordre)", () => {
-    const analysis = analyzeTask(
-      { prompt: "Discuss this long project context" },
-      [{ role: "user", content: "hi" }],
-    );
-    const byPriority = {
-      cost: scoreBackends(analysis, BACKEND_CAPABILITIES, { priority: "cost" }),
-      speed: scoreBackends(analysis, BACKEND_CAPABILITIES, { priority: "speed" }),
-      quality: scoreBackends(analysis, BACKEND_CAPABILITIES, { priority: "quality" }),
-      balanced: scoreBackends(analysis, BACKEND_CAPABILITIES, { priority: "balanced" }),
-    };
-    const scoreOf = (list: typeof byPriority.cost, backend: string) =>
-      list.find((s) => s.backend === backend)?.score ?? -1;
-    const resp = "openai_responses";
-    expect(scoreOf(byPriority.cost, resp)).toBeGreaterThan(scoreOf(byPriority.quality, resp));
-    expect(byPriority.speed[0].score).toBeGreaterThanOrEqual(byPriority.speed[1]?.score ?? 0);
-    expect(byPriority.balanced.length).toBeGreaterThan(0);
   });
 });
 
