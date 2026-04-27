@@ -47,7 +47,7 @@ function ChatControls({ connectedServices, onManage }: ChatControlsProps) {
     <div className="px-12 pt-6 pb-0 flex items-center justify-end">
       <button
         onClick={onManage}
-        className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono tracking-[0.2em] uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan)]/30 transition-all bg-transparent"
+        className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono tracking-display uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan)]/30 transition-all bg-transparent"
         title={count > 0 ? `Connectés : ${preview}${more}` : "Connecter une source"}
       >
         <span
@@ -393,11 +393,11 @@ export default function HomePage() {
                 Hearst Connect
               </span>
               <h1
-                className="text-5xl md:text-6xl select-none halo-cyan-md"
+                className="t-48 select-none"
                 style={{
-                  fontWeight: 700,
-                  letterSpacing: "-0.04em",
-                  lineHeight: 1.05,
+                  fontWeight: "var(--weight-bold)",
+                  letterSpacing: "var(--tracking-tight)",
+                  lineHeight: "var(--leading-tight)",
                   color: "var(--text)",
                 }}
               >
@@ -408,11 +408,11 @@ export default function HomePage() {
             {/* Contextual greeting — softer Inter typography */}
             <div className="text-center space-y-3">
               <p
-                className="text-2xl md:t-28"
+                className="t-24 md:t-28"
                 style={{
-                  fontWeight: 500,
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1.2,
+                  fontWeight: "var(--weight-medium)",
+                  letterSpacing: "var(--tracking-tight)",
+                  lineHeight: "var(--leading-snug)",
                   color: "var(--text)",
                 }}
               >
@@ -442,7 +442,7 @@ export default function HomePage() {
                       <div className="halo-suggestion-logo" style={{ width: 44, height: 44 }} />
                       <div className="flex-1 min-w-0 space-y-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="t-9 font-mono tracking-[0.25em] uppercase opacity-30 text-[var(--cykan)]">
+                          <span className="t-9 font-mono tracking-banner uppercase opacity-30 text-[var(--cykan)]">
                             [ {String(i + 1).padStart(2, "0")} ]
                           </span>
                         </div>
@@ -483,7 +483,7 @@ export default function HomePage() {
                       </span>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.3em] uppercase">
+                        <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-marquee uppercase">
                           <span className="text-[var(--cykan)]/70 group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-all">
                             [ {s.id} ]
                           </span>
@@ -577,7 +577,7 @@ export default function HomePage() {
             <Breadcrumb trail={trail} className="min-w-0 truncate" />
             <button
               onClick={() => setShowFocal(false)}
-              className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)] hover:text-[var(--text)] transition-colors shrink-0"
+              className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--text)] transition-colors shrink-0"
               title="Minimiser (rester dans le contexte)"
             >
               Close [x]
@@ -600,7 +600,7 @@ export default function HomePage() {
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-pulse halo-dot" />
             <div className="flex flex-col items-start">
-              <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors">
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors">
                 {focal.type === "brief" ? "Active Brief" : focal.type === "report" ? "Active Report" : "Active Document"}
               </span>
               <span className="t-15 font-medium tracking-tight text-[var(--text-muted)] group-hover:translate-x-1 group-hover:text-[var(--text)] transition-all duration-300">{focal.title}</span>

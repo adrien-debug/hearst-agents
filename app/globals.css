@@ -213,6 +213,18 @@
   /* Hearst Connect — spacing scale extension */
   --spacing-50: 200px;
 
+  /* Hearst Connect — tracking scale (tracking-tight, tracking-display, …) */
+  --tracking-tight: var(--tracking-tight);
+  --tracking-hairline: var(--tracking-hairline);
+  --tracking-subtle: var(--tracking-subtle);
+  --tracking-caption: var(--tracking-caption);
+  --tracking-wide: var(--tracking-wide);
+  --tracking-stretch: var(--tracking-stretch);
+  --tracking-display: var(--tracking-display);
+  --tracking-banner: var(--tracking-banner);
+  --tracking-marquee: var(--tracking-marquee);
+  --tracking-brand: var(--tracking-brand);
+
   --font-satoshi: 'Satoshi Variable', 'Satoshi', sans-serif;
   --font-sans: 'Satoshi Variable', 'Satoshi', sans-serif;
   --font-mono: 'Satoshi Variable', 'Satoshi', sans-serif;
@@ -242,29 +254,30 @@ body {
   background: #000;
 }
 
-/* ── Typography scale ───────────────────── */
-/* Tailwind covers 12/14/16/20px (text-xs, -sm, -base, -xl).        */
-/* The spec also uses 9/10/11/13/15px — these utilities cover them. */
-/* Hardcoding `text-[Npx]` is forbidden: see scripts/lint-visual.mjs */
+/* ── Typography scale (fluide, ancres 640 / 1024 / 1440 / 2560) ── */
+/* Chaque .t-N : N px à viewport ≤640px, 1.5×N px à viewport ≥2560px. */
+/* Croissance expressive (≈+50% sur grand écran). Lin entre les bornes. */
+/* Hardcoding `text-[Npx]` reste interdit : voir scripts/lint-visual.mjs */
 
-.t-8  { font-size: 8px;  line-height: 1.2; }
-.t-9  { font-size: 9px;  line-height: 1.2; }
-.t-10 { font-size: 10px; line-height: 1.3; }
-.t-11 { font-size: 11px; line-height: 1.3; }
-.t-13 { font-size: 13px; line-height: 1.4; }
-.t-15 { font-size: 15px; line-height: 1.45; }
-.t-18 { font-size: 18px; line-height: 1.4; }
-.t-24 { font-size: 24px; line-height: 1.3; }
-.t-26 { font-size: 26px; line-height: 1.2; }
-.t-28 { font-size: 28px; line-height: 1.2; }
-.t-30 { font-size: 30px; line-height: 1.15; }
-.t-34 { font-size: 34px; line-height: 1.15; }
-.t-60 { font-size: 60px; line-height: 1; }
+.t-8  { font-size: clamp(8px,  0.208vw + 6.667px,  12px);   line-height: 1.2; }
+.t-9  { font-size: clamp(9px,  0.234vw + 7.5px,    13.5px); line-height: 1.2; }
+.t-10 { font-size: clamp(10px, 0.260vw + 8.333px,  15px);   line-height: 1.3; }
+.t-11 { font-size: clamp(11px, 0.286vw + 9.167px,  16.5px); line-height: 1.3; }
+.t-13 { font-size: clamp(13px, 0.339vw + 10.833px, 19.5px); line-height: 1.4; }
+.t-15 { font-size: clamp(15px, 0.391vw + 12.5px,   22.5px); line-height: 1.45; }
+.t-18 { font-size: clamp(18px, 0.469vw + 15px,     27px);   line-height: 1.4; }
+.t-24 { font-size: clamp(24px, 0.625vw + 20px,     36px);   line-height: 1.3; }
+.t-26 { font-size: clamp(26px, 0.677vw + 21.667px, 39px);   line-height: 1.2; }
+.t-28 { font-size: clamp(28px, 0.729vw + 23.333px, 42px);   line-height: 1.2; }
+.t-30 { font-size: clamp(30px, 0.781vw + 25px,     45px);   line-height: 1.15; }
+.t-34 { font-size: clamp(34px, 0.885vw + 28.333px, 51px);   line-height: 1.15; }
+.t-48 { font-size: clamp(48px, 1.250vw + 40px,     72px);   line-height: 1.05; }
+.t-60 { font-size: clamp(60px, 1.563vw + 50px,     90px);   line-height: 1; }
 
 /* ── Typography utilities ───────────────── */
 
 .halo-title-xl {
-  font-size: 56px;
+  font-size: clamp(56px, 1.458vw + 46.667px, 84px);
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -274,7 +287,7 @@ body {
 
 .halo-mono-label {
   font-family: var(--font-satoshi);
-  font-size: 9px;
+  font-size: clamp(9px, 0.234vw + 7.5px, 13.5px);
   letter-spacing: 0.4em;
   color: var(--text-faint);
   text-transform: uppercase;

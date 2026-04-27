@@ -14,6 +14,7 @@ import { RunEngine } from "@/lib/engine/runtime/engine";
 import { RunEventBus } from "@/lib/events/bus";
 import { SSEAdapter } from "@/lib/events/consumers/sse-adapter";
 import { LogPersister } from "@/lib/events/consumers/log-persister";
+import { globalRunBus } from "@/lib/events/global-bus";
 import { runAiPipeline } from "./ai-pipeline";
 import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, shouldInjectUserData, type ExecutionDecision } from "@/lib/capabilities/router";
 
@@ -41,6 +42,7 @@ import { getRequiredProvidersForInput, getBlockedReasonForProviders } from "./pr
 import { shouldPersistEvent, persistRunEvent } from "@/lib/engine/runtime/timeline/persist";
 import type { ProviderId } from "@/lib/providers/types";
 import { retrieveUserDataContext } from "@/lib/connectors/data-retriever";
+import { isFeatureEnabled } from "@/lib/admin/settings";
 
 interface FocalContext {
   id: string;
@@ -102,6 +104,7 @@ export function orchestrate(
   input: OrchestrateInput,
 ): ReadableStream {
   const eventBus = new RunEventBus();
+  eventBus.on((e) => globalRunBus.broadcast(e));
   const sse = new SSEAdapter(eventBus);
   const logPersister = new LogPersister(db);
   const cleanupLogs = logPersister.attach(eventBus);
@@ -489,7 +492,10 @@ async function runPipeline(
   // call (and never trigger an OAuth card for an action that should never
   // happen). The model is also bypassed — pure cost saving + zero risk of
   // jailbreak from this point on.
-  const safety = checkSafetyGate(input.message);
+  // Toggleable via the `safety_gate_enabled` feature flag (default: true) so
+  // operators can flip it from the admin canvas for debug or red-team runs.
+  const safetyEnabled = await isFeatureEnabled(db, "safety_gate_enabled", scope.tenantId, true);
+  const safety = safetyEnabled ? checkSafetyGate(input.message) : { kind: "ok" as const };
   if (safety.kind !== "ok") {
     console.log(`[Orchestrator] Safety gate ${safety.kind}: ${safety.reason}`);
     eventBus.emit({

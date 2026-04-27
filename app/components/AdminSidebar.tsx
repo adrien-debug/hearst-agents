@@ -17,7 +17,6 @@ const SECTIONS: NavSection[] = [
     title: "Overview",
     links: [
       { href: "/admin", label: "Dashboard" },
-      { href: "/admin/reports", label: "Reports" },
     ],
   },
   {
@@ -26,7 +25,6 @@ const SECTIONS: NavSection[] = [
       { href: "/admin/agents", label: "Agents" },
       { href: "/admin/runs", label: "Runs" },
       { href: "/admin/workflows", label: "Workflows" },
-      { href: "/admin/scheduler", label: "Scheduler" },
     ],
   },
   {
@@ -43,9 +41,6 @@ const SECTIONS: NavSection[] = [
       { href: "/admin/settings", label: "Settings" },
       { href: "/admin/health", label: "Health" },
       { href: "/admin/audit", label: "Audit Log" },
-      { href: "/admin/signals", label: "Signals" },
-      { href: "/admin/changes", label: "Changelog" },
-      { href: "/admin/architecture", label: "Architecture" },
     ],
   },
 ];
