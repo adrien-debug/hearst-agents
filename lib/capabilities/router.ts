@@ -119,21 +119,54 @@ export function scopeRequiresProviders(scope: CapabilityScope): boolean {
   return scope.providers.length > 0 && scope.domain !== "general" && scope.domain !== "research";
 }
 
+// Trivial / chit-chat patterns that must NEVER trigger Google data fetch —
+// running 3 round-trips for "Bonjour" or "Hello, can you help me?" wasted
+// 6-9s of latency and caused over-fetch on every benign prompt.
+const CHIT_CHAT_PATTERNS = [
+  /^\s*(bonjour|salut|hey|hello|hi|hola|coucou|merci|thanks?|ok|d'accord|ouais|oui|non|nope)\s*[!?.…]*\s*$/i,
+  /^\s*(comment\s+(ça\s+va|tu\s+vas)|how\s+are\s+you|how'?s\s+it\s+going)/i,
+  /^\s*(qui\s+es-tu|who\s+are\s+you|tu\s+es\s+(qui|quoi)|what\s+are\s+you)/i,
+  /^\s*(que\s+peux-tu\s+faire|what\s+can\s+you\s+do|capabilities)/i,
+  /^\s*(traduis|translate)\b/i,
+  /^\s*(quelle\s+heure|what\s+time)\b/i,
+  /^\s*hello[,!.\s]+can\s+you\s+help/i,
+  /^\s*can\s+you\s+help\s+me\s*\??\s*$/i,
+];
+
+// Personal-data verbs that justify a Google fetch even on short prompts —
+// "résume ma journée" is 3 words but legitimately needs Calendar+Gmail.
+const PERSONAL_DATA_VERBS = [
+  /\b(résume|résumer|résumé|liste|lister|montre|donne(?:-moi)?|recap|où\s+en\s+suis)\b/i,
+  /\bqu'?est[-\s]ce\s+que\s+j'ai\b/i,
+  /\bqu'?ai[-\s]je\b/i,
+  /\b(show\s+me|list\s+my|what\s+do\s+i\s+have|recap\s+my)\b/i,
+];
+
+const JAILBREAK_PATTERNS = [
+  /\bignore\s+(all\s+)?(previous|prior)\s+instructions?\b/i,
+  /\boublie\s+toutes?\s+(tes|les)\s+(instructions?|règles?)\b/i,
+  /\b(reveal|montre|expose|leak|exfiltre)\s+.*(prompt|system)/i,
+  /\btu\s+es\s+maintenant\b/i,
+  /\byou\s+are\s+now\b/i,
+];
+
 /**
  * Whether to inject Google user data (calendar/gmail/drive) into the LLM prompt.
  *
- * Default-on for user-data-likely domains so that vague-but-personal questions
- * like "qu'est-ce que j'ai aujourd'hui ?" or "résume ma journée" still get
- * the real data injected — the keyword detector misses these.
- *
- * Skipped for domains that use other providers (finance/Stripe, developer/GitHub)
- * or no provider at all (research/web). Also skipped for trivial chit-chat to
- * avoid wasted Gmail/Calendar API round-trips on "merci" / "ok".
+ * The previous heuristic was too lax — chit-chat, identity questions, and
+ * jailbreak attempts all triggered 3 simultaneous Google API fetches for no
+ * reason. Tightened ladder:
+ *   1. Explicit data keyword hit → always fetch.
+ *   2. Communication / productivity domains with ≥ 3 words → fetch (real
+ *      personal-data intent like "résume ma journée").
+ *   3. Otherwise (chit-chat, jailbreak, identity, translation, time, short
+ *      prompts, or non-data domains) → skip.
  *
  * Caller is still responsible for verifying that Google tokens exist before
  * actually fetching — this only decides intent.
  */
 export function shouldInjectUserData(scope: CapabilityScope, message: string): boolean {
+  // 1. Explicit keyword hit always wins — user named calendar/gmail/drive.
   if (
     scope.needsProviderData.calendar ||
     scope.needsProviderData.gmail ||
@@ -142,28 +175,28 @@ export function shouldInjectUserData(scope: CapabilityScope, message: string): b
     return true;
   }
 
+  // 2. Hard skip for trivial / hostile / identity / chit-chat prompts.
+  if (CHIT_CHAT_PATTERNS.some((p) => p.test(message))) return false;
+  if (JAILBREAK_PATTERNS.some((p) => p.test(message))) return false;
+
+  // 3. Personal-data verbs override the short-prompt skip ("résume ma
+  // journée" is only 3 words but legitimately needs the fetch).
+  const personalDataAsk = PERSONAL_DATA_VERBS.some((p) => p.test(message));
+
+  const wordCount = message.trim().split(/\s+/).filter(Boolean).length;
+  // Very short prompts (1-2 words) in any non-data domain → skip.
+  if (wordCount < 3 && !personalDataAsk) return false;
+
+  // 4. Domains that need user data on personal-but-vague asks.
   if (scope.domain === "communication" || scope.domain === "productivity") {
     return true;
   }
 
-  if (
-    scope.domain === "research" ||
-    scope.domain === "finance" ||
-    scope.domain === "developer" ||
-    scope.domain === "design" ||
-    scope.domain === "crm"
-  ) {
-    return false;
-  }
-
-  if (scope.domain === "general") {
-    // Vague-but-personal asks ("résume ma journée") are typically 3+ words.
-    // Pure chit-chat ("merci", "Bonjour") is 1–2 words. The 3-word threshold
-    // is permissive: a few false positives ("ok parfait merci") cost one
-    // extra Gmail/Calendar RTT, which is acceptable.
-    const wordCount = message.split(/\s+/).filter(Boolean).length;
-    return wordCount > 2;
-  }
+  // 5. Personal-data verb on general (catch-all) domain → still fetch.
+  // For finance/developer/design/crm/research we trust the domain — if the
+  // user said "liste mes paiements Stripe", Stripe data is what's needed,
+  // not Google.
+  if (personalDataAsk && scope.domain === "general") return true;
 
   return false;
 }

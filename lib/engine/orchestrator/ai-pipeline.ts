@@ -91,9 +91,6 @@ function buildRequestConnectionTool(
  * Builds the `create_scheduled_mission` tool — recurring automation creation
  * with a strict preview/confirm cycle.
  *
- * Replaces the legacy regex-based detectSchedule() early-exit, which created
- * cron missions silently from any message containing "tous les matins".
- *
  * Step 1: model calls with `_preview: true` (default) → returns a formatted
  *         draft of the mission, no side-effect.
  * Step 2: user confirms → model calls with `_preview: false` → mission is
@@ -291,15 +288,25 @@ export async function runAiPipeline(
     const isInternalMetaTool = (name: string): boolean =>
       name === "request_connection" || name === "create_scheduled_mission";
 
+    // Buffer the full assistant text so we can run a sanity check at the
+    // end of the stream — the model is instructed to call request_connection
+    // instead of saying "X is not connected" by text. If we still see that
+    // pattern, log a warning so we know the prompt isn't holding.
+    // (Emoji stripping happens at the SSE adapter so it covers every path,
+    // including synthetic retrieval / research.)
+    let assistantTextBuffer = "";
+
     for await (const event of result.fullStream) {
       switch (event.type) {
-        case "text-delta":
+        case "text-delta": {
+          assistantTextBuffer += event.text;
           eventBus.emit({
             type: "text_delta",
             run_id: engine.id,
             delta: event.text,
           });
           break;
+        }
 
         case "tool-call": {
           toolCallNames.set(event.toolCallId, event.toolName);
@@ -381,6 +388,20 @@ export async function runAiPipeline(
         tool_calls: toolCallNames.size,
         latency_ms: 0,
       });
+    }
+
+    // Sanity check: the system prompt forbids "X n'est pas connecté" /
+    // "X is not connected" responses — the model is supposed to call
+    // request_connection instead. If we see this pattern in the streamed
+    // text, log a warning so we can correlate with the conversation in
+    // production and tighten the prompt further.
+    const refusalPattern = /(n'est pas (connect[ée]|configur[ée])|is not connected|isn't connected|not yet connected|n'est pas (encore )?dispon)/i;
+    if (refusalPattern.test(assistantTextBuffer)) {
+      console.warn(
+        `[AiPipeline] Prompt-violation: model wrote a "not connected" refusal ` +
+          `instead of calling request_connection. run=${engine.id} userId=${input.userId} ` +
+          `excerpt="${assistantTextBuffer.slice(0, 200).replace(/\s+/g, " ")}"`,
+      );
     }
 
     // Persist the full structured turn (user message + assistant + tool

@@ -10,6 +10,7 @@ import {
   getAllProviders,
   getProviderLabel,
 } from "@/lib/providers/registry";
+import { keywordMatches } from "@/lib/capabilities/taxonomy";
 
 export interface ProviderRequirementResult {
   capability: string;
@@ -18,8 +19,6 @@ export interface ProviderRequirementResult {
 }
 
 export function getRequiredProvidersForInput(input: string): ProviderRequirementResult | null {
-  const lower = input.toLowerCase();
-
   const allProviders = getAllProviders();
 
   for (const provider of allProviders) {
@@ -27,7 +26,7 @@ export function getRequiredProvidersForInput(input: string): ProviderRequirement
     if (provider.keywords.fr.length === 0 && provider.keywords.en.length === 0) continue;
 
     const allKeywords = [...provider.keywords.fr, ...provider.keywords.en];
-    const matched = allKeywords.some((k) => lower.includes(k));
+    const matched = allKeywords.some((k) => keywordMatches(input, k));
 
     if (matched && provider.capabilities.length > 0) {
       const relevantProviders = allProviders
@@ -48,7 +47,7 @@ export function getRequiredProvidersForInput(input: string): ProviderRequirement
 export function getBlockedReasonForProviders(providers: string[]): string {
   const names = providers.map((p) => getProviderLabel(p));
   if (names.length === 1) {
-    return `${names[0]} is not connected`;
+    return `Pour cette demande, je dois pouvoir accéder à ${names[0]} — il n'est pas encore connecté.`;
   }
-  return `${names.join(" or ")} is not connected`;
+  return `Pour cette demande, je dois pouvoir accéder à ${names.join(" ou ")} — aucun n'est connecté.`;
 }

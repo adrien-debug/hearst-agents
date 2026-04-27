@@ -14,6 +14,8 @@
  * short-circuit and route them through the agentic AI pipeline instead.
  */
 
+import { escapeRegex } from "@/lib/capabilities/taxonomy";
+
 const WRITE_VERBS_FR = [
   "envoie", "envoies", "envoyez", "envoyer", "envoyé", "renvoie", "renvoyer",
   "réponds", "répondre", "réponse à", "transfère", "transférer", "transfert",
@@ -87,8 +89,4 @@ export function isWriteIntent(message: string): boolean {
     }
   }
   return false;
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

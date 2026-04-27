@@ -234,13 +234,43 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
 
 const _allDomains = Object.keys(DOMAIN_TAXONOMY) as Domain[];
 
+// Word-boundary regex chars to escape before building a keyword pattern.
+// Exported so other intent detectors (write-intent, schedule-intent…) reuse
+// the same escaping rather than re-defining their own.
+export function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Strict keyword match — replaces the previous `lower.includes(kw)` which
+ * matched fragments inside unrelated words ("ui" matched "qui", "git" matched
+ * "previous", etc.) and broke domain routing on trivial prompts.
+ *
+ * Short keywords (≤ 3 chars like "ui", "ux", "git", "pr") get a tight
+ * delimiter check (start/end + punctuation/whitespace). Longer keywords use
+ * a standard `\b` word boundary which is robust enough.
+ */
+export function keywordMatches(input: string, keyword: string): boolean {
+  const kw = keyword.trim().toLowerCase();
+  if (!kw) return false;
+  const lower = input.toLowerCase();
+  if (kw.length <= 3) {
+    return new RegExp(
+      `(^|[\\s.,!?;:()"'«»])${escapeRegex(kw)}($|[\\s.,!?;:()"'«»])`,
+      "i",
+    ).test(lower);
+  }
+  // For keywords ≥ 4 chars, accept an optional "s" suffix so plurals match
+  // ("meeting" → "meetings", "event" → "events"). Avoids ballooning the
+  // keyword lists with every plural variant.
+  return new RegExp(`\\b${escapeRegex(kw)}s?\\b`, "i").test(lower);
+}
+
 /**
  * Resolve the primary domain from user message text.
  * Returns "general" if no domain-specific keywords match.
  */
 export function resolveDomain(message: string): Domain {
-  const lower = message.toLowerCase();
-
   let bestDomain: Domain = "general";
   let bestScore = 0;
 
@@ -251,7 +281,7 @@ export function resolveDomain(message: string): Domain {
 
     let score = 0;
     for (const kw of allKeywords) {
-      if (lower.includes(kw)) score++;
+      if (keywordMatches(message, kw)) score++;
     }
 
     if (score > bestScore) {
@@ -299,18 +329,16 @@ export function resolveRetrievalMode(message: string): RetrievalMode | null {
   const domain = resolveDomain(message);
   if (domain === "communication") return "messages";
 
-  const lower = message.toLowerCase();
-
   const productivityKw = [...DOMAIN_TAXONOMY.productivity.keywords.fr, ...DOMAIN_TAXONOMY.productivity.keywords.en];
   const fileKw = productivityKw.filter((k) =>
     ["fichier", "fichiers", "document", "documents", "drive", "dossier", "file", "files", "folder"].includes(k),
   );
-  if (fileKw.some((k) => lower.includes(k))) return "documents";
+  if (fileKw.some((k) => keywordMatches(message, k))) return "documents";
 
   const calKw = productivityKw.filter((k) =>
     ["agenda", "calendrier", "réunion", "reunion", "événement", "evenement", "planning", "rendez-vous", "rdv", "disponible", "créneau", "aujourd'hui", "demain", "cette semaine", "calendar", "meeting", "event", "schedule", "today", "tomorrow", "this week"].includes(k),
   );
-  if (calKw.some((k) => lower.includes(k))) return "structured_data";
+  if (calKw.some((k) => keywordMatches(message, k))) return "structured_data";
 
   return DOMAIN_TAXONOMY[domain].retrievalMode;
 }
@@ -338,12 +366,11 @@ export function resolveDataIntent(message: string): {
   needsGmail: boolean;
   needsDrive: boolean;
 } {
-  const lower = message.toLowerCase();
   const domain = resolveDomain(message);
 
   return {
-    needsCalendar: [...CAL_KEYWORDS].some((k) => lower.includes(k)) || domain === "productivity",
-    needsGmail: [...GMAIL_KEYWORDS].some((k) => lower.includes(k)) || domain === "communication",
-    needsDrive: [...DRIVE_KEYWORDS].some((k) => lower.includes(k)),
+    needsCalendar: [...CAL_KEYWORDS].some((k) => keywordMatches(message, k)) || domain === "productivity",
+    needsGmail: [...GMAIL_KEYWORDS].some((k) => keywordMatches(message, k)) || domain === "communication",
+    needsDrive: [...DRIVE_KEYWORDS].some((k) => keywordMatches(message, k)),
   };
 }

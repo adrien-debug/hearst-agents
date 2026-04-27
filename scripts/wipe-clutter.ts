@@ -1,17 +1,14 @@
 /**
- * One-shot cleanup — wipe all assets + missions from Supabase.
+ * One-shot cleanup — wipe runtime state from Supabase + in-memory caches.
  *
- * Use case: after an iteration where the orchestrator created junk assets
- * (refusals turned into briefs, etc.) and you want to reset the right panel
- * to a clean state.
+ * Usage:
+ *   npx tsx scripts/wipe-clutter.ts            # default: assets, missions, runs
+ *   npx tsx scripts/wipe-clutter.ts --memory   # also wipe chat_messages (memory)
+ *   npx tsx scripts/wipe-clutter.ts --all      # everything
  *
- * Usage: npx tsx scripts/wipe-clutter.ts
- *
- * This script:
- *   - Loads .env.local
- *   - Connects with the service-role key (bypasses RLS)
- *   - Counts + deletes all rows from `assets`, `actions`, `missions`
- *   - Leaves `chat_messages` and `runs` intact (conversation memory preserved)
+ * The --memory flag also nukes the conversation history. Useful when an
+ * earlier turn polluted the structured memory (e.g. the model mentioned
+ * an unrelated app and re-injected it on follow-up turns).
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -47,22 +44,27 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  const args = new Set(process.argv.slice(2));
+  const wipeMemory = args.has("--memory") || args.has("--all");
+
   const sb = createClient(url, key, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
   // ── Counts before ────────────────────────────────────────────
-  const [assetsCount, actionsCount, missionsCount, runsCount] = await Promise.all([
+  const [assetsCount, actionsCount, missionsCount, runsCount, msgsCount] = await Promise.all([
     sb.from("assets").select("id", { count: "exact", head: true }),
     sb.from("actions").select("id", { count: "exact", head: true }),
     sb.from("missions").select("id", { count: "exact", head: true }),
     sb.from("runs").select("id", { count: "exact", head: true }).eq("trigger", "orchestrator_v2"),
+    sb.from("chat_messages").select("id", { count: "exact", head: true }),
   ]);
   console.log(`Before:`);
-  console.log(`  assets:   ${assetsCount.count ?? "?"}`);
-  console.log(`  actions:  ${actionsCount.count ?? "?"}`);
-  console.log(`  missions: ${missionsCount.count ?? "?"}`);
-  console.log(`  runs(v2): ${runsCount.count ?? "?"}`);
+  console.log(`  assets:        ${assetsCount.count ?? "?"}`);
+  console.log(`  actions:       ${actionsCount.count ?? "?"}`);
+  console.log(`  missions:      ${missionsCount.count ?? "?"}`);
+  console.log(`  runs(v2):      ${runsCount.count ?? "?"}`);
+  console.log(`  chat_messages: ${msgsCount.count ?? "?"}${wipeMemory ? "" : " (preserved — pass --memory to wipe)"}`);
 
   // ── Wipe (children first to respect FKs) ─────────────────────
   // actions.asset_id → assets.id. Delete actions first so the FK doesn't
@@ -82,6 +84,7 @@ async function main(): Promise<void> {
     "assets",     // referenced by actions (already wiped)
     "missions",
     "runs",
+    ...(wipeMemory ? ["chat_messages"] : []),
   ];
 
   // Universal "delete everything" pattern: fetch ids → delete by id list.
@@ -130,17 +133,19 @@ async function main(): Promise<void> {
   }
 
   // ── Counts after ─────────────────────────────────────────────
-  const [a2, ac2, m2, r2] = await Promise.all([
+  const [a2, ac2, m2, r2, cm2] = await Promise.all([
     sb.from("assets").select("id", { count: "exact", head: true }),
     sb.from("actions").select("id", { count: "exact", head: true }),
     sb.from("missions").select("id", { count: "exact", head: true }),
     sb.from("runs").select("id", { count: "exact", head: true }).eq("trigger", "orchestrator_v2"),
+    sb.from("chat_messages").select("id", { count: "exact", head: true }),
   ]);
   console.log(`After:`);
-  console.log(`  assets:   ${a2.count ?? "?"}`);
-  console.log(`  actions:  ${ac2.count ?? "?"}`);
-  console.log(`  missions: ${m2.count ?? "?"}`);
-  console.log(`  runs(v2): ${r2.count ?? "?"}`);
+  console.log(`  assets:        ${a2.count ?? "?"}`);
+  console.log(`  actions:       ${ac2.count ?? "?"}`);
+  console.log(`  missions:      ${m2.count ?? "?"}`);
+  console.log(`  runs(v2):      ${r2.count ?? "?"}`);
+  console.log(`  chat_messages: ${cm2.count ?? "?"}`);
 }
 
 main().catch((err) => {

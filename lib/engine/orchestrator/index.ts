@@ -34,6 +34,8 @@ import { appendMessage, getRecentMessages } from "@/lib/memory/store";
 import { memoryToConversationHistory } from "@/lib/memory/format";
 import { isResearchIntent, isReportIntent } from "./research-intent";
 import { isWriteIntent } from "./write-intent";
+import { isScheduleIntent } from "./schedule-intent";
+import { checkSafetyGate } from "./safety-gate";
 import { runResearchReport } from "./run-research-report";
 import { getRequiredProvidersForInput, getBlockedReasonForProviders } from "./provider-requirements";
 import { shouldPersistEvent, persistRunEvent } from "@/lib/engine/runtime/timeline/persist";
@@ -366,9 +368,9 @@ async function runSyntheticRetrieval(
 // ── Main pipeline ────────────────────────────────────────────
 //
 // Mission scheduling is handled by the `create_scheduled_mission` tool in the
-// AI pipeline (preview + confirm). The legacy regex-based early-exit is gone
-// — it created cron missions silently from any message containing "tous les
-// matins", which produced unwanted automations.
+// AI pipeline (preview + confirm). Schedule intent is detected pre-LLM in
+// `runPipeline` so the model gets a forcing directive instead of doing a
+// one-shot retrieval.
 
 async function runPipeline(
   db: SupabaseClient,
@@ -401,6 +403,29 @@ async function runPipeline(
     }
   }
 
+  // ── Pre-LLM signal injection ──────────────────────────────
+  // Recurring intent detected → bypass user-data fetch (Gmail/Calendar/Drive
+  // are irrelevant when the user wants to *schedule* an action, not run it
+  // now), and inject a top-priority directive that forces the model to
+  // call `create_scheduled_mission` preview.
+  const scheduleDetected = isScheduleIntent(input.message);
+  if (scheduleDetected) {
+    input.skipUserData = true;
+    input._userDataContext =
+      "[DIRECTIVE PRIORITAIRE — SCHEDULE INTENT]\n" +
+      "Le message utilisateur décrit une AUTOMATION RÉCURRENTE (par ex. " +
+      "« tous les matins à 8h », « chaque vendredi à 17h »).\n" +
+      "Tu DOIS appeler le tool `create_scheduled_mission` avec `_preview: true` " +
+      "comme PREMIÈRE action — avant tout autre tool, avant toute synthèse.\n" +
+      "Tu ne dois PAS exécuter la tâche maintenant en mode ponctuel. La " +
+      "valeur attendue est la création de l'automation récurrente.\n" +
+      "Déduis les paramètres directement depuis le message :\n" +
+      "  - name : titre court de la mission\n" +
+      "  - input : la consigne que la mission devra exécuter à chaque tick\n" +
+      "  - schedule : expression cron 5 champs (minute heure jour mois jour-semaine)\n" +
+      "  - label : récurrence en français lisible\n";
+  }
+
   // ── 1. Capability-first routing ─────────────────────────────
   const capScope = resolveCapabilityScope(input.message, input.surface);
   const decision: ExecutionDecision = resolveExecutionMode(capScope, input.message, input.focalContext);
@@ -418,18 +443,23 @@ async function runPipeline(
   input._capabilityDomain = capScope.domain;
   input._allowedTools = capScope.allowedTools;
 
-  // Write intents must NOT route through synthetic retrieval — that path
-  // is read-only (Gmail/Calendar/Drive fetch + summarise). Sending a Slack
-  // message, creating a Notion page, etc., need the AI pipeline so the
-  // model can call Composio tools. Strip retrievalMode in that case.
+  // Three classes of intent skip the synthetic-retrieval short-circuit and
+  // route through the AI pipeline so the model can call Composio tools and
+  // run multi-step plans:
+  //   - WRITE: "envoie un slack" → preview tool, not Gmail summary.
+  //   - SCHEDULE: "tous les matins à 8h" → create_scheduled_mission preview.
+  //   - MULTI-STEP: "résume … puis envoie …" → step 2 must be reachable.
   const writeIntent = isWriteIntent(input.message);
-  input._retrievalMode = writeIntent ? null : capScope.retrievalMode;
+  const multiStepIntent =
+    /\b(puis|ensuite|et\s+ensuite|et\s+puis|après\s+ça|then|after\s+that)\b/i.test(input.message);
+  const bypassRetrieval = writeIntent || scheduleDetected || multiStepIntent;
+  input._retrievalMode = bypassRetrieval ? null : capScope.retrievalMode;
 
   console.log(
     "[ExecutionMode]",
     decision.mode,
     decision.reason,
-    `[domain: ${capScope.domain}, retrieval: ${input._retrievalMode ?? "none"}, write: ${writeIntent}]`,
+    `[domain: ${capScope.domain}, retrieval: ${input._retrievalMode ?? "none"}, write: ${writeIntent}, schedule: ${scheduleDetected}, multistep: ${multiStepIntent}]`,
   );
 
   // ── 2. Create Run ──────────────────────────────────────────
@@ -453,6 +483,28 @@ async function runPipeline(
 
   const engine = await RunEngine.create(db, createInput, eventBus);
   await engine.start();
+
+  // ── Safety gate (BEFORE any tool exposure) ─────────────────
+  // Hostile / abusive intents are refused here so we never propose a tool
+  // call (and never trigger an OAuth card for an action that should never
+  // happen). The model is also bypassed — pure cost saving + zero risk of
+  // jailbreak from this point on.
+  const safety = checkSafetyGate(input.message);
+  if (safety.kind !== "ok") {
+    console.log(`[Orchestrator] Safety gate ${safety.kind}: ${safety.reason}`);
+    eventBus.emit({
+      type: "orchestrator_log",
+      run_id: engine.id,
+      message: `Safety gate ${safety.kind}: ${safety.reason}`,
+    });
+    eventBus.emit({
+      type: "text_delta",
+      run_id: engine.id,
+      delta: safety.userMessage,
+    });
+    await engine.complete();
+    return;
+  }
 
   // ── Init RunRecord for history ─────────────────────────────
   const runRecord: RunRecord = {
@@ -546,8 +598,9 @@ async function runPipeline(
   });
 
   // ── Select agent (CUSTOM_AGENT mode) ────────────────────────
-  // Backend selection is gone — every path runs through the planner +
-  // executor stack now (Composio handles per-user execution dispatch).
+  // All execution modes flow through the same AI pipeline (streamText with
+  // Composio tools). The agent record here is informational only — it
+  // surfaces "which agent" the UI should display in the right panel.
   if (decision.mode === "custom_agent") {
     const agent = selectAgentForContext(toolContext);
     if (agent) {
@@ -570,7 +623,7 @@ async function runPipeline(
         agent_name: agent.name,
         allowed_tools: agent.allowedTools,
         backend: "hearst_runtime",
-        backend_reason: "Single planner+executor backend after legacy cleanup",
+        backend_reason: "AI pipeline (streamText + Composio)",
       });
 
       eventBus.emit({
@@ -622,8 +675,21 @@ async function runPipeline(
   // ── 4. Dispatch by execution mode ──────────────────────────
   try {
     // ── Provider preflight (skip for research — uses web, not user providers) ──
+    //
+    // The previous behaviour was to `engine.fail()` with an English message
+    // ("X is not connected") whenever no provider was connected. That broke
+    // dozens of trivial prompts — the routing keyword fix (F1) eliminates
+    // most false positives, but even legitimately-blocked prompts deserve a
+    // graceful path:
+    //   - if the user *explicitly* mentioned the app (request from
+    //     `getRequiredProvidersForInput` keyword match), surface
+    //     `app_connect_required` and let the inline OAuth card take over.
+    //   - if the routing only inferred the provider (no explicit mention),
+    //     fall through to the AI pipeline so the model can clarify or
+    //     answer without the missing provider.
     if (!researchDetected && scopeRequiresProviders(capScope)) {
       const providerReq = getRequiredProvidersForInput(input.message);
+      const userExplicitlyMentioned = providerReq !== null;
       const providersToCheck = providerReq?.providers ?? capScope.providers;
 
       if (providersToCheck.length > 0) {
@@ -636,32 +702,52 @@ async function runPipeline(
 
         if (!anyConnected) {
           const capability = providerReq?.capability ?? capScope.capabilities[0] ?? capScope.domain;
-          const userMessage = providerReq?.userMessage ?? getBlockedReasonForProviders(providersToCheck);
+          console.log(
+            `[Orchestrator] Provider absent: ${capability} (explicit=${userExplicitlyMentioned}) — providers=${providersToCheck.join(",")}`,
+          );
 
-          console.log(`[Orchestrator] Capability blocked: ${capability} — no provider connected`);
+          if (userExplicitlyMentioned) {
+            // The user named the app — surface the OAuth card via the canonical
+            // event the AI pipeline already uses, so the UI shows
+            // `ChatConnectInline` instead of a hard run failure.
+            const userMessage =
+              providerReq?.userMessage ??
+              getBlockedReasonForProviders(providersToCheck);
 
-          eventBus.emit({
-            type: "capability_blocked",
-            run_id: engine.id,
-            capability,
-            requiredProviders: providersToCheck,
-            message: userMessage,
-          });
+            for (const app of providersToCheck) {
+              eventBus.emit({
+                type: "app_connect_required",
+                run_id: engine.id,
+                app,
+                reason: userMessage,
+              });
+            }
 
+            eventBus.emit({
+              type: "orchestrator_log",
+              run_id: engine.id,
+              message: `Provider needed: ${capability} → ${providersToCheck.join(", ")}`,
+            });
+
+            eventBus.emit({
+              type: "text_delta",
+              run_id: engine.id,
+              delta: userMessage,
+            });
+
+            // Successful, controlled completion — not a failure.
+            await engine.complete();
+            return;
+          }
+
+          // Inferred (false-positive) routing: drop the preflight and let the
+          // AI pipeline run normally. The model can still clarify or fall back
+          // to general chat.
           eventBus.emit({
             type: "orchestrator_log",
             run_id: engine.id,
-            message: `Blocked: ${capability} requires ${providersToCheck.join(" or ")}`,
+            message: `Routing inferred ${capability} but user didn't mention it — falling through to AI pipeline`,
           });
-
-          eventBus.emit({
-            type: "text_delta",
-            run_id: engine.id,
-            delta: userMessage,
-          });
-
-          await engine.fail(`Provider required: ${providersToCheck.join(" or ")}`);
-          return;
         }
       }
     }

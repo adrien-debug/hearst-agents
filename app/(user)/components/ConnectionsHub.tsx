@@ -136,15 +136,20 @@ export function ConnectionsHub() {
     [apps, connectedSlugs],
   );
 
+  // Connected apps surface in the dedicated "Connectés" section at the top.
+  // Excluding them from the category buckets prevents the visual duplicate
+  // (Airtable / Slack appearing both under Connectés AND under their
+  // category section like Communication / Productivité).
   const appsByCategory = useMemo(() => {
     const map = new Map<string, ComposioApp[]>();
     for (const app of apps) {
+      if (connectedSlugs.has(app.key)) continue;
       const cat = categorizeApp(app);
       if (!map.has(cat)) map.set(cat, []);
       map.get(cat)!.push(app);
     }
     return map;
-  }, [apps]);
+  }, [apps, connectedSlugs]);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -367,7 +372,9 @@ export function ConnectionsHub() {
           />
         ) : (
           <>
-            {/* Connected services */}
+            {/* Connected services — grid adapts to the connected count so a
+                single-app or two-app row doesn't leave 2-3 empty columns
+                gaping on the right at xl breakpoint. */}
             {connectedApps.length > 0 && (
               <section className="mb-10">
                 <div className="mb-4">
@@ -378,7 +385,17 @@ export function ConnectionsHub() {
                     accentClass="text-[var(--cykan)] halo-cyan-sm"
                   />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div
+                  className={`grid gap-3 ${
+                    connectedApps.length === 1
+                      ? "grid-cols-1 sm:grid-cols-2 max-w-md"
+                      : connectedApps.length === 2
+                        ? "grid-cols-1 sm:grid-cols-2 max-w-3xl"
+                        : connectedApps.length === 3
+                          ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  }`}
+                >
                   {connectedApps.map((app) => (
                     <AppCard
                       key={app.key}
@@ -510,23 +527,33 @@ function AppCard({
         <AppLogo app={app} size={56} />
         <div className="flex-1 min-w-0 pt-1">
           <div className="t-15 font-medium text-[var(--text)] truncate">{app.name}</div>
-          {connected ? (
-            <div className="mt-1 flex items-center gap-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--cykan)]">
-              <span className="w-1 h-1 rounded-full bg-[var(--cykan)] halo-dot" />
-              active
-            </div>
-          ) : (
-            <div className="mt-1 t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">
-              connecter →
-            </div>
-          )}
+          {/* Status row — kept on a fixed-height line so the connected and
+              non-connected variants share the exact same baseline. The
+              non-connected variant fades the label in on hover but its slot
+              is always reserved (no layout shift). */}
+          <div className="mt-1 h-[14px] flex items-center gap-1.5 t-9 font-mono tracking-[0.2em] uppercase">
+            {connected ? (
+              <>
+                <span className="w-1 h-1 rounded-full bg-[var(--cykan)] halo-dot" />
+                <span className="text-[var(--cykan)]">active</span>
+              </>
+            ) : (
+              <span className="text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">
+                connecter →
+              </span>
+            )}
+          </div>
         </div>
       </div>
-      {app.description && (
-        <p className="t-11 text-[var(--text-faint)] line-clamp-2 leading-[1.4] mt-auto">
-          {app.description}
-        </p>
-      )}
+      {/* Description is always rendered — a soft fallback keeps the bottom
+          row at the same vertical anchor so connected cards (often without
+          their own description) don't leave a gaping void at the bottom. */}
+      <p className="t-11 text-[var(--text-faint)] line-clamp-2 leading-[1.4] mt-auto">
+        {app.description?.trim() ||
+          (connected
+            ? "Connecté à Hearst — disponible pour les actions."
+            : "Connecte ce service pour l'utiliser depuis le chat.")}
+      </p>
     </button>
   );
 }
@@ -534,11 +561,13 @@ function AppCard({
 function AppLogo({ app, size = 16 }: { app: ComposioApp; size?: number }) {
   // Bigger logos get a soft surface frame so colorful brand marks don't
   // clash with the dark theme; small inline logos stay tight to the text.
+  // Inner glyph keeps a constant 22% padding ratio so the visual balance
+  // looks right at any size (28 → 22, 56 → 44, 96 → 75).
   const wrapperClass =
     size >= 32
-      ? "shrink-0 flex items-center justify-center rounded-md bg-white/95 ring-1 ring-[var(--surface-2)] overflow-hidden p-1.5"
+      ? "shrink-0 flex items-center justify-center rounded-md bg-white/95 ring-1 ring-[var(--surface-2)] overflow-hidden"
       : "shrink-0";
-  const inner = size >= 32 ? size - 12 : size;
+  const inner = size >= 32 ? Math.round(size * 0.78) : size;
 
   if (app.logo && app.logo.startsWith("http")) {
     return (
