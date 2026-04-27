@@ -123,6 +123,14 @@ export class SSEAdapter {
           providerId: event.providerId,
         };
 
+      // ── Inline app connect (visible — renders connect card) ──
+      case "app_connect_required":
+        return {
+          type: "app_connect_required",
+          app: event.app,
+          reason: event.reason,
+        };
+
       // ── Text streaming ───────────────────────────────────
       case "text_delta":
         return { type: "text_delta", delta: event.delta };

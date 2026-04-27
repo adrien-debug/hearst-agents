@@ -37,6 +37,7 @@ const PERSIST_TYPES = new Set([
   "step_failed",
   "tool_call_started",
   "tool_call_completed",
+  "app_connect_required",
   "delegate_enqueued",
   "delegate_completed",
   "asset_generated",

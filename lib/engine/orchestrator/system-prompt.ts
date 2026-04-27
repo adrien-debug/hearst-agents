@@ -183,3 +183,32 @@ export const RESPOND_TOOL = {
     },
   },
 };
+
+/**
+ * Tool for requesting a third-party app connection inline.
+ * The model picks this when the user wants an action on an app that is NOT
+ * present in the user's connected actions. The orchestrator will surface
+ * an inline "Connect <app>" card in the chat — the user authorizes once,
+ * then re-asks; no need to leave the conversation.
+ */
+export const REQUEST_CONNECTION_TOOL = {
+  name: "request_connection" as const,
+  description:
+    "Use this ONLY when the user explicitly wants to perform an action through a third-party service (Slack, Notion, GitHub, …) that they have NOT yet connected. Picks the user-facing OAuth prompt directly inside the chat. Do NOT use this for read-only/Google data the user already has connected.",
+  input_schema: {
+    type: "object" as const,
+    required: ["app", "reason"] as const,
+    properties: {
+      app: {
+        type: "string" as const,
+        description:
+          "The Composio app slug (lowercase). Examples: slack, notion, googlecalendar, github, hubspot, salesforce, linear, jira.",
+      },
+      reason: {
+        type: "string" as const,
+        description:
+          "One-sentence French message explaining why we need this connection (e.g. 'Pour envoyer ce message, j'ai besoin d'accéder à ton Slack.'). Shown verbatim above the connect button.",
+      },
+    },
+  },
+};

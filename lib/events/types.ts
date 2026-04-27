@@ -37,6 +37,8 @@ export type RunEvent =
   // Tool calls
   | ToolCallStartedEvent
   | ToolCallCompletedEvent
+  // Inline app connect (Composio, per-user)
+  | AppConnectRequiredEvent
   // Approvals
   | ApprovalRequestedEvent
   | ApprovalDecidedEvent
@@ -167,6 +169,18 @@ export interface ToolCallCompletedEvent extends BaseEvent {
   step_id: string;
   tool: string;
   providerId?: string;
+}
+
+// ── Inline app connect ───────────────────────────────────
+// Emitted when the planner picks `request_connection` to ask the user to
+// authorize a third-party app inline in the chat.
+
+export interface AppConnectRequiredEvent extends BaseEvent {
+  type: "app_connect_required";
+  /** Composio app slug (lowercase). */
+  app: string;
+  /** One-line message displayed above the connect button. */
+  reason: string;
 }
 
 // ── Approvals ────────────────────────────────────────────

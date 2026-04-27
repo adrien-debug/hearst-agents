@@ -1,0 +1,114 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRuntimeStore, type StreamEvent } from "@/stores/runtime";
+import { toast } from "@/app/hooks/use-toast";
+
+interface ConnectRequest {
+  app: string;
+  reason: string;
+}
+
+/**
+ * Inline app-connect card surfaced from a chat turn.
+ *
+ * Triggered when the planner picks `request_connection` (the user asked
+ * something about an app they haven't connected). The card stays visible
+ * after the run completes — using `lastRunId` so it survives the idle
+ * transition the same way `ChatActionReceipts` does.
+ */
+function selectLatestConnectRequest(
+  events: StreamEvent[],
+  runId: string | null,
+): ConnectRequest | null {
+  if (!runId) return null;
+  // Events are stored newest-first; first match for this run is the latest.
+  for (const ev of events) {
+    if (ev.run_id !== runId) continue;
+    if (ev.type === "app_connect_required") {
+      const app = String(ev.app ?? "").trim().toLowerCase();
+      const reason = String(ev.reason ?? "").trim();
+      if (!app) return null;
+      return { app, reason };
+    }
+  }
+  return null;
+}
+
+export function ChatConnectInline() {
+  const events = useRuntimeStore((s) => s.events);
+  const lastRunId = useRuntimeStore((s) => s.lastRunId);
+  const [busy, setBusy] = useState(false);
+
+  const request = useMemo(
+    () => selectLatestConnectRequest(events, lastRunId),
+    [events, lastRunId],
+  );
+
+  if (!request) return null;
+
+  const handleConnect = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/composio/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          appName: request.app,
+          redirectUri: `${window.location.origin}${window.location.pathname}?connected=${encodeURIComponent(request.app)}`,
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; redirectUrl?: string; error?: string };
+      if (!res.ok || !data.ok) {
+        toast.error("Connexion impossible", data.error ?? "Erreur Composio");
+        return;
+      }
+      if (data.redirectUrl) {
+        window.location.href = data.redirectUrl;
+        return;
+      }
+      toast.success(`${request.app} connecté`, "Re-pose ta question pour continuer");
+    } catch (err) {
+      toast.error(
+        "Connexion impossible",
+        err instanceof Error ? err.message : "Erreur réseau",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      className="mt-3 border border-[var(--warn)]/40 bg-[var(--warn)]/[0.04] px-4 py-3"
+      role="region"
+      aria-label="Connexion d'un service requise"
+    >
+      <div className="flex items-center gap-2 mb-2 t-9 font-mono tracking-[0.2em] uppercase text-[var(--warn)]">
+        <span aria-hidden>🔗</span>
+        <span>Connexion requise</span>
+        <span className="text-[var(--text-ghost)]">·</span>
+        <span className="text-[var(--text-faint)]">{request.app}</span>
+      </div>
+      <p className="t-13 text-[var(--text-soft)] leading-[1.5] mb-3">{request.reason}</p>
+      <button
+        onClick={handleConnect}
+        disabled={busy}
+        className="inline-flex items-center gap-2 px-3 py-1.5 t-11 font-mono tracking-[0.15em] uppercase border border-[var(--warn)] text-[var(--warn)] bg-[var(--warn)]/[0.06] hover:bg-[var(--warn)]/[0.12] transition-colors disabled:opacity-50"
+      >
+        {busy ? (
+          <>
+            <span className="w-1 h-1 rounded-full bg-[var(--warn)] animate-pulse" />
+            <span>Redirection…</span>
+          </>
+        ) : (
+          <>
+            <span>Connecter {request.app}</span>
+            <span>→</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+}

@@ -128,6 +128,12 @@ const MAPPINGS: Record<string, Mapping> = {
     severity: "success",
     title: (e) => `Tool done: ${(e.tool as string) || "unknown"}`,
   },
+  app_connect_required: {
+    type: "log",
+    severity: "info",
+    title: (e) => `Connect required: ${(e.app as string) || "unknown app"}`,
+    description: (e) => (e.reason as string) || undefined,
+  },
   delegate_enqueued: {
     type: "step_started",
     severity: "info",

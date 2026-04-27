@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import { useRuntimeStore } from "@/stores/runtime";
 import { ChatToolStream } from "./ChatToolStream";
 import { ChatActionReceipts } from "./ChatActionReceipts";
+import { ChatConnectInline } from "./ChatConnectInline";
 
 export interface Message {
   id: string;
@@ -170,7 +171,12 @@ export function ChatMessages({
 
               {!showShimmer && message.content.length > 0 && (
                 <>
-                  {isLastAssistant && <ChatActionReceipts />}
+                  {isLastAssistant && (
+                    <>
+                      <ChatConnectInline />
+                      <ChatActionReceipts />
+                    </>
+                  )}
                   <AssistantActions content={message.content} />
                 </>
               )}

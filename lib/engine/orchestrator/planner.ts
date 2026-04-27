@@ -16,12 +16,14 @@ import {
   ORCHESTRATOR_MODEL,
   PLAN_TOOL,
   RESPOND_TOOL,
+  REQUEST_CONNECTION_TOOL,
 } from "./system-prompt";
 import { isAgentValidForDomain, getValidAgentsForDomain, type Domain } from "@/lib/capabilities/taxonomy";
 
 export type PlanningResult =
   | { kind: "plan"; plan: Plan }
   | { kind: "direct_response"; text: string }
+  | { kind: "request_connection"; app: string; reason: string }
   | { kind: "error"; error: string };
 
 interface PlanStepFromLLM {
@@ -40,14 +42,36 @@ interface ConversationMessage {
   content: string;
 }
 
+export interface PlanFromIntentOptions {
+  surface?: string;
+  capabilityDomain?: string;
+  /**
+   * Per-user Composio action slugs (e.g. "GMAIL_SEND_EMAIL", "SLACKBOT_…").
+   * When present, the planner gets an extra system block listing the
+   * user's actually-available actions plus the draft-first write rule.
+   * The static prompt stays cached; this dynamic suffix is sent uncached
+   * (small relative cost, full per-user awareness).
+   */
+  discoveredActions?: string[];
+}
+
 export async function planFromIntent(
   db: SupabaseClient,
   engine: RunEngine,
   userMessage: string,
   conversationHistory: ConversationMessage[],
-  surface?: string,
-  capabilityDomain?: string,
+  surfaceOrOptions?: string | PlanFromIntentOptions,
+  capabilityDomainArg?: string,
 ): Promise<PlanningResult> {
+  // Backward compatibility: accept (..., surface, capabilityDomain) OR
+  // (..., options). Internal callers should migrate to the options form.
+  const opts: PlanFromIntentOptions =
+    typeof surfaceOrOptions === "object" && surfaceOrOptions !== null
+      ? surfaceOrOptions
+      : { surface: surfaceOrOptions, capabilityDomain: capabilityDomainArg };
+
+  const { surface, capabilityDomain, discoveredActions } = opts;
+
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
   const messages: Anthropic.MessageParam[] = [
@@ -62,11 +86,14 @@ export async function planFromIntent(
   ];
 
   // ── Prompt caching ─────────────────────────────────────────
-  // The orchestrator system prompt (~1500 tokens) and tool definitions (~500
-  // tokens) are static across every planning call. Mark them as cacheable so
-  // Anthropic returns them as a 5-min ephemeral cache hit on follow-up turns
-  // — typical savings: 70-90% on input cost, ~30% on time-to-first-token.
-  const cachedSystem: Anthropic.MessageCreateParams["system"] = [
+  // The static system prompt (~1500 tokens) and tool definitions (~500
+  // tokens) are identical across every planning call → cached with
+  // `ephemeral` (5-min TTL). The dynamic per-user block (Composio actions +
+  // draft-first rule) is appended as a SECOND system content block with no
+  // cache_control: it differs per user but is small (~300-1500 tokens), so
+  // we trade a tiny per-turn cost for full per-user awareness while the
+  // huge static prefix still hits cache.
+  const systemBlocks: Anthropic.MessageCreateParams["system"] = [
     {
       type: "text",
       text: ORCHESTRATOR_SYSTEM_PROMPT,
@@ -74,10 +101,20 @@ export async function planFromIntent(
     },
   ];
 
+  const dynamicSuffix = buildDynamicSystemSuffix(discoveredActions ?? []);
+  if (dynamicSuffix) {
+    (systemBlocks as Anthropic.TextBlockParam[]).push({
+      type: "text",
+      text: dynamicSuffix,
+    });
+  }
+  const cachedSystem = systemBlocks;
+
   // Cache_control on the last tool caches the entire tools array.
   const cachedTools = [
     PLAN_TOOL,
-    { ...RESPOND_TOOL, cache_control: { type: "ephemeral" } },
+    RESPOND_TOOL,
+    { ...REQUEST_CONNECTION_TOOL, cache_control: { type: "ephemeral" } },
   ] as unknown as Anthropic.Tool[];
 
   let response: Anthropic.Message;
@@ -114,6 +151,16 @@ export async function planFromIntent(
       .map((b) => b.text)
       .join("");
     return { kind: "direct_response", text: text || "OK" };
+  }
+
+  // ── Inline app connect request ────────────────────────────
+  if (toolUse.name === "request_connection") {
+    const input = toolUse.input as { app: string; reason: string };
+    return {
+      kind: "request_connection",
+      app: input.app.toLowerCase(),
+      reason: input.reason,
+    };
   }
 
   // ── Direct response ──────────────────────────────────────
@@ -182,4 +229,77 @@ function buildUserPrompt(message: string, surface?: string): string {
     prompt = `[Surface active: ${surface}]\n\n${message}`;
   }
   return prompt;
+}
+
+/**
+ * Per-turn system suffix listing the actions the *current user* has connected
+ * via Composio, plus the draft-first safety rule for any write op.
+ *
+ * Why this is a SEPARATE system block (not merged into ORCHESTRATOR_SYSTEM_PROMPT):
+ * - The static prompt is cached (`ephemeral` 5-min TTL). Inlining per-user
+ *   data would invalidate the cache on every user switch.
+ * - Splitting keeps the cached prefix big and stable while the dynamic
+ *   suffix stays small (truncated to 80 names + a regex-based safety rule).
+ *
+ * Returns null when there are no discovered actions (skip the empty block).
+ */
+function buildDynamicSystemSuffix(discoveredActions: string[]): string | null {
+  const WRITE_PATTERN = /(SEND|CREATE|UPDATE|DELETE|POST|REPLY|FORWARD|REVOKE|REFUND)/i;
+  const writeActions = discoveredActions.filter((a) => WRITE_PATTERN.test(a));
+
+  const parts: string[] = [];
+
+  // ── Connected actions overview ──────────────────────────────
+  if (discoveredActions.length > 0) {
+    const previewLimit = 80;
+    const preview = discoveredActions.slice(0, previewLimit);
+    const overflow =
+      discoveredActions.length > previewLimit
+        ? ` (+${discoveredActions.length - previewLimit} more not listed)`
+        : "";
+    parts.push(
+      `🔌 USER-CONNECTED ACTIONS (Composio, ${discoveredActions.length} total${overflow})`,
+    );
+    parts.push(
+      `These are real API actions exposed by the apps THIS user has connected. Use them when planning steps that need a third-party effect:\n${preview.join(", ")}`,
+    );
+  } else {
+    parts.push(
+      `🔌 USER-CONNECTED ACTIONS: none yet. The user has not connected any third-party app via Composio.`,
+    );
+  }
+
+  // ── Inline-connect tool guidance ────────────────────────────
+  // Derive the set of "app prefixes" the user has connected so we can
+  // tell the LLM unambiguously which apps trigger request_connection.
+  const connectedAppPrefixes = new Set(
+    discoveredActions.map((a) => a.split("_")[0]?.toLowerCase()).filter(Boolean) as string[],
+  );
+  const connectedList = [...connectedAppPrefixes].join(", ") || "(none)";
+  parts.push(
+    `🔗 INLINE CONNECT — request_connection tool
+Use \`request_connection\` (instead of \`create_plan\` or \`text_response\`) when:
+- The user explicitly asks to do something via a third-party service (Slack, Notion, GitHub, HubSpot, …)
+- AND that service is NOT in the connected apps list above
+Currently connected app prefixes: ${connectedList}
+DO NOT use \`request_connection\` for Google read-only data (Gmail/Calendar/Drive) — those are handled natively even without a Composio connection.
+The user will see a one-click "Connecter <app>" card in the chat. After they connect, they'll re-ask and you can fulfil the action.`,
+  );
+
+  // ── Write-op safety rule (only meaningful if we have write access) ──
+  if (writeActions.length > 0) {
+    parts.push(
+      `⚠️ WRITE ACTIONS DETECTED: ${writeActions.slice(0, 30).join(", ")}${writeActions.length > 30 ? ", …" : ""}`,
+    );
+    parts.push(
+      `Rule for ANY action that mutates the user's accounts (send / create / update / delete / post / reply / forward / revoke / refund):
+1. NEVER call a write action until the user has explicitly approved the exact payload.
+2. Present a clear draft (recipient/target, subject/title, body/payload) and ask "Confirmer l'envoi ?" or equivalent.
+3. Only after explicit confirmation ("oui", "envoie", "go", "confirme", or similar) emit the action step.
+4. If the user wants changes, revise and re-confirm BEFORE the action step.
+This protects the user from irreversible side effects and is non-negotiable.`,
+    );
+  }
+
+  return parts.join("\n\n");
 }

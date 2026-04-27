@@ -129,6 +129,23 @@ export function orchestrate(
 
 // ── Execution Context builder ────────────────────────────────
 
+/**
+ * Fetch the per-user Composio action slugs to feed the planner.
+ * Discovery has its own 5-min cache, so repeat calls within a run are free.
+ * Failures are non-fatal — the planner keeps working with the static prompt.
+ */
+async function fetchDiscoveredActions(userId: string): Promise<string[] | undefined> {
+  if (!userId) return undefined;
+  try {
+    const { getToolsForUser } = await import("@/lib/connectors/composio");
+    const tools = await getToolsForUser(userId);
+    return tools.map((t) => t.name);
+  } catch (err) {
+    console.error("[Orchestrator] Composio discovery failed:", err);
+    return undefined;
+  }
+}
+
 // ── Mode handlers ────────────────────────────────────────────
 
 async function handleDirectAnswer(
@@ -147,14 +164,24 @@ async function handleDirectAnswer(
     ? `${input._userDataContext}\n\n---\nQuestion de l'utilisateur: ${input.message}`
     : input.message;
 
+  const discoveredActions = await fetchDiscoveredActions(input.userId);
+
   const result = await planFromIntent(
     engine.getDb(),
     engine,
     enrichedMessage,
     input.conversationHistory ?? [],
-    input.surface,
-    input._capabilityDomain,
+    {
+      surface: input.surface,
+      capabilityDomain: input._capabilityDomain,
+      discoveredActions,
+    },
   );
+
+  if (result.kind === "request_connection") {
+    await emitConnectRequest(engine, eventBus, result.app, result.reason);
+    return;
+  }
 
   if (result.kind === "direct_response") {
     eventBus.emit({ type: "text_delta", run_id: engine.id, delta: result.text });
@@ -183,6 +210,35 @@ async function handleDirectAnswer(
   }
 }
 
+/**
+ * Emit the inline-connect prompt: a chat-side text explanation, the
+ * structured `app_connect_required` event for the UI card, and complete the run.
+ */
+async function emitConnectRequest(
+  engine: RunEngine,
+  eventBus: RunEventBus,
+  app: string,
+  reason: string,
+): Promise<void> {
+  eventBus.emit({
+    type: "text_delta",
+    run_id: engine.id,
+    delta: reason,
+  });
+  eventBus.emit({
+    type: "app_connect_required",
+    run_id: engine.id,
+    app: app.toLowerCase(),
+    reason,
+  });
+  eventBus.emit({
+    type: "orchestrator_log",
+    run_id: engine.id,
+    message: `Inline connect requested for app=${app}`,
+  });
+  await engine.complete();
+}
+
 async function handlePlanAndExecute(
   engine: RunEngine,
   input: OrchestrateInput,
@@ -198,16 +254,26 @@ async function handlePlanAndExecute(
     ? `${input._userDataContext}\n\n---\nQuestion de l'utilisateur: ${input.message}`
     : input.message;
 
+  const discoveredActions = await fetchDiscoveredActions(input.userId);
+
   const planResult = await planFromIntent(
     engine.getDb(),
     engine,
     enrichedMessage,
     input.conversationHistory ?? [],
-    input.surface,
-    input._capabilityDomain,
+    {
+      surface: input.surface,
+      capabilityDomain: input._capabilityDomain,
+      discoveredActions,
+    },
   );
 
   switch (planResult.kind) {
+    case "request_connection": {
+      await emitConnectRequest(engine, engine.events, planResult.app, planResult.reason);
+      return;
+    }
+
     case "direct_response": {
       if (input._retrievalMode) {
         engine.events.emit({
