@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 import { globalRunBus } from "@/lib/events/global-bus";
 
 export const dynamic = "force-dynamic";

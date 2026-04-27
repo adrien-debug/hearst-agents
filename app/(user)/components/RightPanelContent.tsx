@@ -7,125 +7,28 @@ import type { RightPanelData, FocalObjectView } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
-import { useRuntimeStore, type StreamEvent } from "@/stores/runtime";
+import { useRuntimeStore } from "@/stores/runtime";
 import { missionToFocal, assetToFocal } from "@/lib/ui/focal-mappers";
 import { toast } from "@/app/hooks/use-toast";
-import { getToolCatalogEntry } from "./tool-catalog";
 import { RunHaloIndicator } from "./RunHaloIndicator";
+import {
+  FileIcon,
+  MissionIcon,
+  NodeIcon,
+  DatabaseIcon,
+  ActivityIcon,
+} from "./right-panel-icons";
+import {
+  formatRelativeTime,
+  ACTIVITY_EVENT_TYPES,
+  activityIcon,
+  activityLabel,
+  assetGlyph,
+  EmptyState,
+} from "./right-panel-helpers";
 
 interface RightPanelContentProps {
   onClose?: () => void;
-}
-
-const FileIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-    <polyline points="14 2 14 8 20 8"/>
-  </svg>
-);
-
-const MissionIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <circle cx="12" cy="12" r="10"/>
-    <path d="M12 6v6l4 2"/>
-  </svg>
-);
-
-const NodeIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <circle cx="12" cy="5" r="2"/>
-    <circle cx="5" cy="19" r="2"/>
-    <circle cx="19" cy="19" r="2"/>
-    <path d="M12 7v5M7 18h10"/>
-  </svg>
-);
-
-const DatabaseIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <ellipse cx="12" cy="5" rx="9" ry="3"/>
-    <path d="M3 5v14a9 3 0 0 0 18 0V5"/>
-    <path d="M3 12a9 3 0 0 0 18 0"/>
-  </svg>
-);
-
-const ActivityIcon = () => (
-  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-  </svg>
-);
-
-function formatRelativeTime(timestamp?: number): string {
-  if (!timestamp) return "—";
-  const diff = Date.now() - timestamp;
-  if (diff < 0) return "à venir";
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `il y a ${days}j`;
-  const weeks = Math.floor(days / 7);
-  if (weeks < 4) return `il y a ${weeks}sem`;
-  const months = Math.floor(days / 30);
-  return `il y a ${months}mo`;
-}
-
-const ACTIVITY_EVENT_TYPES = new Set([
-  "tool_call_started",
-  "tool_call_completed",
-  "step_started",
-  "step_completed",
-  "orchestrator_log",
-]);
-
-function activityIcon(type: string): string {
-  if (type === "tool_call_started") return "⚡";
-  if (type === "tool_call_completed") return "✓";
-  if (type === "step_started") return "▶";
-  if (type === "step_completed") return "□";
-  return "·";
-}
-
-function activityLabel(event: StreamEvent): string {
-  if (event.type === "tool_call_started" || event.type === "tool_call_completed") {
-    const tool = (event.tool as string) ?? "";
-    const entry = getToolCatalogEntry(tool);
-    const verb = event.type === "tool_call_started" ? entry.runningVerb : entry.completedVerb;
-    return `${entry.icon} ${entry.label} — ${verb}`;
-  }
-  if (event.type === "step_started" || event.type === "step_completed") {
-    return (event.title as string) ?? (event.agent as string) ?? event.type;
-  }
-  if (event.type === "orchestrator_log") {
-    const msg = (event.message as string) ?? "";
-    return msg.length > 60 ? msg.slice(0, 57) + "…" : msg;
-  }
-  return event.type;
-}
-
-const ASSET_TYPE_GLYPH: Record<string, string> = {
-  report: "▦",
-  brief: "≡",
-  message: "✉",
-  document: "▤",
-  synthesis: "◇",
-  plan: "◈",
-};
-
-function assetGlyph(type: string): string {
-  return ASSET_TYPE_GLYPH[type.toLowerCase()] || "·";
-}
-
-// Empty-state inline placeholder — keeps the section structurally present
-// even when its data slot is empty. Same look across the panel so the user's
-// eye reads "vide ici" rather than "section disparue".
-function EmptyState({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="t-11 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase">
-      {children}
-    </p>
-  );
 }
 
 export function RightPanelContent({ onClose }: RightPanelContentProps) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useNavigationStore } from "@/stores/navigation";
+import { useNavigationStore, type Thread, type Message } from "@/stores/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { HearstLogo } from "./HearstLogo";
@@ -37,11 +37,148 @@ const ChevronRightIcon = () => (
   </svg>
 );
 
+const StarIcon = ({ filled }: { filled: boolean }) => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth={filled ? 0 : 1.5}
+  >
+    <path d="M12 2.5l2.95 6.46 7.05.7-5.3 4.85 1.55 6.99L12 17.96 5.75 21.5l1.55-6.99L2 9.66l7.05-.7L12 2.5z" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
+
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
     <p className="t-11 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase">
       {children}
     </p>
+  );
+}
+
+function GroupLabel({ label, count }: { label: string; count: number }) {
+  return (
+    <div className="flex items-center justify-between mt-3 mb-1.5 first:mt-0">
+      <span className="t-9 font-mono tracking-[0.3em] text-[var(--text-ghost)] uppercase">
+        {label}
+      </span>
+      <span className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)]">
+        {count}
+      </span>
+    </div>
+  );
+}
+
+function snippetOf(msgs: Message[] | undefined): string | null {
+  if (!msgs || msgs.length === 0) return null;
+  const text = msgs[msgs.length - 1].content.replace(/\s+/g, " ").trim();
+  return text.length > 0 ? text : null;
+}
+
+interface ThreadRowProps {
+  thread: Thread;
+  isActive: boolean;
+  snippet: string | null;
+  onSelect: () => void;
+  onTogglePin: () => void;
+  onRemove: () => void;
+}
+
+function ThreadRow({ thread, isActive, snippet, onSelect, onTogglePin, onRemove }: ThreadRowProps) {
+  const isPinned = !!thread.pinned;
+
+  return (
+    <div
+      onClick={onSelect}
+      className={`group cursor-pointer py-2 -mx-2 px-2 transition-colors flex flex-col gap-1 ${
+        isActive ? "bg-[var(--cykan-bg-active)]" : "hover:bg-[var(--surface-2)]"
+      }`}
+      style={isActive ? { boxShadow: "inset 2px 0 0 var(--cykan)" } : undefined}
+      title={thread.name}
+    >
+      <div className="flex items-center gap-3">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onTogglePin();
+          }}
+          className={`w-3 h-3 flex items-center justify-center shrink-0 transition-colors ${
+            isPinned
+              ? "text-[var(--cykan)]"
+              : "text-[var(--text-ghost)] hover:text-[var(--cykan)]"
+          }`}
+          title={isPinned ? "Désépingler" : "Épingler"}
+        >
+          <StarIcon filled={isPinned} />
+        </button>
+        <p
+          className={`flex-1 t-13 font-light truncate min-w-0 transition-colors ${
+            isActive
+              ? "text-[var(--text)]"
+              : "text-[var(--text-inactive)] group-hover:text-[var(--text)]"
+          }`}
+          style={{ lineHeight: "20px" }}
+        >
+          {thread.name}
+        </p>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all shrink-0"
+          title="Supprimer"
+        >
+          <CloseIcon />
+        </button>
+      </div>
+      {snippet && (
+        <p
+          className={`t-11 font-light truncate min-w-0 ${
+            isActive ? "text-[var(--text-muted)]" : "text-[var(--text-faint)]"
+          }`}
+          style={{ paddingLeft: "var(--space-6)", lineHeight: "14px" }}
+        >
+          {snippet}
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface CollapsedTileProps {
+  thread: Thread;
+  isActive: boolean;
+  onSelect: () => void;
+}
+
+function CollapsedTile({ thread, isActive, onSelect }: CollapsedTileProps) {
+  const initial = thread.name.trim().charAt(0).toUpperCase() || "·";
+  const isPinned = !!thread.pinned;
+
+  return (
+    <button
+      onClick={onSelect}
+      title={thread.name}
+      className={`relative w-8 h-8 flex items-center justify-center rounded-sm t-13 font-medium transition-all shrink-0 ${
+        isActive
+          ? "bg-[var(--cykan)] text-[var(--bg)] halo-cyan-sm"
+          : "bg-[var(--surface-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+      }`}
+    >
+      {initial}
+      {isPinned && !isActive && (
+        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--cykan)] halo-cyan-sm" />
+      )}
+    </button>
   );
 }
 
@@ -54,8 +191,10 @@ export function LeftPanel() {
     setActiveThread,
     addThread,
     removeThread,
+    togglePinned,
     leftCollapsed,
     toggleLeftCollapsed,
+    messages,
   } = useNavigationStore();
   const firstName = session?.user?.name?.split(" ")[0] || "Utilisateur";
   const userInitial = firstName.charAt(0).toUpperCase();
@@ -63,6 +202,11 @@ export function LeftPanel() {
   // Padding rule: x=24px (px-6) du bord gauche dans les deux états
   // pour que les icônes restent sur le même axe vertical au toggle.
   const sectionPadX = leftCollapsed ? "pl-6 pr-2" : "px-6";
+
+  const pinnedThreads = threads.filter((t) => t.pinned);
+  const otherThreads = threads.filter((t) => !t.pinned);
+  const hasPinned = pinnedThreads.length > 0;
+  const hasOther = otherThreads.length > 0;
 
   return (
     <aside
@@ -118,71 +262,62 @@ export function LeftPanel() {
 
         {threads.length === 0 ? (
           leftCollapsed ? null : <EmptyState>Aucune conversation</EmptyState>
+        ) : leftCollapsed ? (
+          <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col items-center gap-2">
+            {pinnedThreads.map((t) => (
+              <CollapsedTile
+                key={t.id}
+                thread={t}
+                isActive={t.id === activeThreadId}
+                onSelect={() => setActiveThread(t.id)}
+              />
+            ))}
+            {hasPinned && hasOther && (
+              <div className="w-3 h-px bg-[var(--border-shell)] my-1" />
+            )}
+            {otherThreads.map((t) => (
+              <CollapsedTile
+                key={t.id}
+                thread={t}
+                isActive={t.id === activeThreadId}
+                onSelect={() => setActiveThread(t.id)}
+              />
+            ))}
+          </div>
         ) : (
-          <div className={`overflow-y-auto scrollbar-hide flex-1 ${leftCollapsed ? "space-y-2" : "space-y-px"}`}>
-            {threads.map((thread) => {
-              const isActive = thread.id === activeThreadId;
-              const initial = thread.name.trim().charAt(0).toUpperCase() || "·";
-
-              if (leftCollapsed) {
-                return (
-                  <button
-                    key={thread.id}
-                    onClick={() => setActiveThread(thread.id)}
-                    title={thread.name}
-                    className={`w-8 h-8 flex items-center justify-center rounded-sm t-13 font-medium transition-all shrink-0 ${
-                      isActive
-                        ? "bg-[var(--cykan)] text-[var(--bg)] halo-cyan-sm"
-                        : "bg-[var(--surface-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
-                    }`}
-                  >
-                    {initial}
-                  </button>
-                );
-              }
-
-              return (
-                <div
-                  key={thread.id}
-                  onClick={() => setActiveThread(thread.id)}
-                  className={`group cursor-pointer py-2 -mx-2 px-2 transition-colors flex items-center gap-3 ${
-                    isActive
-                      ? "bg-[var(--cykan-bg-active)]"
-                      : "hover:bg-[var(--surface-2)]"
-                  }`}
-                  style={isActive ? { boxShadow: "inset 2px 0 0 var(--cykan)" } : undefined}
-                  title={thread.name}
-                >
-                  <span
-                    className={`w-1 h-1 rounded-full shrink-0 ${
-                      isActive ? "bg-[var(--cykan)] halo-dot" : "bg-[var(--text-ghost)]"
-                    }`}
+          <div className="overflow-y-auto scrollbar-hide flex-1 space-y-px">
+            {hasPinned && (
+              <>
+                <GroupLabel label="Épinglées" count={pinnedThreads.length} />
+                {pinnedThreads.map((t) => (
+                  <ThreadRow
+                    key={t.id}
+                    thread={t}
+                    isActive={t.id === activeThreadId}
+                    snippet={snippetOf(messages[t.id])}
+                    onSelect={() => setActiveThread(t.id)}
+                    onTogglePin={() => togglePinned(t.id)}
+                    onRemove={() => removeThread(t.id)}
                   />
-                  <p
-                    className={`flex-1 t-13 font-light truncate min-w-0 transition-colors ${
-                      isActive
-                        ? "text-[var(--text)]"
-                        : "text-[var(--text-inactive)] group-hover:text-[var(--text)]"
-                    }`}
-                    style={{ lineHeight: "20px" }}
-                  >
-                    {thread.name}
-                  </p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeThread(thread.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all shrink-0"
-                    title="Supprimer"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              );
-            })}
+                ))}
+              </>
+            )}
+            {hasOther && (
+              <>
+                {hasPinned && <GroupLabel label="Récent" count={otherThreads.length} />}
+                {otherThreads.map((t) => (
+                  <ThreadRow
+                    key={t.id}
+                    thread={t}
+                    isActive={t.id === activeThreadId}
+                    snippet={snippetOf(messages[t.id])}
+                    onSelect={() => setActiveThread(t.id)}
+                    onTogglePin={() => togglePinned(t.id)}
+                    onRemove={() => removeThread(t.id)}
+                  />
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>

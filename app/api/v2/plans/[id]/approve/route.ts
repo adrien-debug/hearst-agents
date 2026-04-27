@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { approvePlan } from "@/lib/engine/planner/index";
 import { approveAndResume, PipelineContext } from "@/lib/engine/planner/pipeline";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export async function POST(
   request: NextRequest,

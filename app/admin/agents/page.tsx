@@ -1,6 +1,6 @@
 import Link from "next/link";
-import AgentCard from "../../components/AgentCard";
-import { getServerSupabase } from "@/lib/supabase-server";
+import AgentCard from "../_components/AgentCard";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 
 export const dynamic = "force-dynamic";
 

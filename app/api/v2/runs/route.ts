@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRuns } from "@/lib/engine/runtime/state/adapter";
 import { getAllRuns } from "@/lib/engine/runtime/runs/store";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

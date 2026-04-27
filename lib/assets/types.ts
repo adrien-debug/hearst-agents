@@ -83,7 +83,7 @@ export interface Action {
 
 // ── Persistent store (Supabase DB + in-memory cache) ────────
 
-import { getServerSupabase } from "@/lib/supabase-server";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

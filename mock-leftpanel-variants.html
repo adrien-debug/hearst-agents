@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Hearst OS — Variantes LeftPanel</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  /* ──────────────────────────────────────────────────────────────
+     Tokens hardcodés (miroir de app/globals.css).
+     Le panel utilisateur tourne en LIGHT par défaut.
+     Les tokens DARK sont fournis pour la section "Dark check".
+     ────────────────────────────────────────────────────────────── */
+  :root {
+    --cykan: #2DD4BF;
+    --warn:  #FFCC00;
+    --danger:#FF3333;
+
+    --page-bg: #050608;
+    --page-fg: #E6E6E8;
+
+    /* Light (par défaut sur user surface) */
+    --l-bg-rail:      #FFFFFF;
+    --l-text:         #1C1D20;
+    --l-text-muted:   rgba(28,29,32,0.68);
+    --l-text-inactive:rgba(28,29,32,0.55);
+    --l-text-faint:   rgba(28,29,32,0.46);
+    --l-text-ghost:   rgba(28,29,32,0.26);
+    --l-border-shell: rgba(28,29,32,0.08);
+    --l-surface-1:    rgba(28,29,32,0.025);
+    --l-surface-2:    rgba(28,29,32,0.045);
+    --l-cykan-active: rgba(45,212,191,0.14);
+    --l-cykan-hover:  rgba(45,212,191,0.08);
+    --l-cykan-border: rgba(45,212,191,0.45);
+
+    /* Dark */
+    --d-bg-rail:      #16191D;
+    --d-text:         #FFFFFF;
+    --d-text-muted:   rgba(255,255,255,0.65);
+    --d-text-inactive:rgba(255,255,255,0.55);
+    --d-text-faint:   rgba(255,255,255,0.45);
+    --d-text-ghost:   rgba(255,255,255,0.25);
+    --d-border-shell: rgba(255,255,255,0.06);
+    --d-surface-1:    rgba(255,255,255,0.025);
+    --d-surface-2:    rgba(255,255,255,0.04);
+    --d-cykan-active: rgba(45,212,191,0.08);
+    --d-cykan-hover:  rgba(45,212,191,0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--page-bg);
+    color: var(--page-fg);
+    font-family: 'Satoshi Variable', 'Satoshi', -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page { max-width: 1320px; margin: 0 auto; padding: 56px 32px 96px; }
+
+  .page > header { margin-bottom: 48px; }
+  .page h1 {
+    font-size: 28px; font-weight: 600; letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+  .page p.lede {
+    font-size: 14px; line-height: 1.55;
+    color: rgba(230,230,232,0.62);
+    max-width: 820px; margin: 0;
+  }
+  .page p.lede em { color: rgba(230,230,232,0.85); font-style: normal; }
+
+  /* Section dividers */
+  h3.section {
+    font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: rgba(230,230,232,0.45);
+    margin: 56px 0 28px;
+    padding: 0 4px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* Variant block */
+  .variant { margin-bottom: 56px; padding: 0 4px; }
+  .variant-head h2 {
+    font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+  .variant-head h2 .num {
+    color: rgba(230,230,232,0.45);
+    font-weight: 400; margin-right: 8px;
+  }
+  .variant-head .desc {
+    font-size: 13px; line-height: 1.55;
+    color: rgba(230,230,232,0.6);
+    max-width: 760px; margin: 0 0 8px;
+  }
+  .variant-head .meta {
+    font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    color: rgba(230,230,232,0.42);
+    letter-spacing: 0.04em;
+    margin: 0 0 22px;
+  }
+  .variant-head .meta b { color: rgba(230,230,232,0.7); font-weight: 600; }
+
+  .mocks {
+    display: flex; gap: 18px; align-items: flex-start;
+    background:
+      repeating-linear-gradient(45deg,
+        rgba(255,255,255,0.018) 0 1px,
+        transparent 1px 14px);
+    padding: 24px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+    width: fit-content;
+  }
+  .mocks .lbl {
+    font-size: 9px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: rgba(230,230,232,0.4);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .mocks .col { display: flex; flex-direction: column; }
+
+  /* ──────────────────────────────────────────────────────────────
+     LeftPanel mock — base
+     ────────────────────────────────────────────────────────────── */
+  .lp {
+    width: 280px;
+    height: 720px;
+    background: var(--l-bg-rail);
+    color: var(--l-text);
+    border: 1px solid var(--l-border-shell);
+    border-radius: 2px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    font-family: inherit;
+    line-height: 1;
+  }
+  .lp.collapsed { width: 64px; }
+  .lp.dark {
+    background: var(--d-bg-rail);
+    color: var(--d-text);
+    border-color: var(--d-border-shell);
+  }
+
+  /* Logo */
+  .lp-logo {
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--l-border-shell);
+    height: 88px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px 12px;
+  }
+  .lp.dark .lp-logo { border-bottom-color: var(--d-border-shell); }
+  .lp-logo .mark { width: 96px; height: auto; display: block; }
+  .lp-logo .h-mark {
+    font-weight: 500; font-size: 28px; line-height: 1;
+    color: var(--cykan);
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 12px rgba(45,212,191,0.35);
+  }
+
+  /* List zone */
+  .lp-list {
+    flex: 1 1 auto; min-height: 0;
+    overflow: hidden;
+    padding: 24px 24px;
+    display: flex; flex-direction: column;
+  }
+  .lp.collapsed .lp-list {
+    padding: 16px 0;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .list-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+    color: var(--l-text-faint);
+  }
+  .lp.dark .list-head { color: var(--d-text-faint); }
+  .list-head .label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 9px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.3em; text-transform: uppercase;
+  }
+  .list-head svg { width: 14px; height: 14px; }
+  .list-head .count {
+    font-size: 9px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.2em;
+  }
+
+  .list-scroll { flex: 1; overflow: hidden; }
+
+  /* Conv item base — "ligne dot + titre" */
+  .conv {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 8px;
+    margin: 0 -8px;
+    color: var(--l-text-inactive);
+    font-size: 13px; font-weight: 300; line-height: 20px;
+    cursor: default;
+    transition: background 120ms ease;
+  }
+  .lp.dark .conv { color: var(--d-text-inactive); }
+
+  .conv .pin {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--l-text-ghost); flex-shrink: 0;
+  }
+  .lp.dark .conv .pin { background: var(--d-text-ghost); }
+
+  .conv .title {
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .conv.active {
+    background: var(--l-cykan-active);
+    box-shadow: inset 2px 0 0 var(--cykan);
+    color: var(--l-text);
+  }
+  .lp.dark .conv.active {
+    background: var(--d-cykan-active);
+    color: var(--d-text);
+  }
+  .conv.active .pin {
+    background: var(--cykan);
+    box-shadow: 0 0 6px rgba(45,212,191,0.55);
+  }
+
+  /* Footer */
+  .lp-foot {
+    flex-shrink: 0;
+    border-top: 1px solid var(--l-border-shell);
+    padding: 16px 24px 20px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .lp.dark .lp-foot { border-top-color: var(--d-border-shell); }
+  .lp.collapsed .lp-foot {
+    padding: 16px 0;
+    align-items: center;
+  }
+
+  .lp-foot .profile {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 8px;
+    margin: 0 -8px;
+    color: var(--l-text-muted);
+    font-size: 13px; font-weight: 300;
+  }
+  .lp.dark .lp-foot .profile { color: var(--d-text-muted); }
+  .profile .ico { color: var(--l-text-faint); width: 14px; height: 14px; flex-shrink: 0; }
+  .lp.dark .profile .ico { color: var(--d-text-faint); }
+
+  .lp-foot .toggle {
+    color: var(--l-text-ghost);
+    width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    height: 28px;
+  }
+  .lp.dark .lp-foot .toggle { color: var(--d-text-ghost); }
+  .toggle svg { width: 14px; height: 14px; }
+
+  /* Collapsed initials */
+  .init-sq {
+    width: 32px; height: 32px;
+    background: var(--l-surface-1);
+    color: var(--l-text-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 500;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .lp.dark .init-sq { background: var(--d-surface-1); color: var(--d-text-muted); }
+  .init-sq.active {
+    background: var(--cykan);
+    color: var(--l-bg-rail);
+    box-shadow: 0 0 10px rgba(45,212,191,0.4);
+  }
+  .init-sq.dashed {
+    background: transparent;
+    border: 1px dashed var(--l-border-shell);
+    color: var(--l-text-faint);
+  }
+  .lp.dark .init-sq.dashed { border-color: var(--d-border-shell); color: var(--d-text-faint); }
+  .init-sq.tiny {
+    width: 28px; height: 24px; font-size: 11px;
+  }
+
+  /* Group label (V2 / V3) */
+  .group-label {
+    font-size: 9px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--l-text-ghost);
+    margin: 14px 0 6px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .group-label:first-child { margin-top: 0; }
+  .lp.dark .group-label { color: var(--d-text-ghost); }
+  .group-label .num {
+    font-size: 9px; letter-spacing: 0.2em;
+    color: var(--l-text-ghost);
+  }
+  .lp.dark .group-label .num { color: var(--d-text-ghost); }
+
+  /* ───── V2: Threads timestampés ───── */
+  .lp[data-v="2"] .conv .pin { display: none; }
+  .lp[data-v="2"] .conv .ts {
+    font-size: 10px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    color: var(--l-text-ghost);
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  .lp[data-v="2"].dark .conv .ts { color: var(--d-text-ghost); }
+  .lp[data-v="2"] .conv.active .ts { color: var(--cykan); }
+
+  /* ───── V3: Pinned-first + preview ───── */
+  .lp[data-v="3"] .conv {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 9px 8px;
+    gap: 4px;
+  }
+  .lp[data-v="3"] .conv .row1 {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .lp[data-v="3"] .conv .pin { display: none; }
+  .lp[data-v="3"] .star {
+    width: 11px; height: 11px;
+    flex-shrink: 0;
+    color: var(--l-text-ghost);
+  }
+  .lp[data-v="3"].dark .star { color: var(--d-text-ghost); }
+  .lp[data-v="3"] .star.on { color: var(--cykan); }
+  .lp[data-v="3"] .conv .snippet {
+    font-size: 11px;
+    color: var(--l-text-faint);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    padding-left: 21px;
+    line-height: 14px;
+  }
+  .lp[data-v="3"].dark .conv .snippet { color: var(--d-text-faint); }
+  .lp[data-v="3"] .conv.active .snippet { color: var(--l-text-muted); }
+  .lp[data-v="3"].dark .conv.active .snippet { color: var(--d-text-muted); }
+
+  /* ───── V4: Avatar-led + status ───── */
+  .lp[data-v="4"] .conv { padding: 6px 8px; gap: 10px; }
+  .lp[data-v="4"] .conv .pin { display: none; }
+  .lp[data-v="4"] .avatar {
+    width: 28px; height: 28px;
+    background: var(--l-surface-2);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500;
+    color: var(--l-text-muted);
+    flex-shrink: 0;
+  }
+  .lp[data-v="4"].dark .avatar { background: var(--d-surface-2); color: var(--d-text-muted); }
+  .lp[data-v="4"] .conv.active .avatar {
+    background: var(--cykan);
+    color: var(--l-bg-rail);
+    box-shadow: 0 0 10px rgba(45,212,191,0.4);
+  }
+  .lp[data-v="4"] .status {
+    width: 6px; height: 6px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .lp[data-v="4"] .status.running {
+    background: var(--cykan);
+    box-shadow: 0 0 8px rgba(45,212,191,0.6);
+  }
+  .lp[data-v="4"] .status.awaiting {
+    background: var(--warn);
+    box-shadow: 0 0 7px rgba(255,204,0,0.45);
+  }
+  .lp[data-v="4"] .conv-meta {
+    font-size: 10px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    color: var(--l-text-ghost);
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  .lp[data-v="4"].dark .conv-meta { color: var(--d-text-ghost); }
+
+  /* ───── V5: Compact + tags ───── */
+  .lp[data-v="5"] .lp-list { padding: 24px 20px; }
+  .lp[data-v="5"] .conv {
+    padding: 4px 8px;
+    gap: 10px;
+    font-size: 12px;
+    line-height: 18px;
+  }
+  .lp[data-v="5"] .conv .pin { display: none; }
+  .lp[data-v="5"] .tag {
+    font-size: 10px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    color: var(--l-text-ghost);
+    width: 56px;
+    flex-shrink: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+  .lp[data-v="5"].dark .tag { color: var(--d-text-ghost); }
+  .lp[data-v="5"] .conv.active .tag { color: var(--cykan); }
+
+  /* ───── V6: Search + filtres ───── */
+  .lp[data-v="6"] .search {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--l-border-shell);
+    margin-bottom: 14px;
+    color: var(--l-text-faint);
+    font-size: 13px;
+  }
+  .lp[data-v="6"].dark .search {
+    border-bottom-color: var(--d-border-shell);
+    color: var(--d-text-faint);
+  }
+  .lp[data-v="6"] .search svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .lp[data-v="6"] .search .placeholder { color: var(--l-text-ghost); font-weight: 300; }
+  .lp[data-v="6"].dark .search .placeholder { color: var(--d-text-ghost); }
+  .lp[data-v="6"] .search .kbd {
+    margin-left: auto;
+    font-size: 10px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    border: 1px solid var(--l-border-shell);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--l-text-ghost);
+    letter-spacing: 0.04em;
+  }
+  .lp[data-v="6"].dark .search .kbd { border-color: var(--d-border-shell); color: var(--d-text-ghost); }
+  .lp[data-v="6"] .filters {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .lp[data-v="6"] .chip {
+    font-size: 9px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 4px 9px;
+    border: 1px solid var(--l-border-shell);
+    border-radius: 9999px;
+    color: var(--l-text-faint);
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .lp[data-v="6"].dark .chip {
+    border-color: var(--d-border-shell);
+    color: var(--d-text-faint);
+  }
+  .lp[data-v="6"] .chip.on {
+    background: var(--l-cykan-active);
+    border-color: var(--l-cykan-border);
+    color: var(--cykan);
+  }
+  .lp[data-v="6"].dark .chip.on {
+    background: var(--d-cykan-active);
+    border-color: rgba(45,212,191,0.35);
+  }
+
+  /* New conv button (V1, V6) */
+  .new-pill {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%;
+    padding: 8px 8px;
+    margin: 0 -8px 12px;
+    color: var(--l-text-faint);
+    border-bottom: 1px dashed transparent;
+  }
+  .new-pill .left {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 9px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    letter-spacing: 0.3em; text-transform: uppercase;
+  }
+  .new-pill svg { width: 14px; height: 14px; }
+  .new-pill .plus {
+    font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    color: var(--cykan);
+  }
+
+  /* Footer note */
+  footer.note {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 13px;
+    color: rgba(230,230,232,0.6);
+    line-height: 1.7;
+  }
+  footer.note strong { color: rgba(230,230,232,0.85); font-weight: 600; }
+  footer.note p { margin: 0 0 14px; max-width: 880px; }
+</style>
+</head>
+<body>
+
+<!-- Logo Hearst, défini une fois, réutilisé via <use> -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="hearst-mark" viewBox="560 455 810 270">
+    <g fill="currentColor">
+      <path d="M751.5,546.1v47.4h79.4l-7.4,16.3h-100.4v-142.3h119l-9.4,15.7h-81.2v47.4h43l-7.6,15.5h-35.4,0Z" />
+      <path d="M1227.2,473.1h135.1l-19.2,18.8h-34v117.9h-28.7v-117.9h-34.9l-18.3-18.8h0Z" />
+      <path d="M1040.6,531.6h19.2c11.9,0,21.6-9.4,21.6-20.9s-9.7-20.9-21.6-20.9h-41.8v120h-28.7v-142.3h70.6c24.7,0,44.7,19.4,44.7,43.2s-18,41.2-41,43.1l58.8,56.9h-30.6l-51.1-46.5v-32.6h0Z" />
+      <path d="M918.7,467.4h-21.3l-57.7,142.3h29l39.4-97.1,39.4,97.1h29l-57.7-142.3h-.1Z" />
+      <path d="M1226,549.1c-3.2-3.1-7.2-6.1-12-9s-9.3-5.2-13.3-6.9-8.5-3.4-13.5-5.2c-2.2-.8-4.8-1.6-7.8-2.7-5.7-2-10.1-3.6-13-4.7-2.9-1.1-5.9-2.5-8.9-4.1s-5.2-3.2-6.6-4.9c-1.4-1.7-2.3-3.8-2.8-6.1,0-1.1-.2-2.4-.2-3.9s.4-3.1,1.2-5.1c.8-2,1.8-3.8,3.1-5.4,4.9-5.9,13.1-8.9,24.4-8.9s20.3,3.6,28.2,10.8h26.2c-11.8-16.8-30-25.1-54.8-25.1s-13.8.8-19.8,2.5c-6.1,1.6-11.2,3.8-15.3,6.5-4.1,2.7-7.6,5.8-10.6,9.4s-5.1,7.1-6.4,10.6-1.9,6.9-1.9,10.2.3,6.3,1.1,9.2c.7,2.8,1.9,5.5,3.5,7.9s3.2,4.5,4.8,6.4c1.6,1.9,3.7,3.7,6.6,5.5,2.8,1.8,5.2,3.2,7.1,4.3,2,1.1,4.7,2.4,8.1,3.9s6.2,2.5,8.1,3.2,4.7,1.7,8.2,2.9l5.7,1.9c5.6,1.9,9.9,3.4,12.9,4.6,3,1.2,6.2,2.6,9.6,4.2,3.4,1.6,5.9,3.1,7.5,4.5s3,3,4,4.8c1.1,1.8,1.6,3.9,1.6,6.2,0,6.4-2.8,11.6-8.4,15.4-5.6,3.8-12,5.8-19.2,5.8-16.9,0-28.3-4.7-34.5-14.1h-23.1c3.3,8.6,9,15.4,17.1,20.4,9.7,6.1,22,9.2,36.9,9.2s13.8-.7,20.3-2.1c6.5-1.4,12.6-3.5,18.4-6.4,5.7-2.9,10.3-7,13.7-12.2,3.4-5.2,5.1-11.3,5.1-18.1s-1.1-9.6-3.2-14c-2.2-4.4-4.8-8.2-8-11.2h0v-.2h0Z" />
+    </g>
+    <g fill="#2DD4BF">
+      <polygon points="601.7 466.9 572.6 466.9 572.6 609.7 601.7 609.7 601.7 549.1 633.1 579.4 665.8 579.4 601.7 517.5 601.7 466.9" />
+      <polygon points="672.7 466.9 672.7 528.1 644.6 500.9 612 500.9 672.7 559.7 672.7 609.7 701.9 609.7 701.9 466.9 672.7 466.9" />
+      <path d="M1307.6,630.1v83.9s-16.9,0-16.9,0v-83.9c-.1,0,16.9,0,16.9,0Z" />
+      <path d="M1251.3,630.1h-12.5l-34,83.8h17.1l23.2-57.2,23.2,57.2h17.1l-34-83.8h0Z" />
+    </g>
+  </symbol>
+
+  <!-- Icônes utilitaires -->
+  <symbol id="ic-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </symbol>
+  <symbol id="ic-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </symbol>
+  <symbol id="ic-chevron-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M15 18l-6-6 6-6" />
+  </symbol>
+  <symbol id="ic-chevron-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M9 18l6-6-6-6" />
+  </symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <circle cx="11" cy="11" r="7" />
+    <line x1="21" y1="21" x2="16.5" y2="16.5" />
+  </symbol>
+  <symbol id="ic-star" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+    <path d="M12 2.5l2.95 6.46 7.05.7-5.3 4.85 1.55 6.99L12 17.96 5.75 21.5l1.55-6.99L2 9.66l7.05-.7L12 2.5z" />
+  </symbol>
+  <symbol id="ic-star-o" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <path d="M12 2.5l2.95 6.46 7.05.7-5.3 4.85 1.55 6.99L12 17.96 5.75 21.5l1.55-6.99L2 9.66l7.05-.7L12 2.5z" />
+  </symbol>
+</svg>
+
+<div class="page">
+
+<header>
+  <h1>Hearst OS — variantes LeftPanel (6 directions)</h1>
+  <p class="lede">
+    Le LeftPanel garde une seule fonction : faire vivre la liste des conversations. Chaque variante respecte
+    les trois zones (logo · liste · footer profil + collapse), la signature visuelle de l'item actif (cykan-bg
+    + barre <em>2px</em> à gauche), et la règle structurelle : <em>zéro nav globale ici</em>. Le mode <em>light</em>
+    est par défaut sur la surface utilisateur ; un check <em>dark</em> est rendu en bas de page sur deux
+    variantes pour valider la lisibilité. Données fictives identiques d'une direction à l'autre — comparaison
+    directe.
+  </p>
+</header>
+
+<h3 class="section">Light — variantes</h3>
+
+<!-- ════════════════════════════════════════════════════════════
+     V1 — Référence sobre (baseline polie)
+     ════════════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <h2><span class="num">01</span>Référence sobre — baseline polie</h2>
+    <p class="desc">
+      L'état actuel, juste calibré au design system : header mono "CONVERSATIONS" + compteur, items en ligne
+      avec un dot et un titre tronqué, item actif marqué cykan (bg-active + barre 2px). Un seul ajout léger :
+      le compteur visible (10) et un "+" qui apparaît au hover du header pour créer un fil. C'est la direction
+      la moins risquée — la signature design tient toute seule, on ne charge pas.
+    </p>
+    <p class="meta"><b>Ajouts :</b> compteur de fils · "+ hover" sur header · <b>Collapsed :</b> initiales de chaque thread dans un carré 32×32, l'actif passe cykan plein, "+" en pointillé en tête, "H" cykan en logo.</p>
+  </div>
+
+  <div class="mocks">
+    <div class="col">
+      <div class="lbl">Étendu</div>
+      <div class="lp" data-v="1">
+        <div class="lp-logo"><svg class="mark" viewBox="560 455 810 270"><use href="#hearst-mark"/></svg></div>
+        <div class="lp-list">
+          <div class="list-head">
+            <span class="label"><svg><use href="#ic-chat"/></svg>Conversations</span>
+            <span class="count">10</span>
+          </div>
+          <div class="list-scroll">
+            <div class="conv active"><span class="pin"></span><span class="title">Brief Q1 2026 — refonte pricing</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Recap call Sandrine</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Pipeline ventes EMEA</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Notes lecture — Bitcoin Standard</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Refonte onboarding mobile</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Audit RGPD trimestriel</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Idées vidéos LinkedIn</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Roadmap H1 — synthèse</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Voyage Tokyo logistique</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Recrutement lead designer</span></div>
+          </div>
+        </div>
+        <div class="lp-foot">
+          <div class="profile"><svg class="ico"><use href="#ic-logout"/></svg><span>Adrien</span></div>
+          <div class="toggle"><svg><use href="#ic-chevron-l"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="lbl">Collapsed</div>
+      <div class="lp collapsed" data-v="1">
+        <div class="lp-logo"><span class="h-mark">H</span></div>
+        <div class="lp-list">
+          <div class="init-sq dashed">+</div>
+          <div class="init-sq active">B</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">P</div>
+          <div class="init-sq">N</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">A</div>
+          <div class="init-sq">I</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">V</div>
+          <div class="init-sq">R</div>
+        </div>
+        <div class="lp-foot">
+          <div class="init-sq">A</div>
+          <div class="toggle"><svg><use href="#ic-chevron-r"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V2 — Threads timestampés (groupes temporels)
+     ════════════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <h2><span class="num">02</span>Threads timestampés — groupes temporels</h2>
+    <p class="desc">
+      Le scénario "30+ fils, retrouver le bon en 1 seconde" rentre dans la grille temporelle.
+      Quatre sections en mono-label (<em>AUJOURD'HUI · HIER · CETTE SEMAINE · PLUS ANCIEN</em>) avec un compteur
+      par groupe à droite. Chaque item perd son dot pour gagner un timestamp aligné fin de ligne (mono, ghost).
+      L'œil scanne en deux temps : "quelle époque" puis "quel titre". L'item actif garde la signature cykan,
+      son timestamp passe cykan aussi.
+    </p>
+    <p class="meta"><b>Ajouts :</b> regroupement temporel · timestamp aligné droite · <b>Collapsed :</b> les groupes disparaissent, on collapse la liste plate (ordre identique à l'expanded — du plus récent au plus ancien) ; même comportement que V1.</p>
+  </div>
+
+  <div class="mocks">
+    <div class="col">
+      <div class="lbl">Étendu</div>
+      <div class="lp" data-v="2">
+        <div class="lp-logo"><svg class="mark" viewBox="560 455 810 270"><use href="#hearst-mark"/></svg></div>
+        <div class="lp-list">
+          <div class="list-head">
+            <span class="label"><svg><use href="#ic-chat"/></svg>Conversations</span>
+            <span class="count">10</span>
+          </div>
+          <div class="list-scroll">
+            <div class="group-label"><span>Aujourd'hui</span><span class="num">2</span></div>
+            <div class="conv active"><span class="title">Brief Q1 2026 — refonte pricing</span><span class="ts">14:32</span></div>
+            <div class="conv"><span class="title">Recap call Sandrine</span><span class="ts">09:08</span></div>
+
+            <div class="group-label"><span>Hier</span><span class="num">2</span></div>
+            <div class="conv"><span class="title">Pipeline ventes EMEA</span><span class="ts">17:45</span></div>
+            <div class="conv"><span class="title">Notes lecture — Bitcoin Standard</span><span class="ts">21:12</span></div>
+
+            <div class="group-label"><span>Cette semaine</span><span class="num">3</span></div>
+            <div class="conv"><span class="title">Refonte onboarding mobile</span><span class="ts">lun.</span></div>
+            <div class="conv"><span class="title">Audit RGPD trimestriel</span><span class="ts">mar.</span></div>
+            <div class="conv"><span class="title">Idées vidéos LinkedIn</span><span class="ts">ven.</span></div>
+
+            <div class="group-label"><span>Plus ancien</span><span class="num">3</span></div>
+            <div class="conv"><span class="title">Roadmap H1 — synthèse</span><span class="ts">7 avr.</span></div>
+            <div class="conv"><span class="title">Voyage Tokyo logistique</span><span class="ts">28 mar.</span></div>
+            <div class="conv"><span class="title">Recrutement lead designer</span><span class="ts">12 mar.</span></div>
+          </div>
+        </div>
+        <div class="lp-foot">
+          <div class="profile"><svg class="ico"><use href="#ic-logout"/></svg><span>Adrien</span></div>
+          <div class="toggle"><svg><use href="#ic-chevron-l"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="lbl">Collapsed</div>
+      <div class="lp collapsed" data-v="2">
+        <div class="lp-logo"><span class="h-mark">H</span></div>
+        <div class="lp-list">
+          <div class="init-sq dashed">+</div>
+          <div class="init-sq active">B</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">P</div>
+          <div class="init-sq">N</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">A</div>
+          <div class="init-sq">I</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">V</div>
+          <div class="init-sq">R</div>
+        </div>
+        <div class="lp-foot">
+          <div class="init-sq">A</div>
+          <div class="toggle"><svg><use href="#ic-chevron-r"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V3 — Pinned-first + preview
+     ════════════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <h2><span class="num">03</span>Pinned-first + préview message</h2>
+    <p class="desc">
+      Sépare les fils <em>épinglés</em> (étoile cykan plein) du reste (étoile creuse). Chaque item passe à
+      ~52px de haut : titre + snippet 1 ligne tronqué (dernier message, en text-faint). C'est la variante la
+      plus "client mail" — densité plus faible mais info plus riche, parfait pour un user qui jongle entre
+      4-5 conversations actives en même temps. Le pin est cliquable (étoile creuse → plein). Item actif :
+      même signature, le snippet remonte en text-muted pour respirer.
+    </p>
+    <p class="meta"><b>Ajouts :</b> pin/unpin · snippet 1 ligne · double section · <b>Collapsed :</b> les épinglés sortent en haut avec un point cykan haut-droit dans le carré, les autres en dessous. La hiérarchie pinned-first se conserve à 64px.</p>
+  </div>
+
+  <div class="mocks">
+    <div class="col">
+      <div class="lbl">Étendu</div>
+      <div class="lp" data-v="3">
+        <div class="lp-logo"><svg class="mark" viewBox="560 455 810 270"><use href="#hearst-mark"/></svg></div>
+        <div class="lp-list">
+          <div class="list-head">
+            <span class="label"><svg><use href="#ic-chat"/></svg>Conversations</span>
+            <span class="count">10</span>
+          </div>
+          <div class="list-scroll">
+            <div class="group-label"><span>Épinglées</span><span class="num">2</span></div>
+            <div class="conv active">
+              <div class="row1">
+                <svg class="star on"><use href="#ic-star"/></svg>
+                <span class="title">Brief Q1 2026 — refonte pricing</span>
+              </div>
+              <div class="snippet">On cale le pricing GTM avant vendredi…</div>
+            </div>
+            <div class="conv">
+              <div class="row1">
+                <svg class="star on"><use href="#ic-star"/></svg>
+                <span class="title">Pipeline ventes EMEA</span>
+              </div>
+              <div class="snippet">12 deals en cours, 3 à risque ce mois</div>
+            </div>
+
+            <div class="group-label"><span>Récent</span><span class="num">8</span></div>
+            <div class="conv">
+              <div class="row1">
+                <svg class="star"><use href="#ic-star-o"/></svg>
+                <span class="title">Refonte onboarding mobile</span>
+              </div>
+              <div class="snippet">Première itération du parcours signup envoyée</div>
+            </div>
+            <div class="conv">
+              <div class="row1">
+                <svg class="star"><use href="#ic-star-o"/></svg>
+                <span class="title">Notes lecture — Bitcoin Standard</span>
+              </div>
+              <div class="snippet">Chapitre 7 : énergie et monnaie saine</div>
+            </div>
+            <div class="conv">
+              <div class="row1">
+                <svg class="star"><use href="#ic-star-o"/></svg>
+                <span class="title">Recap call Sandrine</span>
+              </div>
+              <div class="snippet">Décision : on lance le pilote en mai</div>
+            </div>
+            <div class="conv">
+              <div class="row1">
+                <svg class="star"><use href="#ic-star-o"/></svg>
+                <span class="title">Audit RGPD trimestriel</span>
+              </div>
+              <div class="snippet">Mise à jour cookies à finaliser cette semaine</div>
+            </div>
+            <div class="conv">
+              <div class="row1">
+                <svg class="star"><use href="#ic-star-o"/></svg>
+                <span class="title">Idées vidéos LinkedIn</span>
+              </div>
+              <div class="snippet">Trois angles testés, le format 60s gagne</div>
+            </div>
+          </div>
+        </div>
+        <div class="lp-foot">
+          <div class="profile"><svg class="ico"><use href="#ic-logout"/></svg><span>Adrien</span></div>
+          <div class="toggle"><svg><use href="#ic-chevron-l"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="lbl">Collapsed</div>
+      <div class="lp collapsed" data-v="3">
+        <div class="lp-logo"><span class="h-mark">H</span></div>
+        <div class="lp-list">
+          <div class="init-sq dashed">+</div>
+          <!-- pinned d'abord -->
+          <div class="init-sq active" style="position:relative">
+            B
+            <span style="position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--cykan);"></span>
+          </div>
+          <div class="init-sq" style="position:relative">
+            P
+            <span style="position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--cykan);"></span>
+          </div>
+          <!-- séparateur visuel -->
+          <div style="width:14px;height:1px;background:var(--l-border-shell);margin:2px 0;"></div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">N</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">A</div>
+          <div class="init-sq">I</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">V</div>
+        </div>
+        <div class="lp-foot">
+          <div class="init-sq">A</div>
+          <div class="toggle"><svg><use href="#ic-chevron-r"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V4 — Avatar-led + status agent
+     ════════════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <h2><span class="num">04</span>Avatar-led + status agent (connecté au halo droit)</h2>
+    <p class="desc">
+      Chaque thread a une initiale dans un carré 28×28 (radius-xs, bg surface-2). L'initiale est l'ancre visuelle
+      qui rythme la liste — pas de couleurs custom (zéro multicolore, on respecte l'accent unique). À droite, un
+      <em>status dot</em> 6px parle au halo Run du RightPanel : <span style="color:#2DD4BF">●</span> running (cykan
+      pulsant), <span style="color:#FFCC00">●</span> awaiting (warn). Item actif : avatar passe cykan plein, le
+      titre s'éclaircit. C'est la variante la plus "OS" — la liste devient un dashboard d'état des fils, pas
+      qu'un sommaire.
+    </p>
+    <p class="meta"><b>Ajouts :</b> avatar initiale · status dot (running / awaiting) miroir du halo droit · <b>Collapsed :</b> les avatars eux-mêmes deviennent les vignettes — donc l'état collapsed est <em>déjà</em> dans le DNA de la variante. Le status dot reste visible en surimpression coin haut-droit du carré.</p>
+  </div>
+
+  <div class="mocks">
+    <div class="col">
+      <div class="lbl">Étendu</div>
+      <div class="lp" data-v="4">
+        <div class="lp-logo"><svg class="mark" viewBox="560 455 810 270"><use href="#hearst-mark"/></svg></div>
+        <div class="lp-list">
+          <div class="list-head">
+            <span class="label"><svg><use href="#ic-chat"/></svg>Conversations</span>
+            <span class="count">10</span>
+          </div>
+          <div class="list-scroll">
+            <div class="conv active"><div class="avatar">B</div><span class="title">Brief Q1 2026 — refonte pricing</span><span class="status running"></span></div>
+            <div class="conv"><div class="avatar">R</div><span class="title">Recap call Sandrine</span></div>
+            <div class="conv"><div class="avatar">P</div><span class="title">Pipeline ventes EMEA</span><span class="status awaiting"></span></div>
+            <div class="conv"><div class="avatar">N</div><span class="title">Notes lecture — Bitcoin Standard</span></div>
+            <div class="conv"><div class="avatar">R</div><span class="title">Refonte onboarding mobile</span></div>
+            <div class="conv"><div class="avatar">A</div><span class="title">Audit RGPD trimestriel</span><span class="status running"></span></div>
+            <div class="conv"><div class="avatar">I</div><span class="title">Idées vidéos LinkedIn</span></div>
+            <div class="conv"><div class="avatar">R</div><span class="title">Roadmap H1 — synthèse</span></div>
+            <div class="conv"><div class="avatar">V</div><span class="title">Voyage Tokyo logistique</span></div>
+            <div class="conv"><div class="avatar">R</div><span class="title">Recrutement lead designer</span></div>
+          </div>
+        </div>
+        <div class="lp-foot">
+          <div class="profile">
+            <div class="avatar" style="width:24px;height:24px;border-radius:4px;background:var(--l-surface-2);font-size:11px;font-weight:500;color:var(--l-text-muted);display:flex;align-items:center;justify-content:center;">A</div>
+            <span>Adrien</span>
+            <span class="status running" style="width:6px;height:6px;border-radius:50%;background:var(--cykan);box-shadow:0 0 6px rgba(45,212,191,0.5);margin-left:auto;"></span>
+          </div>
+          <div class="toggle"><svg><use href="#ic-chevron-l"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="lbl">Collapsed</div>
+      <div class="lp collapsed" data-v="4">
+        <div class="lp-logo"><span class="h-mark">H</span></div>
+        <div class="lp-list">
+          <div class="init-sq dashed">+</div>
+          <div class="init-sq active" style="position:relative">B<span style="position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:#FFFFFF;border:1.5px solid var(--cykan);"></span></div>
+          <div class="init-sq">R</div>
+          <div class="init-sq" style="position:relative">P<span style="position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--warn);box-shadow:0 0 5px rgba(255,204,0,0.5);"></span></div>
+          <div class="init-sq">N</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq" style="position:relative">A<span style="position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--cykan);box-shadow:0 0 5px rgba(45,212,191,0.6);"></span></div>
+          <div class="init-sq">I</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">V</div>
+          <div class="init-sq">R</div>
+        </div>
+        <div class="lp-foot">
+          <div class="init-sq" style="position:relative">A<span style="position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--cykan);box-shadow:0 0 5px rgba(45,212,191,0.6);"></span></div>
+          <div class="toggle"><svg><use href="#ic-chevron-r"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V5 — Compact + tags par projet
+     ════════════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <h2><span class="num">05</span>Compact + tags par projet</h2>
+    <p class="desc">
+      Densité maximale : ~26px par ligne, ~20 fils visibles sans scroll dans une fenêtre à 480px. Préfixe
+      <em>#tag</em> en mono-ghost à largeur fixe (#strat, #ventes, #produit…) qui crée des colonnes d'alignement
+      lisibles. Aucun multicolore — les tags restent monochromes (text-ghost), seul l'item actif passe son tag
+      en cykan. Vibe "channel list Slack / Linear team", pour un user qui veut voir l'arborescence projet d'un
+      coup d'œil sans cliquer.
+    </p>
+    <p class="meta"><b>Ajouts :</b> tag #projet en mono-ghost · densité réduite · <b>Collapsed :</b> les tags disparaissent (pas de place à 64px), on retombe sur les initiales V1. L'utilisateur power-user qui aime la densité gardera plus souvent le panel étendu de toute façon.</p>
+  </div>
+
+  <div class="mocks">
+    <div class="col">
+      <div class="lbl">Étendu</div>
+      <div class="lp" data-v="5">
+        <div class="lp-logo"><svg class="mark" viewBox="560 455 810 270"><use href="#hearst-mark"/></svg></div>
+        <div class="lp-list">
+          <div class="list-head">
+            <span class="label"><svg><use href="#ic-chat"/></svg>Conversations</span>
+            <span class="count">10 / 30+</span>
+          </div>
+          <div class="list-scroll">
+            <div class="conv active"><span class="tag">#strat</span><span class="title">Brief Q1 2026 — refonte pricing</span></div>
+            <div class="conv"><span class="tag">#appels</span><span class="title">Recap call Sandrine</span></div>
+            <div class="conv"><span class="tag">#ventes</span><span class="title">Pipeline ventes EMEA</span></div>
+            <div class="conv"><span class="tag">#lecture</span><span class="title">Notes Bitcoin Standard</span></div>
+            <div class="conv"><span class="tag">#produit</span><span class="title">Refonte onboarding mobile</span></div>
+            <div class="conv"><span class="tag">#ops</span><span class="title">Audit RGPD trimestriel</span></div>
+            <div class="conv"><span class="tag">#mkt</span><span class="title">Idées vidéos LinkedIn</span></div>
+            <div class="conv"><span class="tag">#strat</span><span class="title">Roadmap H1 — synthèse</span></div>
+            <div class="conv"><span class="tag">#voyage</span><span class="title">Voyage Tokyo logistique</span></div>
+            <div class="conv"><span class="tag">#people</span><span class="title">Recrutement lead designer</span></div>
+            <div class="conv"><span class="tag">#strat</span><span class="title">Stratégie content 2026</span></div>
+            <div class="conv"><span class="tag">#produit</span><span class="title">A/B chat surface</span></div>
+            <div class="conv"><span class="tag">#ops</span><span class="title">Renouvellement domaines</span></div>
+            <div class="conv"><span class="tag">#ventes</span><span class="title">Compte clé — Acme</span></div>
+            <div class="conv"><span class="tag">#mkt</span><span class="title">Brief campagne mai</span></div>
+          </div>
+        </div>
+        <div class="lp-foot">
+          <div class="profile"><svg class="ico"><use href="#ic-logout"/></svg><span>Adrien</span></div>
+          <div class="toggle"><svg><use href="#ic-chevron-l"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="lbl">Collapsed</div>
+      <div class="lp collapsed" data-v="5">
+        <div class="lp-logo"><span class="h-mark">H</span></div>
+        <div class="lp-list">
+          <div class="init-sq dashed">+</div>
+          <div class="init-sq active">B</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">P</div>
+          <div class="init-sq">N</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">A</div>
+          <div class="init-sq">I</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">V</div>
+          <div class="init-sq">R</div>
+        </div>
+        <div class="lp-foot">
+          <div class="init-sq">A</div>
+          <div class="toggle"><svg><use href="#ic-chevron-r"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     V6 — Search-first + filtres
+     ════════════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <h2><span class="num">06</span>Search-first + filtres chips</h2>
+    <p class="desc">
+      Pour le scénario explicite "30+ fils, retrouve le bon en 1 sec" : input de recherche fine en haut
+      (<em>border-bottom only</em>, raccourci ⌘K), chips filtre dessous (Tout · Épinglées · Aujourd'hui · …).
+      L'état présenté ici a "Tout" actif — la liste reste complète. Un clic sur "Aujourd'hui" filtrerait à 2
+      résultats avec un footer "8 fils masqués". C'est la variante la plus puissante mais aussi la plus dense
+      en chrome — à réserver si le besoin de search est avéré (Adrien à 30+ fils, sinon overkill).
+    </p>
+    <p class="meta"><b>Ajouts :</b> search input ⌘K · filtres chip-pill · <b>Collapsed :</b> à 64px la search disparaît, on retombe sur la grille d'initiales V1. Le ⌘K reste accessible au clavier global, la liste collapsée reste un raccourci visuel.</p>
+  </div>
+
+  <div class="mocks">
+    <div class="col">
+      <div class="lbl">Étendu</div>
+      <div class="lp" data-v="6">
+        <div class="lp-logo"><svg class="mark" viewBox="560 455 810 270"><use href="#hearst-mark"/></svg></div>
+        <div class="lp-list">
+          <div class="search">
+            <svg><use href="#ic-search"/></svg>
+            <span class="placeholder">Filtrer les fils…</span>
+            <span class="kbd">⌘K</span>
+          </div>
+          <div class="filters">
+            <span class="chip on">Tout · 10</span>
+            <span class="chip">Épinglées</span>
+            <span class="chip">Aujourd'hui</span>
+          </div>
+          <div class="list-scroll">
+            <div class="conv active"><span class="pin"></span><span class="title">Brief Q1 2026 — refonte pricing</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Recap call Sandrine</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Pipeline ventes EMEA</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Notes lecture — Bitcoin Standard</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Refonte onboarding mobile</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Audit RGPD trimestriel</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Idées vidéos LinkedIn</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Roadmap H1 — synthèse</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Voyage Tokyo logistique</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Recrutement lead designer</span></div>
+          </div>
+        </div>
+        <div class="lp-foot">
+          <div class="profile"><svg class="ico"><use href="#ic-logout"/></svg><span>Adrien</span></div>
+          <div class="toggle"><svg><use href="#ic-chevron-l"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="lbl">Collapsed</div>
+      <div class="lp collapsed" data-v="6">
+        <div class="lp-logo"><span class="h-mark">H</span></div>
+        <div class="lp-list">
+          <div class="init-sq dashed">+</div>
+          <div class="init-sq active">B</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">P</div>
+          <div class="init-sq">N</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">A</div>
+          <div class="init-sq">I</div>
+          <div class="init-sq">R</div>
+          <div class="init-sq">V</div>
+          <div class="init-sq">R</div>
+        </div>
+        <div class="lp-foot">
+          <div class="init-sq">A</div>
+          <div class="toggle"><svg><use href="#ic-chevron-r"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     DARK CHECK
+     ════════════════════════════════════════════════════════════ -->
+<h3 class="section">Dark check — V1 et V4</h3>
+
+<section class="variant">
+  <div class="variant-head">
+    <h2>Validation dark mode</h2>
+    <p class="desc">
+      Même DNA que les variantes light ci-dessus, juste basculé sur les tokens dark
+      (bg-rail #16191D, text blanc, borders à 6%). On vérifie que la signature cykan tient,
+      que les status dots V4 (cykan/warn) restent lisibles, et que les avatars surface-2
+      ne deviennent pas illisibles sur le dark.
+    </p>
+  </div>
+
+  <div class="mocks" style="background: repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 14px);">
+    <div class="col">
+      <div class="lbl">V1 dark</div>
+      <div class="lp dark" data-v="1">
+        <div class="lp-logo"><svg class="mark" viewBox="560 455 810 270"><use href="#hearst-mark"/></svg></div>
+        <div class="lp-list">
+          <div class="list-head">
+            <span class="label"><svg><use href="#ic-chat"/></svg>Conversations</span>
+            <span class="count">10</span>
+          </div>
+          <div class="list-scroll">
+            <div class="conv active"><span class="pin"></span><span class="title">Brief Q1 2026 — refonte pricing</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Recap call Sandrine</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Pipeline ventes EMEA</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Notes lecture — Bitcoin Standard</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Refonte onboarding mobile</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Audit RGPD trimestriel</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Idées vidéos LinkedIn</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Roadmap H1 — synthèse</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Voyage Tokyo logistique</span></div>
+            <div class="conv"><span class="pin"></span><span class="title">Recrutement lead designer</span></div>
+          </div>
+        </div>
+        <div class="lp-foot">
+          <div class="profile"><svg class="ico"><use href="#ic-logout"/></svg><span>Adrien</span></div>
+          <div class="toggle"><svg><use href="#ic-chevron-l"/></svg></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="lbl">V4 dark</div>
+      <div class="lp dark" data-v="4">
+        <div class="lp-logo"><svg class="mark" viewBox="560 455 810 270"><use href="#hearst-mark"/></svg></div>
+        <div class="lp-list">
+          <div class="list-head">
+            <span class="label"><svg><use href="#ic-chat"/></svg>Conversations</span>
+            <span class="count">10</span>
+          </div>
+          <div class="list-scroll">
+            <div class="conv active"><div class="avatar">B</div><span class="title">Brief Q1 2026 — refonte pricing</span><span class="status running"></span></div>
+            <div class="conv"><div class="avatar">R</div><span class="title">Recap call Sandrine</span></div>
+            <div class="conv"><div class="avatar">P</div><span class="title">Pipeline ventes EMEA</span><span class="status awaiting"></span></div>
+            <div class="conv"><div class="avatar">N</div><span class="title">Notes lecture — Bitcoin Standard</span></div>
+            <div class="conv"><div class="avatar">R</div><span class="title">Refonte onboarding mobile</span></div>
+            <div class="conv"><div class="avatar">A</div><span class="title">Audit RGPD trimestriel</span><span class="status running"></span></div>
+            <div class="conv"><div class="avatar">I</div><span class="title">Idées vidéos LinkedIn</span></div>
+            <div class="conv"><div class="avatar">R</div><span class="title">Roadmap H1 — synthèse</span></div>
+            <div class="conv"><div class="avatar">V</div><span class="title">Voyage Tokyo logistique</span></div>
+            <div class="conv"><div class="avatar">R</div><span class="title">Recrutement lead designer</span></div>
+          </div>
+        </div>
+        <div class="lp-foot">
+          <div class="profile">
+            <div class="avatar" style="width:24px;height:24px;border-radius:4px;background:var(--d-surface-2);font-size:11px;font-weight:500;color:var(--d-text-muted);display:flex;align-items:center;justify-content:center;">A</div>
+            <span>Adrien</span>
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--cykan);box-shadow:0 0 6px rgba(45,212,191,0.5);margin-left:auto;"></span>
+          </div>
+          <div class="toggle"><svg><use href="#ic-chevron-l"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer class="note">
+  <p>
+    <strong>Reco perso.</strong>
+    La <strong>V4 (Avatar-led + status)</strong> est la plus "Hearst OS" : elle exploite le DNA du produit
+    (l'agent qui travaille en arrière-plan, le halo Run du RightPanel) et fait de la liste un mini-dashboard
+    d'état des fils. Couplée à <strong>V2 (groupes temporels)</strong>, on peut fusionner les deux : avatars
+    + status à gauche, regroupés par époque, sans timestamps (qui doublent l'info temporelle déjà donnée par
+    le groupe). C'est ma reco si tu veux pousser une seule direction forte.
+  </p>
+  <p>
+    <strong>Tradeoffs.</strong>
+    <strong>V1</strong> = zéro risque, livre vite, mais ne tire pas parti du contexte agent. ·
+    <strong>V2</strong> = lecture instantanée pour 30+ fils, mais ajoute un niveau de hiérarchie (groupes)
+    qui peut paraître bureaucratique si tu n'as que 5 fils. ·
+    <strong>V3</strong> = parfait pour un user "few but deep" (3-4 fils actifs avec snippets), mais coûte 30%
+    de hauteur par item — la liste de 30+ devient pénible à scroller. ·
+    <strong>V4</strong> = la plus différenciée, mais demande de connecter vraiment la liste à l'état runtime
+    (sinon les status dots ne servent à rien et deviennent du bruit). ·
+    <strong>V5</strong> = excellent si tu structures vraiment ton travail par projets, sinon les tags
+    deviennent des étiquettes vides. ·
+    <strong>V6</strong> = à reporter tant que la liste n'a pas dépassé ~15 fils — un raccourci ⌘K global
+    suffit pour l'instant et économise le chrome.
+  </p>
+  <p>
+    <strong>Hybride low-risk.</strong>
+    Si tu veux une seule itération qui combine plusieurs idées sans casser la signature actuelle :
+    <em>V1 + groupes temporels de V2 + status dot de V4</em>. Tu gardes la densité, tu gagnes deux signaux
+    forts (quand · quel état), tu n'introduis pas de section custom (pas de search, pas de pin, pas de tags).
+    C'est le compromis "haut signal / bas chrome" le plus solide.
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

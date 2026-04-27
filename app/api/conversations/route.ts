@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { createConversationSchema, ok, err, parseBody, dbErr } from "@/lib/domain";
-import { getUserId } from "@/lib/get-user-id";
+import { getUserId } from "@/lib/platform/auth/get-user-id";
 
 export const dynamic = "force-dynamic";
 

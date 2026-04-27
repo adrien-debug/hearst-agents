@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
-import { requireScope } from "@/lib/scope";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
+import { requireScope } from "@/lib/platform/auth/scope";
 import { ok, err, parseBody } from "@/lib/domain/api-helpers";
 import { listAdapters } from "@/lib/integrations";
 import type { Json } from "@/lib/database.types";

@@ -4,11 +4,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
-import { orchestrateV2 } from "@/lib/engine/orchestrator/entry";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
+import { orchestrate } from "@/lib/engine/orchestrator";
 import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { updateMissionLastRun, getMission } from "@/lib/engine/runtime/missions/store";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -60,7 +60,7 @@ export async function POST(
 
   const db = requireServerSupabase();
 
-  const stream = orchestrateV2(db, {
+  const stream = orchestrate(db, {
     userId: scope.userId,
     message: missionInput,
     missionId: id,

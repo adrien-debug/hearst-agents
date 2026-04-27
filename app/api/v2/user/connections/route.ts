@@ -10,7 +10,7 @@ import { getUnifiedConnectors } from "@/lib/connectors/unified/reconcile";
 import { getServiceDefinition } from "@/lib/integrations/catalog";
 import { getProviderIdForService, getAllServiceIds } from "@/lib/integrations/service-map";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 import {
   isComposioConfigured,
   listConnections,

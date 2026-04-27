@@ -1,5 +1,5 @@
 import type { Json } from "@/lib/database.types";
-import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { ok, err } from "@/lib/domain";
 import { executeWorkflow } from "./workflow-engine";
 

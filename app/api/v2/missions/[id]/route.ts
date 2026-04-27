@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMission, disableMission, evictMission } from "@/lib/engine/runtime/missions/store";
 import { updateScheduledMission, deleteScheduledMission } from "@/lib/engine/runtime/state/adapter";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

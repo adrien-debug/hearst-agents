@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { getProvider } from "@/lib/llm";
 import { evaluateSchema, ok, err, parseBody, dbErr } from "@/lib/domain";
 import type { ChatMessage } from "@/lib/llm";

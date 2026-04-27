@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { createWorkflowSchema, ok, err, parseBody, dbErr } from "@/lib/domain";
 
 export const dynamic = "force-dynamic";

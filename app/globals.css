@@ -111,6 +111,7 @@
   --border-shell: rgba(255, 255, 255, 0.06);
   --border-soft: rgba(255, 255, 255, 0.04);
   --border-input: rgba(255, 255, 255, 0.08);
+  --ghost-modal-top: rgba(255, 255, 255, 0.06);
   --card-flat-bg: rgba(255, 255, 255, 0.02);
   --card-flat-border: rgba(255, 255, 255, 0.06);
   --surface-card: rgba(255, 255, 255, 0.035);
@@ -259,6 +260,7 @@
   --border-shell: rgba(28, 29, 32, 0.08);
   --border-soft: rgba(28, 29, 32, 0.05);
   --border-input: rgba(28, 29, 32, 0.12);
+  --ghost-modal-top: rgba(28, 29, 32, 0.10);
   --border-subtle: rgba(28, 29, 32, 0.08);
   --border-default: rgba(28, 29, 32, 0.14);
   --border-strong: rgba(28, 29, 32, 0.20);
@@ -1077,4 +1079,119 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 @keyframes halo-runs-dot-pulse {
   0%, 100% { transform: scale(1);   opacity: 0.85; }
   50%      { transform: scale(1.4); opacity: 1; }
+}
+
+/* ── Ghost Protocol — boutons & inputs minimalistes ──────────────
+   Pattern : `.ghost-btn-solid` pose la base (layout, font, transition),
+   un modificateur `.ghost-btn-cykan` ou `.ghost-btn-ghost` pose le skin.
+   `.ghost-input-line` = input underline cockpit. */
+.ghost-btn-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-satoshi), sans-serif;
+  font-size: clamp(11px, 0.286vw + 9.167px, 16.5px);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  transition:
+    background-color var(--duration-fast, 160ms) var(--ease-standard, ease),
+    border-color var(--duration-fast, 160ms) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 160ms) var(--ease-standard, ease),
+    color var(--duration-fast, 160ms) var(--ease-standard, ease);
+}
+
+.ghost-btn-solid:disabled {
+  cursor: not-allowed;
+}
+
+.ghost-btn-solid:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--cykan-border-hover);
+}
+
+.ghost-btn-cykan {
+  background: var(--cykan);
+  color: #000;
+  border-color: var(--cykan);
+}
+
+.ghost-btn-cykan:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cykan) 88%, transparent);
+  box-shadow: 0 0 24px rgba(45, 212, 191, 0.25);
+}
+
+.ghost-btn-cykan:active:not(:disabled) {
+  background: color-mix(in srgb, var(--cykan) 95%, black);
+}
+
+.ghost-btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border-shell);
+}
+
+.ghost-btn-ghost:hover:not(:disabled) {
+  background: var(--surface-1);
+  color: var(--text);
+  border-color: var(--border-input);
+}
+
+.ghost-btn-ghost:active:not(:disabled) {
+  background: var(--surface-2);
+}
+
+/* Underline-only input — minimal cockpit feel.
+   No background, just a baseline that lights up on focus. */
+.ghost-input-line {
+  display: block;
+  width: 100%;
+  background: transparent;
+  color: var(--text);
+  border: none;
+  border-bottom: 1px solid var(--border-shell);
+  border-radius: 0;
+  padding: var(--space-2) 0;
+  font-family: var(--font-satoshi), sans-serif;
+  font-size: clamp(13px, 0.339vw + 10.833px, 19.5px);
+  line-height: 1.4;
+  outline: none;
+  transition:
+    border-color var(--duration-fast, 160ms) var(--ease-standard, ease),
+    box-shadow var(--duration-fast, 160ms) var(--ease-standard, ease);
+}
+
+.ghost-input-line::placeholder {
+  color: var(--text-faint);
+}
+
+.ghost-input-line:hover:not(:disabled):not(:focus) {
+  border-bottom-color: var(--border-input);
+}
+
+.ghost-input-line:focus-visible {
+  border-bottom-color: var(--cykan);
+  box-shadow: 0 1px 0 0 var(--cykan);
+}
+
+.ghost-input-line:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal panel — flat sheet without halo, sits above the focal stage */
+.ghost-modal-panel {
+  background: var(--bg-elev);
+  border: 1px solid var(--border-shell);
+  border-radius: 0;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow: auto;
 }

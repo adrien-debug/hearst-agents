@@ -1,0 +1,2070 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Hearst OS — RightPanel · Album miniatures × 10 déclinaisons</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  /* ─────────────────────────────────────────────────────────────
+   * PAGE — coque dark cockpit pour la review.
+   * Les vignettes rendent en LIGHT (mode user surface par défaut).
+   * Toutes les variantes partagent les mêmes données fictives :
+   *   • Run halo  : 0xA42F · 65%
+   *   • Status    : streaming "Recherche en cours…"
+   *   • Focal     : Brief "Stratégie Q2 2026 — pricing premium"
+   *   • Activity  : Gmail running · Drive done · Synthèse warn
+   *   • Assets    : Stratégie Q2 (brief) · Audit prix (report) ·
+   *                 Notes ACME (synthesis) · Roadmap S2 (plan)
+   *   • Missions  : Veille concurrence (running 70%) ·
+   *                 Brief matinal (armed) · Synthèse Slack (failed)
+   * Ce qui varie entre variantes : la grammaire visuelle Assets +
+   * Missions (le coeur de "Album miniatures"). Status + Focal sont
+   * traités sobrement pour ne pas concurrencer.
+   * ─────────────────────────────────────────────────────────── */
+  :root {
+    --page-bg: #050608;
+    --page-fg: #E6E6E8;
+    --page-fg-muted: rgba(230,230,232,0.55);
+    --page-fg-faint: rgba(230,230,232,0.40);
+    --page-line: rgba(255,255,255,0.06);
+
+    /* Tokens projet — copie 1:1 LIGHT depuis app/globals.css */
+    --bg:        #F4F4F6;
+    --bg-rail:   #FFFFFF;
+    --bg-elev:   #FAFAFB;
+    --bg-soft:   #ECECEE;
+    --text:      #1C1D20;
+    --text-soft: rgba(28,29,32,0.88);
+    --text-muted: rgba(28,29,32,0.68);
+    --text-faint: rgba(28,29,32,0.46);
+    --text-ghost: rgba(28,29,32,0.26);
+    --text-placeholder: rgba(28,29,32,0.42);
+    --border-shell: rgba(28,29,32,0.08);
+    --border-soft:  rgba(28,29,32,0.05);
+    --border-default: rgba(28,29,32,0.14);
+    --border-strong: rgba(28,29,32,0.20);
+    --surface-1: rgba(28,29,32,0.025);
+    --surface-2: rgba(28,29,32,0.045);
+    --surface-card: rgba(28,29,32,0.035);
+    --cykan: #2DD4BF;
+    --warn: #F59E0B;
+    --danger: #EF4444;
+    --success: #2DC558;
+    --cykan-bg-active: rgba(45,212,191,0.14);
+    --cykan-bg-hover:  rgba(45,212,191,0.08);
+    --cykan-border:    rgba(45,212,191,0.35);
+    --cykan-border-hover: rgba(45,212,191,0.45);
+
+    /* Spacing — tokens projet */
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+
+    /* Radius */
+    --radius-xs: 4px;  --radius-sm: 8px;  --radius-md: 12px;
+    --radius-lg: 16px; --radius-pill: 9999px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--page-bg);
+    color: var(--page-fg);
+    font-family: 'Satoshi Variable', 'Satoshi', -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+  }
+
+  .page { max-width: 1380px; margin: 0 auto; padding: 56px 32px 96px; }
+
+  .page > header { margin-bottom: 56px; max-width: 920px; }
+
+  .page h1 {
+    font-size: 28px; font-weight: 600; letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+
+  .page p.lede {
+    font-size: 14px; line-height: 1.6;
+    color: var(--page-fg-muted);
+    margin: 0 0 14px;
+  }
+
+  .page p.lede strong { color: var(--page-fg); font-weight: 600; }
+  .page p.lede em     { font-style: italic; color: rgba(230,230,232,0.78); }
+
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-top: 16px;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 11px;
+    color: var(--page-fg-faint);
+    letter-spacing: 0.04em;
+  }
+  .meta-row .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--page-line);
+    border-radius: 999px;
+  }
+  .meta-row .pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ── Grid des variantes ─────────────────────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 40px 28px;
+  }
+
+  .variant {
+    display: flex; flex-direction: column;
+    gap: 16px;
+  }
+
+  .variant-head { padding: 0 4px; min-height: 130px; }
+
+  .variant-head .num {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--page-fg-faint);
+  }
+
+  .variant-head h2 {
+    font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
+    margin: 4px 0 6px;
+  }
+
+  .variant-head .sub {
+    font-size: 11.5px;
+    color: rgba(230,230,232,0.50);
+    font-style: italic;
+    margin: 0 0 8px;
+  }
+
+  .variant-head p {
+    font-size: 12.5px; line-height: 1.55;
+    color: var(--page-fg-muted);
+    margin: 0;
+  }
+
+  .variant-head .tokens {
+    margin-top: 10px;
+    font-family: ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--page-fg-faint);
+    line-height: 1.7;
+  }
+  .variant-head .tokens em { font-style: normal; color: rgba(230,230,232,0.55); }
+
+  /* ───────────────────────────────────────────────────────────────
+   * PANEL BASE (commun à toutes les variantes)
+   * ─────────────────────────────────────────────────────────── */
+  .panel {
+    width: 340px;
+    height: 720px;
+    background: var(--bg-rail);
+    color: var(--text);
+    border: 1px solid var(--border-shell);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    font-family: 'Satoshi Variable', 'Satoshi', -apple-system, sans-serif;
+    letter-spacing: -0.01em;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+  }
+  .panel .scroll { flex: 1; min-height: 0; overflow: hidden; }
+
+  /* Halo slot — préservé identique sur toutes variantes */
+  .halo-slot {
+    flex-shrink: 0;
+    height: 132px;
+    border-bottom: 1px solid var(--border-shell);
+    display: flex; align-items: center; justify-content: center;
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-4);
+  }
+  .halo-ring {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    position: relative;
+    background: conic-gradient(var(--cykan) 0deg 234deg, rgba(28,29,32,0.10) 234deg 360deg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .halo-ring::before {
+    content: ''; position: absolute; inset: 6px;
+    border-radius: 50%;
+    background: var(--bg-rail);
+  }
+  .halo-ring .lbl {
+    position: relative;
+    font-family: ui-monospace, monospace;
+    font-size: 9px;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.2;
+  }
+  .halo-ring .lbl strong {
+    display: block;
+    color: var(--cykan);
+    font-weight: 700;
+    font-size: 10px;
+    margin-bottom: 2px;
+  }
+
+  /* Section label */
+  .sec-label {
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  /* Live dot */
+  .live-dot {
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--cykan);
+    box-shadow: 0 0 8px var(--cykan);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Status — uniformisé sobre dans toutes les variantes */
+  .panel .status {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-shell);
+  }
+  .panel .status .head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 5px;
+  }
+  .panel .status .label {
+    font-family: ui-monospace, monospace;
+    font-size: 9px; letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cykan);
+  }
+  .panel .status .line {
+    font-size: 14px; font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  /* Activity — uniformisé minimal (3 lignes pin+label) */
+  .panel .activity {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-shell);
+  }
+  .panel .activity-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .panel .act-line {
+    display: flex; gap: 8px; align-items: center;
+    padding: 4px 0;
+    font-size: 11.5px;
+    color: var(--text-soft);
+  }
+  .panel .act-line .pin {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .panel .act-line.running .pin { background: var(--cykan); animation: pulse 1.4s infinite; }
+  .panel .act-line.done    .pin { background: var(--success); }
+  .panel .act-line.warn    .pin { background: var(--warn); }
+  .panel .act-line .lbl {
+    flex: 1; min-width: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .panel .act-line .dur {
+    font-family: ui-monospace, monospace;
+    font-size: 9px;
+    color: var(--text-ghost);
+    letter-spacing: 0.10em;
+  }
+
+  /* Section générique (Assets / Missions wrappers) */
+  .panel .section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-shell);
+  }
+  .panel .section:last-child { border-bottom: 0; }
+  .panel .section-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+    color: var(--text-faint);
+  }
+  .panel .section-head .ratio {
+    font-family: ui-monospace, monospace;
+    font-size: 9px; letter-spacing: 0.18em;
+    color: var(--text-ghost);
+  }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V01 — BIBLIOTHÈQUE (papier blueprint, baseline raffinée)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v1 .focal {
+    margin: 14px 16px;
+    padding: 14px;
+    background: var(--cykan-bg-hover);
+    border-left: 2px solid var(--cykan);
+    border-radius: var(--radius-xs);
+  }
+  .panel.v1 .focal .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--cykan); color: var(--bg);
+    font-family: ui-monospace, monospace;
+    font-size: 9px; letter-spacing: 0.20em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .panel.v1 .focal h3 { margin: 0 0 12px; font-size: 14px; font-weight: 500; line-height: 1.35; }
+  .panel.v1 .focal .cta {
+    width: 100%; padding: 9px;
+    background: var(--text); color: var(--bg);
+    border: 0;
+    font-family: ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.22em;
+    text-transform: uppercase;
+    border-radius: var(--radius-xs);
+    cursor: pointer; font-weight: 600;
+  }
+
+  .panel.v1 .album { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel.v1 .thumb {
+    background: var(--surface-1);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+  .panel.v1 .thumb .pre {
+    height: 56px;
+    padding: 8px 10px 0;
+    background-image:
+      linear-gradient(to right, var(--text-ghost) 0 70%, transparent 70% 100%),
+      linear-gradient(to right, var(--text-ghost) 0 50%, transparent 50% 100%),
+      linear-gradient(to right, var(--text-ghost) 0 60%, transparent 60% 100%),
+      linear-gradient(to right, var(--text-ghost) 0 40%, transparent 40% 100%);
+    background-size: 100% 4px, 100% 4px, 100% 4px, 100% 4px;
+    background-repeat: no-repeat;
+    background-position: 10px 12px, 10px 22px, 10px 32px, 10px 42px;
+    border-bottom: 1px solid var(--border-soft);
+    opacity: 0.55;
+  }
+  .panel.v1 .thumb.brief    .pre { background-color: var(--cykan-bg-hover); opacity: 0.85; }
+  .panel.v1 .thumb.brief    .pre {
+    background-image:
+      linear-gradient(to right, var(--cykan) 0 65%, transparent 65% 100%),
+      linear-gradient(to right, var(--text-muted) 0 50%, transparent 50% 100%),
+      linear-gradient(to right, var(--text-muted) 0 60%, transparent 60% 100%),
+      linear-gradient(to right, var(--text-muted) 0 40%, transparent 40% 100%);
+  }
+  .panel.v1 .thumb .body { padding: 7px 10px 9px; }
+  .panel.v1 .thumb .name {
+    font-size: 11px;
+    color: var(--text-soft);
+    line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+  .panel.v1 .thumb .type {
+    font-family: ui-monospace, monospace;
+    font-size: 8.5px;
+    color: var(--text-ghost);
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+  }
+  .panel.v1 .thumb.brief .type { color: var(--cykan); }
+
+  .panel.v1 .mod {
+    display: flex; gap: 10px; align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+  .panel.v1 .mod:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v1 .ring {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .panel.v1 .ring::after {
+    content: ''; position: absolute; inset: 4px;
+    border-radius: 50%;
+    background: var(--bg-rail);
+  }
+  .panel.v1 .mod.running .ring { background: conic-gradient(var(--cykan) 0deg 252deg, var(--surface-2) 252deg); animation: spin 4s linear infinite; }
+  .panel.v1 .mod.armed   .ring { background: conic-gradient(var(--cykan) 0deg 360deg); opacity: 0.30; }
+  .panel.v1 .mod.failed  .ring { background: conic-gradient(var(--danger) 0deg 90deg, var(--surface-2) 90deg); }
+  .panel.v1 .mod .body { flex: 1; min-width: 0; }
+  .panel.v1 .mod .name { font-size: 12px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v1 .mod .meta { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.12em; margin-top: 2px; }
+  .panel.v1 .mod.running .meta { color: var(--cykan); }
+  .panel.v1 .mod.armed   .meta { color: var(--text-ghost); }
+  .panel.v1 .mod.failed  .meta { color: var(--danger); }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V02 — POLAROID (cards encadrées, marge papier blanche)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v2 .focal {
+    margin: 14px 16px; padding: 12px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    border-radius: var(--radius-xs);
+    box-shadow: 0 2px 6px rgba(28,29,32,0.05);
+  }
+  .panel.v2 .focal h3 { margin: 0 0 10px; font-size: 14px; font-weight: 500; line-height: 1.35; }
+  .panel.v2 .focal .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .panel.v2 .focal .type { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--cykan); text-transform: uppercase; }
+  .panel.v2 .focal .ts  { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.10em; color: var(--text-ghost); }
+  .panel.v2 .focal .cta { width: 100%; padding: 8px; background: var(--text); color: var(--bg); border: 0; font-size: 11px; letter-spacing: 0.04em; border-radius: var(--radius-xs); cursor: pointer; font-weight: 500; }
+
+  .panel.v2 .album { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .panel.v2 .polaroid {
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    border-radius: 2px;
+    padding: 6px 6px 8px;
+    box-shadow: 0 2px 6px rgba(28,29,32,0.06), 0 1px 0 rgba(28,29,32,0.02);
+    display: flex; flex-direction: column;
+  }
+  .panel.v2 .polaroid .pre {
+    height: 50px;
+    background: var(--bg-soft);
+    border-radius: 1px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel.v2 .polaroid .pre::before {
+    content: ''; position: absolute; inset: 8px;
+    background-image:
+      linear-gradient(to right, var(--text-ghost) 0 70%, transparent 70% 100%),
+      linear-gradient(to right, var(--text-ghost) 0 50%, transparent 50% 100%),
+      linear-gradient(to right, var(--text-ghost) 0 60%, transparent 60% 100%);
+    background-size: 100% 3px, 100% 3px, 100% 3px;
+    background-repeat: no-repeat;
+    background-position: 0 0, 0 8px, 0 16px;
+    opacity: 0.6;
+  }
+  .panel.v2 .polaroid.brief .pre { background: var(--cykan-bg-hover); }
+  .panel.v2 .polaroid .legend { padding: 7px 4px 0; }
+  .panel.v2 .polaroid .name {
+    font-size: 11px; color: var(--text-soft); line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .panel.v2 .polaroid .meta {
+    margin-top: 3px;
+    display: flex; justify-content: space-between;
+    font-family: ui-monospace, monospace;
+    font-size: 8px; letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-ghost);
+  }
+  .panel.v2 .polaroid.brief .meta .t { color: var(--cykan); }
+
+  .panel.v2 .mission-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    border-radius: var(--radius-xs);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel.v2 .mission-card:last-child { margin-bottom: 0; }
+  .panel.v2 .stamp {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--text-ghost);
+    display: flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, monospace;
+    font-size: 9px; font-weight: 700;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+  .panel.v2 .mission-card.running .stamp { border-color: var(--cykan); color: var(--cykan); }
+  .panel.v2 .mission-card.failed  .stamp { border-color: var(--danger); color: var(--danger); }
+  .panel.v2 .mission-card .body { flex: 1; min-width: 0; }
+  .panel.v2 .mission-card .name { font-size: 12px; color: var(--text-soft); }
+  .panel.v2 .mission-card .meta { font-family: ui-monospace, monospace; font-size: 9px; color: var(--text-ghost); letter-spacing: 0.10em; margin-top: 2px; }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V03 — BLUEPRINT TECHNIQUE (papier quadrillé, glyphs schématiques)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v3 .focal {
+    margin: 14px 16px; padding: 14px;
+    border: 1px dashed var(--cykan-border);
+    border-radius: var(--radius-xs);
+    background:
+      radial-gradient(circle at 1px 1px, rgba(45,212,191,0.08) 1px, transparent 0) 0 0 / 8px 8px,
+      var(--bg-rail);
+  }
+  .panel.v3 .focal .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .panel.v3 .focal .type { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--cykan); }
+  .panel.v3 .focal .id   { font-family: ui-monospace, monospace; font-size: 9px; color: var(--text-ghost); letter-spacing: 0.06em; }
+  .panel.v3 .focal h3    { margin: 0 0 12px; font-size: 14px; font-weight: 500; line-height: 1.35; }
+  .panel.v3 .focal .cta  {
+    width: 100%; padding: 8px;
+    background: var(--cykan); color: var(--bg);
+    border: 0; font-family: ui-monospace, monospace;
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    border-radius: var(--radius-xs); cursor: pointer; font-weight: 600;
+  }
+
+  .panel.v3 .album { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel.v3 .blueprint {
+    background:
+      radial-gradient(circle at 1px 1px, rgba(28,29,32,0.10) 1px, transparent 0) 0 0 / 6px 6px,
+      var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+  .panel.v3 .blueprint .diagram {
+    height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-muted);
+  }
+  .panel.v3 .blueprint.brief .diagram { color: var(--cykan); background: var(--cykan-bg-hover); }
+  .panel.v3 .blueprint .body { padding: 6px 9px 8px; background: var(--bg-rail); }
+  .panel.v3 .blueprint .name {
+    font-size: 11px; color: var(--text-soft); line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .panel.v3 .blueprint .type {
+    font-family: ui-monospace, monospace;
+    font-size: 8.5px; letter-spacing: 0.18em;
+    color: var(--text-ghost); text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .panel.v3 .blueprint.brief .type { color: var(--cykan); }
+
+  /* Mission gauge horizontal */
+  .panel.v3 .gauge-row {
+    padding: 8px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+  .panel.v3 .gauge-row:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v3 .gauge-row .top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px;
+  }
+  .panel.v3 .gauge-row .name { font-size: 12px; color: var(--text-soft); }
+  .panel.v3 .gauge-row .meta { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; }
+  .panel.v3 .gauge-row.running .meta { color: var(--cykan); }
+  .panel.v3 .gauge-row.armed   .meta { color: var(--text-ghost); }
+  .panel.v3 .gauge-row.failed  .meta { color: var(--danger); }
+  .panel.v3 .gauge {
+    display: flex; gap: 2px;
+  }
+  .panel.v3 .gauge .seg { flex: 1; height: 5px; background: var(--surface-2); border-radius: 1px; }
+  .panel.v3 .gauge-row.running .gauge .seg.on { background: var(--cykan); box-shadow: 0 0 4px var(--cykan); }
+  .panel.v3 .gauge-row.armed   .gauge .seg.on { background: var(--cykan); opacity: 0.40; }
+  .panel.v3 .gauge-row.failed  .gauge .seg.on { background: var(--danger); }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V04 — STREAM LANDSCAPE (cards 16:9 stack, kicker overlay)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v4 .focal {
+    margin: 14px 16px;
+    background: var(--cykan-bg-hover);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .panel.v4 .focal .cover {
+    height: 60px;
+    background:
+      linear-gradient(135deg, var(--cykan) 0%, transparent 80%),
+      var(--cykan-bg-active);
+    position: relative;
+    padding: 8px 10px;
+  }
+  .panel.v4 .focal .kicker {
+    display: inline-block;
+    padding: 2px 7px;
+    background: rgba(255,255,255,0.92);
+    color: var(--cykan);
+    font-family: ui-monospace, monospace;
+    font-size: 9px; letter-spacing: 0.20em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+  .panel.v4 .focal .body { padding: 10px 12px 12px; }
+  .panel.v4 .focal h3   { margin: 0 0 10px; font-size: 14px; font-weight: 500; line-height: 1.35; }
+  .panel.v4 .focal .cta { width: 100%; padding: 8px; background: var(--text); color: var(--bg); border: 0; font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; border-radius: var(--radius-xs); cursor: pointer; font-weight: 600; }
+
+  .panel.v4 .stack { display: flex; flex-direction: column; gap: 6px; }
+  .panel.v4 .tile {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 10px;
+    padding: 6px;
+    background: var(--surface-1);
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border-soft);
+    align-items: center;
+  }
+  .panel.v4 .tile .cover {
+    height: 40px;
+    border-radius: 2px;
+    background: linear-gradient(135deg, var(--text-muted) 0%, var(--text-ghost) 100%);
+    opacity: 0.5;
+  }
+  .panel.v4 .tile.brief    .cover { background: linear-gradient(135deg, var(--cykan) 0%, var(--cykan-bg-active) 100%); opacity: 1; }
+  .panel.v4 .tile.report   .cover { background: linear-gradient(135deg, #4A4D52 0%, #DCDCE0 100%); }
+  .panel.v4 .tile.synthesis .cover { background: linear-gradient(135deg, var(--warn) 0%, rgba(245,158,11,0.30) 100%); opacity: 0.85; }
+  .panel.v4 .tile.plan     .cover { background: linear-gradient(135deg, var(--success) 0%, rgba(45,197,88,0.25) 100%); opacity: 0.85; }
+  .panel.v4 .tile .body { min-width: 0; }
+  .panel.v4 .tile .name { font-size: 11.5px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v4 .tile .type { font-family: ui-monospace, monospace; font-size: 8.5px; letter-spacing: 0.18em; color: var(--text-ghost); text-transform: uppercase; margin-top: 2px; }
+  .panel.v4 .tile.brief .type { color: var(--cykan); }
+
+  .panel.v4 .mission-stream {
+    background: var(--surface-1);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-xs);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel.v4 .mission-stream:last-child { margin-bottom: 0; }
+  .panel.v4 .mission-stream .ring {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .panel.v4 .mission-stream .ring::after {
+    content: ''; position: absolute; inset: 4px;
+    border-radius: 50%; background: var(--surface-1);
+  }
+  .panel.v4 .mission-stream.running .ring { background: conic-gradient(var(--cykan) 0deg 252deg, var(--surface-2) 252deg); }
+  .panel.v4 .mission-stream.armed   .ring { background: conic-gradient(var(--cykan) 0deg 360deg); opacity: 0.35; }
+  .panel.v4 .mission-stream.failed  .ring { background: conic-gradient(var(--danger) 0deg 90deg, var(--surface-2) 90deg); }
+  .panel.v4 .mission-stream .name { flex: 1; font-size: 12px; color: var(--text-soft); }
+  .panel.v4 .mission-stream .meta { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.10em; color: var(--text-ghost); }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V05 — DATA PORTRAIT (preview = mini-chart par type)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v5 .focal {
+    margin: 14px 16px; padding: 12px 14px;
+    background: var(--surface-1);
+    border-left: 3px solid var(--cykan);
+    border-radius: var(--radius-xs);
+  }
+  .panel.v5 .focal .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .panel.v5 .focal .type { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--cykan); text-transform: uppercase; }
+  .panel.v5 .focal .pct  { font-family: ui-monospace, monospace; font-size: 12px; color: var(--text); font-weight: 600; }
+  .panel.v5 .focal h3    { margin: 0 0 12px; font-size: 14px; font-weight: 500; line-height: 1.35; }
+  .panel.v5 .focal .cta  { width: 100%; padding: 8px; background: var(--text); color: var(--bg); border: 0; font-size: 11px; letter-spacing: 0.04em; border-radius: var(--radius-xs); cursor: pointer; font-weight: 500; }
+
+  .panel.v5 .album { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel.v5 .data-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+  .panel.v5 .data-card .chart {
+    height: 50px;
+    background: var(--bg-rail);
+    border-bottom: 1px solid var(--border-soft);
+    padding: 6px 8px;
+    display: flex; align-items: flex-end;
+    gap: 2px;
+  }
+  .panel.v5 .data-card.brief .chart {
+    /* line chart cykan */
+    background:
+      linear-gradient(to bottom, transparent 60%, var(--cykan-bg-hover) 100%),
+      var(--bg-rail);
+    align-items: stretch;
+    padding: 0;
+    position: relative;
+  }
+  .panel.v5 .data-card.brief .chart::before {
+    content: '';
+    position: absolute; inset: 4px 4px 0;
+    background:
+      linear-gradient(to bottom, transparent 60%, var(--cykan) 100%);
+    clip-path: polygon(
+      0 70%, 12% 60%, 25% 50%, 38% 55%, 50% 35%,
+      62% 40%, 75% 25%, 88% 30%, 100% 15%,
+      100% 100%, 0 100%
+    );
+    opacity: 0.55;
+  }
+  .panel.v5 .data-card.brief .chart::after {
+    content: '';
+    position: absolute; inset: 4px 4px 0;
+    border-top: 1.5px solid var(--cykan);
+    clip-path: polygon(
+      0 70%, 12% 60%, 25% 50%, 38% 55%, 50% 35%,
+      62% 40%, 75% 25%, 88% 30%, 100% 15%
+    );
+  }
+  /* report — bars horizontales */
+  .panel.v5 .data-card.report .chart .bar {
+    flex: 1;
+    background: var(--text-muted);
+    border-radius: 1px;
+    opacity: 0.45;
+  }
+  /* synthesis — scatter dots simulé via gradient */
+  .panel.v5 .data-card.synthesis .chart {
+    background-image:
+      radial-gradient(circle at 18% 65%, var(--warn) 2px, transparent 3px),
+      radial-gradient(circle at 35% 40%, var(--warn) 2px, transparent 3px),
+      radial-gradient(circle at 52% 70%, var(--warn) 2px, transparent 3px),
+      radial-gradient(circle at 68% 30%, var(--warn) 2px, transparent 3px),
+      radial-gradient(circle at 82% 55%, var(--warn) 2px, transparent 3px),
+      var(--bg-rail);
+  }
+  /* plan — stack chart bands */
+  .panel.v5 .data-card.plan .chart {
+    background:
+      linear-gradient(to top,
+        var(--success) 0%, var(--success) 30%,
+        rgba(45,197,88,0.40) 30%, rgba(45,197,88,0.40) 55%,
+        rgba(45,197,88,0.20) 55%, rgba(45,197,88,0.20) 75%,
+        transparent 75% 100%
+      ),
+      var(--bg-rail);
+    opacity: 0.85;
+  }
+  .panel.v5 .data-card .body { padding: 6px 9px 8px; }
+  .panel.v5 .data-card .name { font-size: 11px; color: var(--text-soft); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v5 .data-card .meta { display: flex; justify-content: space-between; margin-top: 3px; font-family: ui-monospace, monospace; font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-ghost); }
+  .panel.v5 .data-card.brief .meta .t { color: var(--cykan); }
+
+  /* Donut missions */
+  .panel.v5 .donut-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+  .panel.v5 .donut-row:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v5 .donut {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .panel.v5 .donut::after { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: var(--bg-rail); }
+  .panel.v5 .donut-row.running .donut { background: conic-gradient(var(--cykan) 0deg 252deg, var(--surface-2) 252deg); }
+  .panel.v5 .donut-row.armed   .donut { background: conic-gradient(var(--cykan) 0deg 360deg); opacity: 0.35; }
+  .panel.v5 .donut-row.failed  .donut { background: conic-gradient(var(--danger) 0deg 90deg, var(--surface-2) 90deg); }
+  .panel.v5 .donut .pct {
+    position: relative;
+    font-family: ui-monospace, monospace;
+    font-size: 8px; font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .panel.v5 .donut-row.running .pct { color: var(--cykan); }
+  .panel.v5 .donut-row.armed   .pct { color: var(--text-ghost); }
+  .panel.v5 .donut-row.failed  .pct { color: var(--danger); }
+  .panel.v5 .donut-row .name { font-size: 12px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v5 .donut-row .meta { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.10em; color: var(--text-ghost); }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V06 — SPINE BINDER (single column, dossiers classeur)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v6 .focal {
+    margin: 14px 16px;
+    padding: 14px 14px 14px 16px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    border-left: 4px solid var(--cykan);
+    border-radius: var(--radius-xs);
+  }
+  .panel.v6 .focal .head { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .panel.v6 .focal .type { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--cykan); text-transform: uppercase; }
+  .panel.v6 .focal .id   { font-family: ui-monospace, monospace; font-size: 9px; color: var(--text-ghost); letter-spacing: 0.06em; }
+  .panel.v6 .focal h3    { margin: 0 0 12px; font-size: 14px; font-weight: 500; line-height: 1.35; }
+  .panel.v6 .focal .cta  { width: 100%; padding: 9px; background: var(--text); color: var(--bg); border: 0; font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; border-radius: var(--radius-xs); cursor: pointer; font-weight: 600; }
+
+  .panel.v6 .stack { display: flex; flex-direction: column; gap: 4px; }
+  .panel.v6 .binder {
+    display: flex; align-items: center;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+    padding: 8px 10px 8px 14px;
+    gap: 10px;
+    position: relative;
+  }
+  .panel.v6 .binder::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 6px;
+    background: var(--text-muted);
+    border-radius: 1px 0 0 1px;
+  }
+  .panel.v6 .binder.brief::before    { background: var(--cykan); }
+  .panel.v6 .binder.report::before   { background: var(--text-muted); }
+  .panel.v6 .binder.synthesis::before { background: var(--warn); }
+  .panel.v6 .binder.plan::before     { background: var(--success); }
+  .panel.v6 .binder .body { flex: 1; min-width: 0; }
+  .panel.v6 .binder .name { font-size: 12px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v6 .binder .meta { font-family: ui-monospace, monospace; font-size: 8.5px; letter-spacing: 0.18em; color: var(--text-ghost); text-transform: uppercase; margin-top: 2px; }
+  .panel.v6 .binder.brief .meta { color: var(--cykan); }
+  .panel.v6 .binder .pages {
+    font-family: ui-monospace, monospace;
+    font-size: 9px; color: var(--text-ghost);
+    letter-spacing: 0.06em;
+  }
+
+  .panel.v6 .mission-binder {
+    display: grid;
+    grid-template-columns: 4px 1fr auto;
+    gap: 12px; align-items: center;
+    padding: 9px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+  .panel.v6 .mission-binder:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v6 .mission-binder .vbar {
+    width: 4px; height: 30px; border-radius: 1px;
+    background: var(--text-ghost);
+    position: relative;
+  }
+  .panel.v6 .mission-binder.running .vbar {
+    background: linear-gradient(to top, var(--cykan) 70%, var(--surface-2) 70%);
+    box-shadow: 0 0 4px rgba(45,212,191,0.4);
+  }
+  .panel.v6 .mission-binder.armed   .vbar { background: var(--cykan); opacity: 0.35; }
+  .panel.v6 .mission-binder.failed  .vbar {
+    background: linear-gradient(to top, var(--danger) 25%, var(--surface-2) 25%);
+  }
+  .panel.v6 .mission-binder .body { min-width: 0; }
+  .panel.v6 .mission-binder .name { font-size: 12px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v6 .mission-binder .meta { font-family: ui-monospace, monospace; font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; margin-top: 2px; }
+  .panel.v6 .mission-binder.running .meta { color: var(--cykan); }
+  .panel.v6 .mission-binder.armed   .meta { color: var(--text-ghost); }
+  .panel.v6 .mission-binder.failed  .meta { color: var(--danger); }
+  .panel.v6 .mission-binder .pct { font-family: ui-monospace, monospace; font-size: 11px; font-weight: 600; }
+  .panel.v6 .mission-binder.running .pct { color: var(--cykan); }
+  .panel.v6 .mission-binder.armed   .pct { color: var(--text-ghost); }
+  .panel.v6 .mission-binder.failed  .pct { color: var(--danger); }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V07 — CONSTELLATION (graph nodes, hexagones, connexions)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v7 .focal {
+    margin: 14px 16px;
+    padding: 14px;
+    background:
+      radial-gradient(ellipse at 50% 0%, var(--cykan-bg-hover) 0%, transparent 70%),
+      var(--bg-elev);
+    border: 1px solid var(--cykan-border);
+    border-radius: var(--radius-md);
+    text-align: center;
+  }
+  .panel.v7 .focal .type { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--cykan); text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .panel.v7 .focal h3   { margin: 0 0 12px; font-size: 14px; font-weight: 500; line-height: 1.35; }
+  .panel.v7 .focal .cta { width: 100%; padding: 9px; background: var(--cykan); color: var(--bg); border: 0; font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; border-radius: 999px; cursor: pointer; font-weight: 600; }
+
+  .panel.v7 .const-svg-wrap {
+    position: relative;
+    height: 200px;
+    margin: 0 -8px;
+  }
+  .panel.v7 .const-svg-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .panel.v7 .node {
+    position: absolute;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    padding: 4px;
+    text-align: center;
+  }
+  .panel.v7 .node .name {
+    font-size: 9px; color: var(--text-soft);
+    line-height: 1.2;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .panel.v7 .node .type {
+    font-family: ui-monospace, monospace;
+    font-size: 7px; letter-spacing: 0.15em;
+    color: var(--text-ghost); text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .panel.v7 .node.brief {
+    background: var(--cykan-bg-hover);
+    border-color: var(--cykan);
+    box-shadow: 0 0 12px rgba(45,212,191,0.18);
+  }
+  .panel.v7 .node.brief .name { color: var(--text); }
+  .panel.v7 .node.brief .type { color: var(--cykan); }
+
+  .panel.v7 .nb1 { left: 50%; top: 8px; transform: translateX(-50%); width: 76px; height: 76px; }
+  .panel.v7 .nb2 { left: 14px;  top: 92px; }
+  .panel.v7 .nb3 { right: 14px; top: 92px; }
+  .panel.v7 .nb4 { left: 50%; bottom: 0; transform: translateX(-50%); }
+
+  .panel.v7 .orb-row {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+  .panel.v7 .orb-row:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v7 .orb {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    position: relative;
+  }
+  .panel.v7 .orb::before {
+    content: ''; position: absolute; inset: 0;
+    border-radius: 50%;
+  }
+  .panel.v7 .orb-row.running .orb {
+    background: var(--cykan);
+    box-shadow: 0 0 14px rgba(45,212,191,0.55);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  .panel.v7 .orb-row.armed   .orb { background: var(--cykan); opacity: 0.30; }
+  .panel.v7 .orb-row.failed  .orb { background: var(--danger); box-shadow: 0 0 12px rgba(239,68,68,0.45); }
+  .panel.v7 .orb-row .name { font-size: 12px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v7 .orb-row .meta { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.10em; color: var(--text-ghost); }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V08 — MAILROOM (cartes postales, timbres, lignes manuscrites)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v8 .focal {
+    margin: 14px 16px; padding: 12px 14px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    border-radius: var(--radius-xs);
+    position: relative;
+  }
+  .panel.v8 .focal::before {
+    content: ''; position: absolute; top: 8px; right: 8px;
+    width: 22px; height: 22px;
+    border: 1.5px dashed var(--cykan);
+    border-radius: 2px;
+  }
+  .panel.v8 .focal .type { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.22em; color: var(--cykan); text-transform: uppercase; margin-bottom: 6px; }
+  .panel.v8 .focal h3 { margin: 0 0 12px; font-size: 14px; font-weight: 500; line-height: 1.35; padding-right: 32px; }
+  .panel.v8 .focal .cta { width: 100%; padding: 8px; background: var(--text); color: var(--bg); border: 0; font-size: 11px; letter-spacing: 0.04em; border-radius: var(--radius-xs); cursor: pointer; font-weight: 500; }
+
+  .panel.v8 .album { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel.v8 .postcard {
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+    border-radius: 2px;
+    padding: 8px 8px 9px;
+    position: relative;
+    box-shadow: 0 1px 0 var(--border-shell);
+  }
+  .panel.v8 .postcard .stamp {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 14px; height: 14px;
+    border: 1.5px dashed var(--text-ghost);
+    border-radius: 1px;
+  }
+  .panel.v8 .postcard.brief .stamp { border-color: var(--cykan); border-style: solid; background: var(--cykan-bg-hover); }
+  .panel.v8 .postcard .lines {
+    margin-top: 14px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .panel.v8 .postcard .ln {
+    height: 2px;
+    background: var(--text-ghost);
+    border-radius: 1px;
+    opacity: 0.45;
+  }
+  .panel.v8 .postcard .ln:nth-child(1) { width: 90%; }
+  .panel.v8 .postcard .ln:nth-child(2) { width: 70%; }
+  .panel.v8 .postcard .ln:nth-child(3) { width: 80%; }
+  .panel.v8 .postcard.brief .ln:nth-child(1) { background: var(--cykan); opacity: 0.85; }
+
+  .panel.v8 .postcard .name {
+    margin-top: 8px;
+    font-size: 11px; color: var(--text-soft);
+    line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .panel.v8 .postcard .type {
+    font-family: ui-monospace, monospace;
+    font-size: 8px; letter-spacing: 0.18em;
+    color: var(--text-ghost); text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .panel.v8 .postcard.brief .type { color: var(--cykan); }
+
+  .panel.v8 .envelope {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 9px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+  .panel.v8 .envelope:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v8 .env-icon {
+    width: 32px; height: 22px;
+    border: 1.5px solid var(--text-ghost);
+    border-radius: 1px;
+    position: relative;
+  }
+  .panel.v8 .env-icon::before {
+    content: ''; position: absolute;
+    top: -1px; left: -1px; right: -1px; height: 11px;
+    border-bottom: 1.5px solid var(--text-ghost);
+    transform: skew(0);
+    background:
+      linear-gradient(135deg, transparent 47%, var(--text-ghost) 47%, var(--text-ghost) 53%, transparent 53%),
+      linear-gradient(225deg, transparent 47%, var(--text-ghost) 47%, var(--text-ghost) 53%, transparent 53%);
+  }
+  .panel.v8 .envelope.running .env-icon { border-color: var(--cykan); }
+  .panel.v8 .envelope.running .env-icon::before { border-bottom-color: var(--cykan); background:
+      linear-gradient(135deg, transparent 47%, var(--cykan) 47%, var(--cykan) 53%, transparent 53%),
+      linear-gradient(225deg, transparent 47%, var(--cykan) 47%, var(--cykan) 53%, transparent 53%); }
+  .panel.v8 .envelope.failed .env-icon  { border-color: var(--danger); }
+  .panel.v8 .envelope.failed .env-icon::before  { border-bottom-color: var(--danger); background:
+      linear-gradient(135deg, transparent 47%, var(--danger) 47%, var(--danger) 53%, transparent 53%),
+      linear-gradient(225deg, transparent 47%, var(--danger) 47%, var(--danger) 53%, transparent 53%); }
+  .panel.v8 .envelope .name { font-size: 12px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v8 .envelope .meta { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.10em; color: var(--text-ghost); margin-top: 2px; }
+  .panel.v8 .envelope .badge {
+    padding: 2px 6px;
+    font-family: ui-monospace, monospace;
+    font-size: 8px; letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border-radius: 1px;
+    border: 1px solid var(--text-ghost);
+    color: var(--text-ghost);
+  }
+  .panel.v8 .envelope.running .badge { color: var(--cykan); border-color: var(--cykan); }
+  .panel.v8 .envelope.failed  .badge { color: var(--danger); border-color: var(--danger); }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V09 — MAGAZINE (hero + small, kicker éditorial)
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v9 .focal {
+    margin: 14px 16px;
+    padding: 0;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--bg-elev);
+    border: 1px solid var(--border-shell);
+  }
+  .panel.v9 .focal .hero {
+    height: 80px;
+    background:
+      linear-gradient(160deg, var(--cykan) 0%, transparent 70%),
+      var(--cykan-bg-active);
+    padding: 10px 12px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .panel.v9 .focal .kicker {
+    font-family: ui-monospace, monospace;
+    font-size: 9px; letter-spacing: 0.30em;
+    color: rgba(255,255,255,0.95);
+    text-transform: uppercase;
+    background: var(--text);
+    padding: 3px 8px;
+    border-radius: 1px;
+    font-weight: 600;
+  }
+  .panel.v9 .focal .ts {
+    font-family: ui-monospace, monospace;
+    font-size: 9px; color: rgba(255,255,255,0.85);
+    letter-spacing: 0.10em;
+  }
+  .panel.v9 .focal .body { padding: 12px 14px 14px; }
+  .panel.v9 .focal h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; line-height: 1.30; letter-spacing: -0.01em; }
+  .panel.v9 .focal .cta { width: 100%; padding: 9px; background: var(--text); color: var(--bg); border: 0; font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; border-radius: var(--radius-xs); cursor: pointer; font-weight: 600; }
+
+  .panel.v9 .stack { display: flex; flex-direction: column; gap: 8px; }
+  .panel.v9 .article {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-soft);
+    align-items: center;
+  }
+  .panel.v9 .article:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v9 .article .pic {
+    height: 30px; border-radius: 2px;
+    background: var(--bg-soft);
+  }
+  .panel.v9 .article.brief    .pic { background: linear-gradient(135deg, var(--cykan) 0%, var(--cykan-bg-active) 100%); }
+  .panel.v9 .article.report   .pic { background: linear-gradient(135deg, #4A4D52 0%, #DCDCE0 100%); }
+  .panel.v9 .article.synthesis .pic { background: linear-gradient(135deg, var(--warn) 0%, rgba(245,158,11,0.30) 100%); }
+  .panel.v9 .article.plan     .pic { background: linear-gradient(135deg, var(--success) 0%, rgba(45,197,88,0.25) 100%); }
+  .panel.v9 .article .body { min-width: 0; }
+  .panel.v9 .article .kicker {
+    font-family: ui-monospace, monospace;
+    font-size: 8px; letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-ghost);
+  }
+  .panel.v9 .article.brief .kicker { color: var(--cykan); }
+  .panel.v9 .article .name {
+    font-size: 12px; color: var(--text-soft);
+    line-height: 1.3; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .panel.v9 .mission-art {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 9px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+  .panel.v9 .mission-art:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v9 .mission-art .left { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .panel.v9 .mission-art .row1 { display: flex; align-items: center; gap: 6px; }
+  .panel.v9 .mission-art .pin { width: 5px; height: 5px; border-radius: 50%; }
+  .panel.v9 .mission-art.running .pin { background: var(--cykan); box-shadow: 0 0 6px var(--cykan); }
+  .panel.v9 .mission-art.armed   .pin { background: var(--cykan); opacity: 0.45; }
+  .panel.v9 .mission-art.failed  .pin { background: var(--danger); }
+  .panel.v9 .mission-art .name { font-size: 12px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v9 .mission-art .meta { font-family: ui-monospace, monospace; font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-ghost); }
+  .panel.v9 .mission-art .spark { display: flex; align-items: flex-end; gap: 2px; height: 16px; }
+  .panel.v9 .mission-art .spark .b { width: 4px; border-radius: 1px; }
+  .panel.v9 .mission-art.running .spark .b { background: var(--cykan); }
+  .panel.v9 .mission-art.armed   .spark .b { background: var(--cykan); opacity: 0.40; }
+  .panel.v9 .mission-art.failed  .spark .b { background: var(--danger); opacity: 0.55; }
+
+  /* ═════════════════════════════════════════════════════════════
+   * V10 — ATELIER CARNET (papier ivoire local, glyphs vintage)
+   * Note : on n'utilise PAS un accent mastic (cykan reste règle).
+   * On joue juste sur la matière fond + serif touch.
+   * ═══════════════════════════════════════════════════════════ */
+  .panel.v10 {
+    --paper: #F8F5EC;
+    --paper-edge: #EFE9D8;
+    --ink:   #1F1B14;
+    --ink-soft: rgba(31,27,20,0.78);
+    --ink-muted: rgba(31,27,20,0.55);
+    --ink-faint: rgba(31,27,20,0.36);
+    --ink-ghost: rgba(31,27,20,0.18);
+
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .panel.v10 .halo-ring::before { background: var(--paper); }
+  .panel.v10 .halo-ring .lbl { color: var(--ink-muted); }
+  .panel.v10 .halo-slot { border-color: var(--paper-edge); }
+  .panel.v10 .status { border-color: var(--paper-edge); }
+  .panel.v10 .activity { border-color: var(--paper-edge); }
+  .panel.v10 .section  { border-color: var(--paper-edge); }
+  .panel.v10 .status .line, .panel.v10 .focal h3 { color: var(--ink); }
+  .panel.v10 .sec-label { color: var(--ink-faint); }
+  .panel.v10 .act-line { color: var(--ink-soft); }
+
+  .panel.v10 .focal {
+    margin: 14px 16px; padding: 14px;
+    background: #FFFCF1;
+    border: 1px solid var(--paper-edge);
+    border-radius: var(--radius-xs);
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 3px 0 0 var(--cykan);
+  }
+  .panel.v10 .focal::before {
+    content: ''; position: absolute;
+    top: 0; left: 12px; right: 12px; height: 1px;
+    background: repeating-linear-gradient(to right, var(--ink-ghost) 0 4px, transparent 4px 8px);
+  }
+  .panel.v10 .focal .type {
+    font-family: 'Iowan Old Style', 'Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 11px; color: var(--cykan);
+    margin-bottom: 4px;
+  }
+  .panel.v10 .focal h3 { font-family: 'Iowan Old Style', Georgia, serif; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.3; margin: 0 0 12px; }
+  .panel.v10 .focal .cta { width: 100%; padding: 8px; background: var(--ink); color: var(--paper); border: 0; font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; border-radius: 1px; cursor: pointer; font-weight: 600; }
+
+  .panel.v10 .album { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel.v10 .page-card {
+    background: #FFFCF1;
+    border: 1px solid var(--paper-edge);
+    border-radius: 1px;
+    padding: 8px 9px;
+    position: relative;
+  }
+  .panel.v10 .page-card.brief {
+    background: linear-gradient(to bottom, rgba(45,212,191,0.06) 0%, #FFFCF1 30%);
+    box-shadow: inset 3px 0 0 var(--cykan);
+  }
+  .panel.v10 .page-card .glyph {
+    width: 18px; height: 18px;
+    margin-bottom: 6px;
+    color: var(--ink-muted);
+  }
+  .panel.v10 .page-card.brief .glyph { color: var(--cykan); }
+  .panel.v10 .page-card .name {
+    font-family: 'Iowan Old Style', Georgia, serif;
+    font-size: 11px; color: var(--ink-soft);
+    line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .panel.v10 .page-card .type {
+    font-family: ui-monospace, monospace;
+    font-size: 8px; letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--ink-ghost);
+    margin-top: 3px;
+  }
+  .panel.v10 .page-card.brief .type { color: var(--cykan); }
+
+  .panel.v10 .clock-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px; align-items: center;
+    padding: 9px 0;
+    border-top: 1px dashed var(--paper-edge);
+  }
+  .panel.v10 .clock-row:first-of-type { border-top: 0; padding-top: 0; }
+  .panel.v10 .clock-svg { width: 26px; height: 26px; }
+  .panel.v10 .clock-row .name { font-family: 'Iowan Old Style', Georgia, serif; font-size: 12px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel.v10 .clock-row .meta { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 0.10em; }
+  .panel.v10 .clock-row.running .meta { color: var(--cykan); }
+  .panel.v10 .clock-row.armed   .meta { color: var(--ink-ghost); }
+  .panel.v10 .clock-row.failed  .meta { color: var(--danger); }
+
+  /* ── Footer ──────────────────────────────────────────────── */
+  footer.note {
+    margin-top: 80px;
+    padding-top: 28px;
+    border-top: 1px solid var(--page-line);
+    font-size: 13px;
+    color: var(--page-fg-muted);
+    line-height: 1.7;
+  }
+  footer.note h3 {
+    font-size: 14px; font-weight: 600;
+    color: var(--page-fg);
+    margin: 0 0 10px;
+  }
+  footer.note p { margin: 0 0 12px; max-width: 920px; }
+  footer.note strong { color: var(--page-fg); font-weight: 600; }
+  footer.note ul { padding-left: 20px; margin: 0 0 16px; }
+  footer.note li { margin-bottom: 8px; }
+
+  .axis-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 12px;
+  }
+  .axis-table th, .axis-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--page-line);
+    vertical-align: top;
+  }
+  .axis-table th {
+    color: var(--page-fg);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .axis-table td {
+    color: var(--page-fg-muted);
+  }
+  .axis-table td .num {
+    font-family: ui-monospace, monospace;
+    color: var(--page-fg-faint);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <header>
+      <h1>Album miniatures — 10 déclinaisons</h1>
+      <p class="lede">
+        Le DNA de la direction Album : <strong>les assets et les missions ne sont
+        plus des lignes plates, mais des objets graphiques qui ont une
+        présence.</strong> On scanne par image avant de scanner par texte. Dix
+        pistes ci-dessous, chacune explore un axe différent : <em>papier blueprint,
+        polaroid, schématique technique, stream landscape, data-portrait, dossier
+        classeur, constellation, mailroom postal, magazine éditorial, carnet
+        d'atelier</em>. Mêmes données fictives partout (focal Brief Q2, 4 assets,
+        3 missions) pour comparaison directe.
+      </p>
+      <div class="meta-row">
+        <span class="pill"><span class="dot" style="background:#2DD4BF"></span>cykan #2DD4BF — accent unique</span>
+        <span class="pill"><span class="dot" style="background:#F59E0B"></span>warn #F59E0B</span>
+        <span class="pill"><span class="dot" style="background:#EF4444"></span>danger #EF4444</span>
+        <span class="pill"><span class="dot" style="background:#FFFFFF;border:1px solid rgba(255,255,255,0.2)"></span>thème user surface = LIGHT</span>
+        <span class="pill">340 × 720 — clamp(220px, 20vw, 480px)</span>
+      </div>
+    </header>
+
+    <div class="grid">
+
+      <!-- ═════ V01 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 01</span>
+          <h2>Bibliothèque · papier blueprint</h2>
+          <p class="sub">la baseline raffinée — preview = aperçu texte</p>
+          <p>
+            Les assets sont des fiches preview. La preview reproduit
+            <em>4 lignes de texte stylisées</em> (linear-gradient calibrés
+            largeur/hauteur), le fond se teinte cykan-bg-hover sur les briefs.
+            Missions = ring conic 252° pour running. La direction la plus
+            sobre : pas de digression atmosphérique, juste de la matière
+            ajoutée au système actuel.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --surface-1 · --cykan-bg-hover · --border-soft ·
+            --radius-xs · --space-2/4 · --warn · --success
+          </p>
+        </div>
+        <div class="panel v1">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <span class="badge">Brief</span>
+            <h3>Stratégie Q2 2026 — pricing premium</h3>
+            <button class="cta">Approuver</button>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Assets</span><span class="ratio">04 →</span></div>
+              <div class="album">
+                <div class="thumb brief"><div class="pre"></div><div class="body"><div class="name">Stratégie Q2</div><div class="type">Brief</div></div></div>
+                <div class="thumb"><div class="pre"></div><div class="body"><div class="name">Audit prix</div><div class="type">Report</div></div></div>
+                <div class="thumb"><div class="pre"></div><div class="body"><div class="name">Notes ACME</div><div class="type">Synth</div></div></div>
+                <div class="thumb"><div class="pre"></div><div class="body"><div class="name">Roadmap S2</div><div class="type">Plan</div></div></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="mod running"><div class="ring"></div><div class="body"><div class="name">Veille concurrence</div><div class="meta">running · 70%</div></div></div>
+              <div class="mod armed"><div class="ring"></div><div class="body"><div class="name">Brief matinal</div><div class="meta">armé · 7h00</div></div></div>
+              <div class="mod failed"><div class="ring"></div><div class="body"><div class="name">Synthèse Slack</div><div class="meta">failed · il y a 2h</div></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V02 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 02</span>
+          <h2>Polaroid</h2>
+          <p class="sub">cards encadrées avec marge papier blanche</p>
+          <p>
+            Chaque asset est une <em>polaroid</em> : marge papier 6px autour
+            de la preview, ombre douce, légende type+date en bas. Plus
+            "objet" que la baseline. Missions = cards horizontales
+            avec un <em>tampon circulaire</em> (statut en cercle 24px).
+            Tonalité plus intime, archive personnelle. Tient bien sur
+            light theme grâce aux ombres tokenisées.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --bg-elev · --shadow-sm (rgba 28,29,32,0.06) ·
+            --border-shell · --radius-xs · --space-2/3
+          </p>
+        </div>
+        <div class="panel v2">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <div class="row"><span class="type">Brief</span><span class="ts">14:32</span></div>
+            <h3>Stratégie Q2 2026 — pricing premium</h3>
+            <button class="cta">Approuver le plan</button>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Assets</span><span class="ratio">04 →</span></div>
+              <div class="album">
+                <div class="polaroid brief"><div class="pre"></div><div class="legend"><div class="name">Stratégie Q2</div><div class="meta"><span class="t">Brief</span><span>14:32</span></div></div></div>
+                <div class="polaroid"><div class="pre"></div><div class="legend"><div class="name">Audit prix</div><div class="meta"><span class="t">Report</span><span>14:18</span></div></div></div>
+                <div class="polaroid"><div class="pre"></div><div class="legend"><div class="name">Notes ACME</div><div class="meta"><span class="t">Synth</span><span>24/04</span></div></div></div>
+                <div class="polaroid"><div class="pre"></div><div class="legend"><div class="name">Roadmap S2</div><div class="meta"><span class="t">Plan</span><span>22/04</span></div></div></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="mission-card running"><div class="stamp">▶</div><div class="body"><div class="name">Veille concurrence</div><div class="meta">running · 70%</div></div></div>
+              <div class="mission-card"><div class="stamp">◷</div><div class="body"><div class="name">Brief matinal</div><div class="meta">armé · 7h00</div></div></div>
+              <div class="mission-card failed"><div class="stamp">!</div><div class="body"><div class="name">Synthèse Slack</div><div class="meta">failed · il y a 2h</div></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V03 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 03</span>
+          <h2>Blueprint technique</h2>
+          <p class="sub">papier quadrillé dot-grid, glyphs schématiques</p>
+          <p>
+            Vibe <em>Excalidraw / Linear product spec</em>. Preview = fond
+            <em>radial-gradient dot-grid 6px</em>, glyph SVG schématique
+            au centre (briefs = 4 carrés grille, reports = 3 lignes,
+            synthesis = lignes inégales, plans = nœuds reliés). Missions
+            deviennent des <em>gauges horizontales segmentées</em> 8 pas.
+            Très lisible, ratio info/pixel maximal.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --bg-elev · --bg-rail · --cykan-bg-hover ·
+            --cykan-border (dashed) · --surface-2 · --radius-xs
+          </p>
+        </div>
+        <div class="panel v3">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Phase 02 / Search</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <div class="row"><span class="type">Brief · focal</span><span class="id">#0xA42F</span></div>
+            <h3>Stratégie Q2 2026 — pricing premium</h3>
+            <button class="cta">Approuver</button>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">gmail.search</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">drive.list · 12</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">synthesis.start</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Assets</span><span class="ratio">04 →</span></div>
+              <div class="album">
+                <div class="blueprint brief">
+                  <div class="diagram"><svg width="32" height="20" viewBox="0 0 32 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="13" height="8"/><rect x="18" y="1" width="13" height="8"/><rect x="1" y="11" width="13" height="8"/><rect x="18" y="11" width="13" height="8"/></svg></div>
+                  <div class="body"><div class="name">Stratégie Q2</div><div class="type">Brief</div></div>
+                </div>
+                <div class="blueprint">
+                  <div class="diagram"><svg width="34" height="20" viewBox="0 0 34 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="3" x2="33" y2="3"/><line x1="1" y1="10" x2="26" y2="10"/><line x1="1" y1="17" x2="20" y2="17"/></svg></div>
+                  <div class="body"><div class="name">Audit prix</div><div class="type">Report</div></div>
+                </div>
+                <div class="blueprint">
+                  <div class="diagram"><svg width="34" height="20" viewBox="0 0 34 20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="3" x2="33" y2="3"/><line x1="1" y1="8" x2="22" y2="8"/><line x1="1" y1="13" x2="33" y2="13"/><line x1="1" y1="18" x2="18" y2="18"/></svg></div>
+                  <div class="body"><div class="name">Notes ACME</div><div class="type">Synth</div></div>
+                </div>
+                <div class="blueprint">
+                  <div class="diagram"><svg width="32" height="22" viewBox="0 0 32 22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="3"/><circle cx="27" cy="5" r="3"/><circle cx="16" cy="17" r="3"/><line x1="8" y1="5" x2="24" y2="5"/><line x1="6" y1="8" x2="14" y2="14"/><line x1="26" y1="8" x2="18" y2="14"/></svg></div>
+                  <div class="body"><div class="name">Roadmap S2</div><div class="type">Plan</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="gauge-row running">
+                <div class="top"><span class="name">Veille concurrence</span><span class="meta">70%</span></div>
+                <div class="gauge"><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg"></span><span class="seg"></span></div>
+              </div>
+              <div class="gauge-row armed">
+                <div class="top"><span class="name">Brief matinal</span><span class="meta">armé</span></div>
+                <div class="gauge"><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span><span class="seg on"></span></div>
+              </div>
+              <div class="gauge-row failed">
+                <div class="top"><span class="name">Synthèse Slack</span><span class="meta">failed</span></div>
+                <div class="gauge"><span class="seg on"></span><span class="seg on"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V04 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 04</span>
+          <h2>Stream landscape</h2>
+          <p class="sub">cards 16:9 stack vertical, kicker chip overlay</p>
+          <p>
+            <em>Feed Spotify / Apple News.</em> Focal hero avec cover dégradé
+            cykan + kicker pill blanc. Assets en <em>cards landscape stack</em>
+            (cover gauche 56×40 + body title/type), gradient cover unique
+            par type (cykan brief, gris report, warn synth, success plan).
+            Missions = cards landscape avec <em>ring conic 22px</em>. Le plus
+            "produit moderne".
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --cykan-bg-hover/active · --surface-1 ·
+            --border-soft · --radius-xs/sm · linear-gradient(135deg, type → 0)
+          </p>
+        </div>
+        <div class="panel v4">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <div class="cover"><span class="kicker">Brief</span></div>
+            <div class="body">
+              <h3>Stratégie Q2 2026 — pricing premium</h3>
+              <button class="cta">Approuver</button>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Assets</span><span class="ratio">04 →</span></div>
+              <div class="stack">
+                <div class="tile brief"><div class="cover"></div><div class="body"><div class="name">Stratégie Q2 — pricing</div><div class="type">Brief · 14:32</div></div></div>
+                <div class="tile report"><div class="cover"></div><div class="body"><div class="name">Audit prix concurrents</div><div class="type">Report · 14:18</div></div></div>
+                <div class="tile synthesis"><div class="cover"></div><div class="body"><div class="name">Notes call ACME — 24/04</div><div class="type">Synth · 24/04</div></div></div>
+                <div class="tile plan"><div class="cover"></div><div class="body"><div class="name">Roadmap équipe S2</div><div class="type">Plan · 22/04</div></div></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="mission-stream running"><div class="ring"></div><span class="name">Veille concurrence</span><span class="meta">70%</span></div>
+              <div class="mission-stream armed"><div class="ring"></div><span class="name">Brief matinal</span><span class="meta">7h00</span></div>
+              <div class="mission-stream failed"><div class="ring"></div><span class="name">Synthèse Slack</span><span class="meta">échec 2h</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V05 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 05</span>
+          <h2>Data portrait</h2>
+          <p class="sub">la preview = mini-chart par type</p>
+          <p>
+            Chaque asset porte <em>un graphique miniature qui suggère son
+            contenu</em> : briefs = courbe cykan ascendante (clip-path SVG
+            polygon), reports = bars horizontales gris, synthesis = scatter
+            warn (radial-gradients), plans = stack chart success. Missions
+            = <em>donut % completion</em> 30px avec valeur centrée. Vibe
+            "tableau de bord analytics" mais à hauteur d'un sidebar.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --bg-rail · --cykan · --cykan-bg-hover ·
+            --warn · --success · --text-muted · clip-path polygon
+          </p>
+        </div>
+        <div class="panel v5">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming · 65%</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <div class="row"><span class="type">Brief</span><span class="pct">65%</span></div>
+            <h3>Stratégie Q2 2026 — pricing premium</h3>
+            <button class="cta">Approuver le plan</button>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Assets</span><span class="ratio">04 →</span></div>
+              <div class="album">
+                <div class="data-card brief"><div class="chart"></div><div class="body"><div class="name">Stratégie Q2</div><div class="meta"><span class="t">Brief</span><span>↗ 65%</span></div></div></div>
+                <div class="data-card report">
+                  <div class="chart">
+                    <span class="bar" style="height:30%"></span>
+                    <span class="bar" style="height:55%"></span>
+                    <span class="bar" style="height:42%"></span>
+                    <span class="bar" style="height:70%"></span>
+                    <span class="bar" style="height:35%"></span>
+                    <span class="bar" style="height:60%"></span>
+                    <span class="bar" style="height:50%"></span>
+                    <span class="bar" style="height:75%"></span>
+                  </div>
+                  <div class="body"><div class="name">Audit prix</div><div class="meta"><span class="t">Report</span><span>8 axes</span></div></div>
+                </div>
+                <div class="data-card synthesis"><div class="chart"></div><div class="body"><div class="name">Notes ACME</div><div class="meta"><span class="t">Synth</span><span>·····</span></div></div></div>
+                <div class="data-card plan"><div class="chart"></div><div class="body"><div class="name">Roadmap S2</div><div class="meta"><span class="t">Plan</span><span>4 phases</span></div></div></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="donut-row running"><div class="donut"><span class="pct">70</span></div><span class="name">Veille concurrence</span><span class="meta">12m</span></div>
+              <div class="donut-row armed"><div class="donut"><span class="pct">·</span></div><span class="name">Brief matinal</span><span class="meta">7h00</span></div>
+              <div class="donut-row failed"><div class="donut"><span class="pct">!</span></div><span class="name">Synthèse Slack</span><span class="meta">2h</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V06 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 06</span>
+          <h2>Spine binder · classeur dossier</h2>
+          <p class="sub">une seule colonne, tranches colorées par type</p>
+          <p>
+            <em>Classeur de dossiers / cassettes.</em> Pas de grille — une
+            <em>colonne unique</em> où chaque asset est un dossier avec
+            <em>tranche gauche 6px colorée</em> (cykan brief, gris report,
+            warn synth, success plan). Missions = lignes avec <em>vbar
+            verticale 4×30px</em> qui montre le ratio (running fill 70%,
+            armed full ghosted, failed fill 25% rouge). Lecture verticale
+            naturelle, plus dense que la grille.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --bg-elev · --border-shell · --radius-xs ·
+            --space-2 · linear-gradient pour vbar partials
+          </p>
+        </div>
+        <div class="panel v6">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <div class="head"><span class="type">Brief</span><span class="id">#A42F</span></div>
+            <h3>Stratégie Q2 2026 — pricing premium</h3>
+            <button class="cta">Approuver</button>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Assets</span><span class="ratio">04 →</span></div>
+              <div class="stack">
+                <div class="binder brief"><div class="body"><div class="name">Stratégie Q2 — pricing</div><div class="meta">Brief · 14:32</div></div><span class="pages">12p</span></div>
+                <div class="binder report"><div class="body"><div class="name">Audit prix concurrents</div><div class="meta">Report · 14:18</div></div><span class="pages">28p</span></div>
+                <div class="binder synthesis"><div class="body"><div class="name">Notes call ACME — 24/04</div><div class="meta">Synth · 24/04</div></div><span class="pages">06p</span></div>
+                <div class="binder plan"><div class="body"><div class="name">Roadmap équipe S2</div><div class="meta">Plan · 22/04</div></div><span class="pages">14p</span></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="mission-binder running"><div class="vbar"></div><div class="body"><div class="name">Veille concurrence</div><div class="meta">running</div></div><span class="pct">70%</span></div>
+              <div class="mission-binder armed"><div class="vbar"></div><div class="body"><div class="name">Brief matinal</div><div class="meta">armé · 7h00</div></div><span class="pct">·</span></div>
+              <div class="mission-binder failed"><div class="vbar"></div><div class="body"><div class="name">Synthèse Slack</div><div class="meta">failed</div></div><span class="pct">25%</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V07 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 07</span>
+          <h2>Constellation · graph nodes</h2>
+          <p class="sub">cards rondes, le focal au centre, autres en orbite</p>
+          <p>
+            Direction la plus <em>signature</em>. Les assets ne sont plus en
+            grille mais en <em>nœuds circulaires reliés</em> : focal brief
+            au centre (cercle 76px cykan-bg + glow), 3 assets en orbite
+            (cercles 64px), <em>lignes pointillées SVG</em> qui matérialisent
+            la connexion. Missions = <em>orbes pulsants</em>. Vibe knowledge
+            graph / Obsidian. Risque : densité info plus faible — à valider.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --cykan · --cykan-bg-hover · --bg-elev ·
+            --border-shell · radial-gradient · animation pulse
+          </p>
+        </div>
+        <div class="panel v7">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <span class="type">Brief · focal</span>
+            <h3>Stratégie Q2 2026 — pricing premium</h3>
+            <button class="cta">Approuver</button>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Assets</span><span class="ratio">04 →</span></div>
+              <div class="const-svg-wrap">
+                <svg viewBox="0 0 308 200" preserveAspectRatio="none">
+                  <line x1="154" y1="46" x2="46" y2="124" stroke="rgba(45,212,191,0.45)" stroke-width="1" stroke-dasharray="3 3"/>
+                  <line x1="154" y1="46" x2="262" y2="124" stroke="rgba(45,212,191,0.45)" stroke-width="1" stroke-dasharray="3 3"/>
+                  <line x1="154" y1="46" x2="154" y2="168" stroke="rgba(45,212,191,0.45)" stroke-width="1" stroke-dasharray="3 3"/>
+                </svg>
+                <div class="node brief nb1"><div class="name">Stratégie Q2</div><div class="type">Brief</div></div>
+                <div class="node nb2"><div class="name">Audit prix</div><div class="type">Report</div></div>
+                <div class="node nb3"><div class="name">Notes ACME</div><div class="type">Synth</div></div>
+                <div class="node nb4"><div class="name">Roadmap S2</div><div class="type">Plan</div></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="orb-row running"><div class="orb"></div><span class="name">Veille concurrence</span><span class="meta">70%</span></div>
+              <div class="orb-row armed"><div class="orb"></div><span class="name">Brief matinal</span><span class="meta">7h00</span></div>
+              <div class="orb-row failed"><div class="orb"></div><span class="name">Synthèse Slack</span><span class="meta">échec 2h</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V08 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 08</span>
+          <h2>Mailroom · cartes postales</h2>
+          <p class="sub">timbres, lignes manuscrites, enveloppes pour missions</p>
+          <p>
+            Métaphore <em>courrier reçu</em>. Assets = postcards avec
+            <em>timbre carré pointillé top-right</em> (plein cykan sur briefs,
+            dashed gris sinon), <em>3 lignes de texte simulées</em> (largeurs
+            décroissantes), legend bas. Missions = <em>enveloppes mini</em>
+            avec rabat triangulaire CSS, pastille statut à droite. Plus
+            narrative que les autres — un panneau qui raconte des choses
+            qui sont arrivées.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --bg-elev · --border-shell · --cykan ·
+            --text-ghost (pour stamps dashed) · --space-2/3
+          </p>
+        </div>
+        <div class="panel v8">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <div class="type">Brief · entrant</div>
+            <h3>Stratégie Q2 2026 — pricing premium</h3>
+            <button class="cta">Approuver le plan</button>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Boîte d'arrivée</span><span class="ratio">04 →</span></div>
+              <div class="album">
+                <div class="postcard brief">
+                  <div class="stamp"></div>
+                  <div class="lines"><div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
+                  <div class="name">Stratégie Q2</div>
+                  <div class="type">Brief · 14:32</div>
+                </div>
+                <div class="postcard">
+                  <div class="stamp"></div>
+                  <div class="lines"><div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
+                  <div class="name">Audit prix</div>
+                  <div class="type">Report · 14:18</div>
+                </div>
+                <div class="postcard">
+                  <div class="stamp"></div>
+                  <div class="lines"><div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
+                  <div class="name">Notes ACME</div>
+                  <div class="type">Synth · 24/04</div>
+                </div>
+                <div class="postcard">
+                  <div class="stamp"></div>
+                  <div class="lines"><div class="ln"></div><div class="ln"></div><div class="ln"></div></div>
+                  <div class="name">Roadmap S2</div>
+                  <div class="type">Plan · 22/04</div>
+                </div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="envelope running"><div class="env-icon"></div><div class="body"><div class="name">Veille concurrence</div><div class="meta">running · 70%</div></div><span class="badge">live</span></div>
+              <div class="envelope"><div class="env-icon"></div><div class="body"><div class="name">Brief matinal</div><div class="meta">armé · 7h00</div></div><span class="badge">armé</span></div>
+              <div class="envelope failed"><div class="env-icon"></div><div class="body"><div class="name">Synthèse Slack</div><div class="meta">failed · 2h</div></div><span class="badge">err</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V09 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 09</span>
+          <h2>Magazine éditorial</h2>
+          <p class="sub">hero du focal + articles small en stack</p>
+          <p>
+            Le focal devient une <em>une de magazine</em> : hero gradient cykan
+            80px avec <em>kicker pill noir</em> "BRIEF" et timestamp. Assets =
+            <em>articles stack</em> avec image 36×30 + kicker type + title.
+            Missions = <em>articles avec sparkline 6 runs</em>. Vibe Substack /
+            Stripe Press / NYT. Donne du <em>poids éditorial</em> au focal
+            sans noyer les autres assets.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> --cykan · --cykan-bg-active · --bg-elev ·
+            --border-shell · --radius-sm · linear-gradient(160deg)
+          </p>
+        </div>
+        <div class="panel v9">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <div class="hero">
+              <span class="kicker">Brief</span>
+              <span class="ts">14:32</span>
+            </div>
+            <div class="body">
+              <h3>Stratégie Q2 2026 — pricing premium</h3>
+              <button class="cta">Approuver</button>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Activity</span><span class="sec-label" style="color:var(--text-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Articles récents</span><span class="ratio">04 →</span></div>
+              <div class="stack">
+                <div class="article brief"><div class="pic"></div><div class="body"><div class="kicker">Brief</div><div class="name">Stratégie Q2 — pricing premium</div></div></div>
+                <div class="article report"><div class="pic"></div><div class="body"><div class="kicker">Report</div><div class="name">Audit prix concurrents</div></div></div>
+                <div class="article synthesis"><div class="pic"></div><div class="body"><div class="kicker">Synthesis</div><div class="name">Notes call ACME — 24/04</div></div></div>
+                <div class="article plan"><div class="pic"></div><div class="body"><div class="kicker">Plan</div><div class="name">Roadmap équipe S2</div></div></div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="mission-art running">
+                <div class="left"><div class="row1"><span class="pin"></span><span class="name">Veille concurrence</span></div><span class="meta">running · il y a 12m</span></div>
+                <div class="spark"><span class="b" style="height:35%"></span><span class="b" style="height:55%"></span><span class="b" style="height:45%"></span><span class="b" style="height:75%"></span><span class="b" style="height:65%"></span><span class="b" style="height:90%"></span></div>
+              </div>
+              <div class="mission-art armed">
+                <div class="left"><div class="row1"><span class="pin"></span><span class="name">Brief matinal</span></div><span class="meta">armé · prochain 7h00</span></div>
+                <div class="spark"><span class="b" style="height:55%"></span><span class="b" style="height:55%"></span><span class="b" style="height:55%"></span><span class="b" style="height:55%"></span><span class="b" style="height:55%"></span><span class="b" style="height:55%"></span></div>
+              </div>
+              <div class="mission-art failed">
+                <div class="left"><div class="row1"><span class="pin"></span><span class="name">Synthèse Slack</span></div><span class="meta">failed · il y a 2h</span></div>
+                <div class="spark"><span class="b" style="height:65%"></span><span class="b" style="height:75%"></span><span class="b" style="height:50%"></span><span class="b" style="height:60%"></span><span class="b" style="height:30%"></span><span class="b" style="height:15%"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═════ V10 ═════ -->
+      <section class="variant">
+        <div class="variant-head">
+          <span class="num">VARIANT 10</span>
+          <h2>Atelier carnet</h2>
+          <p class="sub">papier ivoire, serif touch, glyphs vintage</p>
+          <p>
+            La direction <em>la plus à part</em> : on switch le fond du
+            <em>panel uniquement</em> en papier ivoire <code>#F8F5EC</code>,
+            on garde cykan comme accent, et on touche le focal/title en
+            serif (Iowan Old Style). Assets = pages de carnet avec
+            <em>glyph SVG vintage</em> en haut, text serif, séparateurs
+            pointillés. Missions = <em>petites horloges SVG mécaniques</em>
+            (cadran, aiguille, repère). Vibe Moleskine / studio édition.
+            Reste tokenisable : juste un <code>data-theme="paper"</code>
+            à prévoir si on l'adopte.
+          </p>
+          <p class="tokens">
+            <em>tokens :</em> custom paper local (#F8F5EC, #FFFCF1) ·
+            --cykan (préservé) · serif font-family · --space-2/3
+          </p>
+        </div>
+        <div class="panel v10">
+          <div class="halo-slot"><div class="halo-ring"><div class="lbl"><strong>0xA42F</strong>RUN · 65%</div></div></div>
+          <div class="status"><div class="head"><span class="live-dot"></span><span class="label">Streaming</span></div><div class="line">Recherche en cours…</div></div>
+          <div class="focal">
+            <div class="type">— Brief reçu</div>
+            <h3>Stratégie Q2 2026 — pricing premium</h3>
+            <button class="cta">Approuver</button>
+          </div>
+          <div class="scroll">
+            <div class="activity">
+              <div class="activity-head"><span class="sec-label">Carnet · activité</span><span class="sec-label" style="color:var(--ink-ghost)">3</span></div>
+              <div class="act-line running"><span class="pin"></span><span class="lbl">Gmail · recherche</span><span class="dur">2s</span></div>
+              <div class="act-line done"><span class="pin"></span><span class="lbl">Drive · 12 fichiers</span><span class="dur">8s</span></div>
+              <div class="act-line warn"><span class="pin"></span><span class="lbl">Synthèse · démarrée</span><span class="dur">14s</span></div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Pages</span><span class="ratio">04 →</span></div>
+              <div class="album">
+                <div class="page-card brief">
+                  <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 3h11l3 3v15a0 0 0 0 1 0 0H5z"/><polyline points="16 3 16 6 19 6"/><line x1="8" y1="11" x2="15" y2="11"/><line x1="8" y1="15" x2="13" y2="15"/></svg>
+                  <div class="name">Stratégie Q2</div>
+                  <div class="type">Brief</div>
+                </div>
+                <div class="page-card">
+                  <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="3" width="16" height="18" rx="0.5"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="7" y1="16" x2="13" y2="16"/></svg>
+                  <div class="name">Audit prix</div>
+                  <div class="type">Report</div>
+                </div>
+                <div class="page-card">
+                  <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 5q4-3 7 0t7 0"/><path d="M5 12q4-3 7 0t7 0"/><path d="M5 19q4-3 7 0t7 0"/></svg>
+                  <div class="name">Notes ACME</div>
+                  <div class="type">Synth</div>
+                </div>
+                <div class="page-card">
+                  <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <div class="name">Roadmap S2</div>
+                  <div class="type">Plan</div>
+                </div>
+              </div>
+            </div>
+            <div class="section">
+              <div class="section-head"><span class="sec-label">Missions</span><span class="ratio">03 · +</span></div>
+              <div class="clock-row running">
+                <svg class="clock-svg" viewBox="0 0 26 26" fill="none">
+                  <circle cx="13" cy="13" r="11" stroke="rgba(31,27,20,0.18)" stroke-width="1"/>
+                  <circle cx="13" cy="13" r="11" stroke="#2DD4BF" stroke-width="1.5" stroke-dasharray="48 100" stroke-dashoffset="0" transform="rotate(-90 13 13)"/>
+                  <line x1="13" y1="13" x2="13" y2="6" stroke="#2DD4BF" stroke-width="1.4"/>
+                  <line x1="13" y1="13" x2="18" y2="13" stroke="#2DD4BF" stroke-width="1.4"/>
+                  <circle cx="13" cy="13" r="1.5" fill="#2DD4BF"/>
+                </svg>
+                <span class="name">Veille concurrence</span>
+                <span class="meta">70%</span>
+              </div>
+              <div class="clock-row armed">
+                <svg class="clock-svg" viewBox="0 0 26 26" fill="none">
+                  <circle cx="13" cy="13" r="11" stroke="rgba(31,27,20,0.18)" stroke-width="1"/>
+                  <line x1="13" y1="13" x2="13" y2="6" stroke="rgba(31,27,20,0.36)" stroke-width="1.4"/>
+                  <line x1="13" y1="13" x2="18" y2="13" stroke="rgba(31,27,20,0.36)" stroke-width="1.4"/>
+                  <circle cx="13" cy="13" r="1.5" fill="rgba(31,27,20,0.36)"/>
+                </svg>
+                <span class="name">Brief matinal</span>
+                <span class="meta">7h00</span>
+              </div>
+              <div class="clock-row failed">
+                <svg class="clock-svg" viewBox="0 0 26 26" fill="none">
+                  <circle cx="13" cy="13" r="11" stroke="rgba(31,27,20,0.18)" stroke-width="1"/>
+                  <line x1="6" y1="6" x2="20" y2="20" stroke="#EF4444" stroke-width="1.5"/>
+                  <line x1="20" y1="6" x2="6" y2="20" stroke="#EF4444" stroke-width="1.5"/>
+                </svg>
+                <span class="name">Synthèse Slack</span>
+                <span class="meta">échec 2h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <footer class="note">
+      <h3>Lecture rapide · l'axe principal de chaque variante</h3>
+      <p>
+        Toutes partagent le DNA "Album miniatures" (assets graphiques + missions
+        graphiques). Ce qui les distingue, c'est <strong>la métaphore</strong>
+        que chacune porte. Tableau pour scanner :
+      </p>
+
+      <table class="axis-table">
+        <thead>
+          <tr>
+            <th style="width:24%;">Variante</th>
+            <th style="width:22%;">Métaphore asset</th>
+            <th style="width:22%;">Métaphore mission</th>
+            <th style="width:32%;">Sweet spot — quand l'utiliser</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="num">V01</span> Bibliothèque</td><td>Fiche preview lignes texte</td><td>Ring conic</td><td>Migration douce — le <strong>safe pick</strong></td></tr>
+          <tr><td><span class="num">V02</span> Polaroid</td><td>Photo encadrée + légende</td><td>Carte avec tampon rond</td><td>Sentir l'<strong>archive personnelle</strong></td></tr>
+          <tr><td><span class="num">V03</span> Blueprint</td><td>Schéma technique dot-grid</td><td>Gauge horizontale 8 segments</td><td>Quand le panneau doit dire "<strong>outil pro</strong>"</td></tr>
+          <tr><td><span class="num">V04</span> Stream landscape</td><td>Card 16:9 cover gradient</td><td>Card horizontale + ring</td><td>Si tu vises <strong>Linear / Spotify feel</strong></td></tr>
+          <tr><td><span class="num">V05</span> Data portrait</td><td>Mini-chart par type d'asset</td><td>Donut % completion</td><td>Le user veut <strong>lire des chiffres</strong></td></tr>
+          <tr><td><span class="num">V06</span> Spine binder</td><td>Dossier classeur, tranche colorée</td><td>Vbar 4×30 partial fill</td><td>Densité max — beaucoup d'assets, peu de place</td></tr>
+          <tr><td><span class="num">V07</span> Constellation</td><td>Nœud + connexions SVG</td><td>Orbe pulsant</td><td>Tu veux <strong>une signature</strong> visuelle forte</td></tr>
+          <tr><td><span class="num">V08</span> Mailroom</td><td>Postcard timbre + lignes</td><td>Enveloppe + rabat</td><td>Le panneau <strong>raconte une histoire</strong></td></tr>
+          <tr><td><span class="num">V09</span> Magazine</td><td>Article kicker + image stack</td><td>Article + sparkline 6 runs</td><td>Le focal mérite une <strong>une éditoriale</strong></td></tr>
+          <tr><td><span class="num">V10</span> Atelier carnet</td><td>Page de carnet + glyph vintage</td><td>Horloge SVG cadran</td><td>Tu veux casser le <strong>diktat tech / SaaS</strong></td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:32px;">Reco perso · combos</h3>
+      <p>
+        <strong>Si je dois choisir une seule</strong>, c'est V03 (Blueprint
+        technique) ou V09 (Magazine), pour des raisons opposées :
+      </p>
+      <ul>
+        <li>
+          <strong>V03 Blueprint</strong> est la plus défendable — le ratio
+          info/pixel est excellent, les diagrammes SVG remplacent vraiment
+          les glyphs unicode actuels (▦ ≡ ✉) sans perdre de densité, les
+          gauges horizontales sont plus lisibles que des rings sur un
+          sidebar de 340px. C'est <em>le bon compromis personnalité / sobriété</em>.
+        </li>
+        <li>
+          <strong>V09 Magazine</strong> change le contrat : le focal devient
+          le héros du panneau, pas un item de plus. Si l'objet "focal" est
+          vraiment central dans l'usage — un brief à valider, un report à
+          relire — donner à ce slot un traitement éditorial (hero gradient,
+          kicker pill) <em>guide l'oeil</em> et donne une signature OS.
+        </li>
+      </ul>
+      <p>
+        <strong>Combos qui ont du sens :</strong>
+      </p>
+      <ul>
+        <li>
+          <strong>V03 + V09</strong> : Magazine focal en hero, blueprint sur
+          assets/missions. Mariage le plus complet — focal éditorial, corps
+          du panneau lisible-pro.
+        </li>
+        <li>
+          <strong>V01 + V05 (donuts) + V03 (gauges)</strong> : on garde
+          l'album texte simple pour les assets, mais on injecte les donuts
+          missions (V05) ou les gauges (V03) selon ce qu'on veut mettre en
+          avant — % completion ou phase courante.
+        </li>
+        <li>
+          <strong>V07 Constellation en mode focus</strong> : trop signature
+          pour rester en sidebar permanente, mais excellente pour une
+          <em>vue détail asset</em> (route /assets/:id) où on déplie la
+          constellation à 100%.
+        </li>
+      </ul>
+      <p>
+        <strong>Ce qui coince probablement</strong> :
+      </p>
+      <ul>
+        <li><strong>V07 Constellation</strong> en sidebar permanente — ratio info/pixel trop faible, et tu ne peux pas montrer 8+ assets sans casser la mise en page.</li>
+        <li><strong>V10 Atelier</strong> demande un commitment esthétique fort. Si Hearst veut rester "tech moderne", le carnet ivoire détonne. Si tu veux assumer une <em>identité éditoriale</em>, c'est l'option la plus singulière de toutes.</li>
+        <li><strong>V08 Mailroom</strong> est charmante mais les lignes manuscrites simulées peuvent paraître gimmick après la 50e fois — à valider sur usage prolongé.</li>
+      </ul>
+    </footer>
+
+  </div>
+</body>
+</html>

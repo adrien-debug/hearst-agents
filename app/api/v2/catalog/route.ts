@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/get-user-id";
+import { getUserId } from "@/lib/platform/auth/get-user-id";
 import {
   getAllServices,
   getServicesByCategory,

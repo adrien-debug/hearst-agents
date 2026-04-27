@@ -38,7 +38,7 @@ export async function ensureCleanupSchedulerStarted(): Promise<void> {
   }
 
   try {
-    const { requireServerSupabase } = await import("@/lib/supabase-server");
+    const { requireServerSupabase } = await import("@/lib/platform/db/supabase");
     const db = requireServerSupabase();
     const storage = getGlobalStorage();
 

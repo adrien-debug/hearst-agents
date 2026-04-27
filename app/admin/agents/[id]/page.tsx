@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getServerSupabase } from "@/lib/supabase-server";
-import ModelBadge from "../../../components/ModelBadge";
-import ChatWindow from "../../../components/ChatWindow";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
+import ModelBadge from "../../_components/ModelBadge";
+import ChatWindow from "../../_components/ChatWindow";
 
 export const dynamic = "force-dynamic";
 

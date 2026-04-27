@@ -18,7 +18,7 @@ import { globalRunBus } from "@/lib/events/global-bus";
 import { runAiPipeline } from "./ai-pipeline";
 import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, type ExecutionDecision } from "@/lib/capabilities/router";
 
-import { selectToolsForContext } from "@/lib/tools/tool-selector";
+import { selectToolsForContext } from "@/lib/tools/surface-selector";
 import { selectAgentForContext } from "@/lib/agents/agent-selector";
 import type { RunRecord } from "@/lib/engine/runtime/runs/types";
 import { addRun as storeRun } from "@/lib/engine/runtime/runs/store";

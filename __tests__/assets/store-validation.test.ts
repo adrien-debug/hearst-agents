@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ── Mock for storeAsset (orchestrator path) ───────────────────
 const upsertMock = vi.fn().mockReturnValue({ then: () => undefined });
 
-vi.mock("@/lib/supabase-server", () => ({
+vi.mock("@/lib/platform/db/supabase", () => ({
   getServerSupabase: () => ({
     from: () => ({ upsert: upsertMock }),
   }),

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
-import { requireScope } from "@/lib/scope";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
+import { requireScope } from "@/lib/platform/auth/scope";
 import { ok, err, dbErr, parseBody } from "@/lib/domain";
 import { slugify } from "@/lib/domain/slugify";
 import { z } from "zod";

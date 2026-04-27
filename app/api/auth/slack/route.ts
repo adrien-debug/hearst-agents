@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { getUserId } from "@/lib/get-user-id";
+import { getUserId } from "@/lib/platform/auth/get-user-id";
 
 // Helper to resolve dev scope (same logic as lib/scope.ts, but sync)
 function resolveDevScope(): { tenantId: string; workspaceId: string } {

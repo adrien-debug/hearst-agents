@@ -3,7 +3,7 @@ import { getAssetDetail } from "@/lib/engine/runtime/assets/detail";
 import { deleteAssetById } from "@/lib/engine/runtime/assets/adapter";
 import { evictAsset } from "@/lib/engine/runtime/assets/create-asset";
 import { evictAssetById } from "@/lib/assets/types";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

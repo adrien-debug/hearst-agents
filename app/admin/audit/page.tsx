@@ -1,4 +1,4 @@
-import { getServerSupabase } from "@/lib/supabase-server";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 import { getAuditLogs, type AuditLog } from "@/lib/admin/audit";
 
 export const dynamic = "force-dynamic";

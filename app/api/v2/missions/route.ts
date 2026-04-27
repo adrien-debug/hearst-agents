@@ -11,7 +11,7 @@ import {
   getScheduledMissions,
   updateScheduledMission,
 } from "@/lib/engine/runtime/state/adapter";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

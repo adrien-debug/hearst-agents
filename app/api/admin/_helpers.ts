@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireScope, type CanonicalScope } from "@/lib/scope";
-import { getServerSupabase } from "@/lib/supabase-server";
+import { requireScope, type CanonicalScope } from "@/lib/platform/auth/scope";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 import { checkPermission, type PermissionCheck } from "@/lib/admin/permissions";
 import type { SupabaseClient } from "@supabase/supabase-js";
 

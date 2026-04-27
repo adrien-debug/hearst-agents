@@ -15,7 +15,7 @@ import { getAssets as getPersistedAssets } from "@/lib/engine/runtime/assets/ada
 import { getConnectionsByScope } from "@/lib/connectors/control-plane/store";
 import { getAllMissionOps } from "@/lib/engine/runtime/missions/ops-store";
 import { getSchedulerMode } from "@/lib/engine/runtime/missions/scheduler-init";
-import { getServerSupabase } from "@/lib/supabase-server";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 import { manifestAsset, resolveFocalObject } from "./manifestation";
 import { formatOutput, type OutputTier } from "@/lib/engine/runtime/formatting/pipeline";
 import { getPlansForThread, getMissionsForThread } from "@/lib/engine/planner/store";

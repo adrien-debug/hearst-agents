@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getScheduledMissions } from "@/lib/engine/runtime/state/adapter";
 import { getAllMissions as getMemoryMissions } from "@/lib/engine/runtime/missions/store";
 import { getAllMissionOps } from "@/lib/engine/runtime/missions/ops-store";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 import type { MissionOpsRecord } from "@/lib/engine/runtime/missions/ops-types";
 
 export const dynamic = "force-dynamic";

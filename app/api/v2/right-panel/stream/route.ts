@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { buildRightPanelData } from "@/lib/ui/right-panel/aggregate";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

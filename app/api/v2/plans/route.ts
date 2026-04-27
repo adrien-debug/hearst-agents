@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 import { getAllPlans } from "@/lib/engine/planner/store";
 
 export const dynamic = "force-dynamic";

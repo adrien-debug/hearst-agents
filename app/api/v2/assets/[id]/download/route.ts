@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAssetDetail } from "@/lib/engine/runtime/assets/detail";
 import { readAssetFile } from "@/lib/engine/runtime/assets/file-storage";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

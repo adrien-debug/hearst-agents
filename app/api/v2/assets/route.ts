@@ -3,7 +3,7 @@ import { createAsset, storeAsset, getAllAssets } from "@/lib/engine/runtime/asse
 import { saveAsset, getAssets as getPersistedAssets } from "@/lib/engine/runtime/assets/adapter";
 // Note: AssetType est utilisé implicitement via le z.enum dans createAssetSchema
 import { z } from "zod";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

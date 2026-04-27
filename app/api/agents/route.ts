@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { createAgentSchema, ok, err, parseBody, dbErr, slugify } from "@/lib/domain";
 import type { Database } from "@/lib/database.types";
 

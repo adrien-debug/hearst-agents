@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 import { getPersistedRunEvents } from "@/lib/engine/runtime/timeline/persist";
 
 export const dynamic = "force-dynamic";

@@ -1,4 +1,4 @@
-import { getServerSupabase } from "@/lib/supabase-server";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 import { getSystemHealth, type HealthStatus } from "@/lib/admin/health";
 
 export const dynamic = "force-dynamic";

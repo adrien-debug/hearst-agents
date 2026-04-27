@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireScope } from "@/lib/scope";
-import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireScope } from "@/lib/platform/auth/scope";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import {
   getFeatureFlag,
   setFeatureFlag,

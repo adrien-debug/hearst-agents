@@ -2,7 +2,7 @@
  * Admin Runs List Page
  */
 import Link from "next/link";
-import { getServerSupabase } from "@/lib/supabase-server";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 
 export const dynamic = "force-dynamic";
 

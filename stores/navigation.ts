@@ -21,6 +21,7 @@ export interface Thread {
   name: string;
   surface: Surface;
   lastActivity: number;
+  pinned?: boolean;
 }
 
 interface NavigationState {
@@ -44,6 +45,7 @@ interface NavigationState {
   setActiveThread: (id: string | null) => void;
   updateThreadName: (id: string, name: string) => void;
   removeThread: (id: string) => void;
+  togglePinned: (id: string) => void;
 
   // Messages per thread
   messages: Record<string, Message[]>;
@@ -123,12 +125,19 @@ export const useNavigationStore = create<NavigationState>()(
             : state.activeThreadId;
           // Also clean up messages for removed thread
           const { [id]: _, ...remainingMessages } = state.messages;
-          return { 
-            threads: newThreads, 
+          return {
+            threads: newThreads,
             activeThreadId: newActiveId,
-            messages: remainingMessages 
+            messages: remainingMessages
           };
         }),
+
+      togglePinned: (id) =>
+        set((state) => ({
+          threads: state.threads.map((t) =>
+            t.id === id ? { ...t, pinned: !t.pinned } : t
+          ),
+        })),
 
       // Messages per thread
       addMessageToThread: (threadId, message) =>

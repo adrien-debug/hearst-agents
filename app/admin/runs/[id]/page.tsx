@@ -2,7 +2,7 @@
  * Admin Run Detail Page
  */
 import { notFound } from "next/navigation";
-import { getServerSupabase } from "@/lib/supabase-server";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 
 export const dynamic = "force-dynamic";
 

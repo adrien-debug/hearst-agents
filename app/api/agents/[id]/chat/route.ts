@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { getProvider, smartStreamChat } from "@/lib/llm";
 import type { ModelDecision } from "@/lib/llm";
 import { RunTracer } from "@/lib/engine/runtime";

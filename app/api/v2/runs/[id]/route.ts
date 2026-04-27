@@ -3,7 +3,7 @@ import { getRunById as getPersistedRun } from "@/lib/engine/runtime/state/adapte
 import { getRunById } from "@/lib/engine/runtime/runs/store";
 import { normalizeRunEventsToTimeline } from "@/lib/engine/runtime/timeline/normalize";
 import { getPersistedRunEvents } from "@/lib/engine/runtime/timeline/persist";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

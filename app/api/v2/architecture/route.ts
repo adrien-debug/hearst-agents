@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { loadArchitectureMap, invalidateCache } from "@/lib/architecture-map/load";
 import { getArchitectureGraph, getReverseDependencies, getDownstreamDependencies } from "@/lib/architecture-map/graph";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 

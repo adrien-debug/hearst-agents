@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireScope } from "@/lib/scope";
+import { requireScope } from "@/lib/platform/auth/scope";
 import { getMission as getRuntimeMission, disableMission } from "@/lib/engine/runtime/missions/store";
 import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { pauseMission as pausePlannerMission } from "@/lib/engine/planner/mission-engine";

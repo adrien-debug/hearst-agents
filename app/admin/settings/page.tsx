@@ -1,4 +1,4 @@
-import { getServerSupabase } from "@/lib/supabase-server";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 import { getSystemSettings, getFeatureFlags } from "@/lib/admin/settings";
 import type { SystemSetting } from "@/lib/platform/settings/types";
 

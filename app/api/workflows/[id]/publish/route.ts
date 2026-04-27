@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireServerSupabase } from "@/lib/supabase-server";
+import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { ok, err, dbErr, parseBody } from "@/lib/domain";
 import type { Json } from "@/lib/database.types";
 import { z } from "zod";
