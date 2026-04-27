@@ -24,7 +24,7 @@ export function LeftPanel() {
       >
         <span className="inline-flex items-center justify-center w-7 h-7 rounded-sm halo-ring shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/patterns/hcyan.svg" alt="Hearst" className="w-5 h-5 object-contain" />
+          <img src="/hearst-logo.svg" alt="Hearst" className="w-5 h-5 object-contain" />
         </span>
         <span className="t-15 font-light tracking-tight text-[var(--text-soft)]">Hearst</span>
       </button>

@@ -1,16 +1,16 @@
 "use client";
 
 import { useRef, useCallback, useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
-import type { Message, Surface, RightPanelData } from "@/lib/core/types";
+import type { Message, RightPanelData } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { FocalStage } from "./components/FocalStage";
 import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
-import { SourcePicker, type SourceSelection, getDefaultSelection } from "./components/SourcePicker";
 import { Breadcrumb, type Crumb } from "./components/Breadcrumb";
 import { getAllServices } from "@/lib/integrations/catalog";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
@@ -29,23 +29,34 @@ function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_fail
 
 interface ChatControlsProps {
   connectedServices: ServiceWithConnectionStatus[];
-  services: ServiceWithConnectionStatus[];
-  sourceSelection: SourceSelection;
-  surface: Surface;
-  onSourceChange: (selection: SourceSelection) => void;
+  onManage: () => void;
 }
 
-function ChatControls({ services, connectedServices, sourceSelection, surface, onSourceChange }: ChatControlsProps) {
+/**
+ * Active sources chip — read-only display of how many third-party services
+ * are connected. Replaces the previous SourcePicker, whose `selected_providers`
+ * payload was not consumed by the orchestrator (the model decides at runtime
+ * which Composio tool to call). Clicking the chip opens /apps to manage them.
+ */
+function ChatControls({ connectedServices, onManage }: ChatControlsProps) {
+  const count = connectedServices.length;
+  const preview = connectedServices.slice(0, 3).map((s) => s.name).join(", ");
+  const more = count > 3 ? ` +${count - 3}` : "";
+
   return (
-    <div className="px-12 pt-6 pb-0">
-      <SourcePicker
-        availableServices={services}
-        connectedServices={connectedServices}
-        currentSurface={surface}
-        selection={sourceSelection}
-        onChange={onSourceChange}
-        compact
-      />
+    <div className="px-12 pt-6 pb-0 flex items-center justify-end">
+      <button
+        onClick={onManage}
+        className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono tracking-[0.2em] uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan)]/30 transition-all bg-transparent"
+        title={count > 0 ? `Connectés : ${preview}${more}` : "Connecter une source"}
+      >
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${count > 0 ? "bg-[var(--cykan)] halo-dot" : "bg-[var(--text-ghost)]"}`}
+          aria-hidden
+        />
+        <span>{count} source{count !== 1 ? "s" : ""} {count > 0 ? "actives" : ""}</span>
+        <span className="text-[var(--text-ghost)]" aria-hidden>→</span>
+      </button>
     </div>
   );
 }
@@ -57,25 +68,6 @@ const initialServices = (() => {
     connectionStatus: "disconnected" as const,
   }));
 })();
-
-function getProviderForService(serviceId: string): string | null {
-  const map: Record<string, string> = {
-    gmail: "google",
-    calendar: "google",
-    drive: "google",
-    slack: "slack",
-    notion: "notion",
-    github: "github",
-    hubspot: "hubspot",
-    jira: "jira",
-    linear: "linear",
-    stripe: "stripe",
-    figma: "figma",
-    airtable: "airtable",
-    zapier: "zapier",
-  };
-  return map[serviceId] || null;
-}
 
 export default function HomePage() {
   const { data: session } = useSession();
@@ -135,10 +127,8 @@ export default function HomePage() {
   }, [activeThreadId, hydrateThreadState]);
 
   const [services, setServices] = useState<ServiceWithConnectionStatus[]>(initialServices);
-  const [sourceSelection, setSourceSelection] = useState<SourceSelection>(
-    getDefaultSelection(initialServices)
-  );
   const [showFocal, setShowFocal] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     async function loadConnections() {
@@ -148,15 +138,34 @@ export default function HomePage() {
         const data = await res.json();
         if (data.services && Array.isArray(data.services)) {
           setServices(data.services as ServiceWithConnectionStatus[]);
-          const connected = data.services.filter(
-            (s: ServiceWithConnectionStatus) => s.connectionStatus === "connected"
-          );
-          if (connected.length > 0) {
-            setSourceSelection(getDefaultSelection(connected));
-          }
         }
       } catch (_err) {}
     }
+
+    // Detect OAuth return: ?connected=<app> means the user just authorised
+    // a Composio app. Wipe the server-side discovery cache so the next chat
+    // turn sees the new toolkit, then refresh the connections list, then
+    // strip the query param so a refresh doesn't re-trigger the flow.
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const justConnected = params.get("connected");
+      if (justConnected) {
+        void fetch("/api/composio/invalidate-cache", {
+          method: "POST",
+          credentials: "include",
+        })
+          .catch(() => {})
+          .finally(() => {
+            loadConnections();
+            const url = new URL(window.location.href);
+            url.searchParams.delete("connected");
+            window.history.replaceState({}, "", url.toString());
+            toast.success(`${justConnected} connecté`, "Vous pouvez relancer votre demande.");
+          });
+        return;
+      }
+    }
+
     loadConnections();
   }, []);
 
@@ -184,7 +193,11 @@ export default function HomePage() {
 
     if (messages.length === 0) {
       trackAnalytics("first_message_sent", userEmail, { threadId: activeThreadId });
-      updateThreadName(activeThreadId, message.slice(0, 40));
+      const raw = message.slice(0, 50);
+      const name = message.length > 40
+        ? (raw.lastIndexOf(" ") > 15 ? raw.slice(0, raw.lastIndexOf(" ")) : raw.slice(0, 40))
+        : message;
+      updateThreadName(activeThreadId, name);
     }
 
     assistantBufferRef.current = "";
@@ -215,7 +228,6 @@ export default function HomePage() {
           conversation_id: activeThreadId,
           history: recentMessages,
           capability_mode: "general",
-          selected_providers: sourceSelection.providers,
         }),
       });
       if (!res.ok) {
@@ -270,28 +282,7 @@ export default function HomePage() {
         error: errorMsg,
       });
     }
-  }, [surface, activeThreadId, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, updateThreadName, userEmail]);
-
-  const handleConnect = useCallback(async (serviceId: string) => {
-    const provider = getProviderForService(serviceId);
-    if (!provider) return;
-    try {
-      const res = await fetch("/api/composio/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          appName: provider,
-          redirectUri: `${window.location.origin}/apps?connected=${encodeURIComponent(serviceId)}`,
-        }),
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as { ok?: boolean; redirectUrl?: string };
-      if (data.ok && data.redirectUrl) {
-        window.location.href = data.redirectUrl;
-      }
-    } catch (_err) {}
-  }, []);
+  }, [surface, activeThreadId, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, updateThreadName, userEmail]);
 
   const isIdle = coreState === "idle" && messages.length === 0 && !focal;
 
@@ -305,10 +296,7 @@ export default function HomePage() {
 
   const chatControlsProps: ChatControlsProps = {
     connectedServices,
-    services,
-    sourceSelection,
-    surface,
-    onSourceChange: setSourceSelection,
+    onManage: () => router.push("/apps"),
   };
 
   if (isIdle) {
@@ -518,13 +506,14 @@ export default function HomePage() {
             messages={messages}
             compact={!!(focal && showFocal)}
             className={focal && showFocal ? "h-full overflow-y-auto px-10 py-6 flex flex-col" : "h-full overflow-y-auto px-12 py-10 flex flex-col"}
+            onQuickReply={handleSubmit}
           />
         </div>
       )}
       <ChatControls {...chatControlsProps} />
       <ChatInput
         onSubmit={handleSubmit}
-        placeholder={focal ? `CONTINUE_ON_CONTEXT_` : undefined}
+        placeholder={focal ? "Continuer sur ce document…" : undefined}
         connectedServices={connectedServices}
       />
     </div>

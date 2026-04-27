@@ -17,6 +17,14 @@ interface ChatMessagesProps {
   className?: string;
   compact?: boolean;
   source?: string;
+  onQuickReply?: (text: string) => void;
+}
+
+// Marker emitted by write-guard / schedule preview tools.
+// Matching either French "Réponds confirmer" pattern is enough — both write
+// actions and schedule drafts use the same trailer.
+function hasPendingConfirmation(content: string): boolean {
+  return /Réponds\s+\*\*confirmer\*\*/i.test(content);
 }
 
 function tsFromId(id: string): number | null {
@@ -80,11 +88,39 @@ function StreamShimmer() {
   );
 }
 
+function ConfirmActionChips({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="flex gap-2 mt-3">
+      <button
+        onClick={onConfirm}
+        className="halo-on-hover inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-[0.15em] uppercase border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors"
+      >
+        <span>Confirmer</span>
+        <span aria-hidden>✓</span>
+      </button>
+      <button
+        onClick={onCancel}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-[0.15em] uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-colors"
+      >
+        <span>Annuler</span>
+        <span aria-hidden>✕</span>
+      </button>
+    </div>
+  );
+}
+
 export function ChatMessages({
   messages,
   className,
   compact = false,
   source,
+  onQuickReply,
 }: ChatMessagesProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const coreState = useRuntimeStore((s) => s.coreState);
@@ -169,16 +205,20 @@ export function ChatMessages({
                 </div>
               )}
 
-              {!showShimmer && message.content.length > 0 && (
+              {isLastAssistant && !showShimmer && (
                 <>
-                  {isLastAssistant && (
-                    <>
-                      <ChatConnectInline />
-                      <ChatActionReceipts />
-                    </>
-                  )}
-                  <AssistantActions content={message.content} />
+                  <ChatConnectInline />
+                  <ChatActionReceipts />
                 </>
+              )}
+              {isLastAssistant && !showShimmer && hasPendingConfirmation(message.content) && onQuickReply && (
+                <ConfirmActionChips
+                  onConfirm={() => onQuickReply("confirmer")}
+                  onCancel={() => onQuickReply("annuler")}
+                />
+              )}
+              {!showShimmer && message.content.length > 0 && (
+                <AssistantActions content={message.content} />
               )}
             </div>
           );

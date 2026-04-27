@@ -11,13 +11,17 @@
  * (runResearchReport) and raw retrieval (fetchProviderData) flows here.
  */
 
-import { streamText, stepCountIs } from "ai";
-import type { ModelMessage } from "ai";
+import { streamText, stepCountIs, jsonSchema } from "ai";
+import type { ModelMessage, Tool } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import type { RunEngine } from "@/lib/engine/runtime/engine";
 import type { RunEventBus } from "@/lib/events/bus";
 import { getToolsForUser } from "@/lib/connectors/composio/discovery";
 import { toAiTools } from "@/lib/connectors/composio/to-ai-tools";
+import { filterToolsByDomain, isWriteAction } from "@/lib/connectors/composio/write-guard";
+import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
+import { addMission } from "@/lib/engine/runtime/missions/store";
+import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
 import { buildAgentSystemPrompt } from "./system-prompt";
 
 export interface AiPipelineInput {
@@ -27,9 +31,175 @@ export interface AiPipelineInput {
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
   hasGoogle?: boolean;
   surface?: string;
+  /** Resolved capability domain — used to filter Composio tools to relevant apps only. */
+  domain?: string;
+  /** Tenant scope for multi-tenant operations (mission creation etc.). */
+  tenantId?: string;
+  workspaceId?: string;
 }
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
+
+/**
+ * Builds the `request_connection` tool that lets the model surface an inline
+ * OAuth connect card when the user asks for an action on an unconnected app.
+ *
+ * The execute() callback emits `app_connect_required` on the eventBus; the
+ * ChatConnectInline component picks this up and renders the connect card.
+ */
+function buildRequestConnectionTool(
+  engine: RunEngine,
+  eventBus: RunEventBus,
+): Tool<{ app: string; reason: string }, string> {
+  return {
+    description:
+      "Use this ONLY when the user explicitly wants to perform an action through a third-party service (Slack, Notion, GitHub, …) that they have NOT yet connected. Triggers an inline OAuth connect card directly inside the chat — the user authorises once, then re-asks. Do NOT use this for read-only Google data (Gmail/Calendar/Drive) the user already has connected.",
+    inputSchema: jsonSchema<{ app: string; reason: string }>({
+      type: "object",
+      required: ["app", "reason"],
+      properties: {
+        app: {
+          type: "string",
+          description:
+            "The Composio app slug (lowercase). Examples: slack, notion, googlecalendar, github, hubspot, linear, jira.",
+        },
+        reason: {
+          type: "string",
+          description:
+            "One-sentence French message explaining why we need this connection. Shown verbatim above the connect button.",
+        },
+      },
+    }),
+    execute: async (input: { app: string; reason: string }) => {
+      eventBus.emit({
+        type: "app_connect_required",
+        run_id: engine.id,
+        app: input.app.toLowerCase().trim(),
+        reason: input.reason,
+      });
+      // Return value is shown to the model so it knows the event was emitted
+      return `Connection request for "${input.app}" sent to the user.`;
+    },
+  };
+}
+
+/**
+ * Builds the `create_scheduled_mission` tool — recurring automation creation
+ * with a strict preview/confirm cycle.
+ *
+ * Replaces the legacy regex-based detectSchedule() early-exit, which created
+ * cron missions silently from any message containing "tous les matins".
+ *
+ * Step 1: model calls with `_preview: true` (default) → returns a formatted
+ *         draft of the mission, no side-effect.
+ * Step 2: user confirms → model calls with `_preview: false` → mission is
+ *         created in the in-memory store + persisted to Supabase.
+ */
+interface ScheduleArgs {
+  name: string;
+  input: string;
+  schedule: string;
+  label: string;
+  _preview?: boolean;
+}
+
+function buildCreateScheduledMissionTool(
+  engine: RunEngine,
+  eventBus: RunEventBus,
+  ctx: { userId: string; tenantId: string; workspaceId: string },
+): Tool<ScheduleArgs, string> {
+  return {
+    description:
+      "Create a recurring scheduled automation (cron-style mission). " +
+      "Use this ONLY when the user explicitly asks for something to run on a recurring schedule " +
+      "(e.g. 'résume mes emails tous les matins', 'rappelle-moi chaque vendredi à 17h'). " +
+      "Two-step protocol: ALWAYS call first with _preview: true (default) to show the draft, " +
+      "then call with _preview: false ONLY after the user explicitly confirms.",
+    inputSchema: jsonSchema<ScheduleArgs>({
+      type: "object",
+      required: ["name", "input", "schedule", "label"],
+      properties: {
+        name: {
+          type: "string",
+          description: "Short title of the mission (≤ 80 chars). E.g. 'Résumé matinal des emails'.",
+        },
+        input: {
+          type: "string",
+          description:
+            "The user-facing instruction the scheduled run will execute. " +
+            "E.g. 'Résume mes emails non lus de la veille et envoie un récap.' " +
+            "Should be self-contained — the scheduler will re-feed it as a fresh prompt.",
+        },
+        schedule: {
+          type: "string",
+          description:
+            "Cron expression in 5-field format (minute hour day month weekday). " +
+            "Examples: '0 8 * * *' (daily 8am), '0 17 * * 5' (Fridays 5pm), '0 9 * * 1' (Mondays 9am).",
+        },
+        label: {
+          type: "string",
+          description:
+            "Human-readable French summary of the schedule. E.g. 'Tous les jours à 8h', 'Chaque vendredi à 17h'.",
+        },
+        _preview: {
+          type: "boolean",
+          description:
+            "Set to true (default) to show a draft. Set to false ONLY after the user confirms.",
+          default: true,
+        },
+      },
+    }),
+    execute: async (args: ScheduleArgs) => {
+      const isPreview = args._preview !== false;
+
+      if (isPreview) {
+        return [
+          `📋 Draft · Mission planifiée`,
+          ``,
+          `**Nom** : ${args.name}`,
+          `**Récurrence** : ${args.label}`,
+          `**Cron** : \`${args.schedule}\``,
+          `**Tâche** : ${args.input}`,
+          ``,
+          `↩ Réponds **confirmer** pour créer la mission, ou **annuler** pour abandonner.`,
+        ].join("\n");
+      }
+
+      // Execute: create + persist mission
+      const mission = createScheduledMission({
+        name: args.name.slice(0, 80),
+        input: args.input,
+        schedule: args.schedule,
+        tenantId: ctx.tenantId,
+        workspaceId: ctx.workspaceId,
+        userId: ctx.userId,
+      });
+      addMission(mission);
+
+      void persistMission({
+        id: mission.id,
+        tenantId: ctx.tenantId,
+        workspaceId: ctx.workspaceId,
+        userId: mission.userId,
+        name: mission.name,
+        input: mission.input,
+        schedule: mission.schedule,
+        enabled: mission.enabled,
+        createdAt: mission.createdAt,
+      });
+
+      eventBus.emit({
+        type: "scheduled_mission_created",
+        run_id: engine.id,
+        mission_id: mission.id,
+        name: mission.name,
+        schedule: args.schedule,
+      });
+
+      return `Mission "${mission.name}" créée. Récurrence : ${args.label}.`;
+    },
+  };
+}
 
 export async function runAiPipeline(
   engine: RunEngine,
@@ -44,19 +214,30 @@ export async function runAiPipeline(
     console.error("[AiPipeline] Composio discovery failed:", err);
   }
 
+  // Filter to domain-relevant tools only — prevents token explosion and
+  // improves model decision quality (fewer irrelevant options).
+  const filteredTools = filterToolsByDomain(composioTools, input.domain ?? "general");
+
   eventBus.emit({
     type: "orchestrator_log",
     run_id: engine.id,
-    message: `AI pipeline: ${composioTools.length} Composio tool(s) available`,
+    message: `AI pipeline: ${filteredTools.length}/${composioTools.length} Composio tool(s) (domain: ${input.domain ?? "general"})`,
   });
 
-  // ── 2. Build tool map (real execute() callbacks) ────────────
-  const aiTools = toAiTools(composioTools, input.userId);
-  const hasTools = Object.keys(aiTools).length > 0;
+  // ── 2. Build tool map: Composio tools + request_connection + create_scheduled_mission ──
+  const aiTools = {
+    ...toAiTools(filteredTools, input.userId),
+    request_connection: buildRequestConnectionTool(engine, eventBus),
+    create_scheduled_mission: buildCreateScheduledMissionTool(engine, eventBus, {
+      userId: input.userId,
+      tenantId: input.tenantId ?? "dev-tenant",
+      workspaceId: input.workspaceId ?? "dev-workspace",
+    }),
+  };
 
   // ── 3. Build system prompt ──────────────────────────────────
   const systemPrompt = buildAgentSystemPrompt({
-    composioTools,
+    composioTools: filteredTools,
     hasGoogle: input.hasGoogle ?? false,
     userDataContext: input.userDataContext,
     surface: input.surface,
@@ -76,14 +257,21 @@ export async function runAiPipeline(
       model: anthropic("claude-sonnet-4-6"),
       system: systemPrompt,
       messages,
-      tools: hasTools ? aiTools : undefined,
+      tools: aiTools,
       // Allow up to 10 tool-call → result cycles before forcing a stop
       stopWhen: stepCountIs(10),
       temperature: 0.3,
     });
 
-    // Track active tool calls for event emission pairing
+    // Track active tool calls for event emission pairing.
+    // We also skip event emission for preview-mode write calls so that the
+    // receipts UI doesn't show a fake "Sent" badge for an action that never
+    // actually ran.
     const toolCallNames = new Map<string, string>();
+    const skippedToolCalls = new Set<string>();
+
+    const isInternalMetaTool = (name: string): boolean =>
+      name === "request_connection" || name === "create_scheduled_mission";
 
     for await (const event of result.fullStream) {
       switch (event.type) {
@@ -95,8 +283,22 @@ export async function runAiPipeline(
           });
           break;
 
-        case "tool-call":
+        case "tool-call": {
           toolCallNames.set(event.toolCallId, event.toolName);
+
+          // Detect preview-mode write calls: write tool + _preview not explicitly false.
+          // Both meta tools (request_connection, create_scheduled_mission) and
+          // preview write calls are silenced from the chip stream.
+          const args = (event.input ?? {}) as Record<string, unknown>;
+          const isPreviewWrite =
+            isWriteAction(event.toolName) && args._preview !== false;
+          const skip = isInternalMetaTool(event.toolName) || isPreviewWrite;
+
+          if (skip) {
+            skippedToolCalls.add(event.toolCallId);
+            break;
+          }
+
           eventBus.emit({
             type: "tool_call_started",
             run_id: engine.id,
@@ -111,16 +313,20 @@ export async function runAiPipeline(
             message: `Tool call: ${event.toolName}`,
           });
           break;
+        }
 
-        case "tool-result":
+        case "tool-result": {
+          if (skippedToolCalls.has(event.toolCallId)) break;
+          const name = toolCallNames.get(event.toolCallId);
           eventBus.emit({
             type: "tool_call_completed",
             run_id: engine.id,
             step_id: event.toolCallId,
-            tool: toolCallNames.get(event.toolCallId) ?? event.toolCallId,
+            tool: name ?? event.toolCallId,
             providerId: "composio",
           });
           break;
+        }
 
         case "error":
           console.error("[AiPipeline] stream error:", event.error);

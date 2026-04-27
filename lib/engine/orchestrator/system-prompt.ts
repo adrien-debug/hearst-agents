@@ -278,8 +278,16 @@ ${composioSection}${toolListSection}${dataSection}
 
 RÈGLES :
 1. Utilise les outils disponibles pour agir directement — ne décris pas ce que tu ferais, fais-le.
-2. Pour toute action d'écriture (envoyer, créer, modifier, supprimer) : présente un draft et demande confirmation avant d'exécuter.
-3. Si l'utilisateur demande une action via une app non connectée, explique comment la connecter.
-4. Réponds en français sauf si la demande est en anglais.
-5. Sois concis dans les réponses conversationnelles, complet dans les livrables.`;
+2. ACTIONS D'ÉCRITURE (envoyer, créer, modifier, supprimer) — protocole obligatoire en 2 étapes :
+   a. Appelle l'outil avec \`_preview: true\` (valeur par défaut) → l'outil retourne un draft formaté sans exécuter.
+   b. Présente ce draft à l'utilisateur et attends une confirmation explicite ("confirmer", "oui", "yes", "go", "envoie", "fais-le").
+   c. Seulement après confirmation : rappelle l'outil avec \`_preview: false\` pour exécuter réellement.
+   JAMAIS appeler un outil d'écriture avec \`_preview: false\` sans confirmation explicite de l'utilisateur.
+3. Si l'utilisateur demande une action via une app NON connectée (ex. Slack, Notion, GitHub, Jira…) : appelle IMMÉDIATEMENT l'outil \`request_connection\` avec le slug de l'app et une phrase expliquant pourquoi. Ne tente PAS de répondre par texte — utilise le tool.
+4. AUTOMATISATIONS RÉCURRENTES : si l'utilisateur demande qu'une tâche soit exécutée automatiquement à intervalle régulier ("tous les matins", "chaque vendredi à 17h", "every day at 9am"…), appelle \`create_scheduled_mission\` avec le même protocole en 2 étapes :
+   a. \`_preview: true\` → retourne un draft de la mission.
+   b. Après confirmation utilisateur → \`_preview: false\` → la mission est créée.
+   N'appelle PAS ce tool pour une tâche unique ou ponctuelle.
+5. Réponds en français sauf si la demande est en anglais.
+6. Sois concis dans les réponses conversationnelles, complet dans les livrables.`;
 }

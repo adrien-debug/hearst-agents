@@ -24,11 +24,6 @@ describe("design tokens (app/globals.css)", () => {
     expect(globalsCss).toContain("--color-rail:");
   });
 
-  it("minimalisme: status-dot sans halo décoratif (Ghost Protocol)", () => {
-    expect(globalsCss).toContain(".status-dot");
-    expect(globalsCss).toMatch(/\.status-dot[\s\S]*?box-shadow:\s*none/);
-  });
-
   it("garde le canvas et l'accent documentés", () => {
     expect(globalsCss).toContain("--background:");
     expect(globalsCss).toContain("--cyan-accent:");

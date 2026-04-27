@@ -17,8 +17,6 @@ import { LogPersister } from "@/lib/events/consumers/log-persister";
 import { runAiPipeline } from "./ai-pipeline";
 import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, shouldInjectUserData, type ExecutionDecision } from "@/lib/capabilities/router";
 
-import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
-import { addMission } from "@/lib/engine/runtime/missions/store";
 import { selectToolsForContext } from "@/lib/tools/tool-selector";
 import { selectAgentForContext } from "@/lib/agents/agent-selector";
 import type { RunRecord } from "@/lib/engine/runtime/runs/types";
@@ -27,7 +25,6 @@ import { getTokens } from "@/lib/platform/auth/tokens";
 import {
   saveRun as persistRun,
   updateRun as persistUpdateRun,
-  saveScheduledMission as persistMission,
 } from "@/lib/engine/runtime/state/adapter";
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import { assertTenantScope } from "@/lib/multi-tenant/guards";
@@ -137,18 +134,33 @@ async function resolveHasGoogle(userId: string): Promise<boolean> {
   }
 }
 
-// ── Mode handlers ────────────────────────────────────────────
+// ── Mode handler ─────────────────────────────────────────────
+//
+// Every execution mode (direct_answer, tool_call, workflow, custom_agent,
+// managed_agent) flows through the same AI pipeline. The retrieval mode
+// short-circuit fetches live Google data and synthesises it deterministically
+// — the streamText path doesn't run in that case.
 
-async function handleDirectAnswer(
+async function handleAiPipeline(
   engine: RunEngine,
   eventBus: RunEventBus,
   input: OrchestrateInput,
-  _scope: TenantScope,
+  scope: TenantScope,
 ): Promise<void> {
+  if (input._retrievalMode) {
+    eventBus.emit({
+      type: "orchestrator_log",
+      run_id: engine.id,
+      message: `Retrieval mode: ${input._retrievalMode} — using provider data path`,
+    });
+    await runSyntheticRetrieval(engine, input, scope, input._retrievalMode);
+    return;
+  }
+
   eventBus.emit({
     type: "orchestrator_log",
     run_id: engine.id,
-    message: "AI pipeline: direct response…",
+    message: "AI pipeline: agentic execution…",
   });
 
   await runAiPipeline(engine, eventBus, {
@@ -158,44 +170,9 @@ async function handleDirectAnswer(
     conversationHistory: input.conversationHistory,
     hasGoogle: await resolveHasGoogle(input.userId),
     surface: input.surface,
-  });
-}
-
-
-
-async function handlePlanAndExecute(
-  engine: RunEngine,
-  input: OrchestrateInput,
-  scope: TenantScope,
-): Promise<void> {
-  // If a retrieval mode is set, the request needs real provider data (Google
-  // Drive/Gmail/Calendar). Route through the synthetic retrieval path which
-  // fetches live data and then synthesises it.
-  if (input._retrievalMode) {
-    engine.events.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Retrieval mode: ${input._retrievalMode} — using provider data path`,
-    });
-    await runSyntheticRetrieval(engine, input, scope, input._retrievalMode);
-    return;
-  }
-
-  // All other workflow/action requests go through the AI pipeline which
-  // uses streamText with real Composio tool callbacks.
-  engine.events.emit({
-    type: "orchestrator_log",
-    run_id: engine.id,
-    message: "AI pipeline: agentic execution…",
-  });
-
-  await runAiPipeline(engine, engine.events, {
-    userId: input.userId,
-    message: input.message,
-    userDataContext: input._userDataContext,
-    conversationHistory: input.conversationHistory,
-    hasGoogle: await resolveHasGoogle(input.userId),
-    surface: input.surface,
+    domain: input._capabilityDomain,
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
   });
 }
 
@@ -358,37 +335,12 @@ async function runSyntheticRetrieval(
   }
 }
 
-// ── Schedule detection ───────────────────────────────────────
-
-const SCHEDULE_PATTERNS: Array<{ pattern: RegExp; schedule: string; label: string }> = [
-  { pattern: /tous les matins|every\s+morning|chaque matin/, schedule: "0 8 * * *", label: "Tous les jours à 8h" },
-  { pattern: /tous les soirs|every\s+evening|chaque soir/, schedule: "0 18 * * *", label: "Tous les jours à 18h" },
-  { pattern: /every\s+day|tous les jours|chaque jour|daily/, schedule: "0 8 * * *", label: "Tous les jours à 8h" },
-  { pattern: /à\s+(\d{1,2})h/, schedule: "", label: "" },
-];
-
-function detectSchedule(message: string): { schedule: string; label: string } | null {
-  const lower = message.toLowerCase();
-
-  for (const p of SCHEDULE_PATTERNS) {
-    if (!p.schedule) {
-      const match = lower.match(p.pattern);
-      if (match) {
-        const hour = parseInt(match[1], 10);
-        if (hour >= 0 && hour <= 23) {
-          return { schedule: `0 ${hour} * * *`, label: `Tous les jours à ${hour}h` };
-        }
-      }
-      continue;
-    }
-    if (p.pattern.test(lower)) {
-      return { schedule: p.schedule, label: p.label };
-    }
-  }
-  return null;
-}
-
 // ── Main pipeline ────────────────────────────────────────────
+//
+// Mission scheduling is handled by the `create_scheduled_mission` tool in the
+// AI pipeline (preview + confirm). The legacy regex-based early-exit is gone
+// — it created cron missions silently from any message containing "tous les
+// matins", which produced unwanted automations.
 
 async function runPipeline(
   db: SupabaseClient,
@@ -412,64 +364,13 @@ async function runPipeline(
     }, scope);
 
     if (!input.conversationHistory || input.conversationHistory.length === 0) {
-      const recentMemory = getRecentMessages(input.conversationId, 10);
+      const recentMemory = await getRecentMessages(input.conversationId, 10);
       // Exclude the message we just appended (last one)
       const prior = recentMemory.slice(0, -1);
       if (prior.length > 0) {
         input.conversationHistory = memoryToConversationHistory(prior);
       }
     }
-  }
-
-  // ── 0. Schedule detection (early exit) ─────────────────────
-  const scheduleMatch = detectSchedule(input.message);
-  if (scheduleMatch && !input.missionId) {
-    const mission = createScheduledMission({
-      name: input.message.slice(0, 80),
-      input: input.message,
-      schedule: scheduleMatch.schedule,
-      tenantId: scope.tenantId,
-      workspaceId: scope.workspaceId,
-      userId: input.userId,
-    });
-    addMission(mission);
-
-    void persistMission({
-      id: mission.id,
-      tenantId: scope.tenantId,
-      workspaceId: scope.workspaceId,
-      userId: mission.userId,
-      name: mission.name,
-      input: mission.input,
-      schedule: mission.schedule,
-      enabled: mission.enabled,
-      createdAt: mission.createdAt,
-    });
-
-    const placeholderRunId = `schedule-${mission.id}`;
-
-    eventBus.emit({
-      type: "scheduled_mission_created",
-      run_id: placeholderRunId,
-      mission_id: mission.id,
-      name: mission.name,
-      schedule: scheduleMatch.schedule,
-    });
-
-    eventBus.emit({
-      type: "text_delta",
-      run_id: placeholderRunId,
-      delta: `Mission planifiée : "${mission.name}"\nRécurrence : ${scheduleMatch.label}\nElle s'exécutera automatiquement.`,
-    });
-
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: placeholderRunId,
-      message: `Scheduled mission created: ${mission.name} (${scheduleMatch.schedule})`,
-    });
-
-    console.log(`[Orchestrator] Scheduled mission created: ${mission.id} — ${scheduleMatch.schedule}`);
-    return;
   }
 
   // ── 1. Capability-first routing ─────────────────────────────
@@ -814,20 +715,9 @@ async function runPipeline(
       return;
     }
 
-    // After the legacy backend cleanup, every execution mode runs through
-    // the same plan-and-execute path. Custom/managed agent paths are fed
-    // by the planner LLM that now sees Composio-discovered actions.
-    switch (decision.mode) {
-      case "direct_answer":
-        await handleDirectAnswer(engine, eventBus, input, scope);
-        break;
-      case "tool_call":
-      case "workflow":
-      case "custom_agent":
-      case "managed_agent":
-        await handlePlanAndExecute(engine, input, scope);
-        break;
-    }
+    // Every execution mode flows through the same AI pipeline. The retrieval
+    // mode short-circuit (real Google data fetch) is handled inside.
+    await handleAiPipeline(engine, eventBus, input, scope);
   } finally {
     storeAssistantMemory();
   }
