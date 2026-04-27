@@ -145,6 +145,10 @@ export interface RunCost {
   llm_input_tokens: number;
   llm_output_tokens: number;
   tool_calls: number;
+  /** Anthropic prompt-cache tokens written this run (billed at ~125% of input rate). */
+  cache_creation_input_tokens?: number;
+  /** Anthropic prompt-cache tokens read this run (billed at ~10% of input rate). */
+  cache_read_input_tokens?: number;
 }
 
 export interface UsageMetrics {
@@ -152,6 +156,8 @@ export interface UsageMetrics {
   output_tokens: number;
   tool_calls: number;
   latency_ms: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
 }
 
 // ── Preflight ────────────────────────────────────────────

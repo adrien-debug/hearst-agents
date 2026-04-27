@@ -22,7 +22,22 @@ export interface ToolDefinition {
   };
 }
 
-export type ToolHandler = (args: Record<string, unknown>) => Promise<string>;
+/**
+ * Execution context passed to handlers that need to act on behalf of a user
+ * (e.g. tools that hit a third-party API via Composio with a user-scoped
+ * entityId). Optional so existing pure-compute tools (calculate, format_text)
+ * stay parameter-free.
+ */
+export interface ToolExecutionContext {
+  userId?: string;
+  runId?: string;
+  tenantId?: string;
+}
+
+export type ToolHandler = (
+  args: Record<string, unknown>,
+  context?: ToolExecutionContext,
+) => Promise<string>;
 
 export interface RegisteredTool {
   definition: ToolDefinition;
@@ -90,23 +105,49 @@ export function toOpenAIToolsFiltered(allowedNames: string[]): OpenAI.Beta.Assis
 
 /**
  * Exécute un outil par nom.
+ *
+ * Resolution order:
+ * 1. Static registry (curated tools registered via `registerTool()`).
+ * 2. Composio dynamic dispatch — when the static lookup misses AND the
+ *    request has a userId, the name is forwarded to Composio as an action
+ *    slug. This is how all 1500+ Composio actions become callable without
+ *    having to register each one statically.
  */
 export async function executeTool(
   name: string,
   args: Record<string, unknown>,
+  context?: ToolExecutionContext,
 ): Promise<string> {
   const tool = tools.get(name);
-  if (!tool) {
-    throw new Error(`Tool not found: ${name}`);
+  if (tool) {
+    try {
+      return await tool.handler(args, context);
+    } catch (error) {
+      return JSON.stringify({
+        error: error instanceof Error ? error.message : "Tool execution failed",
+      });
+    }
   }
 
-  try {
-    return await tool.handler(args);
-  } catch (error) {
-    return JSON.stringify({
-      error: error instanceof Error ? error.message : "Tool execution failed",
-    });
+  if (context?.userId) {
+    const { executeComposioAction, isComposioConfigured } = await import(
+      "@/lib/connectors/composio"
+    );
+    if (isComposioConfigured()) {
+      const result = await executeComposioAction({
+        action: name,
+        entityId: context.userId,
+        params: args,
+      });
+      return JSON.stringify(
+        result.ok
+          ? { ok: true, data: result.data }
+          : { ok: false, error: result.error, errorCode: result.errorCode },
+      );
+    }
   }
+
+  throw new Error(`Tool not found: ${name}`);
 }
 
 // ── Built-in Tools ──────────────────────────────────────────
@@ -298,6 +339,83 @@ registerTool(
       results: mockResults,
       simulated: true,
     });
+  },
+);
+
+/**
+ * Tool: gmail_send_email
+ * Sends a real email via Gmail (using Composio under the hood).
+ * Requires COMPOSIO_API_KEY + composio-core installed + the user's Gmail
+ * account connected in Composio. The user identity comes from the
+ * execution context, not from the LLM — the model can never spoof "from".
+ */
+registerTool(
+  "gmail_send_email",
+  {
+    type: "function",
+    function: {
+      name: "gmail_send_email",
+      description:
+        "Send an email via the connected user's Gmail account. Use this when the user explicitly asks you to send / forward / reply to an email. Always confirm critical fields (recipient, subject) with the user before calling.",
+      parameters: {
+        type: "object",
+        properties: {
+          to: {
+            type: "string",
+            description: "Recipient email address (a single address).",
+          },
+          subject: {
+            type: "string",
+            description: "Subject line. Required and must be non-empty.",
+          },
+          body: {
+            type: "string",
+            description: "Email body. Plain text by default; set is_html=true to send HTML.",
+          },
+          cc: {
+            type: "array",
+            items: { type: "string" },
+            description: "Optional list of CC addresses.",
+          },
+          bcc: {
+            type: "array",
+            items: { type: "string" },
+            description: "Optional list of BCC addresses.",
+          },
+          is_html: {
+            type: "boolean",
+            description: "If true, body is interpreted as HTML.",
+          },
+        },
+        required: ["to", "subject", "body"],
+      },
+    },
+  },
+  async (args, context) => {
+    const userId = context?.userId;
+    if (!userId) {
+      return JSON.stringify({
+        ok: false,
+        error: "gmail_send_email requires an authenticated user context.",
+      });
+    }
+
+    const { gmailSendEmail } = await import("@/lib/connectors/composio");
+    const result = await gmailSendEmail({
+      userId,
+      to: String(args.to ?? ""),
+      subject: String(args.subject ?? ""),
+      body: String(args.body ?? ""),
+      cc: Array.isArray(args.cc) ? (args.cc as string[]) : undefined,
+      bcc: Array.isArray(args.bcc) ? (args.bcc as string[]) : undefined,
+      isHtml: Boolean(args.is_html),
+    });
+
+    return JSON.stringify(
+      result.ok
+        ? { ok: true, messageId: result.messageId, sentAt: Date.now() }
+        : { ok: false, error: result.error, errorCode: result.errorCode },
+    );
   },
 );
 

@@ -119,6 +119,55 @@ export function scopeRequiresProviders(scope: CapabilityScope): boolean {
   return scope.providers.length > 0 && scope.domain !== "general" && scope.domain !== "research";
 }
 
+/**
+ * Whether to inject Google user data (calendar/gmail/drive) into the LLM prompt.
+ *
+ * Default-on for user-data-likely domains so that vague-but-personal questions
+ * like "qu'est-ce que j'ai aujourd'hui ?" or "résume ma journée" still get
+ * the real data injected — the keyword detector misses these.
+ *
+ * Skipped for domains that use other providers (finance/Stripe, developer/GitHub)
+ * or no provider at all (research/web). Also skipped for trivial chit-chat to
+ * avoid wasted Gmail/Calendar API round-trips on "merci" / "ok".
+ *
+ * Caller is still responsible for verifying that Google tokens exist before
+ * actually fetching — this only decides intent.
+ */
+export function shouldInjectUserData(scope: CapabilityScope, message: string): boolean {
+  if (
+    scope.needsProviderData.calendar ||
+    scope.needsProviderData.gmail ||
+    scope.needsProviderData.drive
+  ) {
+    return true;
+  }
+
+  if (scope.domain === "communication" || scope.domain === "productivity") {
+    return true;
+  }
+
+  if (
+    scope.domain === "research" ||
+    scope.domain === "finance" ||
+    scope.domain === "developer" ||
+    scope.domain === "design" ||
+    scope.domain === "crm"
+  ) {
+    return false;
+  }
+
+  if (scope.domain === "general") {
+    // Vague-but-personal asks ("résume ma journée") are typically 3+ words.
+    // Pure chit-chat ("merci", "Bonjour") is 1–2 words. The 3-word threshold
+    // is permissive: a few false positives ("ok parfait merci") cost one
+    // extra Gmail/Calendar RTT, which is acceptable.
+    const wordCount = message.split(/\s+/).filter(Boolean).length;
+    return wordCount > 2;
+  }
+
+  return false;
+}
+
 // ── Execution Mode Resolution ───────────────────────────────
 
 export type ExecutionMode = "direct_answer" | "tool_call" | "workflow" | "custom_agent" | "managed_agent";

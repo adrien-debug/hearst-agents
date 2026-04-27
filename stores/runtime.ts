@@ -23,6 +23,12 @@ interface RuntimeState {
   coreState: CoreState;
   flowLabel: string | null;
   currentRunId: string | null;
+  /**
+   * Most recent run id seen, even after the run finished. Drives UI surfaces
+   * that need to outlive `currentRunId` (action receipts, last-trace links,
+   * post-run cost chips).
+   */
+  lastRunId: string | null;
   startRun: (runId: string) => void;
   completeRun: () => void;
   failRun: (error: string) => void;
@@ -37,6 +43,7 @@ export const useRuntimeStore = create<RuntimeState>()(
     coreState: "idle",
     flowLabel: null,
     currentRunId: null,
+    lastRunId: null,
 
     setConnected: (connected) => set({ connected }),
 
@@ -71,6 +78,7 @@ export const useRuntimeStore = create<RuntimeState>()(
           set({
             coreState: "streaming",
             currentRunId: eventRunId || currentRunId,
+            lastRunId: eventRunId || currentRunId,
             flowLabel: event.flow_label as string || null,
           });
           break;
@@ -149,7 +157,8 @@ export const useRuntimeStore = create<RuntimeState>()(
 
     clearEvents: () => set({ events: [] }),
 
-    startRun: (runId) => set({ coreState: "streaming", currentRunId: runId, connected: true }),
+    startRun: (runId) =>
+      set({ coreState: "streaming", currentRunId: runId, lastRunId: runId, connected: true }),
     completeRun: () => set({ coreState: "idle", currentRunId: null, flowLabel: null }),
     failRun: (error) => set({ coreState: "error", flowLabel: error }),
   }))

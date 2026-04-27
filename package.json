@@ -30,6 +30,7 @@
     "@nangohq/node": "^0.70.1",
     "@slack/web-api": "^7.15.1",
     "@supabase/supabase-js": "^2.103.3",
+    "composio-core": "^0.5.39",
     "exceljs": "^4.4.0",
     "googleapis": "^171.4.0",
     "ioredis": "^5.10.1",

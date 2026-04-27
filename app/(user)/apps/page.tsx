@@ -7,6 +7,7 @@ import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { AppCard } from "../components/AppCard";
 import { AppDrawer } from "../components/AppDrawer";
 import { AppCategorySection } from "../components/AppCategorySection";
+import { ComposioConnectionsCard } from "../components/ComposioConnectionsCard";
 import { getAllServices, getAllBundles } from "@/lib/integrations/catalog";
 import { getNangoServices } from "@/lib/integrations/catalog.generated";
 import { enrichWithConnectionStatus } from "@/lib/integrations/catalog";

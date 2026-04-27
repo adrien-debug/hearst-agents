@@ -441,55 +441,112 @@ export default function HomePage() {
     ];
 
     return (
-      <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden bg-gradient-to-b from-[var(--mat-050)] via-[var(--bg-soft)] to-[var(--mat-050)]">
-        <div className="absolute inset-0 bg-hero-aura" />
+      <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden cinematic-stage panel-enter">
 
         <div className="flex-1 flex flex-col items-center justify-center px-12 relative z-10">
-          <div className="w-full max-w-[640px] space-y-16">
-            {/* Wordmark — refined typographic identity with cyan halo */}
-            <div className="flex flex-col items-center gap-6 relative">
-              <span className="t-9 font-mono tracking-[0.3em] text-[var(--cykan)] uppercase halo-cyan-sm">
-                Ghost Protocol
+          <div className="w-full max-w-[720px] space-y-14">
+            {/* Brand block — soft Connect-style identity */}
+            <div className="flex flex-col items-center gap-5 relative">
+              <span
+                className="chip-pill"
+                style={{
+                  fontFamily: "var(--font-plex), ui-monospace, monospace",
+                  color: "var(--cykan)",
+                  borderColor: "rgba(45, 212, 191, 0.25)",
+                  background: "rgba(45, 212, 191, 0.06)",
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] halo-dot" />
+                Hearst Connect
               </span>
-              <h1 className="t-30 font-extralight tracking-[0.3em] text-[var(--text)] uppercase select-none halo-cyan-lg">
+              <h1
+                className="text-5xl md:text-6xl select-none halo-cyan-md"
+                style={{
+                  fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
+                  fontWeight: 700,
+                  letterSpacing: "-0.04em",
+                  lineHeight: 1.05,
+                  color: "var(--text)",
+                }}
+              >
                 Hearst
               </h1>
-              <div className="h-px w-32 halo-rule" />
             </div>
 
-            {/* Contextual greeting */}
+            {/* Contextual greeting — softer Inter typography */}
             <div className="text-center space-y-3">
-              <p className="t-24 font-light text-[var(--text)] tracking-tight">
+              <p
+                className="text-2xl md:t-28"
+                style={{
+                  fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
+                  fontWeight: 500,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1.2,
+                  color: "var(--text)",
+                }}
+              >
                 {greeting}{firstName ? <span className="halo-cyan-sm">, {firstName}</span> : ""}
               </p>
-              <p className="t-11 font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase flex items-center justify-center gap-3">
-                <span className="inline-block w-1 h-1 rounded-full bg-[var(--cykan)] halo-dot" />
-                {connectedCount > 0
-                  ? `${connectedCount} source${connectedCount > 1 ? "s" : ""} connectée${connectedCount > 1 ? "s" : ""} · prêt à exécuter`
-                  : "Aucune source · connecte-en une pour commencer"}
+              <p className="flex items-center justify-center gap-2">
+                <span className="chip-pill" style={{ borderColor: "var(--border-default)", color: "var(--text-muted)" }}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${connectedCount > 0 ? "bg-[var(--cykan)] halo-dot" : "bg-[var(--text-ghost)]"}`} />
+                  {connectedCount > 0
+                    ? `${connectedCount} source${connectedCount > 1 ? "s" : ""} · prêt`
+                    : "Aucune source connectée"}
+                </span>
               </p>
             </div>
 
-            {/* Editorial numbered suggestion cards */}
-            <div className="grid grid-cols-2 gap-px bg-[var(--surface-2)] border border-[var(--surface-2)]">
+            {/* Suggestion cards — Connect card-depth with hover lift */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {suggestions.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => handleSubmit(s.title)}
-                  className="halo-card group relative flex items-start gap-5 p-6 text-left bg-[var(--mat-050)] hover:bg-[var(--surface-1)] overflow-hidden"
+                  className="card-depth group relative flex items-start gap-4 text-left overflow-hidden cursor-pointer"
+                  style={{ padding: "var(--space-6) var(--space-6)" }}
                 >
-                  <span className="halo-on-group-hover t-11 font-mono tracking-[0.2em] text-[var(--cykan)] opacity-50 group-hover:opacity-100 transition-all pt-1">
+                  <span
+                    className="halo-on-group-hover pt-0.5 shrink-0"
+                    style={{
+                      fontFamily: "var(--font-plex), ui-monospace, monospace",
+                      fontSize: "10px",
+                      letterSpacing: "var(--tracking-wide)",
+                      color: "var(--cykan)",
+                      opacity: 0.55,
+                      textTransform: "uppercase",
+                    }}
+                  >
                     {s.id}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="t-13 font-medium tracking-tight text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors">
+                    <p
+                      style={{
+                        fontFamily: "var(--font-inter), ui-sans-serif, sans-serif",
+                        fontWeight: 600,
+                        fontSize: "15px",
+                        letterSpacing: "-0.01em",
+                        color: "var(--text)",
+                      }}
+                    >
                       {s.title}
                     </p>
-                    <p className="t-10 font-mono tracking-[0.2em] text-[var(--text-faint)] mt-1.5 uppercase">
+                    <p
+                      className="mt-1.5"
+                      style={{
+                        fontFamily: "var(--font-inter), ui-sans-serif, sans-serif",
+                        fontWeight: 400,
+                        fontSize: "13px",
+                        color: "var(--text-muted)",
+                      }}
+                    >
                       {s.subtitle}
                     </p>
                   </div>
-                  <span className="halo-on-group-hover absolute top-6 right-6 t-11 font-mono text-[var(--text-ghost)] group-hover:text-[var(--cykan)] group-hover:translate-x-1 transition-all duration-300">
+                  <span
+                    className="halo-on-group-hover absolute right-5 top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:translate-x-1"
+                    style={{ color: "var(--text-ghost)", fontSize: "16px" }}
+                  >
                     →
                   </span>
                 </button>
@@ -498,10 +555,26 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Telemetry footer — Ghost Protocol signature */}
-        <div className="px-12 pb-2 flex items-center justify-between t-9 font-mono tracking-[0.3em] text-[var(--text-ghost)] uppercase relative z-10 select-none">
-          <span>Hearst_OS · v0.4</span>
-          <span className="flex items-center gap-3">
+        {/* Footer — pill chips Connect style */}
+        <div className="px-12 pb-3 flex items-center justify-between relative z-10 select-none">
+          <span
+            className="chip-pill"
+            style={{
+              fontFamily: "var(--font-plex), ui-monospace, monospace",
+              borderColor: "var(--border-subtle)",
+              color: "var(--text-ghost)",
+            }}
+          >
+            Hearst_OS · v0.4
+          </span>
+          <span
+            className="chip-pill"
+            style={{
+              fontFamily: "var(--font-plex), ui-monospace, monospace",
+              borderColor: "var(--border-subtle)",
+              color: "var(--text-ghost)",
+            }}
+          >
             <span className="w-1 h-1 rounded-full bg-[var(--cykan)] halo-dot" />
             {connectedCount} sources · ready
           </span>

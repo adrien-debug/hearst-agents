@@ -61,14 +61,33 @@ export async function planFromIntent(
     },
   ];
 
+  // ── Prompt caching ─────────────────────────────────────────
+  // The orchestrator system prompt (~1500 tokens) and tool definitions (~500
+  // tokens) are static across every planning call. Mark them as cacheable so
+  // Anthropic returns them as a 5-min ephemeral cache hit on follow-up turns
+  // — typical savings: 70-90% on input cost, ~30% on time-to-first-token.
+  const cachedSystem: Anthropic.MessageCreateParams["system"] = [
+    {
+      type: "text",
+      text: ORCHESTRATOR_SYSTEM_PROMPT,
+      cache_control: { type: "ephemeral" },
+    },
+  ];
+
+  // Cache_control on the last tool caches the entire tools array.
+  const cachedTools = [
+    PLAN_TOOL,
+    { ...RESPOND_TOOL, cache_control: { type: "ephemeral" } },
+  ] as unknown as Anthropic.Tool[];
+
   let response: Anthropic.Message;
   try {
     response = await client.messages.create({
       model: ORCHESTRATOR_MODEL,
       max_tokens: 4096,
-      system: ORCHESTRATOR_SYSTEM_PROMPT,
+      system: cachedSystem,
       messages,
-      tools: [PLAN_TOOL, RESPOND_TOOL] as unknown as Anthropic.Tool[],
+      tools: cachedTools,
       tool_choice: { type: "any" },
     });
   } catch (err) {
@@ -82,6 +101,8 @@ export async function planFromIntent(
     output_tokens: response.usage.output_tokens,
     tool_calls: 0,
     latency_ms: 0,
+    cache_creation_input_tokens: response.usage.cache_creation_input_tokens ?? undefined,
+    cache_read_input_tokens: response.usage.cache_read_input_tokens ?? undefined,
   });
 
   const toolUse = response.content.find(

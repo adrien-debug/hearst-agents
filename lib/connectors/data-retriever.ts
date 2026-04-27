@@ -50,6 +50,14 @@ export interface UserDataContext {
   formattedForLLM: string;
 }
 
+/** Per-provider progress callback. The retriever invokes `start` before each
+ * provider read and `end` after, regardless of success/failure — the caller
+ * uses this to surface live tool-call events to the UI. */
+export interface RetrieveProgress {
+  start: (provider: "calendar" | "gmail" | "drive") => void;
+  end: (provider: "calendar" | "gmail" | "drive", ok: boolean) => void;
+}
+
 // ── Main Service ────────────────────────────────────────────
 
 export class DataRetriever {
@@ -60,9 +68,11 @@ export class DataRetriever {
   }
 
   /**
-   * Récupère toutes les données disponibles pour l'utilisateur
+   * Récupère toutes les données disponibles pour l'utilisateur.
+   * The optional `progress` callback receives start/end events per provider
+   * so the caller can surface live tool-call events in the run timeline.
    */
-  async retrieveAll(): Promise<UserDataContext> {
+  async retrieveAll(progress?: RetrieveProgress): Promise<UserDataContext> {
     const context: UserDataContext = {
       hasCalendarAccess: false,
       hasGmailAccess: false,
@@ -81,27 +91,36 @@ export class DataRetriever {
       context.hasDriveAccess = true;
 
       // Récupérer les événements du calendrier pour aujourd'hui
+      progress?.start("calendar");
       try {
         context.events = await this.getTodayEvents();
+        progress?.end("calendar", true);
       } catch (err) {
         console.error("[DataRetriever] Failed to fetch calendar:", err);
         context.hasCalendarAccess = false;
+        progress?.end("calendar", false);
       }
 
       // Récupérer les emails récents
+      progress?.start("gmail");
       try {
         context.emails = await this.getRecentEmails(10);
+        progress?.end("gmail", true);
       } catch (err) {
         console.error("[DataRetriever] Failed to fetch emails:", err);
         context.hasGmailAccess = false;
+        progress?.end("gmail", false);
       }
 
       // Récupérer les fichiers récents
+      progress?.start("drive");
       try {
         context.files = await this.getRecentFiles(5);
+        progress?.end("drive", true);
       } catch (err) {
         console.error("[DataRetriever] Failed to fetch drive files:", err);
         context.hasDriveAccess = false;
+        progress?.end("drive", false);
       }
     }
 
@@ -111,78 +130,57 @@ export class DataRetriever {
     return context;
   }
 
-/**
-   * Récupère les événements du calendrier pour aujourd'hui
-   */
+  // Inner methods let errors propagate so retrieveAll can flip
+  // hasXxxAccess and emit progress.end(_, false) for the UI.
+
   private async getTodayEvents(): Promise<CalendarEvent[]> {
-    try {
-      const { getTodayEvents } = await import("./packs/productivity-pack/services/calendar");
-      const events = await getTodayEvents(this.userId, 10);
-      
-      return events.map(e => ({
-        id: e.id,
-        title: e.title,
-        startTime: e.startTime,
-        endTime: e.endTime,
-        description: e.description,
-        location: e.location,
-        attendees: e.attendees,
-        isAllDay: e.isAllDay,
-      }));
-    } catch (err) {
-      console.error("[DataRetriever] Calendar fetch failed:", err);
-      return [];
-    }
+    const { getTodayEvents } = await import("./packs/productivity-pack/services/calendar");
+    const events = await getTodayEvents(this.userId, 10);
+
+    return events.map(e => ({
+      id: e.id,
+      title: e.title,
+      startTime: e.startTime,
+      endTime: e.endTime,
+      description: e.description,
+      location: e.location,
+      attendees: e.attendees,
+      isAllDay: e.isAllDay,
+    }));
   }
 
-  /**
-   * Récupère les emails récents
-   */
   private async getRecentEmails(limit: number): Promise<EmailMessage[]> {
-    try {
-      const { gmailConnector } = await import("./packs/productivity-pack/services/gmail");
-      const result = await gmailConnector.getEmails(this.userId, limit);
-      
-      if (!result.data) return [];
-      
-      return result.data.map(e => ({
-        id: e.id,
-        subject: e.subject,
-        from: e.sender,
-        to: [], // Non disponible dans l'interface simplifiée
-        date: e.date,
-        snippet: e.snippet,
-        isUnread: !e.isRead,
-        hasAttachments: false, // Non détecté dans l'interface simplifiée
-      }));
-    } catch (err) {
-      console.error("[DataRetriever] Gmail fetch failed:", err);
-      return [];
-    }
+    const { gmailConnector } = await import("./packs/productivity-pack/services/gmail");
+    const result = await gmailConnector.getEmails(this.userId, limit);
+
+    if (!result.data) return [];
+
+    return result.data.map(e => ({
+      id: e.id,
+      subject: e.subject,
+      from: e.sender,
+      to: [],
+      date: e.date,
+      snippet: e.snippet,
+      isUnread: !e.isRead,
+      hasAttachments: false,
+    }));
   }
 
-  /**
-   * Récupère les fichiers récents
-   */
   private async getRecentFiles(limit: number): Promise<DriveFile[]> {
-    try {
-      const { getRecentFiles } = await import("./packs/productivity-pack/services/drive");
-      const result = await getRecentFiles(this.userId, limit);
-      
-      if (!result.data) return [];
-      
-      return result.data.map(f => ({
-        id: f.id,
-        name: f.name,
-        mimeType: f.mimeType,
-        modifiedTime: f.modifiedTime,
-        size: f.size,
-        webViewLink: f.webViewLink,
-      }));
-    } catch (err) {
-      console.error("[DataRetriever] Drive fetch failed:", err);
-      return [];
-    }
+    const { getRecentFiles } = await import("./packs/productivity-pack/services/drive");
+    const result = await getRecentFiles(this.userId, limit);
+
+    if (!result.data) return [];
+
+    return result.data.map(f => ({
+      id: f.id,
+      name: f.name,
+      mimeType: f.mimeType,
+      modifiedTime: f.modifiedTime,
+      size: f.size,
+      webViewLink: f.webViewLink,
+    }));
   }
 
   /**
@@ -267,9 +265,12 @@ export class DataRetriever {
 
 // ── Helper Functions ──────────────────────────────────────
 
-export async function retrieveUserDataContext(userId: string): Promise<UserDataContext> {
+export async function retrieveUserDataContext(
+  userId: string,
+  progress?: RetrieveProgress,
+): Promise<UserDataContext> {
   const retriever = new DataRetriever(userId);
-  return retriever.retrieveAll();
+  return retriever.retrieveAll(progress);
 }
 
 /**

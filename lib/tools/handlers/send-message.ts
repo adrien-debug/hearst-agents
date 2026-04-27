@@ -5,10 +5,12 @@
  * The user never knows which provider is used — the Halo shows it subtly.
  *
  * Supported providers: slack, whatsapp, google (gmail)
- * Each provider handler is a stub for the actual API integration.
+ * Gmail goes through Composio when configured; the others remain stubs
+ * pending their own Composio actions or native SDK wiring.
  */
 
 import type { ProviderId } from "@/lib/providers/types";
+import { gmailSendEmail, isComposioConfigured } from "@/lib/connectors/composio";
 
 // ── Types ───────────────────────────────────────────────────
 
@@ -18,6 +20,10 @@ export interface SendMessageInput {
   providerId: ProviderId;
   channelRef: string;
   threadId?: string;
+  /** Required by Gmail; ignored by Slack / WhatsApp. */
+  subject?: string;
+  /** Composio entityId — typically the user_id. Required for live Gmail send. */
+  userId?: string;
 }
 
 export type DeliveryStatus = "sent" | "delivered" | "read" | "failed";
@@ -64,14 +70,46 @@ async function sendViaWhatsApp(input: SendMessageInput): Promise<SendMessageResu
 }
 
 async function sendViaGmail(input: SendMessageInput): Promise<SendMessageResult> {
-  console.log(`[SendMessage:Gmail] Sending to ${input.channelRef}: ${input.content.slice(0, 50)}…`);
+  // When Composio is configured, the action is real. Otherwise we keep the
+  // historical stub so dev environments without a key don't blow up.
+  if (isComposioConfigured() && input.userId) {
+    const result = await gmailSendEmail({
+      userId: input.userId,
+      to: input.channelRef,
+      subject: input.subject ?? "(no subject)",
+      body: input.content,
+    });
 
-  // TODO: integrate with Gmail API (messages.send)
+    if (!result.ok) {
+      return {
+        success: false,
+        providerId: "google",
+        channelRef: input.channelRef,
+        messageId: null,
+        deliveryStatus: "failed",
+        sentAt: Date.now(),
+        error: result.error,
+      };
+    }
+
+    return {
+      success: true,
+      providerId: "google",
+      channelRef: input.channelRef,
+      messageId: result.messageId ?? `gmail_${Date.now()}`,
+      deliveryStatus: "sent",
+      sentAt: Date.now(),
+    };
+  }
+
+  console.log(
+    `[SendMessage:Gmail] Stub mode — set COMPOSIO_API_KEY + install composio-core for real delivery. To: ${input.channelRef}`,
+  );
   return {
     success: true,
     providerId: "google",
     channelRef: input.channelRef,
-    messageId: `gmail_${Date.now()}`,
+    messageId: `gmail_stub_${Date.now()}`,
     deliveryStatus: "sent",
     sentAt: Date.now(),
   };

@@ -57,6 +57,113 @@
   --z-chat: 40;
   --z-overlay: 50;
   --z-modal: 60;
+
+  /* ─── Hearst Connect — Spacing scale (4px base) ─────────────── */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 120px;
+  --space-32: 160px;
+
+  /* ─── Hearst Connect — Radius scale ─────────────────────────── */
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-pill: 9999px;
+  --radius-full: 9999px;
+
+  /* ─── Hearst Connect — Shadow stack (Cinematic depth) ───────── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.40);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.50);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.60);
+
+  /* High-end card depth stack (3-layer) */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.30),
+                 0 12px 24px rgba(0, 0, 0, 0.20),
+                 0 20px 40px -10px rgba(0, 0, 0, 0.40);
+  --shadow-card-hover: 0 4px 8px rgba(0, 0, 0, 0.35),
+                      0 20px 40px rgba(45, 212, 191, 0.12),
+                      0 30px 60px -12px rgba(0, 0, 0, 0.50);
+
+  /* Signature: offset cyan shadow used on focused inputs */
+  --shadow-input-focus: 4px 4px 0px var(--cyan-accent);
+
+  /* ─── Hearst Connect — Typography weights ───────────────────── */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-black: 800;
+
+  /* ─── Hearst Connect — Letter spacing scale ─────────────────── */
+  --tracking-tight: -0.02em;
+  --tracking-hairline: 0.02em;
+  --tracking-subtle: 0.03em;
+  --tracking-caption: 0.08em;
+  --tracking-wide: 0.12em;
+  --tracking-stretch: 0.18em;
+  --tracking-display: 0.20em;
+  --tracking-banner: 0.25em;
+  --tracking-marquee: 0.30em;
+  --tracking-brand: 0.32em;
+
+  /* ─── Hearst Connect — Line heights ─────────────────────────── */
+  --leading-tight: 1.05;
+  --leading-snug: 1.2;
+  --leading-base: 1.45;
+  --leading-relaxed: 1.6;
+  --leading-loose: 1.8;
+
+  /* ─── Hearst Connect — Motion ───────────────────────────────── */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-soft: cubic-bezier(0.2, 1, 0.2, 1);
+
+  /* ─── Hearst Connect — Border strata ────────────────────────── */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-focus: rgba(255, 255, 255, 0.40);
+
+  /* ─── Hearst Connect — Status colors ────────────────────────── */
+  --color-success: #2DC558;
+  --color-success-bg: rgba(45, 197, 88, 0.10);
+  --color-success-border: rgba(45, 197, 88, 0.20);
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.10);
+  --color-warning-border: rgba(245, 158, 11, 0.20);
+  --color-error: #EF4444;
+  --color-error-bg: rgba(239, 68, 68, 0.10);
+  --color-error-border: rgba(239, 68, 68, 0.20);
+  --color-info: #3B82F6;
+  --color-info-bg: rgba(59, 130, 246, 0.10);
+  --color-info-border: rgba(59, 130, 246, 0.20);
+
+  /* ─── Hearst Connect — Cinematic stage gradients (cyan) ─────── */
+  --stage-shoulder: radial-gradient(ellipse 160% 100% at 50% -30%, rgba(255, 255, 255, 0.045) 0%, transparent 55%);
+  --stage-veil: linear-gradient(180deg, rgba(255, 255, 255, 0.008) 0%, transparent 55%);
+  --stage-carbon: radial-gradient(ellipse at 25% 15%, rgba(15, 15, 15, 0.6) 0%, transparent 45%),
+                  radial-gradient(ellipse at 75% 85%, rgba(8, 8, 8, 0.5) 0%, transparent 40%),
+                  radial-gradient(ellipse at 50% 50%, rgba(5, 5, 5, 0.8) 0%, transparent 70%);
+  --stage-halo-cyan: radial-gradient(ellipse 160% 100% at 50% -30%, rgba(45, 212, 191, 0.06) 0%, transparent 55%);
+  --stage-dot-grid: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.025) 1px, transparent 0);
 }
 
 @theme inline {
@@ -80,8 +187,34 @@
   --color-money: var(--money);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
+
+  /* Hearst Connect — semantic colors */
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+  --color-info: var(--color-info);
+
+  /* Hearst Connect — borders */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+
+  /* Hearst Connect — radius (rounded-xs, rounded-pill, ...) */
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-pill: var(--radius-pill);
+
+  /* Hearst Connect — spacing scale extension */
+  --spacing-50: 200px;
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-inter: var(--font-inter);
+  --font-plex: var(--font-plex-mono);
 }
 
 *,
@@ -316,4 +449,244 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(45, 212, 191, 0.3);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * HEARST CONNECT — Cinematic layer (additive, opt-in classes)
+ * ─────────────────────────────────────────────────────────────
+ * These utilities are non-destructive: they only apply when you
+ * add the class. They don't alter existing component rendering.
+ * ───────────────────────────────────────────────────────────── */
+
+/* "Cinematic stage" — premium dark stage backdrop (Connect screenshot)
+ * Pure black page with subtle dark vignette around edges.
+ * Sections are differentiated by tone shift (black-on-black), NOT
+ * by gradients on the page itself. Keep this almost invisible.
+ */
+.cinematic-stage {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(45, 212, 191, 0.025) 0%, transparent 60%),
+    radial-gradient(ellipse at 25% 15%, rgba(20, 20, 20, 0.6) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 85%, rgba(15, 15, 15, 0.5) 0%, transparent 45%);
+}
+
+/* Subtle dot grid pattern (32px) — overlay on dark surfaces */
+.dot-grid {
+  background-image: var(--stage-dot-grid);
+  background-size: 32px 32px;
+}
+
+/* ─── Section-elevated — Connect screenshot signature ─────────
+ * Black-on-black raised section: card sits 1 tone lighter than
+ * page bg, near-invisible border, big rounded, soft inset top
+ * highlight + soft outer drop. This is how the Connect dashboard
+ * delineates sections WITHOUT visible borders.
+ * ───────────────────────────────────────────────────────────── */
+.section-elevated {
+  background-color: var(--mat-300);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 32px -8px rgba(0, 0, 0, 0.5);
+}
+
+/* Section-elevated nested — for cards inside a section-elevated */
+.section-elevated-inner {
+  background-color: var(--mat-gray);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Card depth stack (3-layer shadow + cyan halo on hover) */
+.card-depth {
+  background-color: var(--mat-300);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  transition: transform var(--duration-slow) var(--ease-out-soft),
+              box-shadow var(--duration-slow) var(--ease-out-soft),
+              border-color var(--duration-base) var(--ease-standard),
+              background-color var(--duration-base) var(--ease-standard);
+}
+
+.card-depth:hover {
+  transform: translateY(-3px);
+  background-color: var(--mat-gray);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 20px 40px -12px rgba(45, 212, 191, 0.10),
+    0 30px 60px -16px rgba(0, 0, 0, 0.6);
+}
+
+/* Signature input focus — offset cyan shadow (non-blurred) */
+.input-focus-signature:focus,
+.input-focus-signature:focus-visible {
+  outline: none;
+  border-color: var(--cyan-accent);
+  box-shadow: var(--shadow-input-focus);
+}
+
+/* Pill chip (rounded-full chip with subtle border) */
+.chip-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* Connect-style accent button — cyan fill, black text, pill */
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--cyan-accent);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caption);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-standard),
+              transform var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.btn-accent:hover {
+  opacity: 0.9;
+  box-shadow: 0 4px 16px rgba(45, 212, 191, 0.25);
+}
+
+.btn-accent:active {
+  transform: scale(0.98);
+}
+
+/* Connect-style ghost button */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-strong);
+}
+
+/* Connect range input styling (cyan thumb) */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: var(--mat-300);
+  border-radius: var(--radius-pill);
+  height: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cyan-accent);
+  margin-top: -5px;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.20);
+}
+
+input[type="range"]::-moz-range-track {
+  background: var(--mat-300);
+  border-radius: var(--radius-pill);
+  height: 4px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cyan-accent);
+  border: none;
+  cursor: pointer;
+}
+
+input[type="range"]:focus-visible {
+  outline: none;
+}
+
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.30);
+}
+
+/* Click ripple effect — Connect signature */
+.click-ripple {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cyan-accent);
+  opacity: 0.5;
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+  z-index: 9999;
+  animation: ripple-out 0.5s ease-out forwards;
+}
+
+@keyframes ripple-out {
+  to {
+    transform: translate(-50%, -50%) scale(4);
+    opacity: 0;
+  }
+}
+
+/* Panel enter animation (Connect cinematic entrance) */
+.panel-enter {
+  animation: panel-enter var(--duration-slow) var(--ease-spring) both;
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(16px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }

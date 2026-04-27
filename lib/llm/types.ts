@@ -2,6 +2,13 @@ export interface ChatMessage {
   role: "system" | "user" | "assistant" | "tool";
   content: string;
   tool_calls?: unknown[];
+  /**
+   * Anthropic-style cache breakpoint. When set on a message, that message —
+   * along with everything before it in the prompt — becomes a cacheable prefix
+   * (5-min ephemeral TTL). Caching only kicks in past Anthropic's minimum
+   * (1024 tokens for Sonnet/Haiku, 2048 for Opus). Ignored by other providers.
+   */
+  cache_control?: { type: "ephemeral" };
 }
 
 export interface ChatRequest {
@@ -21,6 +28,10 @@ export interface ChatResponse {
   tokens_out: number;
   cost_usd: number;
   latency_ms: number;
+  /** Anthropic-only: tokens written to cache this turn (~125% of input rate). */
+  cache_creation_tokens?: number;
+  /** Anthropic-only: tokens read from cache this turn (~10% of input rate). */
+  cache_read_tokens?: number;
 }
 
 export interface StreamChunk {

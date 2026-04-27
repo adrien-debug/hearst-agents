@@ -2,6 +2,8 @@
 
 import { useRef, useEffect, useState } from "react";
 import { useRuntimeStore } from "@/stores/runtime";
+import { ChatToolStream } from "./ChatToolStream";
+import { ChatActionReceipts } from "./ChatActionReceipts";
 
 export interface Message {
   id: string;
@@ -155,7 +157,10 @@ export function ChatMessages({
               </div>
 
               {showShimmer ? (
-                <StreamShimmer />
+                <>
+                  <ChatToolStream />
+                  <StreamShimmer />
+                </>
               ) : (
                 <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text-soft)] font-normal whitespace-pre-wrap`}>
                   {message.content}
@@ -164,7 +169,10 @@ export function ChatMessages({
               )}
 
               {!showShimmer && message.content.length > 0 && (
-                <AssistantActions content={message.content} />
+                <>
+                  {isLastAssistant && <ChatActionReceipts />}
+                  <AssistantActions content={message.content} />
+                </>
               )}
             </div>
           );
@@ -181,6 +189,7 @@ export function ChatMessages({
               <span className="text-[var(--text-faint)]">en cours…</span>
               <span className="opacity-60">]</span>
             </div>
+            <ChatToolStream />
             <StreamShimmer />
           </div>
         )}

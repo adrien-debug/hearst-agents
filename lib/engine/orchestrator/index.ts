@@ -16,7 +16,7 @@ import { SSEAdapter } from "@/lib/events/consumers/sse-adapter";
 import { LogPersister } from "@/lib/events/consumers/log-persister";
 import { planFromIntent } from "./planner";
 import { executePlan } from "./executor";
-import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, type ExecutionDecision } from "@/lib/capabilities/router";
+import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, shouldInjectUserData, type ExecutionDecision } from "@/lib/capabilities/router";
 import { createAsset } from "@/lib/engine/runtime/assets/create-asset";
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
@@ -75,6 +75,8 @@ interface OrchestrateInput {
   _allowedTools?: string[];
   /** Injected by runPipeline — resolved retrieval mode from capability scope */
   _retrievalMode?: string | null;
+  /** Caller opt-out for user-data injection (cron missions, tests). */
+  skipUserData?: boolean;
 }
 
 const DEV_TENANT_ID = "dev-tenant";
@@ -488,12 +490,30 @@ async function handleManagedAgentExecution(
     // _userDataContext is injected by runPipeline before dispatch
     const userDataContext = input._userDataContext ?? "";
 
+    // Discover Composio actions available to *this* user (multi-tenant by
+    // entityId). Failures are non-fatal — the agent still works without
+    // Composio, just with the static toolset.
+    let discoveredActions: string[] = [];
+    try {
+      const { getToolsForUser } = await import("@/lib/connectors/composio");
+      const tools = await getToolsForUser(scope.userId);
+      discoveredActions = tools.map((t) => t.name);
+    } catch (err) {
+      console.error("[Orchestrator] Composio discovery failed:", err);
+    }
+
     const manager = SessionManager.getInstance();
     session = await manager.createWithBackend(selectedBackend, {
       userId: scope.userId,
       tenantId: scope.tenantId,
       workspaceId: scope.workspaceId,
-      systemPrompt: buildSystemPromptForAgent(input.surface, connectedProviders, userDataContext, input._allowedTools),
+      systemPrompt: buildSystemPromptForAgent(
+        input.surface,
+        connectedProviders,
+        userDataContext,
+        input._allowedTools,
+        discoveredActions,
+      ),
       streaming: true,
       initialHistory: input.conversationHistory,
     });
@@ -623,10 +643,11 @@ async function handleManagedAgentExecution(
 
 // Helper to build system prompt with provider context
 function buildSystemPromptForAgent(
-  surface?: string, 
+  surface?: string,
   connectedProviders?: string[],
   userDataContext?: string,
   allowedTools?: string[],
+  discoveredActions?: string[],
 ): string {
   let prompt = `You are Hearst AI, a helpful assistant. You help users with their tasks across various tools and services.`;
 
@@ -657,6 +678,36 @@ function buildSystemPromptForAgent(
 
   if (allowedTools && allowedTools.length > 0) {
     prompt += `\n\n🔧 ALLOWED TOOLS FOR THIS REQUEST: ${allowedTools.join(", ")}. Do NOT attempt to use tools outside this list.`;
+  }
+
+  // Composio-discovered actions: dynamically resolved per user from the
+  // apps they've connected. The list can be long (50–100 actions per app)
+  // so we only show the names — the LLM has the full schema via tool-use
+  // when it's wired into the actual API call.
+  if (discoveredActions && discoveredActions.length > 0) {
+    const preview = discoveredActions.slice(0, 80);
+    const overflow = discoveredActions.length > 80 ? ` (+${discoveredActions.length - 80} more)` : "";
+    prompt += `\n\n🔌 USER-CONNECTED ACTIONS (Composio, ${discoveredActions.length} total${overflow}):\n${preview.join(", ")}\nThese are real actions on the user's accounts. Treat any name containing "send", "create", "update", "delete", "post", or "reply" as a write op (see write-tool rule below).`;
+  }
+
+  // Write-op safety: any tool that mutates the user's third-party accounts
+  // (sends, creates, deletes) must be confirmed by the user BEFORE the call.
+  // The pattern is "draft-first then confirm" — never call a write tool on
+  // first user turn unless the user explicitly authorized it (e.g. "send it
+  // now", "do it", "go ahead").
+  const isWriteToolName = (n: string): boolean =>
+    n === "gmail_send_email" ||
+    /(SEND|CREATE|UPDATE|DELETE|POST|REPLY|FORWARD|REVOKE|REFUND)/i.test(n);
+  const writeToolPool = [...(allowedTools ?? []), ...(discoveredActions ?? [])];
+  const requestedWriteTools = writeToolPool.filter(isWriteToolName);
+  if (requestedWriteTools.length > 0) {
+    prompt += `\n\n⚠️ WRITE TOOLS IN SCOPE: ${requestedWriteTools.join(", ")}.
+Rule for any tool that mutates the user's accounts:
+1. NEVER call a write tool until the user has explicitly approved the exact action.
+2. First, present a clear draft (recipient, subject, body / target, payload) and ask "Confirmer l'envoi ?" or equivalent.
+3. Only after the user replies with explicit confirmation ("oui", "envoie", "go", "confirme", or similar) do you call the tool.
+4. If the user wants changes, revise the draft and re-confirm before calling the tool.
+This protects the user from irreversible actions and is non-negotiable.`;
   }
 
   if (surface && surface !== "home") {
@@ -1146,23 +1197,79 @@ async function runPipeline(
     }
 
     // ── User data retrieval (calendar, gmail, drive) ───────────
-    const dataNeeds = capScope.needsProviderData;
-    if (dataNeeds.calendar || dataNeeds.gmail || dataNeeds.drive) {
+    // Default-on for user-data-likely domains so vague-but-personal questions
+    // ("résume ma journée", "qu'est-ce que j'ai aujourd'hui") still inject.
+    if (!input.skipUserData && shouldInjectUserData(capScope, input.message)) {
+      const userId = scope.userId ?? input.userId;
+      let hasGoogle = false;
       try {
+        const googleTokens = await getTokens(userId, "google");
+        hasGoogle = !!googleTokens?.accessToken;
+      } catch {
+        hasGoogle = false;
+      }
+
+      if (hasGoogle) {
+        try {
+          const keywordHit =
+            capScope.needsProviderData.calendar ||
+            capScope.needsProviderData.gmail ||
+            capScope.needsProviderData.drive;
+          eventBus.emit({
+            type: "orchestrator_log",
+            run_id: engine.id,
+            message: `Retrieving user data — domain=${capScope.domain}, keywordHit=${keywordHit}`,
+          });
+
+          const PROVIDER_TO_TOOL: Record<"calendar" | "gmail" | "drive", string> = {
+            calendar: "google.calendar.list_today_events",
+            gmail: "google.gmail.list_recent_messages",
+            drive: "google.drive.list_recent_files",
+          };
+
+          const dataContext = await retrieveUserDataContext(userId, {
+            start: (provider) => {
+              eventBus.emit({
+                type: "tool_call_started",
+                run_id: engine.id,
+                step_id: `data_retrieve_${provider}_${engine.id}`,
+                tool: PROVIDER_TO_TOOL[provider],
+                providerId: "google",
+                providerLabel: "Google",
+              });
+            },
+            end: (provider, ok) => {
+              eventBus.emit({
+                type: "tool_call_completed",
+                run_id: engine.id,
+                step_id: `data_retrieve_${provider}_${engine.id}`,
+                tool: PROVIDER_TO_TOOL[provider],
+                providerId: "google",
+              });
+              if (!ok) {
+                eventBus.emit({
+                  type: "orchestrator_log",
+                  run_id: engine.id,
+                  message: `Provider read failed for ${provider} — continuing without it`,
+                });
+              }
+            },
+          });
+          input._userDataContext = dataContext.formattedForLLM;
+          eventBus.emit({
+            type: "orchestrator_log",
+            run_id: engine.id,
+            message: `Data retrieved — Calendar=${dataContext.hasCalendarAccess}, Gmail=${dataContext.hasGmailAccess}, Drive=${dataContext.hasDriveAccess}`,
+          });
+        } catch (err) {
+          console.error("[Orchestrator] Failed to retrieve user data:", err);
+        }
+      } else {
         eventBus.emit({
           type: "orchestrator_log",
           run_id: engine.id,
-          message: "Retrieving user data from connected providers...",
+          message: `User data injection skipped — Google not connected (domain=${capScope.domain})`,
         });
-        const dataContext = await retrieveUserDataContext(scope.userId ?? input.userId);
-        input._userDataContext = dataContext.formattedForLLM;
-        eventBus.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: `Data retrieved — Calendar=${dataContext.hasCalendarAccess}, Gmail=${dataContext.hasGmailAccess}, Drive=${dataContext.hasDriveAccess}`,
-        });
-      } catch (err) {
-        console.error("[Orchestrator] Failed to retrieve user data:", err);
       }
     }
 

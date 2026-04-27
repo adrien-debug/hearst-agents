@@ -7,7 +7,22 @@ import {
   resolveCapabilityScope,
   validateAgentForScope,
   scopeRequiresProviders,
+  shouldInjectUserData,
+  type CapabilityScope,
 } from "@/lib/capabilities/router";
+
+function buildScope(partial: Partial<CapabilityScope> & { domain: CapabilityScope["domain"] }): CapabilityScope {
+  return {
+    capabilities: [],
+    providers: [],
+    allowedTools: [],
+    validAgents: [],
+    retrievalMode: null,
+    toolContext: "general",
+    needsProviderData: { calendar: false, gmail: false, drive: false },
+    ...partial,
+  };
+}
 
 describe("resolveCapabilityScope", () => {
   it("email prompt → communication domain with gmail data", () => {
@@ -100,5 +115,64 @@ describe("scopeRequiresProviders", () => {
   it("general does NOT require providers", () => {
     const scope = resolveCapabilityScope("Bonjour");
     expect(scopeRequiresProviders(scope)).toBe(false);
+  });
+});
+
+describe("shouldInjectUserData", () => {
+  it("injects when explicit calendar keyword matches", () => {
+    const scope = resolveCapabilityScope("Mes rendez-vous demain");
+    expect(shouldInjectUserData(scope, "Mes rendez-vous demain")).toBe(true);
+  });
+
+  it("injects when explicit gmail keyword matches", () => {
+    const scope = resolveCapabilityScope("Montre-moi mes emails récents");
+    expect(shouldInjectUserData(scope, "Montre-moi mes emails récents")).toBe(true);
+  });
+
+  it("injects for communication domain even without keyword", () => {
+    const scope = buildScope({ domain: "communication" });
+    expect(shouldInjectUserData(scope, "À qui dois-je répondre en priorité ?")).toBe(true);
+  });
+
+  it("injects for productivity domain even without keyword", () => {
+    const scope = resolveCapabilityScope("Quels sont mes rendez-vous demain ?");
+    expect(scope.domain).toBe("productivity");
+    expect(shouldInjectUserData(scope, "Quels sont mes rendez-vous demain ?")).toBe(true);
+  });
+
+  it("injects for vague-but-personal general question", () => {
+    const msg = "qu'est-ce que j'ai aujourd'hui ?";
+    const scope = resolveCapabilityScope(msg);
+    // "aujourd'hui" maps to calendar → productivity, but even if it didn't,
+    // the general-domain wordcount fallback would catch it.
+    expect(shouldInjectUserData(scope, msg)).toBe(true);
+  });
+
+  it("injects for 'résume ma journée' (vague summary)", () => {
+    const msg = "résume ma journée";
+    const scope = resolveCapabilityScope(msg);
+    expect(shouldInjectUserData(scope, msg)).toBe(true);
+  });
+
+  it("skips trivial chit-chat ('merci')", () => {
+    const scope = resolveCapabilityScope("merci");
+    expect(shouldInjectUserData(scope, "merci")).toBe(false);
+  });
+
+  it("skips short greeting ('Bonjour')", () => {
+    const scope = resolveCapabilityScope("Bonjour");
+    expect(shouldInjectUserData(scope, "Bonjour")).toBe(false);
+  });
+
+  it("skips finance domain (uses Stripe, not Google)", () => {
+    const scope = resolveCapabilityScope("Liste mes paiements Stripe du mois");
+    expect(scope.domain).toBe("finance");
+    expect(shouldInjectUserData(scope, "Liste mes paiements Stripe du mois")).toBe(false);
+  });
+
+  it("skips research domain (uses web, not user data)", () => {
+    const scope = resolveCapabilityScope("Fais une recherche sur les tendances IA");
+    expect(scope.domain).toBe("research");
+    expect(shouldInjectUserData(scope, "Fais une recherche sur les tendances IA")).toBe(false);
   });
 });
