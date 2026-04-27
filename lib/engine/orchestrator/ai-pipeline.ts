@@ -390,16 +390,34 @@ export async function runAiPipeline(
       });
     }
 
-    // Sanity check: the system prompt forbids "X n'est pas connecté" /
-    // "X is not connected" responses — the model is supposed to call
-    // request_connection instead. If we see this pattern in the streamed
-    // text, log a warning so we can correlate with the conversation in
-    // production and tighten the prompt further.
-    const refusalPattern = /(n'est pas (connect[ée]|configur[ée])|is not connected|isn't connected|not yet connected|n'est pas (encore )?dispon)/i;
+    // Sanity check: the system prompt forbids text refusals about a missing
+    // connection / missing tool — the model is supposed to call
+    // request_connection instead. We log when the model slips through with
+    // any of the known evasion patterns (the original "not connected" plus
+    // softer variants like "je ne dispose pas d'outil X", "lag de
+    // propagation", "rafraîchis et réessaie") so we can correlate with
+    // production conversations and tighten the prompt further.
+    const refusalPattern = new RegExp(
+      [
+        "n'est pas (connect[ée]|configur[ée])",
+        "is not connected",
+        "isn't connected",
+        "not yet connected",
+        "n'est pas (encore )?dispon",
+        "je ne dispose pas d'outil",
+        "je n'ai pas d'outil",
+        "outil .{0,40}indisponible",
+        "outil .{0,40}n'est pas (encore )?(disponible|propag)",
+        "lag (de )?(propagation|composio)",
+        "rafra[iî]chis( la page)? et (retente|r[eé]essaie)",
+        "contacte (le )?support",
+      ].join("|"),
+      "i",
+    );
     if (refusalPattern.test(assistantTextBuffer)) {
       console.warn(
-        `[AiPipeline] Prompt-violation: model wrote a "not connected" refusal ` +
-          `instead of calling request_connection. run=${engine.id} userId=${input.userId} ` +
+        `[AiPipeline] Prompt-violation: model wrote a "missing connection / missing tool" ` +
+          `refusal instead of calling request_connection. run=${engine.id} userId=${input.userId} ` +
           `excerpt="${assistantTextBuffer.slice(0, 200).replace(/\s+/g, " ")}"`,
       );
     }

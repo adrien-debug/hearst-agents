@@ -25,7 +25,10 @@ interface ComposioClient {
       slug: string,
       body: { userId: string; arguments?: Record<string, unknown> },
     ): Promise<unknown>;
-    list(query: { userId?: string; toolkits?: string[] }): Promise<unknown>;
+    get(
+      userId: string,
+      query: { toolkits?: string[]; tools?: string[]; limit?: number },
+    ): Promise<unknown>;
   };
   toolkits: {
     list(query?: Record<string, unknown>): Promise<unknown>;

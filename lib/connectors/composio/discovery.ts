@@ -3,11 +3,12 @@
  *
  * Strategy:
  *  1. List the user's ACTIVE connected toolkits via `connectedAccounts.list`.
- *     This is the source-of-truth — `tools.list({userId})` alone has been
+ *     This is the source-of-truth — `tools.get({userId})` alone has been
  *     observed returning empty sets after a fresh OAuth (eventual consistency
  *     on Composio's side), which produced "Slack n'est pas connecté"
  *     hallucinations even when the toolkit was ACTIVE.
- *  2. Fetch tool definitions via `tools.list({userId, toolkits: [active]})`.
+ *  2. Fetch tool definitions via `tools.get(userId, { toolkits: [active], limit })`.
+ *     The SDK returns OpenAI-style `{ type, function: { name, description, parameters } }`.
  *  3. If a toolkit is ACTIVE but the SDK returns no tools for it, the
  *     discrepancy is logged so we can detect propagation lag.
  *
@@ -52,25 +53,23 @@ export function invalidateUserDiscovery(userId: string): void {
 }
 
 interface RawTool {
-  slug?: string;
-  name?: string;
-  description?: string;
-  inputParameters?: Record<string, unknown>;
-  parameters?: Record<string, unknown>;
-  toolkit?: { slug?: string } | string;
+  type?: "function";
+  function?: {
+    name?: string;
+    description?: string;
+    parameters?: Record<string, unknown>;
+  };
 }
 
 function toDiscoveredTool(raw: RawTool): DiscoveredTool | null {
-  const name = (raw.slug ?? raw.name ?? "").toUpperCase();
-  if (!name) return null;
-  const app =
-    typeof raw.toolkit === "object" && raw.toolkit?.slug
-      ? raw.toolkit.slug.toLowerCase()
-      : (typeof raw.toolkit === "string" ? raw.toolkit.toLowerCase() : name.split("_")[0]?.toLowerCase()) ?? "unknown";
+  const fn = raw.function;
+  if (!fn?.name) return null;
+  const name = fn.name.toUpperCase();
+  const app = name.split("_")[0]?.toLowerCase() ?? "unknown";
   return {
     name,
-    description: raw.description ?? "",
-    parameters: raw.inputParameters ?? raw.parameters ?? { type: "object", properties: {} },
+    description: fn.description ?? "",
+    parameters: fn.parameters ?? { type: "object", properties: {} },
     app,
   };
 }
@@ -121,9 +120,11 @@ export async function getToolsForUser(
     }
 
     // 2. Fetch tool definitions for the toolkits we know are ACTIVE.
-    const raw = (await composio.tools.list({
-      userId,
+    //    SDK default page size is 20 — we bump to 100 so we don't truncate
+    //    multi-toolkit users (e.g. slack alone has 75+ actions).
+    const raw = (await composio.tools.get(userId, {
       toolkits: targetSlugs,
+      limit: 100,
     })) as { items?: RawTool[] } | RawTool[];
     const items = Array.isArray(raw) ? raw : (raw.items ?? []);
     const tools = items
@@ -136,7 +137,7 @@ export async function getToolsForUser(
     if (missing.length > 0) {
       console.warn(
         `[Composio/Discovery] userId=${userId} — ACTIVE toolkits with no tools: ${missing.join(", ")} ` +
-          `(tools.list returned ${tools.length} tools across ${slugsInTools.size} toolkits). ` +
+          `(tools.get returned ${tools.length} tools across ${slugsInTools.size} toolkits). ` +
           `Likely Composio eventual-consistency lag — retry shortly.`,
       );
     }
@@ -152,7 +153,11 @@ export async function getToolsForUser(
     }
     return tools;
   } catch (err) {
-    console.error(`[Composio/Discovery] tools.list failed for ${userId}:`, err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error(
+      `[Composio/Discovery] tools.get failed for ${userId}: ${err instanceof Error ? err.message : String(err)}`,
+      stack,
+    );
     return [];
   }
 }
