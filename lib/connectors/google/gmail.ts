@@ -1,6 +1,60 @@
 import { google } from "googleapis";
 import { getGoogleAuth } from "./auth";
 
+export interface SendEmailInput {
+  to: string;
+  subject: string;
+  body: string;
+  cc?: string;
+  bcc?: string;
+}
+
+export interface SendEmailResult {
+  id: string;
+  threadId: string;
+}
+
+/**
+ * Send an email via the user's Gmail account. Builds an RFC822 message,
+ * encodes it base64url, and posts to gmail.users.messages.send.
+ *
+ * Requires the `gmail.send` (or `gmail.modify`) OAuth scope, which the
+ * NextAuth Google provider requests up-front at sign-in.
+ */
+export async function sendEmail(
+  userId: string,
+  input: SendEmailInput,
+): Promise<SendEmailResult> {
+  const auth = await getGoogleAuth(userId);
+  const gmail = google.gmail({ version: "v1", auth });
+
+  const headers = [
+    `To: ${input.to}`,
+    input.cc ? `Cc: ${input.cc}` : "",
+    input.bcc ? `Bcc: ${input.bcc}` : "",
+    `Subject: ${input.subject}`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+  ].filter(Boolean);
+  const raw = `${headers.join("\r\n")}\r\n\r\n${input.body}`;
+
+  const encoded = Buffer.from(raw, "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  const res = await gmail.users.messages.send({
+    userId: "me",
+    requestBody: { raw: encoded },
+  });
+
+  return {
+    id: res.data.id ?? "",
+    threadId: res.data.threadId ?? "",
+  };
+}
+
 export interface EmailSummary {
   id: string;
   subject: string;

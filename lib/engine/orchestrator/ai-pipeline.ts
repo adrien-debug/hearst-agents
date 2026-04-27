@@ -19,6 +19,10 @@ import type { RunEventBus } from "@/lib/events/bus";
 import { getToolsForUser } from "@/lib/connectors/composio/discovery";
 import { toAiTools } from "@/lib/connectors/composio/to-ai-tools";
 import { filterToolsByDomain, isWriteAction } from "@/lib/connectors/composio/write-guard";
+import {
+  buildNativeGoogleTools,
+  NATIVE_GOOGLE_TOOL_DESCRIPTORS,
+} from "@/lib/tools/native/google";
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
@@ -207,27 +211,43 @@ export async function runAiPipeline(
   eventBus: RunEventBus,
   input: AiPipelineInput,
 ): Promise<void> {
-  // ── 1. Discover user's Composio tools ──────────────────────
-  let composioTools: Awaited<ReturnType<typeof getToolsForUser>> = [];
-  try {
-    composioTools = await getToolsForUser(input.userId);
-  } catch (err) {
-    console.error("[AiPipeline] Composio discovery failed:", err);
-  }
+  // ── 1. Discover the two tool surfaces in parallel ──────────
+  // - Native Google tools (Gmail / Calendar / Drive) backed by NextAuth
+  //   tokens — the user gets these the moment they sign in via the Google
+  //   provider, no Composio popup required.
+  // - Composio tools for everything else (Slack, Notion, GitHub, Airtable,
+  //   HubSpot, …).
+  const [nativeGoogleTools, composioToolsRaw] = await Promise.all([
+    buildNativeGoogleTools(input.userId).catch((err) => {
+      console.error("[AiPipeline] native Google discovery failed:", err);
+      return {} as Record<string, unknown>;
+    }),
+    getToolsForUser(input.userId).catch((err) => {
+      console.error("[AiPipeline] Composio discovery failed:", err);
+      return [] as Awaited<ReturnType<typeof getToolsForUser>>;
+    }),
+  ]);
 
-  // Filter to domain-relevant tools only — prevents token explosion and
-  // improves model decision quality (fewer irrelevant options).
-  const filteredTools = filterToolsByDomain(composioTools, input.domain ?? "general");
+  // Filter Composio tools to domain-relevant ones (prevents token explosion).
+  const filteredComposio = filterToolsByDomain(
+    composioToolsRaw,
+    input.domain ?? "general",
+  );
 
+  const nativeCount = Object.keys(nativeGoogleTools).length;
   eventBus.emit({
     type: "orchestrator_log",
     run_id: engine.id,
-    message: `AI pipeline: ${filteredTools.length}/${composioTools.length} Composio tool(s) (domain: ${input.domain ?? "general"})`,
+    message: `AI pipeline: ${nativeCount} native Google tool(s) + ${filteredComposio.length}/${composioToolsRaw.length} Composio tool(s) (domain: ${input.domain ?? "general"})`,
   });
 
-  // ── 2. Build tool map: Composio tools + request_connection + create_scheduled_mission ──
+  // ── 2. Build the unified tool map ──────────────────────────
+  // Native Google tools live alongside Composio tools — the model picks
+  // whichever fits the user's request. Meta tools (request_connection,
+  // create_scheduled_mission) are appended last.
   const aiTools = {
-    ...toAiTools(filteredTools, input.userId),
+    ...nativeGoogleTools,
+    ...toAiTools(filteredComposio, input.userId),
     request_connection: buildRequestConnectionTool(engine, eventBus),
     create_scheduled_mission: buildCreateScheduledMissionTool(engine, eventBus, {
       userId: input.userId,
@@ -237,8 +257,26 @@ export async function runAiPipeline(
   };
 
   // ── 3. Build system prompt ──────────────────────────────────
+  // Surface both tool families in the OUTILS section so the model knows
+  // it can call gmail_send_email *or* a Composio Slack tool without
+  // asking for any extra connection.
+  const composioForPrompt = filteredComposio.map((t) => ({
+    name: t.name,
+    description: t.description,
+    app: t.app,
+    parameters: t.parameters,
+  }));
+  const nativeForPrompt =
+    nativeCount > 0
+      ? NATIVE_GOOGLE_TOOL_DESCRIPTORS.map((t) => ({
+          name: t.name,
+          description: t.description,
+          app: "google",
+          parameters: {} as Record<string, unknown>,
+        }))
+      : [];
   const systemPrompt = buildAgentSystemPrompt({
-    composioTools: filteredTools,
+    composioTools: [...nativeForPrompt, ...composioForPrompt],
     surface: input.surface,
     scheduleDirective: input.scheduleDirective ?? false,
   });

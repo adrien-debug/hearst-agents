@@ -14,13 +14,18 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       authorization: {
         params: {
+          // Le bouton "Continuer avec Google" est l'unique point d'entrée :
+          // un seul consent demande à la fois l'identité ET les scopes
+          // read+write Gmail / Calendar / Drive. La pipeline IA peut alors
+          // appeler les tools natifs sans 2e popup.
           scope: [
             "openid",
             "email",
             "profile",
-            "https://www.googleapis.com/auth/gmail.readonly",
-            "https://www.googleapis.com/auth/calendar.readonly",
-            "https://www.googleapis.com/auth/drive.readonly",
+            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/calendar.events",
+            "https://www.googleapis.com/auth/drive.file",
           ].join(" "),
           access_type: "offline",
           prompt: "consent",
@@ -33,7 +38,10 @@ export const authOptions: AuthOptions = {
       tenantId: process.env.AZURE_AD_TENANT_ID ?? "common",
       authorization: {
         params: {
-          scope: "openid email profile offline_access Mail.Read Calendars.Read Files.Read.All",
+          // Idem côté Microsoft : identité + read+write Mail / Calendars /
+          // Files au premier consent.
+          scope:
+            "openid email profile offline_access Mail.ReadWrite Mail.Send Calendars.ReadWrite Files.ReadWrite",
         },
       },
     }),

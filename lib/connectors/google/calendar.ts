@@ -65,3 +65,50 @@ export async function getUpcomingEvents(
   const timeMax = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
   return listEvents(userId, timeMin, timeMax, maxResults);
 }
+
+export interface CreateCalendarEventInput {
+  summary: string;
+  /** ISO 8601 start, e.g. "2026-04-29T14:00:00+02:00". */
+  start: string;
+  /** ISO 8601 end. */
+  end: string;
+  description?: string;
+  location?: string;
+  /** RFC 5322 emails. */
+  attendees?: string[];
+}
+
+export interface CreateCalendarEventResult {
+  id: string;
+  htmlLink: string;
+}
+
+/**
+ * Create an event on the user's primary Google Calendar. Requires the
+ * `calendar.events` OAuth scope (requested by NextAuth at sign-in).
+ */
+export async function createCalendarEvent(
+  userId: string,
+  input: CreateCalendarEventInput,
+): Promise<CreateCalendarEventResult> {
+  const auth = await getGoogleAuth(userId);
+  const calendar = google.calendar({ version: "v3", auth });
+
+  const res = await calendar.events.insert({
+    calendarId: "primary",
+    requestBody: {
+      summary: input.summary,
+      description: input.description,
+      location: input.location,
+      start: { dateTime: input.start },
+      end: { dateTime: input.end },
+      attendees: input.attendees?.map((email) => ({ email })),
+    },
+    sendUpdates: input.attendees && input.attendees.length > 0 ? "all" : "none",
+  });
+
+  return {
+    id: res.data.id ?? "",
+    htmlLink: res.data.htmlLink ?? "",
+  };
+}
