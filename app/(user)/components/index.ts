@@ -6,7 +6,6 @@ export { ChatInput } from "./ChatInput";
 export { ChatMessages } from "./ChatMessages";
 export { Breadcrumb } from "./Breadcrumb";
 export type { Crumb } from "./Breadcrumb";
-export { CapabilityTabs } from "./CapabilityTabs";
 export { SourcePicker } from "./SourcePicker";
 export { FocalRetryButton } from "./FocalRetryButton";
 export { ConnectionsHub } from "./ConnectionsHub";

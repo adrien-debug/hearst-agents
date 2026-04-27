@@ -174,8 +174,7 @@ export function ServiceIdGlyph({
           src={icon}
           alt={id}
           title={id}
-          className={`${dim} object-contain shrink-0 ${className}`}
-          style={{ opacity: 0.85 }}
+          className={`${dim} object-contain shrink-0 opacity-85 ${className}`}
         />
       </>
     );

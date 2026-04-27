@@ -10,7 +10,6 @@ import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { FocalStage } from "./components/FocalStage";
 import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
-import { CapabilityTabs, type CapabilityMode, getCapabilityFromSurface, isCapabilityAvailable } from "./components/CapabilityTabs";
 import { SourcePicker, type SourceSelection, getDefaultSelection } from "./components/SourcePicker";
 import { Breadcrumb, type Crumb } from "./components/Breadcrumb";
 import { getAllServices } from "@/lib/integrations/catalog";
@@ -29,70 +28,24 @@ function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_fail
 }
 
 interface ChatControlsProps {
-  showBlockedBanner: boolean;
-  capabilityMode: CapabilityMode;
-  capabilityServices: ServiceWithConnectionStatus[];
   connectedServices: ServiceWithConnectionStatus[];
   services: ServiceWithConnectionStatus[];
   sourceSelection: SourceSelection;
   surface: Surface;
-  onConnect: (serviceId: string) => void;
-  onDismissBanner: () => void;
-  onCapabilityChange: (mode: CapabilityMode) => void;
-  onNavigate: (newSurface: Surface) => void;
   onSourceChange: (selection: SourceSelection) => void;
 }
 
-function ChatControls({
-  showBlockedBanner,
-  capabilityMode,
-  connectedServices,
-  services,
-  sourceSelection,
-  surface,
-  onDismissBanner,
-  onCapabilityChange,
-  onNavigate,
-  onSourceChange,
-}: ChatControlsProps) {
+function ChatControls({ services, connectedServices, sourceSelection, surface, onSourceChange }: ChatControlsProps) {
   return (
-    <div className="px-12 pt-10 space-y-8 bg-gradient-to-b from-[var(--surface-1)] to-transparent">
-      {/* Blocked Capability Banner */}
-      {showBlockedBanner && (
-        <div className="bg-gradient-to-r from-[var(--danger)]/10 to-transparent border-l-2 border-[var(--danger)] p-5 flex items-center justify-between group rounded-r-sm">
-          <div className="flex items-center gap-6">
-            <span className="t-10 font-mono font-bold text-[var(--danger)] uppercase tracking-[0.2em]">Access Denied</span>
-            <p className="text-sm font-medium text-[var(--text)] tracking-tight">
-              {capabilityMode} capability requires connection
-            </p>
-          </div>
-          <button
-            onClick={onDismissBanner}
-            className="t-10 font-mono text-[var(--text-faint)] hover:text-[var(--text)] transition-colors tracking-[0.2em]"
-          >
-            Close [x]
-          </button>
-        </div>
-      )}
-
-      {/* Source Picker & Capability Tabs */}
-      <div className="flex items-center justify-between border-b border-[var(--line-strong)] pb-8">
-        <CapabilityTabs
-          connectedServices={connectedServices}
-          activeMode={capabilityMode}
-          onModeChange={onCapabilityChange}
-          onNavigate={onNavigate}
-          compact
-        />
-        <SourcePicker
-          availableServices={services}
-          connectedServices={connectedServices}
-          currentSurface={surface}
-          selection={sourceSelection}
-          onChange={onSourceChange}
-          compact
-        />
-      </div>
+    <div className="px-12 pt-6 pb-0">
+      <SourcePicker
+        availableServices={services}
+        connectedServices={connectedServices}
+        currentSurface={surface}
+        selection={sourceSelection}
+        onChange={onSourceChange}
+        compact
+      />
     </div>
   );
 }
@@ -132,7 +85,6 @@ export default function HomePage() {
   const addEvent = useRuntimeStore((s) => s.addEvent);
   const startRun = useRuntimeStore((s) => s.startRun);
   const surface = useNavigationStore((s) => s.surface);
-  const setSurface = useNavigationStore((s) => s.setSurface);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const activeThread = useNavigationStore((s) =>
     activeThreadId ? s.threads.find((t) => t.id === activeThreadId) : undefined
@@ -143,6 +95,7 @@ export default function HomePage() {
   const messages = useMemo(() => messagesRaw ?? [], [messagesRaw]);
   const addMessageToThread = useNavigationStore((s) => s.addMessageToThread);
   const updateMessageInThread = useNavigationStore((s) => s.updateMessageInThread);
+  const updateThreadName = useNavigationStore((s) => s.updateThreadName);
   const firstName = session?.user?.name?.split(" ")[0];
 
   useEffect(() => {
@@ -182,13 +135,9 @@ export default function HomePage() {
   }, [activeThreadId, hydrateThreadState]);
 
   const [services, setServices] = useState<ServiceWithConnectionStatus[]>(initialServices);
-  const [capabilityMode, setCapabilityMode] = useState<CapabilityMode>(
-    getCapabilityFromSurface(surface)
-  );
   const [sourceSelection, setSourceSelection] = useState<SourceSelection>(
     getDefaultSelection(initialServices)
   );
-  const [showBlockedBanner, setShowBlockedBanner] = useState(false);
   const [showFocal, setShowFocal] = useState(false);
 
   useEffect(() => {
@@ -211,33 +160,6 @@ export default function HomePage() {
     loadConnections();
   }, []);
 
-  const prevSurfaceRef = useRef(surface);
-  const prevCapabilityRef = useRef(capabilityMode);
-
-  useEffect(() => {
-    if (surface !== prevSurfaceRef.current) {
-      prevSurfaceRef.current = surface;
-      const newMode = getCapabilityFromSurface(surface);
-      if (newMode !== prevCapabilityRef.current) {
-        prevCapabilityRef.current = newMode;
-        setTimeout(() => setCapabilityMode(newMode), 0);
-      }
-    }
-  }, [surface]);
-
-  const prevServicesRef = useRef(services);
-  useEffect(() => {
-    if (services !== prevServicesRef.current || capabilityMode !== prevCapabilityRef.current) {
-      prevServicesRef.current = services;
-      prevCapabilityRef.current = capabilityMode;
-      const connectedServices = services.filter((s) => s.connectionStatus === "connected");
-      const isAvailable = isCapabilityAvailable(capabilityMode, connectedServices);
-      const shouldShow = !isAvailable && capabilityMode !== "general";
-      setTimeout(() => {
-        setShowBlockedBanner((prev) => (prev !== shouldShow ? shouldShow : prev));
-      }, 0);
-    }
-  }, [capabilityMode, services]);
 
   const assistantBufferRef = useRef<string>("");
   const currentAssistantIdRef = useRef<string | null>(null);
@@ -246,22 +168,6 @@ export default function HomePage() {
     () => services.filter((s) => s.connectionStatus === "connected"),
     [services]
   );
-
-  const capabilityServices = useMemo(() => {
-    const capabilityMap: Record<string, string> = {
-      messaging: "messaging",
-      calendar: "calendar",
-      files: "files",
-      crm: "crm",
-      support: "support",
-      finance: "finance",
-      developer: "developer_tools",
-      design: "design",
-    };
-    const requiredCap = capabilityMap[capabilityMode];
-    if (!requiredCap) return services;
-    return services.filter((s) => s.capabilities.includes(requiredCap as ServiceWithConnectionStatus["capabilities"][number]));
-  }, [services, capabilityMode]);
 
   // Extract user email for stable dependency
   const userEmail = session?.user?.email || "anonymous";
@@ -277,10 +183,8 @@ export default function HomePage() {
     addMessageToThread(activeThreadId, userMessage);
 
     if (messages.length === 0) {
-      trackAnalytics("first_message_sent", userEmail, {
-        threadId: activeThreadId,
-        provider: capabilityMode,
-      });
+      trackAnalytics("first_message_sent", userEmail, { threadId: activeThreadId });
+      updateThreadName(activeThreadId, message.slice(0, 40));
     }
 
     assistantBufferRef.current = "";
@@ -310,7 +214,7 @@ export default function HomePage() {
           thread_id: activeThreadId,
           conversation_id: activeThreadId,
           history: recentMessages,
-          capability_mode: capabilityMode,
+          capability_mode: "general",
           selected_providers: sourceSelection.providers,
         }),
       });
@@ -355,7 +259,6 @@ export default function HomePage() {
 
       trackAnalytics("run_completed", userEmail, {
         runId: canonicalRunId || clientToken,
-        provider: capabilityMode,
         messageCount: messages.length,
       });
     } catch (err) {
@@ -364,19 +267,10 @@ export default function HomePage() {
       addEvent({ type: "run_failed", error: errorMsg, run_id: clientToken });
       trackAnalytics("run_failed", userEmail, {
         runId: clientToken,
-        provider: capabilityMode,
         error: errorMsg,
       });
     }
-  }, [surface, activeThreadId, capabilityMode, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, userEmail]);
-
-  const handleCapabilityChange = useCallback((mode: CapabilityMode) => {
-    setCapabilityMode(mode);
-  }, []);
-
-  const handleNavigate = useCallback((newSurface: Surface) => {
-    setSurface(newSurface);
-  }, [setSurface]);
+  }, [surface, activeThreadId, sourceSelection, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, updateThreadName, userEmail]);
 
   const handleConnect = useCallback(async (serviceId: string) => {
     const provider = getProviderForService(serviceId);
@@ -399,10 +293,6 @@ export default function HomePage() {
     } catch (_err) {}
   }, []);
 
-  const handleDismissBanner = useCallback(() => {
-    setShowBlockedBanner(false);
-  }, []);
-
   const isIdle = coreState === "idle" && messages.length === 0 && !focal;
 
   const focalIdRef = useRef<string | null>(null);
@@ -414,17 +304,10 @@ export default function HomePage() {
   }, [focal]);
 
   const chatControlsProps: ChatControlsProps = {
-    showBlockedBanner,
-    capabilityMode,
-    capabilityServices,
     connectedServices,
     services,
     sourceSelection,
     surface,
-    onConnect: handleConnect,
-    onDismissBanner: handleDismissBanner,
-    onCapabilityChange: handleCapabilityChange,
-    onNavigate: handleNavigate,
     onSourceChange: setSourceSelection,
   };
 
@@ -453,10 +336,9 @@ export default function HomePage() {
               <span
                 className="chip-pill"
                 style={{
-                  fontFamily: "var(--font-plex), ui-monospace, monospace",
                   color: "var(--cykan)",
-                  borderColor: "rgba(45, 212, 191, 0.25)",
-                  background: "rgba(45, 212, 191, 0.06)",
+                  borderColor: "var(--cykan-border)",
+                  background: "var(--cykan-surface)",
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] halo-dot" />
@@ -465,7 +347,6 @@ export default function HomePage() {
               <h1
                 className="text-5xl md:text-6xl select-none halo-cyan-md"
                 style={{
-                  fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
                   fontWeight: 700,
                   letterSpacing: "-0.04em",
                   lineHeight: 1.05,
@@ -481,7 +362,6 @@ export default function HomePage() {
               <p
                 className="text-2xl md:t-28"
                 style={{
-                  fontFamily: "var(--font-inter), ui-sans-serif, system-ui, sans-serif",
                   fontWeight: 500,
                   letterSpacing: "-0.02em",
                   lineHeight: 1.2,
@@ -510,24 +390,19 @@ export default function HomePage() {
                   style={{ padding: "var(--space-6) var(--space-6)" }}
                 >
                   <span
-                    className="halo-on-group-hover pt-0.5 shrink-0"
+                    className="halo-on-group-hover pt-0.5 shrink-0 t-10 opacity-55 uppercase"
                     style={{
-                      fontFamily: "var(--font-plex), ui-monospace, monospace",
-                      fontSize: "10px",
                       letterSpacing: "var(--tracking-wide)",
                       color: "var(--cykan)",
-                      opacity: 0.55,
-                      textTransform: "uppercase",
                     }}
                   >
                     {s.id}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p
+                      className="t-15"
                       style={{
-                        fontFamily: "var(--font-inter), ui-sans-serif, sans-serif",
                         fontWeight: 600,
-                        fontSize: "15px",
                         letterSpacing: "-0.01em",
                         color: "var(--text)",
                       }}
@@ -535,11 +410,9 @@ export default function HomePage() {
                       {s.title}
                     </p>
                     <p
-                      className="mt-1.5"
+                      className="mt-1.5 t-13"
                       style={{
-                        fontFamily: "var(--font-inter), ui-sans-serif, sans-serif",
                         fontWeight: 400,
-                        fontSize: "13px",
                         color: "var(--text-muted)",
                       }}
                     >
@@ -547,8 +420,8 @@ export default function HomePage() {
                     </p>
                   </div>
                   <span
-                    className="halo-on-group-hover absolute right-5 top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:translate-x-1"
-                    style={{ color: "var(--text-ghost)", fontSize: "16px" }}
+                    className="halo-on-group-hover absolute right-5 top-1/2 -translate-y-1/2 transition-all duration-300 group-hover:translate-x-1 text-base"
+                    style={{ color: "var(--text-ghost)" }}
                   >
                     →
                   </span>
@@ -563,7 +436,6 @@ export default function HomePage() {
           <span
             className="chip-pill"
             style={{
-              fontFamily: "var(--font-plex), ui-monospace, monospace",
               borderColor: "var(--border-subtle)",
               color: "var(--text-ghost)",
             }}
@@ -573,7 +445,6 @@ export default function HomePage() {
           <span
             className="chip-pill"
             style={{
-              fontFamily: "var(--font-plex), ui-monospace, monospace",
               borderColor: "var(--border-subtle)",
               color: "var(--text-ghost)",
             }}

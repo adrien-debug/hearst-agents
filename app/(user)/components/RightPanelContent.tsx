@@ -7,38 +7,15 @@ import type { RightPanelData, FocalObjectView } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
-import { useRuntimeStore } from "@/stores/runtime";
+import { useRuntimeStore, type StreamEvent } from "@/stores/runtime";
 import { missionToFocal, assetToFocal } from "@/lib/ui/focal-mappers";
+import { getToolCatalogEntry } from "./tool-catalog";
 
 interface RightPanelContentProps {
   onClose?: () => void;
 }
 
 // Icon components
-const StatusIcon = ({ state }: { state: string }) => {
-  if (state === "awaiting_approval") {
-    return (
-      <svg className="w-5 h-5 text-[var(--warn)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M12 8v4M12 16h.01"/>
-      </svg>
-    );
-  }
-  if (state === "processing" || state === "running") {
-    return (
-      <svg className="w-5 h-5 text-[var(--cykan)] animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-      </svg>
-    );
-  }
-  return (
-    <svg className="w-5 h-5 text-[var(--text-faint)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M12 6v6l4 2"/>
-    </svg>
-  );
-};
-
 const FileIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -87,6 +64,41 @@ function formatRelativeTime(timestamp?: number): string {
   return `il y a ${months}mo`;
 }
 
+// ── Activity feed helpers ─────────────────────────────────────
+
+const ACTIVITY_EVENT_TYPES = new Set([
+  "tool_call_started",
+  "tool_call_completed",
+  "step_started",
+  "step_completed",
+  "orchestrator_log",
+]);
+
+function activityIcon(type: string): string {
+  if (type === "tool_call_started") return "⚡";
+  if (type === "tool_call_completed") return "✓";
+  if (type === "step_started") return "▶";
+  if (type === "step_completed") return "□";
+  return "·";
+}
+
+function activityLabel(event: StreamEvent): string {
+  if (event.type === "tool_call_started" || event.type === "tool_call_completed") {
+    const tool = (event.tool as string) ?? "";
+    const entry = getToolCatalogEntry(tool);
+    const verb = event.type === "tool_call_started" ? entry.runningVerb : entry.completedVerb;
+    return `${entry.icon} ${entry.label} — ${verb}`;
+  }
+  if (event.type === "step_started" || event.type === "step_completed") {
+    return (event.title as string) ?? (event.agent as string) ?? event.type;
+  }
+  if (event.type === "orchestrator_log") {
+    const msg = (event.message as string) ?? "";
+    return msg.length > 60 ? msg.slice(0, 57) + "…" : msg;
+  }
+  return event.type;
+}
+
 const ASSET_TYPE_GLYPH: Record<string, string> = {
   report: "▦",
   brief: "≡",
@@ -109,6 +121,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const coreState = useRuntimeStore((s) => s.coreState);
   const currentRunId = useRuntimeStore((s) => s.currentRunId);
   const flowLabel = useRuntimeStore((s) => s.flowLabel);
+  const runtimeEvents = useRuntimeStore((s) => s.events);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const { data: session } = useSession();
 
@@ -272,6 +285,11 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const panelData = hasActiveThread ? data : null;
   const isRunning = coreState !== "idle";
   const focalObject = panelData?.focalObject;
+
+  // Live activity: filter to actionable event types, newest-first, cap at 8
+  const activityEvents = runtimeEvents
+    .filter((e) => ACTIVITY_EVENT_TYPES.has(e.type))
+    .slice(0, 8);
   const secondaryObjects = panelData?.secondaryObjects || [];
 
   const getFocalProp = (obj: unknown, key: string): string | undefined => {
@@ -328,7 +346,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         </div>
         <p className={`t-18 font-light tracking-tight ${isRunning ? "text-[var(--text)] halo-cyan-sm" : "text-[var(--text)]"}`}>{stateLabel}</p>
 
-        {(isRunning || coreState === "awaiting_approval") && (
+        {isRunning && (
           <div className="h-px bg-[var(--surface-2)] mt-5 overflow-hidden">
             <div
               className={`h-full ${coreState === "awaiting_approval" ? "bg-[var(--warn)]" : "bg-[var(--cykan)] halo-rule"} ${isRunning ? "animate-pulse" : ""}`}
@@ -494,7 +512,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
         {/* Run Info */}
         {panelData?.currentRun && (
-          <div className="px-6 pt-7 pb-7">
+          <div className="px-6 pt-7 pb-7 border-b border-[var(--surface-2)]">
             <div className="flex items-center gap-2 text-[var(--text-faint)] mb-5">
               <DatabaseIcon />
               <span className="t-9 font-mono tracking-[0.3em] uppercase">Run details</span>
@@ -515,6 +533,54 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Live Activity — shown when a run is active */}
+        {(isRunning || activityEvents.length > 0) && (
+          <div className="px-6 pt-7 pb-6 border-b border-[var(--surface-2)]">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-[var(--text-faint)]">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                <span className="t-9 font-mono tracking-[0.3em] uppercase">Activity</span>
+              </div>
+              {isRunning && (
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-pulse halo-dot" />
+              )}
+            </div>
+            {activityEvents.length === 0 ? (
+              <p className="t-11 text-[var(--text-ghost)] font-mono">En attente…</p>
+            ) : (
+              <div className="space-y-1">
+                {activityEvents.map((event, i) => (
+                  <div
+                    key={`${event.type}-${event.timestamp}-${i}`}
+                    className={`flex items-start gap-2.5 py-1.5 ${i === 0 && isRunning ? "opacity-100" : "opacity-60"}`}
+                  >
+                    <span className={`t-9 font-mono shrink-0 mt-0.5 ${
+                      event.type === "tool_call_started" ? "text-[var(--cykan)]" :
+                      event.type === "tool_call_completed" ? "text-[var(--success,#22c55e)]" :
+                      event.type === "step_started" ? "text-[var(--warn)]" :
+                      "text-[var(--text-ghost)]"
+                    }`}>
+                      {activityIcon(event.type)}
+                    </span>
+                    <p className="t-11 font-light text-[var(--text-muted)] truncate leading-snug">
+                      {activityLabel(event)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Empty idle state */}
+        {!isRunning && activityEvents.length === 0 && !focalObject && !panelData?.assets?.length && !panelData?.missions?.length && (
+          <div className="px-6 pt-10 pb-6 flex flex-col items-center text-center gap-2">
+            <span className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-ghost)]">Prêt</span>
           </div>
         )}
       </div>

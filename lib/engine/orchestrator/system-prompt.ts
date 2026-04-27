@@ -3,7 +3,12 @@
  *
  * The Orchestrator receives a user request and produces a structured Plan.
  * It NEVER executes work directly — it decomposes and delegates.
+ *
+ * `buildAgentSystemPrompt` is used by the AI pipeline for the streamText
+ * execution path (replaces the old planner+executor for action tasks).
  */
+
+import type { DiscoveredTool } from "@/lib/connectors/composio/discovery";
 
 export const ORCHESTRATOR_MODEL = "claude-sonnet-4-6";
 
@@ -39,7 +44,8 @@ RÈGLES :
 8. Prioriser la qualité du plan. Ne pas sur-décomposer les tâches simples.
 
 RÈGLE CRITIQUE — PROVIDERS CONNECTÉS :
-L'utilisateur a Google connecté (Drive + Gmail). Quand il demande :
+Consulte le contexte de session pour savoir quels providers sont connectés.
+Si Google est connecté (Drive + Gmail), quand l'utilisateur demande :
 - un document, fichier, résumé de fichier → KnowledgeRetriever avec retrieval_mode: "documents"
 - ses emails, messages, résumé d'emails → KnowledgeRetriever avec retrieval_mode: "messages"
 - son agenda, ses rendez-vous, ses événements, ses réunions → KnowledgeRetriever avec retrieval_mode: "structured_data"
@@ -212,3 +218,68 @@ export const REQUEST_CONNECTION_TOOL = {
     },
   },
 };
+
+// ── Dynamic system prompt for the AI pipeline ───────────────
+
+interface AgentSystemPromptOpts {
+  composioTools: DiscoveredTool[];
+  hasGoogle: boolean;
+  userDataContext?: string;
+  surface?: string;
+}
+
+/**
+ * System prompt for the streamText-based AI pipeline.
+ *
+ * Unlike the planner prompt (which decomposes into agent steps), this
+ * prompt drives a single agentic loop that can directly call Composio
+ * tools. It lists only the tools the user has actually connected.
+ */
+export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
+  const { composioTools, hasGoogle, userDataContext, surface } = opts;
+
+  const today = new Date().toLocaleDateString("fr-FR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const connectedApps = [...new Set(composioTools.map((t) => t.app))];
+  const googleSection = hasGoogle
+    ? "✅ Google (Gmail, Drive, Calendar) — données injectées dans le contexte si disponibles"
+    : "❌ Google non connecté";
+
+  const composioSection =
+    connectedApps.length > 0
+      ? `✅ Composio apps connectées : ${connectedApps.join(", ")}\n   ${composioTools.length} action(s) disponible(s)`
+      : "❌ Aucune app Composio connectée";
+
+  const toolListSection =
+    composioTools.length > 0
+      ? `\n\nACTIONS DISPONIBLES :\n${composioTools
+          .slice(0, 60)
+          .map((t) => `- ${t.name} : ${t.description.slice(0, 100)}`)
+          .join("\n")}${composioTools.length > 60 ? `\n(+${composioTools.length - 60} autres actions)` : ""}`
+      : "";
+
+  const dataSection = userDataContext
+    ? `\n\nCONTEXTE UTILISATEUR (données temps réel) :\n${userDataContext}`
+    : "";
+
+  const surfaceNote = surface ? `\nSurface active : ${surface}` : "";
+
+  return `Tu es Hearst, un assistant exécutif intelligent pour les professionnels des médias.
+Aujourd'hui : ${today}${surfaceNote}
+
+PROVIDERS CONNECTÉS :
+${googleSection}
+${composioSection}${toolListSection}${dataSection}
+
+RÈGLES :
+1. Utilise les outils disponibles pour agir directement — ne décris pas ce que tu ferais, fais-le.
+2. Pour toute action d'écriture (envoyer, créer, modifier, supprimer) : présente un draft et demande confirmation avant d'exécuter.
+3. Si l'utilisateur demande une action via une app non connectée, explique comment la connecter.
+4. Réponds en français sauf si la demande est en anglais.
+5. Sois concis dans les réponses conversationnelles, complet dans les livrables.`;
+}

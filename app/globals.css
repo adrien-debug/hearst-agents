@@ -44,6 +44,8 @@
   --money: #2DD4BF;
   --warn: #ffcc00;
   --danger: #ff3333;
+  --cykan-border: color-mix(in srgb, var(--cykan) 25%, transparent);
+  --cykan-surface: color-mix(in srgb, var(--cykan) 6%, transparent);
 
   /* Glow shadows — Luxurious & Wide */
   --glow-cyan-sm: 0 0 30px rgba(45, 212, 191, 0.1);
@@ -211,10 +213,9 @@
   /* Hearst Connect — spacing scale extension */
   --spacing-50: 200px;
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-inter: var(--font-inter);
-  --font-plex: var(--font-plex-mono);
+  --font-satoshi: 'Satoshi Variable', 'Satoshi', sans-serif;
+  --font-sans: 'Satoshi Variable', 'Satoshi', sans-serif;
+  --font-mono: 'Satoshi Variable', 'Satoshi', sans-serif;
 }
 
 *,
@@ -235,7 +236,7 @@ html, body {
 }
 
 body {
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-satoshi);
   letter-spacing: -0.01em;
   font-feature-settings: "ss01", "cv11", "tnum", "case";
   background: #000;
@@ -272,7 +273,7 @@ body {
 }
 
 .halo-mono-label {
-  font-family: var(--font-geist-mono), monospace;
+  font-family: var(--font-satoshi);
   font-size: 9px;
   letter-spacing: 0.4em;
   color: var(--text-faint);

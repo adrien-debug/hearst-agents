@@ -52,8 +52,8 @@ const SEMANTIC = {
 
 // Typography
 const FONTS = {
-  sans: "'Satoshi Variable', Inter, -apple-system, sans-serif",
-  mono: "'IBM Plex Mono', 'SF Mono', ui-monospace, monospace",
+  sans: "'Satoshi Variable', 'Satoshi', sans-serif",
+  mono: "'Satoshi Variable', 'Satoshi', sans-serif",
 } as const;
 
 const FONT_SIZES = {

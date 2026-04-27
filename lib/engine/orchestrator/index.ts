@@ -14,10 +14,9 @@ import { RunEngine } from "@/lib/engine/runtime/engine";
 import { RunEventBus } from "@/lib/events/bus";
 import { SSEAdapter } from "@/lib/events/consumers/sse-adapter";
 import { LogPersister } from "@/lib/events/consumers/log-persister";
-import { planFromIntent } from "./planner";
-import { executePlan } from "./executor";
+import { runAiPipeline } from "./ai-pipeline";
 import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, shouldInjectUserData, type ExecutionDecision } from "@/lib/capabilities/router";
-import { createAsset } from "@/lib/engine/runtime/assets/create-asset";
+
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { selectToolsForContext } from "@/lib/tools/tool-selector";
@@ -129,20 +128,12 @@ export function orchestrate(
 
 // ── Execution Context builder ────────────────────────────────
 
-/**
- * Fetch the per-user Composio action slugs to feed the planner.
- * Discovery has its own 5-min cache, so repeat calls within a run are free.
- * Failures are non-fatal — the planner keeps working with the static prompt.
- */
-async function fetchDiscoveredActions(userId: string): Promise<string[] | undefined> {
-  if (!userId) return undefined;
+async function resolveHasGoogle(userId: string): Promise<boolean> {
   try {
-    const { getToolsForUser } = await import("@/lib/connectors/composio");
-    const tools = await getToolsForUser(userId);
-    return tools.map((t) => t.name);
-  } catch (err) {
-    console.error("[Orchestrator] Composio discovery failed:", err);
-    return undefined;
+    const tokens = await getTokens(userId, "google");
+    return Boolean(tokens?.accessToken);
+  } catch {
+    return false;
   }
 }
 
@@ -152,170 +143,60 @@ async function handleDirectAnswer(
   engine: RunEngine,
   eventBus: RunEventBus,
   input: OrchestrateInput,
-  scope: TenantScope,
+  _scope: TenantScope,
 ): Promise<void> {
   eventBus.emit({
     type: "orchestrator_log",
     run_id: engine.id,
-    message: "Generating direct response…",
+    message: "AI pipeline: direct response…",
   });
 
-  const enrichedMessage = input._userDataContext
-    ? `${input._userDataContext}\n\n---\nQuestion de l'utilisateur: ${input.message}`
-    : input.message;
-
-  const discoveredActions = await fetchDiscoveredActions(input.userId);
-
-  const result = await planFromIntent(
-    engine.getDb(),
-    engine,
-    enrichedMessage,
-    input.conversationHistory ?? [],
-    {
-      surface: input.surface,
-      capabilityDomain: input._capabilityDomain,
-      discoveredActions,
-    },
-  );
-
-  if (result.kind === "request_connection") {
-    await emitConnectRequest(engine, eventBus, result.app, result.reason);
-    return;
-  }
-
-  if (result.kind === "direct_response") {
-    eventBus.emit({ type: "text_delta", run_id: engine.id, delta: result.text });
-    await engine.complete();
-    return;
-  }
-
-  if (result.kind === "error") {
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Planner error: ${result.error}`,
-    });
-    await engine.fail(result.error);
-    return;
-  }
-
-  // Planner produced a plan even though we expected direct — execute it
-  if (result.kind === "plan") {
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Plan created with ${result.plan.steps.length} step(s)`,
-    });
-    await runPlanExecution(engine, result.plan, scope, input.threadId, input._capabilityDomain);
-  }
+  await runAiPipeline(engine, eventBus, {
+    userId: input.userId,
+    message: input.message,
+    userDataContext: input._userDataContext,
+    conversationHistory: input.conversationHistory,
+    hasGoogle: await resolveHasGoogle(input.userId),
+    surface: input.surface,
+  });
 }
 
-/**
- * Emit the inline-connect prompt: a chat-side text explanation, the
- * structured `app_connect_required` event for the UI card, and complete the run.
- */
-async function emitConnectRequest(
-  engine: RunEngine,
-  eventBus: RunEventBus,
-  app: string,
-  reason: string,
-): Promise<void> {
-  eventBus.emit({
-    type: "text_delta",
-    run_id: engine.id,
-    delta: reason,
-  });
-  eventBus.emit({
-    type: "app_connect_required",
-    run_id: engine.id,
-    app: app.toLowerCase(),
-    reason,
-  });
-  eventBus.emit({
-    type: "orchestrator_log",
-    run_id: engine.id,
-    message: `Inline connect requested for app=${app}`,
-  });
-  await engine.complete();
-}
+
 
 async function handlePlanAndExecute(
   engine: RunEngine,
   input: OrchestrateInput,
   scope: TenantScope,
 ): Promise<void> {
+  // If a retrieval mode is set, the request needs real provider data (Google
+  // Drive/Gmail/Calendar). Route through the synthetic retrieval path which
+  // fetches live data and then synthesises it.
+  if (input._retrievalMode) {
+    engine.events.emit({
+      type: "orchestrator_log",
+      run_id: engine.id,
+      message: `Retrieval mode: ${input._retrievalMode} — using provider data path`,
+    });
+    await runSyntheticRetrieval(engine, input, scope, input._retrievalMode);
+    return;
+  }
+
+  // All other workflow/action requests go through the AI pipeline which
+  // uses streamText with real Composio tool callbacks.
   engine.events.emit({
     type: "orchestrator_log",
     run_id: engine.id,
-    message: "Planning execution…",
+    message: "AI pipeline: agentic execution…",
   });
 
-  const enrichedMessage = input._userDataContext
-    ? `${input._userDataContext}\n\n---\nQuestion de l'utilisateur: ${input.message}`
-    : input.message;
-
-  const discoveredActions = await fetchDiscoveredActions(input.userId);
-
-  const planResult = await planFromIntent(
-    engine.getDb(),
-    engine,
-    enrichedMessage,
-    input.conversationHistory ?? [],
-    {
-      surface: input.surface,
-      capabilityDomain: input._capabilityDomain,
-      discoveredActions,
-    },
-  );
-
-  switch (planResult.kind) {
-    case "request_connection": {
-      await emitConnectRequest(engine, engine.events, planResult.app, planResult.reason);
-      return;
-    }
-
-    case "direct_response": {
-      if (input._retrievalMode) {
-        engine.events.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: `Planner returned direct response but provider data needed — creating synthetic plan (${input._retrievalMode})`,
-        });
-        await runSyntheticRetrieval(engine, input, scope, input._retrievalMode, planResult.text);
-        return;
-      }
-      engine.events.emit({ type: "text_delta", run_id: engine.id, delta: planResult.text });
-      await engine.complete();
-      return;
-    }
-
-    case "error":
-      engine.events.emit({
-        type: "orchestrator_log",
-        run_id: engine.id,
-        message: `Planner error: ${planResult.error}`,
-      });
-      await engine.fail(planResult.error);
-      return;
-
-    case "plan":
-      if (planResult.plan.steps.length === 0 && input._retrievalMode) {
-        engine.events.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: `Plan has 0 steps but provider data needed — creating synthetic plan (${input._retrievalMode})`,
-        });
-        await runSyntheticRetrieval(engine, input, scope, input._retrievalMode);
-        return;
-      }
-      engine.events.emit({
-        type: "orchestrator_log",
-        run_id: engine.id,
-        message: `Plan created with ${planResult.plan.steps.length} step(s) — executing`,
-      });
-      await runPlanExecution(engine, planResult.plan, scope, input.threadId, input._capabilityDomain);
-      return;
-  }
+  await runAiPipeline(engine, engine.events, {
+    userId: input.userId,
+    message: input.message,
+    userDataContext: input._userDataContext,
+    conversationHistory: input.conversationHistory,
+    hasGoogle: await resolveHasGoogle(input.userId),
+    surface: input.surface,
+  });
 }
 
 
@@ -476,112 +357,6 @@ async function runSyntheticRetrieval(
     await engine.complete();
   }
 }
-
-async function runPlanExecution(
-  engine: RunEngine,
-  plan: import("@/lib/engine/runtime/plans/types").Plan,
-  scope: TenantScope,
-  threadId?: string,
-  capabilityDomain?: string,
-): Promise<void> {
-  const execResult = await executePlan(engine.getDb(), engine, plan, capabilityDomain);
-
-  switch (execResult.status) {
-    case "completed": {
-      engine.events.emit({
-        type: "orchestrator_log",
-        run_id: engine.id,
-        message: `Execution completed (${execResult.completedSteps.length} step(s) done)`,
-      });
-
-      maybeEmitAsset(engine, plan, scope, threadId);
-
-      await engine.complete();
-      return;
-    }
-    case "suspended":
-      engine.events.emit({
-        type: "orchestrator_log",
-        run_id: engine.id,
-        message: `Execution suspended — awaiting input`,
-      });
-      return;
-    case "failed":
-      engine.events.emit({
-        type: "orchestrator_log",
-        run_id: engine.id,
-        message: `Execution failed: ${execResult.error ?? "unknown"}`,
-      });
-      await engine.fail(execResult.error ?? "Plan execution failed");
-      return;
-  }
-}
-
-// ── Asset generation ─────────────────────────────────────────
-
-const ASSET_STEP_THRESHOLD = 2;
-
-function maybeEmitAsset(
-  engine: RunEngine,
-  plan: import("@/lib/engine/runtime/plans/types").Plan,
-  scope: TenantScope,
-  threadId?: string,
-): void {
-  const hasDocBuilder = plan.steps.some((s) => s.agent === "DocBuilder");
-  const isMultiStep = plan.steps.length >= ASSET_STEP_THRESHOLD;
-
-  if (!hasDocBuilder && !isMultiStep) return;
-
-  const assetType = hasDocBuilder ? "report" as const : "doc" as const;
-  const label = plan.steps.find((s) => s.agent === "DocBuilder")?.intent
-    ?? plan.steps[plan.steps.length - 1]?.intent
-    ?? "Generated output";
-
-  const asset = createAsset({
-    type: assetType,
-    name: label,
-    run_id: engine.id,
-    tenantId: scope.tenantId,
-    workspaceId: scope.workspaceId,
-  });
-
-  engine.events.emit({
-    type: "asset_generated",
-    run_id: engine.id,
-    asset_id: asset.id,
-    asset_type: asset.type,
-    name: asset.name,
-  });
-
-  const now = Date.now();
-  engine.events.emit({
-    type: "focal_object_ready",
-    run_id: engine.id,
-    focal_object: {
-      objectType: assetType,
-      id: `fo_${asset.id}`,
-      threadId: threadId ?? engine.id,
-      title: asset.name,
-      status: "delivered",
-      createdAt: now,
-      updatedAt: now,
-      sourceAssetId: asset.id,
-      morphTarget: null,
-      summary: "",
-      sections: [],
-      tier: assetType,
-      tone: "executive",
-      wordCount: 0,
-    },
-  });
-
-  engine.events.emit({
-    type: "orchestrator_log",
-    run_id: engine.id,
-    message: `Asset created: ${asset.name} (${asset.type})`,
-  });
-}
-
 
 // ── Schedule detection ───────────────────────────────────────
 

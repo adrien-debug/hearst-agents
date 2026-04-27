@@ -24,3 +24,5 @@ export {
 export type { ConnectedAccount, InitiateConnectionResult } from "./connections";
 export { listAvailableApps, resetAppsCache } from "./apps";
 export type { ComposioApp } from "./apps";
+export { toAiTools } from "./to-ai-tools";
+export type { AiToolMap } from "./to-ai-tools";

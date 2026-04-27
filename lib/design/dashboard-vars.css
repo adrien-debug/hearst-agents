@@ -120,13 +120,13 @@
 }
 
 .hc-font-mono {
-  font-family: var(--hc-font-mono, 'IBM Plex Mono', monospace);
+  font-family: var(--hc-font-mono, 'Satoshi Variable', 'Satoshi', sans-serif);
   letter-spacing: 0.2em;
 }
 
 .hc-kicker {
   font-size: 10px;
-  font-family: var(--hc-font-mono, 'IBM Plex Mono', monospace);
+  font-family: var(--hc-font-mono, 'Satoshi Variable', 'Satoshi', sans-serif);
   text-transform: uppercase;
   letter-spacing: 0.2em;
   color: var(--hc-text-ghost);

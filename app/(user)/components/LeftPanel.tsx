@@ -3,220 +3,115 @@
 import { useNavigationStore } from "@/stores/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 
-interface LeftPanelProps {
-  connectedServices?: ServiceWithConnectionStatus[];
-  onAddApp?: () => void;
-}
-
-export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) {
+export function LeftPanel() {
   const { data: session } = useSession();
   const router = useRouter();
   const { threads, activeThreadId, setActiveThread, addThread, removeThread } = useNavigationStore();
-  const [showAllThreads, setShowAllThreads] = useState(false);
 
   const firstName = session?.user?.name?.split(" ")[0] || "Utilisateur";
-  const recentThreads = threads.slice(0, 3);
-  const hasMoreThreads = threads.length > 3;
-
-  const handleLogout = () => {
-    signOut({ callbackUrl: "/login" });
-  };
 
   return (
     <aside
-      className="w-[72px] flex flex-col h-full relative z-20 border-r border-[var(--surface-2)] transition-all duration-500"
+      className="w-[200px] flex flex-col h-full relative z-20 border-r border-[var(--surface-2)]"
       style={{ background: "linear-gradient(180deg, var(--mat-050) 0%, var(--bg-soft) 100%)" }}
     >
-      {/* Logo H — halo signature */}
+      {/* Logo */}
       <button
-        onClick={() => {
-          router.push("/");
-          setShowAllThreads(false);
-        }}
-        className="p-4 flex justify-center hover:opacity-80 transition-opacity shrink-0 group"
-        title="Hearst — Home"
+        onClick={() => router.push("/")}
+        className="px-4 py-4 flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0"
+        title="Hearst — Accueil"
       >
-        <span className="relative inline-flex items-center justify-center w-9 h-9 rounded-sm halo-ring">
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-sm halo-ring shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/patterns/hcyan.svg"
-            alt="Hearst"
-            className="w-7 h-7 object-contain"
-          />
+          <img src="/patterns/hcyan.svg" alt="Hearst" className="w-5 h-5 object-contain" />
         </span>
+        <span className="t-15 font-light tracking-tight text-[var(--text-soft)]">Hearst</span>
       </button>
 
       <div className="h-px mx-3 shrink-0 halo-rule" />
 
-      {/* Apps Rail — top-3 connected services + overflow → /apps.
-          Showing every connected service was decorative noise that scaled
-          poorly past 5 apps. The rail now keeps the visual identity (3
-          live logos) but stays actionable: clicking an app or the overflow
-          chip both deep-link to /apps for management. */}
-      {(() => {
-        const RAIL_LIMIT = 3;
-        const visibleServices = connectedServices.slice(0, RAIL_LIMIT);
-        const overflowCount = Math.max(0, connectedServices.length - RAIL_LIMIT);
-        const goToApps = () => router.push("/apps");
-        return (
-          <div className={`flex flex-col items-center py-4 gap-4 overflow-hidden transition-all duration-500 ${showAllThreads ? 'h-0 opacity-0 py-0' : 'shrink-0'}`}>
-            {visibleServices.map((service) => {
-              const status = service.connectionStatus;
-              const showPip = status === "pending" || status === "error";
-              const pipColor =
-                status === "error" ? "bg-[var(--danger)]" :
-                status === "pending" ? "bg-[var(--warn)]" : "";
-              return (
-                <button
-                  key={service.id}
-                  onClick={goToApps}
-                  className="w-8 h-8 flex items-center justify-center transition-transform hover:scale-110 group relative shrink-0"
-                  title={`${service.name} — gérer dans /apps`}
-                  aria-label={`${service.name} — gérer dans /apps`}
-                >
-                  {service.icon ? (
-                    <img
-                      src={service.icon}
-                      alt={service.name}
-                      className="w-7 h-7 object-contain opacity-50 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
-                    />
-                  ) : (
-                    <span className="text-lg font-bold text-[var(--text-faint)] group-hover:text-[var(--text)] transition-colors">{service.name.charAt(0).toUpperCase()}</span>
-                  )}
-
-                  {showPip && (
-                    <span className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${pipColor} ${status === "error" ? "animate-pulse" : ""}`} />
-                  )}
-
-                  <span className="absolute left-full ml-3 px-2 py-1 bg-[var(--bg)] border border-[var(--surface-2)] t-10 font-mono tracking-[0.2em] text-[var(--text-soft)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 uppercase">
-                    {service.name}
-                  </span>
-                </button>
-              );
-            })}
-
-            {overflowCount > 0 && (
-              <button
-                onClick={goToApps}
-                className="w-8 h-8 flex items-center justify-center t-9 font-mono tracking-[0.05em] text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0 group relative"
-                title={`Voir ${overflowCount} autre${overflowCount > 1 ? "s" : ""} service${overflowCount > 1 ? "s" : ""} connecté${overflowCount > 1 ? "s" : ""}`}
-                aria-label={`Voir ${overflowCount} autres services connectés`}
-              >
-                +{overflowCount}
-                <span className="absolute left-full ml-3 px-2 py-1 bg-[var(--bg)] border border-[var(--surface-2)] t-10 font-mono tracking-[0.2em] text-[var(--text-soft)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 uppercase">
-                  +{overflowCount} more
-                </span>
-              </button>
-            )}
-
-            {/* Add App */}
-            <button
-              onClick={onAddApp ?? goToApps}
-              className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
-              title="Connect new app"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </button>
-          </div>
-        );
-      })()}
-
-      <div className="h-px bg-[var(--surface-2)] mx-3 shrink-0" />
-
-      {/* Library nav (Missions / Assets / Runs) was removed:
-          the RightPanel is now persistent and exposes those sections
-          (with previews + counts) at all times — no need for a duplicate
-          rail here. URLs /missions, /assets, /runs remain accessible via
-          the RightPanel section headers and direct navigation. */}
-
-      {/* Sessions */}
-      <div className={`flex flex-col items-center py-3 gap-3 overflow-y-auto scrollbar-hide transition-all duration-500 ${showAllThreads ? 'flex-1' : ''}`}>
-        {(showAllThreads ? threads : recentThreads).map((thread) => (
-          <div key={thread.id} className="relative group/item flex items-center">
-            <button
-              onClick={() => setActiveThread(thread.id)}
-              className={`w-8 h-8 flex items-center justify-center t-13 font-bold transition-all shrink-0 ${
-                activeThreadId === thread.id
-                  ? "text-[var(--cykan)] halo-cyan-sm"
-                  : "text-[var(--text-faint)] hover:text-[var(--text)]"
-              }`}
-              title={thread.name}
-            >
-              {thread.name.charAt(0).toUpperCase()}
-            </button>
-
-            {/* Delete button - appears on hover */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                removeThread(thread.id);
-              }}
-              className="absolute -right-6 w-5 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover/item:opacity-100 transition-all"
-              title="Delete conversation"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        ))}
-
-        {/* Voir tout */}
-        {hasMoreThreads && (
-          <button
-            onClick={() => setShowAllThreads(!showAllThreads)}
-            className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)] transition-colors shrink-0"
-            title={showAllThreads ? "Show less" : "View all"}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className={`transition-transform duration-300 ${showAllThreads ? 'rotate-180' : ''}`}
-            >
-              {showAllThreads ? (
-                <path d="M18 15l-6-6-6 6" />
-              ) : (
-                <path d="M6 9l6 6 6-6" />
-              )}
-            </svg>
-          </button>
-        )}
-
-        {/* New Session */}
+      {/* Conversations header */}
+      <div className="flex items-center justify-between px-4 pt-5 pb-2 shrink-0">
+        <span className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)]">Conversations</span>
         <button
           onClick={() => addThread("New", "home")}
-          className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
-          title="New session"
+          className="w-5 h-5 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+          title="Nouvelle conversation"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
       </div>
 
+      {/* Thread list — scrollable */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide py-1">
+        {threads.length === 0 && (
+          <p className="px-4 py-3 t-11 text-[var(--text-ghost)]">Aucune conversation</p>
+        )}
+        {threads.map((thread) => {
+          const isActive = thread.id === activeThreadId;
+          return (
+            <div
+              key={thread.id}
+              className={`group relative flex items-center gap-3 mx-2 px-2 py-2 rounded-sm cursor-pointer transition-colors ${
+                isActive
+                  ? "bg-[var(--surface-1)] text-[var(--text)]"
+                  : "text-[var(--text-muted)] hover:bg-[var(--surface-1)] hover:text-[var(--text)]"
+              }`}
+              onClick={() => setActiveThread(thread.id)}
+              title={thread.name}
+            >
+              <span className={`w-6 h-6 rounded-sm flex items-center justify-center t-11 font-bold shrink-0 ${
+                isActive ? "bg-[var(--cykan)] text-[var(--bg)]" : "bg-[var(--surface-2)] text-[var(--text-faint)]"
+              }`}>
+                {thread.name.charAt(0).toUpperCase()}
+              </span>
+
+              <span className="flex-1 t-13 font-light truncate min-w-0">{thread.name}</span>
+
+              <button
+                onClick={(e) => { e.stopPropagation(); removeThread(thread.id); }}
+                className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all shrink-0"
+                title="Supprimer"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
       <div className="h-px bg-[var(--surface-2)] mx-3 shrink-0" />
 
-      {/* Logout */}
-      <div className="p-3 flex flex-col items-center shrink-0">
+      {/* Bottom — Apps + Logout */}
+      <div className="p-3 flex flex-col gap-1 shrink-0">
         <button
-          onClick={handleLogout}
-          className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
-          title={`Logout ${firstName}`}
+          onClick={() => router.push("/apps")}
+          className="flex items-center gap-3 px-2 py-2 rounded-sm t-13 font-light text-[var(--text-faint)] hover:text-[var(--text)] hover:bg-[var(--surface-1)] transition-colors"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="2" y="2" width="9" height="9" rx="1"/>
+            <rect x="13" y="2" width="9" height="9" rx="1"/>
+            <rect x="2" y="13" width="9" height="9" rx="1"/>
+            <rect x="13" y="13" width="9" height="9" rx="1"/>
+          </svg>
+          <span>Applications</span>
+        </button>
+
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex items-center gap-3 px-2 py-2 rounded-sm t-13 font-light text-[var(--text-faint)] hover:text-[var(--danger)] hover:bg-[var(--surface-1)] transition-colors"
+        >
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
+          <span>{firstName}</span>
         </button>
       </div>
     </aside>
