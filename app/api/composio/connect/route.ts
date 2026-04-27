@@ -48,7 +48,15 @@ export async function POST(req: NextRequest) {
 
   const result = await initiateConnection(userId, parsed.data.appName, parsed.data.redirectUri);
   if (!result.ok) {
-    return NextResponse.json({ error: result.error ?? "connect_failed" }, { status: 502 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: result.error ?? "connect_failed",
+        errorCode: result.errorCode,
+        details: result.details,
+      },
+      { status: 502 },
+    );
   }
 
   return NextResponse.json({

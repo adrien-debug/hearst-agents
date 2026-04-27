@@ -39,6 +39,7 @@ export function ChatConnectInline() {
   const events = useRuntimeStore((s) => s.events);
   const lastRunId = useRuntimeStore((s) => s.lastRunId);
   const [busy, setBusy] = useState(false);
+  const [lastError, setLastError] = useState<{ message: string; code?: string } | null>(null);
 
   const request = useMemo(
     () => selectLatestConnectRequest(events, lastRunId),
@@ -59,21 +60,40 @@ export function ChatConnectInline() {
           redirectUri: `${window.location.origin}${window.location.pathname}?connected=${encodeURIComponent(request.app)}`,
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; redirectUrl?: string; error?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        redirectUrl?: string;
+        error?: string;
+        errorCode?: string;
+        details?: unknown;
+      };
       if (!res.ok || !data.ok) {
-        toast.error("Connexion impossible", data.error ?? "Erreur Composio");
+        const message = data.error ?? "Erreur Composio";
+        console.error(
+          `[Composio] Inline connect failed for ${request.app}: code=${data.errorCode} message=${message}`,
+          data.details,
+        );
+        setLastError({ message, code: data.errorCode });
+        toast.error(`Connexion ${request.app} impossible`, message);
+        if (data.errorCode === "NO_INTEGRATION" || data.errorCode === "AUTH_CONFIG_REQUIRED") {
+          window.open(
+            `https://app.composio.dev/app/${encodeURIComponent(request.app)}`,
+            "_blank",
+            "noopener,noreferrer",
+          );
+        }
         return;
       }
+      setLastError(null);
       if (data.redirectUrl) {
         window.location.href = data.redirectUrl;
         return;
       }
       toast.success(`${request.app} connecté`, "Re-pose ta question pour continuer");
     } catch (err) {
-      toast.error(
-        "Connexion impossible",
-        err instanceof Error ? err.message : "Erreur réseau",
-      );
+      const message = err instanceof Error ? err.message : "Erreur réseau";
+      setLastError({ message });
+      toast.error("Connexion impossible", message);
     } finally {
       setBusy(false);
     }
@@ -92,23 +112,60 @@ export function ChatConnectInline() {
         <span className="text-[var(--text-faint)]">{request.app}</span>
       </div>
       <p className="t-13 text-[var(--text-soft)] leading-[1.5] mb-3">{request.reason}</p>
-      <button
-        onClick={handleConnect}
-        disabled={busy}
-        className="inline-flex items-center gap-2 px-3 py-1.5 t-11 font-mono tracking-[0.15em] uppercase border border-[var(--warn)] text-[var(--warn)] bg-[var(--warn)]/[0.06] hover:bg-[var(--warn)]/[0.12] transition-colors disabled:opacity-50"
-      >
-        {busy ? (
-          <>
-            <span className="w-1 h-1 rounded-full bg-[var(--warn)] animate-pulse" />
-            <span>Redirection…</span>
-          </>
-        ) : (
-          <>
-            <span>Connecter {request.app}</span>
-            <span>→</span>
-          </>
-        )}
-      </button>
+
+      {lastError && (
+        <div className="mb-3 border border-[var(--danger)]/40 bg-[var(--danger)]/[0.06] px-3 py-2 t-11 text-[var(--danger)]">
+          <div className="font-medium mb-1">
+            {lastError.code === "NO_INTEGRATION"
+              ? "Aucune intégration configurée"
+              : lastError.code === "AUTH_CONFIG_REQUIRED"
+                ? "Auth config manquante"
+                : "Échec"}
+          </div>
+          <div className="text-[var(--text-soft)] leading-[1.45]">{lastError.message}</div>
+          <a
+            href={`https://app.composio.dev/app/${encodeURIComponent(request.app)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-2 t-9 font-mono tracking-[0.15em] uppercase text-[var(--cykan)] hover:underline"
+          >
+            Configurer sur app.composio.dev →
+          </a>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <button
+          onClick={handleConnect}
+          disabled={busy}
+          className="inline-flex items-center gap-2 px-3 py-1.5 t-11 font-mono tracking-[0.15em] uppercase border border-[var(--warn)] text-[var(--warn)] bg-[var(--warn)]/[0.06] hover:bg-[var(--warn)]/[0.12] transition-colors disabled:opacity-50"
+        >
+          {busy ? (
+            <>
+              <span className="w-1 h-1 rounded-full bg-[var(--warn)] animate-pulse" />
+              <span>Redirection…</span>
+            </>
+          ) : lastError ? (
+            <>
+              <span>Réessayer</span>
+            </>
+          ) : (
+            <>
+              <span>Connecter {request.app}</span>
+              <span>→</span>
+            </>
+          )}
+        </button>
+        <a
+          href={`/api/composio/diagnose?app=${encodeURIComponent(request.app)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="t-9 font-mono tracking-[0.15em] uppercase text-[var(--text-faint)] hover:text-[var(--cykan)]"
+          title="Voir le diagnostic Composio (JSON)"
+        >
+          Diagnostic
+        </a>
+      </div>
     </div>
   );
 }

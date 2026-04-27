@@ -25,6 +25,16 @@ export interface InitiateConnectionResult {
   /** Composio's id for the pending connection. */
   connectionId?: string;
   error?: string;
+  /** Stable code the UI can branch on. */
+  errorCode?:
+    | "NOT_CONFIGURED"
+    | "NO_INTEGRATION"
+    | "AUTH_CONFIG_REQUIRED"
+    | "INVALID_INPUT"
+    | "UPSTREAM_ERROR"
+    | "UNKNOWN";
+  /** Raw error payload for debugging (Composio's response body). */
+  details?: unknown;
 }
 
 interface RawConnectedAccount {
@@ -64,22 +74,34 @@ export async function initiateConnection(
   redirectUri?: string,
 ): Promise<InitiateConnectionResult> {
   if (!isComposioConfigured()) {
-    return { ok: false, error: "COMPOSIO_API_KEY not configured." };
+    return {
+      ok: false,
+      error: "COMPOSIO_API_KEY not configured.",
+      errorCode: "NOT_CONFIGURED",
+    };
   }
-  if (!userId) return { ok: false, error: "Missing userId." };
-  if (!appName) return { ok: false, error: "Missing appName." };
+  if (!userId) return { ok: false, error: "Missing userId.", errorCode: "INVALID_INPUT" };
+  if (!appName) return { ok: false, error: "Missing appName.", errorCode: "INVALID_INPUT" };
 
   const toolset = await getComposioToolset();
-  if (!toolset) return { ok: false, error: "Composio SDK not loaded." };
+  if (!toolset) {
+    return { ok: false, error: "Composio SDK not loaded.", errorCode: "NOT_CONFIGURED" };
+  }
+
+  const slug = appName.toLowerCase();
 
   try {
     const res = await toolset.client.connectedAccounts.initiate({
       entityId: userId,
-      appName: appName.toLowerCase(),
+      appName: slug,
       ...(redirectUri ? { redirectUri } : {}),
     });
 
     invalidateUserDiscovery(userId);
+
+    console.log(
+      `[Composio/Connections] initiate ok — userId=${userId} app=${slug} hasRedirect=${Boolean(res.redirectUrl)}`,
+    );
 
     return {
       ok: true,
@@ -87,10 +109,55 @@ export async function initiateConnection(
       connectionId: res.connectedAccountId,
     };
   } catch (err) {
+    const e = err as { message?: string; status?: number; response?: { data?: unknown } } | Error;
+    const message = e instanceof Error ? e.message : (e.message ?? "Unknown error");
+    const responseData = (e as { response?: { data?: unknown } }).response?.data;
+
+    // Server-side log: full error so devs can diagnose from Vercel/local logs.
+    console.error("[Composio/Connections] initiate failed", {
+      userId,
+      app: slug,
+      message,
+      responseData,
+    });
+
+    // Map common Composio failure shapes to a stable errorCode the UI can act on.
+    const lower = message.toLowerCase();
+    let errorCode: InitiateConnectionResult["errorCode"] = "UPSTREAM_ERROR";
+    if (/integration .*(not.*found|missing|unknown)/.test(lower) || /no integration/.test(lower)) {
+      errorCode = "NO_INTEGRATION";
+    } else if (/auth.*config|missing.*scope|client.*id|client.*secret/.test(lower)) {
+      errorCode = "AUTH_CONFIG_REQUIRED";
+    } else if (/not configured|api key|401|403/.test(lower)) {
+      errorCode = "NOT_CONFIGURED";
+    }
+
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "Unknown error initiating connection.",
+      error: friendlyErrorMessage(slug, errorCode, message),
+      errorCode,
+      details: responseData ?? message,
     };
+  }
+}
+
+function friendlyErrorMessage(
+  slug: string,
+  code: InitiateConnectionResult["errorCode"],
+  rawMessage: string,
+): string {
+  switch (code) {
+    case "NO_INTEGRATION":
+      return `Aucune intégration ${slug} configurée sur ton compte Composio. Active-la sur https://app.composio.dev → Apps → ${slug} → Setup → "Use Composio Managed Auth", puis réessaye.`;
+    case "AUTH_CONFIG_REQUIRED":
+      return `L'intégration ${slug} demande une auth config (client ID/secret OAuth). Configure-la sur https://app.composio.dev → Apps → ${slug}.`;
+    case "NOT_CONFIGURED":
+      return `Composio n'est pas correctement configuré côté serveur (clé API ?). Vérifie COMPOSIO_API_KEY.`;
+    case "INVALID_INPUT":
+      return rawMessage;
+    case "UPSTREAM_ERROR":
+    default:
+      return `Composio a refusé la connexion à ${slug} : ${rawMessage}`;
   }
 }
 

@@ -50,6 +50,9 @@ export interface ComposioToolset {
     apps: {
       list(): Promise<unknown>;
     };
+    integrations: {
+      list(args?: Record<string, unknown>): Promise<unknown>;
+    };
   };
 }
 

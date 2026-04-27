@@ -176,9 +176,32 @@ export function ConnectionsHub() {
             redirectUri: `${window.location.origin}/apps?connected=${encodeURIComponent(app.key)}`,
           }),
         });
-        const data = (await res.json()) as { ok?: boolean; redirectUrl?: string; error?: string };
+        const data = (await res.json()) as {
+          ok?: boolean;
+          redirectUrl?: string;
+          error?: string;
+          errorCode?: string;
+          details?: unknown;
+        };
+
         if (!res.ok || !data.ok) {
-          toast.error("Connexion impossible", data.error ?? "Erreur Composio");
+          // Server-friendly message already includes the dashboard URL when relevant.
+          const message = data.error ?? "Erreur Composio";
+          console.error(
+            `[Composio] Connect failed for ${app.key}: code=${data.errorCode} message=${message}`,
+            data.details,
+          );
+          toast.error(`Connexion ${app.name} impossible`, message);
+
+          // For NO_INTEGRATION / AUTH_CONFIG_REQUIRED, open the Composio dashboard
+          // in a new tab so the user can fix it without leaving Hearst.
+          if (data.errorCode === "NO_INTEGRATION" || data.errorCode === "AUTH_CONFIG_REQUIRED") {
+            window.open(
+              `https://app.composio.dev/app/${encodeURIComponent(app.key)}`,
+              "_blank",
+              "noopener,noreferrer",
+            );
+          }
           return;
         }
         if (data.redirectUrl) {
