@@ -32,11 +32,6 @@ import { BACKEND_CAPABILITIES } from "@/lib/agents/backend-v2/types";
 
 const hoisted = vi.hoisted(() => ({
   messagesCreate: vi.fn(),
-  financeExec: vi.fn(),
-  crmExec: vi.fn(),
-  productivityExec: vi.fn(),
-  designExec: vi.fn(),
-  developerExec: vi.fn(),
   getTokensMock: vi.fn(),
   createPlanSpy: vi.fn(),
 }));
@@ -58,21 +53,6 @@ vi.mock("@/lib/platform/auth/tokens", () => ({
   getTokens: hoisted.getTokensMock,
 }));
 
-vi.mock("@/lib/agents/specialized/finance", () => ({
-  executeStripeAgentInRuntime: hoisted.financeExec,
-}));
-vi.mock("@/lib/agents/specialized/crm", () => ({
-  executeCRMAgentInRuntime: hoisted.crmExec,
-}));
-vi.mock("@/lib/agents/specialized/productivity", () => ({
-  executeProductivityAgentInRuntime: hoisted.productivityExec,
-}));
-vi.mock("@/lib/agents/specialized/design", () => ({
-  executeDesignAgentInRuntime: hoisted.designExec,
-}));
-vi.mock("@/lib/agents/specialized/developer", () => ({
-  executeDeveloperAgentInRuntime: hoisted.developerExec,
-}));
 
 vi.mock("@/lib/engine/runtime/plans/store", () => ({
   PlanStore: class {
@@ -325,55 +305,14 @@ function createMockEngine(runId = "run-delegate-test") {
 
 describe("D — Delegate routing", () => {
   beforeEach(() => {
-    hoisted.financeExec.mockReset();
-    hoisted.crmExec.mockReset();
-    hoisted.productivityExec.mockReset();
-    hoisted.designExec.mockReset();
-    hoisted.developerExec.mockReset();
     hoisted.messagesCreate.mockReset();
     hoisted.getTokensMock.mockReset();
-    hoisted.financeExec.mockResolvedValue({ success: true });
-    hoisted.crmExec.mockResolvedValue({ success: true });
-    hoisted.productivityExec.mockResolvedValue({ success: true });
-    hoisted.designExec.mockResolvedValue({ success: true });
-    hoisted.developerExec.mockResolvedValue({ success: true });
     hoisted.getTokensMock.mockResolvedValue(null);
     hoisted.messagesCreate.mockResolvedValue({
       content: [{ type: "text", text: "Réponse mock" }],
       usage: { input_tokens: 1, output_tokens: 2 },
     });
   });
-
-  const specializedCases: Array<{
-    domain: Domain;
-    exec: typeof hoisted.financeExec;
-  }> = [
-    { domain: "finance", exec: hoisted.financeExec },
-    { domain: "crm", exec: hoisted.crmExec },
-    { domain: "productivity", exec: hoisted.productivityExec },
-    { domain: "design", exec: hoisted.designExec },
-    { domain: "developer", exec: hoisted.developerExec },
-  ];
-
-  it.each(specializedCases)(
-    "domain $domain → route vers execute spécialisé + step_completed",
-    async ({ domain, exec }) => {
-      const engine = createMockEngine(`run-${domain}`);
-      const res = await delegate(engine as never, {
-        run_id: engine.id,
-        agent: "KnowledgeRetriever",
-        task: "tâche test",
-        context: { capability_domain: domain },
-        expected_output: "summary",
-      });
-      expect(res.status).toBe("success");
-      expect(exec).toHaveBeenCalled();
-      const types = engine.emitted.map((e) => e.type);
-      expect(types).toContain("step_started");
-      expect(types).toContain("step_completed");
-      expect(types).not.toContain("step_failed");
-    },
-  );
 
   it("agent invalide pour le domaine → PERMISSION_DENIED + step_failed + runtime_warning", async () => {
     const engine = createMockEngine();
@@ -391,7 +330,6 @@ describe("D — Delegate routing", () => {
     const types = engine.emitted.map((e) => e.type);
     expect(types).toContain("runtime_warning");
     expect(types).toContain("step_failed");
-    expect(hoisted.financeExec).not.toHaveBeenCalled();
   });
 });
 

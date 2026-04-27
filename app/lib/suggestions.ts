@@ -3,7 +3,12 @@
  * Ultra-short messages, single action per suggestion.
  */
 
-import type { UnifiedMessage } from "@/lib/connectors/unified-types";
+/** Minimal shape consumed by `detectSuggestions` — kept inline since the
+ * old `UnifiedMessage` cross-source type was removed with the legacy packs. */
+interface SuggestionMessage {
+  priority?: "urgent" | "high" | "normal" | "low";
+  read?: boolean;
+}
 
 // Types locaux
 export type ActionStatus = "waiting" | "running" | "completed" | "failed";
@@ -47,7 +52,7 @@ function step(id: string, label: string, service?: string): { id: string; label:
   return { id, label, status: "waiting" as ActionStatus, service };
 }
 
-export function detectSuggestions(messages: UnifiedMessage[]): Suggestion | null {
+export function detectSuggestions(messages: SuggestionMessage[]): Suggestion | null {
   if (messages.length === 0) return null;
 
   const urgent = messages.filter((m) => m.priority === "urgent");

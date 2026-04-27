@@ -302,102 +302,30 @@ export async function testConnectorConnection(
 
 /**
  * Route health check to provider-specific logic.
+ *
+ * After the Composio migration, third-party provider health is owned by
+ * Composio (per-user, per-app). The admin diagnostic only stays for the
+ * native Google integration that we still drive through NextAuth tokens.
  */
 async function runProviderHealthCheck(
   provider: string,
-  config: Record<string, unknown>
+  _config: Record<string, unknown>
 ): Promise<{ success: boolean; error?: string }> {
   switch (provider) {
-    case "stripe": {
-      const apiKey = config.apiKey as string | undefined;
-      if (!apiKey) {
-        return await checkViaNangoProxy("stripe");
-      }
-      const { StripeApiService } = await import(
-        "@/lib/connectors/packs/finance-pack/services/stripe"
-      );
-      const stripe = new StripeApiService({ apiKey });
-      const h = await stripe.health();
-      return h.ok ? { success: true } : { success: false, error: "Stripe API unreachable" };
-    }
-
-    case "hubspot":
-    case "jira":
-    case "airtable":
-    case "figma":
-    case "salesforce":
-    case "linear":
-    case "quickbooks":
-    case "xero":
-    case "shopify":
-    case "zapier":
-      return await checkViaNangoProxy(provider);
-
     case "gmail":
     case "google":
     case "calendar":
     case "drive":
-      return await checkGoogleNative(provider);
-
+      return checkGoogleNative();
     default:
-      return await checkViaNangoProxy(provider);
+      return {
+        success: false,
+        error: `Health check for "${provider}" is now handled by Composio per-user, not by the admin API`,
+      };
   }
 }
 
-/**
- * Check via Nango proxy — does a lightweight GET to verify the token works.
- */
-async function checkViaNangoProxy(
-  provider: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { isNangoEnabled, getNangoClient } = await import(
-      "@/lib/connectors/nango/client"
-    );
-    if (!isNangoEnabled()) {
-      return { success: false, error: "Nango not configured" };
-    }
-    const nango = getNangoClient();
-
-    const providerEndpoints: Record<string, string> = {
-      hubspot: "/crm/v3/objects/contacts?limit=1",
-      jira: "/rest/api/3/myself",
-      airtable: "/v0/meta/bases",
-      figma: "/v1/me",
-      salesforce: "/services/data/v58.0/limits",
-      linear: "/graphql",
-      quickbooks: "/v3/company/companyInfo",
-      xero: "/api.xro/2.0/Organisation",
-      shopify: "/admin/api/2024-01/shop.json",
-      zapier: "/api/v1/zaps",
-    };
-
-    const endpoint = providerEndpoints[provider] ?? "/";
-
-    const connections = await nango.listConnections();
-    const hasConnection = connections.connections.some(
-      (c: { provider_config_key: string }) => c.provider_config_key === provider
-    );
-
-    if (!hasConnection) {
-      return { success: false, error: `No active ${provider} connection in Nango` };
-    }
-
-    return { success: true };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Nango health check failed",
-    };
-  }
-}
-
-/**
- * Check Google native connectors (Gmail/Calendar/Drive) via token validation.
- */
-async function checkGoogleNative(
-  _provider: string
-): Promise<{ success: boolean; error?: string }> {
+async function checkGoogleNative(): Promise<{ success: boolean; error?: string }> {
   try {
     const response = await fetch("https://www.googleapis.com/oauth2/v1/tokeninfo", {
       method: "GET",

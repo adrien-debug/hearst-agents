@@ -134,28 +134,14 @@ export class DataRetriever {
   // hasXxxAccess and emit progress.end(_, false) for the UI.
 
   private async getTodayEvents(): Promise<CalendarEvent[]> {
-    const { getTodayEvents } = await import("./packs/productivity-pack/services/calendar");
-    const events = await getTodayEvents(this.userId, 10);
-
-    return events.map(e => ({
-      id: e.id,
-      title: e.title,
-      startTime: e.startTime,
-      endTime: e.endTime,
-      description: e.description,
-      location: e.location,
-      attendees: e.attendees,
-      isAllDay: e.isAllDay,
-    }));
+    const { getTodayEvents } = await import("./google/calendar");
+    return getTodayEvents(this.userId, 10);
   }
 
   private async getRecentEmails(limit: number): Promise<EmailMessage[]> {
-    const { gmailConnector } = await import("./packs/productivity-pack/services/gmail");
-    const result = await gmailConnector.getEmails(this.userId, limit);
-
-    if (!result.data) return [];
-
-    return result.data.map(e => ({
+    const { getRecentEmails } = await import("./google/gmail");
+    const messages = await getRecentEmails(this.userId, limit);
+    return messages.map((e) => ({
       id: e.id,
       subject: e.subject,
       from: e.sender,
@@ -168,19 +154,8 @@ export class DataRetriever {
   }
 
   private async getRecentFiles(limit: number): Promise<DriveFile[]> {
-    const { getRecentFiles } = await import("./packs/productivity-pack/services/drive");
-    const result = await getRecentFiles(this.userId, limit);
-
-    if (!result.data) return [];
-
-    return result.data.map(f => ({
-      id: f.id,
-      name: f.name,
-      mimeType: f.mimeType,
-      modifiedTime: f.modifiedTime,
-      size: f.size,
-      webViewLink: f.webViewLink,
-    }));
+    const { getRecentFiles } = await import("./google/drive");
+    return getRecentFiles(this.userId, limit);
   }
 
   /**

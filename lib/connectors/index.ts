@@ -1,22 +1,48 @@
-export type { EmailMessage, CalendarEvent, FileEntry, TaskItem, SlackMessage, ConnectorResult } from "./types";
-export type { EmailConnector, CalendarConnector, FileConnector, TaskConnector, SlackConnector } from "./types";
-export type { ConnectorSource, ConnectorMeta } from "./types";
+/**
+ * Connectors public surface.
+ *
+ * After the legacy cleanup (packs / Nango router / specialized agents
+ * removed), the connectors layer is two things:
+ *  - `composio/*`  → discovery + execution of agent actions per user
+ *  - `google/*`    → direct Google API calls (NextAuth-backed) for the
+ *                    Calendar/Gmail/Drive read paths used by data-retriever
+ *                    and the KnowledgeRetriever delegate.
+ *
+ * Anything else has been removed. Re-export the few external entry points
+ * we still expose so callers don't import from deep paths.
+ */
 
-export type { UnifiedMessage, UnifiedEvent, UnifiedFile, UnifiedTask, SourceInfo } from "./unified-types";
-export { gmailToUnifiedMessage, slackToUnifiedMessage, calendarToUnifiedEvent, driveToUnifiedFile } from "./unified-types";
-export { getUnifiedMessages, getUnifiedEvents, getUnifiedFiles } from "./unified";
-
-export { gmailConnector } from "./packs/productivity-pack/services/gmail";
-export { calendarConnector } from "./packs/productivity-pack/services/calendar";
-export { driveConnector } from "./packs/productivity-pack/services/drive";
-export { slackConnector } from "./packs/productivity-pack/services/slack";
-
-export { CORE_CONNECTORS, EXTERNAL_CONNECTORS, ALL_CONNECTORS, getConnector } from "./registry";
-
-// Router (Phase A) — Pack-first routing with Nango fallback
 export {
-  routeConnectorRequest,
-  getRouterStats,
-  type RouterResult,
-  type RouterContext,
-} from "./router";
+  executeComposioAction,
+  isComposioConfigured,
+  resetComposioClient,
+  getComposioToolset,
+  gmailSendEmail,
+  getToolsForUser,
+  invalidateUserDiscovery,
+  resetDiscoveryCache,
+  toAnthropicTools,
+  toOpenAITools,
+  initiateConnection,
+  listConnections,
+  disconnectAccount,
+} from "./composio";
+export type {
+  ComposioCallParams,
+  ComposioResult,
+  ComposioErrorCode,
+  GmailSendInput,
+  GmailSendOutput,
+  DiscoveredTool,
+  ConnectedAccount,
+  InitiateConnectionResult,
+} from "./composio";
+
+export { retrieveUserDataContext, DataRetriever, detectDataIntent } from "./data-retriever";
+export type {
+  UserDataContext,
+  CalendarEvent as RetrievedCalendarEvent,
+  EmailMessage as RetrievedEmailMessage,
+  DriveFile as RetrievedDriveFile,
+  RetrieveProgress,
+} from "./data-retriever";

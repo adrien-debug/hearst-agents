@@ -33,7 +33,9 @@ import { storeAsset, storeAction, type Asset } from "@/lib/assets/types";
 import { handleSendMessage } from "@/lib/tools/handlers/send-message";
 import { manifestPlan, manifestAsset } from "@/lib/ui/right-panel/manifestation";
 import { logPlanEvent } from "./debug";
-import { gmailConnector, calendarConnector, driveConnector } from "@/lib/connectors";
+import { getRecentEmails } from "@/lib/connectors/google/gmail";
+import { getUpcomingEvents } from "@/lib/connectors/google/calendar";
+import { getRecentFiles } from "@/lib/connectors/google/drive";
 import { searchWeb } from "@/lib/tools/handlers/web-search";
 import { generatePdfArtifact } from "@/lib/engine/runtime/assets/generators/pdf";
 import { generateSpreadsheetArtifact } from "@/lib/engine/runtime/assets/generators/spreadsheet";
@@ -280,13 +282,13 @@ async function executeToolCall(
 
     case "get_messages": {
       try {
-        const result = await gmailConnector.getEmails(ctx.userId, (params.limit as number) ?? 10);
-        const content = result.data
+        const emails = await getRecentEmails(ctx.userId, (params.limit as number) ?? 10);
+        const content = emails
           .map((m) => `- **${m.subject}** (${m.sender}) — ${m.snippet ?? ""}`)
           .join("\n");
         return {
           success: true,
-          data: { content: content || "Aucun message récent.", source: providerId, emails: result.data },
+          data: { content: content || "Aucun message récent.", source: providerId, emails },
         };
       } catch (err) {
         logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });
@@ -297,13 +299,13 @@ async function executeToolCall(
     case "get_calendar_events": {
       try {
         const days = (params.days as number) ?? 7;
-        const result = await calendarConnector.getEvents(ctx.userId, days);
-        const content = result.data
-          .map((e) => `- **${e.title}** — ${e.start} → ${e.end}${e.location ? ` (${e.location})` : ""}`)
+        const events = await getUpcomingEvents(ctx.userId, days);
+        const content = events
+          .map((e) => `- **${e.title}** — ${e.startTime} → ${e.endTime}${e.location ? ` (${e.location})` : ""}`)
           .join("\n");
         return {
           success: true,
-          data: { content: content || "Aucun événement à venir.", source: providerId, events: result.data },
+          data: { content: content || "Aucun événement à venir.", source: providerId, events },
         };
       } catch (err) {
         logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });
@@ -313,13 +315,13 @@ async function executeToolCall(
 
     case "get_files": {
       try {
-        const result = await driveConnector.getFiles(ctx.userId, (params.limit as number) ?? 15);
-        const content = result.data
+        const files = await getRecentFiles(ctx.userId, (params.limit as number) ?? 15);
+        const content = files
           .map((f) => `- **${f.name}** (${f.mimeType}) — modifié ${f.modifiedTime}`)
           .join("\n");
         return {
           success: true,
-          data: { content: content || "Aucun fichier trouvé.", source: providerId, files: result.data },
+          data: { content: content || "Aucun fichier trouvé.", source: providerId, files },
         };
       } catch (err) {
         logPlanEvent("tool_error", { tool, providerId, error: (err as Error).message });

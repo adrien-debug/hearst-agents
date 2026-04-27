@@ -23,47 +23,20 @@ interface NangoProviderSeed {
 }
 
 /**
- * Tier 3 services — long-tail integrations via Nango.
- * These are read-only, generic UI, deep-link to native app.
+ * Tier 3 services — long-tail integrations.
+ *
+ * Previously seeded with 23 placeholder Nango entries that all had
+ * `status: "planned"` and no working backend. Showing them in /apps was
+ * misleading: users clicked, nothing worked.
+ *
+ * Long-tail providers are now surfaced through Composio's discovery layer
+ * (see `ComposioConnectionsCard` and `lib/connectors/composio/discovery.ts`)
+ * which only exposes apps the user has actually connected.
+ *
+ * If/when a provider should ship in the curated UI catalog as Tier 1/2,
+ * promote it explicitly in `lib/integrations/catalog.ts`.
  */
-const TIER_3_NANGO_SERVICES: Array<Partial<ServiceDefinition> & { nangoProvider: string }> = [
-  // Communication & Social
-  { id: "discord", name: "Discord", nangoProvider: "discord", category: "communication", capabilities: ["messaging"] },
-  { id: "zoom", name: "Zoom", nangoProvider: "zoom", category: "communication", capabilities: ["messaging"] },
-  { id: "teams", name: "Microsoft Teams", nangoProvider: "microsoft-teams", category: "communication", capabilities: ["messaging"] },
-  { id: "linkedin", name: "LinkedIn", nangoProvider: "linkedin", category: "communication", capabilities: ["messaging"] },
-
-  // Productivity
-  { id: "confluence", name: "Confluence", nangoProvider: "confluence", category: "productivity", capabilities: ["files"] },
-  { id: "miro", name: "Miro", nangoProvider: "miro", category: "productivity", capabilities: ["design"] },
-  { id: "docusign", name: "DocuSign", nangoProvider: "docusign", category: "productivity", capabilities: ["automation"] },
-
-  // CRM
-  { id: "salesforce", name: "Salesforce", nangoProvider: "salesforce", category: "crm", capabilities: ["crm"] },
-  { id: "pipedrive", name: "Pipedrive", nangoProvider: "pipedrive", category: "crm", capabilities: ["crm"] },
-  { id: "intercom", name: "Intercom", nangoProvider: "intercom", category: "communication", capabilities: ["messaging"] },
-  { id: "zendesk", name: "Zendesk", nangoProvider: "zendesk", category: "support", capabilities: ["support"] },
-
-  // Dev & Infra
-  { id: "gitlab", name: "GitLab", nangoProvider: "gitlab", category: "dev", capabilities: ["developer_tools"] },
-  { id: "bitbucket", name: "Bitbucket", nangoProvider: "bitbucket", category: "dev", capabilities: ["developer_tools"] },
-  { id: "vercel", name: "Vercel", nangoProvider: "vercel", category: "dev", capabilities: ["developer_tools"] },
-  { id: "sentry", name: "Sentry", nangoProvider: "sentry", category: "dev", capabilities: ["developer_tools"] },
-
-  // Analytics
-  { id: "mixpanel", name: "Mixpanel", nangoProvider: "mixpanel", category: "analytics", capabilities: ["research"] },
-  { id: "amplitude", name: "Amplitude", nangoProvider: "amplitude", category: "analytics", capabilities: ["research"] },
-  { id: "segment", name: "Segment", nangoProvider: "segment", category: "analytics", capabilities: ["research"] },
-
-  // Finance
-  { id: "quickbooks", name: "QuickBooks", nangoProvider: "quickbooks", category: "finance", capabilities: ["finance"] },
-  { id: "xero", name: "Xero", nangoProvider: "xero", category: "finance", capabilities: ["finance"] },
-  { id: "shopify", name: "Shopify", nangoProvider: "shopify", category: "commerce", capabilities: ["commerce"] },
-
-  // Storage
-  { id: "dropbox", name: "Dropbox", nangoProvider: "dropbox", category: "storage", capabilities: ["files"] },
-  { id: "onedrive", name: "OneDrive", nangoProvider: "onedrive", category: "storage", capabilities: ["files"] },
-];
+const TIER_3_NANGO_SERVICES: Array<Partial<ServiceDefinition> & { nangoProvider: string }> = [];
 
 /**
  * Generate full ServiceDefinition from Nango seed.

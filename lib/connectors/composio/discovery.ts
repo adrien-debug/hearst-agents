@@ -32,15 +32,24 @@ interface CacheEntry {
 const TTL_MS = 5 * 60_000;
 const cache = new Map<string, CacheEntry>();
 
-/** Reset the discovery cache. Tests + manual invalidation after connect/disconnect. */
+/**
+ * Reset the discovery cache. With no arg, clears every user. With a `userId`,
+ * clears every (userId × apps-filter) variant for that user.
+ */
 export function resetDiscoveryCache(userId?: string): void {
-  if (userId) cache.delete(userId);
-  else cache.clear();
+  if (!userId) {
+    cache.clear();
+    return;
+  }
+  const prefix = `${userId}::`;
+  for (const key of cache.keys()) {
+    if (key.startsWith(prefix)) cache.delete(key);
+  }
 }
 
 /** Force-invalidate one user's cache — call this after a connect/disconnect. */
 export function invalidateUserDiscovery(userId: string): void {
-  cache.delete(userId);
+  resetDiscoveryCache(userId);
 }
 
 interface RawComposioTool {

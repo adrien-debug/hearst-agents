@@ -342,6 +342,9 @@ export default function AppsPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
+        {/* Composio: 1500+ agent actions, multi-tenant per user */}
+        <ComposioConnectionsCard />
+
         {/* Connected Section (if any and not filtered) */}
         {activeFilter !== "connected" && connectedServices.length > 0 && (
           <section className="mb-8">

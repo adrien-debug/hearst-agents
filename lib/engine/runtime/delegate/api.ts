@@ -10,28 +10,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { RunEngine } from "../engine";
 import type { DelegateInput, DelegateResult } from "./types";
 import type { StepActor } from "../engine/types";
-import { searchFiles, readFileContent, searchEmails } from "./connectors";
 import { getTokens } from "@/lib/platform/auth/tokens";
-import { getUpcomingEvents } from "@/lib/connectors/packs/productivity-pack/services/calendar";
-import { executeStripeAgentInRuntime } from "@/lib/agents/specialized/finance";
-import { executeCRMAgentInRuntime } from "@/lib/agents/specialized/crm";
-import { executeProductivityAgentInRuntime } from "@/lib/agents/specialized/productivity";
-import { executeDesignAgentInRuntime } from "@/lib/agents/specialized/design";
-import { executeDeveloperAgentInRuntime } from "@/lib/agents/specialized/developer";
+import { searchDriveFiles, readDriveFileContent } from "@/lib/connectors/google/drive";
+import { searchEmails as searchGmail } from "@/lib/connectors/google/gmail";
+import { getUpcomingEvents } from "@/lib/connectors/google/calendar";
 import { capabilityGuard } from "@/lib/capabilities/guard";
 import type { Domain } from "@/lib/capabilities/taxonomy";
-
-const DOMAIN_AGENT_ROUTES: Record<string, {
-  agent: string;
-  execute: (engine: RunEngine, task: string) => Promise<{ success: boolean; error?: string; [k: string]: unknown }>;
-  errorCode: string;
-}> = {
-  finance: { agent: "FinanceAgent", execute: executeStripeAgentInRuntime, errorCode: "STRIPE_ERROR" },
-  crm: { agent: "CRMAgent", execute: executeCRMAgentInRuntime, errorCode: "CRM_ERROR" },
-  productivity: { agent: "ProductivityAgent", execute: executeProductivityAgentInRuntime, errorCode: "PRODUCTIVITY_ERROR" },
-  design: { agent: "DesignAgent", execute: executeDesignAgentInRuntime, errorCode: "DESIGN_ERROR" },
-  developer: { agent: "DeveloperAgent", execute: executeDeveloperAgentInRuntime, errorCode: "DEVELOPER_ERROR" },
-};
 
 export async function delegate(
   engine: RunEngine,
@@ -100,22 +84,11 @@ export async function delegate(
       };
     }
 
-    // ── Specialized agent routing (guarded by domain) ─────────
-    const resolvedDomain = guardResult.domain;
-
-    const domainRoute = DOMAIN_AGENT_ROUTES[resolvedDomain];
-    if (domainRoute) {
-      const result = await domainRoute.execute(engine, input.task);
-      if (result.success) {
-        await engine.steps.complete(step.id, { output: result as unknown as Record<string, unknown> });
-        engine.events.emit({ type: "step_completed", run_id: engine.id, step_id: step.id, agent: domainRoute.agent as StepActor });
-        return { status: "success", step_id: step.id, data: result as unknown as Record<string, unknown> };
-      } else {
-        await engine.steps.fail(step.id, { code: domainRoute.errorCode, message: result.error || "Unknown", retryable: false });
-        engine.events.emit({ type: "step_failed", run_id: engine.id, step_id: step.id, error: result.error || "Unknown" });
-        return { status: "error", step_id: step.id, error: { code: domainRoute.errorCode, message: result.error || "Unknown", retryable: false } };
-      }
-    }
+    // Domain-specific specialized agents have been removed in favor of
+    // Composio's per-user action discovery. All non-retrieval work routes
+    // through the generic LLM-driven agent path; retrieval modes (documents
+    // / messages / structured_data) still pull live Google data below.
+    void guardResult;
 
     const result = await executeAgentSync(engine, step.id, input);
     return result;
@@ -167,17 +140,10 @@ async function fetchDriveData(
   task: string,
   engine: RunEngine,
 ): Promise<{ providerData: string; providerUsed: string } | null> {
+  void engine;
   try {
     const keywords = extractSearchKeywords(task);
-
-    // Router-first connector call (Pack → Nango → Legacy)
-    const files = await searchFiles(
-      "google-drive",
-      userId,
-      keywords,
-      5,
-      { db: engine.db, tenantId: "default", userId }
-    );
+    const files = await searchDriveFiles(userId, keywords, 5);
 
     if (files.length === 0) {
       return null; // Pas de données = pas d'injection
@@ -186,11 +152,7 @@ async function fetchDriveData(
     const file = files[0];
     let content: string;
     try {
-      content = await readFileContent("google-drive", userId, file.id, {
-        db: engine.db,
-        tenantId: "default",
-        userId,
-      });
+      content = await readDriveFileContent(userId, file.id);
     } catch (readErr) {
       console.error("[Delegate/Drive] read error:", readErr);
       content = `[Erreur de lecture du fichier ${file.name}]`;
@@ -226,18 +188,11 @@ async function fetchGmailData(
   task: string,
   engine: RunEngine,
 ): Promise<{ providerData: string; providerUsed: string } | null> {
+  void engine;
   try {
     const senderMatch = task.match(/(?:de|from)\s+(\w+)/i);
     const query = senderMatch ? `from:${senderMatch[1]}` : undefined;
-
-    // Router-first connector call (Pack → Nango → Legacy)
-    const emails = await searchEmails(
-      "gmail",
-      userId,
-      query,
-      10,
-      { db: engine.db, tenantId: "default", userId }
-    );
+    const emails = await searchGmail(userId, query, 10);
 
     if (emails.length === 0) {
       return null; // Pas de données = pas d'injection dans le prompt

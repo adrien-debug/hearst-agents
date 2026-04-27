@@ -1,0 +1,121 @@
+import { google } from "googleapis";
+import { getGoogleAuth } from "./auth";
+
+export interface EmailSummary {
+  id: string;
+  subject: string;
+  sender: string;
+  snippet: string;
+  date: string;
+  isRead: boolean;
+}
+
+interface GmailHeader {
+  name?: string;
+  value?: string;
+}
+
+function headerValue(headers: GmailHeader[], name: string): string {
+  return headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? "";
+}
+
+export async function getRecentEmails(userId: string, limit = 10): Promise<EmailSummary[]> {
+  const auth = await getGoogleAuth(userId);
+  const gmail = google.gmail({ version: "v1", auth });
+
+  const list = await gmail.users.messages.list({
+    userId: "me",
+    maxResults: limit,
+    q: "in:inbox",
+  });
+
+  const messageIds = list.data.messages ?? [];
+  return Promise.all(
+    messageIds.map(async (msg) => {
+      const detail = await gmail.users.messages.get({
+        userId: "me",
+        id: msg.id!,
+        format: "metadata",
+        metadataHeaders: ["Subject", "From", "Date"],
+      });
+      const headers = (detail.data.payload?.headers ?? []) as GmailHeader[];
+      return {
+        id: detail.data.id ?? msg.id!,
+        subject: headerValue(headers, "Subject") || "(sans sujet)",
+        sender: headerValue(headers, "From"),
+        snippet: detail.data.snippet ?? "",
+        date: headerValue(headers, "Date"),
+        isRead: !(detail.data.labelIds ?? []).includes("UNREAD"),
+      };
+    }),
+  );
+}
+
+export interface EmailFull extends EmailSummary {
+  body: string;
+}
+
+interface GmailPart {
+  mimeType?: string;
+  body?: { data?: string };
+  parts?: GmailPart[];
+}
+
+function extractBody(payload: GmailPart | null | undefined): string {
+  if (!payload) return "";
+  if (payload.body?.data) {
+    return Buffer.from(payload.body.data, "base64url").toString("utf-8");
+  }
+  if (payload.parts) {
+    const textPart = payload.parts.find((p) => p.mimeType === "text/plain" && p.body?.data);
+    if (textPart) {
+      return Buffer.from(textPart.body!.data!, "base64url").toString("utf-8");
+    }
+    const htmlPart = payload.parts.find((p) => p.mimeType === "text/html" && p.body?.data);
+    if (htmlPart && htmlPart.body?.data) {
+      const html = Buffer.from(htmlPart.body.data, "base64url").toString("utf-8");
+      return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    }
+  }
+  return "";
+}
+
+export async function searchEmails(
+  userId: string,
+  query: string | undefined,
+  limit = 10,
+): Promise<EmailFull[]> {
+  const auth = await getGoogleAuth(userId);
+  const gmail = google.gmail({ version: "v1", auth });
+  const q = query ? `in:inbox ${query}` : "in:inbox";
+
+  const list = await gmail.users.messages.list({
+    userId: "me",
+    maxResults: limit,
+    q,
+  });
+
+  const messageIds = list.data.messages ?? [];
+  if (messageIds.length === 0) return [];
+
+  return Promise.all(
+    messageIds.map(async (msg) => {
+      const detail = await gmail.users.messages.get({
+        userId: "me",
+        id: msg.id!,
+        format: "full",
+      });
+      const headers = (detail.data.payload?.headers ?? []) as GmailHeader[];
+      const body = extractBody(detail.data.payload as GmailPart | null | undefined);
+      return {
+        id: detail.data.id ?? msg.id!,
+        subject: headerValue(headers, "Subject") || "(sans sujet)",
+        sender: headerValue(headers, "From"),
+        snippet: detail.data.snippet ?? "",
+        date: headerValue(headers, "Date"),
+        isRead: !(detail.data.labelIds ?? []).includes("UNREAD"),
+        body: body.slice(0, 2000),
+      };
+    }),
+  );
+}

@@ -22,12 +22,8 @@ import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mis
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { selectToolsForContext } from "@/lib/tools/tool-selector";
 import { selectAgentForContext } from "@/lib/agents/agent-selector";
-import { selectAgentBackend } from "@/lib/agents/backends/selector";
 import type { RunRecord } from "@/lib/engine/runtime/runs/types";
 import { addRun as storeRun } from "@/lib/engine/runtime/runs/store";
-import { SessionManager, type UnifiedSession } from "@/lib/agents/sessions";
-import { selectBackend } from "@/lib/agents/backend-v2/selector";
-import type { AgentBackendV2 } from "@/lib/agents/backend-v2/types";
 import { getTokens } from "@/lib/platform/auth/tokens";
 import {
   saveRun as persistRun,
@@ -37,7 +33,6 @@ import {
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import { assertTenantScope } from "@/lib/multi-tenant/guards";
 import { SYSTEM_CONFIG } from "@/lib/system/config";
-import { registerProviderUsage, markProviderDegraded } from "@/lib/connectors/control-plane/register";
 import { preflightConnector } from "@/lib/connectors/control-plane/preflight";
 import { appendMessage, getRecentMessages } from "@/lib/memory/store";
 import { memoryToConversationHistory } from "@/lib/memory/format";
@@ -416,307 +411,6 @@ async function runSyntheticRetrieval(
   }
 }
 
-async function handleManagedAgentExecution(
-  engine: RunEngine,
-  eventBus: RunEventBus,
-  input: OrchestrateInput,
-  scope: TenantScope,
-): Promise<void> {
-  // ── Preflight managed agent provider ─────────────────────
-  const preflight = await preflightConnector({ provider: "anthropic_managed", scope });
-  if (!preflight.ok) {
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Managed agent preflight failed: ${preflight.reason ?? preflight.status} — registering and proceeding`,
-    });
-    void registerProviderUsage({ provider: "anthropic_managed", scope });
-  }
-
-  eventBus.emit({
-    type: "orchestrator_log",
-    run_id: engine.id,
-    message: "Delegating to Session Manager (Backend V2)…",
-  });
-
-  const managedStepId = `managed-${engine.id}`;
-
-  eventBus.emit({
-    type: "step_started",
-    run_id: engine.id,
-    step_id: managedStepId,
-    title: "managed_agent_execution",
-    agent: "anthropic_managed",
-  });
-
-  let session: UnifiedSession | undefined;
-
-  try {
-    // 1. Validate userId
-    if (!scope.userId) {
-      throw new Error("Missing userId in scope");
-    }
-
-    // 2. Detect connected providers for context
-    const connectedProviders: string[] = [];
-    try {
-      const googleTokens = await getTokens(scope.userId, "google");
-      if (googleTokens?.accessToken) {
-        connectedProviders.push("gmail", "drive", "calendar");
-      }
-      const slackTokens = await getTokens(scope.userId, "slack");
-      if (slackTokens?.accessToken) {
-        connectedProviders.push("slack");
-      }
-    } catch {
-      // Silently continue if token check fails
-    }
-
-    // 2. Select backend using Backend V2 selector
-    const selection = selectBackend(
-      { prompt: input.message },
-      {},
-      input.conversationHistory,
-    );
-    const selectedBackend = selection.selectedBackend as AgentBackendV2;
-
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Backend selected: ${selectedBackend} (confidence: ${(selection.confidence * 100).toFixed(0)}%)`,
-    });
-
-    // 3. Create session with unified SessionManager
-    // _userDataContext is injected by runPipeline before dispatch
-    const userDataContext = input._userDataContext ?? "";
-
-    // Discover Composio actions available to *this* user (multi-tenant by
-    // entityId). Failures are non-fatal — the agent still works without
-    // Composio, just with the static toolset.
-    let discoveredActions: string[] = [];
-    try {
-      const { getToolsForUser } = await import("@/lib/connectors/composio");
-      const tools = await getToolsForUser(scope.userId);
-      discoveredActions = tools.map((t) => t.name);
-    } catch (err) {
-      console.error("[Orchestrator] Composio discovery failed:", err);
-    }
-
-    const manager = SessionManager.getInstance();
-    session = await manager.createWithBackend(selectedBackend, {
-      userId: scope.userId,
-      tenantId: scope.tenantId,
-      workspaceId: scope.workspaceId,
-      systemPrompt: buildSystemPromptForAgent(
-        input.surface,
-        connectedProviders,
-        userDataContext,
-        input._allowedTools,
-        discoveredActions,
-      ),
-      streaming: true,
-      initialHistory: input.conversationHistory,
-    });
-
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Session created: ${session.id}`,
-    });
-
-    // 4. Stream response
-    let fullResponse = "";
-    for await (const event of session.sendStream(input.message)) {
-      if (event.type === "message" && event.delta) {
-        fullResponse += event.delta;
-        eventBus.emit({ type: "text_delta", run_id: engine.id, delta: event.delta });
-      }
-      if (event.type === "tool_call" && event.tool) {
-        eventBus.emit({
-          type: "orchestrator_log",
-          run_id: engine.id,
-          message: `[tool] ${event.tool}`,
-        });
-      }
-    }
-
-    eventBus.emit({
-      type: "step_completed",
-      run_id: engine.id,
-      step_id: managedStepId,
-      agent: "anthropic_managed" as import("@/lib/engine/runtime/engine/types").StepActor,
-    });
-
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Session completed with ${fullResponse.length} chars response`,
-    });
-
-    // 5. Create asset and focal object if response exists
-    if (fullResponse) {
-      const asset = createAsset({
-        type: "report",
-        name: "Agent Response",
-        run_id: engine.id,
-        tenantId: scope.tenantId,
-        workspaceId: scope.workspaceId,
-      });
-
-      eventBus.emit({
-        type: "asset_generated",
-        run_id: engine.id,
-        asset_id: asset.id,
-        asset_type: asset.type,
-        name: asset.name,
-      });
-
-      const now = Date.now();
-      eventBus.emit({
-        type: "focal_object_ready",
-        run_id: engine.id,
-        focal_object: {
-          objectType: asset.type,
-          id: `fo_${asset.id}`,
-          threadId: input.threadId ?? engine.id,
-          title: asset.name,
-          status: "delivered",
-          createdAt: now,
-          updatedAt: now,
-          sourceAssetId: asset.id,
-          morphTarget: null,
-          summary: fullResponse.slice(0, 200),
-          sections: [],
-          tier: asset.type,
-          tone: "executive",
-          wordCount: fullResponse.split(/\s+/).length,
-        },
-      });
-
-      eventBus.emit({
-        type: "orchestrator_log",
-        run_id: engine.id,
-        message: `Asset created: ${asset.name} (${asset.type})`,
-      });
-    }
-
-    void registerProviderUsage({ provider: "anthropic_managed", scope });
-    await engine.complete();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    void markProviderDegraded({ provider: "anthropic_managed", scope, error: message });
-
-    eventBus.emit({
-      type: "step_failed",
-      run_id: engine.id,
-      step_id: managedStepId,
-      error: message,
-    });
-
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: `Session failed: ${message}`,
-    });
-
-    console.error("[Orchestrator] Session error, falling back to plan execution:", message);
-
-    // Cleanup session if created
-    if (session) {
-      try {
-        const manager = SessionManager.getInstance();
-        await manager.close(session.id);
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
-
-    eventBus.emit({
-      type: "orchestrator_log",
-      run_id: engine.id,
-      message: "Falling back to hearst_runtime execution",
-    });
-
-    return handlePlanAndExecute(engine, input, scope);
-  }
-}
-
-// Helper to build system prompt with provider context
-function buildSystemPromptForAgent(
-  surface?: string,
-  connectedProviders?: string[],
-  userDataContext?: string,
-  allowedTools?: string[],
-  discoveredActions?: string[],
-): string {
-  let prompt = `You are Hearst AI, a helpful assistant. You help users with their tasks across various tools and services.`;
-
-  if (connectedProviders && connectedProviders.length > 0) {
-    prompt += `\n\n🔐 CONNECTED PROVIDERS: ${connectedProviders.join(", ")}`;
-    
-    if (connectedProviders.includes("gmail")) {
-      prompt += `\n✅ The user is CONNECTED to Gmail. You CAN access their emails. When they ask about emails, summarize, or search messages - use their real Gmail data. NEVER say you cannot access their emails.`;
-    }
-    
-    if (connectedProviders.includes("calendar")) {
-      prompt += `\n✅ The user is CONNECTED to Google Calendar. You CAN access their events and schedule. When they ask about meetings, events, or their agenda - use their real Calendar data. NEVER say you cannot access their calendar.`;
-    }
-    
-    if (connectedProviders.includes("drive")) {
-      prompt += `\n✅ The user is CONNECTED to Google Drive. You CAN access their files and documents. When they ask about files, documents, or Drive content - use their real Drive data. NEVER say you cannot access their files.`;
-    }
-    
-    if (connectedProviders.includes("slack")) {
-      prompt += `\n✅ The user is CONNECTED to Slack. You CAN access their messages and channels when needed.`;
-    }
-  }
-
-  // Inject real user data if available
-  if (userDataContext && userDataContext.trim().length > 0) {
-    prompt += `\n\n📊 REAL USER DATA (Use this as primary source for your response):\n${userDataContext}`;
-  }
-
-  if (allowedTools && allowedTools.length > 0) {
-    prompt += `\n\n🔧 ALLOWED TOOLS FOR THIS REQUEST: ${allowedTools.join(", ")}. Do NOT attempt to use tools outside this list.`;
-  }
-
-  // Composio-discovered actions: dynamically resolved per user from the
-  // apps they've connected. The list can be long (50–100 actions per app)
-  // so we only show the names — the LLM has the full schema via tool-use
-  // when it's wired into the actual API call.
-  if (discoveredActions && discoveredActions.length > 0) {
-    const preview = discoveredActions.slice(0, 80);
-    const overflow = discoveredActions.length > 80 ? ` (+${discoveredActions.length - 80} more)` : "";
-    prompt += `\n\n🔌 USER-CONNECTED ACTIONS (Composio, ${discoveredActions.length} total${overflow}):\n${preview.join(", ")}\nThese are real actions on the user's accounts. Treat any name containing "send", "create", "update", "delete", "post", or "reply" as a write op (see write-tool rule below).`;
-  }
-
-  // Write-op safety: any tool that mutates the user's third-party accounts
-  // (sends, creates, deletes) must be confirmed by the user BEFORE the call.
-  // The pattern is "draft-first then confirm" — never call a write tool on
-  // first user turn unless the user explicitly authorized it (e.g. "send it
-  // now", "do it", "go ahead").
-  const isWriteToolName = (n: string): boolean =>
-    n === "gmail_send_email" ||
-    /(SEND|CREATE|UPDATE|DELETE|POST|REPLY|FORWARD|REVOKE|REFUND)/i.test(n);
-  const writeToolPool = [...(allowedTools ?? []), ...(discoveredActions ?? [])];
-  const requestedWriteTools = writeToolPool.filter(isWriteToolName);
-  if (requestedWriteTools.length > 0) {
-    prompt += `\n\n⚠️ WRITE TOOLS IN SCOPE: ${requestedWriteTools.join(", ")}.
-Rule for any tool that mutates the user's accounts:
-1. NEVER call a write tool until the user has explicitly approved the exact action.
-2. First, present a clear draft (recipient, subject, body / target, payload) and ask "Confirmer l'envoi ?" or equivalent.
-3. Only after the user replies with explicit confirmation ("oui", "envoie", "go", "confirme", or similar) do you call the tool.
-4. If the user wants changes, revise the draft and re-confirm before calling the tool.
-This protects the user from irreversible actions and is non-negotiable.`;
-  }
-
-  if (surface && surface !== "home") {
-    prompt += `\n\nYou are currently interacting through the ${surface} surface.`;
-  }
-
-  return prompt;
-}
-
 async function runPlanExecution(
   engine: RunEngine,
   plan: import("@/lib/engine/runtime/plans/types").Plan,
@@ -1069,27 +763,21 @@ async function runPipeline(
     tools: surfaceTools,
   });
 
-  // ── Select agent + backend (CUSTOM_AGENT mode) ──────────────
+  // ── Select agent (CUSTOM_AGENT mode) ────────────────────────
+  // Backend selection is gone — every path runs through the planner +
+  // executor stack now (Composio handles per-user execution dispatch).
   if (decision.mode === "custom_agent") {
     const agent = selectAgentForContext(toolContext);
     if (agent) {
-      const backendDecision = selectAgentBackend({
-        agent,
-        context: toolContext,
-        userInput: input.message,
-        complexity: capScope.capabilities.length * 2,
-        needsAutonomy: decision.mode === "custom_agent",
-      });
-
       decision.agentId = agent.id;
-      decision.backend = backendDecision.backend;
+      decision.backend = "hearst_runtime";
 
       runRecord.agentId = agent.id;
-      runRecord.backend = backendDecision.backend;
+      runRecord.backend = "hearst_runtime";
 
       void persistUpdateRun(engine.id, {
         agentId: agent.id,
-        backend: backendDecision.backend,
+        backend: "hearst_runtime",
         executionMode: decision.mode,
       });
 
@@ -1099,14 +787,14 @@ async function runPipeline(
         agent_id: agent.id,
         agent_name: agent.name,
         allowed_tools: agent.allowedTools,
-        backend: backendDecision.backend,
-        backend_reason: backendDecision.reason,
+        backend: "hearst_runtime",
+        backend_reason: "Single planner+executor backend after legacy cleanup",
       });
 
       eventBus.emit({
         type: "orchestrator_log",
         run_id: engine.id,
-        message: `Routing to agent: ${agent.name} via ${backendDecision.backend}`,
+        message: `Routing to agent: ${agent.name}`,
       });
     }
   }
@@ -1285,23 +973,18 @@ async function runPipeline(
       return;
     }
 
+    // After the legacy backend cleanup, every execution mode runs through
+    // the same plan-and-execute path. Custom/managed agent paths are fed
+    // by the planner LLM that now sees Composio-discovered actions.
     switch (decision.mode) {
       case "direct_answer":
         await handleDirectAnswer(engine, eventBus, input, scope);
         break;
       case "tool_call":
       case "workflow":
-        await handlePlanAndExecute(engine, input, scope);
-        break;
       case "custom_agent":
-        if (decision.backend === "anthropic_managed") {
-          await handleManagedAgentExecution(engine, eventBus, input, scope);
-        } else {
-          await handlePlanAndExecute(engine, input, scope);
-        }
-        break;
       case "managed_agent":
-        await handleManagedAgentExecution(engine, eventBus, input, scope);
+        await handlePlanAndExecute(engine, input, scope);
         break;
     }
   } finally {

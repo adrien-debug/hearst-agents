@@ -55,8 +55,11 @@ export { resolveProvider, resolveFallback } from "./providers/resolver";
 export type { ProviderId } from "./providers/types";
 
 // ── Connectors ────────────────────────────────────────────
-export { gmailConnector, calendarConnector, driveConnector } from "./connectors";
-export { isNangoEnabled } from "./connectors/nango/client";
+export {
+  retrieveUserDataContext,
+  isComposioConfigured,
+  getToolsForUser,
+} from "./connectors";
 
 // ── Assets (thread-scoped) ────────────────────────────────
 export {

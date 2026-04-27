@@ -16,30 +16,9 @@ export type {
   TenantScope,
 } from "./common";
 
-// ── Connectors ──────────────────────────────────────────────
-export type {
-  EmailMessage,
-  CalendarEvent,
-  FileEntry,
-  TaskItem,
-  ConnectorResult,
-  EmailConnector,
-  CalendarConnector,
-  FileConnector,
-  TaskConnector,
-  SlackMessage,
-  SlackConnector,
-  ConnectorSource,
-  ConnectorMeta,
-  ConnectorCapability,
-  ConnectorDefinition,
-  PackManifest,
-  ConnectorManifest,
-  ConnectorInstance,
-  ConnectorCategory,
-  ConnectorAuthType,
-  ConnectorHealth,
-} from "./connectors";
+// ── Connectors — only Composio + the platform's plug shape remain ─────
+export type { ConnectorCapability, ConnectorDefinition } from "@/lib/connectors/platform/types";
+export type { DiscoveredTool, ConnectedAccount } from "@/lib/connectors/composio";
 
 // ── Agents ──────────────────────────────────────────────────
 export type {

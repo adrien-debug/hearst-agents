@@ -4,18 +4,16 @@ vi.mock("@/lib/platform/auth/tokens", () => ({
   getTokens: vi.fn(async () => ({ accessToken: "tok-test" })),
 }));
 
-vi.mock("@/lib/connectors/packs/productivity-pack/services/calendar", () => ({
+vi.mock("@/lib/connectors/google/calendar", () => ({
   getTodayEvents: vi.fn(async () => []),
 }));
 
-vi.mock("@/lib/connectors/packs/productivity-pack/services/gmail", () => ({
-  gmailConnector: {
-    getEmails: vi.fn(async () => ({ data: [] })),
-  },
+vi.mock("@/lib/connectors/google/gmail", () => ({
+  getRecentEmails: vi.fn(async () => []),
 }));
 
-vi.mock("@/lib/connectors/packs/productivity-pack/services/drive", () => ({
-  getRecentFiles: vi.fn(async () => ({ data: [] })),
+vi.mock("@/lib/connectors/google/drive", () => ({
+  getRecentFiles: vi.fn(async () => []),
 }));
 
 import { DataRetriever } from "@/lib/connectors/data-retriever";
@@ -45,7 +43,7 @@ describe("DataRetriever — onProgress callbacks", () => {
   });
 
   it("emits end(_, false) when a provider read throws", async () => {
-    const calMod = await import("@/lib/connectors/packs/productivity-pack/services/calendar");
+    const calMod = await import("@/lib/connectors/google/calendar");
     vi.mocked(calMod.getTodayEvents).mockRejectedValueOnce(new Error("boom"));
 
     const events: Array<["start" | "end", string, boolean?]> = [];
