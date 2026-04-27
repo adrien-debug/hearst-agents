@@ -1,23 +1,26 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-const { executeAction } = vi.hoisted(() => ({ executeAction: vi.fn() }));
+const { execute } = vi.hoisted(() => ({ execute: vi.fn() }));
 
-vi.mock("composio-core", () => {
-  class OpenAIToolSet {
-    constructor(_opts: { apiKey: string }) {}
-    executeAction = executeAction;
+vi.mock("@composio/core", () => {
+  class Composio {
+    tools = { execute, list: vi.fn() };
+    toolkits = { list: vi.fn(), get: vi.fn(), authorize: vi.fn() };
+    connectedAccounts = { list: vi.fn(), delete: vi.fn() };
+    create = vi.fn();
+    constructor(_opts: { apiKey?: string }) {}
   }
-  return { OpenAIToolSet };
+  return { Composio };
 });
 
 import { executeTool } from "@/lib/agents/backend-v2/openai-tools";
 import { resetComposioClient } from "@/lib/connectors/composio";
 
-describe("openai-tools registry — gmail_send_email", () => {
+describe("openai-tools registry — gmail_send_email (new SDK)", () => {
   beforeEach(() => {
     resetComposioClient();
-    executeAction.mockReset();
-    process.env.COMPOSIO_API_KEY = "ck_test";
+    execute.mockReset();
+    process.env.COMPOSIO_API_KEY = "ak_test";
   });
   afterEach(() => {
     delete process.env.COMPOSIO_API_KEY;
@@ -33,11 +36,11 @@ describe("openai-tools registry — gmail_send_email", () => {
     const parsed = JSON.parse(out);
     expect(parsed.ok).toBe(false);
     expect(parsed.error).toMatch(/authenticated user/);
-    expect(executeAction).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
-  it("uses context.userId as the Composio entityId", async () => {
-    executeAction.mockResolvedValueOnce({ id: "msg-9" });
+  it("uses context.userId as the SDK userId", async () => {
+    execute.mockResolvedValueOnce({ id: "msg-9" });
 
     const out = await executeTool(
       "gmail_send_email",
@@ -45,8 +48,9 @@ describe("openai-tools registry — gmail_send_email", () => {
       { userId: "user-99" },
     );
 
-    const call = executeAction.mock.calls[0][0];
-    expect(call.entityId).toBe("user-99");
+    const call = execute.mock.calls[0];
+    expect(call[0]).toBe("GMAIL_SEND_EMAIL");
+    expect(call[1].userId).toBe("user-99");
 
     const parsed = JSON.parse(out);
     expect(parsed.ok).toBe(true);
@@ -54,7 +58,7 @@ describe("openai-tools registry — gmail_send_email", () => {
   });
 
   it("returns the raw error envelope when Composio fails", async () => {
-    executeAction.mockRejectedValueOnce(new Error("No connected account"));
+    execute.mockRejectedValueOnce(new Error("No connected account"));
     const out = await executeTool(
       "gmail_send_email",
       { to: "to@x.com", subject: "hi", body: "ok" },

@@ -16,7 +16,7 @@ export {
   executeComposioAction,
   isComposioConfigured,
   resetComposioClient,
-  getComposioToolset,
+  getComposio,
   gmailSendEmail,
   getToolsForUser,
   invalidateUserDiscovery,

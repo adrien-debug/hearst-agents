@@ -1,22 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-const { listFn, initiateFn, deleteFn } = vi.hoisted(() => ({
-  listFn: vi.fn(),
-  initiateFn: vi.fn(),
-  deleteFn: vi.fn(),
+const { toolkitsAuthorize, accountsList, accountsDelete } = vi.hoisted(() => ({
+  toolkitsAuthorize: vi.fn(),
+  accountsList: vi.fn(),
+  accountsDelete: vi.fn(),
 }));
 
-vi.mock("composio-core", () => {
-  class OpenAIToolSet {
-    constructor(_opts: { apiKey: string }) {}
-    executeAction = vi.fn();
-    getTools = vi.fn();
-    client = {
-      connectedAccounts: { list: listFn, initiate: initiateFn, delete: deleteFn },
-      apps: { list: vi.fn() },
-    };
+vi.mock("@composio/core", () => {
+  class Composio {
+    tools = { execute: vi.fn(), list: vi.fn() };
+    toolkits = { list: vi.fn(), get: vi.fn(), authorize: toolkitsAuthorize };
+    connectedAccounts = { list: accountsList, delete: accountsDelete };
+    create = vi.fn();
+    constructor(_opts: { apiKey?: string }) {}
   }
-  return { OpenAIToolSet };
+  return { Composio };
 });
 
 import {
@@ -25,17 +23,16 @@ import {
   disconnectAccount,
   resetComposioClient,
   resetDiscoveryCache,
-  getToolsForUser,
 } from "@/lib/connectors/composio";
 
-describe("Composio connections", () => {
+describe("Composio connections (new SDK)", () => {
   beforeEach(() => {
     resetComposioClient();
     resetDiscoveryCache();
-    listFn.mockReset();
-    initiateFn.mockReset();
-    deleteFn.mockReset();
-    process.env.COMPOSIO_API_KEY = "ck_test";
+    toolkitsAuthorize.mockReset();
+    accountsList.mockReset();
+    accountsDelete.mockReset();
+    process.env.COMPOSIO_API_KEY = "ak_test";
   });
   afterEach(() => {
     delete process.env.COMPOSIO_API_KEY;
@@ -58,15 +55,20 @@ describe("Composio connections", () => {
       expect(b.ok).toBe(false);
     });
 
-    it("forwards entityId = userId and lowercases appName", async () => {
-      initiateFn.mockResolvedValueOnce({ redirectUrl: "https://x", connectedAccountId: "c1" });
+    it("calls toolkits.authorize(userId, lowercased slug) and returns redirectUrl", async () => {
+      toolkitsAuthorize.mockResolvedValueOnce({ id: "c1", redirectUrl: "https://x" });
       const r = await initiateConnection("user-42", "Slack");
-      expect(initiateFn).toHaveBeenCalledWith(
-        expect.objectContaining({ entityId: "user-42", appName: "slack" }),
-      );
+      expect(toolkitsAuthorize).toHaveBeenCalledWith("user-42", "slack");
       expect(r).toEqual({ ok: true, redirectUrl: "https://x", connectionId: "c1" });
     });
 
+    it("maps 'no auth config' upstream errors to NO_INTEGRATION", async () => {
+      toolkitsAuthorize.mockRejectedValueOnce(new Error("No auth config found for toolkit slack"));
+      const r = await initiateConnection("u1", "slack");
+      expect(r.ok).toBe(false);
+      expect(r.errorCode).toBe("NO_INTEGRATION");
+      expect(r.error).toMatch(/Aucune intégration slack/);
+    });
   });
 
   describe("listConnections", () => {
@@ -74,15 +76,15 @@ describe("Composio connections", () => {
       delete process.env.COMPOSIO_API_KEY;
       const r = await listConnections("u1");
       expect(r).toEqual([]);
-      expect(listFn).not.toHaveBeenCalled();
+      expect(accountsList).not.toHaveBeenCalled();
     });
 
-    it("filters out malformed accounts and lowercases appName", async () => {
-      listFn.mockResolvedValueOnce({
+    it("normalizes the new SDK shape (toolkit object, nanoid)", async () => {
+      accountsList.mockResolvedValueOnce({
         items: [
-          { id: "c1", appName: "Slack", status: "ACTIVE" },
-          { id: "c2", appUniqueId: "GMAIL", status: "ACTIVE" },
-          { /* missing id */ appName: "ghost" },
+          { id: "c1", toolkit: { slug: "Slack" }, status: "ACTIVE" },
+          { nanoid: "c2", toolkit: "Gmail", status: "ACTIVE" },
+          { /* missing id */ toolkit: { slug: "ghost" } },
         ],
       });
       const r = await listConnections("u1");
@@ -92,46 +94,28 @@ describe("Composio connections", () => {
       ]);
     });
 
-    it("forwards user_uuid for server-side tenant filtering", async () => {
-      listFn.mockResolvedValueOnce({ items: [] });
+    it("forwards userIds for server-side tenant filtering", async () => {
+      accountsList.mockResolvedValueOnce({ items: [] });
       await listConnections("user-42");
-      expect(listFn).toHaveBeenCalledWith(
-        expect.objectContaining({ user_uuid: "user-42", showActiveOnly: true }),
+      expect(accountsList).toHaveBeenCalledWith(
+        expect.objectContaining({ userIds: ["user-42"] }),
       );
     });
   });
 
   describe("disconnectAccount", () => {
-    it("calls SDK delete and reports ok", async () => {
-      deleteFn.mockResolvedValueOnce({ success: true });
+    it("calls SDK delete with the connection id", async () => {
+      accountsDelete.mockResolvedValueOnce(undefined);
       const r = await disconnectAccount("u1", "c1");
-      expect(deleteFn).toHaveBeenCalledWith({ connectedAccountId: "c1" });
+      expect(accountsDelete).toHaveBeenCalledWith("c1");
       expect(r.ok).toBe(true);
     });
 
     it("returns ok=false when SDK throws", async () => {
-      deleteFn.mockRejectedValueOnce(new Error("oh no"));
+      accountsDelete.mockRejectedValueOnce(new Error("oh no"));
       const r = await disconnectAccount("u1", "c1");
       expect(r.ok).toBe(false);
       expect(r.error).toMatch(/oh no/);
-    });
-  });
-
-  describe("multi-tenant isolation (smoke)", () => {
-    it("getToolsForUser uses different cache keys per user — connect on u1 doesn't affect u2's cache", async () => {
-      // We can't fully simulate the SDK roundtrip here, but we can confirm
-      // that listConnections + initiateConnection call SDK with different
-      // user identifiers when called for different users.
-      listFn.mockResolvedValue({ items: [] });
-      await listConnections("user-marie");
-      await listConnections("user-pierre");
-
-      const calls = listFn.mock.calls.map((c) => c[0]);
-      expect(calls).toEqual([
-        expect.objectContaining({ user_uuid: "user-marie" }),
-        expect.objectContaining({ user_uuid: "user-pierre" }),
-      ]);
-      void getToolsForUser;
     });
   });
 });

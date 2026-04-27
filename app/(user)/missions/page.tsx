@@ -7,7 +7,7 @@ import { toast } from "@/app/hooks/use-toast";
 import { GhostIconPencil, GhostIconPlay, GhostIconTrash, GhostIconX } from "../components/ghost-icons";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
-import type { FocalObject } from "@/stores/focal";
+import { missionToFocal } from "@/lib/ui/focal-mappers";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 
 type MissionOpsStatus = "idle" | "running" | "success" | "failed" | "blocked";
@@ -25,34 +25,6 @@ interface Mission {
   opsStatus?: MissionOpsStatus;
   lastError?: string;
   runningSince?: number;
-}
-
-function missionToFocal(mission: Mission, threadId: string | null): FocalObject {
-  const now = Date.now();
-  const status = mission.opsStatus === "running" ? "active"
-    : mission.opsStatus === "failed" ? "failed"
-    : mission.enabled ? "ready"
-    : "paused";
-  const summary = [
-    `Schedule: ${mission.frequency}`,
-    mission.lastRun ? `Last run: ${mission.lastRun}` : "Never run",
-    mission.enabled ? "Armed" : "Disabled",
-  ].join(" · ");
-  return {
-    id: mission.id,
-    type: mission.enabled ? "mission_active" : "mission_draft",
-    status,
-    title: mission.name,
-    body: mission.input || mission.description,
-    summary,
-    missionId: mission.id,
-    threadId: threadId ?? undefined,
-    createdAt: now,
-    updatedAt: now,
-    primaryAction: mission.enabled
-      ? { kind: "pause", label: "Pause mission" }
-      : { kind: "resume", label: "Resume mission" },
-  };
 }
 
 export default function MissionsPage() {
@@ -211,9 +183,17 @@ export default function MissionsPage() {
       });
       if (res.ok) {
         setMissions((prev) => prev.filter((m) => m.id !== missionId));
+        toast.success("Mission supprimée", "La mission a été retirée");
+        return;
       }
+      const data = await res.json().catch(() => ({}));
+      toast.error("Suppression impossible", data.error ?? `Erreur serveur (${res.status})`);
     } catch (error) {
       console.error("Failed to delete mission:", error);
+      toast.error(
+        "Erreur de suppression",
+        error instanceof Error ? error.message : "Erreur réseau",
+      );
     }
   };
 

@@ -3,12 +3,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import type { RightPanelData, RightPanelMission, RightPanelAsset, FocalObjectView } from "@/lib/core/types";
+import type { RightPanelData, FocalObjectView } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
-import type { FocalObject } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
+import { missionToFocal, assetToFocal } from "@/lib/ui/focal-mappers";
 
 interface RightPanelContentProps {
   onClose?: () => void;
@@ -100,57 +100,9 @@ function assetGlyph(type: string): string {
   return ASSET_TYPE_GLYPH[type.toLowerCase()] || "·";
 }
 
-function missionToFocal(mission: RightPanelMission, threadId: string | null): FocalObject {
-  const now = Date.now();
-  const status = mission.opsStatus === "running" ? "active"
-    : mission.opsStatus === "failed" ? "failed"
-    : mission.enabled ? "ready"
-    : "paused";
-  const summaryParts = [
-    `Schedule: ${mission.schedule || "—"}`,
-    mission.lastRunAt ? `Last run: ${formatRelativeTime(mission.lastRunAt)}` : "Never run",
-    mission.enabled ? "Armed" : "Disabled",
-  ];
-  return {
-    id: mission.id,
-    type: mission.enabled ? "mission_active" : "mission_draft",
-    status,
-    title: mission.name,
-    body: mission.input,
-    summary: summaryParts.join(" · "),
-    missionId: mission.id,
-    threadId: threadId ?? undefined,
-    createdAt: now,
-    updatedAt: mission.lastRunAt ?? now,
-    primaryAction: mission.enabled
-      ? { kind: "pause", label: "Pause mission" }
-      : { kind: "resume", label: "Resume mission" },
-  };
-}
-
-function assetToFocal(asset: RightPanelAsset, threadId: string | null): FocalObject {
-  const now = Date.now();
-  const typeMap: Record<string, FocalObject["type"]> = {
-    report: "report",
-    brief: "brief",
-    document: "doc",
-    doc: "doc",
-    message: "message_receipt",
-    plan: "outline",
-    synthesis: "report",
-  };
-  return {
-    id: asset.id,
-    type: typeMap[asset.type.toLowerCase()] ?? "doc",
-    status: "ready",
-    title: asset.name,
-    summary: `Asset · ${asset.type.toUpperCase()}`,
-    sourceAssetId: asset.id,
-    threadId: threadId ?? undefined,
-    createdAt: now,
-    updatedAt: now,
-  };
-}
+// `missionToFocal` and `assetToFocal` now live in `lib/ui/focal-mappers`
+// so /missions, /assets and this right-panel preview render the same shape.
+// Keep `formatRelativeTime` available for other right-panel rendering.
 
 export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const router = useRouter();

@@ -1,15 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-const { executeAction } = vi.hoisted(() => ({ executeAction: vi.fn() }));
+const { execute } = vi.hoisted(() => ({ execute: vi.fn() }));
 
-// `composio-core` is an optional peer dep; we mock it virtually so tests
-// run regardless of whether the package is actually installed.
-vi.mock("composio-core", () => {
-  class OpenAIToolSet {
-    constructor(_opts: { apiKey: string }) {}
-    executeAction = executeAction;
+vi.mock("@composio/core", () => {
+  class Composio {
+    tools = { execute, list: vi.fn() };
+    toolkits = { list: vi.fn(), get: vi.fn(), authorize: vi.fn() };
+    connectedAccounts = { list: vi.fn(), delete: vi.fn() };
+    create = vi.fn();
+    constructor(_opts: { apiKey?: string }) {}
   }
-  return { OpenAIToolSet };
+  return { Composio };
 });
 
 import {
@@ -18,10 +19,10 @@ import {
   resetComposioClient,
 } from "@/lib/connectors/composio";
 
-describe("Composio client", () => {
+describe("Composio client (v0.6 SDK)", () => {
   beforeEach(() => {
     resetComposioClient();
-    executeAction.mockReset();
+    execute.mockReset();
   });
   afterEach(() => {
     delete process.env.COMPOSIO_API_KEY;
@@ -34,7 +35,7 @@ describe("Composio client", () => {
       expect(isComposioConfigured()).toBe(false);
     });
     it("returns true when COMPOSIO_API_KEY is set", () => {
-      process.env.COMPOSIO_API_KEY = "ck_test";
+      process.env.COMPOSIO_API_KEY = "ak_test";
       expect(isComposioConfigured()).toBe(true);
     });
   });
@@ -49,12 +50,12 @@ describe("Composio client", () => {
       });
       expect(result.ok).toBe(false);
       expect(result.errorCode).toBe("NOT_CONFIGURED");
-      expect(executeAction).not.toHaveBeenCalled();
+      expect(execute).not.toHaveBeenCalled();
     });
 
-    it("forwards (action, entityId, params) to the SDK and wraps the result", async () => {
-      process.env.COMPOSIO_API_KEY = "ck_test";
-      executeAction.mockResolvedValueOnce({ id: "msg-123" });
+    it("forwards (slug, { userId, arguments }) to the SDK and wraps the result", async () => {
+      process.env.COMPOSIO_API_KEY = "ak_test";
+      execute.mockResolvedValueOnce({ id: "msg-123" });
 
       const result = await executeComposioAction({
         action: "GMAIL_SEND_EMAIL",
@@ -62,18 +63,17 @@ describe("Composio client", () => {
         params: { recipient_email: "x@y.z", subject: "hi", body: "ok" },
       });
 
-      expect(executeAction).toHaveBeenCalledWith({
-        action: "GMAIL_SEND_EMAIL",
-        entityId: "user-42",
-        params: { recipient_email: "x@y.z", subject: "hi", body: "ok" },
+      expect(execute).toHaveBeenCalledWith("GMAIL_SEND_EMAIL", {
+        userId: "user-42",
+        arguments: { recipient_email: "x@y.z", subject: "hi", body: "ok" },
       });
       expect(result.ok).toBe(true);
       expect(result.data).toEqual({ id: "msg-123" });
     });
 
     it("maps auth-shaped errors to AUTH_REQUIRED", async () => {
-      process.env.COMPOSIO_API_KEY = "ck_test";
-      executeAction.mockRejectedValueOnce(new Error("No connected account for entityId user-7"));
+      process.env.COMPOSIO_API_KEY = "ak_test";
+      execute.mockRejectedValueOnce(new Error("No connected account for user user-7"));
 
       const result = await executeComposioAction({
         action: "GMAIL_SEND_EMAIL",
@@ -86,8 +86,8 @@ describe("Composio client", () => {
     });
 
     it("falls back to ACTION_FAILED for generic errors", async () => {
-      process.env.COMPOSIO_API_KEY = "ck_test";
-      executeAction.mockRejectedValueOnce(new Error("Provider returned 502"));
+      process.env.COMPOSIO_API_KEY = "ak_test";
+      execute.mockRejectedValueOnce(new Error("Provider returned 502"));
 
       const result = await executeComposioAction({
         action: "GMAIL_SEND_EMAIL",

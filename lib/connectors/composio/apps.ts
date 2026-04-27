@@ -1,31 +1,39 @@
 /**
- * Composio Apps catalog — list available apps + per-app metadata.
+ * Composio Toolkits catalog — list available toolkits (= "apps") +
+ * per-toolkit metadata.
  *
- * Cached process-wide for 30 min (catalog is global, not per-user).
+ * The new SDK calls these "toolkits" but the public type stays
+ * `ComposioApp` to avoid a UI-wide rename. Cached process-wide for 30 min
+ * (catalog is global, not per-user).
  */
 
-import { getComposioToolset, isComposioConfigured } from "./client";
+import { getComposio, isComposioConfigured } from "./client";
 
 export interface ComposioApp {
-  /** App slug (e.g. "slack", "googlecalendar"). Used in connect API. */
+  /** Toolkit slug (e.g. "slack", "googlecalendar"). */
   key: string;
   name: string;
   description: string;
   logo: string;
-  /** Comma-separated categories from Composio ("communication,productivity"). */
   categories: string[];
   noAuth: boolean;
 }
 
-interface RawAppInfo {
-  appId?: string;
+interface RawToolkit {
+  slug?: string;
   key?: string;
   name?: string;
+  meta?: {
+    description?: string;
+    logo?: string;
+    categories?: Array<string | { slug?: string; name?: string }>;
+  };
   description?: string;
   logo?: string;
-  categories?: string;
-  no_auth?: boolean;
-  enabled?: boolean;
+  categories?: Array<string | { slug?: string; name?: string }>;
+  authConfig?: { authScheme?: string };
+  authSchemes?: string[];
+  noAuth?: boolean;
 }
 
 const CATALOG_TTL_MS = 30 * 60_000;
@@ -35,26 +43,27 @@ export function resetAppsCache(): void {
   cachedCatalog = null;
 }
 
-function normalize(raw: RawAppInfo): ComposioApp | null {
-  if (!raw.key || !raw.name) return null;
-  if (raw.enabled === false) return null;
+function categoriesOf(raw: RawToolkit): string[] {
+  const list = raw.meta?.categories ?? raw.categories ?? [];
+  return list
+    .map((c) => (typeof c === "string" ? c : (c.slug ?? c.name ?? "")))
+    .map((s) => s.toLowerCase().trim())
+    .filter(Boolean);
+}
+
+function normalize(raw: RawToolkit): ComposioApp | null {
+  const slug = raw.slug ?? raw.key;
+  if (!slug || !raw.name) return null;
   return {
-    key: raw.key.toLowerCase(),
+    key: slug.toLowerCase(),
     name: raw.name,
-    description: raw.description ?? "",
-    logo: raw.logo ?? "",
-    categories: (raw.categories ?? "")
-      .split(",")
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean),
-    noAuth: Boolean(raw.no_auth),
+    description: raw.meta?.description ?? raw.description ?? "",
+    logo: raw.meta?.logo ?? raw.logo ?? "",
+    categories: categoriesOf(raw),
+    noAuth: Boolean(raw.noAuth) || raw.authConfig?.authScheme === "no_auth",
   };
 }
 
-/**
- * Returns the full Composio app catalog. Process-wide cache (catalog is
- * the same for everyone). Returns [] when Composio is not configured.
- */
 export async function listAvailableApps(opts: { force?: boolean } = {}): Promise<ComposioApp[]> {
   if (!isComposioConfigured()) return [];
 
@@ -63,19 +72,20 @@ export async function listAvailableApps(opts: { force?: boolean } = {}): Promise
     return cachedCatalog.apps;
   }
 
-  const toolset = await getComposioToolset();
-  if (!toolset) return [];
+  const composio = await getComposio();
+  if (!composio) return [];
 
   try {
-    const raw = (await toolset.client.apps.list()) as RawAppInfo[];
-    const apps = raw
+    const raw = (await composio.toolkits.list()) as { items?: RawToolkit[] } | RawToolkit[];
+    const items = Array.isArray(raw) ? raw : (raw.items ?? []);
+    const apps = items
       .map(normalize)
       .filter((a): a is ComposioApp => a !== null)
       .sort((a, b) => a.name.localeCompare(b.name));
     cachedCatalog = { apps, expiresAt: now + CATALOG_TTL_MS };
     return apps;
   } catch (err) {
-    console.error("[Composio/Apps] list failed:", err);
+    console.error("[Composio/Toolkits] list failed:", err);
     return [];
   }
 }

@@ -2,7 +2,7 @@ export {
   executeComposioAction,
   isComposioConfigured,
   resetComposioClient,
-  getComposioToolset,
+  getComposio,
 } from "./client";
 export type { ComposioCallParams, ComposioResult, ComposioErrorCode } from "./types";
 export { gmailSendEmail } from "./actions/gmail";

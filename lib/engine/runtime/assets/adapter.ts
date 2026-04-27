@@ -109,6 +109,45 @@ export async function getAssets(params?: {
 /**
  * Get asset by ID.
  */
+/**
+ * Delete an asset from Supabase, scoped to a tenant.
+ *
+ * Returns the affected row count: 0 means the asset didn't exist (or wasn't
+ * in scope for this tenant — same behaviour from the caller's POV).
+ *
+ * Storage cleanup is intentionally NOT done here: storage is async/eventually
+ * consistent and the cleanup worker also handles orphaned blobs. Removing
+ * the DB row is enough to make the asset disappear from the user's view.
+ */
+export async function deleteAssetById(
+  id: string,
+  scope?: { tenantId?: string; workspaceId?: string },
+): Promise<{ ok: boolean; deletedCount: number; error?: string }> {
+  const sb = db();
+  if (!sb) {
+    return { ok: false, deletedCount: 0, error: "no_supabase_client" };
+  }
+
+  try {
+    let query = sb.from("assets").delete({ count: "exact" }).eq("id", id);
+    if (scope?.tenantId) {
+      query = query.eq("tenant_id", scope.tenantId);
+    }
+    if (scope?.workspaceId) {
+      query = query.eq("workspace_id", scope.workspaceId);
+    }
+    const { error, count } = await query;
+    if (error) {
+      console.error("[AssetsAdapter] delete failed:", error.message);
+      return { ok: false, deletedCount: 0, error: error.message };
+    }
+    return { ok: true, deletedCount: count ?? 0 };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return { ok: false, deletedCount: 0, error: message };
+  }
+}
+
 export async function getAssetById(id: string): Promise<Asset | null> {
   const sb = db();
   if (!sb) return null;

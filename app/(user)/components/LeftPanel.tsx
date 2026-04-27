@@ -58,52 +58,80 @@ export function LeftPanel({ connectedServices = [], onAddApp }: LeftPanelProps) 
 
       <div className="h-px mx-3 shrink-0 halo-rule" />
 
-      {/* Apps Rail — monochrome editorial with state pip */}
-      <div className={`flex flex-col items-center py-4 gap-4 overflow-hidden transition-all duration-500 ${showAllThreads ? 'h-0 opacity-0 py-0' : 'flex-1 min-h-0'}`}>
-        {connectedServices.map((service) => {
-          const status = service.connectionStatus;
-          const showPip = status === "pending" || status === "error";
-          const pipColor =
-            status === "error" ? "bg-[var(--danger)]" :
-            status === "pending" ? "bg-[var(--warn)]" : "";
-          return (
+      {/* Apps Rail — top-3 connected services + overflow → /apps.
+          Showing every connected service was decorative noise that scaled
+          poorly past 5 apps. The rail now keeps the visual identity (3
+          live logos) but stays actionable: clicking an app or the overflow
+          chip both deep-link to /apps for management. */}
+      {(() => {
+        const RAIL_LIMIT = 3;
+        const visibleServices = connectedServices.slice(0, RAIL_LIMIT);
+        const overflowCount = Math.max(0, connectedServices.length - RAIL_LIMIT);
+        const goToApps = () => router.push("/apps");
+        return (
+          <div className={`flex flex-col items-center py-4 gap-4 overflow-hidden transition-all duration-500 ${showAllThreads ? 'h-0 opacity-0 py-0' : 'shrink-0'}`}>
+            {visibleServices.map((service) => {
+              const status = service.connectionStatus;
+              const showPip = status === "pending" || status === "error";
+              const pipColor =
+                status === "error" ? "bg-[var(--danger)]" :
+                status === "pending" ? "bg-[var(--warn)]" : "";
+              return (
+                <button
+                  key={service.id}
+                  onClick={goToApps}
+                  className="w-8 h-8 flex items-center justify-center transition-transform hover:scale-110 group relative shrink-0"
+                  title={`${service.name} — gérer dans /apps`}
+                  aria-label={`${service.name} — gérer dans /apps`}
+                >
+                  {service.icon ? (
+                    <img
+                      src={service.icon}
+                      alt={service.name}
+                      className="w-7 h-7 object-contain opacity-50 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
+                    />
+                  ) : (
+                    <span className="text-lg font-bold text-[var(--text-faint)] group-hover:text-[var(--text)] transition-colors">{service.name.charAt(0).toUpperCase()}</span>
+                  )}
+
+                  {showPip && (
+                    <span className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${pipColor} ${status === "error" ? "animate-pulse" : ""}`} />
+                  )}
+
+                  <span className="absolute left-full ml-3 px-2 py-1 bg-[var(--bg)] border border-[var(--surface-2)] t-10 font-mono tracking-[0.2em] text-[var(--text-soft)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 uppercase">
+                    {service.name}
+                  </span>
+                </button>
+              );
+            })}
+
+            {overflowCount > 0 && (
+              <button
+                onClick={goToApps}
+                className="w-8 h-8 flex items-center justify-center t-9 font-mono tracking-[0.05em] text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0 group relative"
+                title={`Voir ${overflowCount} autre${overflowCount > 1 ? "s" : ""} service${overflowCount > 1 ? "s" : ""} connecté${overflowCount > 1 ? "s" : ""}`}
+                aria-label={`Voir ${overflowCount} autres services connectés`}
+              >
+                +{overflowCount}
+                <span className="absolute left-full ml-3 px-2 py-1 bg-[var(--bg)] border border-[var(--surface-2)] t-10 font-mono tracking-[0.2em] text-[var(--text-soft)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 uppercase">
+                  +{overflowCount} more
+                </span>
+              </button>
+            )}
+
+            {/* Add App */}
             <button
-              key={service.id}
-              className="w-8 h-8 flex items-center justify-center transition-transform hover:scale-110 group relative shrink-0"
-              title={service.name}
+              onClick={onAddApp ?? goToApps}
+              className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
+              title="Connect new app"
             >
-              {service.icon ? (
-                <img
-                  src={service.icon}
-                  alt={service.name}
-                  className="w-7 h-7 object-contain opacity-50 grayscale transition-all duration-300 group-hover:opacity-100 group-hover:grayscale-0"
-                />
-              ) : (
-                <span className="text-lg font-bold text-[var(--text-faint)] group-hover:text-[var(--text)] transition-colors">{service.name.charAt(0).toUpperCase()}</span>
-              )}
-
-              {showPip && (
-                <span className={`absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full ${pipColor} ${status === "error" ? "animate-pulse" : ""}`} />
-              )}
-
-              <span className="absolute left-full ml-3 px-2 py-1 bg-[var(--bg)] border border-[var(--surface-2)] t-10 font-mono tracking-[0.2em] text-[var(--text-soft)] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 uppercase">
-                {service.name}
-              </span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
             </button>
-          );
-        })}
-
-        {/* Add App */}
-        <button
-          onClick={onAddApp}
-          className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
-          title="Connect new app"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-        </button>
-      </div>
+          </div>
+        );
+      })()}
 
       <div className="h-px bg-[var(--surface-2)] mx-3 shrink-0" />
 

@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
-import type { FocalObject } from "@/stores/focal";
+import { assetToFocal } from "@/lib/ui/focal-mappers";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
+import { toast } from "@/app/hooks/use-toast";
 
 interface Asset {
   id: string;
@@ -48,30 +49,6 @@ function formatRelative(iso: string): string {
   return `il y a ${mo}mo`;
 }
 
-function assetToFocal(asset: Asset, threadId: string | null): FocalObject {
-  const now = Date.now();
-  const typeMap: Record<string, FocalObject["type"]> = {
-    report: "report",
-    brief: "brief",
-    document: "doc",
-    doc: "doc",
-    message: "message_receipt",
-    plan: "outline",
-    synthesis: "report",
-  };
-  return {
-    id: asset.id,
-    type: typeMap[asset.type.toLowerCase()] ?? "doc",
-    status: "ready",
-    title: asset.name,
-    summary: `Asset · ${asset.type.toUpperCase()} · ${(asset.size / 1024).toFixed(1)} KB`,
-    sourceAssetId: asset.id,
-    threadId: threadId ?? undefined,
-    createdAt: now,
-    updatedAt: now,
-  };
-}
-
 export default function AssetsPage() {
   const router = useRouter();
   const setFocal = useFocalStore((s) => s.setFocal);
@@ -105,6 +82,28 @@ export default function AssetsPage() {
     e.stopPropagation();
     if (asset.url) {
       window.open(asset.url, "_blank");
+    }
+  };
+
+  const handleDelete = async (asset: Asset, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Supprimer "${asset.name}" ? Cette action est irréversible.`)) return;
+    try {
+      const res = await fetch(`/api/v2/assets/${encodeURIComponent(asset.id)}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setAssets((prev) => prev.filter((a) => a.id !== asset.id));
+        toast.success("Asset supprimé", asset.name);
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      toast.error("Suppression impossible", data.error ?? `Erreur serveur (${res.status})`);
+    } catch (err) {
+      toast.error(
+        "Erreur de suppression",
+        err instanceof Error ? err.message : "Erreur réseau",
+      );
     }
   };
 
@@ -145,19 +144,21 @@ export default function AssetsPage() {
             </div>
           ) : (
             <div className="border-y border-[var(--surface-2)]">
-              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] gap-x-6 px-2 py-3 t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)] border-b border-[var(--surface-2)]">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)] border-b border-[var(--surface-2)]">
                 <span className="w-4" />
                 <span>Name</span>
                 <span className="text-right">Type</span>
                 <span className="text-right">Size</span>
                 <span className="text-right">Created</span>
+                <span aria-hidden />
+                <span aria-hidden />
               </div>
 
               {assets.map((asset) => (
                 <div
                   key={asset.id}
                   onClick={() => handleOpen(asset)}
-                  className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto] gap-x-6 items-center px-2 py-4 hover:bg-[var(--surface-1)] transition-colors border-b border-[var(--surface-2)] group cursor-pointer"
+                  className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 items-center px-2 py-4 hover:bg-[var(--surface-1)] transition-colors border-b border-[var(--surface-2)] group cursor-pointer"
                   title={`Open ${asset.name}`}
                 >
                   <span className="t-15 text-[var(--cykan)] opacity-40 group-hover:opacity-100 transition-opacity leading-none w-4 text-center">
@@ -182,6 +183,15 @@ export default function AssetsPage() {
                     className="t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-ghost)] hover:text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                   >
                     Download
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDelete(asset, e)}
+                    className="t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-all"
+                    title={`Supprimer ${asset.name}`}
+                    aria-label={`Supprimer ${asset.name}`}
+                  >
+                    Delete
                   </button>
                 </div>
               ))}
