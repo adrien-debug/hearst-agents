@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EmptyState from "../_components/EmptyState";
 import { getServerSupabase } from "@/lib/platform/db/supabase";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +67,14 @@ export default async function ToolsPage() {
       )}
 
       {tools.length === 0 && !error ? (
-        <p className="text-sm text-[var(--text-muted)]">Aucun tool créé.</p>
+        <EmptyState
+          iconKind="tools"
+          title="Pas encore d'outil"
+          description="Les tools sont les actions HTTP que les agents peuvent appeler (Gmail, Slack, GCal, web search…). Charge le set dev pour démarrer avec 8 outils typiques."
+          createHref="/admin/tools/new"
+          createLabel="+ Créer un tool"
+          seedResource="tools"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {tools.map((t) => (

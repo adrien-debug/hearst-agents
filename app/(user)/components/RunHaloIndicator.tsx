@@ -21,13 +21,19 @@ import { useRuntimeStore } from "@/stores/runtime";
 
 const PHASE_LABELS = ["intent", "search", "analyze", "synth", "deliver"] as const;
 const TOTAL_PHASES = PHASE_LABELS.length;
-const CELLS_PER_PHASE = 20;
+const CELLS_DEFAULT = 20;
+const CELLS_COMPACT = 8;
 
-export function RunHaloIndicator() {
+interface RunHaloIndicatorProps {
+  density?: "default" | "compact";
+}
+
+export function RunHaloIndicator({ density = "default" }: RunHaloIndicatorProps = {}) {
   const coreState = useRuntimeStore((s) => s.coreState);
   const flowLabel = useRuntimeStore((s) => s.flowLabel);
   const currentRunId = useRuntimeStore((s) => s.currentRunId);
   const events = useRuntimeStore((s) => s.events);
+  const cellsPerPhase = density === "compact" ? CELLS_COMPACT : CELLS_DEFAULT;
 
   const stepCount = events.filter((e) => e.type === "step_started").length;
 
@@ -62,6 +68,7 @@ export function RunHaloIndicator() {
     <div
       className="halo-runs"
       data-state={coreState}
+      data-density={density}
       role="status"
       aria-label={accessibleLabel}
     >
@@ -83,7 +90,7 @@ export function RunHaloIndicator() {
               data-phase-name={label}
               data-phase-state={phaseState}
             >
-              {Array.from({ length: CELLS_PER_PHASE }, (_, cellIdx) => (
+              {Array.from({ length: cellsPerPhase }, (_, cellIdx) => (
                 <span key={cellIdx} className="halo-runs-cell" />
               ))}
             </div>

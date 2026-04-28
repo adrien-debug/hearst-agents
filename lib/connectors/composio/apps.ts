@@ -22,6 +22,13 @@ export interface ComposioApp {
   logo: string;
   categories: string[];
   noAuth: boolean;
+  /**
+   * `true` si une auth-config existe pour ce toolkit côté tenant Composio
+   * (managed ou custom) — l'utilisateur peut donc déclencher un OAuth.
+   * `false` sinon : Composio refusera la connexion (NO_INTEGRATION),
+   * il faut d'abord configurer une auth-config sur app.composio.dev.
+   */
+  connectable: boolean;
 }
 
 // Raw item as returned by GET /api/v3/toolkits (snake_case from the API).
@@ -78,7 +85,7 @@ function categoriesOf(raw: RawApiItem): string[] {
     .filter(Boolean);
 }
 
-function normalize(raw: RawApiItem): ComposioApp | null {
+function normalize(raw: RawApiItem): Omit<ComposioApp, "connectable"> | null {
   const slug = raw.slug ?? raw.key;
   if (!slug || !raw.name) return null;
   const noAuth =
@@ -92,6 +99,52 @@ function normalize(raw: RawApiItem): ComposioApp | null {
     categories: categoriesOf(raw),
     noAuth,
   };
+}
+
+// Récupère l'ensemble des slugs de toolkits qui ont au moins une auth-config
+// côté tenant Composio (managed ou custom). Sert à marquer les apps comme
+// `connectable: true|false` dans le catalogue. Pagination native de
+// authConfigs.list (contrairement à toolkits.get qui drop le cursor).
+interface RawAuthConfig {
+  toolkit?: { slug?: string };
+  toolkitSlug?: string;
+}
+interface RawAuthConfigPage {
+  items?: RawAuthConfig[];
+  nextCursor?: string | null;
+}
+interface ComposioAuthConfigsModule {
+  list: (params: Record<string, unknown>) => Promise<RawAuthConfigPage>;
+}
+
+async function fetchConfiguredToolkitSlugs(
+  composio: unknown,
+): Promise<Set<string>> {
+  const set = new Set<string>();
+  const authConfigs = (composio as { authConfigs?: ComposioAuthConfigsModule })
+    .authConfigs;
+  if (!authConfigs?.list) return set;
+  let cursor: string | undefined;
+  const MAX_PAGES = 30;
+  for (let i = 0; i < MAX_PAGES; i++) {
+    const query: Record<string, unknown> = { limit: 100 };
+    if (cursor) query.cursor = cursor;
+    let page: RawAuthConfigPage;
+    try {
+      page = await authConfigs.list(query);
+    } catch (err) {
+      console.warn("[Composio/Toolkits] authConfigs.list failed:", err);
+      break;
+    }
+    for (const ac of page.items ?? []) {
+      const slug = ac.toolkit?.slug ?? ac.toolkitSlug;
+      if (slug) set.add(slug.toLowerCase());
+    }
+    const next = page.nextCursor ?? null;
+    if (!next) break;
+    cursor = next;
+  }
+  return set;
 }
 
 export async function listAvailableApps(
@@ -130,9 +183,18 @@ export async function listAvailableApps(
       cursor = next;
     }
 
+    // Catalogue + auth-configs en parallèle. Le set des configured permet
+    // de marquer chaque app comme connectable ou pas — l'UI grise les
+    // non-connectables et adapte le bouton du drawer.
+    const configuredSlugs = await fetchConfiguredToolkitSlugs(composio);
+
     const apps = all
       .map(normalize)
-      .filter((a): a is ComposioApp => a !== null)
+      .filter((a): a is Omit<ComposioApp, "connectable"> => a !== null)
+      .map((a): ComposioApp => ({
+        ...a,
+        connectable: a.noAuth || configuredSlugs.has(a.key),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     cachedCatalog = { apps, expiresAt: now + CATALOG_TTL_MS };

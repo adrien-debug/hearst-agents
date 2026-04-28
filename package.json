@@ -18,7 +18,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --reporter=list",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "composio:enable-all": "node --env-file=.env.local scripts/composio-bulk-enable.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.71",

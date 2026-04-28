@@ -26,21 +26,21 @@ export default function NodeToggle({ flagKey }: Props) {
       disabled={loading}
       title={error ? `Erreur : ${error}` : value ? "Désactiver" : "Activer"}
       className={[
-        "relative inline-flex items-center h-[var(--space-4)] w-[28px] rounded-[var(--radius-full)] transition-all",
-        "duration-[var(--duration-fast)] ease-[var(--ease-standard)] border",
+        "relative inline-flex items-center h-(--space-4) w-(--space-8) rounded-(--radius-pill) transition-all",
+        "duration-(--duration-fast) ease-(--ease-standard) border",
         value
-          ? "bg-[var(--cykan)]/30 border-[var(--cykan)]/50"
-          : "bg-[var(--bg-soft)] border-[var(--line-strong)]",
+          ? "bg-(--cykan)/30 border-(--cykan)/50"
+          : "bg-(--bg-soft) border-(--line-strong)",
         loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
       ].join(" ")}
     >
       <span
         className={[
-          "inline-block size-[10px] rounded-[var(--radius-full)] transition-transform",
-          "duration-[var(--duration-fast)] ease-[var(--ease-standard)]",
+          "inline-block size-(--space-3) rounded-(--radius-pill) transition-transform",
+          "duration-(--duration-fast) ease-(--ease-standard)",
           value
-            ? "translate-x-[14px] bg-[var(--cykan)]"
-            : "translate-x-[2px] bg-[var(--text-muted)]",
+            ? "translate-x-(--space-4) bg-(--cykan)"
+            : "translate-x-(--space-1) bg-(--text-muted)",
         ].join(" ")}
       />
     </button>

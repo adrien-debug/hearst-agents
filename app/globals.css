@@ -86,6 +86,8 @@
   --width-context: clamp(220px, 20vw, 480px);
   --width-center-max: 960px;
   --width-actions: clamp(440px, 36vw, 720px);
+  --width-admin-sidebar: 240px;
+  --width-admin-sidebar-collapsed: 56px;
   --height-topbar: 48px;
 
   /* ─── Hearst Connect — Halo core (idle home centerpiece) ────── */
@@ -684,6 +686,28 @@ body {
     0 30px 60px -16px rgba(0, 0, 0, 0.6);
 }
 
+/* ── Halo Asset Card ────────────────────────────────
+   Mini-card V05 du RightPanel : type label en tête, mini-chart vectoriel
+   au centre, nom truncate en bas. Inset cyan line au hover, identique au
+   pattern halo-suggestion. */
+.halo-asset-card {
+  background: var(--card-flat-bg);
+  border: 1px solid var(--card-flat-border);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+.halo-asset-card:hover {
+  background: var(--cykan-bg-hover);
+  box-shadow: inset 2px 0 0 var(--cykan);
+}
+.halo-asset-card:focus-visible {
+  outline: none;
+  box-shadow: inset 2px 0 0 var(--cykan), inset 0 0 0 1px var(--cykan-border-hover);
+}
+
 /* ── Halo Suggestion Card ───────────────────────────
    Premium variant for the homepage suggestion grid: ambient cyan glow
    in the top-left, animated bottom accent line, deeper hover halo. */
@@ -988,6 +1012,82 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   50% { transform: scale(1.4); opacity: 0.7; }
 }
 
+/* ── halo-logo-3d — H Hearst extrudé en illusion 3D ─────────────
+   Signature visuelle de la PulseStrip du RightPanel.
+   6 couches SVG du H Hearst empilées sur Z (effet d'épaisseur), avec
+   rotation Y continue en mode running. Pas de WebGL, CSS pur via
+   transform-style: preserve-3d + perspective.
+   data-state pilote la couleur (currentColor) et l'animation. */
+.halo-logo-3d {
+  position: relative;
+  perspective: 240px;
+  pointer-events: none;
+  display: block;
+}
+.halo-logo-3d-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateY(-18deg) rotateX(8deg);
+  transition: transform var(--duration-slow, 300ms) var(--ease-out-soft, ease);
+  filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.18));
+}
+.halo-logo-3d-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.halo-logo-3d-layer svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Running — rotation Y continue, glow plus marqué */
+.halo-logo-3d[data-state="running"] .halo-logo-3d-inner {
+  animation: halo-logo-3d-rotate 9s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.40));
+}
+.halo-logo-3d[data-state="running"] .halo-logo-3d-layer {
+  color: var(--cykan);
+}
+
+/* Awaiting — pas de rotation, couleur warn, légère oscillation */
+.halo-logo-3d[data-state="awaiting"] .halo-logo-3d-inner {
+  animation: halo-logo-3d-sway 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.40));
+}
+.halo-logo-3d[data-state="awaiting"] .halo-logo-3d-layer {
+  color: var(--warn);
+}
+
+/* Error — couleur danger, statique avec léger jitter visuel via opacity */
+.halo-logo-3d[data-state="error"] .halo-logo-3d-layer {
+  color: var(--danger);
+}
+.halo-logo-3d[data-state="error"] .halo-logo-3d-inner {
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.40));
+}
+
+/* Idle — couleur faint, pose 3D maintenue */
+.halo-logo-3d[data-state="idle"] .halo-logo-3d-layer {
+  color: var(--text-faint);
+}
+.halo-logo-3d[data-state="idle"] .halo-logo-3d-inner {
+  filter: none;
+}
+
+@keyframes halo-logo-3d-rotate {
+  from { transform: rotateY(-18deg) rotateX(8deg); }
+  to   { transform: rotateY(342deg) rotateX(8deg); }
+}
+@keyframes halo-logo-3d-sway {
+  0%, 100% { transform: rotateY(-18deg) rotateX(8deg); }
+  50%      { transform: rotateY(-2deg)  rotateX(8deg); }
+}
+
 /* ── Run halo indicator — Phase clusters ──────────────────────
  * Header du RightPanel. 5 zones (intent / search / analyze /
  * synth / deliver), chaque zone = grille 4×5 de cells. État de
@@ -1141,6 +1241,59 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 @keyframes halo-runs-dot-pulse {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.45; }
+}
+
+/* ── halo-runs · density="compact" ─────────────────────────────────
+   Variante 5×8 cells (vs 5×20) pour intégration dans le PulseStrip
+   du RightPanel. Hauteur grille réduite, sélecteurs nth-child remappés
+   pour 8 cells/phase au lieu de 20. */
+.halo-runs[data-density="compact"] .halo-runs-grid {
+  height: 32px;
+  gap: var(--space-1);
+}
+.halo-runs[data-density="compact"] .halo-runs-phase {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+/* Phase current running : moitié des cells (4 sur 8) cykan, dernière pulse */
+.halo-runs[data-density="compact"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
+  background: var(--border-soft);
+}
+.halo-runs[data-density="compact"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+4) {
+  background: var(--cykan);
+}
+.halo-runs[data-density="compact"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(4) {
+  animation: halo-runs-cell-pulse 1.2s ease-in-out infinite;
+}
+/* Awaiting approval : dernière cell (8) pulse en warn */
+.halo-runs[data-density="compact"][data-state="awaiting_approval"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
+  background: var(--warn);
+}
+.halo-runs[data-density="compact"][data-state="awaiting_approval"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(8) {
+  animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
+}
+.halo-runs[data-density="compact"][data-state="awaiting_clarification"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
+  background: var(--warn);
+}
+.halo-runs[data-density="compact"][data-state="awaiting_clarification"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(8) {
+  animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
+}
+/* Error : 4 cells cykan + 1 danger pulse */
+.halo-runs[data-density="compact"][data-state="error"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+4) {
+  background: var(--cykan);
+}
+.halo-runs[data-density="compact"][data-state="error"]
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(4) {
+  background: var(--danger);
+  animation: halo-runs-cell-pulse 1s ease-in-out infinite;
 }
 
 /* ── Ghost Protocol — boutons & inputs minimalistes ──────────────

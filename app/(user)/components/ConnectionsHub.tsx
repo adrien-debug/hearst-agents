@@ -18,6 +18,10 @@ interface ComposioApp {
   logo: string;
   categories: string[];
   noAuth: boolean;
+  // `false` = aucune auth-config côté tenant Composio → click "Connecter"
+  // donnerait NO_INTEGRATION. UI : tile grayscale plus fort + cadenas, drawer
+  // remplace le bouton OAuth par un lien vers la config Composio.
+  connectable?: boolean;
 }
 
 interface DiscoveredTool {
@@ -51,9 +55,24 @@ function categoryLabelById(id: string): string {
   return CATEGORY_LABEL[id] ?? id;
 }
 
-// Picks recommandés par défaut quand on en sait pas plus sur l'usage. Ordre =
-// priorité ; on filtre les déjà-connectés et on garde les 3 premiers.
-const SUGGESTION_PICKS = ["stripe", "linear", "calendly", "hubspot", "github"];
+// Picks recommandés par défaut. Liste large (≥10) pour qu'après filtrage
+// des déjà-connectés on ait toujours 3 dispos. `hint` = micro-descripteur
+// affiché sous le nom dans la card (remplace la catégorie générique pour
+// donner du contexte utile : "que fait Hearst avec ce service").
+const SUGGESTION_PICKS: { slug: string; hint: string }[] = [
+  { slug: "stripe", hint: "facturation & paiements" },
+  { slug: "linear", hint: "tickets & sprints produit" },
+  { slug: "calendly", hint: "planification de RDV" },
+  { slug: "hubspot", hint: "CRM, contacts & deals" },
+  { slug: "github", hint: "PR, issues, code review" },
+  { slug: "notion", hint: "docs, bases & comptes-rendus" },
+  { slug: "googlecalendar", hint: "agenda & créneaux libres" },
+  { slug: "slack", hint: "messages & mentions équipe" },
+  { slug: "figma", hint: "specs design & maquettes" },
+  { slug: "gmail", hint: "emails & threads priorisés" },
+  { slug: "airtable", hint: "bases relationnelles" },
+  { slug: "googledrive", hint: "fichiers & docs partagés" },
+];
 
 // Priorité de statut : plus petit = meilleur. Quand un service a plusieurs
 // connexions (ex: Slack ACTIVE + EXPIRED), on affiche le plus favorable.
@@ -116,7 +135,14 @@ export function ConnectionsHub() {
       if (res.status === 503) return;
       if (!res.ok) return;
       const data = (await res.json()) as { apps?: ComposioApp[] };
-      setApps(data.apps ?? []);
+      // Filtre source : on n'affiche que les toolkits qui ont une auth-config
+      // côté Composio (managed ou custom). Les ~910 non-connectables sont
+      // masqués pour ne pas frustrer l'utilisateur avec des NO_INTEGRATION.
+      // Le code de différenciation visuelle (LockBadge, NotConnectableFooter)
+      // reste en place comme safety net si le flag bouge en runtime.
+      const all = data.apps ?? [];
+      const connectableOnly = all.filter((a) => a.connectable !== false);
+      setApps(connectableOnly);
     } catch (err) {
       console.error("[Composio] failed to load apps catalog", err);
     }
@@ -185,11 +211,32 @@ export function ConnectionsHub() {
     );
   }, [apps, searchQuery]);
 
-  // Suggestions = picks par défaut filtrés des déjà-connectés. 3 premiers.
+  // Suggestions = picks par défaut filtrés des déjà-connectés. Toujours 3.
+  // Si la liste éditoriale est épuisée (rare — 12 picks + ~5 connectés
+  // typiques ⇒ jamais), on complète avec des apps non-connectées du
+  // catalogue, hint = leur catégorie en lower-case.
   const suggestions = useMemo(() => {
-    return SUGGESTION_PICKS.map((key) => apps.find((a) => a.key === key))
-      .filter((app): app is ComposioApp => Boolean(app) && !connectedSlugs.has(app!.key))
-      .slice(0, 3);
+    type Sugg = { app: ComposioApp; hint: string };
+    const fromPicks: Sugg[] = SUGGESTION_PICKS
+      .map((p) => {
+        const app = apps.find((a) => a.key === p.slug);
+        if (!app || connectedSlugs.has(p.slug)) return null;
+        return { app, hint: p.hint };
+      })
+      .filter((s): s is Sugg => s !== null);
+
+    if (fromPicks.length >= 3) return fromPicks.slice(0, 3);
+
+    // Fallback : compléter avec des apps connectables pas encore dans la
+    // liste, hint = leur catégorie. Garantit qu'on affiche toujours 3 cards.
+    const usedKeys = new Set(fromPicks.map((s) => s.app.key));
+    const needed = 3 - fromPicks.length;
+    const fallbacks: Sugg[] = apps
+      .filter((a) => !connectedSlugs.has(a.key) && !usedKeys.has(a.key))
+      .slice(0, needed)
+      .map((app) => ({ app, hint: categoryLabel(app).toLowerCase() }));
+
+    return [...fromPicks, ...fallbacks].slice(0, 3);
   }, [apps, connectedSlugs]);
 
   // Catégories effectivement présentes dans le catalogue, triées par
@@ -501,6 +548,24 @@ export function ConnectionsHub() {
     [refreshAccounts],
   );
   useOAuthCompletionPoll(onOAuthSuccess);
+
+  // Sync drawer ↔ accounts. Quand un OAuth réussit pendant que le drawer
+  // est ouvert, accounts se met à jour mais drawer.connectedAccount reste
+  // figé à la valeur capturée au clic — donc le drawer continue d'afficher
+  // "Connecter <app> →" alors que l'app est connectée. On re-aligne dès
+  // qu'accounts bouge. Symétrique pour la déconnexion.
+  useEffect(() => {
+    if (!drawer) return;
+    const matched = accounts.find(
+      (a) => a.appName.toLowerCase() === drawer.app.key,
+    );
+    const same =
+      (matched && drawer.connectedAccount?.id === matched.id) ||
+      (!matched && !drawer.connectedAccount);
+    if (!same) {
+      setDrawer({ ...drawer, connectedAccount: matched });
+    }
+  }, [accounts, drawer]);
 
   // Quand on change de catégorie, on remet le wallpaper à zéro pour ne
   // pas garder un offset qui n'a plus de sens dans la nouvelle liste.
@@ -818,31 +883,51 @@ function StageTile({
       type="button"
       onClick={onClick}
       aria-label={`${app.name} — ${ribbon}`}
-      className="group relative aspect-square flex flex-col items-center justify-center gap-3 overflow-hidden rounded-md border transition-all"
+      className="group relative aspect-square flex flex-col overflow-hidden rounded-md border transition-all"
       style={{
         background: c.bg,
         borderColor: c.ring,
         boxShadow: `0 0 0 1px ${c.ring}, 0 4px 24px color-mix(in srgb, ${c.dot} 12%, transparent)`,
       }}
     >
-      <AppLogo app={app} size={72} />
-      <span
-        className="t-13 text-center px-2"
-        style={{ fontWeight: "var(--weight-semibold)", color: "var(--text)", letterSpacing: "-0.005em" }}
-      >
-        {app.name}
-      </span>
+      {/* Dot status — flotte en haut-droit, indépendant du flux flex */}
       <span
         aria-hidden
-        className="absolute top-2 right-2 w-2 h-2 rounded-full"
+        className="absolute top-2 right-2 w-2 h-2 rounded-full z-10"
         style={{
           background: c.dot,
           boxShadow: `0 0 8px color-mix(in srgb, ${c.dot} 50%, transparent)`,
           animation: variant === "warn" ? "blink 1.4s infinite" : undefined,
         }}
       />
+
+      {/* Contenu principal — logo + nom centrés dans l'espace au-dessus
+          du ribbon. flex-1 prend toute la hauteur disponible. */}
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-2">
+        <AppLogo app={app} size={72} />
+        <span
+          className="t-13 text-center"
+          style={{
+            fontWeight: "var(--weight-semibold)",
+            color: "var(--text)",
+            letterSpacing: "-0.005em",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            wordBreak: "break-word",
+          }}
+        >
+          {app.name}
+        </span>
+      </div>
+
+      {/* Ribbon — sibling flex (pas absolute) → prend sa place naturelle
+          en bas, ne chevauche plus le nom long. truncate sur 1 ligne avec
+          ellipsis pour les catégories à libellé long type
+          "FILE-MANAGEMENT-&-STORAGE". */}
       <span
-        className="absolute bottom-0 left-0 right-0 t-9 font-mono uppercase text-center py-2 border-t"
+        className="shrink-0 t-9 font-mono uppercase text-center py-2 border-t truncate px-2"
         style={{
           letterSpacing: "var(--tracking-section)",
           color: c.ribbonColor,
@@ -883,29 +968,49 @@ function SuggestionsGrid({
   suggestions,
   onSelect,
 }: {
-  suggestions: ComposioApp[];
+  suggestions: { app: ComposioApp; hint: string }[];
   onSelect: (app: ComposioApp) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-8 pb-2">
-      {suggestions.map((app, i) => (
-        <SuggestionCard
-          key={app.key}
-          app={app}
-          featured={i === 0}
-          onClick={() => onSelect(app)}
-        />
-      ))}
-    </div>
+    <>
+      <SuggestionsHint />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-8 pb-2">
+        {suggestions.map((s, i) => (
+          <SuggestionCard
+            key={s.app.key}
+            app={s.app}
+            hint={s.hint}
+            featured={i === 0}
+            onClick={() => onSelect(s.app)}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+// Une ligne de conseil sobre, juste sous le label "Pour aller plus loin".
+// Pas une cover éditoriale — un nudge pour expliquer pourquoi ces 3 picks.
+function SuggestionsHint() {
+  return (
+    <p
+      className="px-8 pb-3 t-11 text-[var(--text-muted)]"
+      style={{ lineHeight: "var(--leading-snug)" }}
+    >
+      Trois services à fort impact pour ton agent — chacun ouvre une famille
+      d&apos;actions nouvelles dans le chat.
+    </p>
   );
 }
 
 function SuggestionCard({
   app,
+  hint,
   featured,
   onClick,
 }: {
   app: ComposioApp;
+  hint: string;
   featured: boolean;
   onClick: () => void;
 }) {
@@ -928,10 +1033,10 @@ function SuggestionCard({
           {app.name}
         </div>
         <div
-          className="t-9 font-mono uppercase mt-1 text-[var(--text-faint)] truncate"
-          style={{ letterSpacing: "var(--tracking-section)" }}
+          className="t-11 mt-1 text-[var(--text-faint)] truncate"
+          style={{ lineHeight: "var(--leading-snug)" }}
         >
-          {categoryLabel(app)}
+          {hint}
         </div>
       </div>
       <span
@@ -1105,42 +1210,68 @@ function WallpaperTile({
   status: string | undefined;
   onClick: () => void;
 }) {
-  // Non-connectés en grayscale/faded → la couleur des connectés saute aux
-  // yeux et fait office d'index visuel ("ce que j'ai déjà").
-  const dim = !connected;
+  // Trois états visuels :
+  //  - connected      : couleur normale + dot cykan en coin + ring cykan
+  //  - connectable    : grayscale léger (0.55) + retour couleur au hover
+  //  - non-connectable: grayscale fort (0.85) + cadenas SVG en coin
+  // Le cadenas vient d'un mini SVG inline (pas d'emoji — interdit par DS).
+  const isConnectable = app.connectable !== false; // undefined = legacy, on assume connectable
   const variant = connected ? stageVariant(status ?? "active") : "active";
   const dotColor =
     variant === "warn" ? "var(--color-warning)"
       : variant === "error" ? "var(--color-error)"
         : "var(--cykan)";
+
+  const filter = connected
+    ? undefined
+    : isConnectable
+      ? "grayscale(0.55) opacity(0.65)"
+      : "grayscale(0.95) opacity(0.4)";
+
   return (
     <button
       type="button"
       onClick={onClick}
-      title={app.name}
+      title={isConnectable ? app.name : `${app.name} — config Composio requise`}
       aria-label={app.name}
       className="group relative aspect-square flex items-center justify-center rounded-xs border transition-all"
       style={{
         background: "var(--surface)",
         borderColor: connected ? "var(--cykan-border)" : "var(--border-shell)",
-        boxShadow: connected
-          ? "inset 0 0 0 1px var(--cykan-bg)"
-          : undefined,
-        filter: dim ? "grayscale(0.85) opacity(0.55)" : undefined,
+        boxShadow: connected ? "inset 0 0 0 1px var(--cykan-bg)" : undefined,
+        filter,
       }}
     >
       <AppLogo app={app} size={28} />
       {connected && (
         <span
           aria-hidden
-          className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
+          className="absolute top-1 right-1 w-2 h-2 rounded-full"
           style={{
             background: dotColor,
             boxShadow: `0 0 4px color-mix(in srgb, ${dotColor} 60%, transparent)`,
           }}
         />
       )}
+      {!connected && !isConnectable && <LockBadge />}
     </button>
+  );
+}
+
+// Mini SVG cadenas pour les tiles non-connectables (auth-config Composio
+// manquante). Couleur via currentColor → hérite de var(--text-faint).
+function LockBadge() {
+  return (
+    <span
+      aria-hidden
+      className="absolute top-1 right-1 inline-flex items-center justify-center"
+      style={{ color: "var(--text-faint)" }}
+    >
+      <svg width="9" height="11" viewBox="0 0 16 20" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="2" y="9" width="12" height="9" rx="1.5" />
+        <path d="M5 9V6a3 3 0 0 1 6 0v3" strokeLinecap="round" />
+      </svg>
+    </span>
   );
 }
 
@@ -1405,6 +1536,8 @@ function AppDrawer({
             >
               {busy ? "Déconnexion…" : `Déconnecter ${app.name}`}
             </button>
+          ) : app.connectable === false ? (
+            <NotConnectableFooter app={app} />
           ) : (
             <button
               type="button"
@@ -1418,6 +1551,37 @@ function AppDrawer({
         </div>
       </aside>
     </>
+  );
+}
+
+// Footer alternatif quand le toolkit n'a pas d'auth-config Composio →
+// le flow OAuth standard donnerait NO_INTEGRATION. On bascule sur un
+// lien direct vers le dashboard Composio pour configurer l'intégration.
+function NotConnectableFooter({ app }: { app: ComposioApp }) {
+  const dashboardUrl = `https://app.composio.dev/app/${encodeURIComponent(app.key)}`;
+  return (
+    <div className="flex flex-col gap-2">
+      <p
+        className="t-11"
+        style={{ color: "var(--text-soft)", lineHeight: "var(--leading-snug)" }}
+      >
+        Ce service demande une auth-config personnalisée côté Composio avant
+        d&apos;être connectable depuis Hearst.
+      </p>
+      <a
+        href={dashboardUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ghost-btn-solid ghost-btn-ghost w-full text-center"
+        style={{
+          color: "var(--text)",
+          borderColor: "var(--border-default)",
+          textDecoration: "none",
+        }}
+      >
+        Configurer sur Composio →
+      </a>
+    </div>
   );
 }
 

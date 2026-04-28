@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EmptyState from "../_components/EmptyState";
 import { getServerSupabase } from "@/lib/platform/db/supabase";
 
 export const dynamic = "force-dynamic";
@@ -62,13 +63,20 @@ export default async function WorkflowsPage() {
       )}
 
       {workflows.length === 0 && !error ? (
-        <p className="text-sm text-[var(--text-muted)]">Aucun workflow créé.</p>
+        <EmptyState
+          iconKind="router"
+          title="Pas encore de workflow"
+          description="Les workflows orchestrent plusieurs étapes (agents + tools) sur trigger manuel, schedule ou webhook. Charge le set dev (briefing du matin + recap hebdo) pour avoir un point de départ."
+          createHref="/admin/workflows/new"
+          createLabel="+ Créer un workflow"
+          seedResource="workflows"
+        />
       ) : (
         <div className="space-y-3">
           {workflows.map((wf) => (
             <Link
               key={wf.id}
-              href={`/workflows/${wf.id}`}
+              href={`/admin/workflows/${wf.id}`}
               className="flex items-center justify-between rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5 transition-colors hover:border-[var(--line-strong)]"
             >
               <div>

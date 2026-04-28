@@ -23,6 +23,14 @@ export async function requireAdmin(
     return NextResponse.json({ error: "db_unavailable" }, { status: 503 });
   }
 
+  // Dev bypass: skip the Supabase-backed permission check. The proxy already
+  // skipped auth for /api/* paths in this mode (proxy.ts:49), so we mirror
+  // that here — `getUserById` would otherwise throw on the email-shaped
+  // dev userId and return 503.
+  if (process.env.HEARST_DEV_AUTH_BYPASS === "1") {
+    return { scope, db };
+  }
+
   try {
     const allowed = await checkPermission(db, {
       userId: scope.userId,

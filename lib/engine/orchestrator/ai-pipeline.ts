@@ -456,7 +456,16 @@ export async function runAiPipeline(
   try {
     const result = streamText({
       model: anthropic("claude-sonnet-4-6"),
-      system: systemPrompt,
+      // System prompt marqué cache_control: ephemeral → Anthropic cache jusqu'à
+      // 5 min les tokens stables (system + tool descriptors qui y sont inlinés).
+      // Gain attendu : ~60-80% input tokens sur les tours suivants.
+      system: {
+        role: "system" as const,
+        content: systemPrompt,
+        providerOptions: {
+          anthropic: { cacheControl: { type: "ephemeral" } },
+        },
+      },
       messages,
       tools: aiTools,
       // Allow up to 10 tool-call → result cycles before forcing a stop

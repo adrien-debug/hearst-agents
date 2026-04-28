@@ -48,7 +48,7 @@ export default function NewAgentPage() {
       setSaving(false);
       return;
     }
-    router.push(`/agents/${json.agent.id}`);
+    router.push(`/admin/agents/${json.agent.id}`);
   };
 
   return (

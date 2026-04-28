@@ -69,14 +69,20 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
   const sourceAssetId = focal.sourceAssetId;
   const [previewContent, setPreviewContent] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
-  useEffect(() => {
-    if (!sourceAssetId) {
-      setPreviewContent(null);
-      return;
-    }
-    let cancelled = false;
-    setPreviewLoading(true);
+
+  // Reset preview au changement d'asset — pattern "Adjusting state on prop
+  // change" appliqué au render. Évite cascade de renders d'un useEffect dédié.
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [trackedAssetId, setTrackedAssetId] = useState<string | undefined>(sourceAssetId);
+  if (trackedAssetId !== sourceAssetId) {
+    setTrackedAssetId(sourceAssetId);
     setPreviewContent(null);
+    setPreviewLoading(!!sourceAssetId);
+  }
+
+  useEffect(() => {
+    if (!sourceAssetId) return;
+    let cancelled = false;
     fetch(`/api/v2/assets/${encodeURIComponent(sourceAssetId)}`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {

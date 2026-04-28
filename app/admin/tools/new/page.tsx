@@ -42,7 +42,7 @@ export default function NewToolPage() {
       setSaving(false);
       return;
     }
-    router.push("/tools");
+    router.push("/admin/tools");
   };
 
   return (

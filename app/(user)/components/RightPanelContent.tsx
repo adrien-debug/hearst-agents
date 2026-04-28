@@ -1,86 +1,73 @@
 "use client";
 
+/**
+ * RightPanelContent — orchestrateur des 3 strates :
+ *   1. PulseStrip     — bandeau d'activité live (top)
+ *   2. FocalCard      — carte focal contextuelle
+ *   3. LibraryTabs    — onglets Assets / Missions / Activité
+ * + footer pill SSE (live/offline/standby)
+ *
+ * Ce composant garde la responsabilité unique du fetch (SSE EventSource pour
+ * un thread actif, REST pour la "library home" sans thread) et passe les
+ * données aux sous-composants en props. Aucun sous-composant ne re-fetch.
+ */
+
 import { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
 import type { RightPanelData } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
-import { missionToFocal, assetToFocal } from "@/lib/ui/focal-mappers";
-import { toast } from "@/app/hooks/use-toast";
-// RunHaloIndicator (grille 5×20 cellules) supprimé du header — illisible
-// et redondant avec la section STATUS juste en dessous. Le fichier
-// RunHaloIndicator.tsx reste sur disque pour réintroduction éventuelle.
-import {
-  FileIcon,
-  MissionIcon,
-  NodeIcon,
-  DatabaseIcon,
-  ChevronIcon,
-} from "./right-panel-icons";
-import {
-  formatRelativeTime,
-  AssetGlyphSVG,
-  EmptyState,
-} from "./right-panel-helpers";
 import { OAuthStatusCard } from "./OAuthStatusCard";
+import { PulseStrip } from "./right-panel/PulseStrip";
+import { FocalCard } from "./right-panel/FocalCard";
+import { LibraryTabs } from "./right-panel/LibraryTabs";
 
 interface RightPanelContentProps {
   onClose?: () => void;
 }
 
 export function RightPanelContent({ onClose }: RightPanelContentProps) {
-  const router = useRouter();
-  const runtimeEvents = useRuntimeStore((s) => s.events);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
 
   const [data, setData] = useState<RightPanelData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // État ouvert/fermé de chaque section. Persisté en localStorage pour
-  // conserver les préférences entre rechargements et changements de thread.
-  const SECTIONS_STORAGE_KEY = "hearst.rightpanel.openSections";
-  type SectionKey = "focal" | "assets" | "missions";
-  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
-    focal: true,
-    assets: true,
-    missions: true,
-  });
-  // Hydrate depuis localStorage au mount (évite tout mismatch SSR).
+  // Reset `data` quand le thread change. Pattern "Adjusting state on prop
+  // change" — au render, pas en useEffect (évite cascade de renders).
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [trackedThreadId, setTrackedThreadId] = useState<string | null>(activeThreadId ?? null);
+  if (trackedThreadId !== (activeThreadId ?? null)) {
+    setTrackedThreadId(activeThreadId ?? null);
+    setData(null);
+  }
+
+  // Migration douce : la version précédente persistait l'état des sections
+  // collapsibles. La nouvelle archi en strates supprime ce concept.
+  // One-shot cleanup au mount.
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(SECTIONS_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<Record<SectionKey, boolean>>;
-        setOpenSections((prev) => ({ ...prev, ...parsed }));
-      }
+      localStorage.removeItem("hearst.rightpanel.openSections");
     } catch {
-      /* localStorage indisponible ou JSON corrompu — ignore */
+      /* ignore */
     }
   }, []);
-  const toggleSection = (key: SectionKey) => {
-    setOpenSections((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      try {
-        localStorage.setItem(SECTIONS_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
-  };
 
   const activeThreadIdRef = useRef(activeThreadId);
   useEffect(() => {
     activeThreadIdRef.current = activeThreadId;
   }, [activeThreadId]);
 
+  // Re-fetch panel quand un asset_generated event arrive — garantit que la
+  // grille assets reflète la production live sans attendre le prochain SSE
+  // tick. On subscribe au store events.
+  const runtimeEvents = useRuntimeStore((s) => s.events);
   const lastAssetEventTsRef = useRef<number>(0);
   useEffect(() => {
+    if (!activeThreadId) return;
     const assetEvent = runtimeEvents.find((e) => e.type === "asset_generated");
-    if (!assetEvent || !activeThreadId) return;
+    if (!assetEvent) return;
     if (assetEvent.timestamp <= lastAssetEventTsRef.current) return;
     lastAssetEventTsRef.current = assetEvent.timestamp;
     fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`)
@@ -92,10 +79,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   }, [runtimeEvents, activeThreadId]);
 
   useEffect(() => {
-    // Effacer l'ancienne data immédiatement au changement de thread — évite que
-    // les assets/missions du thread précédent restent visibles pendant la transition.
-    setData(null);
-
     // No active thread → render the panel as a "library home" by pulling
     // missions + assets from the global APIs (not the per-thread SSE stream).
     if (!activeThreadId) {
@@ -185,28 +168,9 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const hasActiveThread = Boolean(activeThreadId);
   const panelData = data;
   const focalObject = panelData?.focalObject;
-
-  const secondaryObjects = panelData?.secondaryObjects || [];
+  const secondaryObjects = panelData?.secondaryObjects;
   const assets = panelData?.assets ?? [];
   const missions = panelData?.missions ?? [];
-
-  const getFocalProp = (obj: unknown, key: string): string | undefined => {
-    if (typeof obj !== "object" || obj === null) return undefined;
-    const val = (obj as Record<string, unknown>)[key];
-    return typeof val === "string" ? val : undefined;
-  };
-
-  const focalObjectType = focalObject ? getFocalProp(focalObject, "objectType") || "unknown" : "";
-  const focalTitle = focalObject ? getFocalProp(focalObject, "title") || "Untitled" : "";
-
-  const assetAccent = (type: string) => {
-    const t = type.toLowerCase();
-    if (t === "brief") return "var(--cykan)";
-    if (t === "report" || t === "document") return "var(--text-muted)";
-    if (t === "synthesis") return "var(--warn)";
-    if (t === "plan") return "var(--color-success)";
-    return "var(--text-faint)";
-  };
 
   return (
     <aside
@@ -228,290 +192,25 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           visible même quand on scrolle dans les sections en dessous. */}
       <OAuthStatusCard />
 
-      {/* Scrollable content — Focal en premier, deliverable prioritaire */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      {/* Strate 1 — PULSE */}
+      <PulseStrip />
 
-        {/* ② FOCAL */}
-        {/* ② FOCAL — collapsible, hauteur fixe quand ouvert */}
-        <div className="border-b border-[var(--border-shell)] overflow-hidden">
-          <button
-            type="button"
-            onClick={() => toggleSection("focal")}
-            className="w-full flex items-center gap-2 px-4 py-3 text-[var(--text-soft)] hover:bg-[var(--surface-1)] transition-colors"
-          >
-            <ChevronIcon open={openSections.focal} />
-            <FileIcon />
-            <span className="t-9 font-mono tracking-[0.22em] font-semibold uppercase">Focal</span>
-            <span className="ml-auto t-9 font-mono text-[var(--text-faint)]">{focalObject ? "1" : "—"}</span>
-          </button>
+      {/* Strate 2 — FOCAL */}
+      <FocalCard
+        focalObject={focalObject}
+        secondaryObjects={secondaryObjects}
+        activeThreadId={activeThreadId}
+      />
 
-          <div
-            className="overflow-hidden transition-all"
-            style={{ height: openSections.focal ? "var(--space-32)" : "0px", padding: openSections.focal ? "0 var(--space-4) var(--space-3)" : "0 var(--space-4)" }}
-          >
-          <div className="overflow-y-auto scrollbar-hide h-full flex flex-col gap-3">
-            {focalObject ? (
-              <button
-                type="button"
-                onClick={() => {
-                  useFocalStore.getState().show();
-                  onClose?.();
-                }}
-                className="w-full text-left rounded-sm overflow-hidden shrink-0 cursor-pointer hover:bg-[var(--cykan-bg-active)] transition-colors"
-                style={{ background: "var(--cykan-bg-hover)", borderLeft: "3px solid var(--cykan)" }}
-                title="Ouvrir le focal"
-              >
-                <div className="px-3 pt-2 pb-1 flex items-center gap-2">
-                  <span
-                    className="t-9 font-mono tracking-[0.22em] uppercase font-semibold"
-                    style={{ color: "var(--cykan)" }}
-                  >
-                    {focalObjectType}
-                  </span>
-                </div>
-                <div className="px-3 pb-3">
-                  <h3 className="t-13 font-medium text-[var(--text)] leading-snug">{focalTitle}</h3>
-                </div>
-              </button>
-            ) : null}
+      {/* Strate 3 — LIBRARY (tabs Assets / Missions / Activité) */}
+      <LibraryTabs
+        assets={assets}
+        missions={missions}
+        activeThreadId={activeThreadId}
+        loading={loading}
+      />
 
-            {secondaryObjects.length > 0 && (
-              <div className="shrink-0 pt-2 border-t border-[var(--border-shell)]">
-                <div className="flex items-center gap-2 mb-1.5 text-[var(--text-faint)]">
-                  <NodeIcon />
-                  <span className="t-9 font-mono tracking-[0.22em] uppercase">Liés</span>
-                </div>
-                <div className="space-y-px">
-                  {secondaryObjects.map((obj, idx) => {
-                    const objType = getFocalProp(obj, "objectType") || "unknown";
-                    const objTitle = getFocalProp(obj, "title") || "Untitled";
-                    const objStatus = getFocalProp(obj, "status") || "";
-                    return (
-                      <div key={idx} className="flex items-center gap-2 group cursor-pointer py-1.5 -mx-1 px-1 hover:bg-[var(--surface-2)] rounded-sm transition-colors">
-                        {objStatus && (
-                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                            objStatus === "ready" ? "bg-[var(--cykan)]" :
-                            objStatus === "awaiting_approval" ? "bg-[var(--warn)]" :
-                            "bg-[var(--text-ghost)]"
-                          }`} />
-                        )}
-                        <p className="t-11 text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors truncate flex-1">{objTitle}</p>
-                        <span className="t-9 font-mono tracking-[0.16em] text-[var(--text-faint)] uppercase shrink-0">{objType}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-          </div>
-        </div>
-
-        {/* ACTIVITÉ supprimée — redondante avec le chat (transcript). Historique
-            préservé en backend silencieux (RuntimeStore.events). */}
-
-        {/* ③ ASSETS — collapsible */}
-        <div className="border-b border-[var(--border-shell)] overflow-hidden">
-          <div className="w-full flex items-center gap-2 px-4 py-3 text-[var(--text-soft)] hover:bg-[var(--surface-1)] transition-colors">
-            <button
-              type="button"
-              onClick={() => toggleSection("assets")}
-              className="flex items-center gap-2 flex-1 text-left"
-            >
-              <ChevronIcon open={openSections.assets} />
-              <DatabaseIcon />
-              <span className="t-9 font-mono tracking-[0.22em] font-semibold uppercase">Assets</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/assets")}
-              className="t-9 font-mono text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
-              title="Voir tous les assets"
-            >
-              {assets.length > 0 ? `${assets.length} →` : "→"}
-            </button>
-          </div>
-
-          <div
-            className="overflow-hidden transition-all"
-            style={{ height: openSections.assets ? "auto" : "0px", padding: openSections.assets ? "0 var(--space-4) var(--space-3)" : "0 var(--space-4)" }}
-          >
-          <div className="overflow-y-auto scrollbar-hide space-y-2" style={{ height: "var(--space-32)" }}>
-            {assets.length > 0 ? (
-              assets.map((asset) => (
-                <div
-                  key={asset.id}
-                  onClick={() => useFocalStore.getState().setFocal(assetToFocal(asset, activeThreadId))}
-                  className="group cursor-pointer flex items-center gap-2.5 rounded-sm px-2.5 py-2 hover:bg-[var(--surface-2)] transition-colors"
-                  style={{
-                    background: "var(--surface-1)",
-                    borderLeft: `3px solid ${assetAccent(asset.type)}`,
-                  }}
-                  title={asset.name}
-                >
-                  <div
-                    className="w-7 h-7 flex items-center justify-center shrink-0 rounded-sm"
-                    style={{ background: "var(--surface-2)", color: assetAccent(asset.type) }}
-                    aria-hidden
-                  >
-                    <span className="w-4 h-4 block">
-                      <AssetGlyphSVG type={asset.type} />
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="t-12 font-medium text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors truncate leading-snug">{asset.name}</p>
-                    <p
-                      className="t-9 font-mono tracking-[0.16em] uppercase mt-0.5"
-                      style={{ color: assetAccent(asset.type) }}
-                    >
-                      {asset.type}
-                    </p>
-                  </div>
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (!window.confirm(`Supprimer "${asset.name}" ?`)) return;
-                      const previous = panelData?.assets ?? [];
-                      setData((prev) => prev ? { ...prev, assets: prev.assets.filter((a) => a.id !== asset.id) } : prev);
-                      try {
-                        const res = await fetch(`/api/v2/assets/${encodeURIComponent(asset.id)}`, { method: "DELETE" });
-                        if (!res.ok) {
-                          const body = (await res.json().catch(() => ({}))) as { error?: string };
-                          throw new Error(body.error ?? `HTTP ${res.status}`);
-                        }
-                        toast.success("Asset supprimé", asset.name);
-                      } catch (err) {
-                        setData((prev) => prev ? { ...prev, assets: previous } : prev);
-                        toast.error("Suppression impossible", err instanceof Error ? err.message : "Erreur inconnue");
-                      }
-                    }}
-                    className="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all shrink-0 rounded-sm"
-                    title="Supprimer"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M18 6L6 18M6 6l12 12"/>
-                    </svg>
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="flex items-center h-full">
-                <EmptyState>{loading ? "Chargement…" : "Aucun asset généré"}</EmptyState>
-              </div>
-            )}
-          </div>
-          </div>
-        </div>
-
-        {/* ⑤ MISSIONS — collapsible */}
-        <div className="overflow-hidden">
-          <div className="w-full flex items-center gap-2 px-4 py-3 text-[var(--text-soft)] hover:bg-[var(--surface-1)] transition-colors">
-            <button
-              type="button"
-              onClick={() => toggleSection("missions")}
-              className="flex items-center gap-2 flex-1 text-left"
-            >
-              <ChevronIcon open={openSections.missions} />
-              <MissionIcon />
-              <span className="t-9 font-mono tracking-[0.22em] font-semibold uppercase">Missions</span>
-            </button>
-            <span className="t-9 font-mono text-[var(--text-faint)]">{missions.length}</span>
-            <button
-              type="button"
-              onClick={() => router.push("/missions?new=1")}
-              title="Nouvelle mission"
-              className="t-13 w-5 h-5 flex items-center justify-center rounded-sm text-[var(--text-faint)] hover:text-[var(--cykan)] hover:bg-[var(--cykan-bg-hover)] transition-colors"
-            >
-              +
-            </button>
-          </div>
-
-          <div
-            className="overflow-hidden transition-all"
-            style={{ height: openSections.missions ? "auto" : "0px", padding: openSections.missions ? "0 var(--space-4) var(--space-3)" : "0 var(--space-4)" }}
-          >
-          <div className="overflow-y-auto scrollbar-hide space-y-2" style={{ height: "var(--space-24)" }}>
-            {missions.length > 0 ? (
-              missions.map((mission) => {
-                const isRunningMission = mission.opsStatus === "running";
-                const isFailed = mission.opsStatus === "failed";
-                const isArmed = mission.enabled && !isRunningMission && !isFailed;
-                return (
-                  <div
-                    key={mission.id}
-                    onClick={() => useFocalStore.getState().setFocal(missionToFocal(mission, activeThreadId))}
-                    className="group cursor-pointer flex items-center gap-2.5 px-2.5 py-2 rounded-sm hover:bg-[var(--surface-2)] transition-colors"
-                    style={{ background: "var(--surface-1)" }}
-                  >
-                    {/* Ring SVG 20px */}
-                    <svg width="20" height="20" viewBox="0 0 20 20" className="shrink-0">
-                      <circle cx="10" cy="10" r="8" fill="none" stroke="var(--border-default)" strokeWidth="1.5" />
-                      {isRunningMission && (
-                        <circle
-                          cx="10" cy="10" r="8"
-                          fill="none"
-                          stroke="var(--cykan)"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeDasharray="35 50"
-                          transform="rotate(-90 10 10)"
-                          style={{ filter: "drop-shadow(0 0 3px var(--cykan))" }}
-                        />
-                      )}
-                      {isArmed && (
-                        <circle
-                          cx="10" cy="10" r="8"
-                          fill="none"
-                          stroke="var(--cykan)"
-                          strokeWidth="1.5"
-                          opacity="0.35"
-                          strokeDasharray="50 0"
-                          transform="rotate(-90 10 10)"
-                        />
-                      )}
-                      {isFailed && (
-                        <circle
-                          cx="10" cy="10" r="8"
-                          fill="none"
-                          stroke="var(--danger)"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeDasharray="12 50"
-                          transform="rotate(-90 10 10)"
-                        />
-                      )}
-                      {!mission.enabled && !isFailed && (
-                        <circle cx="10" cy="10" r="2.5" fill="var(--text-ghost)" />
-                      )}
-                      {isRunningMission && (
-                        <circle cx="10" cy="10" r="2.5" fill="var(--cykan)" />
-                      )}
-                    </svg>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="t-12 font-medium text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors truncate">{mission.name}</p>
-                      <p className="t-9 font-mono tracking-[0.14em] uppercase mt-0.5" style={{
-                        color: isRunningMission ? "var(--cykan)" : isFailed ? "var(--danger)" : "var(--text-faint)"
-                      }}>
-                        {isRunningMission ? "running" : isFailed ? "échec" : isArmed ? "armé" : "off"}
-                        {mission.lastRunAt ? ` · ${formatRelativeTime(mission.lastRunAt)}` : ""}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="flex items-center h-full">
-                <EmptyState>{loading ? "Chargement…" : "Aucune mission armée"}</EmptyState>
-              </div>
-            )}
-          </div>
-          </div>
-        </div>
-      </div>
-
-      {/* STATUS — footer compact. Reflète uniquement l'état SSE du panneau
-          (live / offline / standby). Le signal de run vit dans l'AgentActivityStrip. */}
+      {/* STATUS — footer compact. Reflète uniquement l'état SSE du panneau. */}
       <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2.5 flex items-center gap-2">
         <span className={`inline-flex items-center gap-1.5 t-9 font-mono tracking-[0.16em] uppercase px-2 py-0.5 rounded-sm shrink-0 ${
           !hasActiveThread

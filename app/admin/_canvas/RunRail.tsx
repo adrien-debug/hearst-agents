@@ -82,7 +82,7 @@ export default function RunRail({ onSelect, className }: Props) {
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="h-[56px] rounded-md animate-pulse bg-(--surface-card)"
+                className="h-(--space-12) rounded-(--radius-md) animate-pulse bg-(--surface-card)"
               />
             ))}
           </div>

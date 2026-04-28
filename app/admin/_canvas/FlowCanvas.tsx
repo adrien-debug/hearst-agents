@@ -15,12 +15,21 @@ import FlowPacket from "./FlowPacket";
 export default function FlowCanvas() {
   const packets = useCanvasStore((s) => s.packets);
   const cleanupPackets = useCanvasStore((s) => s.cleanupPackets);
+  const trailLength = useCanvasStore((s) => s.runTrail.length);
+  const cleanupTrail = useCanvasStore((s) => s.cleanupTrail);
 
   useEffect(() => {
     if (packets.length === 0) return;
     const t = setInterval(() => cleanupPackets(1500), 500);
     return () => clearInterval(t);
   }, [packets.length, cleanupPackets]);
+
+  // Trail tick — also forces FlowEdge re-render so the afterglow fades.
+  useEffect(() => {
+    if (trailLength === 0) return;
+    const t = setInterval(() => cleanupTrail(4000), 500);
+    return () => clearInterval(t);
+  }, [trailLength, cleanupTrail]);
 
   return (
     <div className="absolute inset-0 grid place-items-center p-(--space-6) overflow-hidden">

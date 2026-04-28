@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EmptyState from "../_components/EmptyState";
 import { getServerSupabase } from "@/lib/platform/db/supabase";
 
 export const dynamic = "force-dynamic";
@@ -55,13 +56,20 @@ export default async function DatasetsPage() {
       )}
 
       {datasets.length === 0 && !error ? (
-        <p className="text-sm text-[var(--text-muted)]">Aucun dataset créé.</p>
+        <EmptyState
+          iconKind="check"
+          title="Pas encore de dataset"
+          description="Les datasets stockent des paires input / expected_output pour évaluer un agent. Charge le set dev pour démarrer avec 3 datasets prêts à tester."
+          createHref="/admin/datasets/new"
+          createLabel="+ Créer un dataset"
+          seedResource="datasets"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {datasets.map((d) => (
             <Link
               key={d.id}
-              href={`/datasets/${d.id}`}
+              href={`/admin/datasets/${d.id}`}
               className="flex flex-col gap-2 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5 transition-colors hover:border-[var(--line-strong)]"
             >
               <h3 className="text-sm font-semibold text-[var(--text)]">{d.name}</h3>

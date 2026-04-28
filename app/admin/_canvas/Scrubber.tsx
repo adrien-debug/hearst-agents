@@ -27,7 +27,7 @@ export default function Scrubber({
 
   if (!selectedRunId) {
     return (
-      <div className="flex items-center justify-between gap-(--space-4) px-(--space-4) py-(--space-2) border-t border-line bg-bg-elev t-10 font-mono uppercase tracking-[0.15em] text-text-faint">
+      <div className="flex items-center justify-between gap-(--space-4) px-(--space-4) py-(--space-2) border-t border-line bg-bg-elev t-10 font-mono uppercase tracking-(--tracking-label) text-text-faint">
         Sélectionne un run pour rejouer
       </div>
     );
@@ -39,7 +39,7 @@ export default function Scrubber({
         type="button"
         onClick={onReset}
         disabled={disabled}
-        className="t-10 font-mono uppercase tracking-[0.12em] px-(--space-2) py-(--space-1) rounded-xs border border-line-strong text-text-muted hover:text-text hover:border-(--cykan)/40 transition-colors disabled:opacity-40"
+        className="t-10 font-mono uppercase tracking-(--tracking-wide) px-(--space-2) py-(--space-1) rounded-(--radius-xs) border border-line-strong text-text-muted hover:text-text hover:border-(--cykan)/40 transition-colors disabled:opacity-40"
       >
         reset
       </button>
@@ -48,7 +48,7 @@ export default function Scrubber({
         type="button"
         onClick={onPlayToggle}
         disabled={disabled}
-        className="t-10 font-mono uppercase tracking-[0.12em] px-(--space-3) py-(--space-1) rounded-xs border border-(--cykan)/40 text-(--cykan) bg-(--cykan)/5 hover:bg-(--cykan)/10 transition-colors disabled:opacity-40"
+        className="t-10 font-mono uppercase tracking-(--tracking-wide) px-(--space-3) py-(--space-1) rounded-(--radius-xs) border border-(--cykan)/40 text-(--cykan) bg-(--cykan)/5 hover:bg-(--cykan)/10 transition-colors disabled:opacity-40"
       >
         {isPlaying ? "pause" : "play"}
       </button>
@@ -61,7 +61,7 @@ export default function Scrubber({
             onClick={() => onSpeedChange(s)}
             disabled={disabled}
             className={[
-              "t-9 font-mono uppercase tracking-widest px-[6px] py-[2px] rounded-xs border transition-colors",
+              "t-9 font-mono uppercase tracking-(--tracking-stretch) px-(--space-2) py-(--space-1) rounded-(--radius-xs) border transition-colors",
               s === speed
                 ? "border-(--cykan)/40 text-(--cykan) bg-(--cykan)/5"
                 : "border-line-strong text-text-muted hover:text-text",
@@ -79,10 +79,10 @@ export default function Scrubber({
         value={Math.round(progress * 1000)}
         onChange={(e) => onSeek(parseInt(e.target.value, 10) / 1000)}
         disabled={disabled}
-        className="flex-1 accent-(--cykan) h-[4px]"
+        className="flex-1 accent-(--cykan) h-(--space-1)"
       />
 
-      <span className="t-9 font-mono tracking-widest text-text-faint">
+      <span className="t-9 font-mono tracking-(--tracking-stretch) text-text-faint">
         {Math.round(progress * 100)}%
       </span>
     </div>

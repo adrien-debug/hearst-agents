@@ -29,7 +29,7 @@ export default function NewDatasetPage() {
       setSaving(false);
       return;
     }
-    router.push(`/datasets/${json.dataset.id}`);
+    router.push(`/admin/datasets/${json.dataset.id}`);
   };
 
   return (

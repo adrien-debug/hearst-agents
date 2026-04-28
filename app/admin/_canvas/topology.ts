@@ -21,10 +21,27 @@ export type NodeId =
   | "pipeline"
   | "complete";
 
+/**
+ * Visual family of a stage. Drives icon + accent color in FlowNode and the
+ * source-side coloring of edges that converge into it.
+ */
+export type StageKind =
+  | "entry"
+  | "router"
+  | "gate"
+  | "intent"
+  | "check"
+  | "tools"
+  | "search"
+  | "llm"
+  | "agent"
+  | "complete";
+
 export type SatelliteId = "memory" | "cost" | "logs" | "sse";
 
 export interface CanvasNode {
   id: NodeId;
+  kind: StageKind;
   label: string;
   sublabel: string;
   x: number;
@@ -58,21 +75,43 @@ export interface CanvasEdge {
   branch?: "research" | "retrieval" | "pipeline" | "agent";
 }
 
-export const VIEWBOX = { width: 1680, height: 720 } as const;
+export const VIEWBOX = { width: 1920, height: 820 } as const;
 
-export const NODE_SIZE = { w: 180, h: 72 } as const;
+/**
+ * Card geometry. 220×104 gives room for a 24px icon, a label + sublabel
+ * column, a metric strip, and a badge overlay without flex contention.
+ */
+export const NODE_SIZE = { w: 220, h: 104 } as const;
 
 // Y-axis canon: research above / main trunk / agent below
-const Y_TOP = 160;
-const Y_MID = 360;
-const Y_BOT = 560;
+const Y_TOP = 180;
+const Y_MID = 410;
+const Y_BOT = 640;
 
-// X-axis: left → right flow (8 trunk stages, branches share trunk-6 X)
-const X = [120, 320, 520, 720, 920, 1120, 1320, 1560] as const;
+// X-axis: 8 trunk slots stepped by 240px (220 card + 20 gap), centered in 1920.
+const X = [130, 370, 610, 850, 1090, 1330, 1570, 1810] as const;
+
+/**
+ * Color of the family. Read by FlowNode for icon tint and selection halo,
+ * and by FlowEdge to color the trail of an arriving edge.
+ */
+export const KIND_COLOR: Record<StageKind, string> = {
+  entry: "var(--cykan)",
+  router: "var(--cykan)",
+  gate: "var(--warn)",
+  intent: "var(--cykan)",
+  check: "var(--cykan)",
+  tools: "var(--cykan)",
+  search: "#A78BFA",
+  llm: "#A78BFA",
+  agent: "#FBBF24",
+  complete: "var(--color-success)",
+};
 
 export const NODES: CanvasNode[] = [
   {
     id: "entry",
+    kind: "entry",
     label: "Entrée",
     sublabel: "HTTP",
     x: X[0],
@@ -87,6 +126,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "router",
+    kind: "router",
     label: "Routeur",
     sublabel: "capability",
     x: X[1],
@@ -101,6 +141,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "safety",
+    kind: "gate",
     label: "Garde-fou",
     sublabel: "safety gate",
     x: X[2],
@@ -121,6 +162,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "intent",
+    kind: "intent",
     label: "Intents",
     sublabel: "détection pré-LLM",
     x: X[3],
@@ -139,6 +181,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "preflight",
+    kind: "check",
     label: "Préflight",
     sublabel: "providers",
     x: X[4],
@@ -157,6 +200,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "tools",
+    kind: "tools",
     label: "Surface outils",
     sublabel: "tiers + meta",
     x: X[5],
@@ -174,6 +218,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "research",
+    kind: "search",
     label: "Research",
     sublabel: "déterministe",
     x: X[6],
@@ -188,6 +233,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "pipeline",
+    kind: "llm",
     label: "AI pipeline",
     sublabel: "streamText",
     x: X[6],
@@ -205,6 +251,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "agent",
+    kind: "agent",
     label: "Agent custom",
     sublabel: "informational",
     x: X[6],
@@ -219,6 +266,7 @@ export const NODES: CanvasNode[] = [
   },
   {
     id: "complete",
+    kind: "complete",
     label: "Run terminé",
     sublabel: "complete | failed",
     x: X[7],
@@ -260,27 +308,93 @@ export function getNode(id: NodeId): CanvasNode {
   return node;
 }
 
-/** Right-edge port (out) and left-edge port (in) of a node center. */
-export function ports(node: CanvasNode) {
-  return {
-    out: { x: node.x + NODE_SIZE.w / 2, y: node.y },
-    in: { x: node.x - NODE_SIZE.w / 2, y: node.y },
-  };
+export type PortDir = "right" | "left" | "top" | "bottom";
+
+/**
+ * Compute the port position for a given side of a node. Nodes are positioned
+ * by center, so the port sits on the corresponding rectangle edge.
+ */
+export function portAt(node: CanvasNode, dir: PortDir): { x: number; y: number } {
+  const halfW = NODE_SIZE.w / 2;
+  const halfH = NODE_SIZE.h / 2;
+  switch (dir) {
+    case "right":
+      return { x: node.x + halfW, y: node.y };
+    case "left":
+      return { x: node.x - halfW, y: node.y };
+    case "top":
+      return { x: node.x, y: node.y - halfH };
+    case "bottom":
+      return { x: node.x, y: node.y + halfH };
+  }
 }
 
-/** Orthogonal path with rounded corners (left → right horizontal flow). */
+/**
+ * Resolve the natural exit/entry sides for an edge based on the relative
+ * positions of its endpoints. Same-row edges flow right→left horizontally;
+ * branches above leave from the top and arrive at the bottom of the next
+ * row, etc.
+ */
+export function edgePorts(from: CanvasNode, to: CanvasNode): {
+  out: PortDir;
+  in: PortDir;
+} {
+  const sameY = Math.abs(from.y - to.y) < 2;
+  if (sameY) return { out: "right", in: "left" };
+
+  const goingUp = to.y < from.y;
+  const goingRight = to.x > from.x;
+
+  if (goingUp) {
+    // Branch upward (e.g. intent → research) or convergence from below.
+    return goingRight
+      ? { out: "top", in: "left" }
+      : { out: "top", in: "right" };
+  }
+  // Branch downward (e.g. tools → agent) or convergence from above.
+  return goingRight
+    ? { out: "bottom", in: "left" }
+    : { out: "bottom", in: "right" };
+}
+
+/**
+ * Orthogonal path with a single rounded corner.
+ *
+ * Routes from `a` exiting in direction `aDir` to `b` entering from `bDir`.
+ * Supports the four production cases:
+ *   - right → left   (horizontal trunk): straight line if y matches.
+ *   - top   → left   (intent → research): up then right.
+ *   - bottom→ left   (tools → agent): down then right.
+ *   - right → top    (agent → complete): right then up.
+ *   - right → bottom (research → complete): right then down.
+ *
+ * The corner radius `r` is clamped so it never exceeds the available leg
+ * lengths (half of the perpendicular distance on each axis).
+ */
 export function bezierPath(
   a: { x: number; y: number },
+  aDir: PortDir,
   b: { x: number; y: number },
+  bDir: PortDir,
 ): string {
-  if (Math.abs(a.y - b.y) < 2) {
+  if (aDir === "right" && bDir === "left" && Math.abs(a.y - b.y) < 2) {
     return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
   }
-  if (Math.abs(a.x - b.x) < 2) {
-    return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+  if (aDir === "top" || aDir === "bottom") {
+    // Vertical exit then horizontal arrival on b.y.
+    const r = Math.min(16, Math.abs(a.y - b.y) / 2, Math.abs(a.x - b.x) / 2);
+    const dirX = b.x > a.x ? 1 : -1;
+    const dirY = b.y > a.y ? 1 : -1;
+    return `M ${a.x} ${a.y} L ${a.x} ${b.y - r * dirY} Q ${a.x} ${b.y} ${a.x + r * dirX} ${b.y} L ${b.x} ${b.y}`;
   }
-  const midX = a.x + (b.x - a.x) / 2;
-  const r = Math.min(16, Math.abs(a.y - b.y) / 2, Math.abs(a.x - b.x) / 2);
-  const dirY = b.y > a.y ? 1 : -1;
-  return `M ${a.x} ${a.y} L ${midX - r} ${a.y} Q ${midX} ${a.y} ${midX} ${a.y + r * dirY} L ${midX} ${b.y - r * dirY} Q ${midX} ${b.y} ${midX + r} ${b.y} L ${b.x} ${b.y}`;
+  if (aDir === "right" && (bDir === "top" || bDir === "bottom")) {
+    // Horizontal exit then vertical arrival on b.x.
+    const r = Math.min(16, Math.abs(a.y - b.y) / 2, Math.abs(a.x - b.x) / 2);
+    const dirX = b.x > a.x ? 1 : -1;
+    const dirY = b.y > a.y ? 1 : -1;
+    return `M ${a.x} ${a.y} L ${b.x - r * dirX} ${a.y} Q ${b.x} ${a.y} ${b.x} ${a.y + r * dirY} L ${b.x} ${b.y}`;
+  }
+  // Fallback — should not happen for the canonical pipeline, but keep a sane
+  // straight line so we never throw at render time.
+  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
 }

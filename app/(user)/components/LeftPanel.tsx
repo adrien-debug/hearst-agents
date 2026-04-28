@@ -2,6 +2,7 @@
 
 import { useNavigationStore, type Thread, type Message } from "@/stores/navigation";
 import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { HearstLogo } from "./HearstLogo";
 
@@ -53,6 +54,12 @@ const StarIcon = ({ filled }: { filled: boolean }) => (
 const CloseIcon = () => (
   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
     <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
+
+const AdminIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 12h4l2-7 4 14 2-7h6" />
   </svg>
 );
 
@@ -324,6 +331,29 @@ export function LeftPanel() {
 
       {/* Profil + toggle */}
       <div className={`shrink-0 border-t border-[var(--border-shell)] flex flex-col gap-1 pt-4 pb-5 ${sectionPadX}`}>
+        {leftCollapsed ? (
+          <Link
+            href="/admin"
+            title="Console admin"
+            className="w-8 h-8 flex items-center justify-center rounded-sm bg-[var(--surface-1)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:bg-[var(--cykan-bg-active)] transition-colors shrink-0"
+          >
+            <AdminIcon />
+          </Link>
+        ) : (
+          <Link
+            href="/admin"
+            title="Console admin"
+            className="group cursor-pointer w-full flex items-center gap-3 py-2 -mx-2 px-2 hover:bg-[var(--surface-1)] transition-colors"
+          >
+            <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)] transition-colors shrink-0">
+              <AdminIcon />
+            </span>
+            <span className="flex-1 t-13 font-light truncate text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors">
+              Console admin
+            </span>
+          </Link>
+        )}
+
         {leftCollapsed ? (
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}

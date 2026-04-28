@@ -35,7 +35,7 @@ export default function NewSkillPage() {
       setSaving(false);
       return;
     }
-    router.push("/skills");
+    router.push("/admin/skills");
   };
 
   return (

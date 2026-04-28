@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EmptyState from "../_components/EmptyState";
 import { getServerSupabase } from "@/lib/platform/db/supabase";
 
 export const dynamic = "force-dynamic";
@@ -56,13 +57,20 @@ export default async function SkillsPage() {
       )}
 
       {skills.length === 0 && !error ? (
-        <p className="text-sm text-[var(--text-muted)]">Aucun skill créé.</p>
+        <EmptyState
+          iconKind="intent"
+          title="Pas encore de skill"
+          description="Les skills sont les capacités atomiques (résumé, draft, recherche…) qu'on peut assigner à un agent. Charge le set dev pour partir avec 5 skills réutilisables."
+          createHref="/admin/skills/new"
+          createLabel="+ Créer un skill"
+          seedResource="skills"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {skills.map((s) => (
             <Link
               key={s.id}
-              href={`/skills/${s.id}`}
+              href={`/admin/skills/${s.id}`}
               className="flex flex-col gap-2 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5 transition-colors hover:border-[var(--line-strong)]"
             >
               <div className="flex items-start justify-between">

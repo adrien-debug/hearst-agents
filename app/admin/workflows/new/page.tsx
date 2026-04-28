@@ -34,7 +34,7 @@ export default function NewWorkflowPage() {
       setSaving(false);
       return;
     }
-    router.push(`/workflows/${json.workflow.id}`);
+    router.push(`/admin/workflows/${json.workflow.id}`);
   };
 
   return (
