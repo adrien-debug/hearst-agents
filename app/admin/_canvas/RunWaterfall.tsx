@@ -178,10 +178,9 @@ export default function RunWaterfall({
         {/* Playhead */}
         <div
           aria-hidden
-          className="absolute top-0 bottom-0 w-px bg-(--cykan) pointer-events-none"
+          className="admin-waterfall-playhead absolute top-0 bottom-0 w-px bg-(--cykan) pointer-events-none"
           style={{
             left: `${Math.min(Math.max(progress, 0), 1) * 100}%`,
-            boxShadow: "0 0 6px var(--cykan)",
           }}
         />
       </div>

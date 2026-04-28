@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
-import { EDGES, NODES, VIEWBOX } from "./topology";
+import {
+  EDGES,
+  NODES,
+  PIPELINE_DOT_STEP_PX,
+  PIPELINE_GRID_STEP_PX,
+  PIPELINE_SCANLINE_HEIGHT_PX,
+  VIEWBOX,
+} from "./topology";
 import { useCanvasStore } from "./store";
 import FlowNode from "./FlowNode";
 import FlowEdge from "./FlowEdge";
@@ -42,10 +49,22 @@ export default function FlowCanvas() {
         >
           <defs>
             {/* Grille : pas = --space-10 (40px) lignes + --space-5 (20px) points */}
-            <pattern id="canvas-grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--line)" strokeWidth="1" />
+            <pattern
+              id="canvas-grid"
+              x="0"
+              y="0"
+              width={PIPELINE_GRID_STEP_PX}
+              height={PIPELINE_GRID_STEP_PX}
+              patternUnits="userSpaceOnUse"
+            >
+              <path
+                d={`M ${PIPELINE_GRID_STEP_PX} 0 L 0 0 0 ${PIPELINE_GRID_STEP_PX}`}
+                fill="none"
+                stroke="var(--line)"
+                strokeWidth="1"
+              />
             </pattern>
-            <pattern id="canvas-dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+            <pattern id="canvas-dots" x="0" y="0" width={PIPELINE_DOT_STEP_PX} height={PIPELINE_DOT_STEP_PX} patternUnits="userSpaceOnUse">
               <circle cx="1" cy="1" r="1" fill="var(--line-strong)" />
             </pattern>
 
@@ -74,21 +93,21 @@ export default function FlowCanvas() {
           <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="url(#canvas-aura)" />
           <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="url(#canvas-vignette)" />
 
-          {/* Animated scanline — 120px tall band that slides down indefinitely. */}
+          {/* Animated scanline — hauteur = `--space-24` (voir topology `PIPELINE_SCANLINE_HEIGHT_PX`). */}
           <rect
             x="0"
-            y="-120"
+            y={-PIPELINE_SCANLINE_HEIGHT_PX}
             width={VIEWBOX.width}
-            height="120"
+            height={PIPELINE_SCANLINE_HEIGHT_PX}
             fill="url(#canvas-scanline)"
             pointerEvents="none"
             className="motion-reduce:hidden"
           >
             <animate
               attributeName="y"
-              from="-120"
+              from={-PIPELINE_SCANLINE_HEIGHT_PX}
               to={VIEWBOX.height}
-              dur="11s"
+              dur="var(--duration-pipeline-scanline)"
               repeatCount="indefinite"
             />
           </rect>

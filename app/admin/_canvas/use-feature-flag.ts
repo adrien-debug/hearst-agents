@@ -20,7 +20,9 @@ export function useFeatureFlag(key: string, defaultValue: boolean) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const raf = requestAnimationFrame(() => {
+      if (!cancelled) setLoading(true);
+    });
     (async () => {
       try {
         const res = await fetch("/api/admin/settings?category=feature_flags");
@@ -51,6 +53,7 @@ export function useFeatureFlag(key: string, defaultValue: boolean) {
     })();
     return () => {
       cancelled = true;
+      cancelAnimationFrame(raf);
     };
   }, [key, defaultValue]);
 

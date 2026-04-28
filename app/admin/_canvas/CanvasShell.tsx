@@ -11,23 +11,13 @@ import NodeDetailPanel from "./NodeDetailPanel";
 import RunRail from "./RunRail";
 import RunWaterfall from "./RunWaterfall";
 import { NODES } from "./topology";
+import { fetchAdminJson } from "./safe-admin-fetch";
 
 interface PersistedEvent {
   type: string;
   ts: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: Record<string, any>;
-}
-
-async function safeJsonFetch<T>(url: string): Promise<T | null> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const text = await res.text();
-    return text ? (JSON.parse(text) as T) : null;
-  } catch {
-    return null;
-  }
 }
 
 export default function CanvasShell() {
@@ -49,12 +39,16 @@ export default function CanvasShell() {
 
   useEffect(() => {
     if (!selectedRunId) {
-      setEvents([]);
-      return;
+      const id = requestAnimationFrame(() => {
+        setEvents([]);
+      });
+      return () => cancelAnimationFrame(id);
     }
     let cancelled = false;
-    setLoadingEvents(true);
-    safeJsonFetch<{ events: PersistedEvent[] }>(`/api/admin/runs/${selectedRunId}/events`).then(
+    const raf = requestAnimationFrame(() => {
+      setLoadingEvents(true);
+    });
+    fetchAdminJson<{ events: PersistedEvent[] }>(`/api/admin/runs/${selectedRunId}/events`).then(
       (data) => {
         if (cancelled) return;
         if (!data) {
@@ -66,6 +60,7 @@ export default function CanvasShell() {
     );
     return () => {
       cancelled = true;
+      cancelAnimationFrame(raf);
     };
   }, [selectedRunId]);
 

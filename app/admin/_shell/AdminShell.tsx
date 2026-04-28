@@ -20,7 +20,10 @@ export default function AdminShell({ children, userLabel, userInitial, env }: Pr
   // Read persisted state once on mount, then mirror updates back to storage.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setCollapsed(window.localStorage.getItem(STORAGE_KEY) === "1");
+    const id = requestAnimationFrame(() => {
+      setCollapsed(window.localStorage.getItem(STORAGE_KEY) === "1");
+    });
+    return () => cancelAnimationFrame(id);
   }, []);
 
   const onToggleCollapsed = () => {
@@ -61,7 +64,7 @@ export default function AdminShell({ children, userLabel, userInitial, env }: Pr
         <>
           <div
             aria-hidden
-            className="md:hidden fixed inset-0 bg-black/60 z-40"
+            className="md:hidden fixed inset-0 z-40 bg-[var(--overlay-scrim)]"
             onClick={() => setDrawerOpen(false)}
           />
           <div className="md:hidden fixed inset-y-0 left-0 w-(--width-admin-sidebar) z-50">

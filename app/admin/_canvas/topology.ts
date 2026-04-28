@@ -6,7 +6,7 @@
  * absolute within the canvas viewBox.
  *
  * Adding a stage? Add it here, then map the relevant SSE event types in
- * event-reducer.ts. Visual rules / colors come from store.ts (NodeState).
+ * event-reducer.ts. Couleurs famille : `KIND_COLOR` + tokens `app/globals.css`.
  */
 
 export type NodeId =
@@ -95,11 +95,16 @@ export const KIND_COLOR: Record<StageKind, string> = {
   intent: "var(--cykan)",
   check: "var(--cykan)",
   tools: "var(--cykan)",
-  search: "#A78BFA",
-  llm: "#A78BFA",
-  agent: "#FBBF24",
+  search: "var(--accent-llm)",
+  llm: "var(--accent-llm)",
+  agent: "var(--accent-agent)",
   complete: "var(--color-success)",
 };
+
+/** Grille / scanline SVG — alignés sur `--space-10`, `--space-5`, `--space-24`. */
+export const PIPELINE_GRID_STEP_PX = 40 as const;
+export const PIPELINE_DOT_STEP_PX = 20 as const;
+export const PIPELINE_SCANLINE_HEIGHT_PX = 120 as const;
 
 export const NODES: CanvasNode[] = [
   {

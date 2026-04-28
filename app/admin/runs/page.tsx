@@ -72,7 +72,7 @@ export default async function RunsPage() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-(--space-6) admin-callout-danger t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -98,7 +98,7 @@ export default async function RunsPage() {
                   <span className="t-9 text-[var(--text-muted)]">{run.agents.name}</span>
                 )}
                 {run.error && (
-                  <span className="max-w-[200px] truncate t-9 text-[var(--danger)]/80">
+                  <span className="max-w-[var(--width-admin-code-clip)] truncate t-9 text-[var(--danger)]/80">
                     {run.error}
                   </span>
                 )}

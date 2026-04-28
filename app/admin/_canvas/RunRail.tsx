@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCanvasStore } from "./store";
+import { fetchAdminJsonWithMeta } from "./safe-admin-fetch";
 
 interface PersistedRun {
   id: string;
@@ -23,24 +24,6 @@ const STATUS_DOT: Record<PersistedRun["status"], string> = {
   failed: "var(--danger)",
 };
 
-async function safeJsonFetch<T>(url: string): Promise<{ data: T | null; error: string | null }> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      return { data: null, error: `HTTP ${res.status}` };
-    }
-    const text = await res.text();
-    if (!text) return { data: null, error: null };
-    try {
-      return { data: JSON.parse(text) as T, error: null };
-    } catch {
-      return { data: null, error: "réponse invalide" };
-    }
-  } catch (e) {
-    return { data: null, error: e instanceof Error ? e.message : "erreur réseau" };
-  }
-}
-
 export default function RunRail({ onSelect, className }: Props) {
   const [runs, setRuns] = useState<PersistedRun[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,7 +32,7 @@ export default function RunRail({ onSelect, className }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    safeJsonFetch<{ runs: PersistedRun[] }>("/api/admin/runs/recent?limit=10").then((res) => {
+    fetchAdminJsonWithMeta<{ runs: PersistedRun[] }>("/api/admin/runs/recent?limit=10").then((res) => {
       if (cancelled) return;
       setRuns(res.data?.runs ?? []);
       setError(res.error);
@@ -71,7 +54,7 @@ export default function RunRail({ onSelect, className }: Props) {
         <p className="t-10 font-mono uppercase tracking-stretch text-text-faint">
           Derniers runs
         </p>
-        <p className="t-9 font-mono uppercase tracking-caption text-text-faint/70 mt-(--space-1)">
+        <p className="t-9 font-mono uppercase tracking-(--tracking-caption) text-text-faint/70 mt-(--space-1)">
           {loading ? "chargement…" : `${runs.length} run${runs.length > 1 ? "s" : ""}`}
         </p>
       </header>

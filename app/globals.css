@@ -902,6 +902,19 @@
   filter: drop-shadow(0 0 12px var(--cable-color));
 }
 
+/* Admin — replay waterfall : tête de lecture (évite box-shadow inline). */
+.admin-waterfall-playhead {
+  box-shadow: var(--shadow-playhead-cykan);
+}
+
+/* Admin — bannière erreur API (listes / formulaires). */
+.admin-callout-danger {
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  padding: var(--space-3) var(--space-4);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

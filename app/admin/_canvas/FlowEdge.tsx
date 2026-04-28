@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { bezierPath, edgePorts, getNode, portAt, type CanvasEdge } from "./topology";
 import { useCanvasStore, type NodeState } from "./store";
 
@@ -50,6 +51,8 @@ export default function FlowEdge({ edge }: Props) {
   const edgeUsageTotal = useCanvasStore((s) => s.edgeUsageTotal);
   const trailEntries = useCanvasStore((s) => s.runTrail);
 
+  const [trailNow, setTrailNow] = useState(() => Date.now());
+
   const fromNode = getNode(edge.from);
   const toNode = getNode(edge.to);
   const dirs = edge.ports ?? edgePorts(fromNode, toNode);
@@ -69,7 +72,14 @@ export default function FlowEdge({ edge }: Props) {
     (acc, t) => (t.edgeId === edge.id && t.ts > acc ? t.ts : acc),
     0,
   );
-  const trailAge = lastTrailTs > 0 ? Date.now() - lastTrailTs : Infinity;
+
+  useEffect(() => {
+    if (lastTrailTs === 0) return;
+    const id = window.setInterval(() => setTrailNow(Date.now()), 120);
+    return () => clearInterval(id);
+  }, [lastTrailTs]);
+
+  const trailAge = lastTrailTs > 0 ? trailNow - lastTrailTs : Infinity;
   const trailOpacity = trailAge < TRAIL_TTL_MS ? 0.6 * (1 - trailAge / TRAIL_TTL_MS) : 0;
 
   return (

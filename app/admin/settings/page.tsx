@@ -81,7 +81,7 @@ export default async function SettingsPage() {
                     )}
                   </div>
                   <div className="ml-4 text-right flex-shrink-0">
-                    <p className="t-13 text-[var(--text-muted)] font-mono max-w-[200px] truncate">
+                    <p className="t-13 text-[var(--text-muted)] font-mono max-w-[var(--width-admin-code-clip)] truncate">
                       {s.isEncrypted
                         ? "••••••"
                         : typeof s.value === "object"

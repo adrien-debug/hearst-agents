@@ -61,7 +61,7 @@ export default async function ToolsPage() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-(--space-6) admin-callout-danger t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -93,7 +93,7 @@ export default async function ToolsPage() {
               )}
               <div className="flex items-center gap-3 t-10 text-[var(--text-muted)]">
                 {t.endpoint_url && (
-                  <span className="truncate max-w-[200px] font-mono">{t.endpoint_url}</span>
+                  <span className="truncate max-w-[var(--width-admin-code-clip)] font-mono">{t.endpoint_url}</span>
                 )}
                 <span>{t.auth_type}</span>
                 <span>{t.timeout_ms}ms</span>

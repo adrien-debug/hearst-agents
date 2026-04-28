@@ -100,7 +100,7 @@ export default async function RunDetailPage({ params }: Props) {
       </div>
 
       {run.error && (
-        <div className="mb-8 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-(--space-8) admin-callout-danger t-13 text-[var(--danger)]">
           {run.error}
         </div>
       )}

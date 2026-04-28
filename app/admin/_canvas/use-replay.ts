@@ -120,7 +120,10 @@ export function useReplay(events: PersistedEvent[]) {
 
   // Re-trigger when events change (new run selected)
   useEffect(() => {
-    reset();
+    const id = requestAnimationFrame(() => reset());
+    return () => {
+      cancelAnimationFrame(id);
+    };
   }, [events, reset]);
 
   return {
