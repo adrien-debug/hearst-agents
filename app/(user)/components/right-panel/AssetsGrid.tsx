@@ -142,6 +142,8 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
               type="button"
               onClick={() => handleRunSuggestion(s.specId, s.title)}
               className="halo-asset-card w-full text-left flex flex-col"
+              data-testid={`report-suggestion-${s.specId}`}
+              data-suggestion-status={s.status}
               style={{
                 padding: "var(--space-3)",
                 gap: "var(--space-1)",

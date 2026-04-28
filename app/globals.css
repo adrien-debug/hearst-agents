@@ -365,12 +365,21 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
+  background: var(--pipeline-base-fill);
   transform: perspective(var(--pipeline-perspective)) rotateX(var(--pipeline-tilt));
   transform-style: preserve-3d;
 }
 
-/* Couche cards — préserve la 3D du parent. */
+/* Couche cards — calée sur la zone de rendu SVG (meet) pour aligner les ports
+ * à tous les viewports. aspect-ratio + max-* reproduit le comportement xMidYMid meet. */
 .pipeline-node-layer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  aspect-ratio: 1920 / 1080;
+  max-width: 100%;
+  max-height: 100%;
   transform-style: preserve-3d;
 }
 

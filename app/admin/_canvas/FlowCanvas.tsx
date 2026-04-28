@@ -38,7 +38,7 @@ export default function FlowCanvas() {
         <svg
           viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
           className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="xMidYMid slice"
+          preserveAspectRatio="xMidYMid meet"
         >
           <defs>
             {/* Grille : pas = --space-10 (40px) lignes + --space-5 (20px) points — valeurs numériques requises par SVG pattern */}
@@ -106,7 +106,7 @@ export default function FlowCanvas() {
         </svg>
 
         {/* Node layer — positioned in % so it follows the SVG scale. */}
-        <div className="absolute inset-0 pipeline-node-layer">
+        <div className="pipeline-node-layer">
           {NODES.map((node) => (
             <FlowNode key={node.id} node={node} />
           ))}

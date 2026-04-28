@@ -64,11 +64,11 @@ export function KpiTile({
         border: "1px solid var(--card-flat-border)",
       }}
     >
-      <span className="t-9 font-mono uppercase text-[var(--text-muted)]" style={{ letterSpacing: "0.2em" }}>
+      <span className="t-9 font-mono uppercase text-[var(--text-muted)]" style={{ letterSpacing: "0.2em" }} data-testid="kpi-label">
         {label}
       </span>
       <div className="flex items-baseline" style={{ gap: "var(--space-2)" }}>
-        <span className="t-28 text-[var(--text)] tracking-tight" style={{ fontWeight: 200 }}>
+        <span className="t-28 text-[var(--text)] tracking-tight" style={{ fontWeight: 200 }} data-testid="kpi-value">
           {value}
         </span>
         {suffix && (

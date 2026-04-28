@@ -52,7 +52,7 @@ export default function FlowEdge({ edge }: Props) {
 
   const fromNode = getNode(edge.from);
   const toNode = getNode(edge.to);
-  const dirs = edgePorts(fromNode, toNode);
+  const dirs = edge.ports ?? edgePorts(fromNode, toNode);
   const a = portAt(fromNode, dirs.out);
   const b = portAt(toNode, dirs.in);
   const d = bezierPath(a, dirs.out, b, dirs.in);

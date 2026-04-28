@@ -146,7 +146,7 @@ export default function RunsPage() {
                     className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto] gap-x-6 items-center px-2 py-4 hover:bg-[var(--surface-1)] transition-colors border-b border-[var(--surface-2)] group cursor-pointer"
                     title={`Open run ${run.id.slice(0, 8)}`}
                   >
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotClass}`} />
+                    <span className={`w-1.5 h-1.5 rounded-pill shrink-0 ${dotClass}`} />
                     <div className="min-w-0">
                       <p className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors truncate">
                         {run.input || `Run ${run.id.slice(0, 8)}`}

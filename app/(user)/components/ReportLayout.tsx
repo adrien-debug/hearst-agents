@@ -36,7 +36,7 @@ interface ReportLayoutProps {
 
 export function ReportLayout({ payload, showMeta = true }: ReportLayoutProps) {
   return (
-    <div className="w-full">
+    <div className="w-full" data-testid="report-layout">
       <div
         className="grid w-full"
         style={{

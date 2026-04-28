@@ -78,7 +78,7 @@ export default async function AuditPage() {
               )}
             </span>
             <span
-              className={`t-10 px-(--space-2) py-[2px] rounded-full w-fit ${SEVERITY_COLORS[log.severity] ?? "text-text-faint"}`}
+              className={`t-10 px-(--space-2) py-[2px] rounded-pill w-fit ${SEVERITY_COLORS[log.severity] ?? "text-text-faint"}`}
             >
               {log.severity}
             </span>

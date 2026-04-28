@@ -73,6 +73,8 @@ export interface CanvasEdge {
   from: NodeId;
   to: NodeId;
   branch?: "research" | "retrieval" | "pipeline" | "agent";
+  /** Override the auto-computed port directions for this edge. */
+  ports?: { out: PortDir; in: PortDir };
 }
 
 export const VIEWBOX = { width: 1920, height: 1080 } as const;
@@ -295,8 +297,8 @@ export const EDGES: CanvasEdge[] = [
   { id: "preflight-tools", from: "preflight", to: "tools" },
   { id: "tools-agent", from: "tools", to: "agent", branch: "agent" },
   { id: "tools-pipeline", from: "tools", to: "pipeline", branch: "pipeline" },
-  { id: "agent-complete", from: "agent", to: "complete" },
-  { id: "research-complete", from: "research", to: "complete" },
+  { id: "agent-complete",    from: "agent",    to: "complete", ports: { out: "right", in: "bottom" } },
+  { id: "research-complete", from: "research", to: "complete", ports: { out: "right", in: "top"    } },
   { id: "pipeline-complete", from: "pipeline", to: "complete" },
 ];
 
