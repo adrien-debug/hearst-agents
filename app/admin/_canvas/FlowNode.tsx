@@ -72,7 +72,7 @@ export default function FlowNode({ node, metric }: Props) {
           setSelected(isSelected ? null : node.id);
         }
       }}
-      className="pipeline-card"
+      className="pipeline-card pointer-events-auto"
       style={cssVars}
     >
       <span aria-hidden className="pipeline-card-gloss" />

@@ -120,13 +120,29 @@ export default function RunWaterfall({
       {/* Waterfall track — bars positioned by start/duration ratio. Background is
           clickable for free seeking, individual bars seek + select the stage. */}
       <div
-        role="presentation"
-        className="relative h-(--space-6) rounded-(--radius-xs) bg-(--surface)/40 cursor-pointer overflow-hidden"
+        role="slider"
+        aria-label="Timeline du run"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress * 100)}
+        tabIndex={0}
+        className="relative h-(--space-6) rounded-(--radius-xs) bg-(--surface)/40 cursor-pointer overflow-hidden focus-visible:ring-1 focus-visible:ring-(--cykan)/50 outline-none"
         onClick={(e) => {
           if (disabled) return;
           const rect = e.currentTarget.getBoundingClientRect();
           const ratio = (e.clientX - rect.left) / rect.width;
           onSeek(Math.max(0, Math.min(1, ratio)));
+        }}
+        onKeyDown={(e) => {
+          if (disabled) return;
+          if (e.key === "ArrowLeft") onSeek(Math.max(0, progress - 0.05));
+          if (e.key === "ArrowRight") onSeek(Math.min(1, progress + 0.05));
+          if (e.key === "Home") onSeek(0);
+          if (e.key === "End") onSeek(1);
+          if (e.key === " ") {
+            e.preventDefault();
+            onPlayToggle();
+          }
         }}
       >
         {bars.length === 0 ? (
@@ -148,7 +164,7 @@ export default function RunWaterfall({
                   onSeek(bar.startMs / totalMs);
                 }}
                 title={`${bar.label} — ${fmt(bar.endMs - bar.startMs)}`}
-                className="absolute top-1/2 -translate-y-1/2 h-(--space-4) rounded-(--radius-xs) border transition-opacity hover:brightness-125"
+                className="absolute top-1/2 -translate-y-1/2 h-(--space-4) rounded-(--radius-xs) border transition-all duration-(--duration-base) ease-(--ease-standard) hover:brightness-110 motion-safe:hover:scale-y-110"
                 style={{
                   left: `${left}%`,
                   width: `${width}%`,

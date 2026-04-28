@@ -45,6 +45,8 @@
   --warn: #ffcc00;
   --danger: #ff3333;
   --accent-llm: #A78BFA;
+  /* Branche « agent custom » pipeline admin (câbles + waterfall) — aligné cartes [data-kind="agent"]. */
+  --accent-agent: #fbbf24;
   --cykan-border: color-mix(in srgb, var(--cykan) 25%, transparent);
   --cykan-surface: color-mix(in srgb, var(--cykan) 6%, transparent);
 
@@ -103,6 +105,8 @@
   --width-actions: clamp(440px, 36vw, 720px);
   --width-admin-sidebar: 240px;
   --width-admin-sidebar-collapsed: 56px;
+  /** Snippets mono (URL, clés) dans les listes admin — évite max-w arbitraires répétés. */
+  --width-admin-code-clip: 200px;
   --height-topbar: 48px;
 
   /* ─── Hearst Connect — Halo core (idle home centerpiece) ────── */
@@ -207,6 +211,10 @@
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out-soft: cubic-bezier(0.2, 1, 0.2, 1);
   --duration-emphasis: 500ms;
+  /* Scanline décorative canvas pipeline (SMIL) — même valeur que `FlowCanvas` / `topology`. */
+  --duration-pipeline-scanline: 11s;
+  /* Ligne tête de lecture timeline admin (glow discret). */
+  --shadow-playhead-cykan: 0 0 6px var(--cykan);
 
   /* ─── Hearst Connect — Border strata ────────────────────────── */
   --border-subtle: rgba(255, 255, 255, 0.08);
@@ -415,11 +423,11 @@
   --pipeline-ring-active: color-mix(in srgb, var(--accent-llm) 55%, transparent);
 }
 [data-pipeline-visual="orbit"] [data-kind="agent"] {
-  --pipeline-accent: #FBBF24;
-  --pipeline-accent-soft: rgba(251, 191, 36, 0.20);
-  --pipeline-accent-glow: 0 0 14px rgba(251, 191, 36, 0.55);
-  --pipeline-accent-glow-md: 0 0 32px rgba(251, 191, 36, 0.45);
-  --pipeline-ring-active: rgba(251, 191, 36, 0.55);
+  --pipeline-accent: var(--accent-agent);
+  --pipeline-accent-soft: color-mix(in srgb, var(--accent-agent) 20%, transparent);
+  --pipeline-accent-glow: 0 0 14px color-mix(in srgb, var(--accent-agent) 55%, transparent);
+  --pipeline-accent-glow-md: 0 0 32px color-mix(in srgb, var(--accent-agent) 45%, transparent);
+  --pipeline-ring-active: color-mix(in srgb, var(--accent-agent) 55%, transparent);
 }
 [data-pipeline-visual="orbit"] [data-kind="complete"] {
   --pipeline-accent: var(--color-success);
@@ -833,7 +841,7 @@
 .pipeline-cable[data-branch="research"],
 .pipeline-cable[data-branch="retrieval"] { --cable-color: var(--cykan); }
 .pipeline-cable[data-branch="pipeline"]  { --cable-color: var(--cykan); }
-.pipeline-cable[data-branch="agent"]     { --cable-color: #FBBF24; }
+.pipeline-cable[data-branch="agent"]     { --cable-color: var(--accent-agent); }
 
 .pipeline-cable-halo {
   fill: none;
@@ -1310,6 +1318,11 @@ body {
 .halo-asset-card:focus-visible {
   outline: none;
   box-shadow: inset 2px 0 0 var(--cykan), inset 0 0 0 1px var(--cykan-border-hover);
+}
+.halo-asset-card--active {
+  border-color: var(--cykan);
+  background: var(--cykan-bg-active);
+  box-shadow: inset 2px 0 0 var(--cykan), 0 0 12px var(--cykan-surface);
 }
 
 /* ── Halo Suggestion Card ───────────────────────────

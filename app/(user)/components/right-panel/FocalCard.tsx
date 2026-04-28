@@ -47,7 +47,7 @@ export function FocalCard({ focalObject, secondaryObjects }: FocalCardProps) {
     return (
       <div
         className="border-b border-[var(--border-shell)] flex items-center gap-4 px-4"
-        style={{ height: "180px" }}
+        style={{ height: "var(--space-32)" }}
       >
         <span
           className="shrink-0 w-16 h-16 text-[var(--text-faint)]"
@@ -79,7 +79,7 @@ export function FocalCard({ focalObject, secondaryObjects }: FocalCardProps) {
   return (
     <div
       className="border-b border-[var(--border-shell)] flex flex-col gap-2 px-4 py-4"
-      style={{ height: "180px" }}
+      style={{ height: "var(--space-32)" }}
     >
       <button
         type="button"

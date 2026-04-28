@@ -282,6 +282,7 @@ export const EDGES: CanvasEdge[] = [
   { id: "intent-research", from: "intent", to: "research", branch: "research" },
   { id: "preflight-tools", from: "preflight", to: "tools" },
   { id: "tools-agent", from: "tools", to: "agent", branch: "agent" },
+  { id: "tools-research", from: "tools", to: "research", branch: "research" },
   { id: "tools-pipeline", from: "tools", to: "pipeline", branch: "pipeline" },
   { id: "agent-complete",    from: "agent",    to: "complete", ports: { out: "right", in: "bottom" } },
   { id: "research-complete", from: "research", to: "complete", ports: { out: "right", in: "top"    } },

@@ -23,6 +23,136 @@ interface AssetsGridProps {
   loading: boolean;
 }
 
+function AssetSkeleton() {
+  return (
+    <div
+      className="halo-asset-card w-full text-left rounded-sm animate-pulse"
+      style={{
+        background: "var(--card-flat-bg)",
+        border: "1px solid var(--card-flat-border)",
+      }}
+    >
+      <div className="flex items-center justify-between px-2 pt-2">
+        <div
+          className="h-3 rounded-sm"
+          style={{
+            background: "var(--surface-1)",
+            width: "40%",
+          }}
+        />
+        <div
+          className="w-4 h-4 rounded-sm"
+          style={{ background: "var(--surface-1)" }}
+        />
+      </div>
+      <div className="px-2 py-2 flex items-center justify-center">
+        <div
+          style={{
+            width: "96px",
+            height: "40px",
+            background: "var(--surface-1)",
+            borderRadius: "var(--radius-xs)",
+          }}
+        />
+      </div>
+      <div className="px-2 pb-2 flex flex-col gap-1">
+        <div
+          className="h-3 rounded-sm"
+          style={{
+            background: "var(--surface-1)",
+            width: "80%",
+          }}
+        />
+        <div
+          className="h-3 rounded-sm"
+          style={{
+            background: "var(--surface-1)",
+            width: "60%",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SuggestionSkeleton() {
+  return (
+    <div
+      className="w-full flex flex-col animate-pulse"
+      style={{
+        padding: "var(--space-3)",
+        gap: "var(--space-1)",
+        borderLeft: "2px solid var(--card-flat-border)",
+        background: "var(--card-flat-bg)",
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <div
+          className="h-4 rounded-sm"
+          style={{
+            background: "var(--surface-1)",
+            width: "60%",
+          }}
+        />
+        <div
+          className="h-3 rounded-sm"
+          style={{
+            background: "var(--surface-1)",
+            width: "20%",
+          }}
+        />
+      </div>
+      <div
+        className="h-3 rounded-sm"
+        style={{
+          background: "var(--surface-1)",
+          width: "90%",
+          marginTop: "var(--space-1)",
+        }}
+      />
+    </div>
+  );
+}
+
+function AssetsSkeletonGrid() {
+  return (
+    <div
+      className="grid grid-cols-2 gap-2"
+      style={{ padding: "var(--space-3)" }}
+    >
+      <AssetSkeleton />
+      <AssetSkeleton />
+      <AssetSkeleton />
+      <AssetSkeleton />
+    </div>
+  );
+}
+
+function Spinner({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      className="animate-spin"
+      style={{ animationDuration: "1s" }}
+    >
+      <circle
+        cx="16"
+        cy="16"
+        r="13"
+        fill="none"
+        stroke="var(--cykan)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray="20 44"
+        transform="rotate(-90 16 16)"
+        style={{ filter: "drop-shadow(0 0 3px var(--cykan))" }}
+      />
+    </svg>
+  );
+}
+
 function assetAccent(type: string): string {
   const t = type.toLowerCase();
   if (t === "brief") return "var(--cykan)";
@@ -37,6 +167,10 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
   // le refresh SSE. Pas de mutation directe de la prop `assets`.
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
   const [runningSpecs, setRunningSpecs] = useState<Set<string>>(new Set());
+
+  // Connect to focal store to highlight the active asset
+  const focal = useFocalStore((s) => s.focal);
+  const activeAssetId = focal?.sourceAssetId ?? null;
 
   const visibleAssets = assets.filter((a) => !pendingDeletes.has(a.id));
   const visibleSuggestions = (reportSuggestions ?? []).filter(
@@ -82,8 +216,31 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
 
   if (loading && visibleAssets.length === 0 && visibleSuggestions.length === 0) {
     return (
-      <div className="px-4 py-8 t-9 font-mono uppercase tracking-[0.22em] text-[var(--text-ghost)] text-center">
-        Chargement…
+      <div className="flex flex-col">
+        {reportSuggestions && reportSuggestions.length > 0 && (
+          <div
+            className="flex flex-col"
+            style={{
+              paddingLeft: "var(--space-3)",
+              paddingRight: "var(--space-3)",
+              paddingTop: "var(--space-3)",
+              gap: "var(--space-2)",
+            }}
+          >
+            <div
+              className="t-9 font-mono uppercase text-[var(--text-faint)]"
+              style={{
+                letterSpacing: "0.22em",
+                paddingBottom: "var(--space-1)",
+              }}
+            >
+              Reports suggérés
+            </div>
+            <SuggestionSkeleton />
+            <SuggestionSkeleton />
+          </div>
+        )}
+        <AssetsSkeletonGrid />
       </div>
     );
   }
@@ -136,50 +293,65 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
           >
             Reports suggérés
           </div>
-          {visibleSuggestions.map((s) => (
-            <button
-              key={s.specId}
-              type="button"
-              onClick={() => handleRunSuggestion(s.specId, s.title)}
-              className="halo-asset-card w-full text-left flex flex-col"
-              data-testid={`report-suggestion-${s.specId}`}
-              data-suggestion-status={s.status}
-              style={{
-                padding: "var(--space-3)",
-                gap: "var(--space-1)",
-                borderLeft: "2px solid var(--cykan)",
-              }}
-              title={s.description}
-            >
-              <div className="flex items-center justify-between">
-                <span className="t-11 text-[var(--text-soft)] font-medium">{s.title}</span>
-                <span
-                  className="t-9 font-mono uppercase"
-                  style={{
-                    color: s.status === "ready" ? "var(--cykan)" : "var(--text-faint)",
-                    letterSpacing: "0.22em",
-                  }}
-                >
-                  {s.status === "ready" ? "lancer" : `${s.requiredApps.length - s.missingApps.length}/${s.requiredApps.length}`}
+          {visibleSuggestions.map((s) => {
+            const isRunning = runningSpecs.has(s.specId);
+            return (
+              <button
+                key={s.specId}
+                type="button"
+                onClick={() => !isRunning && handleRunSuggestion(s.specId, s.title)}
+                disabled={isRunning}
+                className={`halo-asset-card w-full text-left flex flex-col ${isRunning ? "opacity-70" : ""}`}
+                data-testid={`report-suggestion-${s.specId}`}
+                data-suggestion-status={isRunning ? "running" : s.status}
+                style={{
+                  padding: "var(--space-3)",
+                  gap: "var(--space-1)",
+                  borderLeft: "2px solid var(--cykan)",
+                }}
+                title={s.description}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="t-11 text-[var(--text-soft)] font-medium">{s.title}</span>
+                  <span
+                    className="t-9 font-mono uppercase inline-flex items-center gap-1.5"
+                    style={{
+                      color: isRunning ? "var(--cykan)" : s.status === "ready" ? "var(--cykan)" : "var(--text-faint)",
+                      letterSpacing: "0.22em",
+                    }}
+                  >
+                    {isRunning ? (
+                      <>
+                        <Spinner size={12} />
+                        <span>Génération…</span>
+                      </>
+                    ) : s.status === "ready" ? (
+                      "lancer"
+                    ) : (
+                      `${s.requiredApps.length - s.missingApps.length}/${s.requiredApps.length}`
+                    )}
+                  </span>
+                </div>
+                <span className="t-9 text-[var(--text-faint)]" style={{ lineHeight: 1.4 }}>
+                  {s.description}
                 </span>
-              </div>
-              <span className="t-9 text-[var(--text-faint)]" style={{ lineHeight: 1.4 }}>
-                {s.description}
-              </span>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       )}
       <div className="grid grid-cols-2 gap-2" style={{ padding: "var(--space-3)" }}>
         {visibleAssets.map((asset) => {
         const accent = assetAccent(asset.type);
+        const isActive = activeAssetId === asset.id;
         return (
           <div key={asset.id} className="relative group">
             <button
               type="button"
               onClick={() => useFocalStore.getState().setFocal(assetToFocal(asset, activeThreadId))}
-              className="halo-asset-card w-full text-left"
+              className={`halo-asset-card w-full text-left rounded-sm ${isActive ? "halo-asset-card--active" : ""}`}
               title={asset.name}
+              data-active={isActive}
             >
               <div className="flex items-center justify-between px-2 pt-2">
                 <span
@@ -192,7 +364,7 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
                   <AssetGlyphSVG type={asset.type} />
                 </span>
               </div>
-              <div className="px-2 py-1.5 flex items-center justify-center">
+              <div className="px-2 py-2 flex items-center justify-center">
                 <AssetMiniChart type={asset.type} seed={asset.name} />
               </div>
               <div className="px-2 pb-2">
@@ -215,7 +387,7 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
                 e.stopPropagation();
                 void handleDelete(asset);
               }}
-              className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all rounded-sm bg-[var(--bg-rail)]"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all rounded-sm bg-[var(--bg-rail)]"
               title="Supprimer"
               aria-label={`Supprimer ${asset.name}`}
             >

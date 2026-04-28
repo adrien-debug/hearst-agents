@@ -41,7 +41,7 @@ export default function FlowCanvas() {
           preserveAspectRatio="xMidYMid meet"
         >
           <defs>
-            {/* Grille : pas = --space-10 (40px) lignes + --space-5 (20px) points — valeurs numériques requises par SVG pattern */}
+            {/* Grille : pas = --space-10 (40px) lignes + --space-5 (20px) points */}
             <pattern id="canvas-grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--line)" strokeWidth="1" />
             </pattern>
@@ -82,6 +82,7 @@ export default function FlowCanvas() {
             height="120"
             fill="url(#canvas-scanline)"
             pointerEvents="none"
+            className="motion-reduce:hidden"
           >
             <animate
               attributeName="y"
@@ -106,7 +107,7 @@ export default function FlowCanvas() {
         </svg>
 
         {/* Node layer — positioned in % so it follows the SVG scale. */}
-        <div className="pipeline-node-layer">
+        <div className="pipeline-node-layer pointer-events-none">
           {NODES.map((node) => (
             <FlowNode key={node.id} node={node} />
           ))}

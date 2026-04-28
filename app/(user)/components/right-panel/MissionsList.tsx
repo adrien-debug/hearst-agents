@@ -15,15 +15,71 @@ interface MissionsListProps {
   loading: boolean;
 }
 
+function MissionSkeleton() {
+  return (
+    <div
+      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-sm animate-pulse"
+      style={{ background: "var(--surface-1)" }}
+    >
+      {/* Ring placeholder */}
+      <svg width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+        <circle
+          cx="16"
+          cy="16"
+          r="13"
+          fill="none"
+          stroke="var(--surface-2)"
+          strokeWidth="1.5"
+        />
+      </svg>
+
+      {/* Text placeholders */}
+      <span className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div
+          className="h-4 rounded-sm"
+          style={{
+            background: "var(--surface-2)",
+            width: "70%",
+          }}
+        />
+        <div
+          className="h-3 rounded-sm"
+          style={{
+            background: "var(--surface-2)",
+            width: "45%",
+          }}
+        />
+      </span>
+
+      {/* Status placeholder */}
+      <div
+        className="shrink-0 h-3 rounded-sm"
+        style={{
+          background: "var(--surface-2)",
+          width: "40px",
+        }}
+      />
+    </div>
+  );
+}
+
+function MissionsSkeletonList() {
+  return (
+    <div
+      className="px-3 py-3 flex flex-col gap-1.5"
+    >
+      <MissionSkeleton />
+      <MissionSkeleton />
+      <MissionSkeleton />
+    </div>
+  );
+}
+
 export function MissionsList({ missions, activeThreadId, loading }: MissionsListProps) {
   const router = useRouter();
 
   if (loading && missions.length === 0) {
-    return (
-      <div className="px-4 py-8 t-9 font-mono uppercase tracking-[0.22em] text-[var(--text-ghost)] text-center">
-        Chargement…
-      </div>
-    );
+    return <MissionsSkeletonList />;
   }
 
   if (missions.length === 0) {

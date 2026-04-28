@@ -57,6 +57,9 @@ export default function CanvasShell() {
     safeJsonFetch<{ events: PersistedEvent[] }>(`/api/admin/runs/${selectedRunId}/events`).then(
       (data) => {
         if (cancelled) return;
+        if (!data) {
+          console.error(`[CanvasShell] Erreur lors de la récupération des événements pour le run ${selectedRunId}`);
+        }
         setEvents(data?.events ?? []);
         setLoadingEvents(false);
       },

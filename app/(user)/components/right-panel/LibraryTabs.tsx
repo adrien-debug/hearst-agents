@@ -69,7 +69,7 @@ export function LibraryTabs({ assets, missions, reportSuggestions, activeThreadI
         role="tablist"
         aria-label="Bibliothèque"
         className="flex items-center gap-3 px-4 border-b border-[var(--border-shell)]"
-        style={{ height: "40px" }}
+        style={{ height: "var(--space-10)" }}
       >
         {tabs.map((t) => {
           const isActive = activeTab === t.key;

@@ -463,14 +463,15 @@ export default function HomePage() {
           !!titleLabel &&
           (titleLabel.toLowerCase().includes(threadLabel.toLowerCase()) ||
             threadLabel.toLowerCase().includes(titleLabel.toLowerCase().slice(0, 32)));
+        const focalTypeLabel = (focal.type ?? "DOC").toUpperCase();
         const trail: Crumb[] = looksLikeDuplicate
           ? [
-              { label: focal.type.toUpperCase() },
+              { label: focalTypeLabel },
               { label: focal.title, accent: true },
             ]
           : [
               { label: threadLabel || "Hearst" },
-              { label: focal.type.toUpperCase() },
+              { label: focalTypeLabel },
               { label: focal.title, accent: true },
             ];
         return (

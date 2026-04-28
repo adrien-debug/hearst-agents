@@ -89,9 +89,14 @@ export default function RunRail({ onSelect, className }: Props) {
         )}
 
         {!loading && error && (
-          <p className="px-(--space-4) py-(--space-3) t-11 text-text-faint">
-            Pas de session admin valide. Reconnecte-toi pour voir les runs.
-          </p>
+          <div className="px-(--space-4) py-(--space-3) flex flex-col gap-(--space-2)">
+            <p className="t-11 text-(--danger)/80">
+              Erreur : {error}
+            </p>
+            <p className="t-10 text-text-faint">
+              Vérifie ta session admin ou la connexion au serveur.
+            </p>
+          </div>
         )}
 
         {!loading && !error && runs.length === 0 && (
