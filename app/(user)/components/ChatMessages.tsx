@@ -234,8 +234,6 @@ export function ChatMessages({
           </div>
         )}
 
-        {/* Hidden when last assistant is empty — already handled inside loop via showShimmer */}
-        {!lastIsUser && !lastIsEmptyAssistant && null}
       </div>
     </div>
   );

@@ -46,7 +46,7 @@ export default async function HealthPage() {
       </div>
 
       {dbError && (
-        <div className="rounded-md bg-(--danger)/10 border border-(--danger)/25 p-(--space-4) text-danger t-13">
+        <div className="rounded-(--radius-md) bg-(--danger)/10 border border-(--danger)/25 p-(--space-4) text-danger t-13">
           {dbError}
         </div>
       )}
@@ -57,7 +57,7 @@ export default async function HealthPage() {
             {checkEntries.map(([name, ok]) => (
               <div
                 key={name}
-                className="rounded-md bg-surface-1 border border-(--border-shell) p-(--space-4) flex flex-col gap-(--space-2)"
+                className="rounded-(--radius-md) bg-surface-1 border border-(--border-shell) p-(--space-4) flex flex-col gap-(--space-2)"
               >
                 <div className="flex items-center justify-between">
                   <span className="t-13 font-medium text-text-soft capitalize">{name}</span>

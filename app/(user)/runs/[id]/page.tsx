@@ -126,7 +126,7 @@ export default function RunDetailPage() {
           {/* Timeline */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="t-10 font-medium text-[var(--text-muted)] uppercase tracking-wide">
+              <h2 className="t-10 font-medium text-[var(--text-muted)] uppercase tracking-section">
                 Timeline
               </h2>
               {timelineSource !== "empty" && (
@@ -231,11 +231,11 @@ export default function RunDetailPage() {
             {/* Actions */}
             <div className="flex gap-2">
               {run.status === "failed" && (
-                <button className="flex-1 py-2 bg-[var(--cykan)]/15 hover:bg-[var(--cykan)]/25 text-[var(--cykan)] rounded-lg t-13 font-medium transition-colors">
+                <button className="flex-1 py-2 bg-[var(--cykan)]/15 hover:bg-[var(--cykan)]/25 text-[var(--cykan)] rounded-sm t-13 font-medium transition-colors">
                   Relancer
                 </button>
               )}
-              <button className="flex-1 py-2 bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-muted)] rounded-lg t-13 transition-colors border border-[var(--border-subtle)]">
+              <button className="flex-1 py-2 bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-muted)] rounded-sm t-13 transition-colors border border-[var(--border-subtle)]">
                 Sauvegarder comme mission
               </button>
             </div>

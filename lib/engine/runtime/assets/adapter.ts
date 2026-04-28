@@ -66,7 +66,7 @@ export async function saveAsset(asset: Asset): Promise<boolean> {
       console.error("[AssetsAdapter] saveAsset error:", error.message);
       return false;
     }
-    console.log(`[AssetsAdapter] Asset saved: ${asset.id} (${asset.type})`);
+    console.info(`[AssetsAdapter] Asset saved: ${asset.id} (${asset.type})`);
     return true;
   } catch (err) {
     console.error("[AssetsAdapter] saveAsset exception:", err);

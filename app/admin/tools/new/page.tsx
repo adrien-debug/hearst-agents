@@ -46,11 +46,11 @@ export default function NewToolPage() {
   };
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-(--space-8) py-(--space-10)">
       <h1 className="mb-8 t-24 font-semibold text-[var(--text)]">Nouveau tool</h1>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-4 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -62,7 +62,7 @@ export default function NewToolPage() {
             required
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
@@ -71,7 +71,7 @@ export default function NewToolPage() {
           <input
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
@@ -82,7 +82,7 @@ export default function NewToolPage() {
             value={form.endpoint_url}
             onChange={(e) => set("endpoint_url", e.target.value)}
             placeholder="https://api.example.com/action"
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 font-mono t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 font-mono t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
@@ -92,7 +92,7 @@ export default function NewToolPage() {
             <select
               value={form.http_method}
               onChange={(e) => set("http_method", e.target.value)}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
+              className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             >
               {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -105,7 +105,7 @@ export default function NewToolPage() {
             <select
               value={form.auth_type}
               onChange={(e) => set("auth_type", e.target.value)}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
+              className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             >
               {["none", "api_key", "oauth"].map((a) => (
                 <option key={a} value={a}>{a}</option>
@@ -121,7 +121,7 @@ export default function NewToolPage() {
               max={300000}
               value={form.timeout_ms}
               onChange={(e) => set("timeout_ms", parseInt(e.target.value, 10))}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
+              className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             />
           </label>
         </div>
@@ -129,7 +129,7 @@ export default function NewToolPage() {
         <button
           type="submit"
           disabled={saving}
-          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-6 py-2.5 t-13 disabled:opacity-50"
+          className="ghost-btn-solid ghost-btn-cykan rounded-(--radius-sm) px-6 py-2.5 t-13 disabled:opacity-50"
         >
           {saving ? "Création..." : "Créer le tool"}
         </button>

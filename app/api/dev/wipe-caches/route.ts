@@ -32,8 +32,6 @@ export async function POST() {
   clearAllRuns();
   clearAllPlannerStores();
 
-  console.log("[dev/wipe-caches] in-memory stores cleared (assets, actions, missions, runs, planner)");
-
   return NextResponse.json({
     ok: true,
     wiped: {

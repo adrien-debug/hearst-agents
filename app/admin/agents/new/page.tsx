@@ -52,11 +52,11 @@ export default function NewAgentPage() {
   };
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-(--space-8) py-(--space-10)">
       <h1 className="mb-8 t-24 font-semibold text-[var(--text)]">Nouvel agent</h1>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-4 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -71,7 +71,7 @@ export default function NewAgentPage() {
             required
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
@@ -83,7 +83,7 @@ export default function NewAgentPage() {
           <input
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
@@ -100,7 +100,7 @@ export default function NewAgentPage() {
                 set("model_provider", prov);
                 set("model_name", defaultModels[prov]?.[0] ?? "");
               }}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
+              className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             >
               {providers.map((p) => (
                 <option key={p.value} value={p.value}>
@@ -117,7 +117,7 @@ export default function NewAgentPage() {
             <select
               value={form.model_name}
               onChange={(e) => set("model_name", e.target.value)}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
+              className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             >
               {(defaultModels[form.model_provider] ?? []).map((m) => (
                 <option key={m} value={m}>
@@ -137,7 +137,7 @@ export default function NewAgentPage() {
             rows={6}
             value={form.system_prompt}
             onChange={(e) => set("system_prompt", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 font-mono t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 font-mono t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
             placeholder="Tu es un assistant expert en..."
           />
         </label>
@@ -155,7 +155,7 @@ export default function NewAgentPage() {
               step={0.1}
               value={form.temperature}
               onChange={(e) => set("temperature", parseFloat(e.target.value))}
-              className="w-full accent-white"
+              className="w-full accent-(--cykan)"
             />
           </label>
 
@@ -169,7 +169,7 @@ export default function NewAgentPage() {
               max={128000}
               value={form.max_tokens}
               onChange={(e) => set("max_tokens", parseInt(e.target.value, 10))}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
+              className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             />
           </label>
         </div>
@@ -177,7 +177,7 @@ export default function NewAgentPage() {
         <button
           type="submit"
           disabled={saving}
-          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-6 py-2.5 t-13 disabled:opacity-50"
+          className="ghost-btn-solid ghost-btn-cykan rounded-(--radius-sm) px-6 py-2.5 t-13 disabled:opacity-50"
         >
           {saving ? "Création..." : "Créer l'agent"}
         </button>

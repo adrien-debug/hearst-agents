@@ -38,11 +38,11 @@ export default function NewWorkflowPage() {
   };
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-(--space-8) py-(--space-10)">
       <h1 className="mb-8 t-24 font-semibold text-[var(--text)]">Nouveau workflow</h1>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-4 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -54,7 +54,7 @@ export default function NewWorkflowPage() {
             required
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
@@ -63,7 +63,7 @@ export default function NewWorkflowPage() {
           <input
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
@@ -72,7 +72,7 @@ export default function NewWorkflowPage() {
           <select
             value={form.trigger_type}
             onChange={(e) => set("trigger_type", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
+            className="w-full rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
           >
             {["manual", "schedule", "webhook"].map((t) => (
               <option key={t} value={t}>{t}</option>
@@ -83,7 +83,7 @@ export default function NewWorkflowPage() {
         <button
           type="submit"
           disabled={saving}
-          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-6 py-2.5 t-13 disabled:opacity-50"
+          className="ghost-btn-solid ghost-btn-cykan rounded-(--radius-sm) px-6 py-2.5 t-13 disabled:opacity-50"
         >
           {saving ? "Création..." : "Créer le workflow"}
         </button>

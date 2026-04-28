@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { selectTool, buildFallbackChain } from "@/lib/decisions/tool-selector";
+import { selectTool } from "@/lib/decisions/tool-selector";
 import type { ToolScore } from "@/lib/analytics/tool-ranking";
 
 function makeScore(name: string, overrides: Partial<ToolScore> = {}): ToolScore {
@@ -87,28 +87,5 @@ describe("selectTool", () => {
     ];
     const result = selectTool({ candidates, goal: "cost" });
     expect(result.selected).toBe("tool:cheap");
-  });
-});
-
-describe("buildFallbackChain", () => {
-  it("builds chain excluding primary and unstable", () => {
-    const candidates = [
-      makeScore("tool:primary", { score: 0.95 }),
-      makeScore("tool:fb1", { score: 0.8 }),
-      makeScore("tool:fb2", { score: 0.7 }),
-      makeScore("tool:bad", { score: 0.9, reliability: "unstable" }),
-    ];
-    const chain = buildFallbackChain(candidates, "tool:primary");
-    expect(chain).not.toContain("tool:primary");
-    expect(chain).not.toContain("tool:bad");
-    expect(chain[0]).toBe("tool:fb1");
-  });
-
-  it("respects maxDepth", () => {
-    const candidates = Array.from({ length: 10 }, (_, i) =>
-      makeScore(`tool:${i}`, { score: 1 - i * 0.1 }),
-    );
-    const chain = buildFallbackChain(candidates, "tool:0", 2);
-    expect(chain.length).toBe(2);
   });
 });

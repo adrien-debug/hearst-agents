@@ -73,24 +73,6 @@ export function selectTool(req: SelectionRequest): SelectionResult {
   };
 }
 
-export function buildFallbackChain(
-  candidates: ToolScore[],
-  primary: string,
-  maxDepth = 3,
-): string[] {
-  const chain: string[] = [];
-  const usable = candidates
-    .filter((s) => s.tool_name !== primary && s.reliability !== "unstable")
-    .sort((a, b) => b.score - a.score);
-
-  for (const tool of usable) {
-    if (chain.length >= maxDepth) break;
-    chain.push(tool.tool_name);
-  }
-
-  return chain;
-}
-
 function sortByGoal(tools: ToolScore[], goal: SelectionGoal): ToolScore[] {
   switch (goal) {
     case "reliability":

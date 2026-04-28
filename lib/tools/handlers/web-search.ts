@@ -75,7 +75,5 @@ export async function searchWeb(query: string): Promise<WebSearchResult> {
     summary = `No results found for: ${query}`;
   }
 
-  console.log(`[WebSearch] query="${query}" results=${results.length} summary_len=${summary.length}`);
-
   return { query, results, summary };
 }

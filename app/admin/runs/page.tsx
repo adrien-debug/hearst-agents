@@ -58,12 +58,12 @@ export default async function RunsPage() {
   }
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-(--space-8) py-(--space-10)">
       <div className="mb-8">
-        <p className="t-9 font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
+        <p className="t-9 font-medium uppercase tracking-(--tracking-brand) text-[var(--text-muted)]">
           Hearst
         </p>
-        <h1 className="t-28 font-semibold tracking-tight text-[var(--text)]">
+        <h1 className="t-28 font-semibold tracking-(--tracking-tight) text-[var(--text)]">
           Runs
         </h1>
         <p className="mt-1 t-13 text-[var(--text-muted)]">
@@ -72,7 +72,7 @@ export default async function RunsPage() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-6 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -85,10 +85,10 @@ export default async function RunsPage() {
             <Link
               key={run.id}
               href={`/admin/runs/${run.id}`}
-              className="flex items-center justify-between rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4 transition-colors hover:border-[var(--line-strong)]"
+              className="flex items-center justify-between rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4 transition-colors hover:border-[var(--line-strong)]"
             >
               <div className="flex items-center gap-4">
-                <span className="rounded-md border border-[var(--line-strong)] px-2 py-0.5 t-10 font-medium text-[var(--text-muted)]">
+                <span className="rounded-(--radius-md) border border-[var(--line-strong)] px-2 py-0.5 t-10 font-medium text-[var(--text-muted)]">
                   {kindLabel[run.kind] ?? run.kind}
                 </span>
                 <span className={`t-9 font-medium ${statusColor[run.status] ?? "text-[var(--text-muted)]"}`}>

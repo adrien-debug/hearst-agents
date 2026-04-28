@@ -25,7 +25,7 @@ interface Props {
 
 const stepTypeColor: Record<string, string> = {
   chat: "border-[var(--cykan)]/50 text-[var(--cyan-accent)]",
-  tool_call: "border-purple-700 text-purple-400",
+  tool_call: "border-[var(--accent-llm)]/50 text-[var(--accent-llm)]",
   condition: "border-[var(--warn)]/50 text-[var(--warn)]",
   loop: "border-[var(--cykan)]/50 text-[var(--cykan)]",
   transform: "border-[var(--line-strong)] text-[var(--text-muted)]",
@@ -63,9 +63,9 @@ export default async function WorkflowDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-(--space-8) py-(--space-10)">
       <div className="mb-6">
-        <p className="t-9 font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Workflow</p>
+        <p className="t-9 font-medium uppercase tracking-(--tracking-brand) text-[var(--text-muted)]">Workflow</p>
         <div className="flex items-center gap-3">
           <h1 className="t-24 font-semibold text-[var(--text)]">{workflow.name}</h1>
           <span className={`t-9 font-medium ${statusColor[workflow.status] ?? "text-[var(--text-muted)]"}`}>
@@ -84,7 +84,7 @@ export default async function WorkflowDetailPage({ params }: Props) {
       {/* Steps pipeline */}
       <h2 className="mb-4 t-18 font-semibold text-[var(--text)]">Pipeline</h2>
       {steps.length === 0 ? (
-        <div className="mb-8 rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] p-6 text-center">
+        <div className="mb-8 rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-6 text-center">
           <p className="t-13 text-[var(--text-muted)]">Aucune étape. Utilisez l&apos;API pour ajouter des steps.</p>
           <pre className="mt-2 t-9 font-mono text-[var(--text-muted)]">POST /api/workflows/{id}/steps</pre>
         </div>
@@ -103,7 +103,7 @@ export default async function WorkflowDetailPage({ params }: Props) {
               </div>
 
               {/* Step card */}
-              <div className="flex-1 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4">
+              <div className="flex-1 rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`rounded-pill border px-2 py-0.5 t-10 font-medium ${stepTypeColor[step.action_type] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}>
@@ -140,7 +140,7 @@ export default async function WorkflowDetailPage({ params }: Props) {
             <Link
               key={r.id}
               href={`/admin/runs/${r.id}`}
-              className="flex items-center justify-between rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4 transition-colors hover:border-[var(--line-strong)]"
+              className="flex items-center justify-between rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4 transition-colors hover:border-[var(--line-strong)]"
             >
               <div className="flex items-center gap-3">
                 <span className={`h-2 w-2 rounded-pill ${r.status === "completed" ? "bg-[var(--money)]" : r.status === "failed" ? "bg-[var(--danger)]" : r.status === "running" ? "bg-[var(--cykan)]" : "bg-[var(--text-muted)]"}`} />

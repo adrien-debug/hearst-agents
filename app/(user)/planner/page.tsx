@@ -134,7 +134,7 @@ export default function PlannerPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-[var(--card-flat-bg)] border border-[var(--line)] flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-sm bg-[var(--card-flat-bg)] border border-[var(--line)] flex items-center justify-center mb-4">
               <span className="t-24">◉</span>
             </div>
             <h2 className="t-13 font-medium text-[var(--text)] mb-2">Aucun plan</h2>
@@ -145,7 +145,7 @@ export default function PlannerPage() {
             {filtered.map((plan) => (
               <div
                 key={plan.id}
-                className="p-4 rounded-xl bg-[var(--card-flat-bg)] border border-[var(--line)] hover:bg-[var(--surface-1)] transition-colors"
+                className="p-4 rounded-sm bg-[var(--card-flat-bg)] border border-[var(--line)] hover:bg-[var(--surface-1)] transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
@@ -178,7 +178,7 @@ export default function PlannerPage() {
                       {plan.steps.map((step) => (
                         <div
                           key={step.id}
-                          className={`px-2 py-1 rounded t-10 font-medium ${
+                          className={`px-2 py-1 rounded-xs t-10 font-medium ${
                             step.status === "done"
                               ? "bg-[var(--money)]/20 text-[var(--money)]"
                               : step.status === "running"

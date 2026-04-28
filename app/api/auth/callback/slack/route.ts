@@ -97,10 +97,6 @@ export async function GET(request: NextRequest) {
       { tenantId: teamId },
     );
 
-    console.log(
-      `[Slack OAuth] Connected workspace "${teamName}" (team=${teamId ?? "?"}, slackUser=${slackUserId ?? "?"}) for user ${userId} tokenType=${userToken ? "user" : "bot"}`,
-    );
-
     void registerProviderUsage({
       provider: "slack",
       scope: {

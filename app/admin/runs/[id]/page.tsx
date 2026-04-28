@@ -8,12 +8,12 @@ export const dynamic = "force-dynamic";
 
 const traceKindColor: Record<string, string> = {
   llm_call: "border-[var(--cykan)]/50 text-[var(--cyan-accent)]",
-  tool_call: "border-purple-700 text-purple-400",
+  tool_call: "border-[var(--accent-llm)]/50 text-[var(--accent-llm)]",
   memory_read: "border-[var(--cykan)]/50 text-[var(--cykan)]",
-  memory_write: "border-teal-700 text-teal-400",
+  memory_write: "border-[var(--cykan)]/50 text-[var(--cykan)]",
   skill_invoke: "border-[var(--warn)]/50 text-[var(--warn)]",
   error: "border-[var(--danger)]/70 text-[var(--danger)]",
-  guard: "border-yellow-700 text-yellow-400",
+  guard: "border-[var(--warn)]/50 text-[var(--warn)]",
   custom: "border-[var(--line-strong)] text-[var(--text-muted)]",
 };
 
@@ -49,9 +49,9 @@ export default async function RunDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-(--space-8) py-(--space-10)">
       <div className="mb-8">
-        <p className="t-9 font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
+        <p className="t-9 font-medium uppercase tracking-(--tracking-brand) text-[var(--text-muted)]">
           Run
         </p>
         <div className="flex items-center gap-3">
@@ -76,7 +76,7 @@ export default async function RunDetailPage({ params }: Props) {
           { label: "Latency", value: `${run.latency_ms ?? 0}ms` },
           { label: "Traces", value: traces.length },
         ].map((s) => (
-          <div key={s.label} className="rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
+          <div key={s.label} className="rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
             <p className="t-10 font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
             <p className="mt-0.5 t-18 font-semibold text-[var(--text)]">{s.value}</p>
           </div>
@@ -85,13 +85,13 @@ export default async function RunDetailPage({ params }: Props) {
 
       {/* Input / Output */}
       <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+        <div className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
           <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Input</h3>
           <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono t-9 text-[var(--text-soft)]">
             {JSON.stringify(run.input, null, 2)}
           </pre>
         </div>
-        <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+        <div className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
           <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Output</h3>
           <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono t-9 text-[var(--text-soft)]">
             {JSON.stringify(run.output, null, 2)}
@@ -100,7 +100,7 @@ export default async function RunDetailPage({ params }: Props) {
       </div>
 
       {run.error && (
-        <div className="mb-8 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-8 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {run.error}
         </div>
       )}
@@ -114,7 +114,7 @@ export default async function RunDetailPage({ params }: Props) {
           {traces.map((t, i) => (
             <div
               key={t.id}
-              className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4"
+              className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

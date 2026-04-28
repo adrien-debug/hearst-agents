@@ -760,64 +760,84 @@ export function ConnectionsHub() {
           onSelect={openDrawer}
         />
       ) : (
-        <>
-          <SectionLabel label="Connectés" count={stats.connectedCount} />
-          {connectedApps.length > 0 ? (
-            <Stage
-              apps={connectedApps}
-              statusBySlug={statusBySlug}
-              onSelect={openDrawer}
-            />
-          ) : (
-            <OnboardingStage apps={apps} onSelect={openDrawer} />
-          )}
+        <div
+          className="flex flex-col"
+          style={{ padding: "var(--space-4)", gap: "var(--space-4)" }}
+        >
+          {/* CONNECTÉS */}
+          <div
+            className="rounded-sm overflow-hidden"
+            style={{ background: "var(--bg-elev)", border: "1px solid var(--border-shell)" }}
+          >
+            <SectionLabel label="Connectés" count={stats.connectedCount} />
+            {connectedApps.length > 0 ? (
+              <Stage
+                apps={connectedApps}
+                statusBySlug={statusBySlug}
+                onSelect={openDrawer}
+              />
+            ) : (
+              <OnboardingStage apps={apps} onSelect={openDrawer} />
+            )}
+          </div>
 
+          {/* STACKS */}
           <BundlesSection
             apps={apps}
             connectedSlugs={connectedSlugs}
             onSelect={openDrawer}
           />
 
+          {/* POUR ALLER PLUS LOIN */}
           {suggestions.length > 0 && (
-            <>
+            <div
+              className="rounded-sm overflow-hidden"
+              style={{ background: "var(--bg-elev)", border: "1px solid var(--border-shell)" }}
+            >
               <SectionLabel label="Pour aller plus loin" count={suggestions.length} />
               <SuggestionsGrid suggestions={suggestions} onSelect={openDrawer} />
-            </>
-          )}
-
-          <SectionLabel
-            label={attentionFilter ? "À vérifier" : "Catalogue"}
-            count={attentionFilter ? wallpaperApps.length : apps.length}
-          />
-          {attentionFilter && (
-            <div className="px-8 pb-3">
-              <button
-                type="button"
-                onClick={() => setAttentionFilter(false)}
-                className="t-9 font-mono uppercase text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
-                style={{ letterSpacing: "var(--tracking-section)" }}
-              >
-                ← Voir tout le catalogue
-              </button>
             </div>
           )}
-          {!attentionFilter && (
-            <CategoriesBar
-              categories={categoriesWithCount}
-              active={activeCategory}
-              onChange={onCategoryChange}
+
+          {/* CATALOGUE */}
+          <div
+            className="rounded-sm overflow-hidden"
+            style={{ background: "var(--bg-elev)", border: "1px solid var(--border-shell)" }}
+          >
+            <SectionLabel
+              label={attentionFilter ? "À vérifier" : "Catalogue"}
+              count={attentionFilter ? wallpaperApps.length : apps.length}
             />
-          )}
-          <Wallpaper
-            apps={wallpaperVisible}
-            totalFiltered={wallpaperApps.length}
-            connectedSlugs={connectedSlugs}
-            statusBySlug={statusBySlug}
-            onSelect={openDrawer}
-            canLoadMore={wallpaperVisible.length < wallpaperApps.length}
-            onLoadMore={() => setWallpaperLimit((n) => n + WALLPAPER_PAGE)}
-          />
-        </>
+            {attentionFilter && (
+              <div className="px-8 pb-3">
+                <button
+                  type="button"
+                  onClick={() => setAttentionFilter(false)}
+                  className="t-9 font-mono uppercase text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
+                  style={{ letterSpacing: "var(--tracking-section)" }}
+                >
+                  ← Voir tout le catalogue
+                </button>
+              </div>
+            )}
+            {!attentionFilter && (
+              <CategoriesBar
+                categories={categoriesWithCount}
+                active={activeCategory}
+                onChange={onCategoryChange}
+              />
+            )}
+            <Wallpaper
+              apps={wallpaperVisible}
+              totalFiltered={wallpaperApps.length}
+              connectedSlugs={connectedSlugs}
+              statusBySlug={statusBySlug}
+              onSelect={openDrawer}
+              canLoadMore={wallpaperVisible.length < wallpaperApps.length}
+              onLoadMore={() => setWallpaperLimit((n) => n + WALLPAPER_PAGE)}
+            />
+          </div>
+        </div>
       )}
 
       {drawer && (
@@ -976,7 +996,7 @@ function Header({
 function SectionLabel({ label, count }: { label: string; count: number }) {
   return (
     <div
-      className="flex items-baseline gap-2 px-8 pt-8 pb-3 t-10 font-mono uppercase"
+      className="flex items-baseline gap-2 px-8 pt-5 pb-3 t-10 font-mono uppercase"
       style={{ letterSpacing: "var(--tracking-section)" }}
     >
       <span className="text-[var(--text)]">{label}</span>
@@ -999,7 +1019,7 @@ function Stage({
 }) {
   return (
     <div
-      className="grid gap-6 px-8 pb-2"
+      className="grid gap-6 px-8 pb-6"
       style={{
         gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
       }}
@@ -1132,7 +1152,7 @@ function OnboardingStage({
         </div>
       ) : (
         <div
-          className="px-6 py-8 text-center rounded-md"
+          className="px-6 py-8 text-center rounded-sm"
           style={{
             background: "var(--bg-elev)",
             border: "1px dashed var(--border-default)",
@@ -1212,9 +1232,12 @@ function BundlesSection({
   if (allComplete) return null;
 
   return (
-    <>
+    <div
+      className="rounded-sm overflow-hidden"
+      style={{ background: "var(--bg-elev)", border: "1px solid var(--border-shell)" }}
+    >
       <SectionLabel label="Stacks" count={enriched.length} />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-8 pb-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-8 pb-6">
         {enriched.map((b) => (
           <BundleCard
             key={b.id}
@@ -1228,7 +1251,7 @@ function BundlesSection({
           />
         ))}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -1330,7 +1353,7 @@ function SuggestionsGrid({
   onSelect: (app: ComposioApp) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-8 pb-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-8 pb-6">
       {suggestions.map((s, i) => (
         <SuggestionCard
           key={s.app.key}
@@ -1490,7 +1513,7 @@ function Wallpaper({
   onLoadMore: () => void;
 }) {
   return (
-    <div className="px-8 pt-6 pb-8" style={{ background: "var(--bg)" }}>
+    <div className="px-8 pt-4 pb-8">
       {apps.length === 0 ? (
         <p
           className="t-11 font-mono uppercase text-center py-10 text-[var(--text-faint)]"

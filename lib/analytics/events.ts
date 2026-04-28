@@ -19,23 +19,16 @@ export type AnalyticsEventType =
 
 export interface AnalyticsEvent {
   type: AnalyticsEventType;
-  userHash: string; // Anonymized user identifier
-  timestamp: string; // ISO 8601
+  userHash: string;
+  timestamp: string;
   properties?: Record<string, unknown>;
 }
 
-/**
- * Log analytics event (server-side)
- *
- * Note: Replace console with your analytics backend (PostHog, Amplitude, etc.)
- * when ready for production scale.
- */
 export function logAnalyticsEvent(
   type: AnalyticsEventType,
   userId: string,
   properties?: Record<string, unknown>
 ): void {
-  // Anonymize user ID (simple hash for privacy)
   const userHash = hashUserId(userId);
 
   const event: AnalyticsEvent = {
@@ -45,28 +38,16 @@ export function logAnalyticsEvent(
     properties,
   };
 
-  // Structured log for ingestion
-  console.log(`[Analytics] ${type}`, JSON.stringify(event));
+  // TODO: remplacer par backend analytics (PostHog, Amplitude, etc.)
+  console.info(`[Analytics] ${type}`, JSON.stringify(event));
 }
 
-/**
- * Simple hash for user ID anonymization
- */
 function hashUserId(userId: string): string {
-  // Simple non-cryptographic hash for analytics
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
     const char = userId.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   return `user_${Math.abs(hash).toString(16)}`;
-}
-
-/**
- * Check if this is the first message for a user (activation detection)
- */
-export function checkFirstMessage(userId: string, threadCount: number): boolean {
-  // First message = first thread and first message in that thread
-  return threadCount === 0;
 }

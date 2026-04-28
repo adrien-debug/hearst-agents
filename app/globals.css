@@ -44,6 +44,7 @@
   --money: #2DD4BF;
   --warn: #ffcc00;
   --danger: #ff3333;
+  --accent-llm: #A78BFA;
   --cykan-border: color-mix(in srgb, var(--cykan) 25%, transparent);
   --cykan-surface: color-mix(in srgb, var(--cykan) 6%, transparent);
 
@@ -407,11 +408,11 @@
 }
 [data-pipeline-visual="orbit"] [data-kind="search"],
 [data-pipeline-visual="orbit"] [data-kind="llm"] {
-  --pipeline-accent: #A78BFA;
-  --pipeline-accent-soft: rgba(167, 139, 250, 0.20);
-  --pipeline-accent-glow: 0 0 14px rgba(167, 139, 250, 0.55);
-  --pipeline-accent-glow-md: 0 0 32px rgba(167, 139, 250, 0.45);
-  --pipeline-ring-active: rgba(167, 139, 250, 0.55);
+  --pipeline-accent: var(--accent-llm);
+  --pipeline-accent-soft: color-mix(in srgb, var(--accent-llm) 20%, transparent);
+  --pipeline-accent-glow: 0 0 14px color-mix(in srgb, var(--accent-llm) 55%, transparent);
+  --pipeline-accent-glow-md: 0 0 32px color-mix(in srgb, var(--accent-llm) 45%, transparent);
+  --pipeline-ring-active: color-mix(in srgb, var(--accent-llm) 55%, transparent);
 }
 [data-pipeline-visual="orbit"] [data-kind="agent"] {
   --pipeline-accent: #FBBF24;

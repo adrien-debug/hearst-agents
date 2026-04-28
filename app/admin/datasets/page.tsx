@@ -34,23 +34,23 @@ export default async function DatasetsPage() {
   }
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-(--space-8) py-(--space-10)">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="t-9 font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Hearst</p>
-          <h1 className="t-28 font-semibold tracking-tight text-[var(--text)]">Datasets</h1>
+          <p className="t-9 font-medium uppercase tracking-(--tracking-brand) text-[var(--text-muted)]">Hearst</p>
+          <h1 className="t-28 font-semibold tracking-(--tracking-tight) text-[var(--text)]">Datasets</h1>
           <p className="mt-1 t-13 text-[var(--text-muted)]">Jeux de tests pour évaluation structurée.</p>
         </div>
         <Link
           href="/admin/datasets/new"
-          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 t-13"
+          className="ghost-btn-solid ghost-btn-cykan rounded-(--radius-sm) px-4 py-2 t-13"
         >
           + Nouveau dataset
         </Link>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
+        <div className="mb-6 rounded-(--radius-lg) border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -70,7 +70,7 @@ export default async function DatasetsPage() {
             <Link
               key={d.id}
               href={`/admin/datasets/${d.id}`}
-              className="flex flex-col gap-2 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5 transition-colors hover:border-[var(--line-strong)]"
+              className="flex flex-col gap-2 rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5 transition-colors hover:border-[var(--line-strong)]"
             >
               <h3 className="t-11 font-semibold text-[var(--text)]">{d.name}</h3>
               {d.description && (

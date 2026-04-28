@@ -36,14 +36,14 @@ export default async function AuditPage() {
       </div>
 
       {dbError && (
-        <div className="rounded-md bg-(--danger)/10 border border-(--danger)/25 p-(--space-4) text-danger t-13">
+        <div className="rounded-(--radius-md) bg-(--danger)/10 border border-(--danger)/25 p-(--space-4) text-danger t-13">
           {dbError}
         </div>
       )}
 
       {/* Log table */}
-      <div className="rounded-md bg-surface-1 border border-(--border-shell) overflow-hidden">
-        <div className="grid grid-cols-[160px_100px_1fr_80px_100px] gap-(--space-2) px-(--space-4) py-(--space-2) t-10 text-text-ghost uppercase tracking-widest border-b border-(--border-shell)">
+      <div className="rounded-(--radius-md) bg-surface-1 border border-(--border-shell) overflow-hidden">
+        <div className="grid grid-cols-[160px_100px_1fr_80px_100px] gap-(--space-2) px-(--space-4) py-(--space-2) t-10 text-text-ghost uppercase tracking-(--tracking-stretch) border-b border-(--border-shell)">
           <span>Time</span>
           <span>Action</span>
           <span>Resource</span>

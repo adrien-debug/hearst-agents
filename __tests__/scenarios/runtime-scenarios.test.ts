@@ -15,11 +15,9 @@ import {
   classifyRunFailure,
   aggregateFailures,
 } from "../../lib/analytics/failure-classifier";
-import { scoreTools, detectDrift, type ToolScore } from "../../lib/analytics/tool-ranking";
-import type { ToolMetrics } from "../../lib/analytics/metrics";
+import type { ToolScore } from "../../lib/analytics/tool-ranking";
 import { selectTool } from "../../lib/decisions/tool-selector";
 import { selectModel, type ModelScore } from "../../lib/decisions/model-selector";
-import { generateToolFeedback } from "../../lib/analytics/feedback";
 import type { AgentGuardPolicy } from "../../lib/engine/runtime/prompt-guard";
 
 // ─────────────────────────────────────────────────────────────
@@ -106,18 +104,6 @@ describe("Scenario 1: Tool failure + smart fallback", () => {
     expect(tracer.getStatus()).toBe("completed");
   });
 
-  it("generates tool_replacement signal for unstable tool", () => {
-    const toolScores: ToolScore[] = [
-      { tool_name: "api_fetcher_v1", score: 0.2, rank: 2, reliability: "unstable", flags: ["low_success_rate", "frequent_timeouts"] },
-      { tool_name: "api_fetcher_v2", score: 0.9, rank: 1, reliability: "stable", flags: [] },
-    ];
-
-    const feedback = generateToolFeedback(toolScores);
-    const replacementAlerts = feedback.filter((s) => s.kind === "tool_replacement");
-    expect(replacementAlerts.length).toBeGreaterThanOrEqual(1);
-    expect(replacementAlerts[0].target_id).toBe("api_fetcher_v1");
-    expect(replacementAlerts[0].priority).toBe("high");
-  });
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -588,88 +574,10 @@ describe("Scenario 5: Full workflow end-to-end", () => {
 });
 
 // ─────────────────────────────────────────────────────────────
-// SCÉNARIO 6 — DRIFT DETECTION
+// SCÉNARIO 6 — FAILURE AGGREGATION
 // ─────────────────────────────────────────────────────────────
 
-describe("Scenario 6: Drift detection", () => {
-  it("detects success_rate degradation and triggers alert", () => {
-    const previous: ToolMetrics[] = [
-      {
-        tool_name: "tool:data_fetcher",
-        total_calls: 50,
-        successful: 48,
-        failed: 2,
-        timed_out: 0,
-        success_rate: 0.96,
-        avg_latency_ms: 500,
-        p95_latency_ms: 800,
-        total_cost_usd: 0.1,
-        avg_cost_usd: 0.002,
-        failure_breakdown: { network_error: 2 },
-        last_used: "2026-04-10T00:00:00Z",
-      },
-    ];
-
-    const current: ToolMetrics[] = [
-      {
-        tool_name: "tool:data_fetcher",
-        total_calls: 30,
-        successful: 18,
-        failed: 12,
-        timed_out: 5,
-        success_rate: 0.6,
-        avg_latency_ms: 1200,
-        p95_latency_ms: 3000,
-        total_cost_usd: 0.06,
-        avg_cost_usd: 0.002,
-        failure_breakdown: { network_error: 7, timeout: 5 },
-        last_used: "2026-04-17T00:00:00Z",
-      },
-    ];
-
-    const drifts = detectDrift(current, previous);
-
-    expect(drifts.length).toBeGreaterThanOrEqual(1);
-
-    const successDrift = drifts.find((d) => d.metric === "success_rate");
-    expect(successDrift).toBeTruthy();
-    expect(successDrift!.alert).toBe(true);
-    expect(successDrift!.change).toBeLessThan(-0.1);
-
-    const latencyDrift = drifts.find((d) => d.metric === "avg_latency_ms");
-    expect(latencyDrift).toBeTruthy();
-    expect(latencyDrift!.alert).toBe(true);
-  });
-
-  it("scores degraded tool as unstable and generates feedback signal", () => {
-    const degradedMetrics: ToolMetrics[] = [
-      {
-        tool_name: "tool:data_fetcher",
-        total_calls: 30,
-        successful: 18,
-        failed: 12,
-        timed_out: 5,
-        success_rate: 0.6,
-        avg_latency_ms: 1200,
-        p95_latency_ms: 3000,
-        total_cost_usd: 0.06,
-        avg_cost_usd: 0.002,
-        failure_breakdown: { network_error: 7, timeout: 5 },
-        last_used: "2026-04-17T00:00:00Z",
-      },
-    ];
-
-    const scores = scoreTools(degradedMetrics);
-    expect(scores[0].reliability).toBe("unstable");
-    expect(scores[0].flags).toContain("low_success_rate");
-    expect(scores[0].flags).toContain("frequent_timeouts");
-
-    const feedback = generateToolFeedback(scores);
-    const alerts = feedback.filter((s) => s.kind === "tool_replacement");
-    expect(alerts.length).toBeGreaterThanOrEqual(1);
-    expect(alerts[0].priority).toBe("high");
-  });
-
+describe("Scenario 6: Failure aggregation", () => {
   it("aggregates multiple failure types correctly", () => {
     const classifications = [
       classifyTraceFailure({

@@ -26,14 +26,14 @@ export default async function SettingsPage() {
   const categories = [...new Set(settings.map((s) => s.category))].sort();
 
   return (
-    <div className="p-8 space-y-8 text-[var(--text-soft)]">
+    <div className="p-(--space-8) space-y-(--space-8) text-[var(--text-soft)]">
       <div className="flex items-center justify-between">
         <h1 className="t-24 font-light">System Settings</h1>
         <span className="t-13 text-[var(--text-ghost)]">{settings.length} settings</span>
       </div>
 
       {dbError && (
-        <div className="rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] t-13">
+        <div className="rounded-(--radius-lg) bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] t-13">
           {dbError}
         </div>
       )}
@@ -45,7 +45,7 @@ export default async function SettingsPage() {
           {Object.entries(flags).map(([key, enabled]) => (
             <div
               key={key}
-              className="rounded-lg bg-[var(--card-flat-bg)] border border-[var(--card-flat-border)] p-3 flex items-center justify-between"
+              className="rounded-(--radius-lg) bg-[var(--card-flat-bg)] border border-[var(--card-flat-border)] p-3 flex items-center justify-between"
             >
               <span className="t-13 text-[var(--text-muted)] truncate mr-2">{key}</span>
               <span
@@ -69,7 +69,7 @@ export default async function SettingsPage() {
       {categories.map((cat) => (
         <section key={cat}>
           <h2 className="t-13 font-light mb-3 text-[var(--text-muted)] capitalize">{cat.replace(/_/g, " ")}</h2>
-          <div className="rounded-lg bg-[var(--card-flat-bg)] border border-[var(--card-flat-border)] divide-y divide-[var(--card-flat-border)]">
+          <div className="rounded-(--radius-lg) bg-[var(--card-flat-bg)] border border-[var(--card-flat-border)] divide-y divide-[var(--card-flat-border)]">
             {settings
               .filter((s) => s.category === cat)
               .map((s) => (

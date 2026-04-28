@@ -83,7 +83,7 @@ export default async function AgentDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="px-8 py-10">
+    <div className="px-(--space-8) py-(--space-10)">
       {/* Header */}
       <div className="mb-6 flex items-start justify-between">
         <div>
@@ -110,7 +110,7 @@ export default async function AgentDetailPage({ params }: Props) {
           { label: "Coût", value: `$${totalCost.toFixed(4)}` },
           { label: "Succès", value: `${successRate}%`, sub: `avg ${avgLatency}ms` },
         ].map((s) => (
-          <div key={s.label} className="rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
+          <div key={s.label} className="rounded-(--radius-lg) border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
             <p className="t-10 font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
             <p className="mt-0.5 t-18 font-semibold text-[var(--text)]">{s.value}</p>
             {s.sub && <p className="t-10 text-[var(--text-muted)]">{s.sub}</p>}
@@ -121,14 +121,14 @@ export default async function AgentDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Left: Chat */}
         <div>
-          <h2 className="mb-3 t-10 font-semibold uppercase tracking-wide text-[var(--text-muted)]">Chat</h2>
+          <h2 className="mb-3 t-10 font-semibold uppercase tracking-(--tracking-wide) text-[var(--text-muted)]">Chat</h2>
           <ChatWindow agentId={id} />
         </div>
 
         {/* Right: Details */}
         <div className="space-y-5">
           {/* System prompt */}
-          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+          <div className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">System Prompt</h3>
             <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap font-mono t-9 leading-relaxed text-[var(--text-soft)]">
               {agent.system_prompt || "—"}
@@ -136,7 +136,7 @@ export default async function AgentDetailPage({ params }: Props) {
           </div>
 
           {/* Config */}
-          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+          <div className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Config</h3>
             <div className="grid grid-cols-3 gap-2 t-9">
               <div>
@@ -155,7 +155,7 @@ export default async function AgentDetailPage({ params }: Props) {
           </div>
 
           {/* Skills */}
-          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+          <div className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Skills</h3>
             {skills.length === 0 ? (
               <p className="t-9 text-[var(--text-muted)]">Aucun skill attribué.</p>
@@ -174,7 +174,7 @@ export default async function AgentDetailPage({ params }: Props) {
           </div>
 
           {/* Memory */}
-          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+          <div className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Memory</h3>
             {memories.length === 0 ? (
               <p className="t-9 text-[var(--text-muted)]">Aucune mémoire.</p>
@@ -193,7 +193,7 @@ export default async function AgentDetailPage({ params }: Props) {
           </div>
 
           {/* Recent runs */}
-          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+          <div className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="t-9 font-semibold uppercase text-[var(--text-muted)]">Runs récents</h3>
               <Link href={`/admin/runs?agent_id=${id}`} className="t-10 text-[var(--text-muted)] hover:text-[var(--text-muted)]">
@@ -205,7 +205,7 @@ export default async function AgentDetailPage({ params }: Props) {
             ) : (
               <div className="space-y-1">
                 {runs.slice(0, 5).map((r) => (
-                  <Link key={r.id} href={`/admin/runs/${r.id}`} className="flex items-center justify-between rounded-md px-2 py-1 t-9 transition-colors hover:bg-[var(--bg-soft)]">
+                  <Link key={r.id} href={`/admin/runs/${r.id}`} className="flex items-center justify-between rounded-(--radius-md) px-2 py-1 t-9 transition-colors hover:bg-[var(--bg-soft)]">
                     <div className="flex items-center gap-2">
                       <span className={`h-1.5 w-1.5 rounded-pill ${r.status === "completed" ? "bg-[var(--money)]" : r.status === "failed" ? "bg-[var(--danger)]" : "bg-[var(--text-muted)]"}`} />
                       <span className="text-[var(--text-muted)]">{r.kind}</span>
@@ -220,7 +220,7 @@ export default async function AgentDetailPage({ params }: Props) {
           </div>
 
           {/* Evaluations */}
-          <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
+          <div className="rounded-(--radius-sm) border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Evaluations</h3>
             {evals.length === 0 ? (
               <p className="t-9 text-[var(--text-muted)]">Aucune évaluation.</p>

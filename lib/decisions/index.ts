@@ -1,4 +1,4 @@
-export { selectTool, buildFallbackChain } from "./tool-selector";
+export { selectTool } from "./tool-selector";
 export type { SelectionGoal, SelectionRequest, SelectionResult } from "./tool-selector";
 
 export { persistSignals, listSignals, resolveSignal, acknowledgeSignal } from "./signal-manager";

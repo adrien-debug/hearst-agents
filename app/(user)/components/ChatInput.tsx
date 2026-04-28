@@ -96,7 +96,7 @@ export function ChatInput({
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="absolute bottom-full mb-8 w-full bg-[var(--bg)] rounded-lg border border-[var(--surface-2)] overflow-hidden z-50"
+            className="absolute bottom-full mb-8 w-full bg-[var(--bg)] rounded-sm border border-[var(--surface-2)] overflow-hidden z-50"
           >
             {matchingServices.length === 0 ? (
               <div className="p-4 t-11 font-mono tracking-display text-[var(--text-faint)]">
@@ -129,7 +129,7 @@ export function ChatInput({
 
         {/* Input Card — textarea en haut, actions en bas */}
         <div
-          className="bg-[var(--card-flat-bg)] border border-[var(--border-input)] rounded-2xl transition-colors duration-base group focus-within:border-[var(--cykan-border-hover)]"
+          className="bg-[var(--card-flat-bg)] border border-[var(--border-input)] rounded-sm transition-colors duration-base group focus-within:border-[var(--cykan-border-hover)]"
           style={{ boxShadow: "var(--shadow-card)" }}
         >
           <textarea
@@ -155,7 +155,7 @@ export function ChatInput({
             }}
             placeholder={placeholder || surfacePlaceholders[surface] || "Poser une question"}
             rows={1}
-            className="block w-full bg-transparent t-15 font-normal tracking-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed pt-4 pb-2 px-5"
+            className="block w-full bg-transparent t-15 font-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed pt-4 pb-2 px-5"
             style={{ minHeight: "32px", maxHeight: "200px" }}
           />
           <div className="flex items-center justify-between px-3 pb-3 pt-1">

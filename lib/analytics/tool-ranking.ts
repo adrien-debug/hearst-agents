@@ -16,13 +16,6 @@ export interface ToolScore {
   flags: string[];
 }
 
-export interface ToolRecommendation {
-  recommended: string | null;
-  reason: string;
-  alternatives: { tool_name: string; score: number }[];
-  unstable: string[];
-}
-
 const WEIGHTS = {
   success_rate: 0.50,
   latency: 0.20,
@@ -100,92 +93,4 @@ export function scoreTools(metrics: ToolMetrics[]): ToolScore[] {
   scored.forEach((s, i) => { s.rank = i + 1; });
 
   return scored;
-}
-
-export function recommendTool(
-  scores: ToolScore[],
-  category?: string,
-): ToolRecommendation {
-  let candidates = scores.filter((s) => s.reliability !== "unstable");
-
-  if (category) {
-    const filtered = candidates.filter((s) => s.tool_name.startsWith(category));
-    if (filtered.length > 0) candidates = filtered;
-  }
-
-  const stableOnly = candidates.filter((s) => s.reliability === "stable");
-  const pool = stableOnly.length > 0 ? stableOnly : candidates;
-
-  const unstable = scores
-    .filter((s) => s.reliability === "unstable")
-    .map((s) => s.tool_name);
-
-  if (pool.length === 0) {
-    return {
-      recommended: null,
-      reason: "No stable tools available",
-      alternatives: [],
-      unstable,
-    };
-  }
-
-  const best = pool[0];
-
-  return {
-    recommended: best.tool_name,
-    reason: `Highest score (${best.score}) with ${best.reliability} reliability`,
-    alternatives: pool.slice(1, 4).map((s) => ({
-      tool_name: s.tool_name,
-      score: s.score,
-    })),
-    unstable,
-  };
-}
-
-export function detectDrift(
-  currentMetrics: ToolMetrics[],
-  previousMetrics: ToolMetrics[],
-): { tool_name: string; metric: string; change: number; alert: boolean }[] {
-  const drifts: { tool_name: string; metric: string; change: number; alert: boolean }[] = [];
-
-  for (const current of currentMetrics) {
-    const previous = previousMetrics.find((p) => p.tool_name === current.tool_name);
-    if (!previous || previous.total_calls < THRESHOLDS.min_calls_for_ranking) continue;
-
-    const successDelta = current.success_rate - previous.success_rate;
-    if (Math.abs(successDelta) > 0.1) {
-      drifts.push({
-        tool_name: current.tool_name,
-        metric: "success_rate",
-        change: Math.round(successDelta * 1000) / 1000,
-        alert: successDelta < -0.1,
-      });
-    }
-
-    if (previous.avg_latency_ms > 0) {
-      const latencyRatio = current.avg_latency_ms / previous.avg_latency_ms;
-      if (latencyRatio > 2 || latencyRatio < 0.5) {
-        drifts.push({
-          tool_name: current.tool_name,
-          metric: "avg_latency_ms",
-          change: Math.round((latencyRatio - 1) * 100) / 100,
-          alert: latencyRatio > 2,
-        });
-      }
-    }
-
-    if (previous.avg_cost_usd > 0) {
-      const costRatio = current.avg_cost_usd / previous.avg_cost_usd;
-      if (costRatio > 1.5) {
-        drifts.push({
-          tool_name: current.tool_name,
-          metric: "avg_cost_usd",
-          change: Math.round((costRatio - 1) * 100) / 100,
-          alert: true,
-        });
-      }
-    }
-  }
-
-  return drifts;
 }

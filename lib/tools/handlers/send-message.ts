@@ -41,8 +41,6 @@ export interface SendMessageResult {
 // ── Provider handlers ───────────────────────────────────────
 
 async function sendViaSlack(input: SendMessageInput): Promise<SendMessageResult> {
-  console.log(`[SendMessage:Slack] Sending to ${input.channelRef}: ${input.content.slice(0, 50)}…`);
-
   // TODO: integrate with Slack Web API (chat.postMessage)
   return {
     success: true,
@@ -55,8 +53,6 @@ async function sendViaSlack(input: SendMessageInput): Promise<SendMessageResult>
 }
 
 async function sendViaWhatsApp(input: SendMessageInput): Promise<SendMessageResult> {
-  console.log(`[SendMessage:WhatsApp] Sending to ${input.channelRef}: ${input.content.slice(0, 50)}…`);
-
   // TODO: integrate with Meta Cloud API (messages endpoint)
   // POST https://graph.facebook.com/v18.0/{phone-number-id}/messages
   return {
@@ -102,9 +98,6 @@ async function sendViaGmail(input: SendMessageInput): Promise<SendMessageResult>
     };
   }
 
-  console.log(
-    `[SendMessage:Gmail] Stub mode — set COMPOSIO_API_KEY + install composio-core for real delivery. To: ${input.channelRef}`,
-  );
   return {
     success: true,
     providerId: "google",

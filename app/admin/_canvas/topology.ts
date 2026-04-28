@@ -37,8 +37,6 @@ export type StageKind =
   | "agent"
   | "complete";
 
-export type SatelliteId = "memory" | "cost" | "logs" | "sse";
-
 export interface CanvasNode {
   id: NodeId;
   kind: StageKind;
@@ -59,13 +57,6 @@ export interface CanvasNode {
   events: string[];
   /** Branchements possibles depuis ce node (texte humain). */
   branches?: string[];
-}
-
-export interface CanvasSatellite {
-  id: SatelliteId;
-  label: string;
-  x: number;
-  y: number;
 }
 
 export interface CanvasEdge {
@@ -282,11 +273,6 @@ export const NODES: CanvasNode[] = [
     branches: ["→ fin de stream SSE"],
   },
 ];
-
-// Satellites removed in V1 — they were decorative noise. If we re-introduce
-// them, expose interactive metrics (token count, retry stats) rather than
-// static dots.
-export const SATELLITES: CanvasSatellite[] = [];
 
 export const EDGES: CanvasEdge[] = [
   { id: "entry-router", from: "entry", to: "router" },
