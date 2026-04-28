@@ -3,24 +3,31 @@
  *
  *   L1 raw_source_cache    — résultat brut d'un fetch source (clé sha256)
  *   L2 transform_cache     — résultat d'une op de transform (clé sha256)
- *   L3 render_cache        — payload final + narration (clé spec_id+version+payload_hash)
+ *   L3 render_cache        — payload final + narration (spec_id+version+hash)
  *
- * Tables Postgres derrière Supabase (cf. supabase/migrations/0025_report_cache.sql).
- * Toutes les entrées sont éphémères : `expires_at` btree → cleanup périodique.
+ * Tables Postgres derrière Supabase (cf. migration 0025_report_cache.sql).
+ * Best-effort : si Supabase indispo, dégrade en no-op.
  *
- * **Best-effort** : si Supabase n'est pas configuré (pas d'env), les helpers
- * dégradent silencieusement vers no-op (le pipeline continue de fonctionner,
- * juste sans cache).
+ * NOTE TYPAGE : tant que `lib/database.types.ts` ne contient pas les 3 tables
+ * report_*_cache, on cast le client en `any` au point d'entrée. Le shim
+ * `cache-types.ts` documente le shape réel et type les rows retournées. À
+ * supprimer dès que Supabase types sont régénérés.
  */
 
 import { createHash } from "crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerSupabase } from "@/lib/platform/db/supabase";
+import type {
+  ReportSourceCacheRow,
+  ReportTransformCacheRow,
+  ReportRenderCacheRow,
+} from "./cache-types";
 
 // ── Hash & key helpers ─────────────────────────────────────
 
 /**
- * Sérialisation déterministe : tri des clés à chaque niveau pour que le hash
- * soit stable indépendamment de l'ordre d'insertion dans les params.
+ * Sérialisation déterministe : tri des clés pour que le hash soit stable
+ * indépendamment de l'ordre d'insertion dans les params.
  */
 export function stableStringify(value: unknown): string {
   if (value === null || value === undefined) return "null";
@@ -37,7 +44,6 @@ export function stableStringify(value: unknown): string {
       .map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`)
       .join(",")}}`;
   }
-  // fonctions, symbols → on n'autorise pas
   return "null";
 }
 
@@ -45,32 +51,41 @@ export function hashKey(value: unknown): string {
   return createHash("sha256").update(stableStringify(value)).digest("hex");
 }
 
-// ── Types & TTL ────────────────────────────────────────────
-
-export interface CacheEntry<T = unknown> {
-  payload: T;
-  expiresAt: number; // ms epoch
-}
+// ── Supabase client (untyped pour les 3 tables hors schema) ──
 
 const TABLE_SOURCE = "report_source_cache";
 const TABLE_TRANSFORM = "report_transform_cache";
 const TABLE_RENDER = "report_render_cache";
 
+/**
+ * Cast unique du client. Le typage strict des rows est restauré par le
+ * `cache-types.ts` au point de consommation des résultats.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyClient = SupabaseClient<any, "public", any>;
+
+function client(): AnyClient | null {
+  return getServerSupabase() as unknown as AnyClient | null;
+}
+
+function isExpired(iso: string): boolean {
+  return new Date(iso).getTime() < Date.now();
+}
+
 // ── L1 — source cache ──────────────────────────────────────
 
-export async function getSourceCache<T = unknown>(
-  hash: string,
-): Promise<T | null> {
-  const sb = getServerSupabase();
+export async function getSourceCache<T = unknown>(hash: string): Promise<T | null> {
+  const sb = client();
   if (!sb) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb.from(TABLE_SOURCE) as any)
+  const { data, error } = await sb
+    .from(TABLE_SOURCE)
     .select("payload, expires_at")
     .eq("hash", hash)
     .maybeSingle();
   if (error || !data) return null;
-  if (new Date(data.expires_at).getTime() < Date.now()) return null;
-  return data.payload as T;
+  const row = data as Pick<ReportSourceCacheRow, "payload" | "expires_at">;
+  if (isExpired(row.expires_at)) return null;
+  return row.payload as T;
 }
 
 export async function setSourceCache(
@@ -78,14 +93,12 @@ export async function setSourceCache(
   payload: unknown,
   ttlSeconds: number,
 ): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = client();
   if (!sb) return;
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (sb.from(TABLE_SOURCE) as any).upsert(
-    { hash, payload, expires_at: expiresAt },
-    { onConflict: "hash" },
-  );
+  await sb
+    .from(TABLE_SOURCE)
+    .upsert({ hash, payload, expires_at: expiresAt }, { onConflict: "hash" });
 }
 
 // ── L2 — transform cache ───────────────────────────────────
@@ -93,16 +106,17 @@ export async function setSourceCache(
 export async function getTransformCache<T = unknown>(
   hash: string,
 ): Promise<T | null> {
-  const sb = getServerSupabase();
+  const sb = client();
   if (!sb) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb.from(TABLE_TRANSFORM) as any)
+  const { data, error } = await sb
+    .from(TABLE_TRANSFORM)
     .select("payload, expires_at")
     .eq("hash", hash)
     .maybeSingle();
   if (error || !data) return null;
-  if (new Date(data.expires_at).getTime() < Date.now()) return null;
-  return data.payload as T;
+  const row = data as Pick<ReportTransformCacheRow, "payload" | "expires_at">;
+  if (isExpired(row.expires_at)) return null;
+  return row.payload as T;
 }
 
 export async function setTransformCache(
@@ -110,14 +124,12 @@ export async function setTransformCache(
   payload: unknown,
   ttlSeconds: number,
 ): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = client();
   if (!sb) return;
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (sb.from(TABLE_TRANSFORM) as any).upsert(
-    { hash, payload, expires_at: expiresAt },
-    { onConflict: "hash" },
-  );
+  await sb
+    .from(TABLE_TRANSFORM)
+    .upsert({ hash, payload, expires_at: expiresAt }, { onConflict: "hash" });
 }
 
 // ── L3 — render cache ──────────────────────────────────────
@@ -136,18 +148,22 @@ export interface RenderCacheValue {
 export async function getRenderCache(
   key: RenderCacheKey,
 ): Promise<RenderCacheValue | null> {
-  const sb = getServerSupabase();
+  const sb = client();
   if (!sb) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (sb.from(TABLE_RENDER) as any)
+  const { data, error } = await sb
+    .from(TABLE_RENDER)
     .select("payload_json, narration, expires_at")
     .eq("spec_id", key.specId)
     .eq("version", key.version)
     .eq("payload_hash", key.payloadHash)
     .maybeSingle();
   if (error || !data) return null;
-  if (new Date(data.expires_at).getTime() < Date.now()) return null;
-  return { payload: data.payload_json, narration: data.narration ?? null };
+  const row = data as Pick<
+    ReportRenderCacheRow,
+    "payload_json" | "narration" | "expires_at"
+  >;
+  if (isExpired(row.expires_at)) return null;
+  return { payload: row.payload_json, narration: row.narration ?? null };
 }
 
 export async function setRenderCache(
@@ -155,11 +171,10 @@ export async function setRenderCache(
   value: RenderCacheValue,
   ttlSeconds: number,
 ): Promise<void> {
-  const sb = getServerSupabase();
+  const sb = client();
   if (!sb) return;
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (sb.from(TABLE_RENDER) as any).upsert(
+  await sb.from(TABLE_RENDER).upsert(
     {
       spec_id: key.specId,
       version: key.version,
@@ -179,19 +194,17 @@ export async function pruneExpired(): Promise<{
   transform: number;
   render: number;
 }> {
-  const sb = getServerSupabase();
+  const sb = client();
   if (!sb) return { source: 0, transform: 0, render: 0 };
   const now = new Date().toISOString();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb2 = sb as any;
   const [a, b, c] = await Promise.all([
-    sb2.from(TABLE_SOURCE).delete().lt("expires_at", now).select("hash"),
-    sb2.from(TABLE_TRANSFORM).delete().lt("expires_at", now).select("hash"),
-    sb2.from(TABLE_RENDER).delete().lt("expires_at", now).select("spec_id"),
+    sb.from(TABLE_SOURCE).delete().lt("expires_at", now).select("hash"),
+    sb.from(TABLE_TRANSFORM).delete().lt("expires_at", now).select("hash"),
+    sb.from(TABLE_RENDER).delete().lt("expires_at", now).select("spec_id"),
   ]);
   return {
-    source: a.data?.length ?? 0,
-    transform: b.data?.length ?? 0,
-    render: c.data?.length ?? 0,
+    source: (a.data as Array<unknown> | null)?.length ?? 0,
+    transform: (b.data as Array<unknown> | null)?.length ?? 0,
+    render: (c.data as Array<unknown> | null)?.length ?? 0,
   };
 }

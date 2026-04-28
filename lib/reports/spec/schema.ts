@@ -178,7 +178,8 @@ const groupByOpSchema = z.object({
   op: z.literal("groupBy"),
   inputs: z.tuple([datasetRefSchema]),
   params: z.object({
-    by: z.array(z.string().min(1)).min(1),
+    /** `by: []` est valide → produit une row unique avec les agrégats globaux. */
+    by: z.array(z.string().min(1)),
     measures: z
       .array(
         z.object({

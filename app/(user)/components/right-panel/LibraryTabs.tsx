@@ -19,11 +19,12 @@ const STORAGE_KEY = "hearst.rightpanel.activeTab";
 interface LibraryTabsProps {
   assets: RightPanelData["assets"];
   missions: RightPanelData["missions"];
+  reportSuggestions?: RightPanelData["reportSuggestions"];
   activeThreadId: string | null;
   loading: boolean;
 }
 
-export function LibraryTabs({ assets, missions, activeThreadId, loading }: LibraryTabsProps) {
+export function LibraryTabs({ assets, missions, reportSuggestions, activeThreadId, loading }: LibraryTabsProps) {
   const eventsCount = useRuntimeStore((s) => s.events.length);
 
   // Init SSR-stable à "assets" pour que le HTML rendu côté serveur matche
@@ -55,8 +56,9 @@ export function LibraryTabs({ assets, missions, activeThreadId, loading }: Libra
     }
   };
 
+  const suggestionsCount = reportSuggestions?.length ?? 0;
   const tabs: Array<{ key: TabKey; label: string; count: number }> = [
-    { key: "assets", label: "Assets", count: assets.length },
+    { key: "assets", label: "Assets", count: assets.length + suggestionsCount },
     { key: "missions", label: "Missions", count: missions.length },
     { key: "activity", label: "Activité", count: eventsCount },
   ];
@@ -77,7 +79,8 @@ export function LibraryTabs({ assets, missions, activeThreadId, loading }: Libra
               role="tab"
               aria-selected={isActive}
               onClick={() => switchTab(t.key)}
-              className={`relative inline-flex items-center gap-1.5 t-9 font-mono tracking-[0.22em] uppercase py-2 transition-colors ${
+              style={{ letterSpacing: "var(--tracking-section)" }}
+              className={`relative inline-flex items-center gap-2 t-9 font-mono uppercase py-2 transition-colors ${
                 isActive
                   ? "text-[var(--cykan)]"
                   : "text-[var(--text-faint)] hover:text-[var(--text-soft)]"
@@ -100,7 +103,12 @@ export function LibraryTabs({ assets, missions, activeThreadId, loading }: Libra
       {/* Tab panel */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
         {activeTab === "assets" && (
-          <AssetsGrid assets={assets} activeThreadId={activeThreadId} loading={loading} />
+          <AssetsGrid
+            assets={assets}
+            reportSuggestions={reportSuggestions}
+            activeThreadId={activeThreadId}
+            loading={loading}
+          />
         )}
         {activeTab === "missions" && (
           <MissionsList missions={missions} activeThreadId={activeThreadId} loading={loading} />

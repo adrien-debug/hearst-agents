@@ -2,26 +2,17 @@ import type { StageKind } from "../topology";
 
 /**
  * Stage icons — 24×24 stroke-based SVGs indexed by `StageKind`. Keep them
- * minimal: 1.5px stroke, no fill, line caps round. Each icon ships its own
- * `<svg>` so it can be sized via the wrapping `className` (e.g. `w-(--space-5)`).
+ * minimal: 1.5px stroke, no fill, line caps round.
+ *
+ * The SVG owns its className so the caller controls sizing directly via
+ * `size-(--space-*)` etc. (the previous wrapper-span layout silently
+ * collapsed the SVG to 0×0 in some scaled contexts).
  */
 
 interface IconProps {
+  kind: StageKind;
   className?: string;
 }
-
-const wrap = (paths: React.ReactNode) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    {paths}
-  </svg>
-);
 
 const ICON_PATHS: Record<StageKind, React.ReactNode> = {
   // entry — arrow flowing in
@@ -42,9 +33,7 @@ const ICON_PATHS: Record<StageKind, React.ReactNode> = {
     </>
   ),
   // gate — shield
-  gate: (
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  ),
+  gate: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
   // intent — tag
   intent: (
     <>
@@ -101,6 +90,18 @@ const ICON_PATHS: Record<StageKind, React.ReactNode> = {
   ),
 };
 
-export default function StageIcon({ kind, className }: IconProps & { kind: StageKind }) {
-  return <span className={className}>{wrap(ICON_PATHS[kind])}</span>;
+export default function StageIcon({ kind, className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {ICON_PATHS[kind]}
+    </svg>
+  );
 }

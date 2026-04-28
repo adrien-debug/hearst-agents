@@ -16,6 +16,7 @@ import {
   listConnections,
   listAvailableApps,
 } from "@/lib/connectors/composio";
+import { getApplicableReports } from "@/lib/reports/catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -157,8 +158,16 @@ export async function GET(_req: NextRequest) {
     const connectedCount = services.filter((s) => s.connectionStatus === "connected").length;
     console.log(`[UserConnections] User ${scope.userId.slice(0, 8)}: ${connectedCount}/${services.length} connected`);
 
+    // Reports applicables au user vu ses connexions (ready/partial seulement).
+    // Le RightPanel les transforme en suggestions dans la section Assets.
+    const connectedSlugs = services
+      .filter((s) => s.connectionStatus === "connected")
+      .map((s) => s.id);
+    const applicableReports = getApplicableReports(connectedSlugs);
+
     return NextResponse.json({
       services,
+      applicableReports,
       meta: {
         total: services.length,
         connected: connectedCount,

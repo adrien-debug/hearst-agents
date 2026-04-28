@@ -20,7 +20,9 @@ import { manifestAsset, resolveFocalObject } from "./manifestation";
 import { formatOutput, type OutputTier } from "@/lib/engine/runtime/formatting/pipeline";
 import { getPlansForThread, getMissionsForThread } from "@/lib/engine/planner/store";
 import type { Asset, AssetKind, AssetProvenance } from "@/lib/assets/types";
-import type { RightPanelData, FocalObjectView } from "./types";
+import type { RightPanelData, FocalObjectView, RightPanelReportSuggestion } from "./types";
+import { getApplicableReports } from "@/lib/reports/catalog";
+import { getAllServiceIds, getProviderIdForService } from "@/lib/integrations/service-map";
 
 const MAX_RUNS = 20;
 const MAX_ASSETS = 50;
@@ -174,6 +176,7 @@ export async function buildRightPanelData(
 
   // ── Connector Health ──────────────────────────────────────
   let connectorHealth: RightPanelData["connectorHealth"];
+  let connectedProviders: string[] = [];
   try {
     if (!scope) {
       throw new Error("scope_required_for_connector_health");
@@ -189,9 +192,43 @@ export async function buildRightPanelData(
         degraded: conns.filter((c) => c.status === "degraded" || c.status === "error").length,
         disconnected: conns.filter((c) => c.status === "disconnected" || c.status === "pending_auth").length,
       };
+      connectedProviders = conns
+        .filter((c) => c.status === "connected")
+        .map((c) => c.provider);
     }
   } catch {
     /* connector health is optional */
+  }
+
+  // ── Report suggestions (matrice apps connectées × catalogue) ─────
+  // On expanse chaque provider connecté vers ses service IDs (ex: "google"
+  // → ["gmail", "calendar", "drive"]) puis on matche contre les requiredApps
+  // du catalogue.
+  let reportSuggestions: RightPanelReportSuggestion[] | undefined;
+  if (connectedProviders.length > 0) {
+    const providerSet = new Set(connectedProviders);
+    const connectedServiceIds = getAllServiceIds().filter((sid) => {
+      const pid = getProviderIdForService(sid);
+      return pid !== undefined && providerSet.has(pid);
+    });
+    const applicable = getApplicableReports([
+      ...connectedProviders,
+      ...connectedServiceIds,
+    ]);
+    if (applicable.length > 0) {
+      reportSuggestions = applicable
+        .filter((r): r is typeof r & { status: "ready" | "partial" } =>
+          r.status === "ready" || r.status === "partial",
+        )
+        .map((r) => ({
+          specId: r.id,
+          title: r.title,
+          description: r.description,
+          status: r.status,
+          requiredApps: r.requiredApps,
+          missingApps: r.missingApps,
+        }));
+    }
   }
 
   // ── Scheduler / Ops Summary ──────────────────────────────
@@ -431,5 +468,5 @@ export async function buildRightPanelData(
     }
   }
 
-  return { currentRun, recentRuns, assets, missions, connectorHealth, scheduler, missionOpsSummary, focalObject, secondaryObjects };
+  return { currentRun, recentRuns, assets, missions, reportSuggestions, connectorHealth, scheduler, missionOpsSummary, focalObject, secondaryObjects };
 }

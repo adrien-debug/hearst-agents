@@ -9,6 +9,12 @@ interface ConnectedAccount {
   id: string;
   appName: string;
   status: string;
+  // "composio" = OAuth via Composio (handleConnect popup + handleDisconnect).
+  // "native"   = obtenu via le SSO NextAuth (Gmail/Cal/Drive après login
+  //              Google, Outlook après login MS). Pas de OAuth séparé à
+  //              tenter, le drawer affiche une note "géré via SSO" au lieu
+  //              du bouton Connecter/Déconnecter.
+  source?: "composio" | "native";
 }
 
 interface ComposioApp {
@@ -54,6 +60,86 @@ function categoryLabel(app: ComposioApp): string {
 function categoryLabelById(id: string): string {
   return CATEGORY_LABEL[id] ?? id;
 }
+
+// Search intent-based : mappings de mots-clés naturels (FR + EN) vers les
+// slugs Composio. Quand l'utilisateur tape un mot d'intention au lieu d'un
+// nom de service, on remonte les services pertinents en TÊTE des résultats
+// (priorité éditoriale), avant le match fuzzy nom/description classique.
+//
+// Ex : "facturer" → Stripe en 1er même si Stripe ne contient pas le mot
+// "facturer" dans sa description anglaise.
+const INTENT_KEYWORDS: { keywords: string[]; slugs: string[] }[] = [
+  {
+    keywords: ["facture", "facturer", "facturation", "invoice", "billing", "paiement"],
+    slugs: ["stripe", "quickbooks", "pennylane"],
+  },
+  {
+    keywords: ["agenda", "calendrier", "rdv", "rendez-vous", "schedule", "planifier"],
+    slugs: ["googlecalendar", "calendly", "outlook"],
+  },
+  {
+    keywords: ["ticket", "issue", "bug", "sprint", "tracker"],
+    slugs: ["linear", "github", "jira"],
+  },
+  {
+    keywords: ["email", "mail", "courriel", "newsletter"],
+    slugs: ["gmail", "outlook", "mailchimp", "sendgrid"],
+  },
+  {
+    keywords: ["doc", "document", "note", "wiki", "documentation"],
+    slugs: ["notion", "googledocs", "googledrive", "confluence"],
+  },
+  {
+    keywords: ["crm", "contact", "lead", "deal", "prospect"],
+    slugs: ["hubspot", "salesforce", "pipedrive", "attio"],
+  },
+  {
+    keywords: ["chat", "messagerie", "channel", "équipe", "conversation"],
+    slugs: ["slack", "discord", "teams"],
+  },
+  {
+    keywords: ["design", "maquette", "wireframe", "ui"],
+    slugs: ["figma"],
+  },
+  {
+    keywords: ["code", "repo", "pr", "pull request", "commit", "review"],
+    slugs: ["github", "gitlab", "bitbucket"],
+  },
+  {
+    keywords: ["meet", "réunion", "visio", "video", "call"],
+    slugs: ["zoom", "googlemeet", "teams"],
+  },
+  {
+    keywords: ["analytics", "metric", "dashboard", "kpi"],
+    slugs: ["mixpanel", "amplitude", "posthog", "segment"],
+  },
+  {
+    keywords: ["support", "ticket client", "helpdesk"],
+    slugs: ["zendesk", "intercom", "freshdesk", "helpscout"],
+  },
+];
+
+// Bundles use-case : groupes pré-pensés de services qui couvrent un workflow
+// complet. L'utilisateur voit le progrès (X/N connectés) et peut connecter le
+// service suivant non-connecté en 1 clic. Pas de cascade automatique — chaque
+// OAuth est un click explicite (sinon 4 popups séquentielles = cauchemar UX).
+const BUNDLES: { id: string; label: string; slugs: string[] }[] = [
+  {
+    id: "productivity",
+    label: "Stack productivité",
+    slugs: ["googlecalendar", "googledrive", "notion", "slack"],
+  },
+  {
+    id: "sales",
+    label: "Stack ventes B2B",
+    slugs: ["hubspot", "googlecalendar", "gmail", "slack", "stripe"],
+  },
+  {
+    id: "dev",
+    label: "Stack dev",
+    slugs: ["github", "linear", "slack", "figma"],
+  },
+];
 
 // Picks recommandés par défaut. Liste large (≥10) pour qu'après filtrage
 // des déjà-connectés on ait toujours 3 dispos. `hint` = micro-descripteur
@@ -101,28 +187,72 @@ export function ConnectionsHub() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [wallpaperLimit, setWallpaperLimit] = useState(WALLPAPER_PAGE);
+  // Filtre "attentions" — quand actif, le wallpaper ne montre que les
+  // services en pending/error/expired. Activé par click sur le badge ⚠ N
+  // du header, désactivable par re-click ou bouton "réinitialiser".
+  const [attentionFilter, setAttentionFilter] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
   const [drawerActions, setDrawerActions] = useState<DiscoveredTool[] | null>(null);
   const [drawerLoadingActions, setDrawerLoadingActions] = useState(false);
 
   const refreshAccounts = useCallback(async () => {
+    // Fusion de 2 sources de connexions :
+    // 1) Composio (OAuth via popup) — l'historique du composant
+    // 2) Native (SSO Google/Microsoft initial) — Gmail/Cal/Drive sont déjà
+    //    accessibles à l'agent dès le login, pas besoin de redemander
+    //    OAuth Composio (qui se prendrait un access_denied par Google).
+    // Si une app apparaît dans les deux, le composio gagne (cas où l'user
+    // a explicitement re-OAuth via Composio par-dessus le SSO).
     try {
-      const res = await fetch("/api/composio/connections", { credentials: "include" });
-      if (res.status === 503) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+      const [composioRes, nativeRes] = await Promise.all([
+        fetch("/api/composio/connections", { credentials: "include" }),
+        fetch("/api/connections/native", { credentials: "include" }).catch(
+          () => null,
+        ),
+      ]);
+
+      if (composioRes.status === 503) {
+        const data = (await composioRes.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
         setEnabled(false);
         setSdkError(data.message ?? "Composio not configured");
         return;
       }
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        setSdkError(data.error ?? `HTTP ${res.status}`);
+      if (!composioRes.ok) {
+        const data = (await composioRes.json().catch(() => ({}))) as { error?: string };
+        setSdkError(data.error ?? `HTTP ${composioRes.status}`);
         return;
       }
       setSdkError(null);
-      const data = (await res.json()) as { connections?: ConnectedAccount[] };
-      setAccounts(data.connections ?? []);
+
+      const composioData = (await composioRes.json()) as {
+        connections?: ConnectedAccount[];
+      };
+      const composioConns: ConnectedAccount[] = (composioData.connections ?? []).map(
+        (c) => ({ ...c, source: "composio" }),
+      );
+
+      let nativeConns: ConnectedAccount[] = [];
+      if (nativeRes && nativeRes.ok) {
+        const nativeData = (await nativeRes.json()) as {
+          connections?: ConnectedAccount[];
+        };
+        nativeConns = nativeData.connections ?? [];
+      }
+
+      // Dédup : si un slug existe en composio ET en native, on garde le
+      // composio (qui prouve un OAuth explicite, plus "fort"). Le natif est
+      // un fallback automatique du SSO.
+      const composioSlugs = new Set(
+        composioConns.map((c) => c.appName.toLowerCase()),
+      );
+      const filteredNative = nativeConns.filter(
+        (n) => !composioSlugs.has(n.appName.toLowerCase()),
+      );
+      setAccounts([...composioConns, ...filteredNative]);
     } catch (err) {
       console.error("[Composio] failed to load connections", err);
       setSdkError(err instanceof Error ? err.message : "network_error");
@@ -203,12 +333,33 @@ export function ConnectionsHub() {
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return null;
-    return apps.filter(
+
+    // Match classique fuzzy nom/key/description.
+    const fuzzy = apps.filter(
       (a) =>
         a.key.includes(q) ||
         a.name.toLowerCase().includes(q) ||
         a.description.toLowerCase().includes(q),
     );
+
+    // Match intent : la query contient-elle un mot-clé d'une famille ?
+    // Si oui, on remonte les slugs de cette famille EN TÊTE — sauf ceux
+    // déjà dans fuzzy (pour éviter les doublons).
+    const intentSlugs = new Set<string>();
+    for (const intent of INTENT_KEYWORDS) {
+      if (intent.keywords.some((kw) => q.includes(kw))) {
+        for (const s of intent.slugs) intentSlugs.add(s);
+      }
+    }
+    const fuzzyKeys = new Set(fuzzy.map((a) => a.key));
+    const intentMatches = Array.from(intentSlugs)
+      .map((slug) => apps.find((a) => a.key === slug))
+      .filter((a): a is ComposioApp => {
+        if (!a) return false;
+        return !fuzzyKeys.has(a.key);
+      });
+
+    return [...intentMatches, ...fuzzy];
   }, [apps, searchQuery]);
 
   // Suggestions = picks par défaut filtrés des déjà-connectés. Toujours 3.
@@ -256,18 +407,26 @@ export function ConnectionsHub() {
   }, [apps]);
 
   // Ordre du wallpaper : connectés d'abord (lecture immédiate de l'état
-  // de la stack), puis alphabétique. Filtre par activeCategory si défini.
+  // de la stack), puis alphabétique. Filtre par activeCategory et/ou
+  // attentionFilter si définis.
   const wallpaperApps = useMemo(() => {
-    const filtered = activeCategory
-      ? apps.filter((a) => a.categories.includes(activeCategory))
-      : apps;
+    let filtered = apps;
+    if (activeCategory) {
+      filtered = filtered.filter((a) => a.categories.includes(activeCategory));
+    }
+    if (attentionFilter) {
+      filtered = filtered.filter((a) => {
+        const status = statusBySlug.get(a.key);
+        return status && status !== "active";
+      });
+    }
     return [...filtered].sort((a, b) => {
       const aConn = connectedSlugs.has(a.key) ? 0 : 1;
       const bConn = connectedSlugs.has(b.key) ? 0 : 1;
       if (aConn !== bConn) return aConn - bConn;
       return a.name.localeCompare(b.name, "fr");
     });
-  }, [apps, activeCategory, connectedSlugs]);
+  }, [apps, activeCategory, attentionFilter, connectedSlugs, statusBySlug]);
 
   const wallpaperVisible = useMemo(
     () => wallpaperApps.slice(0, wallpaperLimit),
@@ -585,6 +744,12 @@ export function ConnectionsHub() {
         connectedCount={stats.connectedCount}
         catalogCount={stats.catalogCount}
         attentions={stats.attentions}
+        attentionFilter={attentionFilter}
+        onToggleAttentionFilter={() => {
+          setAttentionFilter((s) => !s);
+          setActiveCategory(null);
+          setWallpaperLimit(WALLPAPER_PAGE);
+        }}
       />
 
       {searchResults !== null ? (
@@ -604,8 +769,14 @@ export function ConnectionsHub() {
               onSelect={openDrawer}
             />
           ) : (
-            <EmptyStage />
+            <OnboardingStage apps={apps} onSelect={openDrawer} />
           )}
+
+          <BundlesSection
+            apps={apps}
+            connectedSlugs={connectedSlugs}
+            onSelect={openDrawer}
+          />
 
           {suggestions.length > 0 && (
             <>
@@ -614,12 +785,29 @@ export function ConnectionsHub() {
             </>
           )}
 
-          <SectionLabel label="Catalogue" count={apps.length} />
-          <CategoriesBar
-            categories={categoriesWithCount}
-            active={activeCategory}
-            onChange={onCategoryChange}
+          <SectionLabel
+            label={attentionFilter ? "À vérifier" : "Catalogue"}
+            count={attentionFilter ? wallpaperApps.length : apps.length}
           />
+          {attentionFilter && (
+            <div className="px-8 pb-3">
+              <button
+                type="button"
+                onClick={() => setAttentionFilter(false)}
+                className="t-9 font-mono uppercase text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
+                style={{ letterSpacing: "var(--tracking-section)" }}
+              >
+                ← Voir tout le catalogue
+              </button>
+            </div>
+          )}
+          {!attentionFilter && (
+            <CategoriesBar
+              categories={categoriesWithCount}
+              active={activeCategory}
+              onChange={onCategoryChange}
+            />
+          )}
           <Wallpaper
             apps={wallpaperVisible}
             totalFiltered={wallpaperApps.length}
@@ -689,12 +877,16 @@ function Header({
   connectedCount,
   catalogCount,
   attentions,
+  attentionFilter,
+  onToggleAttentionFilter,
 }: {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   connectedCount: number;
   catalogCount: number;
   attentions: number;
+  attentionFilter: boolean;
+  onToggleAttentionFilter: () => void;
 }) {
   return (
     <div
@@ -750,16 +942,29 @@ function Header({
         <span className="text-[var(--text-ghost)]">/</span>
         <span className="text-[var(--text-faint)]">{catalogCount}</span>
         {attentions > 0 && (
-          <span
-            className="px-2 py-1 rounded-pill border ml-1"
+          <button
+            type="button"
+            onClick={onToggleAttentionFilter}
+            aria-pressed={attentionFilter}
+            title={
+              attentionFilter
+                ? "Cliquer pour réinitialiser le filtre"
+                : "Filtrer le catalogue aux services qui demandent ton attention"
+            }
+            className="px-2 py-1 rounded-pill border ml-1 transition-all cursor-pointer hover:opacity-80"
             style={{
               color: "var(--color-error)",
-              background: "var(--color-error-bg)",
+              background: attentionFilter
+                ? "var(--color-error)"
+                : "var(--color-error-bg)",
               borderColor: "var(--color-error-border)",
+              ...(attentionFilter
+                ? { color: "var(--bg)", fontWeight: "var(--weight-semibold)" }
+                : null),
             }}
           >
             ⚠ {attentions}
-          </span>
+          </button>
         )}
       </div>
     </div>
@@ -941,24 +1146,248 @@ function StageTile({
   );
 }
 
-function EmptyStage() {
+// Starter pack pour les utilisateurs sans connexion. Quatre slugs Composio
+// "essentiels" pour 80 % des cas d'usage (agenda, équipe, doc, fichiers).
+// Si ces apps sont absentes du catalogue (ex: connectable=false côté tenant),
+// elles n'apparaissent simplement pas dans le starter pack.
+const STARTER_PICKS = ["googlecalendar", "slack", "notion", "googledrive"];
+
+function OnboardingStage({
+  apps,
+  onSelect,
+}: {
+  apps: ComposioApp[];
+  onSelect: (app: ComposioApp) => void;
+}) {
+  const starters = STARTER_PICKS
+    .map((slug) => apps.find((a) => a.key === slug))
+    .filter((a): a is ComposioApp => Boolean(a));
+
   return (
     <div className="px-8 pb-2">
-      <div
-        className="px-6 py-10 text-center rounded-md"
-        style={{ background: "var(--bg-elev)", border: "1px dashed var(--border-default)" }}
+      <p
+        className="t-11 mb-3 text-[var(--text-muted)]"
+        style={{ lineHeight: "var(--leading-snug)" }}
       >
-        <p
-          className="t-11 font-mono uppercase mb-2 text-[var(--text-faint)]"
-          style={{ letterSpacing: "var(--tracking-brand)" }}
+        Aucun service connecté pour le moment. Pour démarrer, on te recommande
+        ces quatre essentiels — ton agent gagne immédiatement la moitié de ses
+        capacités quotidiennes.
+      </p>
+      {starters.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {starters.map((app) => (
+            <StarterTile key={app.key} app={app} onClick={() => onSelect(app)} />
+          ))}
+        </div>
+      ) : (
+        <div
+          className="px-6 py-8 text-center rounded-md"
+          style={{
+            background: "var(--bg-elev)",
+            border: "1px dashed var(--border-default)",
+          }}
         >
-          AUCUN SERVICE CONNECTÉ
-        </p>
-        <p className="t-13 text-[var(--text-soft)] leading-relaxed max-w-md mx-auto">
-          Pioche un logo dans le catalogue ci-dessous pour étendre ton agent.
-        </p>
-      </div>
+          <p className="t-13 text-[var(--text-soft)]">
+            Pioche un logo dans le catalogue ci-dessous pour étendre ton agent.
+          </p>
+        </div>
+      )}
     </div>
+  );
+}
+
+function StarterTile({
+  app,
+  onClick,
+}: {
+  app: ComposioApp;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative aspect-square flex flex-col rounded-md border transition-all hover:opacity-90"
+      style={{
+        background: "var(--surface)",
+        borderColor: "var(--border-default)",
+        boxShadow: "0 4px 16px color-mix(in srgb, var(--cykan) 8%, transparent)",
+      }}
+    >
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-2">
+        <AppLogo app={app} size={56} />
+        <span
+          className="t-13 text-center"
+          style={{
+            fontWeight: "var(--weight-semibold)",
+            color: "var(--text)",
+            letterSpacing: "-0.005em",
+          }}
+        >
+          {app.name}
+        </span>
+      </div>
+      <span
+        className="shrink-0 t-9 font-mono uppercase text-center py-2 border-t truncate"
+        style={{
+          letterSpacing: "var(--tracking-section)",
+          color: "var(--cykan-deep)",
+          background: "var(--cykan-bgsoft)",
+          borderColor: "var(--cykan-border)",
+        }}
+      >
+        connecter →
+      </span>
+    </button>
+  );
+}
+
+// ─── Bundles use-case : 3 stacks pré-pensées ──────────────────
+
+function BundlesSection({
+  apps,
+  connectedSlugs,
+  onSelect,
+}: {
+  apps: ComposioApp[];
+  connectedSlugs: Set<string>;
+  onSelect: (app: ComposioApp) => void;
+}) {
+  // Pour chaque bundle : enrichir avec les apps disponibles + progress.
+  // Les apps qui ne sont pas dans le catalogue (rare — slug inconnu) sont
+  // silencieusement skippées.
+  const enriched = BUNDLES.map((b) => {
+    const bundleApps = b.slugs
+      .map((slug) => apps.find((a) => a.key === slug))
+      .filter((a): a is ComposioApp => Boolean(a));
+    const connectedCount = bundleApps.filter((a) =>
+      connectedSlugs.has(a.key),
+    ).length;
+    const next = bundleApps.find((a) => !connectedSlugs.has(a.key));
+    return { ...b, apps: bundleApps, connectedCount, total: bundleApps.length, next };
+  }).filter((b) => b.apps.length > 0);
+
+  // Si tous les bundles sont 100 % connectés (cas dégénéré : 10+ services
+  // déjà branchés), on cache la section — elle n'apporte plus rien.
+  const allComplete = enriched.every((b) => b.connectedCount === b.total);
+  if (allComplete) return null;
+
+  return (
+    <>
+      <SectionLabel label="Stacks" count={enriched.length} />
+      <p
+        className="px-8 pb-3 t-11 text-[var(--text-muted)]"
+        style={{ lineHeight: "var(--leading-snug)" }}
+      >
+        Trois groupes pré-pensés qui couvrent un workflow complet. Connecte le
+        service suivant en un clic — pas de cascade automatique.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-8 pb-2">
+        {enriched.map((b) => (
+          <BundleCard
+            key={b.id}
+            label={b.label}
+            apps={b.apps}
+            connectedCount={b.connectedCount}
+            total={b.total}
+            connectedSlugs={connectedSlugs}
+            next={b.next}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function BundleCard({
+  label,
+  apps,
+  connectedCount,
+  total,
+  connectedSlugs,
+  next,
+  onSelect,
+}: {
+  label: string;
+  apps: ComposioApp[];
+  connectedCount: number;
+  total: number;
+  connectedSlugs: Set<string>;
+  next: ComposioApp | undefined;
+  onSelect: (app: ComposioApp) => void;
+}) {
+  const isComplete = connectedCount === total;
+  return (
+    <button
+      type="button"
+      onClick={() => next && onSelect(next)}
+      disabled={isComplete}
+      className="group flex flex-col text-left px-4 py-4 border rounded-md transition-colors"
+      style={{
+        background: isComplete ? "var(--cykan-bgsoft)" : "var(--surface)",
+        borderColor: isComplete ? "var(--cykan-border)" : "var(--border-shell)",
+        cursor: isComplete ? "default" : "pointer",
+      }}
+    >
+      <div className="flex items-baseline justify-between gap-2 mb-3">
+        <span
+          className="t-13"
+          style={{ fontWeight: "var(--weight-semibold)", color: "var(--text)" }}
+        >
+          {label}
+        </span>
+        <span
+          className="t-9 font-mono uppercase whitespace-nowrap"
+          style={{
+            letterSpacing: "var(--tracking-section)",
+            color: isComplete ? "var(--cykan-deep)" : "var(--text-faint)",
+          }}
+        >
+          {connectedCount} / {total}
+        </span>
+      </div>
+
+      {/* Cluster de logos avec overlap léger. Connectés en couleur normale,
+          non-connectés en grayscale fort pour identifier ce qui reste. */}
+      <div className="flex items-center mb-3">
+        {apps.slice(0, 5).map((a, i) => {
+          const conn = connectedSlugs.has(a.key);
+          return (
+            <span
+              key={a.key}
+              className="inline-flex shrink-0"
+              style={{
+                marginLeft: i === 0 ? 0 : "calc(-1 * var(--space-2))",
+                filter: conn ? undefined : "grayscale(0.85) opacity(0.55)",
+              }}
+            >
+              <AppLogo app={a} size={32} />
+            </span>
+          );
+        })}
+        {apps.length > 5 && (
+          <span
+            className="t-9 font-mono ml-2 text-[var(--text-faint)]"
+            style={{ letterSpacing: "var(--tracking-hairline)" }}
+          >
+            +{apps.length - 5}
+          </span>
+        )}
+      </div>
+
+      {/* CTA — soit "Connecter le suivant : X", soit "✓ complet" */}
+      <div
+        className="t-11 font-mono uppercase mt-auto pt-3 border-t"
+        style={{
+          letterSpacing: "var(--tracking-section)",
+          borderColor: "var(--border-shell)",
+          color: isComplete ? "var(--cykan-deep)" : "var(--text)",
+        }}
+      >
+        {isComplete ? "✓ complet" : `Connecter ${next?.name ?? ""} →`}
+      </div>
+    </button>
   );
 }
 
@@ -1442,10 +1871,9 @@ function AppDrawer({
 
   return (
     <>
-      {/* Backdrop modal — le DS n'expose pas (encore) de token "overlay-scrim". */}
       <div
         className="fixed inset-0 z-40"
-        style={{ background: "rgba(0,0,0,0.40)" }}
+        style={{ background: "var(--overlay-scrim)" }}
         onClick={onClose}
         aria-hidden
       />
@@ -1523,7 +1951,9 @@ function AppDrawer({
           className="shrink-0 px-6 py-4 border-t"
           style={{ background: "var(--bg-elev)", borderColor: "var(--border-shell)" }}
         >
-          {isConnected ? (
+          {isConnected && connectedAccount?.source === "native" ? (
+            <NativeFooter />
+          ) : isConnected ? (
             <button
               type="button"
               onClick={onDisconnect}
@@ -1551,6 +1981,33 @@ function AppDrawer({
         </div>
       </aside>
     </>
+  );
+}
+
+// Footer pour les services connectés via le SSO initial (Google/Microsoft).
+// Pas de bouton "Déconnecter" parce que ces tokens viennent du login —
+// pour révoquer, l'utilisateur doit logout / changer de compte SSO.
+function NativeFooter() {
+  return (
+    <div className="flex flex-col gap-2">
+      <p
+        className="t-9 font-mono uppercase"
+        style={{
+          letterSpacing: "var(--tracking-section)",
+          color: "var(--cykan-deep)",
+        }}
+      >
+        Géré via le SSO
+      </p>
+      <p
+        className="t-11"
+        style={{ color: "var(--text-soft)", lineHeight: "var(--leading-snug)" }}
+      >
+        L&apos;accès à ce service vient de ton login Google/Microsoft initial —
+        Hearst l&apos;utilise nativement, sans OAuth additionnel. Pour révoquer,
+        change de session ou retire les permissions côté provider.
+      </p>
+    </div>
   );
 }
 

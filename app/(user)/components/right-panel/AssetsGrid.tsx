@@ -18,6 +18,7 @@ import { AssetMiniChart } from "./AssetMiniChart";
 
 interface AssetsGridProps {
   assets: RightPanelData["assets"];
+  reportSuggestions?: RightPanelData["reportSuggestions"];
   activeThreadId: string | null;
   loading: boolean;
 }
@@ -31,14 +32,44 @@ function assetAccent(type: string): string {
   return "var(--text-faint)";
 }
 
-export function AssetsGrid({ assets, activeThreadId, loading }: AssetsGridProps) {
+export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading }: AssetsGridProps) {
   // Optimistic delete : on cache localement les ids supprimés en attendant
   // le refresh SSE. Pas de mutation directe de la prop `assets`.
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
+  const [runningSpecs, setRunningSpecs] = useState<Set<string>>(new Set());
 
   const visibleAssets = assets.filter((a) => !pendingDeletes.has(a.id));
+  const visibleSuggestions = (reportSuggestions ?? []).filter(
+    (s) => !runningSpecs.has(s.specId),
+  );
 
-  if (loading && visibleAssets.length === 0) {
+  const handleRunSuggestion = async (specId: string, title: string) => {
+    setRunningSpecs((prev) => new Set(prev).add(specId));
+    try {
+      const res = await fetch(
+        `/api/v2/reports/${encodeURIComponent(specId)}/run`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ threadId: activeThreadId ?? undefined }),
+          credentials: "include",
+        },
+      );
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      toast.success("Report généré", title);
+    } catch (err) {
+      setRunningSpecs((prev) => {
+        const next = new Set(prev);
+        next.delete(specId);
+        return next;
+      });
+      toast.error("Échec génération", err instanceof Error ? err.message : "Erreur inconnue");
+    }
+  };
+
+  if (loading && visibleAssets.length === 0 && visibleSuggestions.length === 0) {
     return (
       <div className="px-4 py-8 t-9 font-mono uppercase tracking-[0.22em] text-[var(--text-ghost)] text-center">
         Chargement…
@@ -46,7 +77,7 @@ export function AssetsGrid({ assets, activeThreadId, loading }: AssetsGridProps)
     );
   }
 
-  if (visibleAssets.length === 0) {
+  if (visibleAssets.length === 0 && visibleSuggestions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-10 gap-4">
         <span className="w-12 h-12 text-[var(--text-faint)]" style={{ opacity: 0.3 }} aria-hidden>
@@ -85,8 +116,49 @@ export function AssetsGrid({ assets, activeThreadId, loading }: AssetsGridProps)
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 px-3 py-3">
-      {visibleAssets.map((asset) => {
+    <div className="flex flex-col">
+      {visibleSuggestions.length > 0 && (
+        <div className="flex flex-col" style={{ paddingLeft: "var(--space-3)", paddingRight: "var(--space-3)", paddingTop: "var(--space-3)", gap: "var(--space-2)" }}>
+          <div
+            className="t-9 font-mono uppercase text-[var(--text-faint)]"
+            style={{ letterSpacing: "0.22em", paddingBottom: "var(--space-1)" }}
+          >
+            Reports suggérés
+          </div>
+          {visibleSuggestions.map((s) => (
+            <button
+              key={s.specId}
+              type="button"
+              onClick={() => handleRunSuggestion(s.specId, s.title)}
+              className="halo-asset-card w-full text-left flex flex-col"
+              style={{
+                padding: "var(--space-3)",
+                gap: "var(--space-1)",
+                borderLeft: "2px solid var(--cykan)",
+              }}
+              title={s.description}
+            >
+              <div className="flex items-center justify-between">
+                <span className="t-11 text-[var(--text-soft)] font-medium">{s.title}</span>
+                <span
+                  className="t-9 font-mono uppercase"
+                  style={{
+                    color: s.status === "ready" ? "var(--cykan)" : "var(--text-faint)",
+                    letterSpacing: "0.22em",
+                  }}
+                >
+                  {s.status === "ready" ? "lancer" : `${s.requiredApps.length - s.missingApps.length}/${s.requiredApps.length}`}
+                </span>
+              </div>
+              <span className="t-9 text-[var(--text-faint)]" style={{ lineHeight: 1.4 }}>
+                {s.description}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2" style={{ padding: "var(--space-3)" }}>
+        {visibleAssets.map((asset) => {
         const accent = assetAccent(asset.type);
         return (
           <div key={asset.id} className="relative group">
@@ -141,6 +213,7 @@ export function AssetsGrid({ assets, activeThreadId, loading }: AssetsGridProps)
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

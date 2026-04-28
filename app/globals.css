@@ -47,6 +47,12 @@
   --cykan-border: color-mix(in srgb, var(--cykan) 25%, transparent);
   --cykan-surface: color-mix(in srgb, var(--cykan) 6%, transparent);
 
+  /* Halo logo shading — bright/cool variants pour shimmer cykan */
+  --halo-shade-bright: color-mix(in srgb, var(--cykan) 70%, #ffffff 30%);
+  --halo-shade-cool: color-mix(in srgb, var(--cykan) 70%, #000000 30%);
+  --halo-edge-light: rgba(255, 255, 255, 0.55);
+  --halo-edge-dark: rgba(0, 0, 0, 0.65);
+
   /* Glow shadows — Luxurious & Wide */
   --glow-cyan-sm: 0 0 30px rgba(45, 212, 191, 0.1);
   --glow-cyan-md: 0 0 60px rgba(45, 212, 191, 0.15);
@@ -114,6 +120,9 @@
   --border-soft: rgba(255, 255, 255, 0.04);
   --border-input: rgba(255, 255, 255, 0.08);
   --ghost-modal-top: rgba(255, 255, 255, 0.06);
+  /* Overlay scrim — fond modal/drawer derrière. Valeur identique en dark
+   * et light : on assombrit toujours par rapport au contenu source. */
+  --overlay-scrim: rgba(0, 0, 0, 0.40);
   --text-on-cykan: #000000;
   --card-flat-bg: rgba(255, 255, 255, 0.02);
   --card-flat-border: rgba(255, 255, 255, 0.06);
@@ -265,6 +274,9 @@
   --border-soft: rgba(28, 29, 32, 0.05);
   --border-input: rgba(28, 29, 32, 0.12);
   --ghost-modal-top: rgba(28, 29, 32, 0.10);
+  /* Voir :root pour la doc. Light theme : même opacité — l'utilisateur
+   * voit du sombre derrière le modal, indépendamment du thème. */
+  --overlay-scrim: rgba(0, 0, 0, 0.40);
   --text-on-cykan: #000000;
   --border-subtle: rgba(28, 29, 32, 0.08);
   --border-default: rgba(28, 29, 32, 0.14);
@@ -1012,80 +1024,337 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   50% { transform: scale(1.4); opacity: 0.7; }
 }
 
-/* ── halo-logo-3d — H Hearst extrudé en illusion 3D ─────────────
-   Signature visuelle de la PulseStrip du RightPanel.
-   6 couches SVG du H Hearst empilées sur Z (effet d'épaisseur), avec
-   rotation Y continue en mode running. Pas de WebGL, CSS pur via
-   transform-style: preserve-3d + perspective.
-   data-state pilote la couleur (currentColor) et l'animation. */
+/* ── halo-logo-3d — Signature 3D premium du H Hearst ──────────────
+ * Composition 4-strates :
+ *   1. Halo orbital   (.halo-logo-3d__halo)     anneaux + particules
+ *   2. Stack volume   (.halo-logo-3d__stack)    10 couches sur axe Z
+ *   3. Shimmer cykan  (gradient SVG animé)      sur la couche avant
+ *   4. Glitch overlay (.halo-logo-3d__glitch)   chromatic + scan (error)
+ *
+ * Le H reste statique en 2D : la dimension 3D vient de la profondeur
+ * de stack (CSS preserve-3d) et du parallax inter-couches en running,
+ * pas d'une rotation qui désorienterait la lecture. data-state pilote
+ * couleur / cadence / intensité de chaque strate.
+ *
+ * Reduced-motion → fallback statique mono-couche (.halo-logo-3d--reduced).
+ * Cycles d'animation scopés au composant (--halo-cycle-*), pas globaux. */
+
 .halo-logo-3d {
+  --halo-color: var(--text-faint);
+  --halo-glow: 0 0 0 transparent;
+  --halo-cycle-breath: 6.5s;
+  --halo-cycle-rotate: 14s;
+  --halo-cycle-orbit: 9s;
+  --halo-cycle-shimmer: 4.5s;
+  --halo-cycle-pulse: 1.6s;
+  --halo-cycle-ring: 3.2s;
+  --halo-cycle-glitch: 4s;
+  --halo-cycle-scan: 2.8s;
+  --halo-tilt-x: 6deg;
+  --halo-tilt-y: -10deg;
+
   position: relative;
-  perspective: 240px;
-  pointer-events: none;
   display: block;
+  pointer-events: none;
+  perspective: 320px;
+  perspective-origin: 50% 50%;
+  color: var(--halo-color);
+  filter: drop-shadow(var(--halo-glow));
+  transition:
+    color var(--duration-base) var(--ease-standard),
+    filter var(--duration-slow) var(--ease-out-soft);
 }
-.halo-logo-3d-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transform: rotateY(-18deg) rotateX(8deg);
-  transition: transform var(--duration-slow, 300ms) var(--ease-out-soft, ease);
-  filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.18));
+
+/* Halo orbital (strate 1) ──────────────────────────────────── */
+.halo-logo-3d__halo {
+  position: absolute;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  pointer-events: none;
+  overflow: visible;
+  color: var(--halo-color);
+  opacity: 0.85;
 }
-.halo-logo-3d-layer {
+.halo-logo-3d__aura {
+  transform-origin: 50% 50%;
+  animation: halo-logo-3d-breath var(--halo-cycle-breath) var(--ease-out-soft) infinite;
+}
+.halo-logo-3d__ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.8;
+  opacity: 0;
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+  animation: halo-logo-3d-ring var(--halo-cycle-ring) var(--ease-out-soft) infinite;
+  animation-play-state: paused;
+}
+.halo-logo-3d__ring--1 { animation-delay: 0s; }
+.halo-logo-3d__ring--2 { animation-delay: calc(var(--halo-cycle-ring) * -0.33); }
+.halo-logo-3d__ring--3 { animation-delay: calc(var(--halo-cycle-ring) * -0.66); }
+.halo-logo-3d__orbit {
+  transform-origin: 50% 50%;
+  transform-box: fill-box;
+  animation-duration: var(--halo-cycle-orbit);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+}
+.halo-logo-3d__orbit--cw {
+  animation-name: halo-logo-3d-orbit-cw;
+}
+.halo-logo-3d__orbit--ccw {
+  animation-name: halo-logo-3d-orbit-ccw;
+  animation-duration: calc(var(--halo-cycle-orbit) * 1.4);
+}
+.halo-logo-3d__particle {
+  fill: currentColor;
+  opacity: 0;
+  filter: drop-shadow(0 0 1.2px currentColor);
+}
+
+/* Stack volumétrique (strate 2 + 3) ────────────────────────── */
+.halo-logo-3d__stage {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.halo-logo-3d-layer svg {
+.halo-logo-3d__stack {
+  position: relative;
+  width: 70%;
+  height: 70%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y));
+  transition: transform var(--duration-slow) var(--ease-out-soft);
+  will-change: transform;
+}
+.halo-logo-3d__layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateZ(var(--layer-z));
+  opacity: var(--layer-opacity);
+  color: var(--halo-color);
+  will-change: transform, opacity;
+}
+.halo-logo-3d__layer[data-position="back"] {
+  /* Couche fond — légèrement assombrie pour la profondeur */
+  filter: brightness(0.55) blur(0.4px);
+}
+.halo-logo-3d__layer[data-position="front"] {
+  /* Couche avant — bevel highlight via drop-shadow inversé */
+  filter:
+    drop-shadow(0 0.5px 0 var(--halo-edge-light))
+    drop-shadow(0 -0.5px 0 var(--halo-edge-dark));
+}
+.halo-logo-3d__h {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
-/* Running — rotation Y continue, glow plus marqué */
-.halo-logo-3d[data-state="running"] .halo-logo-3d-inner {
-  animation: halo-logo-3d-rotate 9s linear infinite;
-  filter: drop-shadow(0 0 10px rgba(45, 212, 191, 0.40));
+/* Glitch overlay (strate 4 — état error) ──────────────────── */
+.halo-logo-3d__glitch {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
-.halo-logo-3d[data-state="running"] .halo-logo-3d-layer {
+.halo-logo-3d__glitch-ghost {
+  position: absolute;
+  width: 70%;
+  height: 70%;
+  display: block;
+}
+.halo-logo-3d__glitch-ghost--cyan {
   color: var(--cykan);
+  transform: translateX(-1.5%);
 }
-
-/* Awaiting — pas de rotation, couleur warn, légère oscillation */
-.halo-logo-3d[data-state="awaiting"] .halo-logo-3d-inner {
-  animation: halo-logo-3d-sway 4s ease-in-out infinite;
-  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.40));
-}
-.halo-logo-3d[data-state="awaiting"] .halo-logo-3d-layer {
-  color: var(--warn);
-}
-
-/* Error — couleur danger, statique avec léger jitter visuel via opacity */
-.halo-logo-3d[data-state="error"] .halo-logo-3d-layer {
+.halo-logo-3d__glitch-ghost--magenta {
   color: var(--danger);
+  transform: translateX(1.5%);
 }
-.halo-logo-3d[data-state="error"] .halo-logo-3d-inner {
-  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.40));
+.halo-logo-3d__scanline {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  height: 1.5px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--halo-edge-light) 50%,
+    transparent 100%
+  );
+  top: 50%;
+  opacity: 0;
 }
 
-/* Idle — couleur faint, pose 3D maintenue */
-.halo-logo-3d[data-state="idle"] .halo-logo-3d-layer {
-  color: var(--text-faint);
+/* État : idle ─────────────────────────────────────────────── */
+.halo-logo-3d[data-state="idle"] {
+  --halo-color: var(--text-faint);
+  --halo-glow: 0 0 6px color-mix(in srgb, var(--text-faint) 30%, transparent);
 }
-.halo-logo-3d[data-state="idle"] .halo-logo-3d-inner {
-  filter: none;
+.halo-logo-3d[data-state="idle"] .halo-logo-3d__stack {
+  animation: halo-logo-3d-breath-3d var(--halo-cycle-breath) var(--ease-out-soft) infinite;
+}
+.halo-logo-3d[data-state="idle"] .halo-logo-3d__halo {
+  opacity: 0.35;
+}
+.halo-logo-3d[data-state="idle"] .halo-logo-3d__ring,
+.halo-logo-3d[data-state="idle"] .halo-logo-3d__particle {
+  opacity: 0;
 }
 
-@keyframes halo-logo-3d-rotate {
-  from { transform: rotateY(-18deg) rotateX(8deg); }
-  to   { transform: rotateY(342deg) rotateX(8deg); }
+/* État : running ──────────────────────────────────────────── */
+.halo-logo-3d[data-state="running"] {
+  --halo-color: var(--cykan);
+  --halo-glow:
+    0 0 8px color-mix(in srgb, var(--cykan) 55%, transparent),
+    0 0 22px color-mix(in srgb, var(--cykan) 28%, transparent);
 }
-@keyframes halo-logo-3d-sway {
-  0%, 100% { transform: rotateY(-18deg) rotateX(8deg); }
-  50%      { transform: rotateY(-2deg)  rotateX(8deg); }
+.halo-logo-3d[data-state="running"] .halo-logo-3d__stack {
+  animation: halo-logo-3d-tilt-3d var(--halo-cycle-rotate) var(--ease-out-soft) infinite;
+}
+.halo-logo-3d[data-state="running"] .halo-logo-3d__ring {
+  animation-play-state: running;
+}
+.halo-logo-3d[data-state="running"] .halo-logo-3d__orbit {
+  animation-play-state: running;
+}
+.halo-logo-3d[data-state="running"] .halo-logo-3d__particle {
+  opacity: 1;
+}
+
+/* État : awaiting ─────────────────────────────────────────── */
+.halo-logo-3d[data-state="awaiting"] {
+  --halo-color: var(--warn);
+  --halo-glow: 0 0 10px color-mix(in srgb, var(--warn) 45%, transparent);
+}
+.halo-logo-3d[data-state="awaiting"] .halo-logo-3d__stack {
+  animation: halo-logo-3d-pulse-3d var(--halo-cycle-pulse) var(--ease-out-soft) infinite;
+}
+.halo-logo-3d[data-state="awaiting"] .halo-logo-3d__ring--1 {
+  animation: halo-logo-3d-ring-contract var(--halo-cycle-pulse) var(--ease-out-soft) infinite;
+  animation-play-state: running;
+}
+.halo-logo-3d[data-state="awaiting"] .halo-logo-3d__ring--2,
+.halo-logo-3d[data-state="awaiting"] .halo-logo-3d__ring--3 {
+  display: none;
+}
+
+/* État : error ────────────────────────────────────────────── */
+.halo-logo-3d[data-state="error"] {
+  --halo-color: var(--danger);
+  --halo-glow: 0 0 10px color-mix(in srgb, var(--danger) 45%, transparent);
+}
+.halo-logo-3d[data-state="error"] .halo-logo-3d__stack {
+  animation: halo-logo-3d-glitch-jolt var(--halo-cycle-glitch) steps(1, end) infinite;
+}
+.halo-logo-3d[data-state="error"] .halo-logo-3d__glitch {
+  animation: halo-logo-3d-glitch-flash var(--halo-cycle-glitch) steps(1, end) infinite;
+}
+.halo-logo-3d[data-state="error"] .halo-logo-3d__scanline {
+  animation: halo-logo-3d-scan var(--halo-cycle-scan) var(--ease-standard) infinite;
+}
+
+/* Fallback reduced-motion ─────────────────────────────────── */
+.halo-logo-3d--reduced {
+  position: relative;
+  display: block;
+  pointer-events: none;
+}
+.halo-logo-3d__static {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.halo-logo-3d--reduced[data-state="idle"]      { color: var(--text-faint); }
+.halo-logo-3d--reduced[data-state="running"]   { color: var(--cykan); }
+.halo-logo-3d--reduced[data-state="awaiting"]  { color: var(--warn); }
+.halo-logo-3d--reduced[data-state="error"]     { color: var(--danger); }
+
+/* Garde-fou système : si l'utilisateur active reduced-motion
+   après le mount, on coupe toutes les animations même si la
+   variante non-reduced reste rendue (transition state). */
+@media (prefers-reduced-motion: reduce) {
+  .halo-logo-3d *,
+  .halo-logo-3d *::before,
+  .halo-logo-3d *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Keyframes ────────────────────────────────────────────────── */
+@keyframes halo-logo-3d-breath {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50%      { transform: scale(1.04); opacity: 1; }
+}
+@keyframes halo-logo-3d-breath-3d {
+  0%, 100% {
+    transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y)) scale3d(1, 1, 1);
+  }
+  50% {
+    transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y)) scale3d(1.015, 1.015, 1);
+  }
+}
+@keyframes halo-logo-3d-tilt-3d {
+  0%   { transform: rotateX(var(--halo-tilt-x)) rotateY(-14deg); }
+  25%  { transform: rotateX(calc(var(--halo-tilt-x) + 2deg)) rotateY(-2deg); }
+  50%  { transform: rotateX(var(--halo-tilt-x)) rotateY(14deg); }
+  75%  { transform: rotateX(calc(var(--halo-tilt-x) - 2deg)) rotateY(2deg); }
+  100% { transform: rotateX(var(--halo-tilt-x)) rotateY(-14deg); }
+}
+@keyframes halo-logo-3d-pulse-3d {
+  0%, 100% {
+    transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y)) scale3d(1, 1, 1);
+  }
+  50% {
+    transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y)) scale3d(1.06, 1.06, 1);
+  }
+}
+@keyframes halo-logo-3d-ring {
+  0%   { transform: scale(0.55); opacity: 0.55; }
+  60%  { opacity: 0.18; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+@keyframes halo-logo-3d-ring-contract {
+  0%, 100% { transform: scale(1.05); opacity: 0.45; }
+  50%      { transform: scale(0.85); opacity: 0.85; }
+}
+@keyframes halo-logo-3d-orbit-cw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes halo-logo-3d-orbit-ccw {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+@keyframes halo-logo-3d-glitch-jolt {
+  0%, 92%, 100% { transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y)) translate3d(0, 0, 0); }
+  93%           { transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y)) translate3d(-1.5%, 0, 0); }
+  95%           { transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y)) translate3d(1px, -1px, 0); }
+  97%           { transform: rotateX(var(--halo-tilt-x)) rotateY(var(--halo-tilt-y)) translate3d(0.8%, 0, 0); }
+}
+@keyframes halo-logo-3d-glitch-flash {
+  0%, 92%, 100% { opacity: 0; }
+  93%, 96%      { opacity: 0.7; }
+  94%           { opacity: 0; }
+}
+@keyframes halo-logo-3d-scan {
+  0%   { top: -5%; opacity: 0; }
+  10%  { opacity: 0.85; }
+  90%  { opacity: 0.85; }
+  100% { top: 105%; opacity: 0; }
 }
 
 /* ── Run halo indicator — Phase clusters ──────────────────────

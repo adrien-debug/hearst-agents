@@ -31,6 +31,7 @@ import type { TenantScope } from "@/lib/multi-tenant/types";
 import { buildAgentSystemPrompt } from "./system-prompt";
 import { storeAsset, type Asset, type AssetKind } from "@/lib/assets/types";
 import { randomUUID } from "crypto";
+import { buildProposeReportSpecTool } from "@/lib/reports/spec/llm-tool";
 
 export interface AiPipelineInput {
   userId: string;
@@ -400,6 +401,14 @@ export async function runAiPipeline(
     ...(input.threadId
       ? {
           create_artifact: buildCreateArtifactTool(engine, eventBus, {
+            threadId: input.threadId,
+            userId: input.userId,
+            tenantId: input.tenantId ?? "dev-tenant",
+            workspaceId: input.workspaceId ?? "dev-workspace",
+          }),
+          // propose_report_spec — compose un report cross-app (Stripe + HubSpot
+          // + Gmail + …) à la volée. Asset persisté → apparaît dans focal.
+          propose_report_spec: buildProposeReportSpecTool(engine, eventBus, {
             threadId: input.threadId,
             userId: input.userId,
             tenantId: input.tenantId ?? "dev-tenant",

@@ -91,6 +91,7 @@ export type {
   RightPanelRun,
   RightPanelAsset,
   RightPanelMission,
+  RightPanelReportSuggestion,
   RightPanelData,
   FocalObjectView,
 } from "@/lib/ui/right-panel/types";

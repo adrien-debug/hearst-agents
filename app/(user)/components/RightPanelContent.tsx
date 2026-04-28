@@ -171,6 +171,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const secondaryObjects = panelData?.secondaryObjects;
   const assets = panelData?.assets ?? [];
   const missions = panelData?.missions ?? [];
+  const reportSuggestions = panelData?.reportSuggestions;
 
   return (
     <aside
@@ -206,20 +207,24 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
       <LibraryTabs
         assets={assets}
         missions={missions}
+        reportSuggestions={reportSuggestions}
         activeThreadId={activeThreadId}
         loading={loading}
       />
 
       {/* STATUS — footer compact. Reflète uniquement l'état SSE du panneau. */}
-      <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2.5 flex items-center gap-2">
-        <span className={`inline-flex items-center gap-1.5 t-9 font-mono tracking-[0.16em] uppercase px-2 py-0.5 rounded-sm shrink-0 ${
-          !hasActiveThread
-            ? "text-[var(--text-faint)]"
-            : isConnected
-              ? "bg-[var(--cykan)]/10 text-[var(--cykan)]"
-              : "text-[var(--text-faint)]"
-        }`}>
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+      <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2 flex items-center gap-2">
+        <span
+          style={{ letterSpacing: "var(--tracking-section)" }}
+          className={`inline-flex items-center gap-2 t-9 font-mono uppercase px-2 py-1 rounded-sm shrink-0 ${
+            !hasActiveThread
+              ? "text-[var(--text-faint)]"
+              : isConnected
+                ? "bg-[var(--cykan-bg-active)] text-[var(--cykan)]"
+                : "text-[var(--text-faint)]"
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full shrink-0 ${
             !hasActiveThread ? "bg-[var(--text-ghost)]" :
             isConnected ? "bg-[var(--cykan)]" : "bg-[var(--text-ghost)]"
           }`} />

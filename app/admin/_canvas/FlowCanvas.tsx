@@ -8,9 +8,9 @@ import FlowEdge from "./FlowEdge";
 import FlowPacket from "./FlowPacket";
 
 /**
- * Flow canvas — variante « Orbital HUD ». Le wrapper fluide se cale sur le
- * ratio du viewBox pour fitter la zone disponible (`max-w-full max-h-full`)
- * sans scroll, tout en gardant la grille / vignette / halo cyan.
+ * Flow canvas — variante « Orbital HUD » V3 : panneau holographique avec
+ * perspective 3D légère, vignette dense, scanline qui parcourt le viewport,
+ * grille cyan + halo radial. Les cards et câbles sont rendus par-dessus.
  */
 export default function FlowCanvas() {
   const packets = useCanvasStore((s) => s.packets);
@@ -24,7 +24,6 @@ export default function FlowCanvas() {
     return () => clearInterval(t);
   }, [packets.length, cleanupPackets]);
 
-  // Trail tick — also forces FlowEdge re-render so the afterglow fades.
   useEffect(() => {
     if (trailLength === 0) return;
     const t = setInterval(() => cleanupTrail(4000), 500);
@@ -38,6 +37,8 @@ export default function FlowCanvas() {
         className="relative w-full max-w-full max-h-full rounded-(--radius-2xl) overflow-hidden shadow-(--shadow-lg) ring-1 ring-(--cykan)/20"
         style={{
           aspectRatio: `${VIEWBOX.width} / ${VIEWBOX.height}`,
+          transform: "perspective(2000px) rotateX(0.4deg)",
+          transformStyle: "preserve-3d",
         }}
       >
         <svg
@@ -56,14 +57,21 @@ export default function FlowCanvas() {
 
             {/* Halo système + vignette pour profondeur (Orbital HUD) */}
             <radialGradient id="canvas-aura" cx="50%" cy="50%" r="65%">
-              <stop offset="0%" stopColor="var(--cykan)" stopOpacity="0.14" />
-              <stop offset="45%" stopColor="var(--cykan)" stopOpacity="0.04" />
+              <stop offset="0%" stopColor="var(--cykan)" stopOpacity="0.18" />
+              <stop offset="45%" stopColor="var(--cykan)" stopOpacity="0.05" />
               <stop offset="100%" stopColor="transparent" />
             </radialGradient>
-            <radialGradient id="canvas-vignette" cx="50%" cy="50%" r="88%">
-              <stop offset="28%" stopColor="var(--pipeline-vignette-mid)" />
+            <radialGradient id="canvas-vignette" cx="50%" cy="50%" r="78%">
+              <stop offset="20%" stopColor="var(--pipeline-vignette-mid)" />
               <stop offset="100%" stopColor="var(--pipeline-vignette-edge)" />
             </radialGradient>
+
+            {/* Scanline — bande horizontale cyan qui descend en boucle. */}
+            <linearGradient id="canvas-scanline" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--cykan)" stopOpacity="0" />
+              <stop offset="50%" stopColor="var(--cykan)" stopOpacity="0.06" />
+              <stop offset="100%" stopColor="var(--cykan)" stopOpacity="0" />
+            </linearGradient>
           </defs>
 
           <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="var(--pipeline-base-fill)" />
@@ -71,6 +79,24 @@ export default function FlowCanvas() {
           <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="url(#canvas-dots)" />
           <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="url(#canvas-aura)" />
           <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="url(#canvas-vignette)" />
+
+          {/* Animated scanline — 80px tall band that slides down indefinitely. */}
+          <rect
+            x="0"
+            y="-80"
+            width={VIEWBOX.width}
+            height="80"
+            fill="url(#canvas-scanline)"
+            pointerEvents="none"
+          >
+            <animate
+              attributeName="y"
+              from="-80"
+              to={VIEWBOX.height}
+              dur="9s"
+              repeatCount="indefinite"
+            />
+          </rect>
 
           <g>
             {EDGES.map((edge) => (
@@ -85,8 +111,8 @@ export default function FlowCanvas() {
           </g>
         </svg>
 
-        {/* Node layer — positioned in % so it follows the SVG scale */}
-        <div className="absolute inset-0">
+        {/* Node layer — positioned in % so it follows the SVG scale. */}
+        <div className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
           {NODES.map((node) => (
             <FlowNode key={node.id} node={node} />
           ))}

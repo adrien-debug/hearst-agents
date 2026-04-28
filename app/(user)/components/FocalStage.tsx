@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import type { FocalObject, FocalStatus } from "@/lib/core/types";
 import { mapFocalObject } from "@/lib/core/types/focal";
 import { FocalRetryButton } from "./FocalRetryButton";
+import { ReportLayout, isReportPayload } from "./ReportLayout";
 
 /**
  * Detects whether an asset content string is a renderable HTML document.
@@ -20,6 +21,21 @@ function isHtmlContent(content: string): boolean {
     head.includes("<body") ||
     /<\/?(div|section|main|header|footer|p|span|h[1-6])\b/i.test(head)
   );
+}
+
+/**
+ * Tente de parser un asset content en payload report. Renvoie null si le
+ * contenu n'est pas un JSON ou ne porte pas le marqueur __reportPayload.
+ */
+function tryParseReportPayload(content: string): ReturnType<typeof JSON.parse> | null {
+  const head = content.trim().slice(0, 50);
+  if (!head.startsWith("{")) return null;
+  try {
+    const parsed = JSON.parse(content);
+    return isReportPayload(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 const STATUS_LABELS: Record<FocalStatus, string> = {
@@ -204,7 +220,9 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)]">chargement…</span>
             )}
           </div>
-          {previewContent && isHtmlContent(previewContent) ? (
+          {previewContent && tryParseReportPayload(previewContent) ? (
+            <ReportLayout payload={tryParseReportPayload(previewContent)!} />
+          ) : previewContent && isHtmlContent(previewContent) ? (
             <iframe
               title={focal.title}
               srcDoc={previewContent}

@@ -86,7 +86,7 @@ export default function CanvasShell() {
     : null;
 
   const showIdleHint = mode !== "live" && !selectedRunId;
-  const showScrubber = !!selectedRunId;
+  const showWaterfall = !!selectedRunId;
 
   const statusText =
     mode === "live"
@@ -162,7 +162,7 @@ export default function CanvasShell() {
               </div>
             )}
           </div>
-          {showScrubber && (
+          {showWaterfall && (
             <RunWaterfall
               events={events}
               isPlaying={replay.isPlaying}

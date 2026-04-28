@@ -10,7 +10,7 @@ interface Props {
 const STROKE = {
   baseMin: 1.2,
   baseMax: 3.6,
-  active: 2.4,
+  active: 2.6,
   ambient: 1,
   traffic: 1.8,
   failed: 1.6,
@@ -20,7 +20,6 @@ const DASH = {
   base: "4 6",
   ambient: "4 12",
   traffic: "6 10",
-  trail: "0",
 } as const;
 
 const BRANCH_COLOR: Record<NonNullable<CanvasEdge["branch"]>, string> = {
@@ -58,11 +57,16 @@ function sankeyWidth(edgeId: string, usage: Record<string, number> | null, total
 }
 
 /**
- * Layers per edge:
- *   1. Base — branch-colored dashed line, width ∝ run frequency (Sankey).
- *   2. Ambient — slow flow on idle so the canvas breathes.
- *   3. Active overlay — bright traffic on running edges.
- *   4. Trail — fades over 4s after a packet traversal (run replay / live).
+ * Fiber-optic cable composite — three stacked strokes give the edge its
+ * material feel:
+ *   1. Halo (×3 width, blurred) — the "glow" around the cable.
+ *   2. Cable (sankey width, branch color) — the body of the cable.
+ *   3. Core (×0.5 width, near-white) — the bright fiber core inside.
+ * Plus connector dots at both endpoints where the cable plugs into the
+ * source / target nodes.
+ *
+ * Failed edges replace the cyan with --danger and drop the ambient + traffic
+ * decoration to keep the failure unambiguous.
  */
 export default function FlowEdge({ edge }: Props) {
   const fromState = useCanvasStore((s) => s.nodeStates[edge.from]);
@@ -82,6 +86,9 @@ export default function FlowEdge({ edge }: Props) {
   const active = !failed && isActive(fromState, toState);
   const color = edgeColor(edge);
   const baseWidth = sankeyWidth(edge.id, edgeUsage, edgeUsageTotal);
+  const cableWidth = active ? Math.max(STROKE.active, baseWidth) : baseWidth;
+  const haloWidth = cableWidth * 3 + 1;
+  const coreWidth = Math.max(cableWidth * 0.45, 0.6);
 
   // Most recent trail entry for this edge (drives the afterglow opacity).
   const lastTrailTs = trailEntries.reduce(
@@ -98,34 +105,67 @@ export default function FlowEdge({ edge }: Props) {
           id={edge.id}
           d={d}
           stroke="var(--danger)"
+          strokeWidth={STROKE.failed * 3}
+          fill="none"
+          opacity={0.18}
+          style={{ filter: "blur(3px)" }}
+        />
+        <path
+          d={d}
+          stroke="var(--danger)"
           strokeWidth={STROKE.failed}
           fill="none"
-          opacity={0.7}
+          opacity={0.85}
         />
+        <circle cx={a.x} cy={a.y} r={3} fill="var(--danger)" />
+        <circle cx={b.x} cy={b.y} r={3} fill="var(--danger)" />
       </g>
     );
   }
 
   return (
     <g>
-      {/* Base path — branch-tinted, Sankey-thick on the trunk. */}
+      {/* Halo — soft cyan/branch glow that gives the cable its volume. */}
+      <path
+        d={d}
+        stroke={color}
+        strokeWidth={haloWidth}
+        fill="none"
+        opacity={active ? 0.25 : 0.12}
+        strokeLinecap="round"
+        style={{
+          filter: "blur(3px)",
+          transition: "opacity 220ms var(--ease-standard)",
+        }}
+      />
+
+      {/* Cable body — branch-tinted, Sankey thickness, dashed for sci-fi feel. */}
       <path
         id={edge.id}
         d={d}
         stroke={color}
-        strokeWidth={active ? Math.max(STROKE.active, baseWidth) : baseWidth}
+        strokeWidth={cableWidth}
         fill="none"
-        opacity={active ? 0.95 : 0.32}
+        opacity={active ? 0.95 : 0.55}
         strokeDasharray={DASH.base}
         strokeLinecap="round"
         style={{
           transition:
             "opacity 220ms var(--ease-standard), stroke-width 220ms var(--ease-standard)",
-          filter: active ? `drop-shadow(0 0 12px ${color})` : "none",
         }}
       />
 
-      {/* Ambient flow — subtle movement when idle so the canvas breathes. */}
+      {/* Bright fiber core — ultra-thin near-white inner stroke. */}
+      <path
+        d={d}
+        stroke="rgba(255,255,255,0.85)"
+        strokeWidth={coreWidth}
+        fill="none"
+        opacity={active ? 0.7 : 0.25}
+        strokeLinecap="round"
+      />
+
+      {/* Ambient flow — subtle dashed motion when idle. */}
       {!active && (
         <path
           d={d}
@@ -172,12 +212,18 @@ export default function FlowEdge({ edge }: Props) {
         <path
           d={d}
           stroke={color}
-          strokeWidth={baseWidth + 1}
+          strokeWidth={baseWidth + 1.5}
           fill="none"
           opacity={trailOpacity}
           style={{ filter: `drop-shadow(0 0 8px ${color})` }}
         />
       )}
+
+      {/* Connector dots — where the cable plugs into the node ports. */}
+      <circle cx={a.x} cy={a.y} r={3} fill={color} opacity={active ? 1 : 0.7} />
+      <circle cx={a.x} cy={a.y} r={1.4} fill="rgba(255,255,255,0.85)" opacity={active ? 1 : 0.5} />
+      <circle cx={b.x} cy={b.y} r={3} fill={color} opacity={active ? 1 : 0.7} />
+      <circle cx={b.x} cy={b.y} r={1.4} fill="rgba(255,255,255,0.85)" opacity={active ? 1 : 0.5} />
     </g>
   );
 }

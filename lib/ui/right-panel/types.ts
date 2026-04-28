@@ -31,6 +31,22 @@ export interface RightPanelAsset {
   runId: string;
 }
 
+/**
+ * Suggestion virtuelle proposée à l'utilisateur quand un report catalogué
+ * peut être déclenché vu ses apps connectées. Apparaît dans le panneau
+ * Assets sans masquer les vrais assets.
+ */
+export interface RightPanelReportSuggestion {
+  /** ID du Spec dans le catalogue (sert de clé d'invocation /run). */
+  specId: string;
+  title: string;
+  description: string;
+  /** "ready" : toutes les apps connectées · "partial" : au moins une. */
+  status: "ready" | "partial";
+  requiredApps: ReadonlyArray<string>;
+  missingApps: ReadonlyArray<string>;
+}
+
 export interface RightPanelMission {
   id: string;
   name: string;
@@ -65,6 +81,8 @@ export interface RightPanelData {
   recentRuns: RightPanelRun[];
   assets: RightPanelAsset[];
   missions: RightPanelMission[];
+  /** Reports catalogués activables vu les apps connectées (ready ou partial). */
+  reportSuggestions?: RightPanelReportSuggestion[];
   connectorHealth?: RightPanelConnectorHealth;
   scheduler?: RightPanelSchedulerSummary;
   missionOpsSummary?: RightPanelMissionOpsSummary;
