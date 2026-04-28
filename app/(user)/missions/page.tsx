@@ -288,8 +288,8 @@ function MissionsPageContent() {
         <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Missions" }] as Crumb[]} className="mb-4" />
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="ghost-title-impact text-lg mb-1">Missions</h1>
-            <p className="t-11 font-mono uppercase tracking-[0.2em] text-[var(--text-muted)]">Automatisations planifiées</p>
+            <h1 className="ghost-title-impact mb-1">Missions</h1>
+            <p className="t-11 font-mono uppercase tracking-display text-[var(--text-muted)]">Automatisations planifiées</p>
           </div>
           <button type="button" onClick={openNewMission} className="ghost-btn-solid ghost-btn-cykan rounded-sm px-5">
             Nouvelle mission
@@ -322,7 +322,7 @@ function MissionsPageContent() {
         {missions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
             <p className="ghost-meta-label">Registre vide</p>
-            <h2 className="ghost-title-impact text-base">Aucune mission</h2>
+            <h2 className="ghost-title-impact t-13">Aucune mission</h2>
             <p className="t-13 font-light leading-relaxed text-[var(--text-muted)] max-w-md">
               Les missions sont des tâches récurrentes planifiées. Exécution automatique selon calendrier.
             </p>
@@ -332,7 +332,7 @@ function MissionsPageContent() {
           </div>
         ) : (
           <div className="border-t border-[var(--line)]">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-9 font-mono uppercase tracking-[0.2em] text-[var(--text-faint)] border-b border-[var(--line)]">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-9 font-mono uppercase tracking-display text-[var(--text-faint)] border-b border-[var(--line)]">
               <span>ID_REF / Descriptor</span>
               <span className="text-right">STATUS_OPS</span>
               <span className="text-right">CMD</span>
@@ -382,7 +382,7 @@ function MissionsPageContent() {
                       className="min-w-0 text-left group/open cursor-pointer"
                       title={`Open ${mission.name}`}
                     >
-                      <p className="font-mono t-9 uppercase tracking-[0.2em] text-[var(--text-faint)] mb-1">ID_REF: {mission.id.slice(0, 8)}</p>
+                      <p className="font-mono t-9 uppercase tracking-display text-[var(--text-faint)] mb-1">ID_REF: {mission.id.slice(0, 8)}</p>
                       <h3 className="t-13 font-medium text-[var(--text)] tracking-tight group-hover/open:text-[var(--cykan)] group-hover/open:halo-cyan-sm transition-colors">{mission.name}</h3>
                       <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] mt-1">{mission.description}</p>
                       {mission.lastError && (
@@ -393,7 +393,7 @@ function MissionsPageContent() {
                     </button>
                   </div>
                   <div className="text-right space-y-2">
-                    <span className={`inline-block font-mono t-9 uppercase tracking-[0.15em] border-b pb-0.5 ${statusLine}`}>
+                    <span className={`inline-block font-mono t-9 uppercase tracking-label border-b pb-0.5 ${statusLine}`}>
                       STATUS_{opsStatusLabel}
                     </span>
                     <div className="t-10 font-mono text-[var(--text-faint)] space-y-1">

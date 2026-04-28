@@ -167,21 +167,21 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
         <div className="flex items-center gap-6">
           <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[focal.status]} ${isLive ? "animate-pulse halo-dot" : ""}`} />
           <div className="flex items-center gap-4">
-            <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)]">{TYPE_LABELS[focal.type]}</span>
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">{TYPE_LABELS[focal.type]}</span>
             <span className="w-1 h-1 rounded-full bg-[var(--text-ghost)]" />
-            <span className={`t-9 font-mono uppercase tracking-[0.3em] ${focal.status === "awaiting_approval" ? "text-[var(--warn)]" : focal.status === "failed" ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}>
+            <span className={`t-9 font-mono uppercase tracking-marquee ${focal.status === "awaiting_approval" ? "text-[var(--warn)]" : focal.status === "failed" ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}>
               {STATUS_LABELS[focal.status]}
             </span>
           </div>
         </div>
-        <div className="font-mono t-9 uppercase tracking-[0.3em] text-[var(--text-ghost)]">
+        <div className="font-mono t-9 uppercase tracking-marquee text-[var(--text-ghost)]">
           {focal.sourcePlanId && (
             <span>ID: {focal.sourcePlanId.slice(0, 8)}</span>
           )}
         </div>
       </header>
 
-      <h1 className="t-28 font-medium text-[var(--text)] leading-[1.2] mb-10 tracking-tight">{focal.title}</h1>
+      <h1 className="t-28 font-medium text-[var(--text)] mb-10 tracking-tight" style={{ lineHeight: "var(--leading-snug)" }}>{focal.title}</h1>
 
       {focal.body && (
         <div className="prose prose-invert max-w-none">
@@ -198,7 +198,7 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
           {focal.sections.map((section, i) => (
             <div key={i} className="border-t border-[var(--surface-2)] pt-8">
               {section.heading && (
-                <h3 className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--cykan)] halo-cyan-sm mb-4">{section.heading}</h3>
+                <h3 className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] halo-cyan-sm mb-4">{section.heading}</h3>
               )}
               <div className="t-15 leading-[1.7] text-[var(--text-muted)] font-normal">{section.body}</div>
             </div>
@@ -207,7 +207,7 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
       )}
 
       {error && (
-        <div className="mt-8 p-4 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] font-mono t-10 tracking-[0.2em] text-[var(--danger)]">
+        <div className="mt-8 p-4 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] font-mono t-10 tracking-display text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -215,9 +215,9 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
       {sourceAssetId && (previewLoading || previewContent) && (
         <div className="mt-12 pt-8 border-t border-[var(--surface-2)]">
           <div className="flex items-center gap-3 mb-4">
-            <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--cykan)]">Aperçu</span>
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">Aperçu</span>
             {previewLoading && (
-              <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)]">chargement…</span>
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">chargement…</span>
             )}
           </div>
           {previewContent && tryParseReportPayload(previewContent) ? (
@@ -239,7 +239,7 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
       )}
 
       <footer className="mt-12 pt-8 border-t border-[var(--surface-2)] flex items-center justify-between">
-        <div className="flex items-center gap-6 t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)]">
+        <div className="flex items-center gap-6 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
           {focal.wordCount ? <span>METRIC: {focal.wordCount}_WORDS</span> : null}
           {focal.provider ? <span>SOURCE: {focal.provider}</span> : null}
         </div>
@@ -255,11 +255,11 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               focalStatus={focal.status}
               label={focal.primaryAction.label}
               onSuccess={onActionComplete}
-              className="px-6 py-3 t-9 font-mono uppercase tracking-[0.3em] bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-300"
+              className="px-6 py-3 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow"
             />
           ) : (
             <button
-              className={`px-6 py-3 t-9 font-mono uppercase tracking-[0.3em] transition-all duration-300 hover:tracking-[0.4em] ${
+              className={`px-6 py-3 t-9 font-mono uppercase tracking-marquee transition-all duration-slow hover:tracking-[0.4em] ${
                 focal.primaryAction.kind === "approve"
                   ? "bg-[var(--text)] text-[var(--bg)]"
                   : "bg-[var(--cykan)] text-[var(--bg)]"
@@ -310,7 +310,7 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center relative z-10">
           <span className="block text-4xl text-[var(--cykan)] opacity-30 halo-cyan-md mb-8 animate-pulse">◉</span>
-          <p className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)]">Waiting_For_Data</p>
+          <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">Waiting_For_Data</p>
         </div>
       </div>
     );

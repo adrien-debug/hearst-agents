@@ -26,10 +26,10 @@ export default async function SettingsPage() {
   const categories = [...new Set(settings.map((s) => s.category))].sort();
 
   return (
-    <div className="p-8 space-y-8 text-white/90">
+    <div className="p-8 space-y-8 text-[var(--text-soft)]">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-light">System Settings</h1>
-        <span className="text-sm text-white/40">{settings.length} settings</span>
+        <h1 className="t-24 font-light">System Settings</h1>
+        <span className="text-sm text-[var(--text-ghost)]">{settings.length} settings</span>
       </div>
 
       {dbError && (
@@ -40,19 +40,19 @@ export default async function SettingsPage() {
 
       {/* Feature Flags */}
       <section>
-        <h2 className="text-lg font-light mb-4 text-white/70">Feature Flags</h2>
+        <h2 className="t-13 font-light mb-4 text-[var(--text-muted)]">Feature Flags</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {Object.entries(flags).map(([key, enabled]) => (
             <div
               key={key}
-              className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-3 flex items-center justify-between"
+              className="rounded-lg bg-[var(--card-flat-bg)] border border-[var(--card-flat-border)] p-3 flex items-center justify-between"
             >
-              <span className="text-sm text-white/70 truncate mr-2">{key}</span>
+              <span className="text-sm text-[var(--text-muted)] truncate mr-2">{key}</span>
               <span
                 className={`text-xs px-2 py-0.5 rounded-full ${
                   enabled
                     ? "bg-[var(--money)]/20 text-[var(--money)]"
-                    : "bg-white/10 text-white/40"
+                    : "bg-[var(--surface-2)] text-[var(--text-ghost)]"
                 }`}
               >
                 {enabled ? "ON" : "OFF"}
@@ -60,7 +60,7 @@ export default async function SettingsPage() {
             </div>
           ))}
           {Object.keys(flags).length === 0 && (
-            <p className="text-sm text-white/30 col-span-full">No feature flags configured</p>
+            <p className="text-sm text-[var(--text-ghost)] col-span-full">No feature flags configured</p>
           )}
         </div>
       </section>
@@ -68,20 +68,20 @@ export default async function SettingsPage() {
       {/* Settings by category */}
       {categories.map((cat) => (
         <section key={cat}>
-          <h2 className="text-lg font-light mb-3 text-white/70 capitalize">{cat.replace(/_/g, " ")}</h2>
-          <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] divide-y divide-white/[0.06]">
+          <h2 className="t-13 font-light mb-3 text-[var(--text-muted)] capitalize">{cat.replace(/_/g, " ")}</h2>
+          <div className="rounded-lg bg-[var(--card-flat-bg)] border border-[var(--card-flat-border)] divide-y divide-[var(--card-flat-border)]">
             {settings
               .filter((s) => s.category === cat)
               .map((s) => (
                 <div key={s.id} className="px-4 py-3 flex items-center justify-between">
                   <div className="min-w-0">
-                    <p className="text-sm text-white/80 font-mono truncate">{s.key}</p>
+                    <p className="text-sm text-[var(--text-soft)] font-mono truncate">{s.key}</p>
                     {s.description && (
-                      <p className="text-xs text-white/30 mt-0.5">{s.description}</p>
+                      <p className="text-xs text-[var(--text-ghost)] mt-0.5">{s.description}</p>
                     )}
                   </div>
                   <div className="ml-4 text-right flex-shrink-0">
-                    <p className="text-sm text-white/60 font-mono max-w-[200px] truncate">
+                    <p className="text-sm text-[var(--text-muted)] font-mono max-w-[200px] truncate">
                       {s.isEncrypted
                         ? "••••••"
                         : typeof s.value === "object"
@@ -89,7 +89,7 @@ export default async function SettingsPage() {
                         : String(s.value)}
                     </p>
                     {s.tenantId && (
-                      <p className="t-10 text-white/20 mt-0.5">
+                      <p className="t-10 text-[var(--text-faint)] mt-0.5">
                         tenant: {s.tenantId.slice(0, 8)}
                       </p>
                     )}

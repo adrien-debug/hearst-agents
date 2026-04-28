@@ -1,27 +1,24 @@
 "use client";
 
 /**
- * HaloLogo3D — signature 3D du H Hearst pour la PulseStrip.
+ * HaloLogo3D — signature 3D « Pulsar Gyroscope » de la PulseStrip.
  *
- * Direction technique : SVG + CSS 3D pur. Three.js a été écarté
- * (~200kb gzip pour un logo 56px = surcoût injustifié, et SVG gère
- * 4 instances simultanées sans contexte WebGL). Composition en
- * 4 strates synchronisées par data-state :
- *   1. Halo orbital      → anneaux + particules (SVG, GPU)
- *   2. Stack volumétrique → 10 couches H sur axe Z (CSS preserve-3d)
- *   3. Shimmer cykan      → linearGradient animé sur la face avant
- *   4. Glitch overlay     → chromatic aberration + scan (état error)
+ * Concept graphique original (pas un rappel du logo Hearst) : un cœur
+ * sphérique émissif au centre, encerclé de 3 anneaux orthogonaux qui
+ * tournent indépendamment (running) ou se figent / se désalignent
+ * (autres états). Particules orbitales en running, glitch + chromatic
+ * aberration en error.
  *
- * Les deux polygones du H Hearst (cf. HearstLogo.tsx) sont réutilisés
- * tels quels et restent **statiques en 2D** : le H demeure 100%
- * lisible quel que soit l'état. La sensation 3D vient de la profondeur
- * de stack et du jeu de lumière, pas d'une rotation qui désorienterait
- * la lecture du logo.
+ * Direction technique : @react-three/fiber + @react-three/drei +
+ * postprocessing. Lazy-chargé via `next/dynamic({ ssr: false })` →
+ * le bundle WebGL n'arrive qu'au montage du composant ; pendant le
+ * chunk download, on rend le fallback statique 2D ci-dessous.
  *
- * Reduced-motion : bascule sur une version statique 2D mono-couche.
- * Hover desktop : optionnel, pas implémenté (composant aria-hidden).
+ * Reduced-motion → fallback statique permanent (pas de canvas WebGL,
+ * pas d'animation).
  */
 
+import dynamic from "next/dynamic";
 import { useId, useSyncExternalStore } from "react";
 
 type HaloState = "idle" | "running" | "awaiting" | "error";
@@ -31,24 +28,22 @@ interface HaloLogo3DProps {
   state?: HaloState;
 }
 
-const STACK_DEPTH = 10;
+// Bundle three+r3f+drei lazy-chargé : ne sort pas du chunk initial.
+const HaloCanvas = dynamic(() => import("./HaloLogo3D.canvas"), {
+  ssr: false,
+  loading: () => null, // le fallback 2D du wrapper reste visible pendant le download
+});
 
 export function HaloLogo3D({ size = 56, state = "idle" }: HaloLogo3DProps) {
-  const reactId = useId();
-  // useId() peut contenir ":" (React 18+) qui casse url(#…) dans SVG
-  const uid = reactId.replace(/:/g, "_");
   const reduced = usePrefersReducedMotion();
 
   if (reduced) {
     return (
-      <div
+      <FallbackStatic
+        size={size}
+        state={state}
         className="halo-logo-3d halo-logo-3d--reduced"
-        data-state={state}
-        style={{ width: size, height: size }}
-        aria-hidden
-      >
-        <HMark className="halo-logo-3d__static" />
-      </div>
+      />
     );
   }
 
@@ -56,164 +51,68 @@ export function HaloLogo3D({ size = 56, state = "idle" }: HaloLogo3DProps) {
     <div
       className="halo-logo-3d"
       data-state={state}
-      style={
-        {
-          width: size,
-          height: size,
-          "--halo-size": `${size}px`,
-        } as React.CSSProperties
-      }
+      style={{ width: size, height: size }}
       aria-hidden
     >
-      {/* Strate 1 — halo orbital (anneaux + particules) */}
-      <Halo uid={uid} />
-
-      {/* Strate 2 — stack volumétrique */}
-      <div className="halo-logo-3d__stage">
-        <div className="halo-logo-3d__stack">
-          {Array.from({ length: STACK_DEPTH }).map((_, i) => {
-            // Couche 0 = arrière, couche STACK_DEPTH-1 = avant
-            const t = i / (STACK_DEPTH - 1);
-            const isFront = i === STACK_DEPTH - 1;
-            // Le shimmer cykan ne s'applique qu'en running ; sur les autres
-            // états la couche avant reste sur currentColor pour préserver
-            // la couleur sémantique (warn / danger / faint).
-            const useShimmer = isFront && state === "running";
-            return (
-              <div
-                key={i}
-                className="halo-logo-3d__layer"
-                data-position={i === 0 ? "back" : isFront ? "front" : "mid"}
-                style={
-                  {
-                    "--layer-z": `${(t - 1) * 9}px`,
-                    "--layer-opacity": String(0.18 + t * 0.82),
-                  } as React.CSSProperties
-                }
-              >
-                <HMark
-                  className="halo-logo-3d__h"
-                  fill={useShimmer ? `url(#halo-shimmer-${uid})` : undefined}
-                  shimmerId={`halo-shimmer-${uid}`}
-                  defineGradient={useShimmer}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Strate 4 — overlay glitch (visible uniquement en état error) */}
-      <div className="halo-logo-3d__glitch" aria-hidden>
-        <HMark className="halo-logo-3d__glitch-ghost halo-logo-3d__glitch-ghost--cyan" />
-        <HMark className="halo-logo-3d__glitch-ghost halo-logo-3d__glitch-ghost--magenta" />
-        <span className="halo-logo-3d__scanline" />
+      {/* Fallback 2D toujours rendu derrière le canvas — il sera couvert
+          quand le canvas WebGL aura monté. Évite un trou visuel pendant
+          le lazy-load (~250 KB de three+r3f). */}
+      <FallbackStatic size={size} state={state} className="halo-logo-3d__fallback" />
+      {/* Wrap rendu à 160% de la taille nominale, centré via inset
+          négatif → la 3D (rings, particules, bloom) déborde la box sans
+          être clippée par overflow:hidden. Le composant garde size×size
+          comme dimension de layout pour la PulseStrip. */}
+      <div className="halo-logo-3d__canvas-wrap">
+        <HaloCanvas state={state} />
       </div>
     </div>
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
- * Sous-composants
- * ────────────────────────────────────────────────────────────── */
+/* ── Fallback statique — pas de WebGL, juste SVG ─────────────────
+ * Composition minimaliste : 3 anneaux SVG orthogonaux + un dot central.
+ * Sert à la fois pour reduced-motion et pour la phase de chargement
+ * du chunk WebGL (~150-300 ms en dev). */
 
-interface HMarkProps {
+interface FallbackStaticProps {
+  size: number;
+  state: HaloState;
   className?: string;
-  fill?: string;
-  shimmerId?: string;
-  defineGradient?: boolean;
 }
 
-/** H Hearst — deux polygones canoniques. Coordonnées issues de HearstLogo.tsx. */
-function HMark({ className, fill, shimmerId, defineGradient }: HMarkProps) {
+function FallbackStatic({ size, state, className }: FallbackStaticProps) {
+  const uid = useId().replace(/:/g, "_");
   return (
-    <svg
-      viewBox="570 462 135 152"
+    <div
       className={className}
-      fill={fill ?? "currentColor"}
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {defineGradient && shimmerId ? (
-        <defs>
-          {/* Gradient cykan animé : translation horizontale → effet
-              "shimmer" sur la face avant. gradientUnits=userSpaceOnUse
-              pour que le translate soit cohérent avec le viewBox. */}
-          <linearGradient
-            id={shimmerId}
-            x1="572"
-            y1="462"
-            x2="702"
-            y2="610"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0" stopColor="var(--halo-shade-cool)" />
-            <stop offset="0.45" stopColor="var(--halo-shade-bright)" />
-            <stop offset="0.55" stopColor="var(--halo-shade-bright)" />
-            <stop offset="1" stopColor="var(--halo-shade-cool)" />
-            <animateTransform
-              attributeName="gradientTransform"
-              type="translate"
-              values="-260 0; 260 0; -260 0"
-              dur="4.5s"
-              repeatCount="indefinite"
-            />
-          </linearGradient>
-        </defs>
-      ) : null}
-      <polygon points="601.7 466.9 572.6 466.9 572.6 609.7 601.7 609.7 601.7 549.1 633.1 579.4 665.8 579.4 601.7 517.5 601.7 466.9" />
-      <polygon points="672.7 466.9 672.7 528.1 644.6 500.9 612 500.9 672.7 559.7 672.7 609.7 701.9 609.7 701.9 466.9 672.7 466.9" />
-    </svg>
-  );
-}
-
-/** Halo orbital — anneaux concentriques + particules en orbite. */
-function Halo({ uid }: { uid: string }) {
-  return (
-    <svg
-      className="halo-logo-3d__halo"
-      viewBox="0 0 100 100"
-      preserveAspectRatio="xMidYMid meet"
+      data-state={state}
+      style={{ width: size, height: size }}
       aria-hidden
     >
-      <defs>
-        {/* Soft radial pour l'aura de fond */}
-        <radialGradient id={`halo-aura-${uid}`} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.45" />
-          <stop offset="60%" stopColor="currentColor" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      {/* Aura diffuse sous le H — visible dès idle */}
-      <circle
-        className="halo-logo-3d__aura"
-        cx="50"
-        cy="50"
-        r="42"
-        fill={`url(#halo-aura-${uid})`}
-      />
-
-      {/* 3 anneaux pulse — désynchronisés par animation-delay */}
-      <circle className="halo-logo-3d__ring halo-logo-3d__ring--1" cx="50" cy="50" r="32" />
-      <circle className="halo-logo-3d__ring halo-logo-3d__ring--2" cx="50" cy="50" r="32" />
-      <circle className="halo-logo-3d__ring halo-logo-3d__ring--3" cx="50" cy="50" r="32" />
-
-      {/* Particules orbitales — group rotatif autour du centre */}
-      <g className="halo-logo-3d__orbit halo-logo-3d__orbit--cw">
-        <circle className="halo-logo-3d__particle" cx="50" cy="8" r="1.3" />
-        <circle className="halo-logo-3d__particle" cx="50" cy="92" r="0.9" />
-      </g>
-      <g className="halo-logo-3d__orbit halo-logo-3d__orbit--ccw">
-        <circle className="halo-logo-3d__particle" cx="6" cy="50" r="1.1" />
-        <circle className="halo-logo-3d__particle" cx="94" cy="50" r="0.7" />
-      </g>
-    </svg>
+      <svg
+        viewBox="-1.8 -1.8 3.6 3.6"
+        className="halo-logo-3d__fallback-svg"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <defs>
+          <radialGradient id={`halo-fb-core-${uid}`} cx="0" cy="0" r="0.4">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        {/* 3 ellipses orthogonales — illusion 3D du gyroscope */}
+        <ellipse cx="0" cy="0" rx="1" ry="1" fill="none" stroke="currentColor" strokeWidth="0.04" opacity="0.55" />
+        <ellipse cx="0" cy="0" rx="1" ry="0.32" fill="none" stroke="currentColor" strokeWidth="0.04" opacity="0.55" />
+        <ellipse cx="0" cy="0" rx="0.32" ry="1" fill="none" stroke="currentColor" strokeWidth="0.04" opacity="0.55" />
+        {/* Cœur central */}
+        <circle cx="0" cy="0" r="0.55" fill={`url(#halo-fb-core-${uid})`} />
+        <circle cx="0" cy="0" r="0.22" fill="currentColor" />
+      </svg>
+    </div>
   );
 }
 
-/* ──────────────────────────────────────────────────────────────
- * Hook utilitaire — prefers-reduced-motion
- * ────────────────────────────────────────────────────────────── */
+/* ── Hook : prefers-reduced-motion via useSyncExternalStore ────── */
 
 function usePrefersReducedMotion(): boolean {
   return useSyncExternalStore(

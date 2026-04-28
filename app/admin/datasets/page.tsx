@@ -38,7 +38,7 @@ export default async function DatasetsPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Hearst</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">Datasets</h1>
+          <h1 className="t-28 font-semibold tracking-tight text-[var(--text)]">Datasets</h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">Jeux de tests pour évaluation structurée.</p>
         </div>
         <Link
@@ -72,7 +72,7 @@ export default async function DatasetsPage() {
               href={`/admin/datasets/${d.id}`}
               className="flex flex-col gap-2 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5 transition-colors hover:border-[var(--line-strong)]"
             >
-              <h3 className="text-sm font-semibold text-[var(--text)]">{d.name}</h3>
+              <h3 className="t-11 font-semibold text-[var(--text)]">{d.name}</h3>
               {d.description && (
                 <p className="line-clamp-2 text-xs text-[var(--text-muted)]">{d.description}</p>
               )}

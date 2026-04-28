@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   "/api/auth",
   "/api/health",
   "/api/webhooks",
+  "/halo-test",
 ];
 
 const STATIC_RE = /^\/(?:_next|favicon\.ico|.*\.(?:svg|png|jpg|ico|webp|woff2?|css|js))$/;

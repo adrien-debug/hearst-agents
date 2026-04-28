@@ -58,6 +58,17 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
+      const data = (await res.json()) as { assetId: string | null; title: string };
+      // Ouvre directement le focal avec le nouvel asset — le SSE refetchera
+      // la grille de son côté dans la seconde qui suit.
+      if (data.assetId) {
+        useFocalStore.getState().setFocal(
+          assetToFocal(
+            { id: data.assetId, name: data.title ?? title, type: "report" },
+            activeThreadId,
+          ),
+        );
+      }
       toast.success("Report généré", title);
     } catch (err) {
       setRunningSpecs((prev) => {

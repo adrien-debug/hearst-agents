@@ -23,6 +23,12 @@ import {
   setRenderCache,
   hashKey,
 } from "./cache";
+import {
+  extractSignals,
+  type BusinessSignal,
+} from "@/lib/reports/signals/extract";
+import type { Severity } from "@/lib/engine/runtime/report-runner";
+import { checkReportBudget } from "./cost-meter";
 
 // ── Source loader (injection pour tests / P1.4) ────────────
 
@@ -51,8 +57,17 @@ export interface RunReportOptions {
 export interface RunReportResult {
   payload: RenderPayload;
   narration: string | null;
+  signals: BusinessSignal[];
+  severity: Severity;
   cacheHit: { render: boolean };
-  cost: { inputTokens: number; outputTokens: number };
+  cost: {
+    inputTokens: number;
+    outputTokens: number;
+    /** USD calculé via lib/reports/engine/cost-meter.ts (estimation Anthropic). */
+    usd: number;
+    /** True si > REPORT_BUDGET_USD (0.20). */
+    exceeded: boolean;
+  };
   durationMs: number;
 }
 
@@ -78,7 +93,10 @@ export async function runReport(
   const payload = renderBlocks(spec, datasets, now);
   const payloadHash = hashKey(payload.blocks);
 
-  // ── 4. L3 render cache check ─────────────────────────────
+  // ── 4. Extraction signaux (déterministe, hors cache) ────
+  const { signals, severity } = extractSignals(payload);
+
+  // ── 5. L3 render cache check ─────────────────────────────
   if (!options.noCache) {
     const cached = await getRenderCache({
       specId: spec.id,
@@ -89,17 +107,19 @@ export async function runReport(
       return {
         payload: cached.payload as RenderPayload,
         narration: cached.narration,
+        signals,
+        severity,
         cacheHit: { render: true },
-        cost: { inputTokens: 0, outputTokens: 0 },
+        cost: { inputTokens: 0, outputTokens: 0, usd: 0, exceeded: false },
         durationMs: Date.now() - t0,
       };
     }
   }
 
-  // ── 5. Narrate (single LLM call) ─────────────────────────
+  // ── 6. Narrate (single LLM call) ─────────────────────────
   const narrationResult = await narrate({ spec, payload });
 
-  // ── 6. L3 render cache write (fire-and-forget) ──────────
+  // ── 7. L3 render cache write (fire-and-forget) ──────────
   if (!options.noCache) {
     void setRenderCache(
       { specId: spec.id, version: spec.version, payloadHash },
@@ -108,13 +128,28 @@ export async function runReport(
     );
   }
 
+  const usage = {
+    inputTokens: narrationResult?.inputTokens ?? 0,
+    outputTokens: narrationResult?.outputTokens ?? 0,
+  };
+  const budget = checkReportBudget(usage);
+  if (budget.exceeded) {
+    console.warn(
+      `[runReport] budget dépassé: $${budget.usd.toFixed(4)} > $${budget.budgetUsd.toFixed(2)} (spec=${spec.id})`,
+    );
+  }
+
   return {
     payload,
     narration: narrationResult?.text ?? null,
+    signals,
+    severity,
     cacheHit: { render: false },
     cost: {
-      inputTokens: narrationResult?.inputTokens ?? 0,
-      outputTokens: narrationResult?.outputTokens ?? 0,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      usd: budget.usd,
+      exceeded: budget.exceeded,
     },
     durationMs: Date.now() - t0,
   };

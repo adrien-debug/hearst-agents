@@ -62,13 +62,13 @@ export function TopBar() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push("/apps")}
-          className="halo-on-hover inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full t-9 font-mono tracking-[0.25em] uppercase border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--cykan-border-hover)] transition-all bg-transparent"
+          className="halo-on-hover inline-flex items-center gap-2 px-2.5 py-1.5 rounded-pill t-9 font-mono tracking-banner uppercase border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--cykan-border-hover)] transition-all bg-transparent"
           title={connectedCount > 0
             ? `${connectedCount} source${connectedCount !== 1 ? "s" : ""} connectée${connectedCount !== 1 ? "s" : ""} — Gérer`
             : "Connecter une source"}
         >
           <span
-            className={`w-1.5 h-1.5 rounded-full ${connectedCount > 0 ? "bg-[var(--cykan)] halo-dot" : "bg-[var(--text-ghost)]"}`}
+            className={`w-1.5 h-1.5 rounded-pill ${connectedCount > 0 ? "bg-[var(--cykan)] halo-dot" : "bg-[var(--text-ghost)]"}`}
             aria-hidden
           />
           <span>{sourcesLabel}</span>

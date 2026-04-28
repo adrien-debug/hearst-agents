@@ -108,7 +108,7 @@ export default function PlannerPage() {
       <div className="border-b border-[var(--line)] p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-medium text-[var(--text)] mb-1">Planner</h1>
+            <h1 className="t-18 font-medium text-[var(--text)] mb-1">Planner</h1>
             <p className="text-sm text-[var(--text-muted)]">Plans d&apos;exécution et orchestration</p>
           </div>
         </div>
@@ -120,8 +120,8 @@ export default function PlannerPage() {
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                 filter === f
-                  ? "bg-[var(--cykan)] text-black"
-                  : "bg-white/5 text-[var(--text-muted)] hover:bg-white/10"
+                  ? "bg-[var(--cykan)] text-[var(--text-on-cykan)]"
+                  : "bg-[var(--surface-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"
               }`}
             >
               {f === "all" ? "Tous" : statusLabel(f)}
@@ -134,10 +134,10 @@ export default function PlannerPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.03] border border-[var(--line)] flex items-center justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-[var(--card-flat-bg)] border border-[var(--line)] flex items-center justify-center mb-4">
               <span className="text-2xl">◉</span>
             </div>
-            <h2 className="text-lg font-medium text-[var(--text)] mb-2">Aucun plan</h2>
+            <h2 className="t-13 font-medium text-[var(--text)] mb-2">Aucun plan</h2>
             <p className="text-sm text-[var(--text-muted)]">Les plans d&apos;exécution apparaîtront ici</p>
           </div>
         ) : (
@@ -145,7 +145,7 @@ export default function PlannerPage() {
             {filtered.map((plan) => (
               <div
                 key={plan.id}
-                className="p-4 rounded-xl bg-white/[0.02] border border-[var(--line)] hover:bg-white/[0.03] transition-colors"
+                className="p-4 rounded-xl bg-[var(--card-flat-bg)] border border-[var(--line)] hover:bg-[var(--surface-1)] transition-colors"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
@@ -185,7 +185,7 @@ export default function PlannerPage() {
                               ? "bg-[var(--cykan)]/20 text-[var(--cykan)]"
                               : step.status === "failed"
                               ? "bg-[var(--danger)]/20 text-[var(--danger)]"
-                              : "bg-white/5 text-[var(--text-faint)]"
+                              : "bg-[var(--surface-1)] text-[var(--text-faint)]"
                           }`}
                         >
                           {step.kind}

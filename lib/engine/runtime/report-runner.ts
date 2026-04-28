@@ -18,9 +18,38 @@ export interface ReportConfig {
 }
 
 // ─── SIGNAL TAXONOMY ────────────────────────────────────────────────
+//
+// Crypto/markets signals (legacy V1) : flash_move, volume_spike, …
+// Business signals (V2 reports cross-app) : mrr_drop, runway_risk, …
+// Les deux unions cohabitent : `SignalType` = union des deux.
 
-export const SIGNAL_TYPES = ["flash_move", "volume_spike", "new_trending", "defi_stress"] as const;
-export type SignalType = (typeof SIGNAL_TYPES)[number];
+export const CRYPTO_SIGNAL_TYPES = [
+  "flash_move",
+  "volume_spike",
+  "new_trending",
+  "defi_stress",
+] as const;
+export type CryptoSignalType = (typeof CRYPTO_SIGNAL_TYPES)[number];
+
+export const BUSINESS_SIGNAL_TYPES = [
+  "mrr_drop",
+  "mrr_spike",
+  "pipeline_thin",
+  "runway_risk",
+  "cycle_time_drift",
+  "customer_at_risk",
+  "support_overload",
+  "commit_velocity_drop",
+  "calendar_overload",
+  "auth_expiring",
+] as const;
+export type BusinessSignalType = (typeof BUSINESS_SIGNAL_TYPES)[number];
+
+export const SIGNAL_TYPES = [
+  ...CRYPTO_SIGNAL_TYPES,
+  ...BUSINESS_SIGNAL_TYPES,
+] as const;
+export type SignalType = CryptoSignalType | BusinessSignalType;
 
 export type Severity = "info" | "warning" | "critical";
 
@@ -31,9 +60,24 @@ export interface AlertMeta {
   severity: Severity;
 }
 
+/**
+ * Severity par signal — défaut info, escalade pour signaux critiques.
+ * Les business signals critiques (mrr_drop sévère, runway_risk) sont escalés
+ * à `warning` ou `critical` par l'extracteur business via `extractSignals()`,
+ * pas ici. Cette fonction reste sur la sémantique legacy crypto + safe defaults.
+ */
 export function determineSeverity(signals: SignalType[]): Severity {
   if (signals.includes("flash_move")) return "critical";
   if (signals.includes("defi_stress") || signals.includes("volume_spike")) return "warning";
+  if (signals.includes("mrr_drop") || signals.includes("runway_risk")) return "critical";
+  if (
+    signals.includes("pipeline_thin") ||
+    signals.includes("cycle_time_drift") ||
+    signals.includes("customer_at_risk") ||
+    signals.includes("support_overload")
+  ) {
+    return "warning";
+  }
   if (signals.length > 0) return "info";
   return "info";
 }
@@ -42,7 +86,9 @@ export function parseAlertMeta(output: string): AlertMeta | null {
   const signalMatch = output.match(/SIGNAL_TYPES:\s*\[([^\]]*)\]/);
   if (!signalMatch) return null;
   const raw = signalMatch[1].split(",").map((s) => s.trim().replace(/"/g, "")).filter(Boolean);
-  const signals = raw.filter((s): s is SignalType => (SIGNAL_TYPES as readonly string[]).includes(s));
+  const signals = raw.filter((s): s is SignalType =>
+    (SIGNAL_TYPES as readonly string[]).includes(s),
+  );
   if (signals.length === 0) return null;
   return { signal_types: signals, severity: determineSeverity(signals) };
 }

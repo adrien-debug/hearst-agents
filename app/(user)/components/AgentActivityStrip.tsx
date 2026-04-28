@@ -65,7 +65,7 @@ export function AgentActivityStrip() {
           }}
         />
         <span
-          className="t-9 font-mono tracking-[0.22em] uppercase font-semibold"
+          className="t-9 font-mono tracking-section uppercase font-semibold"
           style={{ color: accentColor }}
         >
           {stateLabel}
@@ -103,7 +103,7 @@ export function AgentActivityStrip() {
               return (
                 <span
                   key={`${event.type}-${event.timestamp}-${i}`}
-                  className="t-9 font-mono tracking-[0.10em] uppercase px-2 py-0.5 rounded-sm shrink-0 truncate"
+                  className="t-9 font-mono tracking-wide uppercase px-2 py-0.5 rounded-sm shrink-0 truncate"
                   style={{
                     background: chipBg,
                     color: chipColor,
@@ -126,7 +126,7 @@ export function AgentActivityStrip() {
         <button
           type="button"
           onClick={() => useRuntimeStore.getState().stopRun()}
-          className="halo-on-hover inline-flex items-center gap-1.5 t-9 font-mono uppercase tracking-[0.22em] px-2 py-0.5 rounded-sm border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-all shrink-0 ml-auto"
+          className="halo-on-hover inline-flex items-center gap-1.5 t-9 font-mono uppercase tracking-section px-2 py-0.5 rounded-sm border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-all shrink-0 ml-auto"
           title="Arrêter le run"
           aria-label="Arrêter le run en cours"
         >

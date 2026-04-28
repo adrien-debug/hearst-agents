@@ -8,9 +8,11 @@ import FlowEdge from "./FlowEdge";
 import FlowPacket from "./FlowPacket";
 
 /**
- * Flow canvas — variante « Orbital HUD » V3 : panneau holographique avec
- * perspective 3D légère, vignette dense, scanline qui parcourt le viewport,
- * grille cyan + halo radial. Les cards et câbles sont rendus par-dessus.
+ * Flow canvas — variante « Orbital HUD » V4 : panneau holographique avec
+ * perspective 3D assumée (--pipeline-tilt), vignette dense, scanline qui
+ * parcourt le viewport, grille cyan + halo radial. Cards et câbles posés
+ * au-dessus. Toute la matérialité vient de `.pipeline-canvas-frame` +
+ * `[data-pipeline-visual="orbit"]` (globals.css). Aucun style inline.
  */
 export default function FlowCanvas() {
   const packets = useCanvasStore((s) => s.packets);
@@ -31,16 +33,8 @@ export default function FlowCanvas() {
   }, [trailLength, cleanupTrail]);
 
   return (
-    <div className="absolute inset-0 grid place-items-center p-(--space-6) overflow-hidden">
-      <div
-        data-pipeline-visual="orbit"
-        className="relative w-full max-w-full max-h-full rounded-(--radius-2xl) overflow-hidden shadow-(--shadow-lg) ring-1 ring-(--cykan)/20"
-        style={{
-          aspectRatio: `${VIEWBOX.width} / ${VIEWBOX.height}`,
-          transform: "perspective(2000px) rotateX(0.4deg)",
-          transformStyle: "preserve-3d",
-        }}
-      >
+    <div className="absolute inset-0 overflow-hidden">
+      <div data-pipeline-visual="orbit" className="pipeline-canvas-frame">
         <svg
           viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
           className="absolute inset-0 w-full h-full"
@@ -69,7 +63,7 @@ export default function FlowCanvas() {
             {/* Scanline — bande horizontale cyan qui descend en boucle. */}
             <linearGradient id="canvas-scanline" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--cykan)" stopOpacity="0" />
-              <stop offset="50%" stopColor="var(--cykan)" stopOpacity="0.06" />
+              <stop offset="50%" stopColor="var(--cykan)" stopOpacity="0.12" />
               <stop offset="100%" stopColor="var(--cykan)" stopOpacity="0" />
             </linearGradient>
           </defs>
@@ -80,20 +74,20 @@ export default function FlowCanvas() {
           <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="url(#canvas-aura)" />
           <rect x="0" y="0" width={VIEWBOX.width} height={VIEWBOX.height} fill="url(#canvas-vignette)" />
 
-          {/* Animated scanline — 80px tall band that slides down indefinitely. */}
+          {/* Animated scanline — 120px tall band that slides down indefinitely. */}
           <rect
             x="0"
-            y="-80"
+            y="-120"
             width={VIEWBOX.width}
-            height="80"
+            height="120"
             fill="url(#canvas-scanline)"
             pointerEvents="none"
           >
             <animate
               attributeName="y"
-              from="-80"
+              from="-120"
               to={VIEWBOX.height}
-              dur="9s"
+              dur="11s"
               repeatCount="indefinite"
             />
           </rect>
@@ -112,7 +106,7 @@ export default function FlowCanvas() {
         </svg>
 
         {/* Node layer — positioned in % so it follows the SVG scale. */}
-        <div className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
+        <div className="absolute inset-0 pipeline-node-layer">
           {NODES.map((node) => (
             <FlowNode key={node.id} node={node} />
           ))}

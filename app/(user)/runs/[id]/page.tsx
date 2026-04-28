@@ -104,7 +104,7 @@ export default function RunDetailPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-2 t-10 font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] hover:text-[var(--text)]"
+            className="flex items-center gap-2 t-10 font-mono uppercase tracking-label text-[var(--text-muted)] hover:text-[var(--text)]"
           >
             <GhostIconChevronLeft className="w-4 h-4" />
             Back
@@ -112,7 +112,7 @@ export default function RunDetailPage() {
         </div>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-medium text-[var(--text)] mb-1">Run {run.id.slice(0, 8)}...</h1>
+            <h1 className="t-18 font-medium text-[var(--text)] mb-1">Run {run.id.slice(0, 8)}...</h1>
             <p className="text-sm text-[var(--text-muted)]">{run.input}</p>
           </div>
           <span className={`text-sm font-medium ${statusColors[run.status] || "text-[var(--text-muted)]"}`}>
@@ -126,7 +126,7 @@ export default function RunDetailPage() {
           {/* Timeline */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-wider">
+              <h2 className="t-10 font-medium text-[var(--text-muted)] uppercase tracking-wide">
                 Timeline
               </h2>
               {timelineSource !== "empty" && (
@@ -235,7 +235,7 @@ export default function RunDetailPage() {
                   Relancer
                 </button>
               )}
-              <button className="flex-1 py-2 bg-white/[0.05] hover:bg-white/[0.08] text-[var(--text-muted)] rounded-lg text-sm transition-colors border border-white/[0.08]">
+              <button className="flex-1 py-2 bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-muted)] rounded-lg t-13 transition-colors border border-[var(--border-subtle)]">
                 Sauvegarder comme mission
               </button>
             </div>

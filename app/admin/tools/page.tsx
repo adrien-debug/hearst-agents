@@ -49,7 +49,7 @@ export default async function ToolsPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Hearst</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">Tools</h1>
+          <h1 className="t-28 font-semibold tracking-tight text-[var(--text)]">Tools</h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">Outils HTTP connectables aux agents.</p>
         </div>
         <Link
@@ -83,7 +83,7 @@ export default async function ToolsPage() {
               className="flex flex-col gap-2 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5"
             >
               <div className="flex items-start justify-between">
-                <h3 className="text-sm font-semibold text-[var(--text)]">{t.name}</h3>
+                <h3 className="t-11 font-semibold text-[var(--text)]">{t.name}</h3>
                 <span className={`rounded-full border px-2 py-0.5 t-10 font-mono font-medium ${methodColor[t.http_method] ?? "text-[var(--text-muted)] border-[var(--line-strong)]"}`}>
                   {t.http_method}
                 </span>

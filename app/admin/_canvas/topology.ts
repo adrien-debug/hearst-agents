@@ -75,18 +75,18 @@ export interface CanvasEdge {
   branch?: "research" | "retrieval" | "pipeline" | "agent";
 }
 
-export const VIEWBOX = { width: 1920, height: 820 } as const;
+export const VIEWBOX = { width: 1920, height: 960 } as const;
 
 /**
- * Card geometry. 220×104 gives room for a 24px icon, a label + sublabel
- * column, a metric strip, and a badge overlay without flex contention.
+ * Card geometry. 220×180 laisse la place à un disque orbital (halo 3D + icône),
+ * un bloc label + kicker, un bandeau metric/pill et de l'air autour.
  */
-export const NODE_SIZE = { w: 220, h: 104 } as const;
+export const NODE_SIZE = { w: 220, h: 180 } as const;
 
 // Y-axis canon: research above / main trunk / agent below
-const Y_TOP = 180;
-const Y_MID = 410;
-const Y_BOT = 640;
+const Y_TOP = 200;
+const Y_MID = 480;
+const Y_BOT = 760;
 
 // X-axis: 8 trunk slots stepped by 240px (220 card + 20 gap), centered in 1920.
 const X = [130, 370, 610, 850, 1090, 1330, 1570, 1810] as const;

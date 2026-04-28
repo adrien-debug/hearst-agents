@@ -38,6 +38,19 @@ export interface AssetProvenance {
   channelRef?: string;
   sentAt?: number;
   deliveryStatus?: "sent" | "delivered" | "read" | "failed";
+  /** Si l'asset est issu d'un ReportSpec catalogué ou éphémère. */
+  specId?: string;
+  specVersion?: number;
+  /** True quand l'asset est un rendu (run artifact) plutôt qu'un Spec persisté. */
+  runArtifact?: boolean;
+  /**
+   * Signaux extraits du report. Persistés dans le provenance pour le
+   * filtrage/listing côté UI sans avoir à reparser le contentRef.
+   */
+  reportMeta?: {
+    signals?: Array<{ type: string; severity: string; message: string; blockId?: string }>;
+    severity?: "info" | "warning" | "critical";
+  };
 }
 
 export interface Asset {

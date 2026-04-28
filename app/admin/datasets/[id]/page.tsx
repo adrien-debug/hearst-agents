@@ -72,7 +72,7 @@ export default function DatasetDetailPage() {
     <div className="px-8 py-10">
       <div className="mb-6">
         <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Dataset</p>
-        <h1 className="text-2xl font-semibold text-[var(--text)]">{dataset?.name ?? "—"}</h1>
+        <h1 className="t-24 font-semibold text-[var(--text)]">{dataset?.name ?? "—"}</h1>
         {dataset?.description && (
           <p className="mt-1 text-sm text-[var(--text-muted)]">{dataset.description}</p>
         )}
@@ -80,7 +80,7 @@ export default function DatasetDetailPage() {
       </div>
 
       <div className="mb-8 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
-        <h3 className="mb-3 text-xs font-semibold uppercase text-[var(--text-muted)]">Ajouter une entrée</h3>
+        <h3 className="mb-3 t-9 font-semibold uppercase text-[var(--text-muted)]">Ajouter une entrée</h3>
         <form onSubmit={addEntry} className="space-y-3">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <label className="block">
@@ -114,7 +114,7 @@ export default function DatasetDetailPage() {
         </form>
       </div>
 
-      <h2 className="mb-4 text-lg font-semibold text-[var(--text)]">Entrées</h2>
+      <h2 className="mb-4 t-15 font-semibold text-[var(--text)]">Entrées</h2>
       {entries.length === 0 ? (
         <p className="text-sm text-[var(--text-muted)]">Aucune entrée.</p>
       ) : (

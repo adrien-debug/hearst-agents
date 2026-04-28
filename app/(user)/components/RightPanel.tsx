@@ -34,7 +34,7 @@ export function RightPanel() {
             className={`fixed bottom-4 right-4 z-50 w-12 h-12 rounded-sm flex items-center justify-center border transition-all ${
               isMobileOpen
                 ? "bg-[var(--bg-elev)] text-[var(--danger)] border-[var(--danger)]"
-                : "bg-[var(--cykan)] text-black border-[var(--line-strong)]"
+                : "bg-[var(--cykan)] text-[var(--text-on-cykan)] border-[var(--line-strong)]"
             }`}
             aria-label={isMobileOpen ? "Fermer le panneau" : "Ouvrir le panneau runtime"}
           >
@@ -47,7 +47,7 @@ export function RightPanel() {
 
           {/* Drawer panel */}
           <div
-            className={`fixed top-0 right-0 h-full z-50 transform transition-transform duration-300 ease-out ${
+            className={`fixed top-0 right-0 h-full z-50 transform transition-transform duration-slow ease-out-soft ${
               isMobileOpen ? "translate-x-0" : "translate-x-full"
             }`}
           >

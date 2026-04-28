@@ -89,7 +89,7 @@ export default async function AgentDetailPage({ params }: Props) {
         <div>
           <div className="mb-1 flex items-center gap-2">
             <span className={`h-2.5 w-2.5 rounded-full ${statusDot[agent.status] ?? "bg-[var(--text-muted)]"}`} />
-            <h1 className="text-2xl font-semibold text-[var(--text)]">{agent.name}</h1>
+            <h1 className="t-24 font-semibold text-[var(--text)]">{agent.name}</h1>
           </div>
           {agent.description && (
             <p className="mt-1 max-w-xl text-sm text-[var(--text-muted)]">{agent.description}</p>
@@ -121,7 +121,7 @@ export default async function AgentDetailPage({ params }: Props) {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Left: Chat */}
         <div>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[var(--text-muted)]">Chat</h2>
+          <h2 className="mb-3 t-10 font-semibold uppercase tracking-wide text-[var(--text-muted)]">Chat</h2>
           <ChatWindow agentId={id} />
         </div>
 
@@ -129,7 +129,7 @@ export default async function AgentDetailPage({ params }: Props) {
         <div className="space-y-5">
           {/* System prompt */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">System Prompt</h3>
+            <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">System Prompt</h3>
             <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-[var(--text-soft)]">
               {agent.system_prompt || "—"}
             </pre>
@@ -137,7 +137,7 @@ export default async function AgentDetailPage({ params }: Props) {
 
           {/* Config */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Config</h3>
+            <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Config</h3>
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div>
                 <span className="text-[var(--text-muted)]">Temperature</span>
@@ -156,7 +156,7 @@ export default async function AgentDetailPage({ params }: Props) {
 
           {/* Skills */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Skills</h3>
+            <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Skills</h3>
             {skills.length === 0 ? (
               <p className="text-xs text-[var(--text-muted)]">Aucun skill attribué.</p>
             ) : (
@@ -175,7 +175,7 @@ export default async function AgentDetailPage({ params }: Props) {
 
           {/* Memory */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Memory</h3>
+            <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Memory</h3>
             {memories.length === 0 ? (
               <p className="text-xs text-[var(--text-muted)]">Aucune mémoire.</p>
             ) : (
@@ -195,7 +195,7 @@ export default async function AgentDetailPage({ params }: Props) {
           {/* Recent runs */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase text-[var(--text-muted)]">Runs récents</h3>
+              <h3 className="t-9 font-semibold uppercase text-[var(--text-muted)]">Runs récents</h3>
               <Link href={`/admin/runs?agent_id=${id}`} className="t-10 text-[var(--text-muted)] hover:text-[var(--text-muted)]">
                 Tout voir →
               </Link>
@@ -221,7 +221,7 @@ export default async function AgentDetailPage({ params }: Props) {
 
           {/* Evaluations */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
-            <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Evaluations</h3>
+            <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Evaluations</h3>
             {evals.length === 0 ? (
               <p className="text-xs text-[var(--text-muted)]">Aucune évaluation.</p>
             ) : (

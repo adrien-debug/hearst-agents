@@ -54,7 +54,7 @@ export function ReportLayout({ payload, showMeta = true }: ReportLayoutProps) {
               <div
                 className="t-9 font-mono uppercase text-[var(--text-muted)]"
                 style={{
-                  letterSpacing: "0.2em",
+                  letterSpacing: "var(--tracking-display)",
                   marginBottom: "var(--space-3)",
                   paddingBottom: "var(--space-2)",
                   borderBottom: "1px solid var(--surface-2)",
@@ -78,10 +78,10 @@ export function ReportLayout({ payload, showMeta = true }: ReportLayoutProps) {
             borderTop: "1px solid var(--surface-2)",
           }}
         >
-          <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)]">
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
             spec_v{payload.version}
           </span>
-          <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)]">
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
             generated_at: {fmtTimestamp(payload.generatedAt)}
           </span>
         </div>
@@ -171,7 +171,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
             minHeight: "var(--space-12)",
           }}
         >
-          <span className="t-9 font-mono uppercase tracking-[0.2em] text-[var(--text-faint)]">
+          <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
             {block.type}_pending
           </span>
         </div>

@@ -110,7 +110,7 @@ export default function AssetsPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="t-11 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)] animate-pulse">
+        <p className="t-11 font-mono tracking-marquee uppercase text-[var(--text-faint)] animate-pulse">
           Chargement des assets…
         </p>
       </div>
@@ -124,8 +124,8 @@ export default function AssetsPage() {
         <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Assets" }] as Crumb[]} className="mb-4" />
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="ghost-title-impact text-lg mb-1">Assets</h1>
-            <p className="t-11 font-mono uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            <h1 className="ghost-title-impact mb-1">Assets</h1>
+            <p className="t-11 font-mono uppercase tracking-display text-[var(--text-muted)]">
               {assets.length} {assets.length === 1 ? "fichier" : "fichiers"} stocké{assets.length === 1 ? "" : "s"}
             </p>
           </div>
@@ -137,14 +137,14 @@ export default function AssetsPage() {
         <div className="max-w-4xl mx-auto">
           {assets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-              <p className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)]">Registre vide</p>
+              <p className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)]">Registre vide</p>
               <p className="t-13 text-[var(--text-muted)] max-w-md leading-relaxed">
                 Aucun asset pour l&apos;instant. Les rapports, briefs et documents générés par tes runs apparaîtront ici.
               </p>
             </div>
           ) : (
             <div className="border-y border-[var(--surface-2)]">
-              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)] border-b border-[var(--surface-2)]">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] border-b border-[var(--surface-2)]">
                 <span className="w-4" />
                 <span>Name</span>
                 <span className="text-right">Type</span>
@@ -167,27 +167,27 @@ export default function AssetsPage() {
                   <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors truncate">
                     {asset.name}
                   </span>
-                  <span className="t-9 font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase text-right">
+                  <span className="t-9 font-mono tracking-display text-[var(--text-faint)] uppercase text-right">
                     {asset.type}
                   </span>
                   <span className="t-9 font-mono text-[var(--text-faint)] text-right">
                     {(asset.size / 1024).toFixed(1)} KB
                   </span>
-                  <span className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase text-right">
+                  <span className="t-9 font-mono tracking-display text-[var(--text-ghost)] uppercase text-right">
                     {formatRelative(asset.createdAt)}
                   </span>
                   <button
                     type="button"
                     onClick={(e) => handleDownload(asset, e)}
                     disabled={!asset.url}
-                    className="t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-ghost)] hover:text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                    className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                   >
                     Télécharger
                   </button>
                   <button
                     type="button"
                     onClick={(e) => handleDelete(asset, e)}
-                    className="t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-all"
+                    className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-all"
                     title={`Supprimer ${asset.name}`}
                     aria-label={`Supprimer ${asset.name}`}
                   >

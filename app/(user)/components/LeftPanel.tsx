@@ -65,7 +65,7 @@ const AdminIcon = () => (
 
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-11 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase">
+    <p className="t-11 font-mono tracking-display text-[var(--text-ghost)] uppercase">
       {children}
     </p>
   );
@@ -74,10 +74,10 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 function GroupLabel({ label, count }: { label: string; count: number }) {
   return (
     <div className="flex items-center justify-between mt-3 mb-1.5 first:mt-0">
-      <span className="t-9 font-mono tracking-[0.3em] text-[var(--text-ghost)] uppercase">
+      <span className="t-9 font-mono tracking-marquee text-[var(--text-ghost)] uppercase">
         {label}
       </span>
-      <span className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)]">
+      <span className="t-9 font-mono tracking-display text-[var(--text-ghost)]">
         {count}
       </span>
     </div>
@@ -183,7 +183,7 @@ function CollapsedTile({ thread, isActive, onSelect }: CollapsedTileProps) {
     >
       {initial}
       {isPinned && !isActive && (
-        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[var(--cykan)] halo-cyan-sm" />
+        <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-pill bg-[var(--cykan)] halo-cyan-sm" />
       )}
     </button>
   );
@@ -217,7 +217,7 @@ export function LeftPanel() {
 
   return (
     <aside
-      className="h-full flex flex-col z-20 relative border-r border-[var(--border-shell)] transition-[width] duration-300 ease-out"
+      className="h-full flex flex-col z-20 relative border-r border-[var(--border-shell)] transition-[width] duration-slow ease-out-soft"
       style={{
         width: leftCollapsed ? "var(--width-threads-collapsed)" : "var(--width-threads)",
         background: "var(--bg-rail)",
@@ -233,7 +233,7 @@ export function LeftPanel() {
           {leftCollapsed ? (
             <span className="t-28 font-medium tracking-tight text-[var(--cykan)] halo-cyan-sm leading-none">H</span>
           ) : (
-            <HearstLogo className="w-32 h-32 object-contain transition-all duration-300" />
+            <HearstLogo className="w-32 h-32 object-contain transition-all duration-slow" />
           )}
         </button>
       </div>
@@ -256,10 +256,10 @@ export function LeftPanel() {
           >
             <span className="flex items-center gap-2">
               <ChatIcon />
-              <span className="t-9 font-mono tracking-[0.3em] uppercase">Conversations</span>
+              <span className="t-9 font-mono tracking-marquee uppercase">Conversations</span>
             </span>
             <span className="flex items-center gap-2">
-              <span className="t-9 font-mono tracking-[0.2em]">{threads.length}</span>
+              <span className="t-9 font-mono tracking-display">{threads.length}</span>
               <span className="t-9 font-mono opacity-0 group-hover/header:opacity-100 -translate-x-1 group-hover/header:translate-x-0 transition-all">
                 +
               </span>

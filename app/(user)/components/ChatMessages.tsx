@@ -52,7 +52,7 @@ function ActionChip({
   return (
     <button
       onClick={onClick}
-      className="halo-on-hover t-9 font-mono tracking-[0.2em] uppercase px-2 py-1 border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan)]/30 transition-all bg-transparent"
+      className="halo-on-hover t-9 font-mono tracking-display uppercase px-2 py-1 border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan)]/30 transition-all bg-transparent"
     >
       {done ? "Copied" : label}
     </button>
@@ -69,7 +69,7 @@ function AssistantActions({ content }: { content: string }) {
     }).catch(() => {});
   };
   return (
-    <div className="flex gap-2 mt-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200">
+    <div className="flex gap-2 mt-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-base">
       <ActionChip label="Cite" />
       <ActionChip label="Pin to focal" />
       <ActionChip label="Re-run" />
@@ -157,7 +157,7 @@ export function ChatMessages({
           if (message.role === "user") {
             return (
               <div key={message.id} className="w-full">
-                <div className="flex items-center gap-2 mb-1 t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-faint)]">
+                <div className="flex items-center gap-2 mb-1 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
                   <span className="opacity-60">[</span>
                   <span className="font-semibold">You</span>
                   <span className="text-[var(--text-ghost)]">·</span>
@@ -177,7 +177,7 @@ export function ChatMessages({
             <div key={message.id} className="relative pl-5 group">
               <div className="absolute left-0 top-2 bottom-2 w-px bg-[var(--border-shell)]" />
               <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)]" />
-              <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-faint)]">
+              <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
                 <span className="opacity-60">[</span>
                 {source && (
                   <>
@@ -224,7 +224,7 @@ export function ChatMessages({
           <div className="relative pl-5">
             <div className="absolute left-0 top-2 bottom-2 w-px bg-[var(--border-shell)]" />
             <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)]" />
-            <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-[0.2em] uppercase text-[var(--text-faint)]">
+            <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
               <span className="opacity-60">[</span>
               <span>en cours…</span>
               <span className="opacity-60">]</span>

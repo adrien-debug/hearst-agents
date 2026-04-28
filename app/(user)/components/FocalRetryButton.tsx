@@ -129,8 +129,8 @@ export function FocalRetryButton({
   };
 
   const baseClasses = compact
-    ? "px-4 py-2 t-10 font-mono font-black uppercase tracking-[0.2em]"
-    : "px-8 py-4 t-11 font-mono font-black uppercase tracking-[0.3em]";
+    ? "px-4 py-2 t-10 font-mono font-black uppercase tracking-display"
+    : "px-8 py-4 t-11 font-mono font-black uppercase tracking-marquee";
 
   return (
     <button
@@ -139,8 +139,9 @@ export function FocalRetryButton({
       disabled={isRetrying}
       className={
         className ||
-        `${baseClasses} bg-[var(--cykan)] hover:tracking-[0.5em] text-[var(--text-on-cykan)] transition-all duration-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl`
+        `${baseClasses} bg-[var(--cykan)] hover:tracking-[0.5em] text-[var(--text-on-cykan)] transition-all duration-emphasis disabled:opacity-50 disabled:cursor-not-allowed`
       }
+      style={{ boxShadow: "var(--shadow-card-hover)" }}
       title={isRetrying ? "Réessai en cours..." : "Réessayer l'opération"}
     >
       {isRetrying ? "..." : label}

@@ -43,7 +43,7 @@ export default async function AgentsPage() {
           <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
             Hearst
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">
+          <h1 className="t-28 font-semibold tracking-tight text-[var(--text)]">
             Agents
           </h1>
         </div>

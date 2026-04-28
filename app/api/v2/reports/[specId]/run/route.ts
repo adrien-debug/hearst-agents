@@ -75,21 +75,30 @@ export async function POST(
     return NextResponse.json({ error: "run_failed", detail: msg }, { status: 500 });
   }
 
-  // Persiste l'asset si on a un thread cible
+  // Persiste l'asset si on a un thread cible. L'id est exposé dans la réponse
+  // pour que le client puisse setFocal({ sourceAssetId }) immédiatement —
+  // sans attendre le prochain tick SSE du right-panel.
+  let assetId: string | null = null;
   if (body.threadId) {
+    assetId = randomUUID();
     const asset: Asset = {
-      id: randomUUID(),
+      id: assetId,
       threadId: body.threadId,
       kind: "report",
       title: spec.meta.title,
       summary: spec.meta.summary,
       provenance: {
-        providerId: "reports",
+        providerId: "system",
         tenantId: scope.tenantId,
         workspaceId: scope.workspaceId,
         userId: scope.userId,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ...({ specId: spec.id, specVersion: spec.version, runArtifact: true } as any),
+        specId: spec.id,
+        specVersion: spec.version,
+        runArtifact: true,
+        reportMeta: {
+          signals: result.signals,
+          severity: result.severity,
+        },
       },
       createdAt: Date.now(),
       contentRef: JSON.stringify({
@@ -101,8 +110,12 @@ export async function POST(
   }
 
   return NextResponse.json({
+    assetId,
+    title: spec.meta.title,
     payload: result.payload,
     narration: result.narration,
+    signals: result.signals,
+    severity: result.severity,
     cacheHit: result.cacheHit,
     cost: result.cost,
     durationMs: result.durationMs,

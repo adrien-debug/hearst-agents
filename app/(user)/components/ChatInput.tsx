@@ -99,7 +99,7 @@ export function ChatInput({
             className="absolute bottom-full mb-8 w-full bg-[var(--bg)] rounded-lg border border-[var(--surface-2)] overflow-hidden z-50"
           >
             {matchingServices.length === 0 ? (
-              <div className="p-4 t-11 font-mono tracking-[0.2em] text-[var(--text-faint)]">
+              <div className="p-4 t-11 font-mono tracking-display text-[var(--text-faint)]">
                 {typeaheadQuery ? (
                   <>Aucune source trouvée&nbsp;: {typeaheadQuery}</>
                 ) : (
@@ -112,12 +112,12 @@ export function ChatInput({
                   <button
                     key={service.id}
                     onClick={() => selectService(service)}
-                    className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-[var(--surface-1)] transition-all duration-200 group"
+                    className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-[var(--surface-1)] transition-all duration-base group"
                   >
                     <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
                     <div className="flex-1">
                       <p className="text-sm font-medium tracking-tight text-[var(--text)]">@{service.id}</p>
-                      <p className="t-10 font-mono tracking-[0.2em] text-[var(--text-faint)]">{service.name}</p>
+                      <p className="t-10 font-mono tracking-display text-[var(--text-faint)]">{service.name}</p>
                     </div>
                     <span className="t-10 font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">Link</span>
                   </button>
@@ -129,7 +129,7 @@ export function ChatInput({
 
         {/* Input Card — textarea en haut, actions en bas */}
         <div
-          className="bg-[var(--card-flat-bg)] border border-[var(--border-input)] rounded-2xl transition-colors duration-200 group focus-within:border-[var(--cykan-border-hover)]"
+          className="bg-[var(--card-flat-bg)] border border-[var(--border-input)] rounded-2xl transition-colors duration-base group focus-within:border-[var(--cykan-border-hover)]"
           style={{ boxShadow: "var(--shadow-card)" }}
         >
           <textarea
@@ -159,18 +159,18 @@ export function ChatInput({
             style={{ minHeight: "32px", maxHeight: "200px" }}
           />
           <div className="flex items-center justify-between px-3 pb-3 pt-1">
-            <span className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)] px-2">
+            <span className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] px-2">
               Auto
             </span>
             {isRunning ? (
               <div className="w-9 h-9 flex items-center justify-center shrink-0">
-                <div className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-pill animate-spin" />
               </div>
             ) : (
               <button
                 onClick={handleSubmit}
                 disabled={!input.trim()}
-                className={`w-8 h-8 flex items-center justify-center shrink-0 transition-all duration-200 ${
+                className={`w-8 h-8 flex items-center justify-center shrink-0 transition-all duration-base ${
                   input.trim()
                     ? "bg-[var(--cykan)] text-[var(--bg)] border border-[var(--cykan)]"
                     : "bg-transparent text-[var(--text-faint)] border border-[var(--border-default)] cursor-not-allowed"
@@ -186,7 +186,7 @@ export function ChatInput({
           </div>
         </div>
         <div className="absolute left-0 right-0 -bottom-5 flex justify-center opacity-30 hover:opacity-100 transition-opacity">
-          <p className="t-9 text-[var(--text-soft)] font-mono tracking-[0.2em]">
+          <p className="t-9 text-[var(--text-soft)] font-mono tracking-display">
             Entrée pour envoyer · Maj+Entrée nouvelle ligne · @ pour mentionner
           </p>
         </div>

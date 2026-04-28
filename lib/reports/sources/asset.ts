@@ -29,9 +29,7 @@ export async function fetchAsset(input: FetchAssetInput): Promise<FetchAssetResu
     return { rows: [], ok: false, error: "Supabase non configuré" };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb2 = sb as any;
-  const { data, error } = await sb2
+  const { data, error } = await sb
     .from("assets")
     .select("id, content_ref, kind, provenance")
     .eq("id", input.assetId)

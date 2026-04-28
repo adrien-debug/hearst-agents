@@ -47,7 +47,7 @@ export default function NewToolPage() {
 
   return (
     <div className="px-8 py-10">
-      <h1 className="mb-8 text-2xl font-semibold text-[var(--text)]">Nouveau tool</h1>
+      <h1 className="mb-8 t-24 font-semibold text-[var(--text)]">Nouveau tool</h1>
 
       {error && (
         <div className="mb-4 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">

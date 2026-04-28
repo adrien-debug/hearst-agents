@@ -8,32 +8,12 @@ interface Props {
 }
 
 const STROKE = {
-  baseMin: 1.2,
-  baseMax: 3.6,
-  active: 2.6,
-  ambient: 1,
-  traffic: 1.8,
-  failed: 1.6,
+  baseMin: 1.4,
+  baseMax: 4,
+  active: 2.8,
 } as const;
-
-const DASH = {
-  base: "4 6",
-  ambient: "4 12",
-  traffic: "6 10",
-} as const;
-
-const BRANCH_COLOR: Record<NonNullable<CanvasEdge["branch"]>, string> = {
-  pipeline: "var(--cykan)",
-  research: "#A78BFA",
-  agent: "#FBBF24",
-  retrieval: "var(--cykan)",
-};
 
 const TRAIL_TTL_MS = 4000;
-
-function edgeColor(edge: CanvasEdge): string {
-  return edge.branch ? BRANCH_COLOR[edge.branch] : "var(--cykan)";
-}
 
 function isFailed(from: NodeState, to: NodeState): boolean {
   return from === "failed" || from === "blocked" || to === "failed" || to === "blocked";
@@ -57,16 +37,11 @@ function sankeyWidth(edgeId: string, usage: Record<string, number> | null, total
 }
 
 /**
- * Fiber-optic cable composite — three stacked strokes give the edge its
- * material feel:
- *   1. Halo (×3 width, blurred) — the "glow" around the cable.
- *   2. Cable (sankey width, branch color) — the body of the cable.
- *   3. Core (×0.5 width, near-white) — the bright fiber core inside.
- * Plus connector dots at both endpoints where the cable plugs into the
- * source / target nodes.
- *
- * Failed edges replace the cyan with --danger and drop the ambient + traffic
- * decoration to keep the failure unambiguous.
+ * Câble fibre-optique en 4 strokes empilés (halo · body · core · traffic).
+ * Toute la matérialité (couleur de branche, glow, opacité, dasharray traffic)
+ * vient des classes `.pipeline-cable-*` dans globals.css. Ce composant ne fait
+ * que poser `data-branch`, `data-active`, `data-failed` et calculer la
+ * géométrie / l'épaisseur Sankey.
  */
 export default function FlowEdge({ edge }: Props) {
   const fromState = useCanvasStore((s) => s.nodeStates[edge.from]);
@@ -84,11 +59,10 @@ export default function FlowEdge({ edge }: Props) {
 
   const failed = isFailed(fromState, toState);
   const active = !failed && isActive(fromState, toState);
-  const color = edgeColor(edge);
   const baseWidth = sankeyWidth(edge.id, edgeUsage, edgeUsageTotal);
   const cableWidth = active ? Math.max(STROKE.active, baseWidth) : baseWidth;
-  const haloWidth = cableWidth * 3 + 1;
-  const coreWidth = Math.max(cableWidth * 0.45, 0.6);
+  const haloWidth = cableWidth * 3.5;
+  const coreWidth = Math.max(cableWidth * 0.4, 0.6);
 
   // Most recent trail entry for this edge (drives the afterglow opacity).
   const lastTrailTs = trailEntries.reduce(
@@ -98,105 +72,25 @@ export default function FlowEdge({ edge }: Props) {
   const trailAge = lastTrailTs > 0 ? Date.now() - lastTrailTs : Infinity;
   const trailOpacity = trailAge < TRAIL_TTL_MS ? 0.6 * (1 - trailAge / TRAIL_TTL_MS) : 0;
 
-  if (failed) {
-    return (
-      <g>
-        <path
-          id={edge.id}
-          d={d}
-          stroke="var(--danger)"
-          strokeWidth={STROKE.failed * 3}
-          fill="none"
-          opacity={0.18}
-          style={{ filter: "blur(3px)" }}
-        />
-        <path
-          d={d}
-          stroke="var(--danger)"
-          strokeWidth={STROKE.failed}
-          fill="none"
-          opacity={0.85}
-        />
-        <circle cx={a.x} cy={a.y} r={3} fill="var(--danger)" />
-        <circle cx={b.x} cy={b.y} r={3} fill="var(--danger)" />
-      </g>
-    );
-  }
-
   return (
-    <g>
-      {/* Halo — soft cyan/branch glow that gives the cable its volume. */}
-      <path
-        d={d}
-        stroke={color}
-        strokeWidth={haloWidth}
-        fill="none"
-        opacity={active ? 0.25 : 0.12}
-        strokeLinecap="round"
-        style={{
-          filter: "blur(3px)",
-          transition: "opacity 220ms var(--ease-standard)",
-        }}
-      />
-
-      {/* Cable body — branch-tinted, Sankey thickness, dashed for sci-fi feel. */}
+    <g
+      className="pipeline-cable"
+      data-branch={edge.branch ?? "pipeline"}
+      data-active={active ? "true" : undefined}
+      data-failed={failed ? "true" : undefined}
+    >
       <path
         id={edge.id}
         d={d}
-        stroke={color}
-        strokeWidth={cableWidth}
-        fill="none"
-        opacity={active ? 0.95 : 0.55}
-        strokeDasharray={DASH.base}
-        strokeLinecap="round"
-        style={{
-          transition:
-            "opacity 220ms var(--ease-standard), stroke-width 220ms var(--ease-standard)",
-        }}
+        className="pipeline-cable-halo"
+        strokeWidth={haloWidth}
       />
-
-      {/* Bright fiber core — ultra-thin near-white inner stroke. */}
-      <path
-        d={d}
-        stroke="rgba(255,255,255,0.85)"
-        strokeWidth={coreWidth}
-        fill="none"
-        opacity={active ? 0.7 : 0.25}
-        strokeLinecap="round"
-      />
-
-      {/* Ambient flow — subtle dashed motion when idle. */}
-      {!active && (
-        <path
-          d={d}
-          stroke={color}
-          strokeWidth={STROKE.ambient}
-          strokeDasharray={DASH.ambient}
-          strokeLinecap="round"
-          fill="none"
-          opacity={0.5}
-        >
-          <animate
-            attributeName="stroke-dashoffset"
-            from="0"
-            to="-32"
-            dur="4s"
-            repeatCount="indefinite"
-          />
-        </path>
+      <path d={d} className="pipeline-cable-body" strokeWidth={cableWidth} />
+      {!failed && (
+        <path d={d} className="pipeline-cable-core" strokeWidth={coreWidth} />
       )}
-
-      {/* Active traffic — bright overlay tracking flowing packets. */}
       {active && (
-        <path
-          d={d}
-          stroke="var(--foreground)"
-          strokeWidth={STROKE.traffic}
-          strokeDasharray={DASH.traffic}
-          strokeLinecap="round"
-          fill="none"
-          opacity={0.9}
-        >
+        <path d={d} className="pipeline-cable-traffic" strokeWidth={cableWidth * 0.55}>
           <animate
             attributeName="stroke-dashoffset"
             from="0"
@@ -207,23 +101,20 @@ export default function FlowEdge({ edge }: Props) {
         </path>
       )}
 
-      {/* Run trail afterglow — solid stroke that fades over TRAIL_TTL_MS. */}
       {trailOpacity > 0 && (
         <path
           d={d}
-          stroke={color}
+          className="pipeline-cable-trail"
           strokeWidth={baseWidth + 1.5}
-          fill="none"
           opacity={trailOpacity}
-          style={{ filter: `drop-shadow(0 0 8px ${color})` }}
         />
       )}
 
-      {/* Connector dots — where the cable plugs into the node ports. */}
-      <circle cx={a.x} cy={a.y} r={3} fill={color} opacity={active ? 1 : 0.7} />
-      <circle cx={a.x} cy={a.y} r={1.4} fill="rgba(255,255,255,0.85)" opacity={active ? 1 : 0.5} />
-      <circle cx={b.x} cy={b.y} r={3} fill={color} opacity={active ? 1 : 0.7} />
-      <circle cx={b.x} cy={b.y} r={1.4} fill="rgba(255,255,255,0.85)" opacity={active ? 1 : 0.5} />
+      {/* Connector dots — alignés avec .pipeline-port HTML (centre exact bord). */}
+      <circle cx={a.x} cy={a.y} r={5} className="pipeline-cable-port-outer" />
+      <circle cx={a.x} cy={a.y} r={2} className="pipeline-cable-port-inner" />
+      <circle cx={b.x} cy={b.y} r={5} className="pipeline-cable-port-outer" />
+      <circle cx={b.x} cy={b.y} r={2} className="pipeline-cable-port-inner" />
     </g>
   );
 }

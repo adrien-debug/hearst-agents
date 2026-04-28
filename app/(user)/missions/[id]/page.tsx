@@ -49,17 +49,17 @@ export default function MissionDeepLinkPage() {
       <div className="text-center space-y-4">
         {error ? (
           <>
-            <p className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--danger)]">Error</p>
+            <p className="t-9 font-mono tracking-marquee uppercase text-[var(--danger)]">Error</p>
             <p className="t-13 text-[var(--text-muted)] max-w-sm">{error}</p>
             <button
               onClick={() => router.push("/missions")}
-              className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+              className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
             >
               ← Back to missions
             </button>
           </>
         ) : (
-          <p className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)] animate-pulse halo-cyan-sm">
+          <p className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] animate-pulse halo-cyan-sm">
             Loading mission…
           </p>
         )}

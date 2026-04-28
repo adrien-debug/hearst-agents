@@ -388,11 +388,11 @@ export default function HomePage() {
               <div className="text-center space-y-2">
                 <p
                   className="t-26 font-medium tracking-tight text-[var(--text)]"
-                  style={{ lineHeight: "32px" }}
+                  style={{ lineHeight: "var(--leading-snug)" }}
                 >
                   {greeting}{firstName ? <span className="text-[var(--cykan)]">, {firstName}</span> : ""}
                 </p>
-                <p className="t-13 text-[var(--text-subtitle)]" style={{ lineHeight: "20px" }}>
+                <p className="t-13 text-[var(--text-subtitle)]" style={{ lineHeight: "var(--leading-base)" }}>
                   Que puis-je faire pour vous&nbsp;?
                 </p>
               </div>
@@ -424,12 +424,12 @@ export default function HomePage() {
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={s.iconPath} alt="" className="w-6 h-6 object-contain" />
                       ) : (
-                        <span className="t-9 font-mono tracking-[0.22em] uppercase text-[var(--text-faint)]">{s.id}</span>
+                        <span className="t-9 font-mono tracking-section uppercase text-[var(--text-faint)]">{s.id}</span>
                       )}
                     </span>
                     <span className="flex-1 min-w-0 flex flex-col">
                       <span className="t-13 font-medium tracking-tight text-[var(--text)] truncate">{s.title}</span>
-                      <span className="t-9 font-mono tracking-[0.22em] uppercase text-[var(--text-faint)] mt-1 truncate">{s.subtitle}</span>
+                      <span className="t-9 font-mono tracking-section uppercase text-[var(--text-faint)] mt-1 truncate">{s.subtitle}</span>
                     </span>
                   </button>
                 ))}
@@ -480,7 +480,7 @@ export default function HomePage() {
             <Breadcrumb trail={trail} className="min-w-0 truncate" />
             <button
               onClick={hideFocalStage}
-              className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-[0.22em] border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
+              className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
               title="Fermer (Esc)"
             >
               <span>Fermer</span>
@@ -507,7 +507,7 @@ export default function HomePage() {
               <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors">
                 {focal.type === "brief" ? "Active Brief" : focal.type === "report" ? "Active Report" : "Active Document"}
               </span>
-              <span className="t-15 font-medium tracking-tight text-[var(--text-muted)] group-hover:translate-x-1 group-hover:text-[var(--text)] transition-all duration-300">{focal.title}</span>
+              <span className="t-15 font-medium tracking-tight text-[var(--text-muted)] group-hover:translate-x-1 group-hover:text-[var(--text)] transition-all duration-slow">{focal.title}</span>
             </div>
           </button>
         </div>

@@ -997,16 +997,13 @@ function Stage({
   statusBySlug: Map<string, string>;
   onSelect: (app: ComposioApp) => void;
 }) {
-  // Adapte le nombre de colonnes au count pour ne pas étirer chaque tile à
-  // 100 % du viewport quand l'utilisateur n'a qu'un ou deux services.
-  const cols =
-    apps.length >= 5 ? "grid-cols-5"
-      : apps.length === 4 ? "grid-cols-4"
-        : apps.length === 3 ? "grid-cols-3"
-          : apps.length === 2 ? "grid-cols-2"
-            : "grid-cols-1";
   return (
-    <div className={`grid ${cols} gap-3 px-8 pb-2`}>
+    <div
+      className="grid gap-6 px-8 pb-2"
+      style={{
+        gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))",
+      }}
+    >
       {apps.map((app) => (
         <StageTile
           key={app.key}
@@ -1019,8 +1016,8 @@ function Stage({
   );
 }
 
-// Variante visuelle dérivée du status. Stage = signal fort visible d'un coup
-// d'œil → ring colorée + ribbon en bas pour les états non-actifs.
+// Variante visuelle dérivée du status. Active = silencieux ; warn/error =
+// dot coloré + label texte sous le nom.
 function stageVariant(status: string): "active" | "warn" | "error" {
   switch (status) {
     case "initiated":
@@ -1035,12 +1032,6 @@ function stageVariant(status: string): "active" | "warn" | "error" {
   }
 }
 
-function stageRibbon(variant: "active" | "warn" | "error", app: ComposioApp): string {
-  if (variant === "warn") return "oauth en cours";
-  if (variant === "error") return "reconnecter";
-  return categoryLabel(app);
-}
-
 function StageTile({
   app,
   status,
@@ -1051,97 +1042,65 @@ function StageTile({
   onClick: () => void;
 }) {
   const variant = stageVariant(status);
-  const ribbon = stageRibbon(variant, app);
-
-  // Couleurs par variant. On reste sur les tokens DS et on compose le glow
-  // via color-mix qui est exposé par tous les browsers Hearst-supportés.
-  const colorMap: Record<typeof variant, { dot: string; ring: string; bg: string; ribbonColor: string; ribbonBorder: string; ribbonBg: string }> = {
-    active: {
-      dot: "var(--cykan)",
-      ring: "var(--cykan-border)",
-      bg: "var(--surface)",
-      ribbonColor: "var(--text-faint)",
-      ribbonBorder: "var(--border-shell)",
-      ribbonBg: "var(--bg-elev)",
-    },
-    warn: {
-      dot: "var(--color-warning)",
-      ring: "var(--color-warning-border)",
-      bg: "var(--color-warning-bg)",
-      ribbonColor: "var(--color-warning)",
-      ribbonBorder: "var(--color-warning-border)",
-      ribbonBg: "var(--color-warning-bg)",
-    },
-    error: {
-      dot: "var(--color-error)",
-      ring: "var(--color-error-border)",
-      bg: "var(--color-error-bg)",
-      ribbonColor: "var(--color-error)",
-      ribbonBorder: "var(--color-error-border)",
-      ribbonBg: "var(--color-error-bg)",
-    },
-  };
-  const c = colorMap[variant];
+  const dotColor =
+    variant === "warn" ? "var(--color-warning)"
+      : variant === "error" ? "var(--color-error)"
+        : "var(--cykan)";
+  const statusLabel =
+    variant === "warn" ? "oauth en cours"
+      : variant === "error" ? "à reconnecter"
+        : null;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label={`${app.name} — ${ribbon}`}
-      className="group relative aspect-square flex flex-col overflow-hidden rounded-md border transition-all"
-      style={{
-        background: c.bg,
-        borderColor: c.ring,
-        boxShadow: `0 0 0 1px ${c.ring}, 0 4px 24px color-mix(in srgb, ${c.dot} 12%, transparent)`,
-      }}
+      aria-label={`${app.name}${statusLabel ? ` — ${statusLabel}` : ""}`}
+      className="group flex flex-col items-center gap-2"
     >
-      {/* Dot status — flotte en haut-droit, indépendant du flux flex */}
-      <span
-        aria-hidden
-        className="absolute top-2 right-2 w-2 h-2 rounded-full z-10"
-        style={{
-          background: c.dot,
-          boxShadow: `0 0 8px color-mix(in srgb, ${c.dot} 50%, transparent)`,
-          animation: variant === "warn" ? "blink 1.4s infinite" : undefined,
-        }}
-      />
-
-      {/* Contenu principal — logo + nom centrés dans l'espace au-dessus
-          du ribbon. flex-1 prend toute la hauteur disponible. */}
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-2">
-        <AppLogo app={app} size={72} />
+      {/* Logo en relatif → permet d'ancrer le dot status en coin du logo
+          (pas de la card — il n'y a plus de card). Le dot est petit et
+          discret, sauf pour warn/error où il prend la couleur du status. */}
+      <span className="relative inline-flex">
+        <AppLogo app={app} size={48} />
         <span
-          className="t-13 text-center"
+          aria-hidden
+          className="absolute w-2 h-2 rounded-full"
           style={{
-            fontWeight: "var(--weight-semibold)",
-            color: "var(--text)",
-            letterSpacing: "-0.005em",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            wordBreak: "break-word",
+            top: "calc(-1 * var(--space-1))",
+            right: "calc(-1 * var(--space-1))",
+            background: dotColor,
+            boxShadow: `0 0 8px color-mix(in srgb, ${dotColor} 60%, transparent)`,
+            animation: variant === "warn" ? "blink 1.4s infinite" : undefined,
           }}
-        >
-          {app.name}
-        </span>
-      </div>
-
-      {/* Ribbon — sibling flex (pas absolute) → prend sa place naturelle
-          en bas, ne chevauche plus le nom long. truncate sur 1 ligne avec
-          ellipsis pour les catégories à libellé long type
-          "FILE-MANAGEMENT-&-STORAGE". */}
+        />
+      </span>
       <span
-        className="shrink-0 t-9 font-mono uppercase text-center py-2 border-t truncate px-2"
+        className="t-11 text-center group-hover:text-[var(--cykan)] transition-colors"
         style={{
-          letterSpacing: "var(--tracking-section)",
-          color: c.ribbonColor,
-          borderColor: c.ribbonBorder,
-          background: c.ribbonBg,
+          fontWeight: "var(--weight-medium)",
+          color: "var(--text)",
+          lineHeight: "var(--leading-snug)",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+          wordBreak: "break-word",
         }}
       >
-        {ribbon}
+        {app.name}
       </span>
+      {statusLabel && (
+        <span
+          className="t-9 font-mono uppercase"
+          style={{
+            letterSpacing: "var(--tracking-section)",
+            color: dotColor,
+          }}
+        >
+          {statusLabel}
+        </span>
+      )}
     </button>
   );
 }
@@ -1165,14 +1124,6 @@ function OnboardingStage({
 
   return (
     <div className="px-8 pb-2">
-      <p
-        className="t-11 mb-3 text-[var(--text-muted)]"
-        style={{ lineHeight: "var(--leading-snug)" }}
-      >
-        Aucun service connecté pour le moment. Pour démarrer, on te recommande
-        ces quatre essentiels — ton agent gagne immédiatement la moitié de ses
-        capacités quotidiennes.
-      </p>
       {starters.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {starters.map((app) => (
@@ -1207,34 +1158,22 @@ function StarterTile({
     <button
       type="button"
       onClick={onClick}
-      className="group relative aspect-square flex flex-col rounded-md border transition-all hover:opacity-90"
-      style={{
-        background: "var(--surface)",
-        borderColor: "var(--border-default)",
-        boxShadow: "0 4px 16px color-mix(in srgb, var(--cykan) 8%, transparent)",
-      }}
+      className="group flex flex-col items-center gap-2 transition-opacity hover:opacity-90"
     >
-      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-2">
-        <AppLogo app={app} size={56} />
-        <span
-          className="t-13 text-center"
-          style={{
-            fontWeight: "var(--weight-semibold)",
-            color: "var(--text)",
-            letterSpacing: "-0.005em",
-          }}
-        >
-          {app.name}
-        </span>
-      </div>
+      <AppLogo app={app} size={48} />
       <span
-        className="shrink-0 t-9 font-mono uppercase text-center py-2 border-t truncate"
+        className="t-11 text-center group-hover:text-[var(--cykan)] transition-colors"
         style={{
-          letterSpacing: "var(--tracking-section)",
-          color: "var(--cykan-deep)",
-          background: "var(--cykan-bgsoft)",
-          borderColor: "var(--cykan-border)",
+          fontWeight: "var(--weight-medium)",
+          color: "var(--text)",
+          lineHeight: "var(--leading-snug)",
         }}
+      >
+        {app.name}
+      </span>
+      <span
+        className="t-9 font-mono uppercase text-[var(--cykan-deep)] opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ letterSpacing: "var(--tracking-section)" }}
       >
         connecter →
       </span>
@@ -1275,13 +1214,6 @@ function BundlesSection({
   return (
     <>
       <SectionLabel label="Stacks" count={enriched.length} />
-      <p
-        className="px-8 pb-3 t-11 text-[var(--text-muted)]"
-        style={{ lineHeight: "var(--leading-snug)" }}
-      >
-        Trois groupes pré-pensés qui couvrent un workflow complet. Connecte le
-        service suivant en un clic — pas de cascade automatique.
-      </p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-8 pb-2">
         {enriched.map((b) => (
           <BundleCard
@@ -1323,17 +1255,16 @@ function BundleCard({
       type="button"
       onClick={() => next && onSelect(next)}
       disabled={isComplete}
-      className="group flex flex-col text-left px-4 py-4 border rounded-md transition-colors"
-      style={{
-        background: isComplete ? "var(--cykan-bgsoft)" : "var(--surface)",
-        borderColor: isComplete ? "var(--cykan-border)" : "var(--border-shell)",
-        cursor: isComplete ? "default" : "pointer",
-      }}
+      className="group flex flex-col text-left transition-colors"
+      style={{ cursor: isComplete ? "default" : "pointer" }}
     >
       <div className="flex items-baseline justify-between gap-2 mb-3">
         <span
-          className="t-13"
-          style={{ fontWeight: "var(--weight-semibold)", color: "var(--text)" }}
+          className="t-13 group-hover:text-[var(--cykan)] transition-colors"
+          style={{
+            fontWeight: "var(--weight-semibold)",
+            color: isComplete ? "var(--cykan-deep)" : "var(--text)",
+          }}
         >
           {label}
         </span>
@@ -1348,27 +1279,25 @@ function BundleCard({
         </span>
       </div>
 
-      {/* Cluster de logos avec overlap léger. Connectés en couleur normale,
-          non-connectés en grayscale fort pour identifier ce qui reste. */}
-      <div className="flex items-center mb-3">
-        {apps.slice(0, 5).map((a, i) => {
+      {/* Cluster de logos sans frame. Connectés en couleur normale,
+          non-connectés en grayscale léger. Pas de border autour de chaque,
+          pas de boîte autour du cluster. */}
+      <div className="flex items-center gap-2 mb-3">
+        {apps.slice(0, 5).map((a) => {
           const conn = connectedSlugs.has(a.key);
           return (
             <span
               key={a.key}
               className="inline-flex shrink-0"
-              style={{
-                marginLeft: i === 0 ? 0 : "calc(-1 * var(--space-2))",
-                filter: conn ? undefined : "grayscale(0.85) opacity(0.55)",
-              }}
+              style={{ filter: conn ? undefined : "grayscale(0.85) opacity(0.55)" }}
             >
-              <AppLogo app={a} size={32} />
+              <AppLogo app={a} size={28} />
             </span>
           );
         })}
         {apps.length > 5 && (
           <span
-            className="t-9 font-mono ml-2 text-[var(--text-faint)]"
+            className="t-9 font-mono text-[var(--text-faint)]"
             style={{ letterSpacing: "var(--tracking-hairline)" }}
           >
             +{apps.length - 5}
@@ -1376,17 +1305,15 @@ function BundleCard({
         )}
       </div>
 
-      {/* CTA — soit "Connecter le suivant : X", soit "✓ complet" */}
-      <div
-        className="t-11 font-mono uppercase mt-auto pt-3 border-t"
+      <span
+        className="t-9 font-mono uppercase"
         style={{
           letterSpacing: "var(--tracking-section)",
-          borderColor: "var(--border-shell)",
-          color: isComplete ? "var(--cykan-deep)" : "var(--text)",
+          color: isComplete ? "var(--cykan-deep)" : "var(--text-faint)",
         }}
       >
         {isComplete ? "✓ complet" : `Connecter ${next?.name ?? ""} →`}
-      </div>
+      </span>
     </button>
   );
 }
@@ -1401,34 +1328,17 @@ function SuggestionsGrid({
   onSelect: (app: ComposioApp) => void;
 }) {
   return (
-    <>
-      <SuggestionsHint />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-8 pb-2">
-        {suggestions.map((s, i) => (
-          <SuggestionCard
-            key={s.app.key}
-            app={s.app}
-            hint={s.hint}
-            featured={i === 0}
-            onClick={() => onSelect(s.app)}
-          />
-        ))}
-      </div>
-    </>
-  );
-}
-
-// Une ligne de conseil sobre, juste sous le label "Pour aller plus loin".
-// Pas une cover éditoriale — un nudge pour expliquer pourquoi ces 3 picks.
-function SuggestionsHint() {
-  return (
-    <p
-      className="px-8 pb-3 t-11 text-[var(--text-muted)]"
-      style={{ lineHeight: "var(--leading-snug)" }}
-    >
-      Trois services à fort impact pour ton agent — chacun ouvre une famille
-      d&apos;actions nouvelles dans le chat.
-    </p>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-8 pb-2">
+      {suggestions.map((s, i) => (
+        <SuggestionCard
+          key={s.app.key}
+          app={s.app}
+          hint={s.hint}
+          featured={i === 0}
+          onClick={() => onSelect(s.app)}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -1447,17 +1357,16 @@ function SuggestionCard({
     <button
       type="button"
       onClick={onClick}
-      className="group flex items-center gap-4 px-4 py-3 text-left border rounded-md transition-colors"
-      style={{
-        background: featured ? "var(--cykan-bgsoft)" : "var(--surface)",
-        borderColor: featured ? "var(--cykan-border)" : "var(--border-shell)",
-      }}
+      className="group flex items-center gap-4 text-left transition-colors"
     >
       <AppLogo app={app} size={40} />
       <div className="flex-1 min-w-0">
         <div
-          className="t-13 truncate"
-          style={{ fontWeight: "var(--weight-semibold)", color: "var(--text)" }}
+          className="t-13 truncate group-hover:text-[var(--cykan)] transition-colors"
+          style={{
+            fontWeight: "var(--weight-semibold)",
+            color: featured ? "var(--cykan-deep)" : "var(--text)",
+          }}
         >
           {app.name}
         </div>
@@ -1493,9 +1402,8 @@ function CategoriesBar({
   const hiddenCount = Math.max(0, categories.length - visible.length);
   return (
     <div
-      className="flex items-center gap-2 px-8 py-3 overflow-x-auto"
+      className="flex items-center gap-6 px-8 py-3 overflow-x-auto"
       style={{
-        background: "var(--bg-elev)",
         borderTop: "1px solid var(--border-shell)",
         borderBottom: "1px solid var(--border-shell)",
       }}
@@ -1542,19 +1450,17 @@ function CategoryChip({
     <button
       type="button"
       onClick={onClick}
-      className="t-10 font-mono uppercase rounded-pill px-3 py-1 border whitespace-nowrap transition-colors"
+      className="t-10 font-mono uppercase whitespace-nowrap transition-colors"
       style={{
         letterSpacing: "var(--tracking-section)",
-        background: on ? "var(--text)" : "var(--surface)",
-        color: on ? "var(--bg)" : "var(--text-muted)",
-        borderColor: on ? "var(--text)" : "var(--border-shell)",
+        color: on ? "var(--cykan)" : "var(--text-faint)",
         fontWeight: on ? "var(--weight-semibold)" : "var(--weight-regular)",
       }}
     >
       {label}
       <span
         className="ml-2"
-        style={{ color: on ? "color-mix(in srgb, var(--bg) 55%, transparent)" : "var(--text-ghost)" }}
+        style={{ color: on ? "var(--cykan)" : "var(--text-ghost)", opacity: on ? 0.6 : 1 }}
       >
         {count}
       </span>
@@ -1612,7 +1518,7 @@ function Wallpaper({
         }}
       >
         <span>
-          {apps.length} visible{apps.length > 1 ? "s" : ""} · {totalFiltered} dans la catégorie
+          {apps.length} / {totalFiltered}
         </span>
         {canLoadMore && (
           <button
@@ -1665,9 +1571,7 @@ function WallpaperTile({
       aria-label={app.name}
       className="group relative aspect-square flex items-center justify-center rounded-xs border transition-all"
       style={{
-        background: "var(--surface)",
-        borderColor: connected ? "var(--cykan-border)" : "var(--border-shell)",
-        boxShadow: connected ? "inset 0 0 0 1px var(--cykan-bg)" : undefined,
+        borderColor: connected ? "var(--cykan-border)" : "var(--border-soft)",
         filter,
       }}
     >
@@ -1675,8 +1579,10 @@ function WallpaperTile({
       {connected && (
         <span
           aria-hidden
-          className="absolute top-1 right-1 w-2 h-2 rounded-full"
+          className="absolute w-2 h-2 rounded-full"
           style={{
+            top: "calc(-1 * var(--space-1))",
+            right: "calc(-1 * var(--space-1))",
             background: dotColor,
             boxShadow: `0 0 4px color-mix(in srgb, ${dotColor} 60%, transparent)`,
           }}
@@ -1788,12 +1694,7 @@ function AppLogo({ app, size = 16 }: { app: ComposioApp; size?: number }) {
     return (
       <span
         className={wrapperClass}
-        style={{
-          width: size,
-          height: size,
-          background: "var(--surface)",
-          boxShadow: "inset 0 0 0 1px var(--border-shell)",
-        }}
+        style={{ width: size, height: size }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -1819,6 +1720,7 @@ function AppLogo({ app, size = 16 }: { app: ComposioApp; size?: number }) {
       </span>
     );
   }
+  // Fallback (pas de logo distant) : pastille discrète avec l'initiale.
   return (
     <span
       className={wrapperClass}
@@ -1828,7 +1730,6 @@ function AppLogo({ app, size = 16 }: { app: ComposioApp; size?: number }) {
         fontSize: inner * 0.6,
         background: "var(--surface-2)",
         color: "var(--text-faint)",
-        boxShadow: "inset 0 0 0 1px var(--border-shell)",
       }}
     >
       {app.name?.[0]?.toUpperCase() ?? "·"}

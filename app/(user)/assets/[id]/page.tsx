@@ -60,7 +60,7 @@ export default function AssetDetailPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-white/40 text-sm">Chargement...</div>
+        <div className="t-13 text-[var(--text-ghost)]">Chargement...</div>
       </div>
     );
   }
@@ -68,10 +68,10 @@ export default function AssetDetailPage() {
   if (!asset) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <div className="text-white/40 text-sm mb-4">Asset non trouvé</div>
+        <div className="t-13 text-[var(--text-ghost)] mb-4">Asset non trouvé</div>
         <button
           onClick={() => router.push("/")}
-          className="text-cyan-400 hover:text-cyan-300 text-sm"
+          className="t-13 text-[var(--cykan)] hover:text-[var(--cykan)]/80"
         >
           Retour à l&apos;accueil
         </button>
@@ -86,14 +86,14 @@ export default function AssetDetailPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-2 t-10 font-mono uppercase tracking-[0.15em] text-[var(--text-muted)] hover:text-[var(--text)]"
+            className="flex items-center gap-2 t-10 font-mono uppercase tracking-label text-[var(--text-muted)] hover:text-[var(--text)]"
           >
             <GhostIconChevronLeft className="w-4 h-4" />
             Back
           </button>
         </div>
         <p className="ghost-meta-label mb-1">ASSET_VIEW</p>
-        <h1 className="ghost-title-impact text-lg">Asset</h1>
+        <h1 className="ghost-title-impact">Asset</h1>
       </div>
 
       {/* Content */}

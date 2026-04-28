@@ -92,7 +92,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
                 }`}
               >
                 <p className={`text-xs font-black uppercase tracking-tighter ${selected ? "" : "text-[var(--text-soft)]"}`}>{option.label}</p>
-                <p className="t-10 font-mono uppercase tracking-[0.08em] text-[var(--text-faint)] mt-1">{option.description}</p>
+                <p className="t-10 font-mono uppercase tracking-caption text-[var(--text-faint)] mt-1">{option.description}</p>
               </button>
             );
           })}
@@ -109,14 +109,14 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
             placeholder="0 9 * * 1"
             className="ghost-input-line w-full font-mono text-xs"
           />
-          <p className="t-10 font-mono text-[var(--text-faint)] mt-2 uppercase tracking-[0.1em]">min heure jour mois jour-semaine</p>
+          <p className="t-10 font-mono text-[var(--text-faint)] mt-2 uppercase tracking-caption">min heure jour mois jour-semaine</p>
         </div>
       )}
 
       <div className="flex items-center justify-between py-4 border-y border-[var(--line)]">
         <div>
           <p className="text-xs font-medium text-[var(--text-soft)]">Mission activée</p>
-          <p className="t-10 font-mono text-[var(--text-faint)] mt-1 uppercase tracking-[0.12em]">Exécution selon fréquence</p>
+          <p className="t-10 font-mono text-[var(--text-faint)] mt-1 uppercase tracking-wide">Exécution selon fréquence</p>
         </div>
         <button
           type="button"

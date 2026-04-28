@@ -201,12 +201,17 @@ export function buildProposeReportSpecTool(
         title: spec.meta.title,
         summary: spec.meta.summary,
         provenance: {
-          providerId: "reports",
+          providerId: "system",
           tenantId: ctx.tenantId,
           workspaceId: ctx.workspaceId,
           userId: ctx.userId,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ...({ specId: spec.id, specVersion: spec.version, runArtifact: true } as any),
+          specId: spec.id,
+          specVersion: spec.version,
+          runArtifact: true,
+          reportMeta: {
+            signals: result.signals,
+            severity: result.severity,
+          },
         },
         createdAt: now,
         contentRef: JSON.stringify({
