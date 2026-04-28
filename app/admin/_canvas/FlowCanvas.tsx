@@ -38,7 +38,7 @@ export default function FlowCanvas() {
         <svg
           viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
           className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="xMidYMid meet"
+          preserveAspectRatio="xMidYMid slice"
         >
           <defs>
             {/* Grille : pas = --space-10 (40px) lignes + --space-5 (20px) points — valeurs numériques requises par SVG pattern */}

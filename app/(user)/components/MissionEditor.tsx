@@ -91,7 +91,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
                   selected ? "bg-[var(--bg-soft)] text-[var(--cykan)]" : "bg-[var(--bg)] text-[var(--text-muted)] hover:bg-[var(--bg-elev)]"
                 }`}
               >
-                <p className={`text-xs font-black uppercase tracking-tighter ${selected ? "" : "text-[var(--text-soft)]"}`}>{option.label}</p>
+                <p className={`t-9 font-black uppercase tracking-tight ${selected ? "" : "text-[var(--text-soft)]"}`}>{option.label}</p>
                 <p className="t-10 font-mono uppercase tracking-caption text-[var(--text-faint)] mt-1">{option.description}</p>
               </button>
             );
@@ -107,7 +107,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
             value={formData.customCron}
             onChange={(e) => setFormData({ ...formData, customCron: e.target.value })}
             placeholder="0 9 * * 1"
-            className="ghost-input-line w-full font-mono text-xs"
+            className="ghost-input-line w-full font-mono t-9"
           />
           <p className="t-10 font-mono text-[var(--text-faint)] mt-2 uppercase tracking-caption">min heure jour mois jour-semaine</p>
         </div>
@@ -115,7 +115,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
 
       <div className="flex items-center justify-between py-4 border-y border-[var(--line)]">
         <div>
-          <p className="text-xs font-medium text-[var(--text-soft)]">Mission activée</p>
+          <p className="t-9 font-medium text-[var(--text-soft)]">Mission activée</p>
           <p className="t-10 font-mono text-[var(--text-faint)] mt-1 uppercase tracking-wide">Exécution selon fréquence</p>
         </div>
         <button

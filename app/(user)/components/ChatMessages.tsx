@@ -176,7 +176,7 @@ export function ChatMessages({
           return (
             <div key={message.id} className="relative pl-5 group">
               <div className="absolute left-0 top-2 bottom-2 w-px bg-[var(--border-shell)]" />
-              <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)]" />
+              <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-pill bg-[var(--cykan)]" />
               <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
                 <span className="opacity-60">[</span>
                 {source && (
@@ -223,7 +223,7 @@ export function ChatMessages({
         {isRunning && lastIsUser && (
           <div className="relative pl-5">
             <div className="absolute left-0 top-2 bottom-2 w-px bg-[var(--border-shell)]" />
-            <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-full bg-[var(--cykan)]" />
+            <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-pill bg-[var(--cykan)]" />
             <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
               <span className="opacity-60">[</span>
               <span>en cours…</span>

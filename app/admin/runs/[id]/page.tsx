@@ -51,19 +51,19 @@ export default async function RunDetailPage({ params }: Props) {
   return (
     <div className="px-8 py-10">
       <div className="mb-8">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
+        <p className="t-9 font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
           Run
         </p>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-semibold text-[var(--text)]">
+          <h1 className="t-24 font-semibold text-[var(--text)]">
             {run.kind}
           </h1>
-          <span className={`text-sm font-medium ${statusColor[run.status] ?? "text-[var(--text-muted)]"}`}>
+          <span className={`t-13 font-medium ${statusColor[run.status] ?? "text-[var(--text-muted)]"}`}>
             {run.status}
           </span>
         </div>
         {agent && (
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Agent: {agent.name}</p>
+          <p className="mt-1 t-13 text-[var(--text-muted)]">Agent: {agent.name}</p>
         )}
       </div>
 
@@ -78,7 +78,7 @@ export default async function RunDetailPage({ params }: Props) {
         ].map((s) => (
           <div key={s.label} className="rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
             <p className="t-10 font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
-            <p className="mt-0.5 text-lg font-semibold text-[var(--text)]">{s.value}</p>
+            <p className="mt-0.5 t-18 font-semibold text-[var(--text)]">{s.value}</p>
           </div>
         ))}
       </div>
@@ -86,29 +86,29 @@ export default async function RunDetailPage({ params }: Props) {
       {/* Input / Output */}
       <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
-          <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Input</h3>
-          <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-[var(--text-soft)]">
+          <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Input</h3>
+          <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono t-9 text-[var(--text-soft)]">
             {JSON.stringify(run.input, null, 2)}
           </pre>
         </div>
         <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
-          <h3 className="mb-2 text-xs font-semibold uppercase text-[var(--text-muted)]">Output</h3>
-          <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono text-xs text-[var(--text-soft)]">
+          <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Output</h3>
+          <pre className="max-h-40 overflow-auto whitespace-pre-wrap font-mono t-9 text-[var(--text-soft)]">
             {JSON.stringify(run.output, null, 2)}
           </pre>
         </div>
       </div>
 
       {run.error && (
-        <div className="mb-8 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
+        <div className="mb-8 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {run.error}
         </div>
       )}
 
       {/* Traces timeline */}
-      <h2 className="mb-4 text-lg font-semibold text-[var(--text)]">Traces</h2>
+      <h2 className="mb-4 t-18 font-semibold text-[var(--text)]">Traces</h2>
       {traces.length === 0 ? (
-        <p className="text-sm text-[var(--text-muted)]">Aucune trace.</p>
+        <p className="t-13 text-[var(--text-muted)]">Aucune trace.</p>
       ) : (
         <div className="space-y-2">
           {traces.map((t, i) => (
@@ -118,15 +118,15 @@ export default async function RunDetailPage({ params }: Props) {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-[var(--text-muted)]">#{i + 1}</span>
+                  <span className="t-9 font-mono text-[var(--text-muted)]">#{i + 1}</span>
                   <span
-                    className={`rounded-full border px-2 py-0.5 t-10 font-medium ${traceKindColor[t.kind] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}
+                    className={`rounded-pill border px-2 py-0.5 t-10 font-medium ${traceKindColor[t.kind] ?? "border-[var(--line-strong)] text-[var(--text-muted)]"}`}
                   >
                     {t.kind}
                   </span>
-                  <span className="text-sm text-[var(--text-soft)]">{t.name}</span>
+                  <span className="t-13 text-[var(--text-soft)]">{t.name}</span>
                 </div>
-                <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
+                <div className="flex items-center gap-4 t-9 text-[var(--text-muted)]">
                   {t.model_used && <span>{t.model_used}</span>}
                   {t.latency_ms != null && <span>{t.latency_ms}ms</span>}
                   {(t.tokens_in ?? 0) > 0 && (
@@ -136,7 +136,7 @@ export default async function RunDetailPage({ params }: Props) {
               </div>
 
               {t.error && (
-                <p className="mt-2 text-xs text-[var(--danger)]">{t.error}</p>
+                <p className="mt-2 t-9 text-[var(--danger)]">{t.error}</p>
               )}
 
               <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">

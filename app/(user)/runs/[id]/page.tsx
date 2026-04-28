@@ -61,7 +61,7 @@ export default function RunDetailPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg)" }}>
-        <div className="text-[var(--text-muted)] text-sm">Chargement...</div>
+        <div className="text-[var(--text-muted)] t-13">Chargement...</div>
       </div>
     );
   }
@@ -69,10 +69,10 @@ export default function RunDetailPage() {
   if (!run) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8" style={{ background: "var(--bg)" }}>
-        <div className="text-[var(--text-muted)] text-sm mb-4">Run non trouvé</div>
+        <div className="text-[var(--text-muted)] t-13 mb-4">Run non trouvé</div>
         <button
           onClick={() => router.push("/")}
-          className="text-[var(--cykan)] hover:text-[var(--cykan)]/80 text-sm"
+          className="text-[var(--cykan)] hover:text-[var(--cykan)]/80 t-13"
         >
           Retour à l&apos;accueil
         </button>
@@ -113,9 +113,9 @@ export default function RunDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="t-18 font-medium text-[var(--text)] mb-1">Run {run.id.slice(0, 8)}...</h1>
-            <p className="text-sm text-[var(--text-muted)]">{run.input}</p>
+            <p className="t-13 text-[var(--text-muted)]">{run.input}</p>
           </div>
-          <span className={`text-sm font-medium ${statusColors[run.status] || "text-[var(--text-muted)]"}`}>
+          <span className={`t-13 font-medium ${statusColors[run.status] || "text-[var(--text-muted)]"}`}>
             {statusLabels[run.status] || run.status}
           </span>
         </div>
@@ -130,7 +130,7 @@ export default function RunDetailPage() {
                 Timeline
               </h2>
               {timelineSource !== "empty" && (
-                <span className="text-xs text-[var(--text-faint)]">
+                <span className="t-9 text-[var(--text-faint)]">
                   {timelineSource === "memory" ? "Live" : "Persisted"}
                 </span>
               )}
@@ -148,25 +148,25 @@ export default function RunDetailPage() {
                 <h3 className="ghost-meta-label mb-4">Metrics</h3>
                 <div className="space-y-2">
                   {run.metrics.tokensIn !== undefined && (
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between t-13">
                       <span className="text-[var(--text-faint)]">Tokens in</span>
                       <span className="text-[var(--text)]">{run.metrics.tokensIn}</span>
                     </div>
                   )}
                   {run.metrics.tokensOut !== undefined && (
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between t-13">
                       <span className="text-[var(--text-faint)]">Tokens out</span>
                       <span className="text-[var(--text)]">{run.metrics.tokensOut}</span>
                     </div>
                   )}
                   {run.metrics.costUsd !== undefined && (
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between t-13">
                       <span className="text-[var(--text-faint)]">Coût</span>
                       <span className="text-[var(--text)]">${run.metrics.costUsd.toFixed(4)}</span>
                     </div>
                   )}
                   {run.metrics.latencyMs !== undefined && (
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between t-13">
                       <span className="text-[var(--text-faint)]">Latence</span>
                       <span className="text-[var(--text)]">{run.metrics.latencyMs}ms</span>
                     </div>
@@ -189,7 +189,7 @@ export default function RunDetailPage() {
                     >
                       <ServiceIdGlyph id={asset.id} size="sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[var(--text)] truncate">{asset.name}</p>
+                        <p className="t-13 text-[var(--text)] truncate">{asset.name}</p>
                         <p className="t-10 font-mono uppercase text-[var(--text-muted)]">{asset.type}</p>
                       </div>
                       <GhostIconChevronRight className="w-4 h-4 shrink-0 text-[var(--cykan)]" />
@@ -202,7 +202,7 @@ export default function RunDetailPage() {
             {/* Info */}
             <div className="border-t border-[var(--line)] p-4 bg-[var(--bg)]">
               <h3 className="ghost-meta-label mb-4">Info</h3>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 t-13">
                 <div className="flex justify-between">
                   <span className="text-[var(--text-faint)]">Backend</span>
                   <span className="text-[var(--text)]">{run.backend || "-"}</span>
@@ -231,7 +231,7 @@ export default function RunDetailPage() {
             {/* Actions */}
             <div className="flex gap-2">
               {run.status === "failed" && (
-                <button className="flex-1 py-2 bg-[var(--cykan)]/15 hover:bg-[var(--cykan)]/25 text-[var(--cykan)] rounded-lg text-sm font-medium transition-colors">
+                <button className="flex-1 py-2 bg-[var(--cykan)]/15 hover:bg-[var(--cykan)]/25 text-[var(--cykan)] rounded-lg t-13 font-medium transition-colors">
                   Relancer
                 </button>
               )}

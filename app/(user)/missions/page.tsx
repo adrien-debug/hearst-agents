@@ -298,20 +298,20 @@ function MissionsPageContent() {
 
         {/* Stats */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-[var(--money)]" />
+          <div className="flex items-center gap-2 t-9">
+            <span className="w-2 h-2 rounded-pill bg-[var(--money)]" />
             <span className="text-[var(--text-muted)]">{missions.filter((m) => m.enabled).length} activées</span>
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-[var(--cykan)] animate-pulse" />
+          <div className="flex items-center gap-2 t-9">
+            <span className="w-2 h-2 rounded-pill bg-[var(--cykan)] animate-pulse" />
             <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "running").length} en cours</span>
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-[var(--danger)]" />
+          <div className="flex items-center gap-2 t-9">
+            <span className="w-2 h-2 rounded-pill bg-[var(--danger)]" />
             <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "failed").length} échecs</span>
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-2 h-2 rounded-full bg-[var(--warn)]" />
+          <div className="flex items-center gap-2 t-9">
+            <span className="w-2 h-2 rounded-pill bg-[var(--warn)]" />
             <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "blocked").length} bloqués</span>
           </div>
         </div>
@@ -370,7 +370,7 @@ function MissionsPageContent() {
                     <button
                       type="button"
                       onClick={() => handleToggle(mission)}
-                      className={`w-2 h-2 rounded-full mt-1 shrink-0 transition-colors ${
+                      className={`w-2 h-2 rounded-pill mt-1 shrink-0 transition-colors ${
                         mission.enabled ? "bg-[var(--money)]" : "bg-[var(--text-faint)]"
                       }`}
                       title={mission.enabled ? "Désactiver" : "Activer"}
@@ -449,7 +449,7 @@ function MissionsPageContent() {
         >
             <div className="p-8">
               <div className="flex items-center justify-between mb-8 border-b border-[var(--line)] pb-4">
-                <h2 className="ghost-title-impact text-sm">
+                <h2 className="ghost-title-impact">
                   {editingMission ? "Modifier la mission" : "Nouvelle mission"}
                 </h2>
                 <button type="button" onClick={closeEditor} className="text-[var(--text-muted)] hover:text-[var(--text)] p-1" aria-label="Fermer">

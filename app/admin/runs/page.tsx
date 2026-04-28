@@ -60,25 +60,25 @@ export default async function RunsPage() {
   return (
     <div className="px-8 py-10">
       <div className="mb-8">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
+        <p className="t-9 font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">
           Hearst
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-[var(--text)]">
+        <h1 className="t-28 font-semibold tracking-tight text-[var(--text)]">
           Runs
         </h1>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">
+        <p className="mt-1 t-13 text-[var(--text-muted)]">
           Chaque exécution, chaque trace, chaque token.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
+        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
 
       {runs.length === 0 && !error ? (
-        <p className="text-sm text-[var(--text-muted)]">Aucun run enregistré. Lancez un chat ou un workflow.</p>
+        <p className="t-13 text-[var(--text-muted)]">Aucun run enregistré. Lancez un chat ou un workflow.</p>
       ) : (
         <div className="space-y-2">
           {runs.map((run) => (
@@ -91,19 +91,19 @@ export default async function RunsPage() {
                 <span className="rounded-md border border-[var(--line-strong)] px-2 py-0.5 t-10 font-medium text-[var(--text-muted)]">
                   {kindLabel[run.kind] ?? run.kind}
                 </span>
-                <span className={`text-xs font-medium ${statusColor[run.status] ?? "text-[var(--text-muted)]"}`}>
+                <span className={`t-9 font-medium ${statusColor[run.status] ?? "text-[var(--text-muted)]"}`}>
                   {run.status}
                 </span>
                 {run.agents && (
-                  <span className="text-xs text-[var(--text-muted)]">{run.agents.name}</span>
+                  <span className="t-9 text-[var(--text-muted)]">{run.agents.name}</span>
                 )}
                 {run.error && (
-                  <span className="max-w-[200px] truncate text-xs text-[var(--danger)]/80">
+                  <span className="max-w-[200px] truncate t-9 text-[var(--danger)]/80">
                     {run.error}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-6 text-xs text-[var(--text-muted)]">
+              <div className="flex items-center gap-6 t-9 text-[var(--text-muted)]">
                 {run.tokens_in > 0 && (
                   <span>{run.tokens_in + run.tokens_out} tok</span>
                 )}

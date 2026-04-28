@@ -73,7 +73,7 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
         ) : (
           <div className="text-center space-y-4">
             <p className="font-mono t-10 uppercase tracking-[0.3em] text-[var(--text-faint)]">{typeRef}_VIEW</p>
-            <p className="text-xs font-light text-[var(--text-muted)]">
+            <p className="t-9 font-light text-[var(--text-muted)]">
               {asset.type === "pdf" && "PDF — téléchargement requis"}
               {asset.type === "excel" && "Excel — téléchargement requis"}
               {asset.type === "doc" && "Document — téléchargement requis"}

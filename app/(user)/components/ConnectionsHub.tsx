@@ -933,7 +933,7 @@ function Header({
       >
         <span className="flex items-center gap-2 text-[var(--text)]">
           <span
-            className="w-1 h-1 rounded-full halo-dot"
+            className="w-1 h-1 rounded-pill halo-dot"
             style={{ background: "var(--cykan)" }}
             aria-hidden
           />
@@ -1065,7 +1065,7 @@ function StageTile({
         <AppLogo app={app} size={48} />
         <span
           aria-hidden
-          className="absolute w-2 h-2 rounded-full"
+          className="absolute w-2 h-2 rounded-pill"
           style={{
             top: "calc(-1 * var(--space-1))",
             right: "calc(-1 * var(--space-1))",
@@ -1255,8 +1255,12 @@ function BundleCard({
       type="button"
       onClick={() => next && onSelect(next)}
       disabled={isComplete}
-      className="group flex flex-col text-left transition-colors"
-      style={{ cursor: isComplete ? "default" : "pointer" }}
+      className="group flex flex-col text-left transition-colors rounded-xs"
+      style={{
+        cursor: isComplete ? "default" : "pointer",
+        border: `1px solid ${isComplete ? "var(--cykan-border)" : "var(--border-shell)"}`,
+        padding: "var(--space-4)",
+      }}
     >
       <div className="flex items-baseline justify-between gap-2 mb-3">
         <span
@@ -1279,9 +1283,7 @@ function BundleCard({
         </span>
       </div>
 
-      {/* Cluster de logos sans frame. Connectés en couleur normale,
-          non-connectés en grayscale léger. Pas de border autour de chaque,
-          pas de boîte autour du cluster. */}
+      {/* Cluster de logos. Connectés en couleur, non-connectés en grayscale. */}
       <div className="flex items-center gap-2 mb-3">
         {apps.slice(0, 5).map((a) => {
           const conn = connectedSlugs.has(a.key);
@@ -1579,7 +1581,7 @@ function WallpaperTile({
       {connected && (
         <span
           aria-hidden
-          className="absolute w-2 h-2 rounded-full"
+          className="absolute w-2 h-2 rounded-pill"
           style={{
             top: "calc(-1 * var(--space-1))",
             right: "calc(-1 * var(--space-1))",

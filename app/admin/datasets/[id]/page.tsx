@@ -66,17 +66,17 @@ export default function DatasetDetailPage() {
     setSaving(false);
   };
 
-  if (loading) return <div className="px-8 py-10 text-sm text-[var(--text-muted)]">Chargement...</div>;
+  if (loading) return <div className="px-8 py-10 t-13 text-[var(--text-muted)]">Chargement...</div>;
 
   return (
     <div className="px-8 py-10">
       <div className="mb-6">
-        <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Dataset</p>
+        <p className="t-9 font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Dataset</p>
         <h1 className="t-24 font-semibold text-[var(--text)]">{dataset?.name ?? "—"}</h1>
         {dataset?.description && (
-          <p className="mt-1 text-sm text-[var(--text-muted)]">{dataset.description}</p>
+          <p className="mt-1 t-13 text-[var(--text-muted)]">{dataset.description}</p>
         )}
-        <p className="mt-2 text-xs text-[var(--text-muted)]">{entries.length} entrées</p>
+        <p className="mt-2 t-9 text-[var(--text-muted)]">{entries.length} entrées</p>
       </div>
 
       <div className="mb-8 rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
@@ -89,7 +89,7 @@ export default function DatasetDetailPage() {
                 rows={3}
                 value={newInput}
                 onChange={(e) => setNewInput(e.target.value)}
-                className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+                className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
                 placeholder="Question ou instruction de test..."
               />
             </label>
@@ -99,7 +99,7 @@ export default function DatasetDetailPage() {
                 rows={3}
                 value={newExpected}
                 onChange={(e) => setNewExpected(e.target.value)}
-                className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+                className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
                 placeholder="Résultat attendu..."
               />
             </label>
@@ -107,7 +107,7 @@ export default function DatasetDetailPage() {
           <button
             type="submit"
             disabled={saving || !newInput.trim() || !newExpected.trim()}
-            className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 text-sm disabled:opacity-40"
+            className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 t-13 disabled:opacity-40"
           >
             {saving ? "..." : "Ajouter"}
           </button>
@@ -116,25 +116,25 @@ export default function DatasetDetailPage() {
 
       <h2 className="mb-4 t-15 font-semibold text-[var(--text)]">Entrées</h2>
       {entries.length === 0 ? (
-        <p className="text-sm text-[var(--text-muted)]">Aucune entrée.</p>
+        <p className="t-13 text-[var(--text-muted)]">Aucune entrée.</p>
       ) : (
         <div className="space-y-2">
           {entries.map((entry, i) => (
             <div key={entry.id} className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-4">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-mono text-[var(--text-muted)]">#{i + 1}</span>
+                <span className="t-9 font-mono text-[var(--text-muted)]">#{i + 1}</span>
                 {entry.tags.length > 0 && entry.tags.map((t) => (
-                  <span key={t} className="rounded-full border border-[var(--line-strong)] px-2 py-0.5 t-10 text-[var(--text-muted)]">{t}</span>
+                  <span key={t} className="rounded-pill border border-[var(--line-strong)] px-2 py-0.5 t-10 text-[var(--text-muted)]">{t}</span>
                 ))}
               </div>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <div>
                   <p className="t-10 font-medium uppercase text-[var(--text-muted)]">Input</p>
-                  <p className="mt-1 text-xs text-[var(--text-soft)] whitespace-pre-wrap">{entry.input}</p>
+                  <p className="mt-1 t-9 text-[var(--text-soft)] whitespace-pre-wrap">{entry.input}</p>
                 </div>
                 <div>
                   <p className="t-10 font-medium uppercase text-[var(--text-muted)]">Expected</p>
-                  <p className="mt-1 text-xs text-[var(--text-soft)] whitespace-pre-wrap">{entry.expected_output}</p>
+                  <p className="mt-1 t-9 text-[var(--text-soft)] whitespace-pre-wrap">{entry.expected_output}</p>
                 </div>
               </div>
             </div>

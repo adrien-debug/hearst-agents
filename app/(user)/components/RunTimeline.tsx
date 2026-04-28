@@ -39,7 +39,7 @@ const TYPE_REF: Record<string, string> = {
 export function RunTimeline({ timeline, isLive }: RunTimelineProps) {
   if (timeline.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 text-[var(--text-muted)] text-sm font-mono uppercase tracking-[0.15em]">
+      <div className="flex items-center justify-center py-8 text-[var(--text-muted)] t-13 font-mono uppercase tracking-label">
         {isLive ? "STREAM_WAIT" : "NO_EVENTS"}
       </div>
     );

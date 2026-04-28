@@ -378,9 +378,9 @@ export default function HomePage() {
                 style={{ width: 24, height: 24 }}
                 aria-hidden
               >
-                <span className="absolute inset-0 rounded-full border border-[var(--cykan)]/40" />
+                <span className="absolute inset-0 rounded-pill border border-[var(--cykan)]/40" />
                 <span
-                  className="w-1 h-1 rounded-full bg-[var(--cykan)] animate-pulse"
+                  className="w-1 h-1 rounded-pill bg-[var(--cykan)] animate-pulse"
                   style={{ animationDuration: "2.4s" }}
                 />
               </div>
@@ -502,7 +502,7 @@ export default function HomePage() {
             onClick={showFocalStage}
             className="inline-flex items-center gap-6 group"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-pulse halo-dot" />
+            <span className="w-1.5 h-1.5 rounded-pill bg-[var(--cykan)] animate-pulse halo-dot" />
             <div className="flex flex-col items-start">
               <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors">
                 {focal.type === "brief" ? "Active Brief" : focal.type === "report" ? "Active Report" : "Active Document"}

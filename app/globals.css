@@ -926,8 +926,32 @@
   --radius-2xl: var(--radius-2xl);
   --radius-pill: var(--radius-pill);
 
-  /* Hearst Connect — spacing scale extension */
+  /* Hearst Connect — spacing scale (p-N, gap-N, m-N, w-N, h-N… → tokens)
+   * Chaque --spacing-N mappe la classe Tailwind correspondante sur le token
+   * --space-N. Zéro magic number côté TSX : px-6 = var(--space-6) = 24px. */
+  --spacing-1:  var(--space-1);
+  --spacing-2:  var(--space-2);
+  --spacing-3:  var(--space-3);
+  --spacing-4:  var(--space-4);
+  --spacing-5:  var(--space-5);
+  --spacing-6:  var(--space-6);
+  --spacing-8:  var(--space-8);
+  --spacing-10: var(--space-10);
+  --spacing-12: var(--space-12);
+  --spacing-16: var(--space-16);
+  --spacing-20: var(--space-20);
+  --spacing-24: var(--space-24);
+  --spacing-32: var(--space-32);
   --spacing-50: 200px;
+
+  /* Hearst Connect — leading scale (leading-tight → var(--leading-tight)…)
+   * Override les valeurs Tailwind par défaut (1.25 / 1.375 / 2.0) qui
+   * divergeaient du scale du DS (1.05 / 1.2 / 1.8). */
+  --leading-tight:   var(--leading-tight);
+  --leading-snug:    var(--leading-snug);
+  --leading-base:    var(--leading-base);
+  --leading-relaxed: var(--leading-relaxed);
+  --leading-loose:   var(--leading-loose);
 
   /* Hearst Connect — tracking scale (tracking-tight, tracking-display, …) */
   --tracking-tight: var(--tracking-tight);

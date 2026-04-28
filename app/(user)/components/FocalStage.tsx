@@ -165,10 +165,10 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
     <div className="w-full">
       <header className="flex items-center justify-between mb-10 pb-6 border-b border-[var(--surface-2)]">
         <div className="flex items-center gap-6">
-          <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[focal.status]} ${isLive ? "animate-pulse halo-dot" : ""}`} />
+          <span className={`w-2 h-2 rounded-pill ${STATUS_COLORS[focal.status]} ${isLive ? "animate-pulse halo-dot" : ""}`} />
           <div className="flex items-center gap-4">
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">{TYPE_LABELS[focal.type]}</span>
-            <span className="w-1 h-1 rounded-full bg-[var(--text-ghost)]" />
+            <span className="w-1 h-1 rounded-pill bg-[var(--text-ghost)]" />
             <span className={`t-9 font-mono uppercase tracking-marquee ${focal.status === "awaiting_approval" ? "text-[var(--warn)]" : focal.status === "failed" ? "text-[var(--danger)]" : "text-[var(--text-muted)]"}`}>
               {STATUS_LABELS[focal.status]}
             </span>
@@ -309,7 +309,7 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center relative z-10">
-          <span className="block text-4xl text-[var(--cykan)] opacity-30 halo-cyan-md mb-8 animate-pulse">◉</span>
+          <span className="block t-34 text-[var(--cykan)] opacity-30 halo-cyan-md mb-8 animate-pulse">◉</span>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">Waiting_For_Data</p>
         </div>
       </div>

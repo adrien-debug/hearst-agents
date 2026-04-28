@@ -37,20 +37,20 @@ export default async function DatasetsPage() {
     <div className="px-8 py-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Hearst</p>
+          <p className="t-9 font-medium uppercase tracking-[0.35em] text-[var(--text-muted)]">Hearst</p>
           <h1 className="t-28 font-semibold tracking-tight text-[var(--text)]">Datasets</h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Jeux de tests pour évaluation structurée.</p>
+          <p className="mt-1 t-13 text-[var(--text-muted)]">Jeux de tests pour évaluation structurée.</p>
         </div>
         <Link
           href="/admin/datasets/new"
-          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 text-sm"
+          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-4 py-2 t-13"
         >
           + Nouveau dataset
         </Link>
       </div>
 
       {error && (
-        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
+        <div className="mb-6 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
@@ -74,7 +74,7 @@ export default async function DatasetsPage() {
             >
               <h3 className="t-11 font-semibold text-[var(--text)]">{d.name}</h3>
               {d.description && (
-                <p className="line-clamp-2 text-xs text-[var(--text-muted)]">{d.description}</p>
+                <p className="line-clamp-2 t-9 text-[var(--text-muted)]">{d.description}</p>
               )}
               <div className="flex items-center gap-3 t-10 text-[var(--text-muted)]">
                 {d.agents && <span>Agent: {d.agents.name}</span>}

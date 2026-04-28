@@ -181,7 +181,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
       {/* Mobile header */}
       {onClose && (
         <div className="p-4 flex items-center justify-between md:hidden border-b border-[var(--border-shell)]">
-          <p className="text-sm font-medium">Contexte</p>
+          <p className="t-13 font-medium">Contexte</p>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)]">
             ✕
           </button>
@@ -224,7 +224,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                 : "text-[var(--text-faint)]"
           }`}
         >
-          <span className={`w-2 h-2 rounded-full shrink-0 ${
+          <span className={`w-2 h-2 rounded-pill shrink-0 ${
             !hasActiveThread ? "bg-[var(--text-ghost)]" :
             isConnected ? "bg-[var(--cykan)]" : "bg-[var(--text-ghost)]"
           }`} />

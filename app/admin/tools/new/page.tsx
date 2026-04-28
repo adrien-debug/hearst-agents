@@ -50,49 +50,49 @@ export default function NewToolPage() {
       <h1 className="mb-8 t-24 font-semibold text-[var(--text)]">Nouveau tool</h1>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)]">
+        <div className="mb-4 rounded-lg border border-[var(--danger)]/40 bg-[var(--danger)]/10 px-4 py-3 t-13 text-[var(--danger)]">
           {error}
         </div>
       )}
 
       <form onSubmit={submit} className="max-w-xl space-y-5">
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Nom</span>
+          <span className="mb-1 block t-9 font-medium text-[var(--text-muted)]">Nom</span>
           <input
             required
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Description</span>
+          <span className="mb-1 block t-9 font-medium text-[var(--text-muted)]">Description</span>
           <input
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Endpoint URL</span>
+          <span className="mb-1 block t-9 font-medium text-[var(--text-muted)]">Endpoint URL</span>
           <input
             type="url"
             value={form.endpoint_url}
             onChange={(e) => set("endpoint_url", e.target.value)}
             placeholder="https://api.example.com/action"
-            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 font-mono text-sm text-[var(--text)] outline-none focus:border-[var(--cykan)]"
+            className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 font-mono t-13 text-[var(--text)] outline-none focus:border-[var(--cykan)]"
           />
         </label>
 
         <div className="grid grid-cols-3 gap-4">
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Méthode</span>
+            <span className="mb-1 block t-9 font-medium text-[var(--text-muted)]">Méthode</span>
             <select
               value={form.http_method}
               onChange={(e) => set("http_method", e.target.value)}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none"
+              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             >
               {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -101,11 +101,11 @@ export default function NewToolPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Auth</span>
+            <span className="mb-1 block t-9 font-medium text-[var(--text-muted)]">Auth</span>
             <select
               value={form.auth_type}
               onChange={(e) => set("auth_type", e.target.value)}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none"
+              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             >
               {["none", "api_key", "oauth"].map((a) => (
                 <option key={a} value={a}>{a}</option>
@@ -114,14 +114,14 @@ export default function NewToolPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Timeout (ms)</span>
+            <span className="mb-1 block t-9 font-medium text-[var(--text-muted)]">Timeout (ms)</span>
             <input
               type="number"
               min={100}
               max={300000}
               value={form.timeout_ms}
               onChange={(e) => set("timeout_ms", parseInt(e.target.value, 10))}
-              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 text-sm text-[var(--text)] outline-none"
+              className="w-full rounded-lg border border-[var(--line-strong)] bg-[var(--bg-soft)] px-3 py-2 t-13 text-[var(--text)] outline-none"
             />
           </label>
         </div>
@@ -129,7 +129,7 @@ export default function NewToolPage() {
         <button
           type="submit"
           disabled={saving}
-          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-6 py-2.5 text-sm disabled:opacity-50"
+          className="ghost-btn-solid ghost-btn-cykan rounded-sm px-6 py-2.5 t-13 disabled:opacity-50"
         >
           {saving ? "Création..." : "Créer le tool"}
         </button>

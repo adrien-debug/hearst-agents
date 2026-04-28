@@ -57,7 +57,7 @@ export function AgentActivityStrip() {
       {/* Pulse dot + flow label */}
       <span className="inline-flex items-center gap-2 shrink-0">
         <span
-          className="w-1.5 h-1.5 rounded-full"
+          className="w-1.5 h-1.5 rounded-pill"
           style={{
             background: accentColor,
             boxShadow: isRunning ? `0 0 6px ${accentColor}` : "none",

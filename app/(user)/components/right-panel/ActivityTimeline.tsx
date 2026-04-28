@@ -90,7 +90,7 @@ export function ActivityTimeline() {
               {formatHHMM(event.timestamp)}
             </span>
             <span
-              className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
+              className="w-1.5 h-1.5 rounded-pill shrink-0 mt-1.5"
               style={{ background: color, boxShadow: `0 0 6px ${color}` }}
               aria-hidden
             />

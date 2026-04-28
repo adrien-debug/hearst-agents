@@ -29,11 +29,11 @@ export default async function SettingsPage() {
     <div className="p-8 space-y-8 text-[var(--text-soft)]">
       <div className="flex items-center justify-between">
         <h1 className="t-24 font-light">System Settings</h1>
-        <span className="text-sm text-[var(--text-ghost)]">{settings.length} settings</span>
+        <span className="t-13 text-[var(--text-ghost)]">{settings.length} settings</span>
       </div>
 
       {dbError && (
-        <div className="rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] text-sm">
+        <div className="rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] t-13">
           {dbError}
         </div>
       )}
@@ -47,9 +47,9 @@ export default async function SettingsPage() {
               key={key}
               className="rounded-lg bg-[var(--card-flat-bg)] border border-[var(--card-flat-border)] p-3 flex items-center justify-between"
             >
-              <span className="text-sm text-[var(--text-muted)] truncate mr-2">{key}</span>
+              <span className="t-13 text-[var(--text-muted)] truncate mr-2">{key}</span>
               <span
-                className={`text-xs px-2 py-0.5 rounded-full ${
+                className={`t-9 px-2 py-0.5 rounded-pill ${
                   enabled
                     ? "bg-[var(--money)]/20 text-[var(--money)]"
                     : "bg-[var(--surface-2)] text-[var(--text-ghost)]"
@@ -60,7 +60,7 @@ export default async function SettingsPage() {
             </div>
           ))}
           {Object.keys(flags).length === 0 && (
-            <p className="text-sm text-[var(--text-ghost)] col-span-full">No feature flags configured</p>
+            <p className="t-13 text-[var(--text-ghost)] col-span-full">No feature flags configured</p>
           )}
         </div>
       </section>
@@ -75,13 +75,13 @@ export default async function SettingsPage() {
               .map((s) => (
                 <div key={s.id} className="px-4 py-3 flex items-center justify-between">
                   <div className="min-w-0">
-                    <p className="text-sm text-[var(--text-soft)] font-mono truncate">{s.key}</p>
+                    <p className="t-13 text-[var(--text-soft)] font-mono truncate">{s.key}</p>
                     {s.description && (
-                      <p className="text-xs text-[var(--text-ghost)] mt-0.5">{s.description}</p>
+                      <p className="t-9 text-[var(--text-ghost)] mt-0.5">{s.description}</p>
                     )}
                   </div>
                   <div className="ml-4 text-right flex-shrink-0">
-                    <p className="text-sm text-[var(--text-muted)] font-mono max-w-[200px] truncate">
+                    <p className="t-13 text-[var(--text-muted)] font-mono max-w-[200px] truncate">
                       {s.isEncrypted
                         ? "••••••"
                         : typeof s.value === "object"

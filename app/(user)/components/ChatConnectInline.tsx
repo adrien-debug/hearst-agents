@@ -142,7 +142,7 @@ export function ChatConnectInline() {
         >
           {busy ? (
             <>
-              <span className="w-1 h-1 rounded-full bg-[var(--warn)] animate-pulse" />
+              <span className="w-1 h-1 rounded-pill bg-[var(--warn)] animate-pulse" />
               <span>Redirection…</span>
             </>
           ) : lastError ? (

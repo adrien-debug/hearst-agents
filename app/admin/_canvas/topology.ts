@@ -75,7 +75,7 @@ export interface CanvasEdge {
   branch?: "research" | "retrieval" | "pipeline" | "agent";
 }
 
-export const VIEWBOX = { width: 1920, height: 960 } as const;
+export const VIEWBOX = { width: 1920, height: 1080 } as const;
 
 /**
  * Card geometry. 220×180 laisse la place à un disque orbital (halo 3D + icône),
@@ -84,9 +84,9 @@ export const VIEWBOX = { width: 1920, height: 960 } as const;
 export const NODE_SIZE = { w: 220, h: 180 } as const;
 
 // Y-axis canon: research above / main trunk / agent below
-const Y_TOP = 200;
-const Y_MID = 480;
-const Y_BOT = 760;
+const Y_TOP = 260;
+const Y_MID = 540;
+const Y_BOT = 820;
 
 // X-axis: 8 trunk slots stepped by 240px (220 card + 20 gap), centered in 1920.
 const X = [130, 370, 610, 850, 1090, 1330, 1570, 1810] as const;

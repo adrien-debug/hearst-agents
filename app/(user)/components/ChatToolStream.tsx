@@ -47,7 +47,7 @@ export function ChatToolStream() {
             </span>
             {!isDone && (
               <span
-                className={`ml-1 inline-block w-1 h-1 rounded-full ${dot} animate-pulse`}
+                className={`ml-1 inline-block w-1 h-1 rounded-pill ${dot} animate-pulse`}
               />
             )}
           </li>

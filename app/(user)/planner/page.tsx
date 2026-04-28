@@ -98,7 +98,7 @@ export default function PlannerPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[var(--bg)]">
-        <span className="text-[var(--text-muted)] text-sm">Chargement des plans...</span>
+        <span className="text-[var(--text-muted)] t-13">Chargement des plans...</span>
       </div>
     );
   }
@@ -109,7 +109,7 @@ export default function PlannerPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="t-18 font-medium text-[var(--text)] mb-1">Planner</h1>
-            <p className="text-sm text-[var(--text-muted)]">Plans d&apos;exécution et orchestration</p>
+            <p className="t-13 text-[var(--text-muted)]">Plans d&apos;exécution et orchestration</p>
           </div>
         </div>
 
@@ -118,7 +118,7 @@ export default function PlannerPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+              className={`px-3 py-1.5 t-9 rounded-sm transition-colors ${
                 filter === f
                   ? "bg-[var(--cykan)] text-[var(--text-on-cykan)]"
                   : "bg-[var(--surface-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"
@@ -135,10 +135,10 @@ export default function PlannerPage() {
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-16 h-16 rounded-2xl bg-[var(--card-flat-bg)] border border-[var(--line)] flex items-center justify-center mb-4">
-              <span className="text-2xl">◉</span>
+              <span className="t-24">◉</span>
             </div>
             <h2 className="t-13 font-medium text-[var(--text)] mb-2">Aucun plan</h2>
-            <p className="text-sm text-[var(--text-muted)]">Les plans d&apos;exécution apparaîtront ici</p>
+            <p className="t-13 text-[var(--text-muted)]">Les plans d&apos;exécution apparaîtront ici</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -150,20 +150,20 @@ export default function PlannerPage() {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-medium ${statusColor(plan.status)}`}>
+                      <span className={`t-9 font-medium ${statusColor(plan.status)}`}>
                         {statusLabel(plan.status)}
                       </span>
                       <span className="text-[var(--text-faint)]">·</span>
-                      <span className="text-xs text-[var(--text-faint)]">{typeLabel(plan.type)}</span>
+                      <span className="t-9 text-[var(--text-faint)]">{typeLabel(plan.type)}</span>
                       {plan.requiresApproval && (
                         <>
                           <span className="text-[var(--text-faint)]">·</span>
-                          <span className="text-xs text-[var(--warn)]">Approbation requise</span>
+                          <span className="t-9 text-[var(--warn)]">Approbation requise</span>
                         </>
                       )}
                     </div>
-                    <p className="text-sm text-[var(--text)] font-medium mb-1">{plan.intent}</p>
-                    <div className="flex items-center gap-2 text-xs text-[var(--text-faint)]">
+                    <p className="t-13 text-[var(--text)] font-medium mb-1">{plan.intent}</p>
+                    <div className="flex items-center gap-2 t-9 text-[var(--text-faint)]">
                       <span>ID: {plan.id.slice(0, 8)}</span>
                       <span>·</span>
                       <span>Thread: {plan.threadId.slice(0, 8)}</span>
@@ -173,7 +173,7 @@ export default function PlannerPage() {
 
                 {plan.steps && plan.steps.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-[var(--line)]">
-                    <p className="text-xs text-[var(--text-muted)] mb-2">Étapes ({plan.steps.length})</p>
+                    <p className="t-9 text-[var(--text-muted)] mb-2">Étapes ({plan.steps.length})</p>
                     <div className="flex flex-wrap gap-2">
                       {plan.steps.map((step) => (
                         <div

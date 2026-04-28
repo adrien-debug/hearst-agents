@@ -88,11 +88,11 @@ export default async function AgentDetailPage({ params }: Props) {
       <div className="mb-6 flex items-start justify-between">
         <div>
           <div className="mb-1 flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${statusDot[agent.status] ?? "bg-[var(--text-muted)]"}`} />
+            <span className={`h-2.5 w-2.5 rounded-pill ${statusDot[agent.status] ?? "bg-[var(--text-muted)]"}`} />
             <h1 className="t-24 font-semibold text-[var(--text)]">{agent.name}</h1>
           </div>
           {agent.description && (
-            <p className="mt-1 max-w-xl text-sm text-[var(--text-muted)]">{agent.description}</p>
+            <p className="mt-1 max-w-xl t-13 text-[var(--text-muted)]">{agent.description}</p>
           )}
           <div className="mt-2 flex items-center gap-3">
             <ModelBadge provider={agent.model_provider} model={agent.model_name} />
@@ -112,7 +112,7 @@ export default async function AgentDetailPage({ params }: Props) {
         ].map((s) => (
           <div key={s.label} className="rounded-lg border border-[var(--line-strong)] bg-[var(--bg-elev)] px-4 py-3">
             <p className="t-10 font-medium uppercase text-[var(--text-muted)]">{s.label}</p>
-            <p className="mt-0.5 text-lg font-semibold text-[var(--text)]">{s.value}</p>
+            <p className="mt-0.5 t-18 font-semibold text-[var(--text)]">{s.value}</p>
             {s.sub && <p className="t-10 text-[var(--text-muted)]">{s.sub}</p>}
           </div>
         ))}
@@ -130,7 +130,7 @@ export default async function AgentDetailPage({ params }: Props) {
           {/* System prompt */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">System Prompt</h3>
-            <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap font-mono text-xs leading-relaxed text-[var(--text-soft)]">
+            <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap font-mono t-9 leading-relaxed text-[var(--text-soft)]">
               {agent.system_prompt || "—"}
             </pre>
           </div>
@@ -138,7 +138,7 @@ export default async function AgentDetailPage({ params }: Props) {
           {/* Config */}
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Config</h3>
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-3 gap-2 t-9">
               <div>
                 <span className="text-[var(--text-muted)]">Temperature</span>
                 <p className="text-[var(--text-soft)]">{agent.temperature}</p>
@@ -158,13 +158,13 @@ export default async function AgentDetailPage({ params }: Props) {
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Skills</h3>
             {skills.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)]">Aucun skill attribué.</p>
+              <p className="t-9 text-[var(--text-muted)]">Aucun skill attribué.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {skills.map((s) => {
                   const skill = s.skills as unknown as { id: string; name: string; category: string } | null;
                   return skill ? (
-                    <span key={skill.id} className="rounded-full border border-[var(--line-strong)] px-2.5 py-0.5 t-10 font-medium text-[var(--text-muted)]">
+                    <span key={skill.id} className="rounded-pill border border-[var(--line-strong)] px-2.5 py-0.5 t-10 font-medium text-[var(--text-muted)]">
                       {skill.name}
                     </span>
                   ) : null;
@@ -177,9 +177,9 @@ export default async function AgentDetailPage({ params }: Props) {
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Memory</h3>
             {memories.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)]">Aucune mémoire.</p>
+              <p className="t-9 text-[var(--text-muted)]">Aucune mémoire.</p>
             ) : (
-              <ul className="space-y-1 text-xs text-[var(--text-soft)]">
+              <ul className="space-y-1 t-9 text-[var(--text-soft)]">
                 {memories.map((m) => (
                   <li key={m.id} className="flex justify-between gap-2">
                     <span className="truncate">
@@ -201,13 +201,13 @@ export default async function AgentDetailPage({ params }: Props) {
               </Link>
             </div>
             {runs.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)]">Aucun run.</p>
+              <p className="t-9 text-[var(--text-muted)]">Aucun run.</p>
             ) : (
               <div className="space-y-1">
                 {runs.slice(0, 5).map((r) => (
-                  <Link key={r.id} href={`/admin/runs/${r.id}`} className="flex items-center justify-between rounded-md px-2 py-1 text-xs transition-colors hover:bg-[var(--bg-soft)]">
+                  <Link key={r.id} href={`/admin/runs/${r.id}`} className="flex items-center justify-between rounded-md px-2 py-1 t-9 transition-colors hover:bg-[var(--bg-soft)]">
                     <div className="flex items-center gap-2">
-                      <span className={`h-1.5 w-1.5 rounded-full ${r.status === "completed" ? "bg-[var(--money)]" : r.status === "failed" ? "bg-[var(--danger)]" : "bg-[var(--text-muted)]"}`} />
+                      <span className={`h-1.5 w-1.5 rounded-pill ${r.status === "completed" ? "bg-[var(--money)]" : r.status === "failed" ? "bg-[var(--danger)]" : "bg-[var(--text-muted)]"}`} />
                       <span className="text-[var(--text-muted)]">{r.kind}</span>
                     </div>
                     <span className="text-[var(--text-muted)]">
@@ -223,9 +223,9 @@ export default async function AgentDetailPage({ params }: Props) {
           <div className="rounded-sm border border-[var(--line-strong)] bg-[var(--bg-elev)] p-5">
             <h3 className="mb-2 t-9 font-semibold uppercase text-[var(--text-muted)]">Evaluations</h3>
             {evals.length === 0 ? (
-              <p className="text-xs text-[var(--text-muted)]">Aucune évaluation.</p>
+              <p className="t-9 text-[var(--text-muted)]">Aucune évaluation.</p>
             ) : (
-              <ul className="space-y-1 text-xs text-[var(--text-soft)]">
+              <ul className="space-y-1 t-9 text-[var(--text-soft)]">
                 {evals.map((ev) => (
                   <li key={ev.id} className="flex justify-between gap-2">
                     <span>

@@ -114,9 +114,9 @@ export function ChatInput({
                     onClick={() => selectService(service)}
                     className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-[var(--surface-1)] transition-all duration-base group"
                   >
-                    <span className="text-xl grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
+                    <span className="t-18 grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
                     <div className="flex-1">
-                      <p className="text-sm font-medium tracking-tight text-[var(--text)]">@{service.id}</p>
+                      <p className="t-13 font-medium tracking-tight text-[var(--text)]">@{service.id}</p>
                       <p className="t-10 font-mono tracking-display text-[var(--text-faint)]">{service.name}</p>
                     </div>
                     <span className="t-10 font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">Link</span>
@@ -155,7 +155,7 @@ export function ChatInput({
             }}
             placeholder={placeholder || surfacePlaceholders[surface] || "Poser une question"}
             rows={1}
-            className="block w-full bg-transparent text-base font-normal tracking-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed pt-4 pb-2 px-5"
+            className="block w-full bg-transparent t-15 font-normal tracking-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed pt-4 pb-2 px-5"
             style={{ minHeight: "32px", maxHeight: "200px" }}
           />
           <div className="flex items-center justify-between px-3 pb-3 pt-1">
