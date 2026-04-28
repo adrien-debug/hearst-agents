@@ -217,7 +217,7 @@ export function LeftPanel() {
       }}
     >
       {/* Logo */}
-      <div className="shrink-0 border-b border-[var(--border-shell)] flex items-center justify-center pt-5 pb-4 px-2">
+      <div className="shrink-0 border-b border-[var(--border-shell)] flex items-center justify-center pb-1 px-2">
         <button
           onClick={() => router.push("/")}
           className="flex items-center justify-center hover:opacity-80 transition-opacity"

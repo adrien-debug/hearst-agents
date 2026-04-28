@@ -137,7 +137,7 @@ export default function AssetsPage() {
         <div className="max-w-4xl mx-auto">
           {assets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-              <p className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)]">EMPTY_REGISTRY</p>
+              <p className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)]">Registre vide</p>
               <p className="t-13 text-[var(--text-muted)] max-w-md leading-relaxed">
                 Aucun asset pour l&apos;instant. Les rapports, briefs et documents générés par tes runs apparaîtront ici.
               </p>

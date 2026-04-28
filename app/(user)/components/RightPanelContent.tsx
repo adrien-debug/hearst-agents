@@ -10,20 +10,19 @@ import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
 import { missionToFocal, assetToFocal } from "@/lib/ui/focal-mappers";
 import { toast } from "@/app/hooks/use-toast";
-import { RunHaloIndicator } from "./RunHaloIndicator";
+// RunHaloIndicator (grille 5×20 cellules) supprimé du header — illisible
+// et redondant avec la section STATUS juste en dessous. Le fichier
+// RunHaloIndicator.tsx reste sur disque pour réintroduction éventuelle.
 import {
   FileIcon,
   MissionIcon,
   NodeIcon,
   DatabaseIcon,
-  ActivityIcon,
+  ChevronIcon,
 } from "./right-panel-icons";
 import {
   formatRelativeTime,
-  ACTIVITY_EVENT_TYPES,
-  activityIcon,
-  activityLabel,
-  assetGlyph,
+  AssetGlyphSVG,
   EmptyState,
 } from "./right-panel-helpers";
 
@@ -46,6 +45,39 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // État ouvert/fermé de chaque section. Persisté en localStorage pour
+  // conserver les préférences entre rechargements et changements de thread.
+  const SECTIONS_STORAGE_KEY = "hearst.rightpanel.openSections";
+  type SectionKey = "focal" | "assets" | "missions";
+  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
+    focal: true,
+    assets: true,
+    missions: true,
+  });
+  // Hydrate depuis localStorage au mount (évite tout mismatch SSR).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SECTIONS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Record<SectionKey, boolean>>;
+        setOpenSections((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch {
+      /* localStorage indisponible ou JSON corrompu — ignore */
+    }
+  }, []);
+  const toggleSection = (key: SectionKey) => {
+    setOpenSections((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      try {
+        localStorage.setItem(SECTIONS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
   const activeThreadIdRef = useRef(activeThreadId);
   useEffect(() => {
     activeThreadIdRef.current = activeThreadId;
@@ -66,6 +98,10 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   }, [runtimeEvents, activeThreadId]);
 
   useEffect(() => {
+    // Effacer l'ancienne data immédiatement au changement de thread — évite que
+    // les assets/missions du thread précédent restent visibles pendant la transition.
+    setData(null);
+
     // No active thread → render the panel as a "library home" by pulling
     // missions + assets from the global APIs (not the per-thread SSE stream).
     if (!activeThreadId) {
@@ -214,9 +250,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const isRunning = coreState !== "idle";
   const focalObject = panelData?.focalObject;
 
-  const activityEvents = runtimeEvents
-    .filter((e) => ACTIVITY_EVENT_TYPES.has(e.type))
-    .slice(0, 8);
   const secondaryObjects = panelData?.secondaryObjects || [];
   const assets = panelData?.assets ?? [];
   const missions = panelData?.missions ?? [];
@@ -238,6 +271,15 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         ? (flowLabel || "Traitement")
         : "Prêt";
 
+  const assetAccent = (type: string) => {
+    const t = type.toLowerCase();
+    if (t === "brief") return "var(--cykan)";
+    if (t === "report" || t === "document") return "var(--text-muted)";
+    if (t === "synthesis") return "var(--warn)";
+    if (t === "plan") return "var(--color-success)";
+    return "var(--text-faint)";
+  };
+
   return (
     <aside
       className="h-full flex flex-col z-20 relative border-l border-[var(--border-shell)]"
@@ -253,210 +295,163 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         </div>
       )}
 
-      {/* Run halo — symétrique au bloc logo de gauche, fixe, jamais scrollé */}
-      <div className="shrink-0 border-b border-[var(--border-shell)] flex items-center justify-center pt-5 pb-4 px-2">
-        <RunHaloIndicator />
-      </div>
-
-      {/* ① STATUS — toujours rendu */}
-      <div className="px-4 py-4 border-b border-[var(--border-shell)]">
-        <div className="flex items-center justify-between mb-3">
-          <span className="t-11 font-mono tracking-[0.22em] text-[var(--text-placeholder)] uppercase">
-            {hasActiveThread ? "Status" : "Mode"}
-          </span>
-          <span className={`flex items-center gap-2 t-9 font-mono tracking-[0.2em] uppercase ${
-            !hasActiveThread ? "text-[var(--text-faint)]" :
-            coreState === "awaiting_approval" ? "text-[var(--warn)]" :
-            isRunning ? "text-[var(--cykan)] halo-cyan-sm" : "text-[var(--text-faint)]"
-          }`}>
-            <span className={`w-1 h-1 rounded-full ${
-              !hasActiveThread ? "bg-[var(--text-ghost)]" :
-              coreState === "awaiting_approval" ? "bg-[var(--warn)]" :
-              isRunning ? "bg-[var(--cykan)] animate-pulse halo-dot" : "bg-[var(--text-faint)]"
-            }`} />
-            {!hasActiveThread ? "standby" : isConnected ? "live" : "offline"}
-          </span>
-        </div>
-        <p className={`t-18 font-light tracking-tight ${isRunning ? "text-[var(--text)] halo-cyan-sm" : "text-[var(--text)]"}`}>{stateLabel}</p>
-
-        {isRunning && (
-          <div className="h-px bg-[var(--surface-2)] mt-5 overflow-hidden">
-            <div
-              className={`h-full ${coreState === "awaiting_approval" ? "bg-[var(--warn)]" : "bg-[var(--cykan)] halo-rule"} ${isRunning ? "animate-pulse" : ""}`}
-              style={{ width: coreState === "awaiting_approval" ? "100%" : "66%" }}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Scrollable content */}
+      {/* Scrollable content — Focal en premier, deliverable prioritaire */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
 
-        {/* ② FOCAL — toujours rendu, Related fusionné en sous-bloc */}
-        <div className="px-4 py-4 border-b border-[var(--border-shell)] relative">
-          <div className="flex items-center justify-between mb-4">
-            <div className={`flex items-center gap-2 ${focalObject ? "text-[var(--cykan)] halo-cyan-sm" : "text-[var(--text-faint)]"}`}>
-              <FileIcon />
-              <span className="t-11 font-mono tracking-[0.22em] uppercase">
-                {focalObject ? focalObjectType : "Focal"}
-              </span>
-            </div>
-          </div>
-
-          {focalObject ? (
-            <>
-              <h3 className="t-15 font-medium text-[var(--text)] mb-1 leading-snug">{focalTitle}</h3>
-
-              {actionError && (
-                <p className="mt-3 t-11 text-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 rounded">{actionError}</p>
-              )}
-
-              {(focalObject as FocalObjectView)?.primaryAction && (
-                <button
-                  className={`mt-5 w-full py-3 t-11 font-mono tracking-[0.2em] uppercase rounded-sm transition-colors ${
-                    (focalObject as FocalObjectView).primaryAction?.kind === "approve"
-                      ? "bg-[var(--text)] text-[var(--bg)] hover:bg-[var(--text-soft)]"
-                      : "bg-[var(--cykan)] text-[var(--bg)] hover:bg-[var(--cykan)]/90"
-                  }`}
-                  onClick={handlePrimaryAction}
-                  disabled={actionLoading}
-                >
-                  {actionLoading ? "Traitement…" : (focalObject as FocalObjectView).primaryAction?.label}
-                </button>
-              )}
-            </>
-          ) : (
-            <EmptyState>Aucun focal actif</EmptyState>
-          )}
-
-          {secondaryObjects.length > 0 && (
-            <div className="mt-5 pt-4 border-t border-[var(--border-shell)]">
-              <div className="flex items-center gap-2 mb-3 text-[var(--text-faint)]">
-                <NodeIcon />
-                <span className="t-11 font-mono tracking-[0.22em] uppercase">Related</span>
-              </div>
-              <div className="space-y-1 overflow-y-auto scrollbar-hide" style={{ maxHeight: "var(--space-24)" }}>
-                {secondaryObjects.map((obj, idx) => {
-                  const objType = getFocalProp(obj, "objectType") || "unknown";
-                  const objTitle = getFocalProp(obj, "title") || "Untitled";
-                  const objStatus = getFocalProp(obj, "status") || "";
-                  return (
-                    <div key={idx} className="flex items-center gap-3 group cursor-pointer py-2 -mx-2 px-2 hover:bg-[var(--surface-1)] transition-colors">
-                      {objStatus && (
-                        <span className={`w-1 h-1 rounded-full shrink-0 ${
-                          objStatus === "ready" ? "bg-[var(--cykan)]" :
-                          objStatus === "awaiting_approval" ? "bg-[var(--warn)]" :
-                          "bg-[var(--text-ghost)]"
-                        }`} />
-                      )}
-                      <p className="t-13 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors truncate flex-1">{objTitle}</p>
-                      <span className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase shrink-0">{objType}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ③ ACTIVITY — toujours rendu, Run details fusionné en sous-bloc */}
-        <div className="px-4 py-4 border-b border-[var(--border-shell)]">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-[var(--text-faint)]">
-              <ActivityIcon />
-              <span className="t-11 font-mono tracking-[0.22em] uppercase">Activity</span>
-            </div>
-            {isRunning && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-pulse halo-dot" />
-            )}
-          </div>
-
-          {activityEvents.length > 0 ? (
-            <div className="space-y-1 overflow-y-auto scrollbar-hide" style={{ maxHeight: "var(--space-32)" }}>
-              {activityEvents.map((event, i) => (
-                <div
-                  key={`${event.type}-${event.timestamp}-${i}`}
-                  className={`flex items-start gap-2.5 py-1.5 ${i === 0 && isRunning ? "opacity-100" : "opacity-60"}`}
-                >
-                  <span className={`t-9 font-mono shrink-0 mt-0.5 ${
-                    event.type === "tool_call_started" ? "text-[var(--cykan)]" :
-                    event.type === "tool_call_completed" ? "text-[var(--color-success)]" :
-                    event.type === "step_started" ? "text-[var(--warn)]" :
-                    "text-[var(--text-ghost)]"
-                  }`}>
-                    {activityIcon(event.type)}
-                  </span>
-                  <p className="t-11 font-light text-[var(--text-muted)] truncate leading-snug">
-                    {activityLabel(event)}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState>{isRunning ? "En attente…" : "Aucune activité"}</EmptyState>
-          )}
-
-          {panelData?.currentRun && (
-            <div className="mt-5 pt-4 border-t border-[var(--border-shell)] space-y-3 t-11">
-              <div className="flex justify-between">
-                <span className="font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase">Run ID</span>
-                <span className="text-[var(--text-muted)] font-mono">{currentRunId?.slice(0, 12)}...</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase">Mode</span>
-                <span className="text-[var(--cykan)] font-mono">{panelData.currentRun.executionMode}</span>
-              </div>
-              {(panelData.currentRun.pendingToolCalls ?? 0) > 0 && (
-                <div className="flex justify-between">
-                  <span className="font-mono tracking-[0.2em] text-[var(--text-faint)] uppercase">Pending</span>
-                  <span className="text-[var(--cykan)] font-mono">{panelData.currentRun.pendingToolCalls}</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* ④ ASSETS — toujours rendu */}
-        <div className="px-4 py-4 border-b border-[var(--border-shell)]">
+        {/* ② FOCAL */}
+        {/* ② FOCAL — collapsible, hauteur fixe quand ouvert */}
+        <div className="border-b border-[var(--border-shell)] overflow-hidden">
           <button
-            onClick={() => router.push("/assets")}
-            className="halo-on-hover w-full flex items-center justify-between mb-5 group/header text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
-            title="View all assets"
+            type="button"
+            onClick={() => toggleSection("focal")}
+            className="w-full flex items-center gap-2 px-4 py-3 text-[var(--text-soft)] hover:bg-[var(--surface-1)] transition-colors"
           >
-            <span className="flex items-center gap-2">
-              <DatabaseIcon />
-              <span className="t-11 font-mono tracking-[0.22em] uppercase">Assets</span>
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="t-9 font-mono tracking-[0.2em]">{assets.length}</span>
-              <span className="t-9 font-mono opacity-0 group-hover/header:opacity-100 -translate-x-1 group-hover/header:translate-x-0 transition-all">→</span>
-            </span>
+            <ChevronIcon open={openSections.focal} />
+            <FileIcon />
+            <span className="t-9 font-mono tracking-[0.22em] font-semibold uppercase">Focal</span>
+            <span className="ml-auto t-9 font-mono text-[var(--text-faint)]">{focalObject ? "1" : "—"}</span>
           </button>
 
-          {assets.length > 0 ? (
-            <div className="space-y-px overflow-y-auto scrollbar-hide" style={{ maxHeight: "var(--space-32)" }}>
-              {assets.slice(0, 5).map((asset) => (
+          <div
+            className="overflow-hidden transition-all"
+            style={{ height: openSections.focal ? "var(--space-32)" : "0px", padding: openSections.focal ? "0 var(--space-4) var(--space-3)" : "0 var(--space-4)" }}
+          >
+          <div className="overflow-y-auto scrollbar-hide h-full flex flex-col gap-3">
+            {focalObject ? (
+              <div
+                className="rounded-sm overflow-hidden shrink-0"
+                style={{ background: "var(--cykan-bg-hover)", borderLeft: "3px solid var(--cykan)" }}
+              >
+                <div className="px-3 pt-2 pb-1 flex items-center gap-2">
+                  <span
+                    className="t-9 font-mono tracking-[0.22em] uppercase font-semibold"
+                    style={{ color: "var(--cykan)" }}
+                  >
+                    {focalObjectType}
+                  </span>
+                </div>
+                <div className="px-3 pb-3">
+                  <h3 className="t-13 font-medium text-[var(--text)] leading-snug mb-3">{focalTitle}</h3>
+
+                  {actionError && (
+                    <p className="mb-3 t-11 text-[var(--danger)] bg-[var(--danger)]/10 px-2 py-1.5 rounded-sm">{actionError}</p>
+                  )}
+
+                  {(focalObject as FocalObjectView)?.primaryAction && (
+                    <button
+                      className={`w-full py-2.5 t-11 font-mono tracking-[0.18em] uppercase rounded-sm transition-colors ${
+                        (focalObject as FocalObjectView).primaryAction?.kind === "approve"
+                          ? "bg-[var(--text)] text-[var(--bg)] hover:opacity-90"
+                          : "bg-[var(--cykan)] text-[var(--bg)] hover:opacity-90"
+                      }`}
+                      onClick={handlePrimaryAction}
+                      disabled={actionLoading}
+                    >
+                      {actionLoading ? "Traitement…" : (focalObject as FocalObjectView).primaryAction?.label}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {secondaryObjects.length > 0 && (
+              <div className="shrink-0 pt-2 border-t border-[var(--border-shell)]">
+                <div className="flex items-center gap-2 mb-1.5 text-[var(--text-faint)]">
+                  <NodeIcon />
+                  <span className="t-9 font-mono tracking-[0.22em] uppercase">Liés</span>
+                </div>
+                <div className="space-y-px">
+                  {secondaryObjects.map((obj, idx) => {
+                    const objType = getFocalProp(obj, "objectType") || "unknown";
+                    const objTitle = getFocalProp(obj, "title") || "Untitled";
+                    const objStatus = getFocalProp(obj, "status") || "";
+                    return (
+                      <div key={idx} className="flex items-center gap-2 group cursor-pointer py-1.5 -mx-1 px-1 hover:bg-[var(--surface-2)] rounded-sm transition-colors">
+                        {objStatus && (
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            objStatus === "ready" ? "bg-[var(--cykan)]" :
+                            objStatus === "awaiting_approval" ? "bg-[var(--warn)]" :
+                            "bg-[var(--text-ghost)]"
+                          }`} />
+                        )}
+                        <p className="t-11 text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors truncate flex-1">{objTitle}</p>
+                        <span className="t-9 font-mono tracking-[0.16em] text-[var(--text-faint)] uppercase shrink-0">{objType}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+          </div>
+        </div>
+
+        {/* ACTIVITÉ supprimée — redondante avec le chat (transcript). Historique
+            préservé en backend silencieux (RuntimeStore.events). */}
+
+        {/* ③ ASSETS — collapsible */}
+        <div className="border-b border-[var(--border-shell)] overflow-hidden">
+          <div className="w-full flex items-center gap-2 px-4 py-3 text-[var(--text-soft)] hover:bg-[var(--surface-1)] transition-colors">
+            <button
+              type="button"
+              onClick={() => toggleSection("assets")}
+              className="flex items-center gap-2 flex-1 text-left"
+            >
+              <ChevronIcon open={openSections.assets} />
+              <DatabaseIcon />
+              <span className="t-9 font-mono tracking-[0.22em] font-semibold uppercase">Assets</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/assets")}
+              className="t-9 font-mono text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+              title="Voir tous les assets"
+            >
+              {assets.length > 0 ? `${assets.length} →` : "→"}
+            </button>
+          </div>
+
+          <div
+            className="overflow-hidden transition-all"
+            style={{ height: openSections.assets ? "auto" : "0px", padding: openSections.assets ? "0 var(--space-4) var(--space-3)" : "0 var(--space-4)" }}
+          >
+          <div className="overflow-y-auto scrollbar-hide space-y-2" style={{ height: "var(--space-32)" }}>
+            {assets.length > 0 ? (
+              assets.map((asset) => (
                 <div
                   key={asset.id}
                   onClick={() => useFocalStore.getState().setFocal(assetToFocal(asset, activeThreadId))}
-                  className="group cursor-pointer py-2 -mx-2 px-2 hover:bg-[var(--surface-1)] transition-colors border-b border-[var(--border-soft)] last:border-b-0 flex items-start gap-3"
-                  title={`Open ${asset.name}`}
+                  className="group cursor-pointer flex items-center gap-2.5 rounded-sm px-2.5 py-2 hover:bg-[var(--surface-2)] transition-colors"
+                  style={{
+                    background: "var(--surface-1)",
+                    borderLeft: `3px solid ${assetAccent(asset.type)}`,
+                  }}
+                  title={asset.name}
                 >
-                  <span className="t-13 text-[var(--cykan)] opacity-30 group-hover:opacity-100 transition-opacity shrink-0 leading-none mt-1">
-                    {assetGlyph(asset.type)}
-                  </span>
+                  <div
+                    className="w-7 h-7 flex items-center justify-center shrink-0 rounded-sm"
+                    style={{ background: "var(--surface-2)", color: assetAccent(asset.type) }}
+                    aria-hidden
+                  >
+                    <span className="w-4 h-4 block">
+                      <AssetGlyphSVG type={asset.type} />
+                    </span>
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="t-13 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors truncate">{asset.name}</p>
-                    <p className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase mt-1">{asset.type}</p>
+                    <p className="t-12 font-medium text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors truncate leading-snug">{asset.name}</p>
+                    <p
+                      className="t-9 font-mono tracking-[0.16em] uppercase mt-0.5"
+                      style={{ color: assetAccent(asset.type) }}
+                    >
+                      {asset.type}
+                    </p>
                   </div>
                   <button
                     onClick={async (e) => {
                       e.stopPropagation();
                       if (!window.confirm(`Supprimer "${asset.name}" ?`)) return;
-
                       const previous = panelData?.assets ?? [];
                       setData((prev) => prev ? { ...prev, assets: prev.assets.filter((a) => a.id !== asset.id) } : prev);
-
                       try {
                         const res = await fetch(`/api/v2/assets/${encodeURIComponent(asset.id)}`, { method: "DELETE" });
                         if (!res.ok) {
@@ -466,11 +461,10 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                         toast.success("Asset supprimé", asset.name);
                       } catch (err) {
                         setData((prev) => prev ? { ...prev, assets: previous } : prev);
-                        const msg = err instanceof Error ? err.message : "Erreur inconnue";
-                        toast.error("Suppression impossible", msg);
+                        toast.error("Suppression impossible", err instanceof Error ? err.message : "Erreur inconnue");
                       }
                     }}
-                    className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all shrink-0"
+                    className="opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all shrink-0 rounded-sm"
                     title="Supprimer"
                   >
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -478,63 +472,148 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                     </svg>
                   </button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState>{loading ? "Chargement…" : "Aucun asset généré"}</EmptyState>
-          )}
+              ))
+            ) : (
+              <div className="flex items-center h-full">
+                <EmptyState>{loading ? "Chargement…" : "Aucun asset généré"}</EmptyState>
+              </div>
+            )}
+          </div>
+          </div>
         </div>
 
-        {/* ⑤ MISSIONS — toujours rendu */}
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between mb-3 text-[var(--text-faint)]">
+        {/* ⑤ MISSIONS — collapsible */}
+        <div className="overflow-hidden">
+          <div className="w-full flex items-center gap-2 px-4 py-3 text-[var(--text-soft)] hover:bg-[var(--surface-1)] transition-colors">
             <button
-              onClick={() => router.push("/missions")}
-              className="flex items-center gap-2 hover:text-[var(--cykan)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--cykan-border-hover)] transition-colors"
-              title="View all missions"
+              type="button"
+              onClick={() => toggleSection("missions")}
+              className="flex items-center gap-2 flex-1 text-left"
             >
+              <ChevronIcon open={openSections.missions} />
               <MissionIcon />
-              <span className="t-11 font-mono tracking-[0.22em] uppercase">Missions</span>
+              <span className="t-9 font-mono tracking-[0.22em] font-semibold uppercase">Missions</span>
             </button>
-            <div className="flex items-center gap-3">
-              <span className="t-9 font-mono tracking-[0.2em]">{missions.length}</span>
-              <button
-                onClick={() => router.push("/missions?new=1")}
-                title="Nouvelle mission"
-                className="t-13 leading-none text-[var(--text-faint)] hover:text-[var(--cykan)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--cykan-border-hover)] transition-colors"
-              >
-                +
-              </button>
-            </div>
+            <span className="t-9 font-mono text-[var(--text-faint)]">{missions.length}</span>
+            <button
+              type="button"
+              onClick={() => router.push("/missions?new=1")}
+              title="Nouvelle mission"
+              className="t-13 w-5 h-5 flex items-center justify-center rounded-sm text-[var(--text-faint)] hover:text-[var(--cykan)] hover:bg-[var(--cykan-bg-hover)] transition-colors"
+            >
+              +
+            </button>
           </div>
 
-          {missions.length > 0 ? (
-            <div className="space-y-px mb-3 overflow-y-auto scrollbar-hide" style={{ maxHeight: "var(--space-32)" }}>
-              {missions.slice(0, 3).map((mission) => (
-                <div
-                  key={mission.id}
-                  onClick={() => useFocalStore.getState().setFocal(missionToFocal(mission, activeThreadId))}
-                  className="group cursor-pointer py-2 -mx-2 px-2 hover:bg-[var(--surface-1)] transition-colors border-b border-[var(--border-soft)] last:border-b-0 flex items-center gap-3"
-                  title={`Open ${mission.name}`}
-                >
-                  <span className={`w-1 h-1 rounded-full shrink-0 ${
-                    mission.opsStatus === "running" ? "bg-[var(--cykan)] animate-pulse halo-dot" :
-                    mission.opsStatus === "failed" ? "bg-[var(--danger)]" :
-                    mission.enabled ? "bg-[var(--cykan)] opacity-50" : "bg-[var(--text-ghost)]"
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <p className="t-13 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors truncate">{mission.name}</p>
+          <div
+            className="overflow-hidden transition-all"
+            style={{ height: openSections.missions ? "auto" : "0px", padding: openSections.missions ? "0 var(--space-4) var(--space-3)" : "0 var(--space-4)" }}
+          >
+          <div className="overflow-y-auto scrollbar-hide space-y-2" style={{ height: "var(--space-24)" }}>
+            {missions.length > 0 ? (
+              missions.map((mission) => {
+                const isRunningMission = mission.opsStatus === "running";
+                const isFailed = mission.opsStatus === "failed";
+                const isArmed = mission.enabled && !isRunningMission && !isFailed;
+                return (
+                  <div
+                    key={mission.id}
+                    onClick={() => useFocalStore.getState().setFocal(missionToFocal(mission, activeThreadId))}
+                    className="group cursor-pointer flex items-center gap-2.5 px-2.5 py-2 rounded-sm hover:bg-[var(--surface-2)] transition-colors"
+                    style={{ background: "var(--surface-1)" }}
+                  >
+                    {/* Ring SVG 20px */}
+                    <svg width="20" height="20" viewBox="0 0 20 20" className="shrink-0">
+                      <circle cx="10" cy="10" r="8" fill="none" stroke="var(--border-default)" strokeWidth="1.5" />
+                      {isRunningMission && (
+                        <circle
+                          cx="10" cy="10" r="8"
+                          fill="none"
+                          stroke="var(--cykan)"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeDasharray="35 50"
+                          transform="rotate(-90 10 10)"
+                          style={{ filter: "drop-shadow(0 0 3px var(--cykan))" }}
+                        />
+                      )}
+                      {isArmed && (
+                        <circle
+                          cx="10" cy="10" r="8"
+                          fill="none"
+                          stroke="var(--cykan)"
+                          strokeWidth="1.5"
+                          opacity="0.35"
+                          strokeDasharray="50 0"
+                          transform="rotate(-90 10 10)"
+                        />
+                      )}
+                      {isFailed && (
+                        <circle
+                          cx="10" cy="10" r="8"
+                          fill="none"
+                          stroke="var(--danger)"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeDasharray="12 50"
+                          transform="rotate(-90 10 10)"
+                        />
+                      )}
+                      {!mission.enabled && !isFailed && (
+                        <circle cx="10" cy="10" r="2.5" fill="var(--text-ghost)" />
+                      )}
+                      {isRunningMission && (
+                        <circle cx="10" cy="10" r="2.5" fill="var(--cykan)" />
+                      )}
+                    </svg>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="t-12 font-medium text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors truncate">{mission.name}</p>
+                      <p className="t-9 font-mono tracking-[0.14em] uppercase mt-0.5" style={{
+                        color: isRunningMission ? "var(--cykan)" : isFailed ? "var(--danger)" : "var(--text-faint)"
+                      }}>
+                        {isRunningMission ? "running" : isFailed ? "échec" : isArmed ? "armé" : "off"}
+                        {mission.lastRunAt ? ` · ${formatRelativeTime(mission.lastRunAt)}` : ""}
+                      </p>
+                    </div>
                   </div>
-                  <span className="t-9 font-mono tracking-[0.2em] text-[var(--text-ghost)] uppercase shrink-0">
-                    {mission.lastRunAt ? formatRelativeTime(mission.lastRunAt) : (mission.enabled ? "armé" : "off")}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState>{loading ? "Chargement…" : "Aucune mission armée"}</EmptyState>
-          )}
+                );
+              })
+            ) : (
+              <div className="flex items-center h-full">
+                <EmptyState>{loading ? "Chargement…" : "Aucune mission armée"}</EmptyState>
+              </div>
+            )}
+          </div>
+          </div>
         </div>
+      </div>
+
+      {/* STATUS — footer compact, toujours visible. Référence d'état d'arrière-plan,
+          pas focus principal. Une seule ligne : pill état + flow label. */}
+      <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2.5 flex items-center gap-3">
+        <span className={`inline-flex items-center gap-1.5 t-9 font-mono tracking-[0.16em] uppercase px-2 py-0.5 rounded-sm shrink-0 ${
+          coreState === "awaiting_approval"
+            ? "bg-[var(--warn)]/10 text-[var(--warn)]"
+            : isRunning
+            ? "bg-[var(--cykan)]/10 text-[var(--cykan)]"
+            : "text-[var(--text-faint)]"
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+            coreState === "awaiting_approval" ? "bg-[var(--warn)]" :
+            isRunning ? "bg-[var(--cykan)] animate-pulse" : "bg-[var(--text-ghost)]"
+          }`} />
+          {!hasActiveThread ? "standby" : isConnected ? "live" : "offline"}
+        </span>
+        <p className="t-11 text-[var(--text-muted)] truncate flex-1" title={stateLabel}>{stateLabel}</p>
+        {isRunning && (
+          <div className="w-12 h-0.5 rounded-full overflow-hidden shrink-0" style={{ background: "var(--border-soft)" }}>
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${coreState === "awaiting_approval" ? "bg-[var(--warn)]" : "bg-[var(--cykan)]"}`}
+              style={{ width: coreState === "awaiting_approval" ? "100%" : "66%" }}
+            />
+          </div>
+        )}
       </div>
     </aside>
   );

@@ -10,6 +10,7 @@ import type { Asset } from "./types";
 import { getAssetDownloadInfo } from "./file-storage";
 import { getAllRuns } from "../runs/store";
 import { getRuns as getPersistedRuns } from "../state/adapter";
+import { getServerSupabase } from "@/lib/platform/db/supabase";
 
 function inferPreviewType(assetType: string): AssetPreviewType {
   switch (assetType) {
@@ -178,6 +179,46 @@ export async function getAssetDetail(input: {
     }
 
     return assetToDetail(assetRef, run.id, fullAsset);
+  }
+
+  // Final fallback — direct query on the `assets` table for assets persisted
+  // outside the runs path (e.g. via the `create_artifact` tool, which stores
+  // raw content in `content_ref` column directly via lib/assets/types).
+  const sb = getServerSupabase();
+  if (sb) {
+    const { data, error } = await sb
+      .from("assets")
+      .select("id, kind, title, summary, content_ref, run_id, provenance, created_at")
+      .eq("id", input.assetId)
+      .maybeSingle();
+    if (!error && data) {
+      const prov = (data.provenance ?? {}) as Record<string, unknown>;
+      const tenantId = prov.tenantId as string | undefined;
+      const workspaceId = prov.workspaceId as string | undefined;
+      // Scope check
+      if (
+        (input.tenantId && tenantId && tenantId !== input.tenantId) ||
+        (input.workspaceId && workspaceId && workspaceId !== input.workspaceId)
+      ) {
+        return null;
+      }
+      const kindStr = String(data.kind ?? "doc");
+      const fullAsset: Asset = {
+        id: String(data.id),
+        type: kindStr as Asset["type"],
+        name: String(data.title ?? "Untitled"),
+        run_id: String(data.run_id ?? ""),
+        tenantId: tenantId ?? input.tenantId ?? "",
+        workspaceId: workspaceId ?? input.workspaceId ?? "",
+        created_at: data.created_at ? new Date(data.created_at as string).getTime() : Date.now(),
+        metadata: { content: (data.content_ref as string | null) ?? undefined },
+      };
+      return assetToDetail(
+        { id: fullAsset.id, name: fullAsset.name, type: fullAsset.type },
+        fullAsset.run_id,
+        fullAsset,
+      );
+    }
   }
 
   return null;

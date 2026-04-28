@@ -2,11 +2,10 @@
 
 Système d'action centré chat avec orchestration v2, artifacts file-backed, et missions récurrentes.
 
-**UI — Ghost Protocol (26/04/2026)** : surface cockpit sombre (`app/globals.css` tokens), typographie Satoshi + Geist Mono, séparateurs `var(--line)`, glyphes SVG filaires (`app/(user)/components/ghost-icons.tsx`), intégrations affichées en `ServiceIdGlyph` (plus d’emojis dans l’UI). Classes utilitaires Ghost (`.ghost-meta-label`, `.ghost-btn-solid`, modales, skeleton scanline) et `.status-dot*` (`box-shadow: none`) sont définies dans `app/globals.css` et couvertes par `__tests__/ui/design-tokens.test.ts`. **Admin** (`app/admin/*`, `app/components/AdminSidebar.tsx`) aligné sur les mêmes variables (remplacement massif des tons `zinc-*` / boutons primaires).
+**UI — Ghost Protocol (26/04/2026)** : surface cockpit sombre (`app/globals.css` tokens), typographie Satoshi + Geist Mono, séparateurs `var(--line)`, glyphes SVG filaires (`app/(user)/components/ghost-icons.tsx`), intégrations affichées en `ServiceIdGlyph` (plus d’emojis dans l’UI). Classes utilitaires Ghost (`.ghost-meta-label`, `.ghost-btn-solid`, modales, skeleton scanline) et `.status-dot*` (`box-shadow: none`) sont définies dans `app/globals.css` et couvertes par `__tests__/ui/design-tokens.test.ts`. L'admin (`app/admin/*`) est aligné sur les mêmes variables.
 
 > 🚀 **Quick Start**: `npm run dev` = **hearst-os seul** sur **:9000**  
-> `npm run launch` = stack complète + nohup + purge `.next`  
-> 📖 Guide complet: [`LAUNCHER.md`](./LAUNCHER.md)
+> `npm run launch` = stack complète + nohup + purge `.next`
 
 > **🆕 Mise à jour 26/04/2026 — Cleanup complet terminé** :  
 > ✅ 30+ fichiers morts supprimés  
@@ -37,8 +36,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > [`lib/orchestrator/orchestrate-v2.ts`](./lib/orchestrator/orchestrate-v2.ts)
 
 > ✅ **Fondations — Semaines 0-6 TERMINÉES (25/04/2026)**  
-> Sécurité env • Responsive shell • Toasts/feedback • Login FR • Core types unifiés • Analytics 4 events • E2E complet (mobile+desktop)  
-> [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
+> Sécurité env • Responsive shell • Toasts/feedback • Login FR • Core types unifiés • Analytics 4 events • E2E complet (mobile+desktop)
 
 > ✅ **Phase 7 — Convergence Architecture** — **Terminé 25/04/2026**  
 > Runtime migré (52 fichiers) • Settings dynamiques (4 fichiers + SQL) • Auth réorganisé • 404 tests ✅
@@ -49,7 +47,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 >
 > ✅ **Phase B — Finance Agent** — `lib/agents/specialized/finance.ts` • Stripe Agent (list/get payments, invoices, subscriptions, balance, customers, summarize) • Router integration — **Terminé 25/04/2026**
 >
-> ✅ **Phase 9 — Architecture Finale Alignment** — Structure réorganisée et alignée sur `HEARST-ARCHITECTURE-FINALE.html`
+> ✅ **Phase 9 — Architecture Finale Alignment** — Structure réorganisée et alignée sur l'architecture cible
 > - `lib/agents/specialized/` — Agents métier (finance.ts)
 > - `lib/agents/index.ts` — Barrel export restauré
 > - `lib/connectors/packs/finance-pack/{auth,services,mappers,schemas}/` — Connector Pack structure
@@ -63,10 +61,6 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > - `productivity-pack/` — Notion (pages, databases, blocks, search), Trello/Asana (planned)
 > - `design-pack/` — Figma (files, components, variables, comments), Adobe/Canva (planned)
 > - `developer-pack/` — GitHub (repos, PRs, issues, commits) — ✅ **Phase 4**
->
-> **Spec produit / système** : [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md)
-> **État Phase 10** : [`docs/STATUS_2026-04-25_PHASE10.md`](./docs/STATUS_2026-04-25_PHASE10.md)
-> **État d'avancement / écarts** : [`docs/CONVERGENCE_STATUS_2026-04-25.md`](./docs/CONVERGENCE_STATUS_2026-04-25.md)
 >
 > **Métriques actuelles (26/04/2026)** :
 > | Métrique | Valeur |
@@ -91,33 +85,14 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 > - ✅ **Error Handling** — Remplacement alerts par système toast unifié
 > - ✅ **Security** — Validation stricte NEXT_PUBLIC_NANGO_PUBLIC_KEY (pas de fallback secret key)
 >
-> **Documentation audits** : 3 rapports détaillés (2,267 lignes) — [`docs/AUDIT_PRIORITIES_2_3.md`](./docs/AUDIT_PRIORITIES_2_3.md), [`docs/AUDIT_PRIORITIES_2_5_COMPLETE.md`](./docs/AUDIT_PRIORITIES_2_5_COMPLETE.md), [`docs/AUDIT_FINAL_CORRECTIONS.md`](./docs/AUDIT_FINAL_CORRECTIONS.md)
 
-## 📚 Documentation Architecture (HTML)
-
-Documents interactifs ouverts dans le navigateur :
-
-| Document | Contenu | Lien |
-|----------|---------|------|
-| **HEARST-ARCHITECTURE-FINALE.html** | Structure complète `lib/` après audit 100%. Où mettre les assets, services, admin. | [`./HEARST-ARCHITECTURE-FINALE.html`](./HEARST-ARCHITECTURE-FINALE.html) |
-| **HEARST-MASTERPLAN.html** | Vision produit, roadmap 19 semaines, investissements infrastructure | [`./HEARST-MASTERPLAN.html`](./HEARST-MASTERPLAN.html) |
-| **hearst-ui-vision.html** | Interface utilisateur — 2 états (IDLE/ACTIVE), chat-first, assets, missions | [`./hearst-ui-vision.html`](./hearst-ui-vision.html) |
-| **HEARST-STATUS-VS-VISION.html** | Vue simple et visuelle: état réel, vision cible, écarts, prochaines étapes | [`./HEARST-STATUS-VS-VISION.html`](./HEARST-STATUS-VS-VISION.html) |
-
-**Ouvrir :** `open HEARST-ARCHITECTURE-FINALE.html` (ou double-clic)
-
-### Documentation Technique (Markdown)
+## 📚 Références visuelles
 
 | Document | Contenu |
 |----------|---------|
-| [`LAUNCHER.md`](./LAUNCHER.md) | Guide démarrage — `npm run launch` |
-| [`docs/PRODUCT_SYSTEM_SPEC.md`](./docs/PRODUCT_SYSTEM_SPEC.md) | Spec produit / système complet |
-| [`docs/CONVERGENCE_STATUS_2026-04-24.md`](./docs/CONVERGENCE_STATUS_2026-04-24.md) | Etat réel du projet: fait, restant, écarts, ordre recommandé |
-| [`docs/AGENT_GOVERNANCE.md`](./docs/AGENT_GOVERNANCE.md) | Gouvernance outils & lifecycle agents |
-| [`docs/DOMAIN_MODEL.md`](./docs/DOMAIN_MODEL.md) | Modèle de données (Entity Map) |
-| [`docs/RUNTIME_AND_REPLAY.md`](./docs/RUNTIME_AND_REPLAY.md) | Cycle de vie runs & replay |
-| [`docs/DB_AND_MIGRATIONS.md`](./docs/DB_AND_MIGRATIONS.md) | Database & migrations |
-| [`docs/NANGO_SETUP.md`](./docs/NANGO_SETUP.md) | Setup OAuth Nango
+| [`HEARST-OS-DESIGN-SYSTEM.html`](./HEARST-OS-DESIGN-SYSTEM.html) | Langage visuel canonique — tokens, classes, composants |
+| [`hearst-ui-vision.html`](./hearst-ui-vision.html) | Interface utilisateur — 2 états (IDLE/ACTIVE), chat-first, assets, missions |
+| [`mock-chat-central.html`](./mock-chat-central.html) | Mock de la surface principale (chat-first) |
 
 ### Core Types — Architecture Finale
 
@@ -126,9 +101,7 @@ Documents interactifs ouverts dans le navigateur :
 | `lib/core/types` | [`./lib/core/types/index.ts`](./lib/core/types/index.ts) | **Point d'entrée canonique** pour les types métier centraux. Barrel export unifié aligné sur Architecture Finale. |
 | `lib/core/types/focal` | [`./lib/core/types/focal.ts`](./lib/core/types/focal.ts) | Utilities focal (mapFocalObject, mapFocalObjects) — unification client/serveur. |
 
-**Migration** : nouveaux imports depuis `@/lib/core/types` (unifié) plutôt que dispersés. Legacy supporté avec marquage @deprecated.
-
-**Architecture Finale alignment** : [`ROADMAP_ARCHITECTURE_FINALE.md`](./ROADMAP_ARCHITECTURE_FINALE.md) — plan de convergence vers la structure cible (lib/platform/, lib/engine/, lib/agents/, connector packs).
+**Migration** : nouveaux imports depuis `@/lib/core/types` (unifié) plutôt que dispersés.
 
 ## Architecture UX
 

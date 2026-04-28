@@ -78,12 +78,12 @@ export function ChatInput({
   }
 
   const surfacePlaceholders: Record<string, string> = {
-    home: "Ask anything...",
-    inbox: "Search messages...",
-    calendar: "Ask about your schedule...",
-    files: "Find documents...",
-    tasks: "Create a mission...",
-    apps: "Configure connectors...",
+    home: "Poser une question",
+    inbox: "Chercher dans les messages…",
+    calendar: "Une question sur votre agenda ?",
+    files: "Trouver un document…",
+    tasks: "Créer une mission…",
+    apps: "Configurer les connecteurs…",
   };
 
   return (
@@ -127,19 +127,18 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Container */}
+        {/* Input Card — textarea en haut, actions en bas */}
         <div
-          className="flex items-center gap-4 px-5 bg-[var(--card-flat-bg)] border border-[var(--border-input)] transition-colors duration-200 group focus-within:bg-[var(--surface-2)] focus-within:border-[var(--cykan-border-hover)]"
-          style={{ height: "var(--input-height)" }}
+          className="bg-[var(--card-flat-bg)] border border-[var(--border-input)] rounded-2xl transition-colors duration-200 group focus-within:border-[var(--cykan-border-hover)]"
+          style={{ boxShadow: "var(--shadow-card)" }}
         >
-          <span className="t-11 font-mono text-[var(--cykan)] opacity-30 group-focus-within:opacity-100 group-focus-within:halo-cyan-sm transition-all tracking-[0.2em] self-center">&gt;</span>
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
               e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -154,30 +153,37 @@ export function ChatInput({
                 setHideTypeahead(true);
               }
             }}
-            placeholder={placeholder || surfacePlaceholders[surface] || "Type a message..."}
+            placeholder={placeholder || surfacePlaceholders[surface] || "Poser une question"}
             rows={1}
-            className="flex-1 bg-transparent text-base font-normal tracking-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none min-h-[28px] max-h-[150px] leading-relaxed p-0 m-0"
+            className="block w-full bg-transparent text-base font-normal tracking-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed pt-4 pb-2 px-5"
+            style={{ minHeight: "32px", maxHeight: "200px" }}
           />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-[var(--surface-2)] overflow-hidden">
-            <div className="h-full bg-[var(--cykan)] w-0 group-focus-within:w-full transition-all duration-500 ease-out" />
+          <div className="flex items-center justify-between px-3 pb-3 pt-1">
+            <span className="t-9 font-mono tracking-[0.3em] uppercase text-[var(--text-faint)] px-2">
+              Auto
+            </span>
+            {isRunning ? (
+              <div className="w-9 h-9 flex items-center justify-center shrink-0">
+                <div className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-full animate-spin" />
+              </div>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={!input.trim()}
+                className={`w-8 h-8 flex items-center justify-center shrink-0 transition-all duration-200 ${
+                  input.trim()
+                    ? "bg-[var(--cykan)] text-[var(--bg)] border border-[var(--cykan)]"
+                    : "bg-transparent text-[var(--text-faint)] border border-[var(--border-default)] cursor-not-allowed"
+                }`}
+                style={input.trim() ? { boxShadow: "0 0 24px rgba(45,212,191,0.40)" } : {}}
+                title="Envoyer"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
           </div>
-          {isRunning ? (
-            <div className="w-8 h-8 flex items-center justify-center shrink-0">
-              <div
-                className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-full animate-spin"
-              />
-            </div>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={!input.trim()}
-              className="w-8 h-8 flex items-center justify-center shrink-0 text-[var(--text-faint)] hover:text-[var(--bg)] hover:bg-[var(--cykan)] transition-all duration-300 rounded-sm disabled:opacity-0"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
-          )}
         </div>
         <div className="absolute left-0 right-0 -bottom-5 flex justify-center opacity-30 hover:opacity-100 transition-opacity">
           <p className="t-9 text-[var(--text-soft)] font-mono tracking-[0.2em]">

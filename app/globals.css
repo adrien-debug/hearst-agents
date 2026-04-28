@@ -112,6 +112,7 @@
   --border-soft: rgba(255, 255, 255, 0.04);
   --border-input: rgba(255, 255, 255, 0.08);
   --ghost-modal-top: rgba(255, 255, 255, 0.06);
+  --text-on-cykan: #000000;
   --card-flat-bg: rgba(255, 255, 255, 0.02);
   --card-flat-border: rgba(255, 255, 255, 0.06);
   --surface-card: rgba(255, 255, 255, 0.035);
@@ -261,6 +262,7 @@
   --border-soft: rgba(28, 29, 32, 0.05);
   --border-input: rgba(28, 29, 32, 0.12);
   --ghost-modal-top: rgba(28, 29, 32, 0.10);
+  --text-on-cykan: #000000;
   --border-subtle: rgba(28, 29, 32, 0.08);
   --border-default: rgba(28, 29, 32, 0.14);
   --border-strong: rgba(28, 29, 32, 0.20);
@@ -956,129 +958,159 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   50% { transform: scale(1.4); opacity: 0.7; }
 }
 
-/* ── Run halo indicator ────────────────────────────────────────
- * Indicateur circulaire (RightPanel header) symétrique au bloc logo.
- * 4 régimes visuels : idle / running / awaiting / error. Pilotés par
- * data-state lu sur le runtime store. pathLength=100 sur le SVG arc
- * permet d'exprimer la longueur en % indépendamment du rayon. */
+/* ── Run halo indicator — Phase clusters ──────────────────────
+ * Header du RightPanel. 5 zones (intent / search / analyze /
+ * synth / deliver), chaque zone = grille 4×5 de cells. État de
+ * chaque cluster piloté par data-phase-state (todo/current/done)
+ * lu depuis le composant. La couleur globale change selon
+ * data-state (idle, streaming, awaiting_approval, error). */
 .halo-runs {
-  position: relative;
-  width: 128px;
-  height: 128px;
+  width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  /* currentColor pilote le track de fond — suit le texte du thème */
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
   color: var(--text);
 }
 
-.halo-runs-spinner {
-  position: absolute;
-  inset: 0;
-  transform: rotate(-90deg);  /* arc démarre à midi */
+.halo-runs-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-satoshi);
+  font-size: 9px;
+  letter-spacing: var(--tracking-section);
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
-.halo-runs-spinner svg {
-  width: 100%;
-  height: 100%;
-  display: block;
+.halo-runs-top strong {
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-subtle);
+  margin-left: var(--space-1);
 }
 
-.halo-runs-arc {
-  stroke: var(--cykan);
-  stroke-dasharray: 100 100;
-  stroke-dashoffset: 88;        /* idle ≈ 12% d'arc visible */
-  opacity: 0.95;                /* visible sur dark ET light */
-  transition:
-    stroke-dasharray var(--duration-slow) var(--ease-out-soft),
-    stroke-dashoffset var(--duration-slow) var(--ease-out-soft),
-    stroke var(--duration-base) var(--ease-standard),
-    opacity var(--duration-base) var(--ease-standard);
+.halo-runs-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--cykan);
 }
 
-/* Idle — petit arc + rotation très lente (signe de vie) */
-.halo-runs[data-state="idle"] .halo-runs-spinner {
-  animation: halo-runs-rotate 14s linear infinite;
+.halo-runs[data-state="awaiting_approval"]      .halo-runs-state,
+.halo-runs[data-state="awaiting_clarification"] .halo-runs-state {
+  color: var(--warn);
+}
+.halo-runs[data-state="error"] .halo-runs-state { color: var(--danger); }
+.halo-runs[data-state="idle"]  .halo-runs-state { color: var(--text-faint); }
+
+.halo-runs-flow {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+  text-align: right;
 }
 
-/* Running (streaming / connecting / processing) — arc plus long, rotation rapide */
-.halo-runs[data-state="streaming"]   .halo-runs-arc,
-.halo-runs[data-state="connecting"]  .halo-runs-arc,
-.halo-runs[data-state="processing"]  .halo-runs-arc {
-  stroke-dashoffset: 68;        /* ≈ 32% d'arc */
-  opacity: 1;
+.halo-runs-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-2);
+  height: 60px;
 }
 
-.halo-runs[data-state="streaming"]   .halo-runs-spinner,
-.halo-runs[data-state="connecting"]  .halo-runs-spinner,
-.halo-runs[data-state="processing"]  .halo-runs-spinner {
-  animation: halo-runs-rotate 1.6s linear infinite;
+.halo-runs-phase {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 2px;
 }
 
-/* Awaiting — anneau plein "100%", warn color, rotation arrêtée */
-.halo-runs[data-state="awaiting_approval"]      .halo-runs-arc,
-.halo-runs[data-state="awaiting_clarification"] .halo-runs-arc {
-  stroke: var(--warn);
-  stroke-dashoffset: 0;
-  opacity: 1;
+/* Cell par défaut — todo (phases à venir ou état running) */
+.halo-runs-cell {
+  background: var(--border-soft);
+  border-radius: 1px;
+  transition: background var(--duration-base) var(--ease-standard);
 }
 
-.halo-runs[data-state="awaiting_approval"]      .halo-runs-spinner,
-.halo-runs[data-state="awaiting_clarification"] .halo-runs-spinner {
-  animation: none;
-}
-
-/* Error — demi-arc danger, statique */
-.halo-runs[data-state="error"] .halo-runs-arc {
-  stroke: var(--danger);
-  stroke-dashoffset: 50;
-  opacity: 0.95;
-}
-
-.halo-runs[data-state="error"] .halo-runs-spinner {
-  animation: none;
-}
-
-@keyframes halo-runs-rotate {
-  from { transform: rotate(-90deg); }
-  to   { transform: rotate(270deg); }
-}
-
-/* Centre — dot pulsant, change de couleur selon l'état */
-.halo-runs-dot {
-  position: relative;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+/* Phase done — toutes les cells cykan */
+.halo-runs-phase[data-phase-state="done"] .halo-runs-cell {
   background: var(--cykan);
-  box-shadow: 0 0 6px rgba(45, 212, 191, 0.5);
-  animation: halo-runs-dot-pulse 3.2s ease-in-out infinite;
 }
 
-.halo-runs[data-state="streaming"]  .halo-runs-dot,
-.halo-runs[data-state="connecting"] .halo-runs-dot,
-.halo-runs[data-state="processing"] .halo-runs-dot {
-  animation: halo-runs-dot-pulse 1.1s ease-in-out infinite;
-  box-shadow: 0 0 10px rgba(45, 212, 191, 0.7);
+/* Phase current — 12 / 20 cells cykan (60%), la 12e pulse */
+.halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+12) {
+  background: var(--cykan);
+}
+.halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(12) {
+  animation: halo-runs-cell-pulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 4px var(--cykan);
 }
 
-.halo-runs[data-state="awaiting_approval"]      .halo-runs-dot,
-.halo-runs[data-state="awaiting_clarification"] .halo-runs-dot {
+/* Awaiting approval — phase courante pleine en warn, dernière pulse */
+.halo-runs[data-state="awaiting_approval"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
   background: var(--warn);
-  box-shadow: 0 0 8px rgba(255, 204, 0, 0.55);
-  animation: none;
+}
+.halo-runs[data-state="awaiting_approval"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(20) {
+  animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 4px var(--warn);
 }
 
-.halo-runs[data-state="error"] .halo-runs-dot {
+/* Awaiting clarification — phase 1 pleine en warn */
+.halo-runs[data-state="awaiting_clarification"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
+  background: var(--warn);
+}
+.halo-runs[data-state="awaiting_clarification"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(20) {
+  animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 4px var(--warn);
+}
+
+/* Error — phase courante 60% en danger, statique */
+.halo-runs[data-state="error"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+12) {
   background: var(--danger);
-  box-shadow: none;
+}
+.halo-runs[data-state="error"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(12) {
   animation: none;
+  box-shadow: none;
+}
+
+/* Idle — cells avec bordure visible mais pas de couleur pleine */
+.halo-runs[data-state="idle"] .halo-runs-cell {
+  background: transparent;
+  outline: 1px solid var(--border-default);
+  outline-offset: -1px;
+}
+
+@keyframes halo-runs-cell-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+.halo-runs-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  animation: halo-runs-dot-pulse 1.4s ease-in-out infinite;
+}
+
+.halo-runs[data-state="idle"] .halo-runs-dot,
+.halo-runs[data-state="error"] .halo-runs-dot,
+.halo-runs[data-state="awaiting_approval"] .halo-runs-dot,
+.halo-runs[data-state="awaiting_clarification"] .halo-runs-dot {
+  animation: none;
+}
+.halo-runs[data-state="idle"] .halo-runs-dot {
+  box-shadow: none;
+  opacity: 0.4;
 }
 
 @keyframes halo-runs-dot-pulse {
-  0%, 100% { transform: scale(1);   opacity: 0.85; }
-  50%      { transform: scale(1.4); opacity: 1; }
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
 }
 
 /* ── Ghost Protocol — boutons & inputs minimalistes ──────────────

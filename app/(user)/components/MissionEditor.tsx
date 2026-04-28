@@ -45,7 +45,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div>
-        <label className="ghost-meta-label block mb-2">FIELD_NAME</label>
+        <label className="ghost-meta-label block mb-2">Nom</label>
         <input
           type="text"
           value={formData.name}
@@ -56,7 +56,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
       </div>
 
       <div>
-        <label className="ghost-meta-label block mb-2">FIELD_DESC</label>
+        <label className="ghost-meta-label block mb-2">Description</label>
         <input
           type="text"
           value={formData.description}
@@ -67,7 +67,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
       </div>
 
       <div>
-        <label className="ghost-meta-label block mb-2">FIELD_PROMPT</label>
+        <label className="ghost-meta-label block mb-2">Instructions</label>
         <textarea
           value={formData.prompt}
           onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
@@ -78,7 +78,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
       </div>
 
       <div>
-        <label className="ghost-meta-label block mb-4">FIELD_CRON_PRESET</label>
+        <label className="ghost-meta-label block mb-4">Fréquence</label>
         <div className="grid grid-cols-2 gap-px bg-[var(--line)]">
           {FREQUENCY_OPTIONS.map((option) => {
             const selected = formData.frequency === option.value;
@@ -101,7 +101,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
 
       {formData.frequency === "custom" && (
         <div>
-          <label className="ghost-meta-label block mb-2">FIELD_CRON_EXPR</label>
+          <label className="ghost-meta-label block mb-2">Expression cron</label>
           <input
             type="text"
             value={formData.customCron}
@@ -109,13 +109,13 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
             placeholder="0 9 * * 1"
             className="ghost-input-line w-full font-mono text-xs"
           />
-          <p className="t-10 font-mono text-[var(--text-faint)] mt-2 uppercase tracking-[0.1em]">FMT_MIN HOUR DOM MON DOW</p>
+          <p className="t-10 font-mono text-[var(--text-faint)] mt-2 uppercase tracking-[0.1em]">min heure jour mois jour-semaine</p>
         </div>
       )}
 
       <div className="flex items-center justify-between py-4 border-y border-[var(--line)]">
         <div>
-          <p className="text-xs font-medium text-[var(--text-soft)]">FLAG_ENABLED</p>
+          <p className="text-xs font-medium text-[var(--text-soft)]">Mission activée</p>
           <p className="t-10 font-mono text-[var(--text-faint)] mt-1 uppercase tracking-[0.12em]">Exécution selon fréquence</p>
         </div>
         <button
@@ -136,14 +136,14 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
 
       <div className="flex gap-3 pt-2">
         <button type="button" onClick={onCancel} className="ghost-btn-solid ghost-btn-ghost flex-1 rounded-sm">
-          Abort
+          Annuler
         </button>
         <button
           type="submit"
           disabled={!isValid || isLoading}
           className="ghost-btn-solid ghost-btn-cykan flex-1 rounded-sm disabled:opacity-40"
         >
-          {isLoading ? "COMMIT…" : "Commit"}
+          {isLoading ? "Enregistrement…" : "Enregistrer"}
         </button>
       </div>
     </form>

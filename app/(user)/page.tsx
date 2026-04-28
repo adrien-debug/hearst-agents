@@ -12,6 +12,7 @@ import { FocalStage } from "./components/FocalStage";
 import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
 import { Breadcrumb, type Crumb } from "./components/Breadcrumb";
+import { AgentActivityStrip } from "./components/AgentActivityStrip";
 import { getAllServices } from "@/lib/integrations/catalog";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { toast } from "@/app/hooks/use-toast";
@@ -318,6 +319,14 @@ export default function HomePage() {
     }
   }, [focal]);
 
+  // Re-show focal whenever the user explicitly clicks an asset/mission card
+  // in the right panel — even if the focal id hasn't changed (otherwise a
+  // closed focal stays closed when re-clicking the same item in the list).
+  const viewRequestedAt = useFocalStore((s) => s.viewRequestedAt);
+  useEffect(() => {
+    if (viewRequestedAt > 0) setShowFocal(true);
+  }, [viewRequestedAt]);
+
   if (isIdle) {
     const hour = new Date().getHours();
     const greeting =
@@ -378,6 +387,9 @@ export default function HomePage() {
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
+      {/* Strip activité agents — header live, visible quand un run tourne */}
+      <AgentActivityStrip />
+
       {focal && showFocal && (() => {
         const threadLabel = activeThread?.name?.trim() ?? "";
         const titleLabel = focal.title?.trim() ?? "";

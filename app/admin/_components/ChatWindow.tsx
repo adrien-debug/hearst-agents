@@ -75,13 +75,15 @@ export default function ChatWindow({ agentId }: ChatWindowProps) {
   };
 
   return (
-    <div className="flex flex-col h-[500px] rounded-lg border border-white/10 bg-surface">
+    <div className="flex flex-col h-[500px] border border-[var(--border-shell)] bg-[var(--surface)]">
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
             <div
-              className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                m.role === "user" ? "bg-white/10 text-white" : "bg-white/5 text-white/80"
+              className={`max-w-[80%] px-3 py-2 t-13 ${
+                m.role === "user"
+                  ? "bg-[var(--surface-2)] text-[var(--text)]"
+                  : "bg-[var(--surface-1)] text-[var(--text-soft)]"
               }`}
             >
               {m.content}
@@ -90,18 +92,18 @@ export default function ChatWindow({ agentId }: ChatWindowProps) {
         ))}
         <div ref={bottomRef} />
       </div>
-      <div className="border-t border-white/10 p-3 flex gap-2">
+      <div className="border-t border-[var(--border-shell)] p-3 flex gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()}
           placeholder="Message..."
-          className="flex-1 bg-black/50 border border-white/10 rounded px-3 py-2 text-sm text-white placeholder:text-white/30"
+          className="flex-1 bg-[var(--bg-soft)] border border-[var(--border-input)] px-3 py-2 t-13 text-[var(--text)] placeholder:text-[var(--text-faint)]"
         />
         <button
           onClick={send}
           disabled={loading || !input.trim()}
-          className="px-4 py-2 bg-cyan-accent text-black rounded text-sm font-medium disabled:opacity-50"
+          className="ghost-btn-solid ghost-btn-cykan disabled:opacity-50"
         >
           {loading ? "..." : "Envoyer"}
         </button>

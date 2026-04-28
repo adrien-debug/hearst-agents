@@ -29,6 +29,8 @@ import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/sta
 import { appendModelMessages, getRecentModelMessages } from "@/lib/memory/store";
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import { buildAgentSystemPrompt } from "./system-prompt";
+import { storeAsset, type Asset, type AssetKind } from "@/lib/assets/types";
+import { randomUUID } from "crypto";
 
 export interface AiPipelineInput {
   userId: string;
@@ -44,6 +46,8 @@ export interface AiPipelineInput {
   workspaceId?: string;
   /** Conversation id used to load/persist structured ModelMessages history. */
   conversationId?: string;
+  /** Thread id — required for the create_artifact tool to scope assets to the right thread. */
+  threadId?: string;
 }
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
@@ -206,6 +210,142 @@ function buildCreateScheduledMissionTool(
   };
 }
 
+/**
+ * Builds the `create_artifact` tool — persists generated content (HTML, code,
+ * markdown, JSON, etc.) as an Asset attached to the current thread, so it
+ * appears in the right-panel Assets list and is previewable in the Focal stage.
+ *
+ * Use this when the user asks for content that should persist beyond the chat
+ * (a generated HTML page, a JSON config, a Markdown document, etc.). For
+ * one-shot snippets that don't need to be saved, the model should still answer
+ * inline in a code block (RÈGLE ZÉRO) without calling this tool.
+ */
+interface CreateArtifactArgs {
+  name: string;
+  kind: AssetKind;
+  content: string;
+  contentType?: string;
+  summary?: string;
+}
+
+const ARTIFACT_KIND_VALUES: AssetKind[] = [
+  "report",
+  "brief",
+  "message",
+  "document",
+  "spreadsheet",
+  "task",
+  "event",
+];
+
+function buildCreateArtifactTool(
+  engine: RunEngine,
+  eventBus: RunEventBus,
+  ctx: { threadId: string; userId: string; tenantId: string; workspaceId: string },
+): Tool<CreateArtifactArgs, string> {
+  return {
+    description:
+      "Persist a generated content piece (HTML page, code snippet, JSON config, Markdown doc, brief, report) " +
+      "as a saved Asset attached to the current thread. The asset will appear in the right-panel Assets list " +
+      "and will be previewable when clicked. " +
+      "Use this when the user wants the result to persist beyond the chat. " +
+      "For throwaway code snippets answered inline in a code block, do NOT call this tool — keep them inline.",
+    inputSchema: jsonSchema<CreateArtifactArgs>({
+      type: "object",
+      required: ["name", "kind", "content"],
+      properties: {
+        name: {
+          type: "string",
+          description:
+            "Short, human-readable title (≤ 80 chars). E.g. 'Logo H — page démo', 'Plan éditorial Q2', 'Config API Stripe'.",
+        },
+        kind: {
+          type: "string",
+          enum: ARTIFACT_KIND_VALUES,
+          description:
+            "Asset category. 'document' for HTML/code/markdown/JSON/text content, 'report' for synthesised long-form analyses, 'brief' for short briefs, 'message' for email/chat drafts, 'spreadsheet' for tabular data.",
+        },
+        content: {
+          type: "string",
+          description:
+            "The full raw content of the artifact. Stored as-is so the focal preview can render it directly (HTML rendered in iframe sandbox, code in syntax-highlighted block, etc.).",
+        },
+        contentType: {
+          type: "string",
+          description:
+            "Optional MIME-like hint: 'html', 'css', 'js', 'json', 'markdown', 'python', 'tsx', 'plain'. Used by the focal renderer to choose the right preview mode. Defaults to 'plain'.",
+        },
+        summary: {
+          type: "string",
+          description: "Optional one-line summary of the artifact (≤ 140 chars), shown under the title.",
+        },
+      },
+    }),
+    execute: async (args: CreateArtifactArgs) => {
+      const cleanTitle = (args.name ?? "").trim();
+      if (!cleanTitle) {
+        return "Error: artifact title is required.";
+      }
+      if (!args.content || !args.content.trim()) {
+        return "Error: artifact content is empty.";
+      }
+
+      // V1 AssetKind → cleaner display type (avoids "document" → "pdf"
+      // mapping in adapter.mapKindToType which would mislabel HTML as PDF
+      // in the right-panel Assets list).
+      const displayType =
+        args.contentType ??
+        (args.kind === "report" ? "report"
+          : args.kind === "brief" ? "brief"
+          : args.kind === "spreadsheet" ? "csv"
+          : args.kind === "message" ? "text"
+          : "doc");
+
+      const asset: Asset = {
+        id: randomUUID(),
+        threadId: ctx.threadId,
+        kind: args.kind,
+        title: cleanTitle.slice(0, 80),
+        summary: args.summary?.slice(0, 140),
+        provenance: {
+          providerId: "system",
+          tenantId: ctx.tenantId,
+          workspaceId: ctx.workspaceId,
+          userId: ctx.userId,
+          // Stored as `provenance.type` so adapter.mapKindToType picks it
+          // up as the originalType (priorité absolue dans le mapping).
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...({ type: displayType } as any),
+        },
+        createdAt: Date.now(),
+        contentRef: args.content,
+        runId: engine.id,
+      };
+
+      // storeAsset persists to Supabase (fire-and-forget) + caches in memory.
+      storeAsset(asset);
+
+      // Map the V1 AssetKind (DB schema) to the V2 AssetType used in events,
+      // so downstream consumers (right panel, focal mappers) treat it uniformly.
+      const eventAssetType =
+        args.kind === "report"      ? "report"
+        : args.kind === "spreadsheet" ? "excel"
+        : "doc";
+
+      eventBus.emit({
+        type: "asset_generated",
+        run_id: engine.id,
+        asset_id: asset.id,
+        asset_type: eventAssetType,
+        name: cleanTitle,
+      });
+
+      const ct = args.contentType ?? "plain";
+      return `Artifact "${cleanTitle}" (${args.kind}, ${ct}) saved. It now appears in the right-panel Assets list — click it to preview.`;
+    },
+  };
+}
+
 export async function runAiPipeline(
   engine: RunEngine,
   eventBus: RunEventBus,
@@ -254,6 +394,19 @@ export async function runAiPipeline(
       tenantId: input.tenantId ?? "dev-tenant",
       workspaceId: input.workspaceId ?? "dev-workspace",
     }),
+    // create_artifact requires a threadId to scope the saved asset. Without
+    // it (e.g. surface that doesn't pass thread_id), we omit the tool from
+    // the surface so the model can't call it and fail silently.
+    ...(input.threadId
+      ? {
+          create_artifact: buildCreateArtifactTool(engine, eventBus, {
+            threadId: input.threadId,
+            userId: input.userId,
+            tenantId: input.tenantId ?? "dev-tenant",
+            workspaceId: input.workspaceId ?? "dev-workspace",
+          }),
+        }
+      : {}),
   };
 
   // ── 3. Build system prompt ──────────────────────────────────

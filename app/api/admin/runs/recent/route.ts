@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireScope } from "@/lib/platform/auth/scope";
+import { requireAdmin, isError } from "@/app/api/admin/_helpers";
 import { getRuns } from "@/lib/engine/runtime/state/adapter";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireScope({ context: "GET /api/admin/runs/recent" });
-  if (error) return NextResponse.json({ error: error.message }, { status: error.status });
+  const guard = await requireAdmin("GET /api/admin/runs/recent", {
+    resource: "runs",
+    action: "read",
+  });
+  if (isError(guard)) return guard;
 
   const url = new URL(req.url);
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "10", 10) || 10, 50);

@@ -102,32 +102,24 @@ export async function buildRightPanelData(
     completedAt: r.completedAt,
   }));
 
-  // Get assets from Supabase (canonical) + runs as fallback
+  // Get assets from Supabase (canonical source).
+  // On ne tombe jamais en fallback vers les runs in-memory : les assets attachés
+  // aux runs ne sont pas nettoyés par DELETE, ce qui provoquait des réapparitions
+  // fantômes dans le panel après suppression (le SSE poll toutes les secondes
+  // et overwritait la suppression optimistic côté client).
   const persistedAssets = await getPersistedAssets({
     tenantId: scope?.tenantId,
     workspaceId: scope?.workspaceId,
     limit: MAX_ASSETS,
   });
 
-  // Map to RightPanelAsset format
   const assets: { id: string; name: string; type: string; runId: string }[] =
-    persistedAssets.length > 0
-      ? persistedAssets.map((a) => ({
-          id: a.id,
-          name: a.name,
-          type: a.type,
-          runId: a.run_id,
-        }))
-      : runs
-          .flatMap((r) =>
-            r.assets.map((a) => ({
-              id: a.id,
-              name: a.name,
-              type: a.type,
-              runId: r.id,
-            })),
-          )
-          .slice(0, MAX_ASSETS);
+    persistedAssets.map((a) => ({
+      id: a.id,
+      name: a.name,
+      type: a.type,
+      runId: a.run_id,
+    }));
 
   // ── Missions ─────────────────────────────────────────────
   let missionList = await getPersistedMissions({

@@ -34,29 +34,5 @@
                 "order": 2
             }
         },
-        {
-            "name": "hearst-connect: debug",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost:8100",
-            "webRoot": "${workspaceFolder}/../hearst-connect",
-            "sourceMaps": true,
-            "presentation": {
-                "group": "other",
-                "order": 1
-            }
-        },
-        {
-            "name": "Hearst-app: debug",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}/../Hearst-app/packages/frontend",
-            "sourceMaps": true,
-            "presentation": {
-                "group": "other",
-                "order": 2
-            }
-        }
     ]
 }

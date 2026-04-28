@@ -7,7 +7,7 @@ interface ModelBadgeProps {
 
 export default function ModelBadge({ provider, model }: ModelBadgeProps) {
   return (
-    <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-white/10 text-white/70">
+    <span className="inline-flex items-center px-2 py-1 t-10 bg-[var(--surface-2)] text-[var(--text-muted)]">
       {provider}: {model}
     </span>
   );

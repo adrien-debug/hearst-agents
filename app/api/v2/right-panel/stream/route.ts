@@ -10,6 +10,7 @@ import { buildRightPanelData } from "@/lib/ui/right-panel/aggregate";
 import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const PANEL_INTERVAL_MS = 1000;
 const PING_INTERVAL_MS = 25000;

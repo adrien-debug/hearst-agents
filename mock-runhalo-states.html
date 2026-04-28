@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Hearst OS — RunHaloIndicator (M06 Phase clusters) · 4 états</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  /* ─────────────────────────────────────────────────────────────
+   * Mock standalone du nouveau RunHaloIndicator implémenté dans le
+   * code (M06 Phase clusters). Reproduit le DOM exact du composant
+   * et le CSS exact ajouté à app/globals.css, dans les 4 états
+   * (idle, streaming, awaiting_approval, error). Permet la boucle
+   * visuelle sans dépendre du dev server (qui a un bug Turbopack
+   * préexistant non lié à ce changement).
+   * ─────────────────────────────────────────────────────────── */
+  :root {
+    --page-bg: #050608;
+    --page-fg: #E6E6E8;
+    --page-fg-muted: rgba(230,230,232,0.55);
+    --page-line: rgba(255,255,255,0.06);
+
+    /* Tokens projet — copie 1:1 LIGHT (data-theme="light") */
+    --bg-rail:   #FFFFFF;
+    --text:      #1C1D20;
+    --text-muted: rgba(28,29,32,0.68);
+    --text-faint: rgba(28,29,32,0.46);
+    --text-ghost: rgba(28,29,32,0.26);
+    --border-shell: rgba(28,29,32,0.08);
+    --surface-1: rgba(28,29,32,0.025);
+    --surface-2: rgba(28,29,32,0.045);
+    --cykan: #2DD4BF;
+    --warn: #F59E0B;
+    --danger: #EF4444;
+
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px;
+
+    --tracking-subtle: 0.03em;
+    --tracking-section: 0.22em;
+
+    --weight-semibold: 600;
+
+    --duration-base: 200ms;
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--page-bg);
+    color: var(--page-fg);
+    font-family: 'Satoshi Variable', 'Satoshi', -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+
+  .page { max-width: 1380px; margin: 0 auto; padding: 56px 32px 96px; }
+
+  .page > header { margin-bottom: 56px; max-width: 920px; }
+
+  .page h1 {
+    font-size: 28px; font-weight: 600; letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+
+  .page p.lede {
+    font-size: 14px; line-height: 1.6;
+    color: var(--page-fg-muted);
+    margin: 0 0 14px;
+  }
+  .page p.lede strong { color: var(--page-fg); font-weight: 600; }
+  .page p.lede em     { font-style: italic; }
+  .page p.lede code   { font-family: ui-monospace, monospace; color: rgba(230,230,232,0.85); background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 32px;
+  }
+
+  .case { display: flex; flex-direction: column; gap: 14px; }
+  .case-head { padding: 0 4px; }
+  .case-head .num {
+    font-family: ui-monospace, monospace;
+    font-size: 11px; letter-spacing: 0.18em;
+    color: rgba(230,230,232,0.40);
+  }
+  .case-head h2 { font-size: 17px; font-weight: 600; margin: 4px 0 4px; letter-spacing: -0.01em; }
+  .case-head p  { font-size: 12.5px; color: var(--page-fg-muted); margin: 0; line-height: 1.55; }
+
+  /* Wrap émulant le slot du panel */
+  .panel-slot {
+    width: 340px;
+    background: var(--bg-rail);
+    border: 1px solid var(--border-shell);
+    border-radius: 6px;
+    padding: 20px var(--space-2) 16px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+    /* matches the wrapper in RightPanelContent : pt-5 pb-4 px-2 */
+  }
+
+  /* ───────────────────────────────────────────────────────────
+   * Composant — copie 1:1 du CSS de app/globals.css
+   * ─────────────────────────────────────────────────────── */
+  .halo-runs {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: 0 var(--space-2);
+    color: var(--text);
+  }
+
+  .halo-runs-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 9px;
+    letter-spacing: var(--tracking-section);
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .halo-runs-top strong {
+    color: var(--text);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-subtle);
+    margin-left: var(--space-1);
+  }
+
+  .halo-runs-state {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--cykan);
+  }
+
+  .halo-runs[data-state="awaiting_approval"]      .halo-runs-state,
+  .halo-runs[data-state="awaiting_clarification"] .halo-runs-state {
+    color: var(--warn);
+  }
+  .halo-runs[data-state="error"] .halo-runs-state { color: var(--danger); }
+  .halo-runs[data-state="idle"]  .halo-runs-state { color: var(--text-faint); }
+
+  .halo-runs-flow {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
+    text-align: right;
+  }
+
+  .halo-runs-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-2);
+    height: 60px;
+  }
+
+  .halo-runs-phase {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 2px;
+  }
+
+  .halo-runs-cell {
+    background: var(--surface-2);
+    border-radius: 1px;
+    transition: background var(--duration-base) var(--ease-standard);
+  }
+
+  .halo-runs-phase[data-phase-state="done"] .halo-runs-cell {
+    background: var(--cykan);
+  }
+
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+12) {
+    background: var(--cykan);
+  }
+  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(12) {
+    animation: halo-runs-cell-pulse 1.2s ease-in-out infinite;
+    box-shadow: 0 0 4px var(--cykan);
+  }
+
+  .halo-runs[data-state="awaiting_approval"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
+    background: var(--warn);
+  }
+  .halo-runs[data-state="awaiting_approval"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(20) {
+    animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
+    box-shadow: 0 0 4px var(--warn);
+  }
+
+  .halo-runs[data-state="awaiting_clarification"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
+    background: var(--warn);
+  }
+  .halo-runs[data-state="awaiting_clarification"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(20) {
+    animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
+    box-shadow: 0 0 4px var(--warn);
+  }
+
+  .halo-runs[data-state="error"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+12) {
+    background: var(--danger);
+  }
+  .halo-runs[data-state="error"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(12) {
+    animation: none;
+    box-shadow: none;
+  }
+
+  .halo-runs[data-state="idle"] .halo-runs-cell {
+    background: var(--surface-1);
+  }
+  .halo-runs[data-state="idle"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(12) {
+    animation: none;
+    box-shadow: none;
+  }
+
+  @keyframes halo-runs-cell-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+  }
+
+  .halo-runs-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 6px currentColor;
+    animation: halo-runs-dot-pulse 1.4s ease-in-out infinite;
+  }
+
+  .halo-runs[data-state="idle"] .halo-runs-dot,
+  .halo-runs[data-state="error"] .halo-runs-dot,
+  .halo-runs[data-state="awaiting_approval"] .halo-runs-dot,
+  .halo-runs[data-state="awaiting_clarification"] .halo-runs-dot {
+    animation: none;
+  }
+  .halo-runs[data-state="idle"] .halo-runs-dot {
+    box-shadow: none;
+    opacity: 0.4;
+  }
+
+  @keyframes halo-runs-dot-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.45; }
+  }
+
+  /* Footer */
+  footer.note {
+    margin-top: 80px;
+    padding-top: 28px;
+    border-top: 1px solid var(--page-line);
+    font-size: 13px;
+    color: var(--page-fg-muted);
+    line-height: 1.7;
+  }
+  footer.note h3 { font-size: 14px; font-weight: 600; color: var(--page-fg); margin: 0 0 10px; }
+  footer.note p { margin: 0 0 12px; max-width: 920px; }
+  footer.note strong { color: var(--page-fg); font-weight: 600; }
+  footer.note ul { padding-left: 20px; margin: 0 0 16px; }
+  footer.note li { margin-bottom: 6px; }
+  footer.note code { font-family: ui-monospace, monospace; color: rgba(230,230,232,0.85); background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <header>
+      <h1>RunHaloIndicator — M06 Phase clusters · 4 états</h1>
+      <p class="lede">
+        <strong>Implémentation effective</strong> dans
+        <code>app/(user)/components/RunHaloIndicator.tsx</code> + classes
+        <code>.halo-runs*</code> dans <code>app/globals.css</code>. Cette page
+        rend le composant tel que produit par React, dans les 4 états
+        possibles (<em>idle</em>, <em>streaming</em>, <em>awaiting_approval</em>,
+        <em>error</em>). Phase courante dérivée du nombre de
+        <em>step_started</em> events modulo 5 — heuristique à remplacer
+        quand le runtime exposera des phases nommées.
+      </p>
+    </header>
+
+    <div class="grid">
+
+      <!-- ─── État 1 — IDLE ─── -->
+      <section class="case">
+        <div class="case-head">
+          <span class="num">STATE · IDLE</span>
+          <h2>Veille</h2>
+          <p>
+            Aucun run actif. Toutes les cells en <code>--surface-1</code>
+            (ghost), aucune animation. Dot statique opacity 0.4. ID affiché
+            "—". Le panel respire — rien ne capte l'œil.
+          </p>
+        </div>
+        <div class="panel-slot">
+          <div class="halo-runs" data-state="idle" role="status" aria-label="Agents en veille" title="Agents en veille">
+            <div class="halo-runs-row halo-runs-top">
+              <span>RUN <strong>—</strong></span>
+              <span>—</span>
+            </div>
+            <div class="halo-runs-grid">
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+            </div>
+            <div class="halo-runs-row halo-runs-bot">
+              <span class="halo-runs-state">
+                <span class="halo-runs-dot" aria-hidden></span>
+                veille
+              </span>
+              <span class="halo-runs-flow">Agents en veille</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── État 2 — STREAMING (phase 3 = analyze) ─── -->
+      <section class="case">
+        <div class="case-head">
+          <span class="num">STATE · STREAMING</span>
+          <h2>Run actif — phase 3 / 5 (analyze)</h2>
+          <p>
+            Phases 1-2 done (full cykan), phase 3 current (60% remplie, la
+            cell 12 pulse), phases 4-5 todo. Dot cykan pulse à 1.4s.
+            Flow label affiche le label dynamique du runtime.
+          </p>
+        </div>
+        <div class="panel-slot">
+          <div class="halo-runs" data-state="streaming" role="status" aria-label="Recherche en cours…" title="Recherche en cours…">
+            <div class="halo-runs-row halo-runs-top">
+              <span>RUN <strong>0xA42F</strong></span>
+              <span>3 / 5</span>
+            </div>
+            <div class="halo-runs-grid">
+              <div class="halo-runs-phase" data-phase-state="done">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="done">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="current">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+            </div>
+            <div class="halo-runs-row halo-runs-bot">
+              <span class="halo-runs-state">
+                <span class="halo-runs-dot" aria-hidden></span>
+                analyze
+              </span>
+              <span class="halo-runs-flow">Recherche en cours…</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── État 3 — AWAITING_APPROVAL (phase 5 en warn) ─── -->
+      <section class="case">
+        <div class="case-head">
+          <span class="num">STATE · AWAITING_APPROVAL</span>
+          <h2>Validation requise — phase 5 (deliver) en warn</h2>
+          <p>
+            Phases 1-4 done (full cykan). Phase 5 (deliver) <em>entièrement</em>
+            remplie en <code>--warn</code>, dernière cell pulse à 1.4s.
+            Couleur du dot et du label "approval" en warn. Le panel devient
+            chaud — l'utilisateur doit agir.
+          </p>
+        </div>
+        <div class="panel-slot">
+          <div class="halo-runs" data-state="awaiting_approval" role="status" aria-label="Validation requise" title="Validation requise">
+            <div class="halo-runs-row halo-runs-top">
+              <span>RUN <strong>0xA42F</strong></span>
+              <span>5 / 5</span>
+            </div>
+            <div class="halo-runs-grid">
+              <div class="halo-runs-phase" data-phase-state="done">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="done">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="done">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="done">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="current">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+            </div>
+            <div class="halo-runs-row halo-runs-bot">
+              <span class="halo-runs-state">
+                <span class="halo-runs-dot" aria-hidden></span>
+                approval
+              </span>
+              <span class="halo-runs-flow">Validation requise</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─── État 4 — ERROR (phase 3 en danger) ─── -->
+      <section class="case">
+        <div class="case-head">
+          <span class="num">STATE · ERROR</span>
+          <h2>Erreur — phase 3 (analyze) en danger</h2>
+          <p>
+            Phases 1-2 done (full cykan), phase 3 current avec les 12 cells
+            en <code>--danger</code>, <em>pas d'animation</em> (statique). Dot
+            et label "erreur" en danger. Couleur sans pulsation = signal
+            d'arrêt visuel.
+          </p>
+        </div>
+        <div class="panel-slot">
+          <div class="halo-runs" data-state="error" role="status" aria-label="Erreur" title="Erreur">
+            <div class="halo-runs-row halo-runs-top">
+              <span>RUN <strong>0xA42F</strong></span>
+              <span>3 / 5</span>
+            </div>
+            <div class="halo-runs-grid">
+              <div class="halo-runs-phase" data-phase-state="done">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="done">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="current">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+              <div class="halo-runs-phase" data-phase-state="todo">
+                <span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span><span class="halo-runs-cell"></span>
+              </div>
+            </div>
+            <div class="halo-runs-row halo-runs-bot">
+              <span class="halo-runs-state">
+                <span class="halo-runs-dot" aria-hidden></span>
+                erreur
+              </span>
+              <span class="halo-runs-flow">Erreur</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <footer class="note">
+      <h3>Ce qui est livré</h3>
+      <ul>
+        <li><code>app/(user)/components/RunHaloIndicator.tsx</code> — réécrit en M06 Phase clusters (5 zones × 20 cells)</li>
+        <li><code>app/globals.css</code> — bloc <code>.halo-runs*</code> remplacé (anciennes classes <code>.halo-runs-spinner</code> / <code>.halo-runs-arc</code> supprimées)</li>
+        <li>Type check passe (tsc --noEmit clean)</li>
+      </ul>
+
+      <h3 style="margin-top:24px;">Heuristique phase courante</h3>
+      <p>
+        Faute d'API "phase nommée" exposée par le runtime, la phase courante
+        est dérivée de <code>events.filter(e => e.type === "step_started").length % 5</code>.
+        Pour les états spéciaux : <code>awaiting_approval</code> → phase 5
+        (deliver gating), <code>awaiting_clarification</code> → phase 1 (intent
+        attend un input). Quand le runtime exposera une vraie séquence de
+        phases nommées, swap l'heuristique par la source réelle (1 ligne).
+      </p>
+
+      <h3 style="margin-top:24px;">Points de vigilance · à valider en réel</h3>
+      <ul>
+        <li>Le dev server local a un bug Turbopack/tailwindcss préexistant non lié à ce changement (résolution depuis un dossier parent). À fixer indépendamment, n'a pas pu être testé in-app.</li>
+        <li>Avec width: 100%, le composant s'adapte à la largeur du panel (clamp 220-480px). À vérifier sur viewport étroit (220px) que les 5 zones × 4 cells restent lisibles.</li>
+        <li>L'animation pulse (1.2s) sur la cell 12 est subtile en light theme. Si pas assez visible en usage, augmenter le box-shadow ou le contraste.</li>
+      </ul>
+    </footer>
+
+  </div>
+</body>
+</html>

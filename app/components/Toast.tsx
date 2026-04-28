@@ -49,7 +49,7 @@ export function Toast({ id, type, title, message, duration = 5000, onDismiss }: 
 
   return (
     <div
-      className={`relative flex items-start gap-3 p-4 border-t border-[var(--ghost-modal-top)] bg-black animate-in slide-in-from-right-full duration-300 ${styles.border}`}
+      className={`relative flex items-start gap-3 p-4 border-t border-[var(--ghost-modal-top)] bg-[var(--bg-elev)] animate-in slide-in-from-right-full duration-300 ${styles.border}`}
       role="alert"
     >
       <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center mt-0.5">{styles.icon}</span>

@@ -5,6 +5,7 @@ import { ensureSchedulerStarted } from "@/lib/engine/runtime/missions/scheduler-
 import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 export const maxDuration = 120;
 
 // Start the mission scheduler exactly once (module scope, survives hot-reload).

@@ -151,6 +151,7 @@ async function handleAiPipeline(
     tenantId: scope.tenantId,
     workspaceId: scope.workspaceId,
     conversationId: input.conversationId,
+    threadId: input.threadId,
   });
 }
 

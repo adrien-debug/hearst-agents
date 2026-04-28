@@ -1,12 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useSession } from "next-auth/react";
 import type { FocalObject, FocalStatus } from "@/lib/core/types";
 import { mapFocalObject } from "@/lib/core/types/focal";
 import { FocalRetryButton } from "./FocalRetryButton";
+
+/**
+ * Detects whether an asset content string is a renderable HTML document.
+ * Heuristic — looks for a <html>/<!doctype>/<body> root, or recognizable tags.
+ */
+function isHtmlContent(content: string): boolean {
+  const head = content.trim().slice(0, 200).toLowerCase();
+  return (
+    head.startsWith("<!doctype") ||
+    head.startsWith("<html") ||
+    head.includes("<body") ||
+    /<\/?(div|section|main|header|footer|p|span|h[1-6])\b/i.test(head)
+  );
+}
 
 const STATUS_LABELS: Record<FocalStatus, string> = {
   composing: "COMPOSING_",
@@ -48,6 +62,36 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Asset preview — fetched on demand when the focal originates from an asset.
+  // The right-panel API only ships {id,name,type} for assets; the full content
+  // lives behind /api/v2/assets/[id]. We fetch lazily on focal change.
+  const sourceAssetId = focal.sourceAssetId;
+  const [previewContent, setPreviewContent] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  useEffect(() => {
+    if (!sourceAssetId) {
+      setPreviewContent(null);
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    setPreviewContent(null);
+    fetch(`/api/v2/assets/${encodeURIComponent(sourceAssetId)}`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const content = (data?.asset?.content as string | undefined) ?? null;
+        setPreviewContent(content);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewContent(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [sourceAssetId]);
 
   const handlePrimaryAction = async () => {
     if (!focal.primaryAction) return;
@@ -143,6 +187,30 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
       {error && (
         <div className="mt-8 p-4 bg-[var(--danger)]/5 border-l-2 border-[var(--danger)] font-mono t-10 tracking-[0.2em] text-[var(--danger)]">
           {error}
+        </div>
+      )}
+
+      {sourceAssetId && (previewLoading || previewContent) && (
+        <div className="mt-12 pt-8 border-t border-[var(--surface-2)]">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--cykan)]">Aperçu</span>
+            {previewLoading && (
+              <span className="t-9 font-mono uppercase tracking-[0.3em] text-[var(--text-faint)]">chargement…</span>
+            )}
+          </div>
+          {previewContent && isHtmlContent(previewContent) ? (
+            <iframe
+              title={focal.title}
+              srcDoc={previewContent}
+              sandbox="allow-same-origin"
+              className="w-full rounded-sm border border-[var(--surface-2)] bg-white"
+              style={{ height: "var(--space-32)", minHeight: "320px" }}
+            />
+          ) : previewContent ? (
+            <pre className="t-13 font-mono leading-[1.5] text-[var(--text-soft)] bg-[var(--surface-1)] rounded-sm p-4 overflow-auto whitespace-pre-wrap" style={{ maxHeight: "var(--space-32)" }}>
+              {previewContent}
+            </pre>
+          ) : null}
         </div>
       )}
 

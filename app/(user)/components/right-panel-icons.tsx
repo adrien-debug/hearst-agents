@@ -38,3 +38,18 @@ export const ActivityIcon = () => (
     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
   </svg>
 );
+
+export const ChevronIcon = ({ open }: { open: boolean }) => (
+  <svg
+    className="w-3 h-3 transition-transform shrink-0"
+    style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);

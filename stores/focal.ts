@@ -73,6 +73,14 @@ interface FocalState {
   isFocused: boolean;
   hasContent: boolean;
 
+  /**
+   * Monotonic counter incremented on every explicit `setFocal` call (i.e.
+   * user clicked an asset/mission card). Page-level UI watches this to
+   * force-show the focal stage even if the same focal id was already set.
+   * Auto-rehydratation (hydrateThreadState) does NOT bump this.
+   */
+  viewRequestedAt: number;
+
   // Thread rehydratation — replaces focal and secondary atomically
   hydrateThreadState: (focal: FocalObject | null, secondary: FocalObject[]) => void;
 }
@@ -99,6 +107,7 @@ export const useFocalStore = create<FocalState>((set, get) => ({
   secondary: [],
   isFocused: false,
   hasContent: false,
+  viewRequestedAt: 0,
 
   // Actions
   setFocal: (focal) => {
@@ -119,6 +128,7 @@ export const useFocalStore = create<FocalState>((set, get) => ({
       focal,
       isFocused: !!focal,
       hasContent: !!focal?.body || !!focal?.summary,
+      viewRequestedAt: Date.now(),
     });
   },
 

@@ -128,6 +128,12 @@ export default function MissionsPage() {
     };
   }, []);
 
+  const CRON_SCHEDULES: Record<string, string> = {
+    daily: "0 9 * * *",
+    weekly: "0 9 * * 1",
+    monthly: "0 9 1 * *",
+  };
+
   const handleSave = async (formData: {
     name: string;
     description: string;
@@ -139,7 +145,7 @@ export default function MissionsPage() {
     setIsSaving(true);
     try {
       if (editingMission) {
-        // Update existing
+        // Update existing — la route PATCH [id] gère prompt→input et frequency→schedule
         const res = await fetch(`/api/v2/missions/${editingMission.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -155,15 +161,27 @@ export default function MissionsPage() {
           );
         }
       } else {
-        // Create new
+        // Create new — la route POST attend `input` + `schedule`, pas `prompt` + `frequency`
+        const schedule =
+          formData.frequency === "custom"
+            ? (formData.customCron ?? "")
+            : CRON_SCHEDULES[formData.frequency];
         const res = await fetch("/api/v2/missions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            name: formData.name,
+            input: formData.prompt,
+            schedule,
+            enabled: formData.enabled,
+          }),
         });
         if (res.ok) {
           const newMission = await res.json();
-          setMissions((prev) => [...prev, newMission.mission]);
+          setMissions((prev) => [...prev, {
+            ...newMission.mission,
+            frequency: formData.frequency,
+          }]);
         }
       }
       setShowEditor(false);
@@ -271,10 +289,10 @@ export default function MissionsPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="ghost-title-impact text-lg mb-1">Missions</h1>
-            <p className="t-11 font-mono uppercase tracking-[0.2em] text-[var(--text-muted)]">SCHED_AUTOMATION</p>
+            <p className="t-11 font-mono uppercase tracking-[0.2em] text-[var(--text-muted)]">Automatisations planifiées</p>
           </div>
           <button type="button" onClick={openNewMission} className="ghost-btn-solid ghost-btn-cykan rounded-sm px-5">
-            NEW_MISSION
+            Nouvelle mission
           </button>
         </div>
 
@@ -303,13 +321,13 @@ export default function MissionsPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {missions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
-            <p className="ghost-meta-label">EMPTY_REGISTRY</p>
+            <p className="ghost-meta-label">Registre vide</p>
             <h2 className="ghost-title-impact text-base">Aucune mission</h2>
             <p className="t-13 font-light leading-relaxed text-[var(--text-muted)] max-w-md">
               Les missions sont des tâches récurrentes planifiées. Exécution automatique selon calendrier.
             </p>
             <button type="button" onClick={openNewMission} className="ghost-btn-solid ghost-btn-ghost rounded-sm px-6">
-              INIT_FIRST
+              Créer la première
             </button>
           </div>
         ) : (
@@ -420,16 +438,19 @@ export default function MissionsPage() {
         )}
       </div>
 
-      {/* Editor Modal */}
+      {/* Editor — drawer depuis la droite */}
       {showEditor && (
         <>
         <div className="ghost-overlay-backdrop z-[60]" onClick={closeEditor} />
-        <div className="fixed inset-0 z-[61] flex items-center justify-center p-4 pointer-events-none">
-          <div className="ghost-modal-panel pointer-events-auto w-full max-w-lg max-h-[90vh] shadow-none" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed top-0 right-0 bottom-0 z-[61] flex flex-col overflow-y-auto pointer-events-auto"
+          style={{ width: "clamp(320px, 36vw, 520px)", background: "var(--bg-rail)", borderLeft: "1px solid var(--border-shell)" }}
+          onClick={(e) => e.stopPropagation()}
+        >
             <div className="p-8">
               <div className="flex items-center justify-between mb-8 border-b border-[var(--line)] pb-4">
                 <h2 className="ghost-title-impact text-sm">
-                  {editingMission ? "EDIT_MISSION" : "NEW_MISSION"}
+                  {editingMission ? "Modifier la mission" : "Nouvelle mission"}
                 </h2>
                 <button type="button" onClick={closeEditor} className="text-[var(--text-muted)] hover:text-[var(--text)] p-1" aria-label="Fermer">
                   <GhostIconX className="w-5 h-5" />
@@ -453,7 +474,6 @@ export default function MissionsPage() {
               />
             </div>
           </div>
-        </div>
         </>
       )}
     </div>
