@@ -13,6 +13,8 @@ interface PersistedRun {
 
 interface Props {
   onSelect: (runId: string) => void;
+  /** Colonne runs dans le flux (sans largeur fixe — la colonne parent définit la largeur). */
+  className?: string;
 }
 
 const STATUS_DOT: Record<PersistedRun["status"], string> = {
@@ -39,7 +41,7 @@ async function safeJsonFetch<T>(url: string): Promise<{ data: T | null; error: s
   }
 }
 
-export default function RunRail({ onSelect }: Props) {
+export default function RunRail({ onSelect, className }: Props) {
   const [runs, setRuns] = useState<PersistedRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,37 +61,41 @@ export default function RunRail({ onSelect }: Props) {
   }, []);
 
   return (
-    <aside className="hidden lg:flex w-[288px] shrink-0 border-l border-[var(--line)] bg-[var(--bg-elev)] flex-col">
-      <header className="px-[var(--space-4)] py-[var(--space-3)] border-b border-[var(--line)]">
-        <p className="t-10 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]">
+    <div
+      className={[
+        "flex flex-col min-h-0 flex-1 bg-bg-elev",
+        className ?? "",
+      ].join(" ")}
+    >
+      <header className="px-(--space-4) py-(--space-3) shrink-0 border-b border-line bg-surface">
+        <p className="t-10 font-mono uppercase tracking-stretch text-text-faint">
           Derniers runs
         </p>
-        <p className="t-9 font-mono uppercase tracking-[0.12em] text-[var(--text-faint)]/60 mt-[var(--space-1)]">
+        <p className="t-9 font-mono uppercase tracking-caption text-text-faint/70 mt-(--space-1)">
           {loading ? "chargement…" : `${runs.length} run${runs.length > 1 ? "s" : ""}`}
         </p>
       </header>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {loading && (
-          <div className="px-[var(--space-4)] py-[var(--space-6)] space-y-[var(--space-2)]">
+          <div className="px-(--space-4) py-(--space-6) space-y-(--space-2)">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="h-[56px] rounded-[var(--radius-md)] animate-pulse"
-                style={{ background: "var(--surface-card)" }}
+                className="h-[56px] rounded-md animate-pulse bg-(--surface-card)"
               />
             ))}
           </div>
         )}
 
         {!loading && error && (
-          <p className="px-[var(--space-4)] py-[var(--space-3)] t-11 text-[var(--text-faint)]">
+          <p className="px-(--space-4) py-(--space-3) t-11 text-text-faint">
             Pas de session admin valide. Reconnecte-toi pour voir les runs.
           </p>
         )}
 
         {!loading && !error && runs.length === 0 && (
-          <p className="px-[var(--space-4)] py-[var(--space-3)] t-11 text-[var(--text-muted)]">
+          <p className="px-(--space-4) py-(--space-3) t-11 text-text-muted">
             Aucun run encore. Envoie un message dans le chat pour en générer un.
           </p>
         )}
@@ -104,30 +110,30 @@ export default function RunRail({ onSelect }: Props) {
                     type="button"
                     onClick={() => onSelect(run.id)}
                     className={[
-                      "w-full text-left px-[var(--space-4)] py-[var(--space-3)] border-b border-[var(--line)] transition-colors",
+                      "w-full text-left px-(--space-4) py-(--space-3) border-b border-line transition-colors duration-(--duration-base) ease-(--ease-standard)",
                       isSelected
-                        ? "bg-[var(--cykan)]/8 border-l-2 border-l-[var(--cykan)]"
-                        : "hover:bg-[var(--bg-soft)] border-l-2 border-l-transparent",
+                        ? "bg-(--cykan-bg-active) border-l-2 border-l-(--cykan)"
+                        : "hover:bg-bg-soft border-l-2 border-l-transparent",
                     ].join(" ")}
                   >
-                    <div className="flex items-center gap-[var(--space-2)] mb-[var(--space-1)]">
+                    <div className="flex items-center gap-(--space-2) mb-(--space-1)">
                       <span
-                        className="size-[6px] rounded-[var(--radius-full)] shrink-0"
+                        className="size-(--space-2) rounded-(--radius-full) shrink-0"
                         style={{ background: STATUS_DOT[run.status] }}
                       />
-                      <span className="t-10 font-mono uppercase tracking-[0.1em] text-[var(--text-faint)]">
+                      <span className="t-10 font-mono uppercase tracking-caption text-text-faint">
                         {run.status}
                       </span>
                       {run.surface && (
-                        <span className="t-9 font-mono uppercase tracking-[0.1em] text-[var(--text-faint)] ml-auto">
+                        <span className="t-9 font-mono uppercase tracking-caption text-text-faint ml-auto">
                           {run.surface}
                         </span>
                       )}
                     </div>
-                    <p className="t-11 text-[var(--text-soft)] line-clamp-2 leading-snug">
+                    <p className="t-11 text-text-soft line-clamp-2 leading-snug">
                       {run.input || "(message vide)"}
                     </p>
-                    <p className="t-9 font-mono tracking-[0.08em] text-[var(--text-faint)] mt-[var(--space-1)]">
+                    <p className="t-9 font-mono tracking-caption text-text-faint mt-(--space-1)">
                       {new Date(run.createdAt).toLocaleString("fr-FR", {
                         day: "2-digit",
                         month: "short",
@@ -142,6 +148,6 @@ export default function RunRail({ onSelect }: Props) {
           </ul>
         )}
       </div>
-    </aside>
+    </div>
   );
 }

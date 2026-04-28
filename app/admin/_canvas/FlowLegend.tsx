@@ -5,7 +5,7 @@ const ITEMS: Array<{ label: string; color: string }> = [
   { label: "ok", color: "var(--cykan)" },
   { label: "bloqué", color: "var(--warn)" },
   { label: "fail", color: "var(--danger)" },
-  { label: "idle", color: "rgba(255,255,255,0.3)" },
+  { label: "idle", color: "var(--text-ghost)" },
 ];
 
 export default function FlowLegend() {

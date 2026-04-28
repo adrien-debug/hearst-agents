@@ -1,7 +1,7 @@
 "use client";
 
 import type { CanvasNode } from "./topology";
-import { NODE_SIZE } from "./topology";
+import { NODE_SIZE, VIEWBOX } from "./topology";
 import { useCanvasStore, type NodeState } from "./store";
 import NodeToggle from "./NodeToggle";
 
@@ -11,34 +11,28 @@ interface Props {
 
 const STATE_CLASSES: Record<NodeState, string> = {
   idle: [
-    "border border-white/5",
-    "bg-[#030303]/80 backdrop-blur-md",
+    "bg-[var(--surface)]/40 backdrop-blur-2xl",
     "text-text-muted",
-    "shadow-sm",
+    "shadow-[var(--shadow-sm)]",
   ].join(" "),
   active: [
-    "border border-(--cykan)/40",
-    "bg-gradient-to-r from-[#030303]/90 to-(--cykan)/10 backdrop-blur-md",
+    "bg-linear-to-b from-[var(--surface)] to-[var(--cykan-bg-active)] backdrop-blur-2xl",
     "text-text",
-    "shadow-[0_0_20px_rgba(45,212,191,0.2),inset_0_1px_0_rgba(255,255,255,0.1)]",
+    "shadow-[var(--glow-cyan-md)]",
   ].join(" "),
   success: [
-    "border border-(--cykan)/20",
-    "bg-[#030303]/80 backdrop-blur-md",
-    "text-text-soft",
+    "bg-[var(--surface)]/60 backdrop-blur-2xl",
+    "text-(--cykan)",
   ].join(" "),
   failed: [
-    "border border-(--danger)/30",
-    "bg-gradient-to-r from-[#030303]/90 to-(--danger)/10 backdrop-blur-md",
+    "bg-linear-to-b from-[var(--surface)] to-[color-mix(in_srgb,var(--danger)_12%,var(--surface))] backdrop-blur-2xl",
     "text-danger",
   ].join(" "),
   blocked: [
-    "border border-(--warn)/30",
-    "bg-gradient-to-r from-[#030303]/90 to-(--warn)/10 backdrop-blur-md",
+    "bg-linear-to-b from-[var(--surface)] to-[color-mix(in_srgb,var(--warn)_14%,var(--surface))] backdrop-blur-2xl",
     "text-warn",
   ].join(" "),
   disabled: [
-    "border border-transparent",
     "bg-transparent",
     "text-text-faint opacity-40",
   ].join(" "),
@@ -57,10 +51,24 @@ export default function FlowNode({ node }: Props) {
   const isSelected = useCanvasStore((s) => s.selectedNodeId === node.id);
 
   // Position-as-percentage so the node layer scales with the SVG viewBox.
-  const leftPct = (node.x / 1500) * 100;
-  const topPct = (node.y / 600) * 100;
+  const leftPct = (node.x / VIEWBOX.width) * 100;
+  const topPct = (node.y / VIEWBOX.height) * 100;
 
   const badge = STATE_BADGE[state];
+  const perimeter = 514; // Approx perimeter of 220x64 pill shape (rx=32)
+  const dashOffset =
+    state === "idle"
+      ? perimeter
+      : state === "active"
+        ? perimeter * 0.2 // 80% full when active
+        : 0; // 100% full when success/failed/blocked
+
+  const strokeColor =
+    state === "failed"
+      ? "var(--danger)"
+      : state === "blocked"
+        ? "var(--warn)"
+        : "var(--cykan)";
 
   return (
     <div
@@ -74,7 +82,7 @@ export default function FlowNode({ node }: Props) {
         }
       }}
       className={[
-        "absolute flex items-center justify-between rounded-(--radius-lg) px-(--space-4) py-(--space-2)",
+        "pipeline-node absolute flex items-center justify-between rounded-full px-(--space-5) py-(--space-2)",
         "transition-all duration-(--duration-base) ease-(--ease-standard)",
         "cursor-pointer outline-none",
         "focus-visible:ring-2 focus-visible:ring-(--cykan)/60",
@@ -89,33 +97,51 @@ export default function FlowNode({ node }: Props) {
         transform: "translate(-50%, -50%)",
       }}
     >
-      <div className="flex flex-col items-start justify-center gap-1">
-        <span className="t-13 font-medium leading-none tracking-tight">{node.label}</span>
-        <span className="t-9 font-mono uppercase tracking-[0.14em] text-text-faint leading-none">{node.sublabel}</span>
+      {/* SVG Gauge Border */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none rounded-full" style={{ overflow: "visible" }}>
+        {/* Base Track */}
+        <rect
+          x="0.5"
+          y="0.5"
+          width="calc(100% - 1px)"
+          height="calc(100% - 1px)"
+          rx="31.5"
+          fill="none"
+          stroke="var(--border-default)"
+          strokeWidth="1"
+        />
+        {/* Animated Gauge */}
+        <rect
+          x="0.5"
+          y="0.5"
+          width="calc(100% - 1px)"
+          height="calc(100% - 1px)"
+          rx="31.5"
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={state === "idle" ? "0" : "2"}
+          strokeDasharray={perimeter}
+          strokeDashoffset={dashOffset}
+          strokeLinecap="round"
+          className="transition-all duration-1000 ease-out"
+          style={{
+            filter: state !== "idle" ? `drop-shadow(0 0 8px ${strokeColor})` : "none",
+          }}
+        />
+      </svg>
+
+      <div className="flex flex-col items-start justify-center gap-[2px] relative z-10">
+        <span className="t-13 font-medium leading-none tracking-tight text-text">{node.label}</span>
+        <span className="t-9 font-mono uppercase tracking-widest text-text-faint leading-none">{node.sublabel}</span>
       </div>
 
       {badge && (
         <span
-          className="t-10 font-mono uppercase tracking-widest px-[6px] py-[2px] rounded-sm border whitespace-nowrap"
+          className="relative z-10 t-10 font-mono uppercase tracking-widest px-[8px] py-[4px] rounded-full border whitespace-nowrap"
           style={{
-            background:
-              state === "failed"
-                ? "color-mix(in srgb, var(--danger) 15%, transparent)"
-                : state === "blocked"
-                  ? "color-mix(in srgb, var(--warn) 15%, transparent)"
-                  : "color-mix(in srgb, var(--cykan) 15%, transparent)",
-            borderColor:
-              state === "failed"
-                ? "color-mix(in srgb, var(--danger) 30%, transparent)"
-                : state === "blocked"
-                  ? "color-mix(in srgb, var(--warn) 30%, transparent)"
-                  : "color-mix(in srgb, var(--cykan) 30%, transparent)",
-            color:
-              state === "failed"
-                ? "var(--danger)"
-                : state === "blocked"
-                  ? "var(--warn)"
-                  : "var(--cykan)",
+            background: `color-mix(in srgb, ${strokeColor} 15%, transparent)`,
+            borderColor: `color-mix(in srgb, ${strokeColor} 30%, transparent)`,
+            color: strokeColor,
           }}
         >
           {badge}
@@ -123,7 +149,7 @@ export default function FlowNode({ node }: Props) {
       )}
 
       {node.toggleable && node.flagKey && (
-        <span className="absolute -bottom-(--space-3) left-1/2 -translate-x-1/2">
+        <span className="absolute -bottom-(--space-4) left-1/2 -translate-x-1/2 z-10">
           <NodeToggle flagKey={node.flagKey} />
         </span>
       )}

@@ -66,8 +66,6 @@ interface FocalState {
 
   // Secondary objects (historical)
   secondary: FocalObject[];
-  addSecondary: (obj: FocalObject) => void;
-  clearSecondary: () => void;
 
   // Derived
   isFocused: boolean;
@@ -147,13 +145,6 @@ export const useFocalStore = create<FocalState>((set, get) => ({
 
   show: () => set((state) => (state.focal ? { isVisible: true } : {})),
   hide: () => set({ isVisible: false }),
-
-  addSecondary: (obj) =>
-    set((state) => ({
-      secondary: [obj, ...state.secondary].slice(0, 3),
-    })),
-
-  clearSecondary: () => set({ secondary: [] }),
 
   // Atomic rehydratation for thread switch / hard reload.
   //

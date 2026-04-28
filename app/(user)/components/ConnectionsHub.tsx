@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { toast } from "@/app/hooks/use-toast";
+import { useOAuthStore } from "@/stores/oauth";
+import { useOAuthCompletionPoll } from "@/app/hooks/use-oauth-completion-poll";
 
 interface ConnectedAccount {
   id: string;
@@ -231,19 +233,22 @@ export function ConnectionsHub() {
       setDrawer({ app, connectedAccount: connected });
       setDrawerActions(null);
 
-      if (connected) {
-        setDrawerLoadingActions(true);
-        try {
-          const res = await fetch(`/api/composio/tools?apps=${encodeURIComponent(app.key)}`, {
-            credentials: "include",
-          });
-          if (res.ok) {
-            const data = (await res.json()) as { tools?: DiscoveredTool[] };
-            setDrawerActions(data.tools ?? []);
-          }
-        } finally {
-          setDrawerLoadingActions(false);
+      // On charge les actions pour TOUTES les apps (connectées ou pas) pour
+      // que le drawer puisse décrire "ce que ton agent pourra faire" même
+      // en mode discovery. L'endpoint /api/composio/app-actions ignore le
+      // filtre activeAccounts utilisé par /api/composio/tools.
+      setDrawerLoadingActions(true);
+      try {
+        const res = await fetch(
+          `/api/composio/app-actions?app=${encodeURIComponent(app.key)}`,
+          { credentials: "include" },
+        );
+        if (res.ok) {
+          const data = (await res.json()) as { tools?: DiscoveredTool[] };
+          setDrawerActions(data.tools ?? []);
         }
+      } finally {
+        setDrawerLoadingActions(false);
       }
     },
     [accounts],
@@ -257,6 +262,22 @@ export function ConnectionsHub() {
   const handleConnect = useCallback(
     async (app: ComposioApp) => {
       setBusy(app.key);
+
+      // Ouvrir la popup IMMÉDIATEMENT en réponse au click. Si on attend la fin
+      // du fetch /api/composio/connect, le browser perd le contexte de geste
+      // utilisateur et le popup blocker la rejette. On ouvre vide, on
+      // navigue ensuite quand on a la redirectUrl.
+      const POPUP_FEATURES = "width=480,height=720,left=200,top=100,resizable=yes,scrollbars=yes";
+      const popup = typeof window !== "undefined"
+        ? window.open("about:blank", "hearst-oauth", POPUP_FEATURES)
+        : null;
+
+      useOAuthStore.getState().start({
+        slug: app.key,
+        appName: app.name,
+        popup,
+      });
+
       try {
         const res = await fetch("/api/composio/connect", {
           method: "POST",
@@ -277,29 +298,64 @@ export function ConnectionsHub() {
 
         if (!res.ok || !data.ok) {
           const message = data.error ?? "Erreur Composio";
-          console.error(
-            `[Composio] Connect failed for ${app.key}: code=${data.errorCode} message=${message}`,
-            data.details,
-          );
-          toast.error(`Connexion ${app.name} impossible`, message);
-
-          if (data.errorCode === "NO_INTEGRATION" || data.errorCode === "AUTH_CONFIG_REQUIRED") {
-            window.open(
-              `https://app.composio.dev/app/${encodeURIComponent(app.key)}`,
-              "_blank",
-              "noopener,noreferrer",
+          // NO_INTEGRATION / AUTH_CONFIG_REQUIRED = état attendu (le toolkit
+          // n'a pas d'auth-config côté dashboard Composio). Pas un bug client,
+          // donc pas de console.error qui crie en rouge dans devtools.
+          const isMissingIntegration =
+            data.errorCode === "NO_INTEGRATION" ||
+            data.errorCode === "AUTH_CONFIG_REQUIRED";
+          if (!isMissingIntegration) {
+            console.warn(
+              `[Composio] Connect failed for ${app.key}: code=${data.errorCode} message=${message}`,
+              data.details,
             );
           }
+          toast.error(`Connexion ${app.name} impossible`, message);
+
+          if (isMissingIntegration) {
+            // Réutiliser la popup déjà ouverte pour rediriger vers le dashboard
+            // Composio plutôt qu'ouvrir une 2ème window. Le user voit direct
+            // la page de configuration du toolkit, sans flash de popup vide.
+            const dashboardUrl = `https://app.composio.dev/app/${encodeURIComponent(app.key)}`;
+            if (popup && !popup.closed) {
+              popup.location.href = dashboardUrl;
+            } else {
+              window.open(dashboardUrl, "_blank", "noopener,noreferrer");
+            }
+          } else if (popup && !popup.closed) {
+            popup.close();
+          }
+
+          useOAuthStore.getState().setStatus("error", message);
           return;
         }
         if (data.redirectUrl) {
-          window.location.href = data.redirectUrl;
+          // Naviguer la popup vers l'URL OAuth. Si la popup a été bloquée
+          // (popup === null), on retombe sur la nav de la fenêtre principale
+          // — comportement de fallback acceptable, l'utilisateur revient via
+          // le redirectUri vers /apps?connected=slug.
+          if (popup && !popup.closed) {
+            popup.location.href = data.redirectUrl;
+            useOAuthStore.getState().setStatus("active");
+          } else {
+            useOAuthStore.getState().clear();
+            window.location.href = data.redirectUrl;
+          }
           return;
         }
+        // Pas de redirect = déjà connecté côté Composio (apps no-auth).
+        if (popup && !popup.closed) popup.close();
+        useOAuthStore.getState().setStatus("success");
         toast.success(`${app.name} connecté`, "Demande à Hearst d'utiliser ce service");
         await refreshAccounts();
+        setTimeout(() => useOAuthStore.getState().clear(), 3000);
       } catch (err) {
         toast.error("Connexion impossible", err instanceof Error ? err.message : "Erreur réseau");
+        if (popup && !popup.closed) popup.close();
+        useOAuthStore.getState().setStatus(
+          "error",
+          err instanceof Error ? err.message : "Erreur réseau",
+        );
       } finally {
         setBusy(null);
       }
@@ -331,23 +387,120 @@ export function ConnectionsHub() {
   );
 
   // OAuth callback landing — ?connected=<slug> after Composio returns.
+  // Deux cas :
+  // 1) On est dans la popup OAuth (window.opener pointe vers la fenêtre
+  //    principale Hearst) → postMessage au parent puis self.close.
+  // 2) Pas de popup (fallback historique : redirect full page) → toast
+  //    + refresh comme avant.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const connected = params.get("connected");
-    if (connected) {
+    if (!connected) return;
+
+    const isPopup =
+      window.opener &&
+      window.opener !== window &&
+      !(window.opener as Window).closed;
+
+    if (isPopup) {
+      try {
+        (window.opener as Window).postMessage(
+          { type: "hearst_oauth_complete", status: "success", slug: connected },
+          window.location.origin,
+        );
+      } catch (err) {
+        console.error("[Composio] postMessage to opener failed", err);
+      }
+      // On laisse 50 ms au parent pour traiter le message avant de fermer la
+      // popup, sinon Chrome peut perdre le message en transit.
+      setTimeout(() => window.close(), 50);
+      return;
+    }
+
+    // Fallback : nav full-page (popup bloquée par le browser ou flow legacy).
+    toast.success(
+      `${connected} connecté ✓`,
+      `Demande à Hearst d'utiliser ${connected} dans le chat`,
+    );
+    window.history.replaceState({}, "", window.location.pathname);
+    void fetch("/api/composio/invalidate-cache", {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {});
+    queueMicrotask(() => void refreshAccounts());
+  }, [refreshAccounts]);
+
+  // Listener postMessage pour les callbacks venant de la popup OAuth.
+  // Filtre par origin pour rejeter les messages externes.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      const data = e.data as { type?: string; status?: string; slug?: string; error?: string };
+      if (data?.type !== "hearst_oauth_complete") return;
+
+      if (data.status === "success" && data.slug) {
+        useOAuthStore.getState().setStatus("success");
+        toast.success(
+          `${data.slug} connecté ✓`,
+          `Demande à Hearst d'utiliser ${data.slug} dans le chat`,
+        );
+        void fetch("/api/composio/invalidate-cache", {
+          method: "POST",
+          credentials: "include",
+        }).catch(() => {});
+        void refreshAccounts();
+        setTimeout(() => useOAuthStore.getState().clear(), 3000);
+      } else if (data.status === "error") {
+        useOAuthStore.getState().setStatus("error", data.error ?? "Connexion refusée");
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [refreshAccounts]);
+
+  // Détecte la fermeture manuelle de la popup (croix / cmd+W) sans callback.
+  // Toutes les ~500ms, on regarde si la popup référencée par le store est
+  // close. Si oui, on bascule en "cancelled" pour que la carte du RightPanel
+  // sache. Note : le hook useOAuthCompletionPoll plus bas peut détecter une
+  // connexion réussie avant cet interval (status passe à "success") — dans
+  // ce cas la condition (status === "opening" || "active") devient fausse,
+  // donc on ne trigger pas un faux "cancelled".
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = window.setInterval(() => {
+      const { popup, status } = useOAuthStore.getState();
+      if (!popup) return;
+      if (popup.closed && (status === "opening" || status === "active")) {
+        useOAuthStore.getState().setStatus("cancelled");
+      }
+    }, 500);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Composio termine ses flows OAuth sur leur propre page de confirmation
+  // (cross-origin → postMessage bloqué). On poll l'API connections pour
+  // détecter le moment où le slug visé devient ACTIVE et déclencher la
+  // confirmation côté Hearst sans attendre que l'utilisateur ferme la popup.
+  const onOAuthSuccess = useCallback(
+    (slug: string) => {
       toast.success(
-        `${connected} connecté ✓`,
-        `Demande à Hearst d'utiliser ${connected} dans le chat`,
+        `${slug} connecté ✓`,
+        `Demande à Hearst d'utiliser ${slug} dans le chat`,
       );
-      window.history.replaceState({}, "", window.location.pathname);
       void fetch("/api/composio/invalidate-cache", {
         method: "POST",
         credentials: "include",
       }).catch(() => {});
-      queueMicrotask(() => void refreshAccounts());
-    }
-  }, [refreshAccounts]);
+      void refreshAccounts();
+      // Auto-clear la carte du RightPanel après un délai court — laisse le
+      // temps de voir la confirmation, sans encombrer le panel.
+      setTimeout(() => useOAuthStore.getState().clear(), 3000);
+    },
+    [refreshAccounts],
+  );
+  useOAuthCompletionPoll(onOAuthSuccess);
 
   // Quand on change de catégorie, on remet le wallpaper à zéro pour ne
   // pas garder un offset qui n'a plus de sens dans la nouvelle liste.
@@ -1135,6 +1288,8 @@ interface AppDrawerProps {
   onDisconnect?: () => void;
 }
 
+const ACTIONS_PREVIEW = 8;
+
 function AppDrawer({
   state,
   actions,
@@ -1146,6 +1301,13 @@ function AppDrawer({
 }: AppDrawerProps) {
   const { app, connectedAccount } = state;
   const isConnected = !!connectedAccount;
+  const [showAll, setShowAll] = useState(false);
+
+  const totalActions = actions?.length ?? 0;
+  const visibleActions = showAll
+    ? actions ?? []
+    : (actions ?? []).slice(0, ACTIONS_PREVIEW);
+  const overflow = totalActions - visibleActions.length;
 
   return (
     <>
@@ -1159,17 +1321,18 @@ function AppDrawer({
       <aside
         role="dialog"
         aria-label={app.name}
-        className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 overflow-y-auto border-l panel-enter"
+        className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 flex flex-col border-l panel-enter"
         style={{ background: "var(--bg)", borderColor: "var(--border-shell)" }}
       >
+        {/* Header — close + status badge, fixe en haut */}
         <div
-          className="px-6 py-5 border-b flex items-center justify-between"
+          className="shrink-0 px-6 py-5 border-b flex items-center justify-between"
           style={{ borderColor: "var(--border-shell)" }}
         >
           <button
             type="button"
             onClick={onClose}
-            className="t-9 font-mono uppercase text-[var(--text-faint)] hover:text-[var(--text)]"
+            className="t-9 font-mono uppercase text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
             style={{ letterSpacing: "var(--tracking-section)" }}
           >
             ← Fermer
@@ -1184,10 +1347,11 @@ function AppDrawer({
           )}
         </div>
 
-        <div className="px-6 py-6">
+        {/* Body scrollable — titre, description, liste d'actions */}
+        <div className="flex-1 overflow-y-auto px-6 py-6">
           <div className="flex items-center gap-4 mb-4">
             <AppLogo app={app} size={48} />
-            <div>
+            <div className="min-w-0">
               <h2
                 className="t-18 m-0"
                 style={{ fontWeight: "var(--weight-semibold)", color: "var(--text)" }}
@@ -1203,45 +1367,31 @@ function AppDrawer({
             </div>
           </div>
 
-          <p
-            className="t-13 mb-6"
-            style={{ color: "var(--text-soft)", lineHeight: "var(--leading-relaxed)" }}
-          >
-            {app.description}
-          </p>
-
-          {isConnected && (
-            <div className="mb-6">
-              <div
-                className="t-9 font-mono uppercase mb-3 text-[var(--text-faint)]"
-                style={{ letterSpacing: "var(--tracking-section)" }}
-              >
-                Actions disponibles
-              </div>
-              {loadingActions ? (
-                <p className="t-11 text-[var(--text-faint)]">Chargement…</p>
-              ) : actions && actions.length > 0 ? (
-                <ul className="t-11 font-mono space-y-1">
-                  {actions.slice(0, 5).map((a) => (
-                    <li key={a.name} className="flex items-start gap-2">
-                      <span className="text-[var(--cykan)] mt-1">·</span>
-                      <span className="text-[var(--text-soft)]">{actionLabel(a)}</span>
-                    </li>
-                  ))}
-                  {actions.length > 5 && (
-                    <li className="t-11 text-[var(--text-faint)] pt-1">
-                      + {actions.length - 5} autres
-                    </li>
-                  )}
-                </ul>
-              ) : (
-                <p className="t-11 text-[var(--text-faint)]">
-                  Aucune action exposée pour ce compte.
-                </p>
-              )}
-            </div>
+          {app.description && (
+            <p
+              className="t-13 mb-6"
+              style={{ color: "var(--text-soft)", lineHeight: "var(--leading-relaxed)" }}
+            >
+              {app.description}
+            </p>
           )}
 
+          <ActionsSection
+            isConnected={isConnected}
+            loading={loadingActions}
+            actions={visibleActions}
+            totalActions={totalActions}
+            overflow={overflow}
+            showAll={showAll}
+            onToggleShowAll={() => setShowAll((s) => !s)}
+          />
+        </div>
+
+        {/* Footer sticky — bouton connect/disconnect en bas */}
+        <div
+          className="shrink-0 px-6 py-4 border-t"
+          style={{ background: "var(--bg-elev)", borderColor: "var(--border-shell)" }}
+        >
           {isConnected ? (
             <button
               type="button"
@@ -1269,6 +1419,130 @@ function AppDrawer({
       </aside>
     </>
   );
+}
+
+function ActionsSection({
+  isConnected,
+  loading,
+  actions,
+  totalActions,
+  overflow,
+  showAll,
+  onToggleShowAll,
+}: {
+  isConnected: boolean;
+  loading: boolean;
+  actions: DiscoveredTool[];
+  totalActions: number;
+  overflow: number;
+  showAll: boolean;
+  onToggleShowAll: () => void;
+}) {
+  return (
+    <section>
+      <div
+        className="flex items-baseline gap-2 mb-3 t-9 font-mono uppercase"
+        style={{ letterSpacing: "var(--tracking-section)" }}
+      >
+        <span className="text-[var(--text)]">
+          {isConnected ? "Ce que Hearst fait pour toi" : "Ce que ton agent pourra faire"}
+        </span>
+        {totalActions > 0 && (
+          <>
+            <span className="text-[var(--text-ghost)]">·</span>
+            <span className="text-[var(--text-faint)]">{totalActions}</span>
+          </>
+        )}
+      </div>
+
+      {loading ? (
+        <ul className="space-y-1">
+          {[0, 1, 2, 3].map((i) => (
+            <li
+              key={i}
+              className="rounded-xs"
+              style={{
+                background: "var(--surface-2)",
+                height: "var(--space-8)",
+                opacity: 0.6,
+              }}
+              aria-hidden
+            />
+          ))}
+        </ul>
+      ) : actions.length === 0 ? (
+        <p className="t-11 text-[var(--text-faint)]">
+          Aucune action listée pour ce service. Connecte-le et Hearst découvrira automatiquement ce qu&apos;il peut faire.
+        </p>
+      ) : (
+        <ul className="space-y-px">
+          {actions.map((a) => (
+            <ActionBullet key={a.name} action={a} />
+          ))}
+          {(overflow > 0 || showAll) && (
+            <li className="pt-2">
+              <button
+                type="button"
+                onClick={onToggleShowAll}
+                className="t-9 font-mono uppercase text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
+                style={{ letterSpacing: "var(--tracking-section)" }}
+              >
+                {showAll
+                  ? "← Réduire"
+                  : `Voir les ${totalActions} actions →`}
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function ActionBullet({ action }: { action: DiscoveredTool }) {
+  const title = actionLabel(action);
+  const desc = truncateDescription(action.description);
+  return (
+    <li
+      className="flex items-start gap-3 py-2 border-b"
+      style={{ borderColor: "var(--border-soft)" }}
+    >
+      <span
+        className="t-13 leading-none text-[var(--cykan)] mt-1"
+        aria-hidden
+      >
+        ·
+      </span>
+      <div className="flex-1 min-w-0">
+        <div
+          className="t-13"
+          style={{ fontWeight: "var(--weight-medium)", color: "var(--text)" }}
+        >
+          {title}
+        </div>
+        {desc && (
+          <div
+            className="t-11 mt-1 text-[var(--text-faint)]"
+            style={{ lineHeight: "var(--leading-snug)" }}
+          >
+            {desc}
+          </div>
+        )}
+      </div>
+    </li>
+  );
+}
+
+// Première phrase de la description Composio, tronquée à ~120 chars. Évite les
+// blocs verbeux remplis de "This action allows you to…".
+function truncateDescription(desc: string): string | null {
+  if (!desc) return null;
+  const cleaned = desc.replace(/\s+/g, " ").trim();
+  if (!cleaned) return null;
+  const firstSentence = cleaned.split(/(?<=[.!?])\s+/)[0] ?? cleaned;
+  const max = 120;
+  if (firstSentence.length <= max) return firstSentence;
+  return firstSentence.slice(0, max).trimEnd() + "…";
 }
 
 function actionLabel(action: DiscoveredTool): string {

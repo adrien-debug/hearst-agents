@@ -24,6 +24,7 @@ import {
   AssetGlyphSVG,
   EmptyState,
 } from "./right-panel-helpers";
+import { OAuthStatusCard } from "./OAuthStatusCard";
 
 interface RightPanelContentProps {
   onClose?: () => void;
@@ -221,6 +222,11 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           </button>
         </div>
       )}
+
+      {/* Carte de statut OAuth — visible uniquement pendant qu'une popup
+          de connexion est ouverte. Affichée en haut du panel pour rester
+          visible même quand on scrolle dans les sections en dessous. */}
+      <OAuthStatusCard />
 
       {/* Scrollable content — Focal en premier, deliverable prioritaire */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">

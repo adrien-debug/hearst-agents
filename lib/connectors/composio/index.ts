@@ -10,6 +10,7 @@ export { gmailSendEmail } from "./actions/gmail";
 export type { GmailSendInput, GmailSendOutput } from "./actions/gmail";
 export {
   getToolsForUser,
+  getToolsForApp,
   invalidateUserDiscovery,
   resetDiscoveryCache,
   toAnthropicTools,

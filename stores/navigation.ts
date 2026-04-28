@@ -25,11 +25,6 @@ export interface Thread {
 }
 
 interface NavigationState {
-  // Sidebar
-  isOpen: boolean;
-  toggleSidebar: () => void;
-  setSidebarOpen: (open: boolean) => void;
-
   // Left rail collapse (desktop)
   leftCollapsed: boolean;
   toggleLeftCollapsed: () => void;
@@ -64,17 +59,12 @@ export const useNavigationStore = create<NavigationState>()(
   persist(
     (set, get) => ({
       // Initial state
-      isOpen: true,
       leftCollapsed: false,
       leftDrawerOpen: false,
       surface: "home",
       threads: [{ id: "default", name: "Accueil", surface: "home", lastActivity: Date.now() }],
       activeThreadId: "default",
       messages: {},
-
-      // Sidebar
-      toggleSidebar: () => set((state) => ({ isOpen: !state.isOpen })),
-      setSidebarOpen: (open) => set({ isOpen: open }),
 
       // Left rail collapse
       toggleLeftCollapsed: () => set((state) => ({ leftCollapsed: !state.leftCollapsed })),

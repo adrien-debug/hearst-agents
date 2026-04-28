@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MissionEditor } from "../components/MissionEditor";
 import { toast } from "@/app/hooks/use-toast";
@@ -27,7 +27,7 @@ interface Mission {
   runningSince?: number;
 }
 
-export default function MissionsPage() {
+function MissionsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setFocal = useFocalStore((s) => s.setFocal);
@@ -477,5 +477,19 @@ export default function MissionsPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function MissionsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center min-h-[min(50vh,var(--space-32))] px-(--space-8)">
+          <p className="t-13 text-text-muted">Chargement des missions…</p>
+        </div>
+      }
+    >
+      <MissionsPageContent />
+    </Suspense>
   );
 }

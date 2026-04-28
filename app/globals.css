@@ -217,11 +217,12 @@
 }
 
 /* ─── Light theme — variant 10 "Linear day" ────────────────────
- * Activé via [data-theme="light"] sur la racine du layout user.
+ * Activé via [data-theme="light"] sur la racine du layout user,
+ * ou sur `CanvasShell` (pipeline admin) pour fond blanc + grille technique.
  * On flip surfaces / texte / bordures vers le light cool neutre, on
  * conserve le cykan turquoise (#2DD4BF) comme accent — il porte sur
- * fond clair grâce à sa saturation. Les pages non-scopées (admin,
- * etc.) restent en dark par défaut. */
+ * fond clair grâce à sa saturation. Les autres routes admin sans cet
+ * attribut restent en dark hérité de :root. */
 [data-theme="light"] {
   /* Surfaces */
   --bg: #F4F4F6;
@@ -289,6 +290,35 @@
   --shadow-card: 0 1px 2px rgba(28, 29, 32, 0.04),
                  0 12px 24px rgba(28, 29, 32, 0.06);
   --shadow-input-focus: 4px 4px 0px var(--cyan-accent);
+}
+
+/* ─── Pipeline admin — « Orbital HUD » (îlot sombre futuriste dans shell light) ─
+ * Portée : `[data-pipeline-visual="orbit"]` sur le wrapper `FlowCanvas` uniquement.
+ * Réinjecte contrastes type cockpit sur grille cyan + verre fumé. */
+[data-pipeline-visual="orbit"] {
+  --foreground: #f2faf8;
+  --text: rgba(242, 250, 248, 0.96);
+  --text-soft: rgba(232, 244, 242, 0.88);
+  --text-muted: rgba(195, 218, 214, 0.72);
+  --text-faint: rgba(155, 185, 180, 0.52);
+  --text-ghost: rgba(110, 145, 138, 0.38);
+  --surface: rgba(10, 16, 18, 0.88);
+  --bg-soft: rgba(6, 12, 14, 0.92);
+  --bg-elev: rgba(8, 14, 16, 0.94);
+  --border-default: rgba(45, 212, 191, 0.26);
+  --border-subtle: rgba(45, 212, 191, 0.14);
+  --line: rgba(45, 212, 191, 0.16);
+  --line-strong: rgba(45, 212, 191, 0.28);
+  --line-active: rgba(45, 212, 191, 0.45);
+  --cykan-bg-active: rgba(45, 212, 191, 0.22);
+  --cykan-surface: rgba(45, 212, 191, 0.14);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 24px rgba(45, 212, 191, 0.08);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 40px rgba(45, 212, 191, 0.06);
+  --pipeline-base-fill: #030708;
+  /* Centre transparent → bords assombris (SVG vignette) */
+  --pipeline-vignette-mid: transparent;
+  --pipeline-vignette-edge: rgba(0, 0, 0, 0.82);
 }
 
 @theme inline {

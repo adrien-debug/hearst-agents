@@ -2,8 +2,8 @@
  * Canvas topology — single source of truth for node positions + edges.
  *
  * Maps the runtime pipeline (lib/engine/orchestrator/index.ts) onto a
- * deterministic SVG layout. Coordinates are absolute within the canvas
- * viewBox (0 0 1100 600).
+ * deterministic SVG layout (left → right horizontal flow). Coordinates are
+ * absolute within the canvas viewBox.
  *
  * Adding a stage? Add it here, then map the relevant SSE event types in
  * event-reducer.ts. Visual rules / colors come from store.ts (NodeState).
@@ -58,17 +58,17 @@ export interface CanvasEdge {
   branch?: "research" | "retrieval" | "pipeline" | "agent";
 }
 
-export const VIEWBOX = { width: 1500, height: 600 } as const;
+export const VIEWBOX = { width: 1680, height: 720 } as const;
 
-export const NODE_SIZE = { w: 160, h: 48 } as const;
+export const NODE_SIZE = { w: 180, h: 72 } as const;
 
-// Y-axis canon: top branch / main row / bottom branch
-const Y_TOP = 200;
-const Y_MID = 320;
-const Y_BOT = 440;
+// Y-axis canon: research above / main trunk / agent below
+const Y_TOP = 160;
+const Y_MID = 360;
+const Y_BOT = 560;
 
-// X-axis: tighter grouping
-const X = [100, 280, 460, 640, 820, 1000, 1180, 1360] as const;
+// X-axis: left → right flow (8 trunk stages, branches share trunk-6 X)
+const X = [120, 320, 520, 720, 920, 1120, 1320, 1560] as const;
 
 export const NODES: CanvasNode[] = [
   {
@@ -173,25 +173,11 @@ export const NODES: CanvasNode[] = [
     ],
   },
   {
-    id: "agent",
-    label: "Agent custom",
-    sublabel: "informational",
-    x: X[6],
-    y: Y_TOP,
-    fileHint: "lib/agents/agent-selector.ts",
-    description:
-      "Sélection d'un agent dédié (toolContext-based) pour mode CUSTOM_AGENT. Aujourd'hui purement informational : surface l'identité agent dans le right panel UI. L'exécution réelle continue toujours via streamText (AI pipeline) — il n'y a plus d'agent runtime séparé après la suppression du planner+executor.",
-    inputs: "toolContext",
-    outputs: "agent_selected event",
-    events: ["agent_selected"],
-    branches: ["→ AI pipeline (toujours)"],
-  },
-  {
     id: "research",
     label: "Research",
     sublabel: "déterministe",
     x: X[6],
-    y: Y_MID,
+    y: Y_TOP,
     fileHint: "lib/engine/orchestrator/run-research-report.ts",
     description:
       "Path déterministe pour intents recherche/rapport (« cherche », « fais-moi un rapport sur »). Pas de streamText : web search → structuration → asset_generated avec PDF optionnel via generatePdfArtifact. Output tier détecté (brief / report) selon longueur attendue.",
@@ -205,7 +191,7 @@ export const NODES: CanvasNode[] = [
     label: "AI pipeline",
     sublabel: "streamText",
     x: X[6],
-    y: Y_BOT,
+    y: Y_MID,
     fileHint: "lib/engine/orchestrator/ai-pipeline.ts",
     description:
       "streamText() Anthropic claude-sonnet-4-6 avec system prompt unifié (une seule section OUTILS read+write), tool map (provider tools + request_connection + create_scheduled_mission), stopWhen=stepCountIs(10), maxOutputTokens=8000, temperature=0.3. Quand le model a besoin d'une donnée tierce, il appelle l'outil correspondant (gmail_fetch_emails, googlecalendar_events_list, etc.) — c'est lui qui décide. Auto-trigger app_connect_required sur AUTH_REQUIRED. Sentinel refusalPattern logge si le model émet une variante de refus textuel au lieu d'appeler request_connection.",
@@ -216,6 +202,20 @@ export const NODES: CanvasNode[] = [
       "tool call → exécution provider ou meta tool",
       "stream end → Run terminé",
     ],
+  },
+  {
+    id: "agent",
+    label: "Agent custom",
+    sublabel: "informational",
+    x: X[6],
+    y: Y_BOT,
+    fileHint: "lib/agents/agent-selector.ts",
+    description:
+      "Sélection d'un agent dédié (toolContext-based) pour mode CUSTOM_AGENT. Aujourd'hui purement informational : surface l'identité agent dans le right panel UI. L'exécution réelle continue toujours via streamText (AI pipeline) — il n'y a plus d'agent runtime séparé après la suppression du planner+executor.",
+    inputs: "toolContext",
+    outputs: "agent_selected event",
+    events: ["agent_selected"],
+    branches: ["→ AI pipeline (toujours)"],
   },
   {
     id: "complete",
@@ -268,7 +268,7 @@ export function ports(node: CanvasNode) {
   };
 }
 
-/** Orthogonal path string with rounded corners. */
+/** Orthogonal path with rounded corners (left → right horizontal flow). */
 export function bezierPath(
   a: { x: number; y: number },
   b: { x: number; y: number },
@@ -276,9 +276,11 @@ export function bezierPath(
   if (Math.abs(a.y - b.y) < 2) {
     return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
   }
+  if (Math.abs(a.x - b.x) < 2) {
+    return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+  }
   const midX = a.x + (b.x - a.x) / 2;
-  const r = Math.min(16, Math.abs(a.y - b.y) / 2);
+  const r = Math.min(16, Math.abs(a.y - b.y) / 2, Math.abs(a.x - b.x) / 2);
   const dirY = b.y > a.y ? 1 : -1;
-  
   return `M ${a.x} ${a.y} L ${midX - r} ${a.y} Q ${midX} ${a.y} ${midX} ${a.y + r * dirY} L ${midX} ${b.y - r * dirY} Q ${midX} ${b.y} ${midX + r} ${b.y} L ${b.x} ${b.y}`;
 }

@@ -162,6 +162,59 @@ export async function getToolsForUser(
   }
 }
 
+/**
+ * Liste les tools d'UN toolkit, **sans filtrer** par connexions actives.
+ *
+ * Différence avec `getToolsForUser` : la fonction principale n'expose que
+ * les tools des toolkits que l'utilisateur a effectivement connectés.
+ * `getToolsForApp` est utilisé côté UI (drawer /apps) pour montrer
+ * "ce que ton agent pourra faire" AVANT la connexion — discovery éditoriale,
+ * pas runtime.
+ *
+ * Cache séparé du cache principal (clé préfixée `app::`) pour éviter de
+ * pourrir les lookups runtime quand on browse le catalogue.
+ */
+const appCache = new Map<string, CacheEntry>();
+const APP_TTL_MS = 5 * 60_000;
+
+export async function getToolsForApp(
+  userId: string,
+  app: string,
+): Promise<DiscoveredTool[]> {
+  if (!userId || !app) return [];
+
+  const slug = app.toLowerCase();
+  const cacheKey = `app::${slug}`;
+  const now = Date.now();
+  const hit = appCache.get(cacheKey);
+  if (hit && hit.expiresAt > now) return hit.tools;
+
+  const composio = await getComposio();
+  if (!composio) return [];
+
+  try {
+    const raw = (await composio.tools.get(userId, {
+      toolkits: [slug],
+      limit: 100,
+    })) as { items?: RawTool[] } | RawTool[];
+    const items = Array.isArray(raw) ? raw : (raw.items ?? []);
+    const tools = items
+      .map(toDiscoveredTool)
+      .filter((t): t is DiscoveredTool => t !== null);
+
+    if (tools.length > 0) {
+      appCache.set(cacheKey, { tools, expiresAt: now + APP_TTL_MS });
+    }
+    return tools;
+  } catch (err) {
+    console.warn(
+      `[Composio/Discovery] getToolsForApp(${slug}) failed: ` +
+        (err instanceof Error ? err.message : String(err)),
+    );
+    return [];
+  }
+}
+
 export function toAnthropicTools(tools: DiscoveredTool[]): Array<{
   name: string;
   description: string;

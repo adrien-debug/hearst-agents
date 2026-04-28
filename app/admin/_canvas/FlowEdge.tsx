@@ -34,7 +34,22 @@ export default function FlowEdge({ edge }: Props) {
   const toNode = getNode(edge.to);
   const a = ports(fromNode).out;
   const b = ports(toNode).in;
-  const d = bezierPath(a, b);
+  
+  let d = bezierPath(a, b);
+
+  // Custom routing for intent -> research to avoid crossing preflight & tools
+  if (edge.from === "intent" && edge.to === "research") {
+    const r = 16;
+    // Exit intent from the right side instead of bottom
+    const startX = fromNode.x + 110; // 220 / 2
+    const startY = fromNode.y;
+    // Enter research from top
+    const endX = toNode.x;
+    const endY = toNode.y - 32; // 64 / 2
+    
+    // Path: right -> down -> right -> down
+    d = `M ${startX} ${startY} L ${endX - r} ${startY} Q ${endX} ${startY} ${endX} ${startY + r} L ${endX} ${endY}`;
+  }
 
   const failed = isFailed(fromState, toState);
   const active = !failed && isActive(fromState, toState);
@@ -56,51 +71,51 @@ export default function FlowEdge({ edge }: Props) {
 
   return (
     <g>
-      {/* Base path — also serves as the <mpath> target for FlowPacket animateMotion */}
+      {/* Base path — blueprint style dashed line */}
       <path
         id={edge.id}
         d={d}
         stroke="var(--cykan)"
         strokeWidth={active ? 2 : 1.2}
         fill="none"
-        opacity={active ? 0.95 : 0.15}
+        opacity={active ? 0.95 : 0.12}
         strokeDasharray="4 6"
         strokeLinecap="round"
         style={{
           transition:
             "opacity 220ms var(--ease-standard), stroke-width 220ms var(--ease-standard)",
-          filter: active ? "drop-shadow(0 0 8px var(--cykan))" : "none",
+          filter: active ? "drop-shadow(0 0 12px var(--cykan))" : "none",
         }}
       />
 
-      {/* Ambient flow — only when idle, gives the canvas pulse */}
+      {/* Ambient flow — subtle movement when idle */}
       {!active && (
         <path
           d={d}
           stroke="var(--cykan)"
-          strokeWidth={1.4}
-          strokeDasharray="4 6"
+          strokeWidth={1}
+          strokeDasharray="4 12"
           strokeLinecap="round"
           fill="none"
-          opacity={0.55}
+          opacity={0.3}
         >
           <animate
             attributeName="stroke-dashoffset"
             from="0"
-            to="-20"
-            dur="2.4s"
+            to="-32"
+            dur="4s"
             repeatCount="indefinite"
           />
         </path>
       )}
 
-      {/* Active flow — fast bright dashes layered over the base */}
+      {/* Active traffic — trait brillant (Orbital : --foreground) */}
       {active && (
         <path
           d={d}
-          stroke="var(--text)"
-          strokeWidth={1.6}
-          strokeDasharray="4 6"
+          stroke="var(--foreground)"
+          strokeWidth={1.8}
+          strokeDasharray="6 10"
           strokeLinecap="round"
           fill="none"
           opacity={0.9}
@@ -108,7 +123,7 @@ export default function FlowEdge({ edge }: Props) {
           <animate
             attributeName="stroke-dashoffset"
             from="0"
-            to="-20"
+            to="-32"
             dur="0.8s"
             repeatCount="indefinite"
           />
