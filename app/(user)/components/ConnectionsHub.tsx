@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import type { ReactNode } from "react";
 import { toast } from "@/app/hooks/use-toast";
 
 interface ConnectedAccount {
@@ -46,17 +45,26 @@ function categoryLabel(app: ComposioApp): string {
   return CATEGORY_LABEL[first] ?? first;
 }
 
+function categoryLabelById(id: string): string {
+  return CATEGORY_LABEL[id] ?? id;
+}
+
 // Picks recommandés par défaut quand on en sait pas plus sur l'usage. Ordre =
 // priorité ; on filtre les déjà-connectés et on garde les 3 premiers.
 const SUGGESTION_PICKS = ["stripe", "linear", "calendly", "hubspot", "github"];
-
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 // Priorité de statut : plus petit = meilleur. Quand un service a plusieurs
 // connexions (ex: Slack ACTIVE + EXPIRED), on affiche le plus favorable.
 const STATUS_RANK: Record<string, number> = {
   active: 0, initiated: 1, pending: 2, failed: 3, error: 3, expired: 4,
 };
+
+// Wallpaper : combien de tuiles on affiche d'office. Sur 1030 apps, charger
+// tout d'un coup tue le DOM ; on lazy-charge par paliers de WALLPAPER_PAGE.
+const WALLPAPER_PAGE = 100;
+
+// Catégories visibles en chips (les autres regroupées dans "+ N catégories").
+const CATEGORIES_VISIBLE = 8;
 
 interface DrawerState {
   app: ComposioApp;
@@ -70,8 +78,8 @@ export function ConnectionsHub() {
   const [enabled, setEnabled] = useState(true);
   const [sdkError, setSdkError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [indexQuery, setIndexQuery] = useState("");
-  const [activeLetter, setActiveLetter] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [wallpaperLimit, setWallpaperLimit] = useState(WALLPAPER_PAGE);
   const [busy, setBusy] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
   const [drawerActions, setDrawerActions] = useState<DiscoveredTool[] | null>(null);
@@ -150,8 +158,9 @@ export function ConnectionsHub() {
     [apps, connectedSlugs],
   );
 
-  // Compté par SERVICE unique (pas par connexion) — un service avec 2 ACTIVE + 1
-  // EXPIRED ne compte pas comme attention puisque le meilleur statut est ACTIVE.
+  // Compté par SERVICE unique (pas par connexion) — un service avec 2 ACTIVE
+  // + 1 EXPIRED ne compte pas comme attention puisque le meilleur statut
+  // est ACTIVE.
   const stats = useMemo(() => {
     const attentions = Array.from(statusBySlug.values()).filter(
       (s) => s !== "active",
@@ -181,44 +190,40 @@ export function ConnectionsHub() {
       .slice(0, 3);
   }, [apps, connectedSlugs]);
 
-  const indexFiltered = useMemo(() => {
-    const filter = indexQuery.trim().toLowerCase();
-    return apps
-      .filter((a) => {
-        if (filter && !a.name.toLowerCase().includes(filter) && !a.key.includes(filter)) {
-          return false;
-        }
-        if (activeLetter) {
-          const first = (a.name[0] ?? "").toUpperCase();
-          if (first !== activeLetter) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, "fr"));
-  }, [apps, indexQuery, activeLetter]);
-
-  const availableLetters = useMemo(() => {
-    const set = new Set<string>();
+  // Catégories effectivement présentes dans le catalogue, triées par
+  // population décroissante pour mettre en avant celles qui couvrent le
+  // plus de services.
+  const categoriesWithCount = useMemo(() => {
+    const map = new Map<string, number>();
     for (const app of apps) {
-      const first = (app.name[0] ?? "").toUpperCase();
-      if (ALPHABET.includes(first)) set.add(first);
+      for (const cat of app.categories) {
+        map.set(cat, (map.get(cat) ?? 0) + 1);
+      }
     }
-    return set;
+    const entries = Array.from(map.entries())
+      .map(([id, count]) => ({ id, label: categoryLabelById(id), count }))
+      .sort((a, b) => b.count - a.count);
+    return entries;
   }, [apps]);
 
-  const indexGroups = useMemo(() => {
-    const groups: { letter: string; apps: ComposioApp[] }[] = [];
-    let current: { letter: string; apps: ComposioApp[] } | null = null;
-    for (const app of indexFiltered) {
-      const letter = (app.name[0] ?? "?").toUpperCase();
-      if (!current || current.letter !== letter) {
-        current = { letter, apps: [] };
-        groups.push(current);
-      }
-      current.apps.push(app);
-    }
-    return groups;
-  }, [indexFiltered]);
+  // Ordre du wallpaper : connectés d'abord (lecture immédiate de l'état
+  // de la stack), puis alphabétique. Filtre par activeCategory si défini.
+  const wallpaperApps = useMemo(() => {
+    const filtered = activeCategory
+      ? apps.filter((a) => a.categories.includes(activeCategory))
+      : apps;
+    return [...filtered].sort((a, b) => {
+      const aConn = connectedSlugs.has(a.key) ? 0 : 1;
+      const bConn = connectedSlugs.has(b.key) ? 0 : 1;
+      if (aConn !== bConn) return aConn - bConn;
+      return a.name.localeCompare(b.name, "fr");
+    });
+  }, [apps, activeCategory, connectedSlugs]);
+
+  const wallpaperVisible = useMemo(
+    () => wallpaperApps.slice(0, wallpaperLimit),
+    [wallpaperApps, wallpaperLimit],
+  );
 
   const openDrawer = useCallback(
     async (app: ComposioApp) => {
@@ -344,9 +349,11 @@ export function ConnectionsHub() {
     }
   }, [refreshAccounts]);
 
-  const onIndexQueryChange = useCallback((next: string) => {
-    setIndexQuery(next);
-    if (next.trim()) setActiveLetter(null);
+  // Quand on change de catégorie, on remet le wallpaper à zéro pour ne
+  // pas garder un offset qui n'a plus de sens dans la nouvelle liste.
+  const onCategoryChange = useCallback((cat: string | null) => {
+    setActiveCategory(cat);
+    setWallpaperLimit(WALLPAPER_PAGE);
   }, []);
 
   if (!enabled) return <DisabledState message={sdkError} />;
@@ -371,17 +378,15 @@ export function ConnectionsHub() {
         />
       ) : (
         <>
-          <SectionLabel
-            label="Connectés"
-            count={stats.connectedCount}
-            empty={stats.connectedCount === 0 ? "rien encore — pioche dans l'index" : undefined}
-          />
-          {connectedApps.length > 0 && (
-            <ConnectedGrid
+          <SectionLabel label="Connectés" count={stats.connectedCount} />
+          {connectedApps.length > 0 ? (
+            <Stage
               apps={connectedApps}
               statusBySlug={statusBySlug}
               onSelect={openDrawer}
             />
+          ) : (
+            <EmptyStage />
           )}
 
           {suggestions.length > 0 && (
@@ -391,17 +396,20 @@ export function ConnectionsHub() {
             </>
           )}
 
-          <IndexSection
-            groups={indexGroups}
-            availableLetters={availableLetters}
-            activeLetter={activeLetter}
-            onLetterChange={setActiveLetter}
-            indexQuery={indexQuery}
-            onIndexQueryChange={onIndexQueryChange}
+          <SectionLabel label="Catalogue" count={apps.length} />
+          <CategoriesBar
+            categories={categoriesWithCount}
+            active={activeCategory}
+            onChange={onCategoryChange}
+          />
+          <Wallpaper
+            apps={wallpaperVisible}
+            totalFiltered={wallpaperApps.length}
+            connectedSlugs={connectedSlugs}
             statusBySlug={statusBySlug}
-            totalCount={apps.length}
-            visibleCount={indexFiltered.length}
             onSelect={openDrawer}
+            canLoadMore={wallpaperVisible.length < wallpaperApps.length}
+            onLoadMore={() => setWallpaperLimit((n) => n + WALLPAPER_PAGE)}
           />
         </>
       )}
@@ -542,33 +550,22 @@ function Header({
 
 // ─── Section label sobre — pas de marker éditorial ────────────
 
-function SectionLabel({
-  label,
-  count,
-  empty,
-}: {
-  label: string;
-  count: number;
-  empty?: string;
-}) {
+function SectionLabel({ label, count }: { label: string; count: number }) {
   return (
     <div
-      className="flex items-baseline justify-between px-8 pt-8 pb-3 t-10 font-mono uppercase"
+      className="flex items-baseline gap-2 px-8 pt-8 pb-3 t-10 font-mono uppercase"
       style={{ letterSpacing: "var(--tracking-section)" }}
     >
-      <span className="flex items-baseline gap-2">
-        <span className="text-[var(--text)]">{label}</span>
-        <span className="text-[var(--text-ghost)]">·</span>
-        <span className="text-[var(--text-faint)]">{count}</span>
-      </span>
-      {empty && <span className="text-[var(--text-faint)]">{empty}</span>}
+      <span className="text-[var(--text)]">{label}</span>
+      <span className="text-[var(--text-ghost)]">·</span>
+      <span className="text-[var(--text-faint)]">{count}</span>
     </div>
   );
 }
 
-// ─── Connectés : grille compacte (logo + nom + status) ────────
+// ─── Stage — grosses tiles carrées des connectés ──────────────
 
-function ConnectedGrid({
+function Stage({
   apps,
   statusBySlug,
   onSelect,
@@ -577,10 +574,18 @@ function ConnectedGrid({
   statusBySlug: Map<string, string>;
   onSelect: (app: ComposioApp) => void;
 }) {
+  // Adapte le nombre de colonnes au count pour ne pas étirer chaque tile à
+  // 100 % du viewport quand l'utilisateur n'a qu'un ou deux services.
+  const cols =
+    apps.length >= 5 ? "grid-cols-5"
+      : apps.length === 4 ? "grid-cols-4"
+        : apps.length === 3 ? "grid-cols-3"
+          : apps.length === 2 ? "grid-cols-2"
+            : "grid-cols-1";
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 px-8 pb-4">
+    <div className={`grid ${cols} gap-3 px-8 pb-2`}>
       {apps.map((app) => (
-        <ConnectedCard
+        <StageTile
           key={app.key}
           app={app}
           status={statusBySlug.get(app.key) ?? "active"}
@@ -591,7 +596,29 @@ function ConnectedGrid({
   );
 }
 
-function ConnectedCard({
+// Variante visuelle dérivée du status. Stage = signal fort visible d'un coup
+// d'œil → ring colorée + ribbon en bas pour les états non-actifs.
+function stageVariant(status: string): "active" | "warn" | "error" {
+  switch (status) {
+    case "initiated":
+    case "pending":
+      return "warn";
+    case "error":
+    case "failed":
+    case "expired":
+      return "error";
+    default:
+      return "active";
+  }
+}
+
+function stageRibbon(variant: "active" | "warn" | "error", app: ComposioApp): string {
+  if (variant === "warn") return "oauth en cours";
+  if (variant === "error") return "reconnecter";
+  return categoryLabel(app);
+}
+
+function StageTile({
   app,
   status,
   onClick,
@@ -600,69 +627,104 @@ function ConnectedCard({
   status: string;
   onClick: () => void;
 }) {
+  const variant = stageVariant(status);
+  const ribbon = stageRibbon(variant, app);
+
+  // Couleurs par variant. On reste sur les tokens DS et on compose le glow
+  // via color-mix qui est exposé par tous les browsers Hearst-supportés.
+  const colorMap: Record<typeof variant, { dot: string; ring: string; bg: string; ribbonColor: string; ribbonBorder: string; ribbonBg: string }> = {
+    active: {
+      dot: "var(--cykan)",
+      ring: "var(--cykan-border)",
+      bg: "var(--surface)",
+      ribbonColor: "var(--text-faint)",
+      ribbonBorder: "var(--border-shell)",
+      ribbonBg: "var(--bg-elev)",
+    },
+    warn: {
+      dot: "var(--color-warning)",
+      ring: "var(--color-warning-border)",
+      bg: "var(--color-warning-bg)",
+      ribbonColor: "var(--color-warning)",
+      ribbonBorder: "var(--color-warning-border)",
+      ribbonBg: "var(--color-warning-bg)",
+    },
+    error: {
+      dot: "var(--color-error)",
+      ring: "var(--color-error-border)",
+      bg: "var(--color-error-bg)",
+      ribbonColor: "var(--color-error)",
+      ribbonBorder: "var(--color-error-border)",
+      ribbonBg: "var(--color-error-bg)",
+    },
+  };
+  const c = colorMap[variant];
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex items-center gap-3 px-3 py-3 text-left border transition-colors"
+      aria-label={`${app.name} — ${ribbon}`}
+      className="group relative aspect-square flex flex-col items-center justify-center gap-3 overflow-hidden rounded-md border transition-all"
       style={{
-        background: "var(--surface)",
-        borderColor: "var(--border-shell)",
+        background: c.bg,
+        borderColor: c.ring,
+        boxShadow: `0 0 0 1px ${c.ring}, 0 4px 24px color-mix(in srgb, ${c.dot} 12%, transparent)`,
       }}
     >
-      <AppLogo app={app} size={32} />
-      <div className="flex-1 min-w-0">
-        <div
-          className="t-13 truncate group-hover:text-[var(--cykan)] transition-colors"
-          style={{ fontWeight: "var(--weight-semibold)", color: "var(--text)" }}
-        >
-          {app.name}
-        </div>
-        <div className="mt-1">
-          <StatusPill status={status} />
-        </div>
-      </div>
+      <AppLogo app={app} size={72} />
+      <span
+        className="t-13 text-center px-2"
+        style={{ fontWeight: "var(--weight-semibold)", color: "var(--text)", letterSpacing: "-0.005em" }}
+      >
+        {app.name}
+      </span>
+      <span
+        aria-hidden
+        className="absolute top-2 right-2 w-2 h-2 rounded-full"
+        style={{
+          background: c.dot,
+          boxShadow: `0 0 8px color-mix(in srgb, ${c.dot} 50%, transparent)`,
+          animation: variant === "warn" ? "blink 1.4s infinite" : undefined,
+        }}
+      />
+      <span
+        className="absolute bottom-0 left-0 right-0 t-9 font-mono uppercase text-center py-2 border-t"
+        style={{
+          letterSpacing: "var(--tracking-section)",
+          color: c.ribbonColor,
+          borderColor: c.ribbonBorder,
+          background: c.ribbonBg,
+        }}
+      >
+        {ribbon}
+      </span>
     </button>
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const variant = (() => {
-    switch (status) {
-      case "active":
-        return { color: "var(--cykan)", bg: "var(--cykan-surface)", label: "active" };
-      case "initiated":
-      case "pending":
-        return { color: "var(--color-warning)", bg: "var(--color-warning-bg)", label: "pending" };
-      case "error":
-      case "failed":
-        return { color: "var(--color-error)", bg: "var(--color-error-bg)", label: "erreur" };
-      case "expired":
-        return { color: "var(--color-error)", bg: "var(--color-error-bg)", label: "expiré" };
-      default:
-        return { color: "var(--cykan)", bg: "var(--cykan-surface)", label: "active" };
-    }
-  })();
+function EmptyStage() {
   return (
-    <span
-      className="t-9 font-mono uppercase inline-flex items-center gap-2 px-2 py-1 rounded-pill"
-      style={{
-        color: variant.color,
-        background: variant.bg,
-        letterSpacing: "var(--tracking-section)",
-      }}
-    >
-      <span
-        className="w-1 h-1 rounded-full"
-        style={{ background: variant.color }}
-        aria-hidden
-      />
-      {variant.label}
-    </span>
+    <div className="px-8 pb-2">
+      <div
+        className="px-6 py-10 text-center rounded-md"
+        style={{ background: "var(--bg-elev)", border: "1px dashed var(--border-default)" }}
+      >
+        <p
+          className="t-11 font-mono uppercase mb-2 text-[var(--text-faint)]"
+          style={{ letterSpacing: "var(--tracking-brand)" }}
+        >
+          AUCUN SERVICE CONNECTÉ
+        </p>
+        <p className="t-13 text-[var(--text-soft)] leading-relaxed max-w-md mx-auto">
+          Pioche un logo dans le catalogue ci-dessous pour étendre ton agent.
+        </p>
+      </div>
+    </div>
   );
 }
 
-// ─── Suggestions : compact, zéro phrase narrative ─────────────
+// ─── Suggestions : strip horizontal compact ────────────────────
 
 function SuggestionsGrid({
   suggestions,
@@ -672,7 +734,7 @@ function SuggestionsGrid({
   onSelect: (app: ComposioApp) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 px-8 pb-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 px-8 pb-2">
       {suggestions.map((app, i) => (
         <SuggestionCard
           key={app.key}
@@ -694,18 +756,17 @@ function SuggestionCard({
   featured: boolean;
   onClick: () => void;
 }) {
-  const cykanFeatured = featured;
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex items-center gap-3 px-3 py-3 text-left border transition-colors"
+      className="group flex items-center gap-4 px-4 py-3 text-left border rounded-md transition-colors"
       style={{
-        background: cykanFeatured ? "var(--cykan-surface)" : "var(--surface)",
-        borderColor: cykanFeatured ? "var(--cykan-border)" : "var(--border-shell)",
+        background: featured ? "var(--cykan-bgsoft)" : "var(--surface)",
+        borderColor: featured ? "var(--cykan-border)" : "var(--border-shell)",
       }}
     >
-      <AppLogo app={app} size={32} />
+      <AppLogo app={app} size={40} />
       <div className="flex-1 min-w-0">
         <div
           className="t-13 truncate"
@@ -721,261 +782,212 @@ function SuggestionCard({
         </div>
       </div>
       <span
-        className="t-11 font-mono uppercase text-[var(--cykan-deep)] opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ letterSpacing: "var(--tracking-section)" }}
+        className="font-mono text-[var(--text-ghost)] group-hover:text-[var(--cykan-deep)] transition-colors"
+        aria-hidden
       >
-        connecter →
+        →
       </span>
     </button>
   );
 }
 
-// ─── Index alphabétique + search dédiée ───────────────────────
+// ─── Categories bar — chips scrollables, filtre le wallpaper ──
 
-function IndexSection({
-  groups,
-  availableLetters,
-  activeLetter,
-  onLetterChange,
-  indexQuery,
-  onIndexQueryChange,
-  statusBySlug,
-  totalCount,
-  visibleCount,
-  onSelect,
+function CategoriesBar({
+  categories,
+  active,
+  onChange,
 }: {
-  groups: { letter: string; apps: ComposioApp[] }[];
-  availableLetters: Set<string>;
-  activeLetter: string | null;
-  onLetterChange: (letter: string | null) => void;
-  indexQuery: string;
-  onIndexQueryChange: (q: string) => void;
-  statusBySlug: Map<string, string>;
-  totalCount: number;
-  visibleCount: number;
-  onSelect: (app: ComposioApp) => void;
+  categories: { id: string; label: string; count: number }[];
+  active: string | null;
+  onChange: (cat: string | null) => void;
 }) {
+  const visible = categories.slice(0, CATEGORIES_VISIBLE);
+  const hiddenCount = Math.max(0, categories.length - visible.length);
   return (
     <div
-      className="px-8 pt-8 pb-8 border-t mt-4"
-      style={{ background: "var(--bg-elev)", borderColor: "var(--border-default)" }}
+      className="flex items-center gap-2 px-8 py-3 overflow-x-auto"
+      style={{
+        background: "var(--bg-elev)",
+        borderTop: "1px solid var(--border-shell)",
+        borderBottom: "1px solid var(--border-shell)",
+      }}
     >
-      <div className="flex items-baseline justify-between gap-6 mb-4 flex-wrap">
+      <CategoryChip
+        label="Tout"
+        count={categories.reduce((sum, c) => sum + c.count, 0)}
+        on={active === null}
+        onClick={() => onChange(null)}
+      />
+      {visible.map((c) => (
+        <CategoryChip
+          key={c.id}
+          label={c.label}
+          count={c.count}
+          on={active === c.id}
+          onClick={() => onChange(active === c.id ? null : c.id)}
+        />
+      ))}
+      {hiddenCount > 0 && (
         <span
-          className="t-10 font-mono uppercase flex items-baseline gap-2"
+          className="t-10 font-mono uppercase whitespace-nowrap text-[var(--text-faint)] ml-auto"
           style={{ letterSpacing: "var(--tracking-section)" }}
         >
-          <span className="text-[var(--text)]">Index</span>
-          <span className="text-[var(--text-ghost)]">·</span>
-          <span className="text-[var(--text-faint)]">{totalCount} services</span>
+          + {hiddenCount} catégorie{hiddenCount > 1 ? "s" : ""}
         </span>
-
-        <IndexSearch
-          value={indexQuery}
-          onChange={onIndexQueryChange}
-          visibleCount={visibleCount}
-          totalCount={totalCount}
-        />
-      </div>
-
-      <AlphabetSelector
-        availableLetters={availableLetters}
-        activeLetter={activeLetter}
-        onLetterChange={onLetterChange}
-      />
-
-      {groups.length === 0 ? (
-        <p className="t-13 text-center py-10 text-[var(--text-faint)]">
-          Aucun service ne correspond.
-          {(activeLetter || indexQuery) && (
-            <button
-              type="button"
-              className="ml-3 underline text-[var(--cykan)]"
-              onClick={() => {
-                onLetterChange(null);
-                onIndexQueryChange("");
-              }}
-            >
-              réinitialiser
-            </button>
-          )}
-        </p>
-      ) : (
-        <div className="columns-5 gap-6">
-          {groups.map((g) => (
-            <div key={g.letter} className="break-inside-avoid mb-4">
-              <div
-                className="t-15 font-mono pb-1 mb-2 border-b"
-                style={{
-                  color: "var(--cykan)",
-                  borderColor: "var(--border-shell)",
-                  fontWeight: "var(--weight-semibold)",
-                }}
-              >
-                {g.letter}
-              </div>
-              {g.apps.map((app) => (
-                <IndexRow
-                  key={app.key}
-                  app={app}
-                  status={statusBySlug.get(app.key)}
-                  query={indexQuery}
-                  onClick={() => onSelect(app)}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
       )}
     </div>
   );
 }
 
-function IndexSearch({
-  value,
-  onChange,
-  visibleCount,
-  totalCount,
-}: {
-  value: string;
-  onChange: (q: string) => void;
-  visibleCount: number;
-  totalCount: number;
-}) {
-  return (
-    <label
-      className="flex items-center gap-2 px-3 py-2 rounded-xs border w-96"
-      style={{
-        background: "var(--surface)",
-        borderColor: value ? "var(--cykan-border)" : "var(--border-shell)",
-      }}
-    >
-      <span className="t-11 leading-none text-[var(--text-faint)]">⌕</span>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Filtre l'index"
-        className="flex-1 bg-transparent outline-none border-none t-11 text-[var(--text)] placeholder:text-[var(--text-faint)]"
-      />
-      <span
-        className="t-9 font-mono uppercase text-[var(--text-faint)]"
-        style={{ letterSpacing: "var(--tracking-section)" }}
-      >
-        {value ? `${visibleCount} résultat${visibleCount > 1 ? "s" : ""}` : `${totalCount}`}
-      </span>
-    </label>
-  );
-}
-
-function AlphabetSelector({
-  availableLetters,
-  activeLetter,
-  onLetterChange,
-}: {
-  availableLetters: Set<string>;
-  activeLetter: string | null;
-  onLetterChange: (letter: string | null) => void;
-}) {
-  return (
-    <div className="flex border-y mb-4" style={{ borderColor: "var(--border-shell)" }}>
-      {ALPHABET.map((letter) => {
-        const present = availableLetters.has(letter);
-        const active = activeLetter === letter;
-        return (
-          <button
-            key={letter}
-            type="button"
-            disabled={!present}
-            onClick={() => onLetterChange(active ? null : letter)}
-            className="flex-1 t-11 font-mono uppercase py-2 border-r last:border-r-0 transition-colors"
-            style={{
-              color: active
-                ? "var(--cykan)"
-                : present
-                  ? "var(--text-muted)"
-                  : "var(--text-ghost)",
-              background: active ? "var(--cykan-surface)" : "transparent",
-              borderColor: "var(--border-soft)",
-              fontWeight: active ? "var(--weight-semibold)" : "var(--weight-regular)",
-              cursor: present ? "pointer" : "default",
-              letterSpacing: "var(--tracking-hairline)",
-            }}
-          >
-            {letter}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function IndexRow({
-  app,
-  status,
-  query,
+function CategoryChip({
+  label,
+  count,
+  on,
   onClick,
 }: {
-  app: ComposioApp;
-  status?: string;
-  query: string;
+  label: string;
+  count: number;
+  on: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex items-center gap-2 py-1 w-full text-left t-11"
-      style={{ color: "var(--text-soft)", lineHeight: "var(--leading-snug)" }}
+      className="t-10 font-mono uppercase rounded-pill px-3 py-1 border whitespace-nowrap transition-colors"
+      style={{
+        letterSpacing: "var(--tracking-section)",
+        background: on ? "var(--text)" : "var(--surface)",
+        color: on ? "var(--bg)" : "var(--text-muted)",
+        borderColor: on ? "var(--text)" : "var(--border-shell)",
+        fontWeight: on ? "var(--weight-semibold)" : "var(--weight-regular)",
+      }}
     >
-      <AppLogo app={app} size={14} />
-      <span className="flex-1 min-w-0 truncate group-hover:text-[var(--cykan)] transition-colors">
-        {highlight(app.name, query)}
+      {label}
+      <span
+        className="ml-2"
+        style={{ color: on ? "color-mix(in srgb, var(--bg) 55%, transparent)" : "var(--text-ghost)" }}
+      >
+        {count}
       </span>
-      {status && (
-        <span
-          className="t-9 font-mono uppercase"
-          style={{
-            letterSpacing: "var(--tracking-section)",
-            color:
-              status === "active"
-                ? "var(--cykan)"
-                : status === "expired" || status === "error" || status === "failed"
-                  ? "var(--color-error)"
-                  : "var(--color-warning)",
-          }}
-        >
-          {status === "active"
-            ? "✓"
-            : status === "expired" || status === "error" || status === "failed"
-              ? "!"
-              : "◌"}
-        </span>
-      )}
     </button>
   );
 }
 
-function highlight(text: string, query: string): ReactNode {
-  const q = query.trim();
-  if (!q) return text;
-  const idx = text.toLowerCase().indexOf(q.toLowerCase());
-  if (idx < 0) return text;
+// ─── Wallpaper — grille dense du catalogue ─────────────────────
+
+function Wallpaper({
+  apps,
+  totalFiltered,
+  connectedSlugs,
+  statusBySlug,
+  onSelect,
+  canLoadMore,
+  onLoadMore,
+}: {
+  apps: ComposioApp[];
+  totalFiltered: number;
+  connectedSlugs: Set<string>;
+  statusBySlug: Map<string, string>;
+  onSelect: (app: ComposioApp) => void;
+  canLoadMore: boolean;
+  onLoadMore: () => void;
+}) {
   return (
-    <>
-      {text.slice(0, idx)}
-      <mark
+    <div className="px-8 pt-6 pb-8" style={{ background: "var(--bg)" }}>
+      {apps.length === 0 ? (
+        <p
+          className="t-11 font-mono uppercase text-center py-10 text-[var(--text-faint)]"
+          style={{ letterSpacing: "var(--tracking-brand)" }}
+        >
+          AUCUN SERVICE DANS CETTE CATÉGORIE
+        </p>
+      ) : (
+        <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
+          {apps.map((app) => (
+            <WallpaperTile
+              key={app.key}
+              app={app}
+              connected={connectedSlugs.has(app.key)}
+              status={statusBySlug.get(app.key)}
+              onClick={() => onSelect(app)}
+            />
+          ))}
+        </div>
+      )}
+      <div
+        className="mt-5 pt-4 flex items-center justify-between t-10 font-mono uppercase border-t"
         style={{
-          background: "var(--cykan-bg-active)",
-          color: "var(--text)",
-          padding: "0 var(--space-1)",
-          borderRadius: "var(--radius-xs)",
+          borderColor: "var(--border-shell)",
+          letterSpacing: "var(--tracking-section)",
+          color: "var(--text-faint)",
         }}
       >
-        {text.slice(idx, idx + q.length)}
-      </mark>
-      {text.slice(idx + q.length)}
-    </>
+        <span>
+          {apps.length} visible{apps.length > 1 ? "s" : ""} · {totalFiltered} dans la catégorie
+        </span>
+        {canLoadMore && (
+          <button
+            type="button"
+            onClick={onLoadMore}
+            className="text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
+          >
+            charger plus →
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WallpaperTile({
+  app,
+  connected,
+  status,
+  onClick,
+}: {
+  app: ComposioApp;
+  connected: boolean;
+  status: string | undefined;
+  onClick: () => void;
+}) {
+  // Non-connectés en grayscale/faded → la couleur des connectés saute aux
+  // yeux et fait office d'index visuel ("ce que j'ai déjà").
+  const dim = !connected;
+  const variant = connected ? stageVariant(status ?? "active") : "active";
+  const dotColor =
+    variant === "warn" ? "var(--color-warning)"
+      : variant === "error" ? "var(--color-error)"
+        : "var(--cykan)";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={app.name}
+      aria-label={app.name}
+      className="group relative aspect-square flex items-center justify-center rounded-xs border transition-all"
+      style={{
+        background: "var(--surface)",
+        borderColor: connected ? "var(--cykan-border)" : "var(--border-shell)",
+        boxShadow: connected
+          ? "inset 0 0 0 1px var(--cykan-bg)"
+          : undefined,
+        filter: dim ? "grayscale(0.85) opacity(0.55)" : undefined,
+      }}
+    >
+      <AppLogo app={app} size={28} />
+      {connected && (
+        <span
+          aria-hidden
+          className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
+          style={{
+            background: dotColor,
+            boxShadow: `0 0 4px color-mix(in srgb, ${dotColor} 60%, transparent)`,
+          }}
+        />
+      )}
+    </button>
   );
 }
 
@@ -1022,7 +1034,7 @@ function SearchResultsSection({
             key={app.key}
             type="button"
             onClick={() => onSelect(app)}
-            className="group flex items-center gap-3 px-3 py-3 text-left border transition-colors"
+            className="group flex items-center gap-3 px-3 py-3 text-left border transition-colors rounded-sm"
             style={{
               background: connectedSlugs.has(app.key) ? "var(--cykan-surface)" : "var(--surface)",
               borderColor: connectedSlugs.has(app.key) ? "var(--cykan-border)" : "var(--border-shell)",
@@ -1137,8 +1149,7 @@ function AppDrawer({
 
   return (
     <>
-      {/* Backdrop modal — le DS n'expose pas (encore) de token "overlay-scrim".
-         À ajouter dans globals.css si on en met d'autres. */}
+      {/* Backdrop modal — le DS n'expose pas (encore) de token "overlay-scrim". */}
       <div
         className="fixed inset-0 z-40"
         style={{ background: "rgba(0,0,0,0.40)" }}

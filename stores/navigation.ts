@@ -34,6 +34,11 @@ interface NavigationState {
   leftCollapsed: boolean;
   toggleLeftCollapsed: () => void;
 
+  // Left drawer (mobile only — volatile, not persisted)
+  leftDrawerOpen: boolean;
+  closeLeftDrawer: () => void;
+  toggleLeftDrawer: () => void;
+
   // Surface
   surface: Surface;
   setSurface: (surface: Surface) => void;
@@ -61,6 +66,7 @@ export const useNavigationStore = create<NavigationState>()(
       // Initial state
       isOpen: true,
       leftCollapsed: false,
+      leftDrawerOpen: false,
       surface: "home",
       threads: [{ id: "default", name: "Accueil", surface: "home", lastActivity: Date.now() }],
       activeThreadId: "default",
@@ -72,6 +78,10 @@ export const useNavigationStore = create<NavigationState>()(
 
       // Left rail collapse
       toggleLeftCollapsed: () => set((state) => ({ leftCollapsed: !state.leftCollapsed })),
+
+      // Left drawer (mobile)
+      closeLeftDrawer: () => set({ leftDrawerOpen: false }),
+      toggleLeftDrawer: () => set((state) => ({ leftDrawerOpen: !state.leftDrawerOpen })),
 
       // Surface
       setSurface: (surface) => {
@@ -101,7 +111,8 @@ export const useNavigationStore = create<NavigationState>()(
       },
 
       setActiveThread: (id) => {
-        set({ activeThreadId: id });
+        // Sélectionner un thread ferme le drawer mobile (UX standard).
+        set({ activeThreadId: id, leftDrawerOpen: false });
         if (id) {
           const thread = get().threads.find((t) => t.id === id);
           if (thread) {

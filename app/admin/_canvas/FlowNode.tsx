@@ -11,40 +11,36 @@ interface Props {
 
 const STATE_CLASSES: Record<NodeState, string> = {
   idle: [
-    "border border-white/[0.08]",
-    "bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-transparent",
-    "text-[var(--text-soft)]",
-    "shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+    "border border-white/5",
+    "bg-[#030303]/80 backdrop-blur-md",
+    "text-text-muted",
+    "shadow-sm",
   ].join(" "),
   active: [
-    "border border-[var(--cykan)]/70",
-    "bg-gradient-to-b from-[var(--cykan)]/15 via-[var(--cykan)]/8 to-[var(--cykan)]/4",
-    "text-[var(--text)]",
-    "shadow-[var(--glow-cyan-md),inset_0_1px_0_rgba(255,255,255,0.08)]",
-    "scale-[1.04]",
+    "border border-(--cykan)/40",
+    "bg-gradient-to-r from-[#030303]/90 to-(--cykan)/10 backdrop-blur-md",
+    "text-text",
+    "shadow-[0_0_20px_rgba(45,212,191,0.2),inset_0_1px_0_rgba(255,255,255,0.1)]",
   ].join(" "),
   success: [
-    "border border-[var(--cykan)]/45",
-    "bg-gradient-to-b from-[var(--cykan)]/10 via-[var(--cykan)]/5 to-transparent",
-    "text-[var(--cykan)]",
-    "shadow-[var(--glow-cyan-sm),inset_0_1px_0_rgba(255,255,255,0.04)]",
+    "border border-(--cykan)/20",
+    "bg-[#030303]/80 backdrop-blur-md",
+    "text-text-soft",
   ].join(" "),
   failed: [
-    "border border-[var(--danger)]/55",
-    "bg-gradient-to-b from-[var(--danger)]/15 via-[var(--danger)]/8 to-transparent",
-    "text-[var(--danger)]",
-    "shadow-[0_0_30px_rgba(255,51,51,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]",
+    "border border-(--danger)/30",
+    "bg-gradient-to-r from-[#030303]/90 to-(--danger)/10 backdrop-blur-md",
+    "text-danger",
   ].join(" "),
   blocked: [
-    "border border-[var(--warn)]/55",
-    "bg-gradient-to-b from-[var(--warn)]/15 via-[var(--warn)]/8 to-transparent",
-    "text-[var(--warn)]",
-    "shadow-[0_0_30px_rgba(255,204,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
+    "border border-(--warn)/30",
+    "bg-gradient-to-r from-[#030303]/90 to-(--warn)/10 backdrop-blur-md",
+    "text-warn",
   ].join(" "),
   disabled: [
-    "border border-white/[0.05]",
-    "bg-[var(--bg-soft)]",
-    "text-[var(--text-faint)] opacity-50",
+    "border border-transparent",
+    "bg-transparent",
+    "text-text-faint opacity-40",
   ].join(" "),
 };
 
@@ -78,12 +74,12 @@ export default function FlowNode({ node }: Props) {
         }
       }}
       className={[
-        "absolute flex flex-col items-center justify-center rounded-lg px-3",
-        "transition-all duration-[var(--duration-base)] ease-[var(--ease-standard)]",
-        "text-center cursor-pointer outline-none",
-        "focus-visible:ring-2 focus-visible:ring-[var(--cykan)]/60",
+        "absolute flex items-center justify-between rounded-(--radius-lg) px-(--space-4) py-(--space-2)",
+        "transition-all duration-(--duration-base) ease-(--ease-standard)",
+        "cursor-pointer outline-none",
+        "focus-visible:ring-2 focus-visible:ring-(--cykan)/60",
         STATE_CLASSES[state],
-        isSelected ? "ring-1 ring-[var(--cykan)]/60" : "",
+        isSelected ? "ring-1 ring-(--cykan)/60 bg-(--cykan-surface)" : "",
       ].join(" ")}
       style={{
         left: `${leftPct}%`,
@@ -93,27 +89,27 @@ export default function FlowNode({ node }: Props) {
         transform: "translate(-50%, -50%)",
       }}
     >
-      <span className="t-13 font-medium leading-tight">{node.label}</span>
-      <span className="t-9 font-mono uppercase tracking-[0.14em] mt-1.5 opacity-60 leading-none">
-        {node.sublabel}
-      </span>
+      <div className="flex flex-col items-start justify-center gap-1">
+        <span className="t-13 font-medium leading-none tracking-tight">{node.label}</span>
+        <span className="t-9 font-mono uppercase tracking-[0.14em] text-text-faint leading-none">{node.sublabel}</span>
+      </div>
 
       {badge && (
         <span
-          className="absolute -top-2 -right-2 t-9 font-mono uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-sm border whitespace-nowrap"
+          className="t-10 font-mono uppercase tracking-widest px-[6px] py-[2px] rounded-sm border whitespace-nowrap"
           style={{
             background:
               state === "failed"
-                ? "color-mix(in srgb, var(--danger) 22%, transparent)"
+                ? "color-mix(in srgb, var(--danger) 15%, transparent)"
                 : state === "blocked"
-                  ? "color-mix(in srgb, var(--warn) 22%, transparent)"
-                  : "color-mix(in srgb, var(--cykan) 22%, transparent)",
+                  ? "color-mix(in srgb, var(--warn) 15%, transparent)"
+                  : "color-mix(in srgb, var(--cykan) 15%, transparent)",
             borderColor:
               state === "failed"
-                ? "color-mix(in srgb, var(--danger) 50%, transparent)"
+                ? "color-mix(in srgb, var(--danger) 30%, transparent)"
                 : state === "blocked"
-                  ? "color-mix(in srgb, var(--warn) 50%, transparent)"
-                  : "color-mix(in srgb, var(--cykan) 50%, transparent)",
+                  ? "color-mix(in srgb, var(--warn) 30%, transparent)"
+                  : "color-mix(in srgb, var(--cykan) 30%, transparent)",
             color:
               state === "failed"
                 ? "var(--danger)"
@@ -127,7 +123,7 @@ export default function FlowNode({ node }: Props) {
       )}
 
       {node.toggleable && node.flagKey && (
-        <span className="absolute -bottom-3 left-1/2 -translate-x-1/2">
+        <span className="absolute -bottom-(--space-3) left-1/2 -translate-x-1/2">
           <NodeToggle flagKey={node.flagKey} />
         </span>
       )}

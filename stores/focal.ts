@@ -74,10 +74,19 @@ interface FocalState {
   hasContent: boolean;
 
   /**
+   * Visibilité du focal stage plein écran. `setFocal(obj)` la passe à true
+   * automatiquement (clic asset/mission card). `hide()` la passe à false
+   * sans toucher à `focal` lui-même — l'utilisateur peut rouvrir via show().
+   */
+  isVisible: boolean;
+  show: () => void;
+  hide: () => void;
+
+  /**
    * Monotonic counter incremented on every explicit `setFocal` call (i.e.
-   * user clicked an asset/mission card). Page-level UI watches this to
-   * force-show the focal stage even if the same focal id was already set.
-   * Auto-rehydratation (hydrateThreadState) does NOT bump this.
+   * user clicked an asset/mission card). Lu par `hydrateThreadState` pour
+   * protéger pendant 30s le focal user-cliqué contre l'écrasement par le
+   * polling SSE. Auto-rehydratation (hydrateThreadState) does NOT bump this.
    */
   viewRequestedAt: number;
 
@@ -107,6 +116,7 @@ export const useFocalStore = create<FocalState>((set, get) => ({
   secondary: [],
   isFocused: false,
   hasContent: false,
+  isVisible: false,
   viewRequestedAt: 0,
 
   // Actions
@@ -128,11 +138,15 @@ export const useFocalStore = create<FocalState>((set, get) => ({
       focal,
       isFocused: !!focal,
       hasContent: !!focal?.body || !!focal?.summary,
+      isVisible: !!focal,
       viewRequestedAt: Date.now(),
     });
   },
 
-  clearFocal: () => set({ focal: null, isFocused: false, hasContent: false }),
+  clearFocal: () => set({ focal: null, isFocused: false, hasContent: false, isVisible: false }),
+
+  show: () => set((state) => (state.focal ? { isVisible: true } : {})),
+  hide: () => set({ isVisible: false }),
 
   addSecondary: (obj) =>
     set((state) => ({
@@ -141,8 +155,30 @@ export const useFocalStore = create<FocalState>((set, get) => ({
 
   clearSecondary: () => set({ secondary: [] }),
 
-  // Atomic rehydratation for thread switch / hard reload
+  // Atomic rehydratation for thread switch / hard reload.
+  //
+  // Important: this is called by the SSE poll every ~1s, so it must NOT
+  // overwrite a focal the user just opened by clicking an asset / mission
+  // card in the right panel — otherwise the preview vanishes a second after
+  // it's clicked. We preserve the user-selected focal if it was set within
+  // the last 30s and points to a different asset/mission than the SSE one.
   hydrateThreadState: (newFocal, newSecondary) => {
+    const state = get();
+    const now = Date.now();
+    const userPicked =
+      !!state.focal &&
+      state.viewRequestedAt > 0 &&
+      now - state.viewRequestedAt < 30_000 &&
+      (!!state.focal.sourceAssetId || !!state.focal.missionId);
+    const sameAsCurrent =
+      !!newFocal && !!state.focal && newFocal.id === state.focal.id;
+
+    if (userPicked && !sameAsCurrent) {
+      // Keep the user's focal selection, only update secondary list.
+      set({ secondary: newSecondary.slice(0, 3) });
+      return;
+    }
+
     // Validate focal content
     if (newFocal && !isValidContent(newFocal)) {
       console.warn("[FocalStore] Rejected hydrated focal with error content:", newFocal.title);

@@ -87,6 +87,7 @@ export default function HomePage() {
   const coreState = useRuntimeStore((s) => s.coreState);
   const addEvent = useRuntimeStore((s) => s.addEvent);
   const startRun = useRuntimeStore((s) => s.startRun);
+  const setAbortController = useRuntimeStore((s) => s.setAbortController);
   const surface = useNavigationStore((s) => s.surface);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const activeThread = useNavigationStore((s) =>
@@ -140,7 +141,9 @@ export default function HomePage() {
 
   const [services, setServicesLocal] = useState<ServiceWithConnectionStatus[]>(initialServices);
   const [connectionsLoaded, setConnectionsLoadedLocal] = useState(false);
-  const [showFocal, setShowFocal] = useState(false);
+  const isFocalVisible = useFocalStore((s) => s.isVisible);
+  const showFocalStage = useFocalStore((s) => s.show);
+  const hideFocalStage = useFocalStore((s) => s.hide);
   const setStoreServices = useServicesStore((s) => s.setServices);
   const setStoreLoaded = useServicesStore((s) => s.setLoaded);
 
@@ -202,6 +205,11 @@ export default function HomePage() {
     [services]
   );
 
+  const idleSuggestions = useMemo(
+    () => buildSuggestions(connectedServices),
+    [connectedServices]
+  );
+
   const userEmail = session?.user?.email || "anonymous";
 
   const handleSubmit = useCallback(async (message: string) => {
@@ -242,6 +250,9 @@ export default function HomePage() {
 
     startRun(clientToken);
 
+    const controller = new AbortController();
+    setAbortController(controller);
+
     try {
       const res = await fetch("/api/orchestrate", {
         method: "POST",
@@ -254,6 +265,7 @@ export default function HomePage() {
           history: recentMessages,
           capability_mode: "general",
         }),
+        signal: controller.signal,
       });
       if (!res.ok) {
         const errorMsg = `Erreur serveur: ${res.status}`;
@@ -268,6 +280,7 @@ export default function HomePage() {
       let canonicalRunId: string | null = null;
 
       while (true) {
+        if (controller.signal.aborted) break;
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
@@ -294,11 +307,23 @@ export default function HomePage() {
         }
       }
 
+      if (controller.signal.aborted) {
+        // Run interrompu par l'utilisateur via stopRun() — pas un échec.
+        return;
+      }
+
       trackAnalytics("run_completed", userEmail, {
         runId: canonicalRunId || clientToken,
         messageCount: messages.length,
       });
     } catch (err) {
+      // Abort déclenché par stopRun() : pas de toast, pas d'event run_failed.
+      const isAbort =
+        controller.signal.aborted ||
+        (err instanceof DOMException && err.name === "AbortError") ||
+        (err instanceof Error && err.name === "AbortError");
+      if (isAbort) return;
+
       const errorMsg = err instanceof Error ? err.message : "Échec de la connexion";
       toast.error("Erreur de connexion", errorMsg);
       addEvent({ type: "run_failed", error: errorMsg, run_id: clientToken });
@@ -306,26 +331,28 @@ export default function HomePage() {
         runId: clientToken,
         error: errorMsg,
       });
+    } finally {
+      setAbortController(null);
     }
-  }, [surface, activeThreadId, addThread, messages, addEvent, startRun, addMessageToThread, updateMessageInThread, updateThreadName, userEmail]);
+  }, [surface, activeThreadId, addThread, messages, addEvent, startRun, setAbortController, addMessageToThread, updateMessageInThread, updateThreadName, userEmail]);
 
   const isIdle = coreState === "idle" && messages.length === 0 && !focal;
 
-  const focalIdRef = useRef<string | null>(null);
+  // Esc ferme le focal stage. Ignore les inputs/textarea/contenteditable pour
+  // ne pas couper l'utilisateur en pleine saisie.
   useEffect(() => {
-    if (focal && focal.id !== focalIdRef.current) {
-      focalIdRef.current = focal.id;
-      setShowFocal(true);
-    }
-  }, [focal]);
-
-  // Re-show focal whenever the user explicitly clicks an asset/mission card
-  // in the right panel — even if the focal id hasn't changed (otherwise a
-  // closed focal stays closed when re-clicking the same item in the list).
-  const viewRequestedAt = useFocalStore((s) => s.viewRequestedAt);
-  useEffect(() => {
-    if (viewRequestedAt > 0) setShowFocal(true);
-  }, [viewRequestedAt]);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+      if (!useFocalStore.getState().isVisible) return;
+      e.preventDefault();
+      hideFocalStage();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [hideFocalStage]);
 
   if (isIdle) {
     const hour = new Date().getHours();
@@ -371,6 +398,44 @@ export default function HomePage() {
               </div>
             </div>
 
+            {connectionsLoaded && idleSuggestions.length > 0 && (
+              <div
+                className="grid w-full"
+                style={{
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: "var(--card-gap)",
+                  maxWidth: "calc(var(--card-width) * 2 + var(--card-gap))",
+                }}
+              >
+                {idleSuggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleSubmit(s.title)}
+                    className="halo-suggestion text-left flex items-center"
+                    style={{ gap: "var(--space-4)" }}
+                  >
+                    <span
+                      className="halo-suggestion-logo"
+                      style={{ width: 44, height: 44 }}
+                      aria-hidden
+                    >
+                      {s.iconPath ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={s.iconPath} alt="" className="w-6 h-6 object-contain" />
+                      ) : (
+                        <span className="t-9 font-mono tracking-[0.22em] uppercase text-[var(--text-faint)]">{s.id}</span>
+                      )}
+                    </span>
+                    <span className="flex-1 min-w-0 flex flex-col">
+                      <span className="t-13 font-medium tracking-tight text-[var(--text)] truncate">{s.title}</span>
+                      <span className="t-9 font-mono tracking-[0.22em] uppercase text-[var(--text-faint)] mt-1 truncate">{s.subtitle}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
           </div>
         </div>
 
@@ -390,7 +455,7 @@ export default function HomePage() {
       {/* Strip activité agents — header live, visible quand un run tourne */}
       <AgentActivityStrip />
 
-      {focal && showFocal && (() => {
+      {focal && isFocalVisible && (() => {
         const threadLabel = activeThread?.name?.trim() ?? "";
         const titleLabel = focal.title?.trim() ?? "";
         const looksLikeDuplicate =
@@ -414,11 +479,12 @@ export default function HomePage() {
           <div className="flex items-center justify-between px-12 py-6 flex-shrink-0 relative z-10 border-b border-[var(--surface-2)]">
             <Breadcrumb trail={trail} className="min-w-0 truncate" />
             <button
-              onClick={() => setShowFocal(false)}
-              className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--text)] transition-colors shrink-0"
-              title="Minimiser (rester dans le contexte)"
+              onClick={hideFocalStage}
+              className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-[0.22em] border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
+              title="Fermer (Esc)"
             >
-              Close [x]
+              <span>Fermer</span>
+              <span className="opacity-60">ESC</span>
             </button>
           </div>
           {/* Focal content - principal reading surface */}
@@ -430,10 +496,10 @@ export default function HomePage() {
       })()}
 
       {/* Collapsed focal indicator - contextual chip */}
-      {focal && !showFocal && (
+      {focal && !isFocalVisible && (
         <div className="flex-shrink-0 px-12 py-8 relative z-10">
           <button
-            onClick={() => setShowFocal(true)}
+            onClick={showFocalStage}
             className="inline-flex items-center gap-6 group"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--cykan)] animate-pulse halo-dot" />
@@ -448,11 +514,11 @@ export default function HomePage() {
       )}
 
       {messages.length > 0 && (
-        <div className={focal && showFocal ? "flex-shrink-0 h-[320px] border-t border-[var(--surface-2)] bg-gradient-to-b from-[var(--surface-1)] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[var(--mat-050)] to-[var(--bg-soft)]"}>
+        <div className={focal && isFocalVisible ? "flex-shrink-0 h-[320px] border-t border-[var(--surface-2)] bg-gradient-to-b from-[var(--surface-1)] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[var(--mat-050)] to-[var(--bg-soft)]"}>
           <ChatMessages
             messages={messages}
-            compact={!!(focal && showFocal)}
-            className={focal && showFocal ? "h-full overflow-y-auto px-10 py-6 flex flex-col" : "h-full overflow-y-auto px-12 py-10 flex flex-col"}
+            compact={!!(focal && isFocalVisible)}
+            className={focal && isFocalVisible ? "h-full overflow-y-auto px-10 py-6 flex flex-col" : "h-full overflow-y-auto px-12 py-10 flex flex-col"}
             onQuickReply={handleSubmit}
           />
         </div>

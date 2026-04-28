@@ -119,6 +119,21 @@ export function AgentActivityStrip() {
           </div>
         </div>
       )}
+
+      {/* Bouton Stop — uniquement pendant l'exécution active. En awaiting_*,
+          l'utilisateur passe par les chips Confirmer/Annuler du chat. */}
+      {isRunning && (
+        <button
+          type="button"
+          onClick={() => useRuntimeStore.getState().stopRun()}
+          className="halo-on-hover inline-flex items-center gap-1.5 t-9 font-mono uppercase tracking-[0.22em] px-2 py-0.5 rounded-sm border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-all shrink-0 ml-auto"
+          title="Arrêter le run"
+          aria-label="Arrêter le run en cours"
+        >
+          <span>Stop</span>
+          <span aria-hidden>⏹</span>
+        </button>
+      )}
     </div>
   );
 }

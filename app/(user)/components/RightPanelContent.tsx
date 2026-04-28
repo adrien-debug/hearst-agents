@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import type { RightPanelData, FocalObjectView } from "@/lib/core/types";
+import type { RightPanelData } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
@@ -32,18 +31,12 @@ interface RightPanelContentProps {
 
 export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const router = useRouter();
-  const coreState = useRuntimeStore((s) => s.coreState);
-  const currentRunId = useRuntimeStore((s) => s.currentRunId);
-  const flowLabel = useRuntimeStore((s) => s.flowLabel);
   const runtimeEvents = useRuntimeStore((s) => s.events);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
-  const { data: session } = useSession();
 
   const [data, setData] = useState<RightPanelData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
 
   // État ouvert/fermé de chaque section. Persisté en localStorage pour
   // conserver les préférences entre rechargements et changements de thread.
@@ -188,66 +181,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     };
   }, [activeThreadId]);
 
-  const handlePrimaryAction = async () => {
-    if (!data?.focalObject) return;
-    const focalObject = data.focalObject as FocalObjectView;
-    if (!focalObject.primaryAction) return;
-
-    const kind = focalObject.primaryAction.kind;
-    setActionLoading(true);
-    setActionError(null);
-
-    try {
-      let res: Response;
-
-      if (kind === "approve" && focalObject.sourcePlanId) {
-        res = await fetch(`/api/v2/plans/${focalObject.sourcePlanId}/approve`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            threadId: activeThreadId,
-            userId: session?.user?.email ?? "anonymous",
-            connectedProviders: [],
-          }),
-        });
-      } else if (kind === "pause" && focalObject.missionId) {
-        res = await fetch(`/api/v2/missions/${focalObject.missionId}/pause`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-      } else if (kind === "resume" && focalObject.missionId) {
-        res = await fetch(`/api/v2/missions/${focalObject.missionId}/resume`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-      } else {
-        throw new Error("Unknown action kind");
-      }
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || `Action failed: ${res.status}`);
-      }
-
-      if (activeThreadId) {
-        const refreshRes = await fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`);
-        if (refreshRes.ok) {
-          const panelData: RightPanelData = await refreshRes.json();
-          setData(panelData);
-        }
-      }
-
-      onClose?.();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Action failed");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const hasActiveThread = Boolean(activeThreadId);
   const panelData = data;
-  const isRunning = coreState !== "idle";
   const focalObject = panelData?.focalObject;
 
   const secondaryObjects = panelData?.secondaryObjects || [];
@@ -262,14 +197,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
 
   const focalObjectType = focalObject ? getFocalProp(focalObject, "objectType") || "unknown" : "";
   const focalTitle = focalObject ? getFocalProp(focalObject, "title") || "Untitled" : "";
-
-  const stateLabel = !hasActiveThread
-    ? "Bibliothèque"
-    : coreState === "awaiting_approval"
-      ? (flowLabel || "Validation requise")
-      : isRunning
-        ? (flowLabel || "Traitement")
-        : "Prêt";
 
   const assetAccent = (type: string) => {
     const t = type.toLowerCase();
@@ -318,9 +245,15 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           >
           <div className="overflow-y-auto scrollbar-hide h-full flex flex-col gap-3">
             {focalObject ? (
-              <div
-                className="rounded-sm overflow-hidden shrink-0"
+              <button
+                type="button"
+                onClick={() => {
+                  useFocalStore.getState().show();
+                  onClose?.();
+                }}
+                className="w-full text-left rounded-sm overflow-hidden shrink-0 cursor-pointer hover:bg-[var(--cykan-bg-active)] transition-colors"
                 style={{ background: "var(--cykan-bg-hover)", borderLeft: "3px solid var(--cykan)" }}
+                title="Ouvrir le focal"
               >
                 <div className="px-3 pt-2 pb-1 flex items-center gap-2">
                   <span
@@ -331,27 +264,9 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                   </span>
                 </div>
                 <div className="px-3 pb-3">
-                  <h3 className="t-13 font-medium text-[var(--text)] leading-snug mb-3">{focalTitle}</h3>
-
-                  {actionError && (
-                    <p className="mb-3 t-11 text-[var(--danger)] bg-[var(--danger)]/10 px-2 py-1.5 rounded-sm">{actionError}</p>
-                  )}
-
-                  {(focalObject as FocalObjectView)?.primaryAction && (
-                    <button
-                      className={`w-full py-2.5 t-11 font-mono tracking-[0.18em] uppercase rounded-sm transition-colors ${
-                        (focalObject as FocalObjectView).primaryAction?.kind === "approve"
-                          ? "bg-[var(--text)] text-[var(--bg)] hover:opacity-90"
-                          : "bg-[var(--cykan)] text-[var(--bg)] hover:opacity-90"
-                      }`}
-                      onClick={handlePrimaryAction}
-                      disabled={actionLoading}
-                    >
-                      {actionLoading ? "Traitement…" : (focalObject as FocalObjectView).primaryAction?.label}
-                    </button>
-                  )}
+                  <h3 className="t-13 font-medium text-[var(--text)] leading-snug">{focalTitle}</h3>
                 </div>
-              </div>
+              </button>
             ) : null}
 
             {secondaryObjects.length > 0 && (
@@ -589,31 +504,22 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         </div>
       </div>
 
-      {/* STATUS — footer compact, toujours visible. Référence d'état d'arrière-plan,
-          pas focus principal. Une seule ligne : pill état + flow label. */}
-      <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2.5 flex items-center gap-3">
+      {/* STATUS — footer compact. Reflète uniquement l'état SSE du panneau
+          (live / offline / standby). Le signal de run vit dans l'AgentActivityStrip. */}
+      <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2.5 flex items-center gap-2">
         <span className={`inline-flex items-center gap-1.5 t-9 font-mono tracking-[0.16em] uppercase px-2 py-0.5 rounded-sm shrink-0 ${
-          coreState === "awaiting_approval"
-            ? "bg-[var(--warn)]/10 text-[var(--warn)]"
-            : isRunning
-            ? "bg-[var(--cykan)]/10 text-[var(--cykan)]"
-            : "text-[var(--text-faint)]"
+          !hasActiveThread
+            ? "text-[var(--text-faint)]"
+            : isConnected
+              ? "bg-[var(--cykan)]/10 text-[var(--cykan)]"
+              : "text-[var(--text-faint)]"
         }`}>
           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-            coreState === "awaiting_approval" ? "bg-[var(--warn)]" :
-            isRunning ? "bg-[var(--cykan)] animate-pulse" : "bg-[var(--text-ghost)]"
+            !hasActiveThread ? "bg-[var(--text-ghost)]" :
+            isConnected ? "bg-[var(--cykan)]" : "bg-[var(--text-ghost)]"
           }`} />
           {!hasActiveThread ? "standby" : isConnected ? "live" : "offline"}
         </span>
-        <p className="t-11 text-[var(--text-muted)] truncate flex-1" title={stateLabel}>{stateLabel}</p>
-        {isRunning && (
-          <div className="w-12 h-0.5 rounded-full overflow-hidden shrink-0" style={{ background: "var(--border-soft)" }}>
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${coreState === "awaiting_approval" ? "bg-[var(--warn)]" : "bg-[var(--cykan)]"}`}
-              style={{ width: coreState === "awaiting_approval" ? "100%" : "66%" }}
-            />
-          </div>
-        )}
       </div>
     </aside>
   );

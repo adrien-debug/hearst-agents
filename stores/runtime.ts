@@ -29,9 +29,18 @@ interface RuntimeState {
    * post-run cost chips).
    */
   lastRunId: string | null;
+  /**
+   * AbortController du fetch en cours. Non sérialisable — le store n'étant
+   * pas persisté c'est safe. `stopRun()` l'invoque pour fermer la connexion
+   * SSE côté client. Le backend continue silencieusement (TODO endpoint
+   * dédié `/api/orchestrate/abort/[runId]` pour vrai kill serveur).
+   */
+  abortController: AbortController | null;
+  setAbortController: (controller: AbortController | null) => void;
   startRun: (runId: string) => void;
   completeRun: () => void;
   failRun: (error: string) => void;
+  stopRun: () => void;
 }
 
 const MAX_EVENTS = 50;
@@ -44,6 +53,7 @@ export const useRuntimeStore = create<RuntimeState>()(
     flowLabel: null,
     currentRunId: null,
     lastRunId: null,
+    abortController: null,
 
     setConnected: (connected) => set({ connected }),
 
@@ -157,10 +167,25 @@ export const useRuntimeStore = create<RuntimeState>()(
 
     clearEvents: () => set({ events: [] }),
 
+    setAbortController: (controller) => set({ abortController: controller }),
+
     startRun: (runId) =>
       set({ coreState: "streaming", currentRunId: runId, lastRunId: runId, connected: true }),
-    completeRun: () => set({ coreState: "idle", currentRunId: null, flowLabel: null }),
-    failRun: (error) => set({ coreState: "error", flowLabel: error }),
+    completeRun: () => set({ coreState: "idle", currentRunId: null, flowLabel: null, abortController: null }),
+    failRun: (error) => set({ coreState: "error", flowLabel: error, abortController: null }),
+    stopRun: () => {
+      const controller = get().abortController;
+      if (controller && !controller.signal.aborted) {
+        controller.abort();
+      }
+      set({ coreState: "idle", flowLabel: "Annulé", currentRunId: null, abortController: null });
+      // Fade le label "Annulé" après 1.5s pour ne pas polluer la strip.
+      setTimeout(() => {
+        if (get().coreState === "idle" && get().flowLabel === "Annulé") {
+          set({ flowLabel: null });
+        }
+      }, 1500);
+    },
   }))
 );
 

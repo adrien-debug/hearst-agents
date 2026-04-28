@@ -4,7 +4,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen text-[var(--text)]" style={{ background: "var(--bg)" }}>
+    <div className="min-h-screen text-text bg-bg">
       {children}
     </div>
   );

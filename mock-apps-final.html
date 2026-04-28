@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Hearst OS — Apps · last proposition</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     Page wrapper (dark, comme les autres mocks).
+     Une seule frame, light theme, plus grande.
+     ───────────────────────────────────────────────────────────── */
+  :root {
+    --cykan: #2DD4BF;
+    --page-bg: #050608;
+    --page-fg: #E6E6E8;
+    --page-mut: rgba(230,230,232,0.55);
+    --page-faint: rgba(230,230,232,0.35);
+    --page-line: rgba(255,255,255,0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--page-bg);
+    color: var(--page-fg);
+    font-family: 'Satoshi Variable', 'Satoshi', -apple-system, BlinkMacSystemFont, 'Inter', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1280px; margin: 0 auto; padding: 56px 32px 96px; }
+  .page > header { margin-bottom: 40px; }
+  .page h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 12px; }
+  .page h1 code { font-family: ui-monospace, monospace; font-size: 22px; color: var(--cykan); font-weight: 600; }
+  .page p.lede { font-size: 13.5px; color: var(--page-mut); line-height: 1.6; max-width: 800px; margin: 0; }
+  .page p.lede strong { color: var(--page-fg); font-weight: 600; }
+  .page p.lede em { color: var(--cykan); font-style: normal; }
+
+  h3.section {
+    font-size: 11px; font-family: ui-monospace, monospace;
+    letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--page-faint);
+    margin: 48px 0 20px;
+    padding: 0 4px 12px;
+    border-bottom: 1px solid var(--page-line);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     FRAME — light theme, tokens DS Hearst
+     ───────────────────────────────────────────────────────────── */
+  .frame {
+    --bg:           #F4F4F6;
+    --bg-elev:      #FAFAFB;
+    --bg-soft:      #ECECEE;
+    --surface:      #FFFFFF;
+    --surface-1:    rgba(28,29,32,0.025);
+    --surface-2:    rgba(28,29,32,0.045);
+    --text:         #1C1D20;
+    --text-soft:    rgba(28,29,32,0.88);
+    --text-muted:   rgba(28,29,32,0.65);
+    --text-faint:   rgba(28,29,32,0.46);
+    --text-ghost:   rgba(28,29,32,0.26);
+    --text-trace:   rgba(28,29,32,0.14);
+    --border-shell: rgba(28,29,32,0.08);
+    --border-soft:  rgba(28,29,32,0.05);
+    --border-default: rgba(28,29,32,0.14);
+    --cykan:        #2DD4BF;
+    --cykan-deep:   #0E8F80;
+    --cykan-bg:     rgba(45,212,191,0.10);
+    --cykan-bgsoft: rgba(45,212,191,0.05);
+    --cykan-border: rgba(45,212,191,0.35);
+    --cykan-glow:   0 0 0 1px var(--cykan-border), 0 4px 24px rgba(45,212,191,0.18);
+    --warn:         #C9892F;
+    --warn-bg:      rgba(201,137,47,0.12);
+    --danger:       #C24F4F;
+    --danger-bg:    rgba(194,79,79,0.10);
+
+    width: 1100px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  .mono { font-family: ui-monospace, monospace; }
+
+  /* ─────────────────────────────────────────────────────────────
+     LOGO — couleur native marque, frame neutre
+     ───────────────────────────────────────────────────────────── */
+  .lg {
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0; overflow: hidden; position: relative;
+  }
+  .lg .glyph {
+    color: #FFFFFF; font-weight: 700; letter-spacing: -0.02em; line-height: 1;
+  }
+
+  .lg.s-32 { width: 32px; height: 32px; border-radius: 6px; }
+  .lg.s-32 .glyph { font-size: 14px; }
+  .lg.s-40 { width: 40px; height: 40px; }
+  .lg.s-40 .glyph { font-size: 17px; }
+  .lg.s-56 { width: 56px; height: 56px; }
+  .lg.s-56 .glyph { font-size: 24px; }
+  .lg.s-72 { width: 72px; height: 72px; }
+  .lg.s-72 .glyph { font-size: 30px; }
+  .lg.s-96 { width: 96px; height: 96px; border-radius: 12px; }
+  .lg.s-96 .glyph { font-size: 38px; }
+
+  /* couleurs natives marques */
+  .lg.gmail   { background: #EA4335; }
+  .lg.slack   { background: #4A154B; }
+  .lg.notion  { background: #000000; }
+  .lg.gdrive  { background: linear-gradient(135deg,#4285F4 0%, #34A853 50%, #FBBC04 100%); }
+  .lg.outlook { background: #0078D4; }
+  .lg.teams   { background: #4B53BC; }
+  .lg.discord { background: #5865F2; }
+  .lg.zoom    { background: #2D8CFF; }
+  .lg.spark   { background: #1B57F1; }
+  .lg.asana   { background: #F06A6A; }
+  .lg.linear  { background: #5E6AD2; }
+  .lg.trello  { background: #0079BF; }
+  .lg.gcal    { background: #4285F4; }
+  .lg.hubspot { background: #FF7A59; }
+  .lg.sf      { background: #00A1E0; }
+  .lg.pipe    { background: #1A1A1A; }
+  .lg.gh      { background: #181717; }
+  .lg.gitlab  { background: #FC6D26; }
+  .lg.figma   { background: #1E1E1E; }
+  .lg.stripe  { background: #635BFF; }
+  .lg.intercom{ background: #1F8DED; }
+  .lg.calendly{ background: #006BFF; }
+  .lg.airtable{ background: #FF6E0F; }
+  .lg.qb      { background: #2CA01C; }
+  .lg.penny   { background: #003366; }
+  .lg.loom    { background: #625DF5; }
+  .lg.miro    { background: #FFD02F; }
+  .lg.miro .glyph { color: #050038; }
+  .lg.zapier  { background: #FF4F00; }
+  .lg.dropbox { background: #0061FF; }
+  .lg.aws     { background: #232F3E; }
+  .lg.gcp     { background: #4285F4; }
+  .lg.openai  { background: #10A37F; }
+  .lg.anthropic { background: #D4A27F; }
+  .lg.anthropic .glyph { color: #1C1D20; }
+  .lg.mistral { background: #FF7000; }
+  .lg.gemini  { background: #4796E3; }
+  .lg.discord2{ background: #5865F2; }
+  .lg.figma2  { background: #F24E1E; }
+  .lg.bitbucket { background: #2684FF; }
+  .lg.jira    { background: #2684FF; }
+  .lg.confluence { background: #2684FF; }
+  .lg.zendesk { background: #03363D; }
+  .lg.salesforce { background: #00A1E0; }
+  .lg.pagerduty { background: #06AC38; }
+  .lg.opsgenie { background: #172B4D; }
+  .lg.datadog { background: #632CA6; }
+  .lg.sentry  { background: #362D59; }
+  .lg.grafana { background: #F46800; }
+  .lg.cloudflare { background: #F38020; }
+  .lg.vercel  { background: #000000; }
+  .lg.netlify { background: #00C7B7; }
+  .lg.heroku  { background: #430098; }
+  .lg.docker  { background: #2496ED; }
+  .lg.kubernetes { background: #326CE5; }
+  .lg.terraform { background: #7B42BC; }
+  .lg.ansible { background: #EE0000; }
+  .lg.gitlab2 { background: #FCA326; }
+  .lg.jenkins { background: #D33833; }
+  .lg.shopify { background: #95BF47; }
+  .lg.woo     { background: #7F54B3; }
+  .lg.bigcommerce { background: #34313F; }
+  .lg.magento { background: #EE672F; }
+  .lg.square  { background: #000000; }
+  .lg.paypal  { background: #003087; }
+  .lg.mailchimp { background: #FFE01B; }
+  .lg.mailchimp .glyph { color: #241C15; }
+  .lg.sendgrid { background: #1A82E2; }
+  .lg.mailgun { background: #C03A91; }
+  .lg.mailerlite { background: #04A77E; }
+  .lg.activecampaign { background: #356AE6; }
+  .lg.klaviyo { background: #232425; }
+  .lg.brevo   { background: #0B996E; }
+  .lg.typeform { background: #262627; }
+  .lg.surveymonkey { background: #00BF6F; }
+  .lg.qualtrics { background: #00B5E2; }
+  .lg.amplitude { background: #1F45FC; }
+  .lg.mixpanel { background: #7856FF; }
+  .lg.posthog { background: #1D4AFF; }
+  .lg.segment { background: #52BD95; }
+  .lg.fullstory { background: #F24405; }
+  .lg.hotjar  { background: #FD3A5C; }
+  .lg.crisp   { background: #1972F5; }
+  .lg.drift   { background: #1851D8; }
+  .lg.helpscout { background: #1292EE; }
+  .lg.freshdesk { background: #1AAB87; }
+  .lg.gainsight { background: #4CAF50; }
+  .lg.chargebee { background: #FF7846; }
+  .lg.recurly { background: #B72028; }
+  .lg.lemonsqueezy { background: #FFC233; }
+  .lg.lemonsqueezy .glyph { color: #1C1D20; }
+  .lg.gumroad { background: #FF90E8; }
+  .lg.gumroad .glyph { color: #1C1D20; }
+  .lg.notion2 { background: #FFFFFF; box-shadow: inset 0 0 0 1px var(--border-shell); }
+  .lg.notion2 .glyph { color: #1C1D20; }
+  .lg.coda    { background: #F46A54; }
+  .lg.clickup { background: #7B68EE; }
+  .lg.monday  { background: #FF3D57; }
+  .lg.basecamp { background: #1D2D35; }
+
+  /* ─────────────────────────────────────────────────────────────
+     HEADER — sticky, search dominante, counters inline
+     ───────────────────────────────────────────────────────────── */
+  .top {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 32px;
+    border-bottom: 1px solid var(--border-shell);
+    background: var(--bg);
+  }
+  .top .crumb {
+    font-family: ui-monospace, monospace;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.32em;
+    color: var(--cykan-deep);
+    white-space: nowrap;
+  }
+  .top .search {
+    flex: 1;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border-shell);
+    border-radius: 999px;
+    color: var(--text-faint);
+    font-size: 13.5px;
+  }
+  .top .search .ic { color: var(--text-faint); font-size: 14px; }
+  .top .search .kbd {
+    margin-left: auto;
+    font-family: ui-monospace, monospace; font-size: 9.5px;
+    color: var(--text-faint);
+    border: 1px solid var(--border-shell);
+    border-radius: 4px;
+    padding: 2px 6px;
+    background: var(--bg-elev);
+  }
+  .top .stats {
+    display: flex; align-items: center; gap: 12px;
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+  .top .stats .live {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--text);
+  }
+  .top .stats .live .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--cykan);
+    box-shadow: 0 0 8px rgba(45,212,191,0.6);
+  }
+  .top .stats .sep { color: var(--text-ghost); }
+  .top .stats .total { color: var(--text-faint); }
+  .top .stats .attn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 999px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid rgba(194,79,79,0.30);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     SECTION LABEL — sobre, mono uppercase, count à droite
+     ───────────────────────────────────────────────────────────── */
+  .lbl {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 32px 32px 14px;
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.28em;
+  }
+  .lbl .l { display: flex; align-items: baseline; gap: 10px; }
+  .lbl .l .name { color: var(--text); font-weight: 600; }
+  .lbl .l .sep { color: var(--text-ghost); }
+  .lbl .l .n { color: var(--text-faint); }
+  .lbl .r { color: var(--text-faint); }
+
+  /* ─────────────────────────────────────────────────────────────
+     STAGE — 5 grosses tiles carrées des connectés
+     Hauteur fixe par tile, logo XL centré, status discret en coin.
+     ───────────────────────────────────────────────────────────── */
+  .stage {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 0 32px 8px;
+  }
+  .tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: var(--surface);
+    border: 1px solid var(--border-shell);
+    border-radius: 12px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 14px;
+    overflow: hidden;
+    transition: box-shadow 200ms, border-color 200ms, transform 300ms;
+    cursor: pointer;
+  }
+  .tile.active {
+    border-color: var(--cykan-border);
+    box-shadow: var(--cykan-glow);
+  }
+  .tile.warn {
+    border-color: rgba(201,137,47,0.5);
+    background: linear-gradient(180deg, var(--warn-bg), var(--surface) 60%);
+  }
+  .tile.error {
+    border-color: rgba(194,79,79,0.4);
+    background: linear-gradient(180deg, var(--danger-bg), var(--surface) 60%);
+  }
+  .tile:hover {
+    border-color: var(--cykan-border);
+    box-shadow: var(--cykan-glow);
+    transform: translateY(-2px);
+  }
+  .tile .name {
+    font-size: 13.5px; font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.005em;
+    text-align: center;
+    padding: 0 8px;
+  }
+  .tile .corner {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--cykan);
+    box-shadow: 0 0 8px rgba(45,212,191,0.5);
+  }
+  .tile.warn .corner {
+    background: var(--warn);
+    box-shadow: 0 0 6px rgba(201,137,47,0.4);
+    animation: blink 1.4s infinite;
+  }
+  .tile.error .corner {
+    background: var(--danger);
+    box-shadow: none;
+  }
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  .tile .ribbon {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 6px 10px;
+    font-family: ui-monospace, monospace;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--text-faint);
+    border-top: 1px solid var(--border-shell);
+    background: var(--bg-elev);
+    text-align: center;
+  }
+  .tile.error .ribbon { color: var(--danger); border-color: rgba(194,79,79,0.30); background: rgba(194,79,79,0.04); }
+  .tile.warn .ribbon { color: var(--warn); border-color: rgba(201,137,47,0.30); background: rgba(201,137,47,0.04); }
+
+  /* ─────────────────────────────────────────────────────────────
+     SUGGESTIONS — strip horizontal, 3 cards compactes
+     ───────────────────────────────────────────────────────────── */
+  .sugg {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 0 32px 8px;
+  }
+  .sugg .card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border-shell);
+    border-radius: 10px;
+    transition: all 180ms;
+    cursor: pointer;
+    position: relative;
+  }
+  .sugg .card.featured {
+    border-color: var(--cykan-border);
+    background: linear-gradient(180deg, var(--cykan-bgsoft), var(--surface) 80%);
+  }
+  .sugg .card:hover {
+    border-color: var(--cykan-border);
+    box-shadow: 0 0 0 1px var(--cykan-border);
+  }
+  .sugg .card .body { flex: 1; min-width: 0; }
+  .sugg .card .nm {
+    font-size: 14px; font-weight: 600; color: var(--text);
+    letter-spacing: -0.005em;
+  }
+  .sugg .card .cat {
+    font-family: ui-monospace, monospace;
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--text-faint);
+    margin-top: 2px;
+  }
+  .sugg .card .arr {
+    font-family: ui-monospace, monospace;
+    color: var(--text-ghost);
+    font-size: 16px;
+  }
+  .sugg .card.featured .arr { color: var(--cykan-deep); }
+  .sugg .card:hover .arr { color: var(--cykan-deep); }
+
+  /* ─────────────────────────────────────────────────────────────
+     CATALOGUE — chips catégories sticky + wallpaper de logos
+     ───────────────────────────────────────────────────────────── */
+  .cats-bar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 32px;
+    background: var(--bg-elev);
+    border-top: 1px solid var(--border-shell);
+    border-bottom: 1px solid var(--border-shell);
+    overflow: hidden;
+  }
+  .cats-bar .chip {
+    padding: 5px 12px;
+    font-family: ui-monospace, monospace;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border-shell);
+    border-radius: 999px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .cats-bar .chip.on {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+    font-weight: 600;
+  }
+  .cats-bar .chip .n {
+    color: var(--text-ghost); margin-left: 6px;
+    letter-spacing: 0.04em;
+  }
+  .cats-bar .chip.on .n { color: rgba(244,244,246,0.55); }
+  .cats-bar .more {
+    margin-left: auto;
+    font-family: ui-monospace, monospace;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+
+  /* WALLPAPER — grille très dense, logos petits, non-connectés grisés */
+  .wallpaper {
+    padding: 24px 32px 32px;
+    background: var(--bg);
+  }
+  .wallpaper .grid {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 8px;
+  }
+  .wallpaper .wp-tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: var(--surface);
+    border: 1px solid var(--border-shell);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 180ms;
+    cursor: pointer;
+  }
+  .wallpaper .wp-tile.connected {
+    border-color: var(--cykan-border);
+    box-shadow: inset 0 0 0 1px var(--cykan-bg);
+  }
+  .wallpaper .wp-tile.connected::after {
+    content: '';
+    position: absolute;
+    top: 4px; right: 4px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--cykan);
+    box-shadow: 0 0 4px rgba(45,212,191,0.6);
+  }
+  .wallpaper .wp-tile.dim {
+    filter: grayscale(0.85) opacity(0.55);
+  }
+  .wallpaper .wp-tile:hover {
+    transform: translateY(-1px) scale(1.05);
+    border-color: var(--cykan-border);
+    box-shadow: 0 4px 16px rgba(45,212,191,0.18), inset 0 0 0 1px var(--cykan-border);
+    z-index: 2;
+    filter: none;
+  }
+  .wallpaper .wp-tile .lg {
+    width: 70%; height: 70%;
+    border-radius: 4px;
+  }
+  .wallpaper .wp-tile .lg .glyph { font-size: 14px; }
+
+  .wallpaper .footer-bar {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-shell);
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: ui-monospace, monospace;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--text-faint);
+  }
+  .wallpaper .footer-bar .a { color: var(--cykan-deep); }
+
+  /* ─────────────────────────────────────────────────────────────
+     FOOTER PAGE
+     ───────────────────────────────────────────────────────────── */
+  footer.note {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--page-line);
+    font-size: 13px;
+    color: var(--page-mut);
+    line-height: 1.7;
+  }
+  footer.note h4 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.32em;
+    color: var(--page-fg); margin: 0 0 12px;
+    font-family: ui-monospace, monospace;
+  }
+  footer.note p { margin: 0 0 12px; max-width: 880px; }
+  footer.note strong { color: var(--page-fg); font-weight: 600; }
+  footer.note .reco {
+    border-left: 2px solid var(--cykan);
+    padding: 4px 0 4px 16px;
+    margin: 12px 0;
+    color: var(--page-fg);
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+
+    <header>
+      <h1>Hearst OS — page <code>/apps</code> · last proposition</h1>
+      <p class="lede">
+        Direction <em>Stage + Wallpaper</em>. Trois zones, zéro phrase.
+        <strong>Stage</strong> en haut : tes connectés en grosses tiles carrées,
+        statut signalé par un point en coin (pas de pill texte).
+        <strong>Suggestions</strong> en strip court (logo + nom + catégorie + flèche).
+        <strong>Wallpaper</strong> en bas : le catalogue 1030 en grille dense
+        de logos, non-connectés grisés/désaturés, hover = couleur + glow cykan.
+        Catégories en chips sticky pour filtrer.
+        Search globale en header. Une seule barre, ⌘K. Pas de cover, pas de byline,
+        pas de markers I/II/III. La densité visuelle remplace le texte.
+      </p>
+    </header>
+
+    <h3 class="section">FRAME · 1100 × 1280</h3>
+
+    <div class="frame">
+
+      <!-- HEADER : search dominante + counters inline -->
+      <div class="top">
+        <span class="crumb">[ APPS ]</span>
+        <div class="search">
+          <span class="ic">⌕</span>
+          <span>Cherche un service</span>
+          <span class="kbd">⌘ K</span>
+        </div>
+        <div class="stats">
+          <span class="live"><span class="dot"></span>5</span>
+          <span class="sep">/</span>
+          <span class="total">1 030</span>
+          <span class="attn">⚠ 1</span>
+        </div>
+      </div>
+
+      <!-- STAGE : 5 grosses tiles carrées -->
+      <div class="lbl">
+        <div class="l"><span class="name">Connectés</span><span class="sep">·</span><span class="n">5</span></div>
+        <div class="r">tes piliers</div>
+      </div>
+
+      <div class="stage">
+        <div class="tile active">
+          <span class="lg s-72 slack"><span class="glyph">S</span></span>
+          <span class="name">Slack</span>
+          <span class="corner"></span>
+          <span class="ribbon">communication</span>
+        </div>
+        <div class="tile active">
+          <span class="lg s-72 airtable"><span class="glyph">A</span></span>
+          <span class="name">Airtable</span>
+          <span class="corner"></span>
+          <span class="ribbon">productivité</span>
+        </div>
+        <div class="tile active">
+          <span class="lg s-72 gmail"><span class="glyph">G</span></span>
+          <span class="name">Gmail</span>
+          <span class="corner"></span>
+          <span class="ribbon">communication</span>
+        </div>
+        <div class="tile active">
+          <span class="lg s-72 notion"><span class="glyph">N</span></span>
+          <span class="name">Notion</span>
+          <span class="corner"></span>
+          <span class="ribbon">productivité</span>
+        </div>
+        <div class="tile error">
+          <span class="lg s-72 sf"><span class="glyph">S</span></span>
+          <span class="name">Salesforce</span>
+          <span class="corner"></span>
+          <span class="ribbon">token expiré · reconnecter</span>
+        </div>
+      </div>
+
+      <!-- SUGGESTIONS : strip de 3 picks -->
+      <div class="lbl">
+        <div class="l"><span class="name">Pour aller plus loin</span><span class="sep">·</span><span class="n">3</span></div>
+        <div class="r">picks</div>
+      </div>
+
+      <div class="sugg">
+        <div class="card featured">
+          <span class="lg s-40 stripe"><span class="glyph">S</span></span>
+          <div class="body">
+            <div class="nm">Stripe</div>
+            <div class="cat">finance</div>
+          </div>
+          <span class="arr">→</span>
+        </div>
+        <div class="card">
+          <span class="lg s-40 linear"><span class="glyph">L</span></span>
+          <div class="body">
+            <div class="nm">Linear</div>
+            <div class="cat">développement</div>
+          </div>
+          <span class="arr">→</span>
+        </div>
+        <div class="card">
+          <span class="lg s-40 calendly"><span class="glyph">C</span></span>
+          <div class="body">
+            <div class="nm">Calendly</div>
+            <div class="cat">planification</div>
+          </div>
+          <span class="arr">→</span>
+        </div>
+      </div>
+
+      <!-- CATÉGORIES STICKY -->
+      <div class="lbl">
+        <div class="l"><span class="name">Catalogue</span><span class="sep">·</span><span class="n">1 030</span></div>
+        <div class="r">filtre par catégorie</div>
+      </div>
+
+      <div class="cats-bar">
+        <span class="chip on">Tout <span class="n">1 030</span></span>
+        <span class="chip">Communication <span class="n">14</span></span>
+        <span class="chip">Productivité <span class="n">35</span></span>
+        <span class="chip">CRM &amp; Ventes <span class="n">22</span></span>
+        <span class="chip">Développement <span class="n">48</span></span>
+        <span class="chip">Design <span class="n">12</span></span>
+        <span class="chip">Finance <span class="n">17</span></span>
+        <span class="chip">IA &amp; Données <span class="n">29</span></span>
+        <span class="chip">Marketing <span class="n">35</span></span>
+        <span class="more">+ 4 catégories</span>
+      </div>
+
+      <!-- WALLPAPER : grille dense de logos -->
+      <div class="wallpaper">
+        <div class="grid">
+          <!-- Connectés (5) — couleur normale + anneau cykan -->
+          <div class="wp-tile connected"><span class="lg slack"><span class="glyph">S</span></span></div>
+          <div class="wp-tile connected"><span class="lg airtable"><span class="glyph">A</span></span></div>
+          <div class="wp-tile connected"><span class="lg gmail"><span class="glyph">G</span></span></div>
+          <div class="wp-tile connected"><span class="lg notion"><span class="glyph">N</span></span></div>
+          <div class="wp-tile connected"><span class="lg sf"><span class="glyph">S</span></span></div>
+
+          <!-- Non-connectés — grayscale, ~80 services -->
+          <div class="wp-tile dim"><span class="lg outlook"><span class="glyph">O</span></span></div>
+          <div class="wp-tile dim"><span class="lg teams"><span class="glyph">T</span></span></div>
+          <div class="wp-tile dim"><span class="lg discord"><span class="glyph">D</span></span></div>
+          <div class="wp-tile dim"><span class="lg zoom"><span class="glyph">Z</span></span></div>
+          <div class="wp-tile dim"><span class="lg spark"><span class="glyph">S</span></span></div>
+          <div class="wp-tile dim"><span class="lg gcal"><span class="glyph">C</span></span></div>
+          <div class="wp-tile dim"><span class="lg gdrive"><span class="glyph">D</span></span></div>
+          <div class="wp-tile dim"><span class="lg asana"><span class="glyph">A</span></span></div>
+          <div class="wp-tile dim"><span class="lg linear"><span class="glyph">L</span></span></div>
+
+          <div class="wp-tile dim"><span class="lg trello"><span class="glyph">T</span></span></div>
+          <div class="wp-tile dim"><span class="lg hubspot"><span class="glyph">H</span></span></div>
+          <div class="wp-tile dim"><span class="lg pipe"><span class="glyph">P</span></span></div>
+          <div class="wp-tile dim"><span class="lg gh"><span class="glyph">G</span></span></div>
+          <div class="wp-tile dim"><span class="lg gitlab"><span class="glyph">G</span></span></div>
+          <div class="wp-tile dim"><span class="lg figma"><span class="glyph">F</span></span></div>
+          <div class="wp-tile dim"><span class="lg stripe"><span class="glyph">S</span></span></div>
+          <div class="wp-tile dim"><span class="lg intercom"><span class="glyph">I</span></span></div>
+          <div class="wp-tile dim"><span class="lg calendly"><span class="glyph">C</span></span></div>
+          <div class="wp-tile dim"><span class="lg qb"><span class="glyph">Q</span></span></div>
+          <div class="wp-tile dim"><span class="lg penny"><span class="glyph">P</span></span></div>
+          <div class="wp-tile dim"><span class="lg loom"><span class="glyph">L</span></span></div>
+          <div class="wp-tile dim"><span class="lg miro"><span class="glyph">M</span></span></div>
+          <div class="wp-tile dim"><span class="lg openai"><span class="glyph">O</span></span></div>
+
+          <div class="wp-tile dim"><span class="lg anthropic"><span class="glyph">A</span></span></div>
+          <div class="wp-tile dim"><span class="lg mistral"><span class="glyph">M</span></span></div>
+          <div class="wp-tile dim"><span class="lg gemini"><span class="glyph">G</span></span></div>
+          <div class="wp-tile dim"><span class="lg zapier"><span class="glyph">Z</span></span></div>
+          <div class="wp-tile dim"><span class="lg dropbox"><span class="glyph">D</span></span></div>
+          <div class="wp-tile dim"><span class="lg jira"><span class="glyph">J</span></span></div>
+          <div class="wp-tile dim"><span class="lg confluence"><span class="glyph">C</span></span></div>
+          <div class="wp-tile dim"><span class="lg bitbucket"><span class="glyph">B</span></span></div>
+          <div class="wp-tile dim"><span class="lg jenkins"><span class="glyph">J</span></span></div>
+          <div class="wp-tile dim"><span class="lg docker"><span class="glyph">D</span></span></div>
+          <div class="wp-tile dim"><span class="lg kubernetes"><span class="glyph">K</span></span></div>
+          <div class="wp-tile dim"><span class="lg terraform"><span class="glyph">T</span></span></div>
+          <div class="wp-tile dim"><span class="lg ansible"><span class="glyph">A</span></span></div>
+          <div class="wp-tile dim"><span class="lg vercel"><span class="glyph">V</span></span></div>
+
+          <div class="wp-tile dim"><span class="lg netlify"><span class="glyph">N</span></span></div>
+          <div class="wp-tile dim"><span class="lg heroku"><span class="glyph">H</span></span></div>
+          <div class="wp-tile dim"><span class="lg cloudflare"><span class="glyph">C</span></span></div>
+          <div class="wp-tile dim"><span class="lg datadog"><span class="glyph">D</span></span></div>
+          <div class="wp-tile dim"><span class="lg sentry"><span class="glyph">S</span></span></div>
+          <div class="wp-tile dim"><span class="lg grafana"><span class="glyph">G</span></span></div>
+          <div class="wp-tile dim"><span class="lg pagerduty"><span class="glyph">P</span></span></div>
+          <div class="wp-tile dim"><span class="lg opsgenie"><span class="glyph">O</span></span></div>
+          <div class="wp-tile dim"><span class="lg shopify"><span class="glyph">S</span></span></div>
+          <div class="wp-tile dim"><span class="lg woo"><span class="glyph">W</span></span></div>
+          <div class="wp-tile dim"><span class="lg paypal"><span class="glyph">P</span></span></div>
+          <div class="wp-tile dim"><span class="lg square"><span class="glyph">S</span></span></div>
+          <div class="wp-tile dim"><span class="lg chargebee"><span class="glyph">C</span></span></div>
+          <div class="wp-tile dim"><span class="lg recurly"><span class="glyph">R</span></span></div>
+
+          <div class="wp-tile dim"><span class="lg lemonsqueezy"><span class="glyph">L</span></span></div>
+          <div class="wp-tile dim"><span class="lg gumroad"><span class="glyph">G</span></span></div>
+          <div class="wp-tile dim"><span class="lg mailchimp"><span class="glyph">M</span></span></div>
+          <div class="wp-tile dim"><span class="lg sendgrid"><span class="glyph">S</span></span></div>
+          <div class="wp-tile dim"><span class="lg mailgun"><span class="glyph">M</span></span></div>
+          <div class="wp-tile dim"><span class="lg brevo"><span class="glyph">B</span></span></div>
+          <div class="wp-tile dim"><span class="lg klaviyo"><span class="glyph">K</span></span></div>
+          <div class="wp-tile dim"><span class="lg activecampaign"><span class="glyph">A</span></span></div>
+          <div class="wp-tile dim"><span class="lg typeform"><span class="glyph">T</span></span></div>
+          <div class="wp-tile dim"><span class="lg surveymonkey"><span class="glyph">S</span></span></div>
+          <div class="wp-tile dim"><span class="lg amplitude"><span class="glyph">A</span></span></div>
+          <div class="wp-tile dim"><span class="lg mixpanel"><span class="glyph">M</span></span></div>
+          <div class="wp-tile dim"><span class="lg posthog"><span class="glyph">P</span></span></div>
+          <div class="wp-tile dim"><span class="lg segment"><span class="glyph">S</span></span></div>
+
+          <div class="wp-tile dim"><span class="lg fullstory"><span class="glyph">F</span></span></div>
+          <div class="wp-tile dim"><span class="lg hotjar"><span class="glyph">H</span></span></div>
+          <div class="wp-tile dim"><span class="lg crisp"><span class="glyph">C</span></span></div>
+          <div class="wp-tile dim"><span class="lg drift"><span class="glyph">D</span></span></div>
+          <div class="wp-tile dim"><span class="lg helpscout"><span class="glyph">H</span></span></div>
+          <div class="wp-tile dim"><span class="lg freshdesk"><span class="glyph">F</span></span></div>
+          <div class="wp-tile dim"><span class="lg zendesk"><span class="glyph">Z</span></span></div>
+          <div class="wp-tile dim"><span class="lg coda"><span class="glyph">C</span></span></div>
+          <div class="wp-tile dim"><span class="lg clickup"><span class="glyph">C</span></span></div>
+          <div class="wp-tile dim"><span class="lg monday"><span class="glyph">M</span></span></div>
+          <div class="wp-tile dim"><span class="lg basecamp"><span class="glyph">B</span></span></div>
+          <div class="wp-tile dim"><span class="lg aws"><span class="glyph">A</span></span></div>
+          <div class="wp-tile dim"><span class="lg gcp"><span class="glyph">G</span></span></div>
+          <div class="wp-tile dim"><span class="lg figma2"><span class="glyph">F</span></span></div>
+        </div>
+
+        <div class="footer-bar">
+          <span>84 visibles · 946 de plus dans le catalogue</span>
+          <span class="a">charger plus →</span>
+        </div>
+      </div>
+    </div>
+
+
+    <footer class="note">
+      <h4>Pourquoi cette direction</h4>
+      <p>
+        On ne lit pas ses apps, on les <strong>reconnaît visuellement</strong>. Les marques sont des
+        signes graphiques : Slack mauve, Gmail rouge, Notion noir, Stripe violet — tu les identifies en
+        100 ms. Cette grammaire fait toute la signalétique du dashboard à la place du texte.
+      </p>
+      <div class="reco">
+        <strong>3 zones, 0 phrase :</strong> Stage (5 grosses tiles connectées), Suggestions (3 picks),
+        Wallpaper (le reste du catalogue, non-connectés grisés). La hiérarchie est portée par <em>la
+        taille</em> et <em>la saturation</em>, pas par les mots.
+      </div>
+      <p>
+        <strong>Scaling 1030 :</strong> le wallpaper en grille 14 cols affiche ~80-100 services par
+        viewport. Les chips catégories en sticky filtrent en place. La search globale filtre tout en
+        live. Pas besoin d'index alphabétique séparé — le grayscale fait office d'index visuel
+        ("ce que je n'ai pas encore connecté").
+      </p>
+      <p>
+        <strong>États possibles :</strong> tile <em>active</em> (border cykan + dot vert), tile
+        <em>warn</em> (oauth pending, dot orange clignotant), tile <em>error</em> (token expiré, dot
+        rouge + ribbon "reconnecter"). Sur le wallpaper, hover = couleur + glow + scale subtle, click
+        = drawer (pas changé).
+      </p>
+      <p>
+        <strong>À noter :</strong> la grille 14 colonnes suppose un viewport ≥ 1100px. À 720px (laptop
+        avec RightPanel ouvert) on tombe à 8 colonnes — toujours dense, toujours lisible. Si tu
+        valides cette direction, l'implémentation TSX se fait en gardant la logique
+        existante, juste un nouveau rendu en 4 zones (top / stage / sugg / wallpaper).
+      </p>
+    </footer>
+
+  </div>
+</body>
+</html>

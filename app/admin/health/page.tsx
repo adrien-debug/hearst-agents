@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 function StatusDot({ ok }: { ok: boolean }) {
   return (
-    <span className={`inline-block w-2 h-2 rounded-full ${ok ? "bg-[var(--money)]" : "bg-[var(--danger)]"}`} />
+    <span className={`inline-block size-(--space-2) rounded-(--radius-full) ${ok ? "bg-money" : "bg-danger"}`} />
   );
 }
 
@@ -26,10 +26,10 @@ export default async function HealthPage() {
 
   const overall = health?.status ?? "unknown";
   const overallColor: Record<string, string> = {
-    healthy: "text-[var(--money)]",
-    degraded: "text-[var(--warn)]",
-    unhealthy: "text-[var(--danger)]",
-    unknown: "text-white/40",
+    healthy: "text-money",
+    degraded: "text-warn",
+    unhealthy: "text-danger",
+    unknown: "text-text-faint",
   };
 
   const checkEntries = health
@@ -37,42 +37,42 @@ export default async function HealthPage() {
     : [];
 
   return (
-    <div className="p-8 space-y-8 text-white/90">
-      <div className="flex items-center gap-4">
-        <h1 className="text-2xl font-light">System Health</h1>
-        <span className={`text-sm uppercase font-medium ${overallColor[overall]}`}>
+    <div className="p-(--space-8) space-y-(--space-8) text-text-soft">
+      <div className="flex items-center gap-(--space-4)">
+        <h1 className="t-24 font-light text-text">System Health</h1>
+        <span className={`t-13 uppercase font-medium ${overallColor[overall]}`}>
           {overall}
         </span>
       </div>
 
       {dbError && (
-        <div className="rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] text-sm">
+        <div className="rounded-md bg-(--danger)/10 border border-(--danger)/25 p-(--space-4) text-danger t-13">
           {dbError}
         </div>
       )}
 
       {health && (
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-(--space-4) md:grid-cols-2 lg:grid-cols-4">
             {checkEntries.map(([name, ok]) => (
               <div
                 key={name}
-                className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-4 space-y-2"
+                className="rounded-md bg-surface-1 border border-(--border-shell) p-(--space-4) flex flex-col gap-(--space-2)"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-white/80 capitalize">{name}</span>
+                  <span className="t-13 font-medium text-text-soft capitalize">{name}</span>
                   <StatusDot ok={ok} />
                 </div>
                 {health.latency[name as keyof typeof health.latency] !== undefined && (
-                  <p className="text-xs text-white/40">
+                  <p className="t-10 text-text-faint">
                     Latency:{" "}
-                    <span className="text-white/60">
+                    <span className="text-text-muted">
                       {health.latency[name as keyof typeof health.latency]}ms
                     </span>
                   </p>
                 )}
                 {health.details[name as keyof typeof health.details] && (
-                  <p className="text-xs text-[var(--danger)] truncate">
+                  <p className="t-10 text-danger truncate">
                     {health.details[name as keyof typeof health.details]}
                   </p>
                 )}
@@ -80,7 +80,7 @@ export default async function HealthPage() {
             ))}
           </div>
 
-          <p className="text-xs text-white/20">
+          <p className="t-10 text-text-ghost">
             Checked at {new Date(health.timestamp).toLocaleString()} — v{health.version}
           </p>
         </>

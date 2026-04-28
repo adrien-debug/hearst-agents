@@ -4,10 +4,10 @@ import { getAuditLogs, type AuditLog } from "@/lib/admin/audit";
 export const dynamic = "force-dynamic";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  info: "text-[var(--cyan-accent)] bg-[var(--cykan)]/10",
-  warning: "text-[var(--warn)] bg-[var(--warn)]/10",
-  error: "text-[var(--danger)] bg-[var(--danger)]/10",
-  critical: "text-[var(--danger)] bg-[var(--danger)]/15",
+  info: "text-cyan-accent bg-(--cykan)/10",
+  warning: "text-warn bg-(--warn)/10",
+  error: "text-danger bg-(--danger)/10",
+  critical: "text-danger bg-(--danger)/15",
 };
 
 export default async function AuditPage() {
@@ -29,21 +29,21 @@ export default async function AuditPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 text-white/90">
+    <div className="p-(--space-8) space-y-(--space-8) text-text-soft">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-light">Audit Log</h1>
-        <span className="text-sm text-white/40">{total} total, showing {logs.length}</span>
+        <h1 className="t-24 font-light text-text">Audit Log</h1>
+        <span className="t-13 text-text-faint">{total} total, showing {logs.length}</span>
       </div>
 
       {dbError && (
-        <div className="rounded-lg bg-[var(--danger)]/10 border border-[var(--danger)]/25 p-4 text-[var(--danger)] text-sm">
+        <div className="rounded-md bg-(--danger)/10 border border-(--danger)/25 p-(--space-4) text-danger t-13">
           {dbError}
         </div>
       )}
 
       {/* Log table */}
-      <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] overflow-hidden">
-        <div className="grid grid-cols-[160px_100px_1fr_80px_100px] gap-2 px-4 py-2 text-xs text-white/30 uppercase tracking-wider border-b border-white/[0.06]">
+      <div className="rounded-md bg-surface-1 border border-(--border-shell) overflow-hidden">
+        <div className="grid grid-cols-[160px_100px_1fr_80px_100px] gap-(--space-2) px-(--space-4) py-(--space-2) t-10 text-text-ghost uppercase tracking-widest border-b border-(--border-shell)">
           <span>Time</span>
           <span>Action</span>
           <span>Resource</span>
@@ -52,33 +52,33 @@ export default async function AuditPage() {
         </div>
 
         {logs.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-white/30">No audit logs found</p>
+          <p className="px-(--space-4) py-(--space-8) text-center t-13 text-text-ghost">No audit logs found</p>
         )}
 
         {logs.map((log) => (
           <div
             key={log.id}
-            className="grid grid-cols-[160px_100px_1fr_80px_100px] gap-2 px-4 py-2 text-sm border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors"
+            className="grid grid-cols-[160px_100px_1fr_80px_100px] gap-(--space-2) px-(--space-4) py-(--space-2) t-13 border-b border-line hover:bg-surface-2 transition-colors"
           >
-            <span className="text-white/40 text-xs font-mono">
+            <span className="text-text-faint t-10 font-mono">
               {new Date(log.timestamp).toLocaleString()}
             </span>
-            <span className="text-white/70 font-mono text-xs truncate">{log.action}</span>
-            <span className="text-white/60 truncate">
+            <span className="text-text-muted font-mono t-10 truncate">{log.action}</span>
+            <span className="text-text-muted truncate">
               {log.resource}
               {log.resourceId && (
-                <span className="text-white/30 ml-1">#{log.resourceId.slice(0, 8)}</span>
+                <span className="text-text-ghost ml-(--space-1)">#{log.resourceId.slice(0, 8)}</span>
               )}
             </span>
             <span>
               {log.success ? (
-                <span className="text-[var(--money)] text-xs">OK</span>
+                <span className="text-money t-10">OK</span>
               ) : (
-                <span className="text-[var(--danger)] text-xs">FAIL</span>
+                <span className="text-danger t-10">FAIL</span>
               )}
             </span>
             <span
-              className={`text-xs px-2 py-0.5 rounded-full w-fit ${SEVERITY_COLORS[log.severity] ?? "text-white/40"}`}
+              className={`t-10 px-(--space-2) py-[2px] rounded-full w-fit ${SEVERITY_COLORS[log.severity] ?? "text-text-faint"}`}
             >
               {log.severity}
             </span>

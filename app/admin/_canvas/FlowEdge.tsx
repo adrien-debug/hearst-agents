@@ -61,13 +61,15 @@ export default function FlowEdge({ edge }: Props) {
         id={edge.id}
         d={d}
         stroke="var(--cykan)"
-        strokeWidth={1.4}
+        strokeWidth={active ? 2 : 1.2}
         fill="none"
-        opacity={active ? 0.95 : 0.22}
+        opacity={active ? 0.95 : 0.15}
+        strokeDasharray="4 6"
+        strokeLinecap="round"
         style={{
           transition:
             "opacity 220ms var(--ease-standard), stroke-width 220ms var(--ease-standard)",
-          filter: active ? "drop-shadow(0 0 6px var(--cykan))" : "none",
+          filter: active ? "drop-shadow(0 0 8px var(--cykan))" : "none",
         }}
       />
 
@@ -77,7 +79,7 @@ export default function FlowEdge({ edge }: Props) {
           d={d}
           stroke="var(--cykan)"
           strokeWidth={1.4}
-          strokeDasharray="2 16"
+          strokeDasharray="4 6"
           strokeLinecap="round"
           fill="none"
           opacity={0.55}
@@ -85,7 +87,7 @@ export default function FlowEdge({ edge }: Props) {
           <animate
             attributeName="stroke-dashoffset"
             from="0"
-            to="-18"
+            to="-20"
             dur="2.4s"
             repeatCount="indefinite"
           />
@@ -96,9 +98,9 @@ export default function FlowEdge({ edge }: Props) {
       {active && (
         <path
           d={d}
-          stroke="#ffffff"
+          stroke="var(--text)"
           strokeWidth={1.6}
-          strokeDasharray="3 10"
+          strokeDasharray="4 6"
           strokeLinecap="round"
           fill="none"
           opacity={0.9}
@@ -106,7 +108,7 @@ export default function FlowEdge({ edge }: Props) {
           <animate
             attributeName="stroke-dashoffset"
             from="0"
-            to="-13"
+            to="-20"
             dur="0.8s"
             repeatCount="indefinite"
           />

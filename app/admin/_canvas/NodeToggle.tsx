@@ -26,7 +26,7 @@ export default function NodeToggle({ flagKey }: Props) {
       disabled={loading}
       title={error ? `Erreur : ${error}` : value ? "Désactiver" : "Activer"}
       className={[
-        "relative inline-flex items-center h-4 w-7 rounded-full transition-all",
+        "relative inline-flex items-center h-[var(--space-4)] w-[28px] rounded-[var(--radius-full)] transition-all",
         "duration-[var(--duration-fast)] ease-[var(--ease-standard)] border",
         value
           ? "bg-[var(--cykan)]/30 border-[var(--cykan)]/50"
@@ -36,11 +36,11 @@ export default function NodeToggle({ flagKey }: Props) {
     >
       <span
         className={[
-          "inline-block size-2.5 rounded-full transition-transform",
+          "inline-block size-[10px] rounded-[var(--radius-full)] transition-transform",
           "duration-[var(--duration-fast)] ease-[var(--ease-standard)]",
           value
-            ? "translate-x-3.5 bg-[var(--cykan)]"
-            : "translate-x-0.5 bg-[var(--text-muted)]",
+            ? "translate-x-[14px] bg-[var(--cykan)]"
+            : "translate-x-[2px] bg-[var(--text-muted)]",
         ].join(" ")}
       />
     </button>

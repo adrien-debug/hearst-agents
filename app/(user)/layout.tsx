@@ -1,7 +1,7 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import { LeftPanel } from "./components/LeftPanel";
+import { LeftPanelShell } from "./components/LeftPanelShell";
 import { RightPanel } from "./components/RightPanel";
 import { TopBar } from "./components/TopBar";
 import { ToastContainer } from "@/app/components/ToastContainer";
@@ -25,9 +25,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           className="h-screen w-full flex overflow-hidden"
           style={{ background: "var(--bg-center)", color: "var(--text)" }}
         >
-          <div className="hidden md:block">
-            <LeftPanel />
-          </div>
+          <LeftPanelShell />
 
           {/* Main content: TopBar puis surface */}
           <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">

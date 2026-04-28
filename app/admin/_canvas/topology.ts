@@ -60,15 +60,15 @@ export interface CanvasEdge {
 
 export const VIEWBOX = { width: 1500, height: 600 } as const;
 
-export const NODE_SIZE = { w: 168, h: 80 } as const;
+export const NODE_SIZE = { w: 160, h: 48 } as const;
 
-// Y-axis canon: top branch (agent) / main row / bottom branch (pipeline)
-const Y_TOP = 220;
+// Y-axis canon: top branch / main row / bottom branch
+const Y_TOP = 200;
 const Y_MID = 320;
-const Y_BOT = 420;
+const Y_BOT = 440;
 
-// 8 columns, 180px gap between most nodes (final gap tighter to anchor `complete`).
-const X = [110, 300, 490, 680, 870, 1060, 1250, 1400] as const;
+// X-axis: tighter grouping
+const X = [100, 280, 460, 640, 820, 1000, 1180, 1360] as const;
 
 export const NODES: CanvasNode[] = [
   {
@@ -268,11 +268,17 @@ export function ports(node: CanvasNode) {
   };
 }
 
-/** Cubic Bézier path string between two points, horizontal control handles. */
+/** Orthogonal path string with rounded corners. */
 export function bezierPath(
   a: { x: number; y: number },
   b: { x: number; y: number },
 ): string {
-  const dx = Math.max(40, (b.x - a.x) * 0.5);
-  return `M ${a.x} ${a.y} C ${a.x + dx} ${a.y}, ${b.x - dx} ${b.y}, ${b.x} ${b.y}`;
+  if (Math.abs(a.y - b.y) < 2) {
+    return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+  }
+  const midX = a.x + (b.x - a.x) / 2;
+  const r = Math.min(16, Math.abs(a.y - b.y) / 2);
+  const dirY = b.y > a.y ? 1 : -1;
+  
+  return `M ${a.x} ${a.y} L ${midX - r} ${a.y} Q ${midX} ${a.y} ${midX} ${a.y + r * dirY} L ${midX} ${b.y - r * dirY} Q ${midX} ${b.y} ${midX + r} ${b.y} L ${b.x} ${b.y}`;
 }

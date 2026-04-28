@@ -27,19 +27,19 @@ export default function Scrubber({
 
   if (!selectedRunId) {
     return (
-      <div className="flex items-center justify-between gap-4 px-4 py-2 border-t border-[var(--line)] bg-[var(--bg-elev)] t-10 font-mono uppercase tracking-[0.15em] text-[var(--text-faint)]">
+      <div className="flex items-center justify-between gap-(--space-4) px-(--space-4) py-(--space-2) border-t border-line bg-bg-elev t-10 font-mono uppercase tracking-[0.15em] text-text-faint">
         Sélectionne un run pour rejouer
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 border-t border-[var(--line)] bg-[var(--bg-elev)]">
+    <div className="flex items-center gap-(--space-3) px-(--space-4) py-(--space-2) border-t border-line bg-bg-elev">
       <button
         type="button"
         onClick={onReset}
         disabled={disabled}
-        className="t-10 font-mono uppercase tracking-[0.12em] px-2 py-1 rounded border border-[var(--line-strong)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--cykan)]/40 transition-colors disabled:opacity-40"
+        className="t-10 font-mono uppercase tracking-[0.12em] px-(--space-2) py-(--space-1) rounded-xs border border-line-strong text-text-muted hover:text-text hover:border-(--cykan)/40 transition-colors disabled:opacity-40"
       >
         reset
       </button>
@@ -48,12 +48,12 @@ export default function Scrubber({
         type="button"
         onClick={onPlayToggle}
         disabled={disabled}
-        className="t-10 font-mono uppercase tracking-[0.12em] px-3 py-1 rounded border border-[var(--cykan)]/40 text-[var(--cykan)] bg-[var(--cykan)]/5 hover:bg-[var(--cykan)]/10 transition-colors disabled:opacity-40"
+        className="t-10 font-mono uppercase tracking-[0.12em] px-(--space-3) py-(--space-1) rounded-xs border border-(--cykan)/40 text-(--cykan) bg-(--cykan)/5 hover:bg-(--cykan)/10 transition-colors disabled:opacity-40"
       >
         {isPlaying ? "pause" : "play"}
       </button>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-(--space-1)">
         {([1, 4, 16] as const).map((s) => (
           <button
             key={s}
@@ -61,10 +61,10 @@ export default function Scrubber({
             onClick={() => onSpeedChange(s)}
             disabled={disabled}
             className={[
-              "t-9 font-mono uppercase tracking-[0.1em] px-1.5 py-0.5 rounded border transition-colors",
+              "t-9 font-mono uppercase tracking-widest px-[6px] py-[2px] rounded-xs border transition-colors",
               s === speed
-                ? "border-[var(--cykan)]/40 text-[var(--cykan)] bg-[var(--cykan)]/5"
-                : "border-[var(--line-strong)] text-[var(--text-muted)] hover:text-[var(--text)]",
+                ? "border-(--cykan)/40 text-(--cykan) bg-(--cykan)/5"
+                : "border-line-strong text-text-muted hover:text-text",
             ].join(" ")}
           >
             {s}×
@@ -79,10 +79,10 @@ export default function Scrubber({
         value={Math.round(progress * 1000)}
         onChange={(e) => onSeek(parseInt(e.target.value, 10) / 1000)}
         disabled={disabled}
-        className="flex-1 accent-[var(--cykan)] h-1"
+        className="flex-1 accent-(--cykan) h-[4px]"
       />
 
-      <span className="t-9 font-mono tracking-[0.1em] text-[var(--text-faint)]">
+      <span className="t-9 font-mono tracking-widest text-text-faint">
         {Math.round(progress * 100)}%
       </span>
     </div>

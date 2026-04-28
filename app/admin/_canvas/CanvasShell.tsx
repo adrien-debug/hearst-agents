@@ -84,19 +84,19 @@ export default function CanvasShell() {
   const showScrubber = !!selectedRunId;
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--bg)] overflow-hidden">
+    <div className="flex flex-col h-screen bg-bg overflow-hidden">
       {/* Top header */}
-      <header className="flex items-center justify-between px-8 py-5 border-b border-[var(--line)] bg-gradient-to-r from-[var(--cykan)]/[0.04] via-transparent to-transparent shrink-0">
-        <div className="flex items-baseline gap-6">
+      <header className="flex items-center justify-between px-(--space-8) py-(--space-5) border-b border-line bg-linear-to-r from-(--cykan)/4 via-transparent to-transparent shrink-0">
+        <div className="flex items-baseline gap-(--space-6)">
           <div>
-            <p className="t-10 font-mono uppercase tracking-[0.22em] text-[var(--text-faint)]">
+            <p className="t-10 font-mono uppercase tracking-[0.22em] text-text-faint">
               Hearst Admin
             </p>
-            <h1 className="t-28 font-bold tracking-tight text-[var(--text)] leading-tight mt-1">
+            <h1 className="t-28 font-bold tracking-tight text-text leading-tight mt-(--space-1)">
               Pipeline live
             </h1>
           </div>
-          <span className="t-11 font-mono uppercase tracking-[0.15em] text-[var(--text-faint)]/70 hidden xl:inline">
+          <span className="t-11 font-mono uppercase tracking-[0.15em] text-(--text-faint)/70 hidden xl:inline">
             {mode === "live"
               ? "tail global event bus"
               : selectedRunId
@@ -105,24 +105,24 @@ export default function CanvasShell() {
           </span>
         </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-(--space-5)">
           <FlowLegend />
           <button
             type="button"
             onClick={onLiveToggle}
             className={[
-              "flex items-center gap-2 t-11 font-mono uppercase tracking-[0.15em] px-4 py-2 rounded border transition-colors",
+              "flex items-center gap-(--space-2) t-11 font-mono uppercase tracking-[0.15em] px-(--space-4) py-(--space-2) rounded-xs border transition-colors",
               mode === "live"
-                ? "border-[var(--cykan)]/60 text-[var(--cykan)] bg-[var(--cykan)]/10 shadow-[var(--glow-cyan-sm)]"
-                : "border-[var(--line-strong)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--cykan)]/40 hover:bg-[var(--cykan)]/5",
+                ? "border-(--cykan)/60 text-(--cykan) bg-(--cykan)/10 shadow-(--glow-cyan-sm)"
+                : "border-line-strong text-text-muted hover:text-text hover:border-(--cykan)/40 hover:bg-(--cykan)/5",
             ].join(" ")}
           >
             <span
               className={[
-                "size-2 rounded-full",
+                "size-(--space-2) rounded-(--radius-full)",
                 mode === "live"
-                  ? "bg-[var(--cykan)] animate-pulse shadow-[0_0_8px_var(--cykan)]"
-                  : "bg-[var(--text-faint)]",
+                  ? "bg-(--cykan) animate-pulse shadow-(--glow-cyan-sm)"
+                  : "bg-text-faint",
               ].join(" ")}
             />
             {mode === "live" ? "Live actif" : "Activer le live"}
@@ -133,14 +133,14 @@ export default function CanvasShell() {
       {/* Main: canvas + rail */}
       <div className="flex-1 flex min-h-0">
         <main className="flex-1 flex flex-col min-w-0">
-          <div className="flex-1 flex items-center justify-center min-h-0 px-8 py-6 relative">
+          <div className="flex-1 flex items-center justify-center min-h-0 px-(--space-8) py-(--space-6) relative">
             <FlowCanvas />
 
             {/* Centered idle hint — explains how to use the canvas */}
             {showIdleHint && (
-              <div className="absolute top-8 left-1/2 -translate-x-1/2 pointer-events-none">
-                <div className="rounded-full border border-[var(--cykan)]/30 bg-[var(--bg-elev)]/80 backdrop-blur px-5 py-2 t-11 font-mono uppercase tracking-[0.18em] text-[var(--cykan)]/80">
-                  active le live ↑ ou choisis un run →
+              <div className="absolute top-(--space-8) left-1/2 -translate-x-1/2 pointer-events-none z-10">
+                <div className="rounded-(--radius-full) border border-(--cykan)/30 bg-(--bg-elev)/80 backdrop-blur px-(--space-5) py-(--space-2) t-11 font-mono uppercase tracking-[0.18em] text-(--cykan)/80">
+                  active le live ↑ ou choisis un run ↘
                 </div>
               </div>
             )}
@@ -168,69 +168,69 @@ export default function CanvasShell() {
           className={[
             "fixed top-[88px] right-[300px] z-50",
             "w-[360px] max-h-[calc(100vh-120px)] overflow-y-auto",
-            "rounded-md border border-[var(--cykan)]/30",
-            "bg-[var(--bg-elev)]/95 backdrop-blur",
-            "shadow-[var(--glow-cyan-md)]",
+            "rounded-md border border-(--cykan)/30",
+            "bg-(--bg-elev)/95 backdrop-blur",
+            "shadow-(--glow-cyan-md)",
           ].join(" ")}
         >
-          <header className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--line)] bg-[var(--bg-elev)]/95 backdrop-blur">
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="t-13 font-medium text-[var(--text)] truncate">
+          <header className="sticky top-0 z-10 flex items-center justify-between gap-(--space-3) px-(--space-4) py-(--space-3) border-b border-line bg-(--bg-elev)/95 backdrop-blur">
+            <div className="flex flex-col gap-[2px] min-w-0">
+              <span className="t-13 font-medium text-text truncate">
                 {selectedNode.label}
               </span>
-              <span className="t-10 font-mono uppercase tracking-[0.14em] text-[var(--text-faint)]/80">
+              <span className="t-10 font-mono uppercase tracking-[0.14em] text-(--text-faint)/80">
                 {selectedNode.sublabel}
               </span>
             </div>
             <button
               type="button"
               onClick={() => setSelectedNodeId(null)}
-              className="t-10 font-mono uppercase tracking-[0.12em] text-[var(--text-faint)] hover:text-[var(--text)] transition-colors shrink-0"
+              className="t-10 font-mono uppercase tracking-[0.12em] text-text-faint hover:text-text transition-colors shrink-0"
             >
               fermer
             </button>
           </header>
 
-          <div className="flex flex-col gap-4 px-4 py-4">
-            <p className="t-12 leading-relaxed text-[var(--text-muted)]">
+          <div className="flex flex-col gap-(--space-4) px-(--space-4) py-(--space-4)">
+            <p className="t-12 leading-relaxed text-text-muted">
               {selectedNode.description}
             </p>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1">
-                <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+            <div className="grid grid-cols-2 gap-(--space-3)">
+              <div className="flex flex-col gap-(--space-1)">
+                <span className="t-9 font-mono uppercase tracking-[0.18em] text-(--text-faint)/70">
                   Inputs
                 </span>
-                <span className="t-11 text-[var(--text)]">{selectedNode.inputs}</span>
+                <span className="t-11 text-text">{selectedNode.inputs}</span>
               </div>
-              <div className="flex flex-col gap-1">
-                <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+              <div className="flex flex-col gap-(--space-1)">
+                <span className="t-9 font-mono uppercase tracking-[0.18em] text-(--text-faint)/70">
                   Outputs
                 </span>
-                <span className="t-11 text-[var(--text)]">{selectedNode.outputs}</span>
+                <span className="t-11 text-text">{selectedNode.outputs}</span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+            <div className="flex flex-col gap-(--space-2)">
+              <span className="t-9 font-mono uppercase tracking-[0.18em] text-(--text-faint)/70">
                 Source
               </span>
-              <div className="rounded-sm bg-[var(--bg-soft)] px-2 py-1.5">
-                <p className="t-10 font-mono tracking-[0.04em] text-[var(--cykan)] break-all leading-snug">
+              <div className="rounded-sm bg-bg-soft px-(--space-2) py-[6px]">
+                <p className="t-10 font-mono tracking-[0.04em] text-(--cykan) break-all leading-snug">
                   {selectedNode.fileHint}
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+            <div className="flex flex-col gap-(--space-2)">
+              <span className="t-9 font-mono uppercase tracking-[0.18em] text-(--text-faint)/70">
                 Events SSE
               </span>
-              <ul className="flex flex-col gap-1">
+              <ul className="flex flex-col gap-(--space-1)">
                 {selectedNode.events.map((e) => (
                   <li
                     key={e}
-                    className="t-10 font-mono tracking-[0.02em] text-[var(--text-soft)] before:content-['—_'] before:text-[var(--text-faint)]/60"
+                    className="t-10 font-mono tracking-[0.02em] text-text-soft before:content-['—_'] before:text-(--text-faint)/60"
                   >
                     {e}
                   </li>
@@ -239,15 +239,15 @@ export default function CanvasShell() {
             </div>
 
             {selectedNode.branches && selectedNode.branches.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <span className="t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)]/70">
+              <div className="flex flex-col gap-(--space-2)">
+                <span className="t-9 font-mono uppercase tracking-[0.18em] text-(--text-faint)/70">
                   Branchements
                 </span>
-                <ul className="flex flex-col gap-1">
+                <ul className="flex flex-col gap-(--space-1)">
                   {selectedNode.branches.map((b) => (
                     <li
                       key={b}
-                      className="t-11 text-[var(--text-soft)] leading-snug"
+                      className="t-11 text-text-soft leading-snug"
                     >
                       {b}
                     </li>
@@ -256,11 +256,11 @@ export default function CanvasShell() {
               </div>
             )}
 
-            <div className="pt-2 border-t border-[var(--line)]">
+            <div className="pt-(--space-2) border-t border-line">
               <span
                 className={[
                   "t-9 font-mono uppercase tracking-[0.18em]",
-                  selectedNode.toggleable ? "text-[var(--cykan)]/80" : "text-[var(--text-faint)]/60",
+                  selectedNode.toggleable ? "text-(--cykan)/80" : "text-(--text-faint)/60",
                 ].join(" ")}
               >
                 {selectedNode.toggleable && selectedNode.flagKey
