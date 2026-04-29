@@ -32,6 +32,7 @@ import { SYSTEM_CONFIG } from "@/lib/system/config";
 import { preflightConnector } from "@/lib/connectors/control-plane/preflight";
 import { appendMessage, getRecentMessages } from "@/lib/memory/store";
 import { memoryToConversationHistory } from "@/lib/memory/format";
+import { appendToSummary } from "@/lib/memory/conversation-summary";
 import { isResearchIntent, isReportIntent } from "./research-intent";
 import { isScheduleIntent } from "./schedule-intent";
 import { checkSafetyGate } from "./safety-gate";
@@ -186,6 +187,7 @@ async function runPipeline(
       content: input.message,
       createdAt: Date.now(),
     }, scope);
+    void appendToSummary({ userId: input.userId, role: "user", content: input.message });
 
     if (!input.conversationHistory || input.conversationHistory.length === 0) {
       const recentMemory = await getRecentMessages(input.conversationId, 10);
@@ -438,6 +440,7 @@ async function runPipeline(
         content: assistantOutput,
         createdAt: Date.now(),
       }, scope);
+      void appendToSummary({ userId: input.userId, role: "assistant", content: assistantOutput });
     }
   };
 
