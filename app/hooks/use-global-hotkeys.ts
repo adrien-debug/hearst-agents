@@ -8,6 +8,8 @@
  * - ⌘1..⌘8    : switch direct vers un Stage (cockpit/chat/asset/browser/
  *               meeting/kg/voice/simulation — grille systématique,
  *               voir STAGE_HOTKEYS)
+ * - ⌘⇧V       : toggle direct mode voix ambient (raccourci alternatif
+ *               à ⌘7, accessible même quand un autre Stage est actif)
  * - ⌘⌫        : back stage
  *
  * Ignore les inputs / textarea / contenteditable pour ne pas voler les
@@ -33,6 +35,21 @@ export function useGlobalHotkeys() {
     const onKey = (e: KeyboardEvent) => {
       // ⌘K et ⌘L : autorisés même en input (palette / chat flottant)
       const meta = e.metaKey || e.ctrlKey;
+
+      // ⌘⇧V → mode voix ambient (toggle). Doit être checké AVANT le early
+      // return `if (!meta) return;` ne change rien (meta est requis), mais
+      // checké AVANT les ⌘+lettre simples sinon collision.
+      if (meta && e.shiftKey && (e.key === "v" || e.key === "V")) {
+        e.preventDefault();
+        const currentMode = useStageStore.getState().current.mode;
+        if (currentMode === "voice") {
+          useStageStore.getState().back();
+        } else {
+          setMode({ mode: "voice" });
+        }
+        return;
+      }
+
       if (!meta) return;
 
       if (e.key === "k" || e.key === "K") {
