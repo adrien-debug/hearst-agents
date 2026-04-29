@@ -6,9 +6,11 @@ import { LeftPanelShell } from "./components/LeftPanelShell";
 import { RightPanel } from "./components/RightPanel";
 import { PulseBar } from "./components/PulseBar";
 import { Commandeur } from "./components/Commandeur";
+import { VoicePulse } from "./components/voice/VoicePulse";
 import { ToastContainer } from "@/app/components/ToastContainer";
 import { useToast } from "@/app/hooks/use-toast";
 import { useGlobalHotkeys } from "@/app/hooks/use-global-hotkeys";
+import { useVoiceStore } from "@/stores/voice";
 
 function BriefingAutoTrigger() {
   useEffect(() => {
@@ -28,6 +30,22 @@ function ToastProvider({ children }: { children: React.ReactNode }) {
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </>
   );
+}
+
+/**
+ * VoiceMount — Mount conditionnel du pipeline WebRTC voix.
+ *
+ * Vit au root layout pour ne JAMAIS unmount lors de la navigation entre
+ * Stages. La connexion OpenAI Realtime ne s'ouvre que quand
+ * `useVoiceStore.voiceActive` passe à true (déclenché par ⌘7, ⌘⇧V, ou
+ * Commandeur). Avant : VoicePulse était dans VoiceStage → mount/unmount
+ * à chaque navigation → 14 sessions accumulées + 4 agents qui parlaient
+ * en chœur.
+ */
+function VoiceMount() {
+  const voiceActive = useVoiceStore((s) => s.voiceActive);
+  if (!voiceActive) return null;
+  return <VoicePulse />;
 }
 
 /**
@@ -70,6 +88,9 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
           {/* Overlay global — toujours monté, contrôlé par useStageStore.commandeurOpen */}
           <Commandeur />
+
+          {/* Pipeline WebRTC voix — vit au root, n'est rendu que si voiceActive */}
+          <VoiceMount />
         </div>
       </ToastProvider>
     </SessionProvider>

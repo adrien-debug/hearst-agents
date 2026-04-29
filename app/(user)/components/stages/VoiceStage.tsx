@@ -3,16 +3,15 @@
 /**
  * VoiceStage — Mode voix ambient temps réel (Signature 6).
  *
- * Le composant VoicePulse (mounted toujours) gère le WebRTC. La stage
- * affiche : un cercle pulsant proportionnel au RMS audio, un badge phase,
- * et un transcript live des 6 dernières échanges. Tout vient de
- * useVoiceStore — pas de prop sessionId nécessaire (ignoré pour compat).
+ * VoicePulse vit au root layout (cf. layout.tsx VoiceMount) — la stage ne
+ * monte plus rien côté WebRTC. Elle ne fait que visualiser : cercle pulsant
+ * proportionnel au RMS audio, badge phase. Le transcript est affiché par
+ * le ContextRail droit (cf. C-light wiring). Tout vient de useVoiceStore.
  */
 
 import { useMemo } from "react";
 import { useStageStore } from "@/stores/stage";
 import { useVoiceStore, type VoicePhase } from "@/stores/voice";
-import { VoicePulse } from "../voice/VoicePulse";
 
 interface VoiceStageProps {
   sessionId?: string;
@@ -20,7 +19,6 @@ interface VoiceStageProps {
 
 const PULSE_MIN_PX = 80;
 const PULSE_MAX_PX = 200;
-const TRANSCRIPT_TAIL = 6;
 
 const PHASE_LABEL: Record<VoicePhase, string> = {
   idle: "STANDBY",
@@ -45,19 +43,18 @@ export function VoiceStage(_props: VoiceStageProps) {
   const phase = useVoiceStore((s) => s.phase);
   const sessionId = useVoiceStore((s) => s.sessionId);
   const audioLevel = useVoiceStore((s) => s.audioLevel);
-  const transcript = useVoiceStore((s) => s.transcript);
   const error = useVoiceStore((s) => s.error);
-  const reset = useVoiceStore((s) => s.reset);
 
   const pulseSize = useMemo(() => {
     const range = PULSE_MAX_PX - PULSE_MIN_PX;
     return PULSE_MIN_PX + Math.max(0, Math.min(audioLevel, 1)) * range;
   }, [audioLevel]);
 
-  const tail = transcript.slice(-TRANSCRIPT_TAIL);
-
+  // Ordre important : on désactive la session WebRTC AVANT de quitter la
+  // stage, sinon le teardown peut foirer si le composant racine VoicePulse
+  // unmount pendant que back() change le mode.
   const stopAndExit = () => {
-    reset();
+    useVoiceStore.getState().setVoiceActive(false);
     back();
   };
 
@@ -68,8 +65,6 @@ export function VoiceStage(_props: VoiceStageProps) {
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
-      <VoicePulse />
-
       <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
         <div className="flex items-center gap-4">
           <span
@@ -112,7 +107,8 @@ export function VoiceStage(_props: VoiceStageProps) {
             width: `${pulseSize}px`,
             height: `${pulseSize}px`,
             opacity: 0.4 + Math.min(audioLevel, 1) * 0.4,
-            transition: "width var(--duration-fast, 160ms) var(--ease-standard, ease), height var(--duration-fast, 160ms) var(--ease-standard, ease), opacity var(--duration-fast, 160ms) var(--ease-standard, ease)",
+            transition:
+              "width var(--duration-fast, 160ms) var(--ease-standard, ease), height var(--duration-fast, 160ms) var(--ease-standard, ease), opacity var(--duration-fast, 160ms) var(--ease-standard, ease)",
           }}
           aria-hidden
         />
@@ -131,40 +127,6 @@ export function VoiceStage(_props: VoiceStageProps) {
           )}
         </div>
       </div>
-
-      <footer
-        className="flex-shrink-0 border-t border-[var(--border-default)] flex flex-col gap-2 overflow-y-auto"
-        style={{ padding: "var(--space-6) var(--space-12)", maxHeight: "var(--space-64)" }}
-      >
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-          TRANSCRIPT
-        </span>
-        {tail.length === 0 ? (
-          <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-            En attente du premier échange…
-          </p>
-        ) : (
-          tail.map((entry) => (
-            <div key={entry.id} className="flex items-start gap-3">
-              <span
-                className={`t-9 font-mono uppercase tracking-marquee shrink-0 ${
-                  entry.role === "user" ? "text-[var(--cykan)]" : "text-[var(--text-faint)]"
-                }`}
-              >
-                {entry.role === "user" ? "USER" : "AGENT"}
-              </span>
-              <p
-                className={`t-13 ${
-                  entry.role === "user" ? "text-[var(--cykan)]" : "text-[var(--text)]"
-                }`}
-                style={{ lineHeight: "var(--leading-base)" }}
-              >
-                {entry.text}
-              </p>
-            </div>
-          ))
-        )}
-      </footer>
     </div>
   );
 }

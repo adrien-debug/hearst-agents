@@ -18,6 +18,7 @@
 
 import { useEffect } from "react";
 import { useStageStore, STAGE_HOTKEYS } from "@/stores/stage";
+import { useVoiceStore } from "@/stores/voice";
 
 export function useGlobalHotkeys() {
   const toggleCommandeur = useStageStore((s) => s.toggleCommandeur);
@@ -41,11 +42,14 @@ export function useGlobalHotkeys() {
       // checké AVANT les ⌘+lettre simples sinon collision.
       if (meta && e.shiftKey && (e.key === "v" || e.key === "V")) {
         e.preventDefault();
-        const currentMode = useStageStore.getState().current.mode;
-        if (currentMode === "voice") {
-          useStageStore.getState().back();
+        const stage = useStageStore.getState();
+        const voice = useVoiceStore.getState();
+        if (stage.current.mode === "voice") {
+          voice.setVoiceActive(false);
+          stage.back();
         } else {
-          setMode({ mode: "voice" });
+          voice.setVoiceActive(true);
+          stage.setMode({ mode: "voice" });
         }
         return;
       }
@@ -102,6 +106,7 @@ export function useGlobalHotkeys() {
             setMode({ mode: "kg" });
             break;
           case "voice":
+            useVoiceStore.getState().setVoiceActive(true);
             setMode({ mode: "voice" });
             break;
           case "simulation":

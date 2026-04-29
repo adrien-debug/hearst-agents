@@ -31,6 +31,11 @@ interface VoiceState {
   /** RMS du mic, normalisé 0..1. */
   audioLevel: number;
   error: string | null;
+  /** True quand le pipeline WebRTC doit être actif. Le composant VoicePulse
+   * est monté au root layout et ne se connecte que si ce flag passe à true.
+   * Évite le mount/unmount catastrophique sur chaque navigation Stage qui
+   * accumulait des sessions OpenAI Realtime concurrentes. */
+  voiceActive: boolean;
 
   setPhase: (phase: VoicePhase) => void;
   setSessionId: (id: string | null) => void;
@@ -39,6 +44,7 @@ interface VoiceState {
   updateLastTranscript: (id: string, deltaOrText: string) => void;
   setAudioLevel: (level: number) => void;
   setError: (err: string | null) => void;
+  setVoiceActive: (active: boolean) => void;
   reset: () => void;
 }
 
@@ -48,6 +54,7 @@ export const useVoiceStore = create<VoiceState>((set) => ({
   transcript: [],
   audioLevel: 0,
   error: null,
+  voiceActive: false,
 
   setPhase: (phase) => set({ phase }),
   setSessionId: (id) => set({ sessionId: id }),
@@ -61,6 +68,7 @@ export const useVoiceStore = create<VoiceState>((set) => ({
     })),
   setAudioLevel: (level) => set({ audioLevel: level }),
   setError: (err) => set({ error: err }),
+  setVoiceActive: (active) => set({ voiceActive: active }),
   reset: () =>
     set({
       phase: "idle",
@@ -68,5 +76,6 @@ export const useVoiceStore = create<VoiceState>((set) => ({
       transcript: [],
       audioLevel: 0,
       error: null,
+      voiceActive: false,
     }),
 }));

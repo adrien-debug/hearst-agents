@@ -17,6 +17,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStageStore, type StagePayload } from "@/stores/stage";
+import { useVoiceStore } from "@/stores/voice";
 
 interface CommandAction {
   id: string;
@@ -109,6 +110,7 @@ export function Commandeur() {
       hint: "Conversation full-duplex < 500ms",
       hotkey: "⌘7",
       perform: () => {
+        useVoiceStore.getState().setVoiceActive(true);
         setStageMode({ mode: "voice" } as StagePayload);
         setOpen(false);
       },

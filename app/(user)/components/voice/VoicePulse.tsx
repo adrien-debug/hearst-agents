@@ -11,9 +11,11 @@
  *  5. ontrack → audio element pour la sortie TTS
  *  6. DataChannel events → store (phase, transcript)
  *
- * Le composant gère son lifecycle entièrement : mount = connect, unmount =
- * teardown propre (tracks, peer, analyser). Ne rend qu'un audio invisible
- * (la viz est dans VoiceStage qui lit useVoiceStore).
+ * Monté UNE SEULE FOIS au root layout via VoiceMount, et activé seulement
+ * quand `useVoiceStore.voiceActive` passe à true (déclenché par ⌘7, ⌘⇧V,
+ * ou Commandeur). Avant : monté dans VoiceStage → mount/unmount à chaque
+ * navigation Stage → 14 sessions OpenAI accumulées. Le bug est résolu en
+ * sortant le mount du Stage.
  */
 
 import { useCallback, useEffect, useRef } from "react";
@@ -22,6 +24,11 @@ import { useVoiceStore } from "@/stores/voice";
 const REALTIME_MODEL = "gpt-4o-realtime-preview";
 const REALTIME_SDP_URL = `https://api.openai.com/v1/realtime?model=${REALTIME_MODEL}`;
 const AUDIO_LEVEL_BOOST = 4;
+
+// Singleton guard module-level — empêche deux PeerConnections OpenAI
+// concurrentes même si React Strict Mode ou un re-render parasite remonte
+// le composant. Si une session est déjà active, le nouveau start() est no-op.
+let activePc: RTCPeerConnection | null = null;
 
 interface RealtimeServerEvent {
   type: string;
@@ -58,6 +65,7 @@ export function VoicePulse() {
     dcRef.current?.close();
     dcRef.current = null;
     pcRef.current?.close();
+    if (activePc === pcRef.current) activePc = null;
     pcRef.current = null;
     if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
       void audioCtxRef.current.close().catch(() => {});
@@ -69,6 +77,10 @@ export function VoicePulse() {
   }, [reset]);
 
   const start = useCallback(async () => {
+    if (activePc) {
+      console.warn("[VoicePulse] Session déjà active, skip nouveau start");
+      return;
+    }
     setError(null);
     setPhase("connecting");
     try {
@@ -120,6 +132,7 @@ export function VoicePulse() {
       // 4. RTCPeerConnection
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
+      activePc = pc;
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
       // 5. ontrack pour piper le TTS dans l'audio element
