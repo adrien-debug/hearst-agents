@@ -11,6 +11,12 @@ import {
   buildFounderCockpit,
   buildCustomer360,
   buildDealToCash,
+  buildFinancialPnL,
+  buildProductAnalytics,
+  buildSupportHealth,
+  buildEngineeringVelocity,
+  buildMarketingAarrr,
+  buildHrPeople,
 } from "@/lib/reports/catalog";
 
 const SCOPE = {
@@ -35,10 +41,40 @@ describe("catalogue — Zod validation", () => {
     expect(() => reportSpecSchema.parse(spec)).not.toThrow();
   });
 
-  it("le CATALOG expose les 3 entries avec ids stables", () => {
-    expect(CATALOG).toHaveLength(3);
+  it("Financial P&L est un Spec valide", () => {
+    const spec = buildFinancialPnL(SCOPE);
+    expect(() => reportSpecSchema.parse(spec)).not.toThrow();
+  });
+
+  it("Product Analytics est un Spec valide", () => {
+    const spec = buildProductAnalytics(SCOPE);
+    expect(() => reportSpecSchema.parse(spec)).not.toThrow();
+  });
+
+  it("Support Health est un Spec valide", () => {
+    const spec = buildSupportHealth(SCOPE);
+    expect(() => reportSpecSchema.parse(spec)).not.toThrow();
+  });
+
+  it("Engineering Velocity est un Spec valide", () => {
+    const spec = buildEngineeringVelocity(SCOPE);
+    expect(() => reportSpecSchema.parse(spec)).not.toThrow();
+  });
+
+  it("Marketing AARRR est un Spec valide", () => {
+    const spec = buildMarketingAarrr(SCOPE);
+    expect(() => reportSpecSchema.parse(spec)).not.toThrow();
+  });
+
+  it("HR / People est un Spec valide", () => {
+    const spec = buildHrPeople(SCOPE);
+    expect(() => reportSpecSchema.parse(spec)).not.toThrow();
+  });
+
+  it("le CATALOG expose les 9 entries avec ids stables", () => {
+    expect(CATALOG).toHaveLength(9);
     const ids = CATALOG.map((c) => c.id);
-    expect(new Set(ids).size).toBe(3); // tous distincts
+    expect(new Set(ids).size).toBe(9); // tous distincts
   });
 });
 
@@ -79,5 +115,182 @@ describe("getApplicableReports — matrice connexions", () => {
     const out = getApplicableReports(["HubSpot", "STRIPE"]);
     const d2c = out.find((r) => r.title === "Deal-to-Cash");
     expect(d2c?.status).toBe("ready");
+  });
+
+  it("Financial P&L apparaît dès Stripe seul (partial) puis ready avec QuickBooks", () => {
+    const partial = getApplicableReports(["stripe"]);
+    const fpl1 = partial.find((r) => r.title === "Financial P&L");
+    expect(fpl1?.status).toBe("partial");
+    expect(fpl1?.missingApps).toContain("quickbooks");
+
+    const ready = getApplicableReports(["stripe", "quickbooks"]);
+    const fpl2 = ready.find((r) => r.title === "Financial P&L");
+    expect(fpl2?.status).toBe("ready");
+    expect(fpl2?.missingApps).toHaveLength(0);
+  });
+
+  it("Product Analytics nécessite Mixpanel + Stripe + Intercom", () => {
+    const partial = getApplicableReports(["mixpanel"]);
+    const pa = partial.find((r) => r.title === "Product Analytics");
+    expect(pa?.status).toBe("partial");
+
+    const ready = getApplicableReports(["mixpanel", "stripe", "intercom"]);
+    const pa2 = ready.find((r) => r.title === "Product Analytics");
+    expect(pa2?.status).toBe("ready");
+  });
+
+  it("Support Health est ready dès Intercom connecté", () => {
+    const ready = getApplicableReports(["intercom"]);
+    const sh = ready.find((r) => r.title === "Support Health");
+    expect(sh?.status).toBe("ready");
+    expect(sh?.missingApps).toHaveLength(0);
+  });
+
+  it("Engineering Velocity est partial avec GitHub seul, ready avec Linear", () => {
+    const partial = getApplicableReports(["github"]);
+    const ev1 = partial.find((r) => r.title === "Engineering Velocity");
+    expect(ev1?.status).toBe("partial");
+    expect(ev1?.missingApps).toContain("linear");
+
+    const ready = getApplicableReports(["github", "linear"]);
+    const ev2 = ready.find((r) => r.title === "Engineering Velocity");
+    expect(ev2?.status).toBe("ready");
+    expect(ev2?.missingApps).toHaveLength(0);
+  });
+
+  it("Marketing AARRR nécessite Google Analytics + Stripe + HubSpot", () => {
+    const partial = getApplicableReports(["googleanalytics"]);
+    const ma = partial.find((r) => r.title === "Marketing AARRR");
+    expect(ma?.status).toBe("partial");
+
+    const ready = getApplicableReports([
+      "googleanalytics",
+      "stripe",
+      "hubspot",
+    ]);
+    const ma2 = ready.find((r) => r.title === "Marketing AARRR");
+    expect(ma2?.status).toBe("ready");
+    expect(ma2?.missingApps).toHaveLength(0);
+  });
+
+  it("HR / People nécessite Greenhouse + Slack + BambooHR", () => {
+    const partial = getApplicableReports(["slack"]);
+    const hr = partial.find((r) => r.title === "HR / People");
+    expect(hr?.status).toBe("partial");
+    expect(hr?.missingApps).toContain("greenhouse");
+    expect(hr?.missingApps).toContain("bamboohr");
+
+    const ready = getApplicableReports(["greenhouse", "slack", "bamboohr"]);
+    const hr2 = ready.find((r) => r.title === "HR / People");
+    expect(hr2?.status).toBe("ready");
+    expect(hr2?.missingApps).toHaveLength(0);
+  });
+});
+
+describe("catalogue — sous-scalaires consommés par signals", () => {
+  /**
+   * Vérifie que les blocs KPI exposent bien le sous-scalaire (props.subScalars)
+   * attendu par les règles de signals (extract.ts). Sans ces sous-scalaires,
+   * les rules composites skip silencieusement et n'émettent rien.
+   */
+  function findBlock(spec: ReturnType<typeof buildFinancialPnL>, blockId: string) {
+    return spec.blocks.find((b) => b.id === blockId);
+  }
+
+  it("financial-pnl : kpi_expenses expose baseline_3m", () => {
+    const spec = buildFinancialPnL(SCOPE);
+    const block = findBlock(spec, "kpi_expenses");
+    expect(block).toBeDefined();
+    const subs = block?.props?.subScalars as Record<string, string>;
+    expect(subs.baseline_3m).toBeDefined();
+  });
+
+  it("product-analytics : kpi_top_feature expose mau", () => {
+    const spec = buildProductAnalytics(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_top_feature");
+    expect(block).toBeDefined();
+    const subs = block?.props?.subScalars as Record<string, string>;
+    expect(subs.mau).toBeDefined();
+  });
+
+  it("product-analytics : kpi_nps expose previous", () => {
+    const spec = buildProductAnalytics(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_nps");
+    expect(block).toBeDefined();
+    const subs = block?.props?.subScalars as Record<string, string>;
+    expect(subs.previous).toBeDefined();
+  });
+
+  it("product-analytics : kpi_retention_c2 expose baseline", () => {
+    const spec = buildProductAnalytics(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_retention_c2");
+    expect(block).toBeDefined();
+    const subs = block?.props?.subScalars as Record<string, string>;
+    expect(subs.baseline).toBeDefined();
+  });
+
+  it("support-health : kpi_csat_7d expose baseline", () => {
+    const spec = buildSupportHealth(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_csat_7d");
+    expect(block).toBeDefined();
+    const subs = block?.props?.subScalars as Record<string, string>;
+    expect(subs.baseline).toBeDefined();
+  });
+
+  it("support-health : kpi_sla expose value en ratio (format percent)", () => {
+    const spec = buildSupportHealth(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_sla");
+    expect(block).toBeDefined();
+    expect(block?.props?.format).toBe("percent");
+  });
+
+  it("engineering-velocity : kpi_lead_time expose baseline", () => {
+    const spec = buildEngineeringVelocity(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_lead_time");
+    expect(block).toBeDefined();
+    const subs = block?.props?.subScalars as Record<string, string>;
+    expect(subs.baseline).toBeDefined();
+  });
+
+  it("engineering-velocity : kpi_change_failure_rate présent (rename de kpi_cfr)", () => {
+    const spec = buildEngineeringVelocity(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_change_failure_rate");
+    expect(block).toBeDefined();
+  });
+
+  it("hr-people : kpi_late_activity expose value en ratio (format percent)", () => {
+    const spec = buildHrPeople(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_late_activity");
+    expect(block).toBeDefined();
+    expect(block?.props?.format).toBe("percent");
+    // value = ratio late/total : pas de subScalars requis pour la rule simple.
+  });
+
+  it("engineering-velocity : kpi_incidents expose baseline_4w", () => {
+    const spec = buildEngineeringVelocity(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_incidents");
+    expect(block).toBeDefined();
+    const subs = block?.props?.subScalars as Record<string, string>;
+    expect(subs.baseline_4w).toBeDefined();
+  });
+
+  it("engineering-velocity : kpi_cycle expose deltaField pour cycle_time_drift", () => {
+    const spec = buildEngineeringVelocity(SCOPE);
+    const block = spec.blocks.find((b) => b.id === "kpi_cycle");
+    expect(block).toBeDefined();
+    expect(block?.props?.deltaField).toBeDefined();
+  });
+
+  it("aucun catalogue ne dépasse MAX_TRANSFORMS = 24", () => {
+    const specs = [
+      buildFinancialPnL(SCOPE),
+      buildProductAnalytics(SCOPE),
+      buildSupportHealth(SCOPE),
+      buildEngineeringVelocity(SCOPE),
+      buildHrPeople(SCOPE),
+    ];
+    for (const spec of specs) {
+      expect(spec.transforms.length).toBeLessThanOrEqual(24);
+    }
   });
 });

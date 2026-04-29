@@ -6,6 +6,8 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 
 > 🚀 **Quick Start** : `npm run dev` = hearst-os seul sur `:9000`. `npm run launch` = stack complète.
 
+**Workers Next (CPU / orphelins)** : si la machine chauffe après un build ou un arrêt brutal, des `jest-worker/processChild.js` peuvent rester avec **PPID=1**. Audit : `npm run workers:audit` ; nettoyage **uniquement des orphelins** (sans casser un `next build` en cours) : `npm run workers:kill-orphans` — script [`scripts/next-worker-helper.sh`](./scripts/next-worker-helper.sh).
+
 ## État du repo (29/04/2026)
 
 | Métrique | Valeur |

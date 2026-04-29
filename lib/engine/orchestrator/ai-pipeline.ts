@@ -34,6 +34,7 @@ import { buildAgentSystemPrompt } from "./system-prompt";
 import { storeAsset, type Asset, type AssetKind } from "@/lib/assets/types";
 import { randomUUID } from "crypto";
 import { buildProposeReportSpecTool } from "@/lib/reports/spec/llm-tool";
+import { defaultMetrics as defaultLlmMetrics } from "@/lib/llm/metrics";
 
 // Schema for validating tool results from the AI pipeline
 const ToolResultSchema = z.object({
@@ -42,8 +43,6 @@ const ToolResultSchema = z.object({
   error: z.string().optional(),
   data: z.unknown().optional(),
 });
-
-type ToolResult = z.infer<typeof ToolResultSchema>;
 
 export interface AiPipelineInput {
   userId: string;
@@ -604,6 +603,7 @@ export async function runAiPipeline(
               run_id: engine.id,
               message: `Loop detected: ${event.toolName} called too many times with same arguments. Stopping.`,
             });
+            defaultLlmMetrics.incrementCounter("tool_loop_detected");
             throw new Error(`Tool call loop detected for ${event.toolName}`);
           }
 

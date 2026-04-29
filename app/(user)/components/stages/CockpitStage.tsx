@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useRef } from "react";
 import { useNavigationStore } from "@/stores/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useRuntimeStore } from "@/stores/runtime";
@@ -11,7 +10,6 @@ import { QuickActions } from "./QuickActions";
 import type { Message } from "@/lib/core/types";
 
 export function CockpitStage() {
-  const router = useRouter();
   const addThread = useNavigationStore((s) => s.addThread);
   const addMessageToThread = useNavigationStore((s) => s.addMessageToThread);
   const updateThreadName = useNavigationStore((s) => s.updateThreadName);

@@ -29,6 +29,10 @@ import {
 } from "@/lib/reports/signals/extract";
 import type { Severity } from "@/lib/reports/signals/types";
 import { checkReportBudget } from "./cost-meter";
+import type {
+  DispatchAlertsInput,
+  DispatchAlertsResult,
+} from "@/lib/notifications/alert-dispatcher";
 
 // ── Source loader (injection pour tests / P1.4) ────────────
 
@@ -45,6 +49,20 @@ const stubLoader: SourceLoader = async () => new Map();
 
 // ── runReport ──────────────────────────────────────────────
 
+/**
+ * Hook d'alerting injecté. Reçoit la liste de signaux ET la spec courante.
+ * Permet au caller de brancher `dispatchAlerts` (Supabase + canaux) sans
+ * que `run-report` n'importe la stack alerting au runtime — un
+ * import paresseux de `lib/notifications` n'est pas idéal ici car cela
+ * créerait une dépendance circulaire (alert-dispatcher → settings → ...).
+ *
+ * Convention : best-effort. Une exception du dispatcher est loggée mais
+ * NE casse PAS le report.
+ */
+export type AlertDispatcher = (
+  input: Pick<DispatchAlertsInput, "tenantId" | "signals" | "report">,
+) => Promise<DispatchAlertsResult>;
+
 export interface RunReportOptions {
   /** Loader injecté ; par défaut stub vide. P1.4 fournira l'implémentation prod. */
   sourceLoader?: SourceLoader;
@@ -52,6 +70,12 @@ export interface RunReportOptions {
   noCache?: boolean;
   /** Ancrage temporel pour les ops window/diff (déterminisme). */
   now?: number;
+  /**
+   * Dispatcher d'alerting opt-in. Si fourni, est appelé après extractSignals
+   * avec les signaux dont la sévérité ≥ "critical" (le filtre fin est appliqué
+   * côté dispatcher via `severityFloor`).
+   */
+  alertDispatcher?: AlertDispatcher;
 }
 
 export interface RunReportResult {
@@ -95,6 +119,27 @@ export async function runReport(
 
   // ── 4. Extraction signaux (déterministe, hors cache) ────
   const { signals, severity } = extractSignals(payload);
+
+  // ── 4b. Alerting opt-in (best-effort, hors cache) ────────
+  // Déclenché à chaque run y compris cache hit — le throttle 4h côté
+  // dispatcher empêche le spam. On filtre côté caller pour n'envoyer
+  // que les signaux marqués "critical" (cf prompt mission).
+  if (options.alertDispatcher) {
+    const critical = signals.filter((s) => s.severity === "critical");
+    if (critical.length > 0) {
+      try {
+        await options.alertDispatcher({
+          tenantId: spec.scope.tenantId,
+          signals: critical,
+          report: { id: spec.id, title: spec.meta.title },
+        });
+      } catch (err) {
+        console.warn(
+          `[runReport] alertDispatcher a throw — ignoré : ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+  }
 
   // ── 5. L3 render cache check ─────────────────────────────
   if (!options.noCache) {

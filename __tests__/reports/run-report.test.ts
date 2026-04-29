@@ -5,7 +5,7 @@
  * exécution réelle nécessiterait ANTHROPIC_API_KEY mocké, deferred V2).
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { runReport, type SourceLoader } from "@/lib/reports/engine/run-report";
 import type { ReportSpec } from "@/lib/reports/spec/schema";
 
@@ -138,5 +138,136 @@ describe("runReport — pipeline end-to-end avec mocks", () => {
       new Map([["stripe", [{ amount: 100, currency: "EUR" }]]]);
     const result = await runReport(spec, { sourceLoader, noCache: true });
     expect(result.narration).toBeNull();
+  });
+
+  it("appelle alertDispatcher uniquement avec les signaux critical", async () => {
+    const spec = buildSpec();
+    // Spec qui produit kpi_runway critical (< 6 mois)
+    spec.transforms = [
+      {
+        id: "runway_calc",
+        op: "groupBy",
+        inputs: ["stripe"],
+        params: {
+          by: [],
+          measures: [{ name: "value", fn: "avg", field: "runway_months" }],
+        },
+      },
+    ];
+    spec.blocks = [
+      {
+        id: "kpi_runway",
+        type: "kpi",
+        dataRef: "runway_calc",
+        layout: { col: 1, row: 0 },
+        props: { field: "value" },
+      },
+    ];
+
+    const sourceLoader: SourceLoader = async () =>
+      new Map([["stripe", [{ runway_months: 4 }]]]);
+
+    const dispatcher = vi.fn(async () => ({
+      dispatchedSignals: [],
+      throttledSignals: [],
+      results: [],
+      anyDelivered: false,
+    }));
+
+    const result = await runReport(spec, {
+      sourceLoader,
+      noCache: true,
+      alertDispatcher: dispatcher,
+    });
+
+    expect(dispatcher).toHaveBeenCalledTimes(1);
+    type DispatchArg = {
+      tenantId: string;
+      signals: Array<{ type: string; severity: string }>;
+      report: { id: string };
+    };
+    const calls = dispatcher.mock.calls as unknown as Array<[DispatchArg]>;
+    const call = calls[0][0];
+    expect(call.tenantId).toBe("t");
+    expect(call.signals).toHaveLength(1);
+    expect(call.signals[0].type).toBe("runway_risk");
+    expect(call.signals[0].severity).toBe("critical");
+    expect(call.report.id).toBe(spec.id);
+    expect(result.signals[0].type).toBe("runway_risk");
+  });
+
+  it("n'appelle PAS alertDispatcher si aucun signal critical", async () => {
+    const spec = buildSpec();
+    spec.blocks = [
+      {
+        id: "kpi_runway",
+        type: "kpi",
+        dataRef: "totals",
+        layout: { col: 1, row: 0 },
+        props: { field: "mrr" }, // mrr=300, pas un signal runway
+      },
+    ];
+
+    const sourceLoader: SourceLoader = async () =>
+      new Map([["stripe", [{ amount: 300, currency: "EUR" }]]]);
+
+    const dispatcher = vi.fn(async () => ({
+      dispatchedSignals: [],
+      throttledSignals: [],
+      results: [],
+      anyDelivered: false,
+    }));
+
+    await runReport(spec, {
+      sourceLoader,
+      noCache: true,
+      alertDispatcher: dispatcher,
+    });
+
+    expect(dispatcher).not.toHaveBeenCalled();
+  });
+
+  it("ignore les exceptions du alertDispatcher (best-effort)", async () => {
+    const spec = buildSpec();
+    spec.transforms = [
+      {
+        id: "runway_calc",
+        op: "groupBy",
+        inputs: ["stripe"],
+        params: {
+          by: [],
+          measures: [{ name: "value", fn: "avg", field: "runway_months" }],
+        },
+      },
+    ];
+    spec.blocks = [
+      {
+        id: "kpi_runway",
+        type: "kpi",
+        dataRef: "runway_calc",
+        layout: { col: 1, row: 0 },
+        props: { field: "value" },
+      },
+    ];
+
+    const sourceLoader: SourceLoader = async () =>
+      new Map([["stripe", [{ runway_months: 3 }]]]);
+
+    const dispatcher = vi.fn(async () => {
+      throw new Error("boom");
+    });
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const result = await runReport(spec, {
+        sourceLoader,
+        noCache: true,
+        alertDispatcher: dispatcher,
+      });
+      // Le pipeline continue malgré l'exception
+      expect(result.signals[0].type).toBe("runway_risk");
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });

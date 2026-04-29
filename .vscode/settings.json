@@ -5,7 +5,7 @@
     "debug.openDebug": "openOnDebugBreak",
     "debug.console.fontSize": 12,
     "debug.console.acceptSuggestionOnEnter": "on",
-    "debug.javascript.autoAttachFilter": "always",
+    "debug.javascript.autoAttachFilter": "disabled",
     "debug.javascript.resourceRequestOptions": {
         "retryOn429": true
     },
