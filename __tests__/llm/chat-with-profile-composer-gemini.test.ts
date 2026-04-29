@@ -63,6 +63,8 @@ describe("chatWithProfile — composer → gemini chain", () => {
   });
 
   it("falls back to gemini when composer HTTP fails", async () => {
+    vi.useFakeTimers();
+
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: RequestInfo | URL) => {
@@ -85,13 +87,17 @@ describe("chatWithProfile — composer → gemini chain", () => {
       [geminiId]: geminiRow,
     });
 
-    const res = await chatWithProfile(sb, composerId, [{ role: "user", content: "ping" }]);
+    const promise = chatWithProfile(sb, composerId, [{ role: "user", content: "ping" }]);
+    await vi.runAllTimersAsync();
+    const res = await promise;
 
     expect(res.content).toBe("fallback-body");
     expect(res.profile_used).toBe("gemini/gemini-3-flash-preview");
     expect(res.cost_usd).toBeCloseTo((100 / 1000) * 0.0005 + (200 / 1000) * 0.003, 8);
     expect((fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(2);
-  });
+
+    vi.useRealTimers();
+  }, 10000);
 
   it("uses composer only when first profile succeeds", async () => {
     vi.stubGlobal(

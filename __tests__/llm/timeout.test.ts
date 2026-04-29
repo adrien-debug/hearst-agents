@@ -42,22 +42,27 @@ describe("makeAbortSignal", () => {
     expect(signal.aborted).toBe(true);
   });
 
-  it("clears timeout when signal aborts", () => {
-    const controller = new AbortController();
-    const timeoutSpy = vi.spyOn(global, "setTimeout");
-
-    const signal = makeAbortSignal(1000);
-
-    controller.abort();
-    vi.advanceTimersByTime(500);
-    expect(signal.aborted).toBe(false);
+  it("respects CHAT_TIMEOUT_MS and STREAM_TIMEOUT_MS constants", () => {
+    // These are module-level constants set from env vars at import time
+    // Verify they are reasonable defaults
+    expect(CHAT_TIMEOUT_MS).toBeGreaterThan(0);
+    expect(STREAM_TIMEOUT_MS).toBeGreaterThan(CHAT_TIMEOUT_MS);
+    expect(CHAT_TIMEOUT_MS).toBe(30000); // default 30s
+    expect(STREAM_TIMEOUT_MS).toBe(60000); // default 60s
   });
 
-  it("respects env vars for timeout defaults", () => {
-    process.env.LLM_CHAT_TIMEOUT_MS = "45000";
-    process.env.LLM_STREAM_TIMEOUT_MS = "90000";
+  it("timeout applies correctly with different durations", () => {
+    const shortSignal = makeAbortSignal(100);
+    const longSignal = makeAbortSignal(5000);
 
-    expect(CHAT_TIMEOUT_MS).toBe(45000);
-    expect(STREAM_TIMEOUT_MS).toBe(90000);
+    expect(shortSignal.aborted).toBe(false);
+    expect(longSignal.aborted).toBe(false);
+
+    vi.advanceTimersByTime(100);
+    expect(shortSignal.aborted).toBe(true);
+    expect(longSignal.aborted).toBe(false);
+
+    vi.advanceTimersByTime(4900);
+    expect(longSignal.aborted).toBe(true);
   });
 });

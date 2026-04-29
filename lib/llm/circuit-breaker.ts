@@ -40,6 +40,14 @@ export class LLMCircuitBreaker {
       this.providers.set(provider, circuit);
     }
 
+    // Sync state with timeout window before processing
+    if (circuit.state === "OPEN" && circuit.openedAt) {
+      const now = Date.now();
+      if (now - circuit.openedAt >= this.resetWindowMs) {
+        circuit.state = "HALF_OPEN";
+      }
+    }
+
     if (circuit.state === "HALF_OPEN") {
       circuit.state = "CLOSED";
       circuit.failureCount = 0;
@@ -54,6 +62,14 @@ export class LLMCircuitBreaker {
     if (!circuit) {
       circuit = { state: "CLOSED", failureCount: 0, openedAt: null };
       this.providers.set(provider, circuit);
+    }
+
+    // Sync state with timeout window before processing
+    if (circuit.state === "OPEN" && circuit.openedAt) {
+      const now = Date.now();
+      if (now - circuit.openedAt >= this.resetWindowMs) {
+        circuit.state = "HALF_OPEN";
+      }
     }
 
     circuit.failureCount++;

@@ -53,7 +53,7 @@ export class CircuitOpenError extends Error {
 export function sanitizeProviderError(status: number, body: string): string {
   let sanitized = body;
 
-  sanitized = sanitized.replace(/sk-[A-Za-z0-9]{20,}/g, "[REDACTED_KEY]");
+  sanitized = sanitized.replace(/sk-[A-Za-z0-9]{10,}/g, "[REDACTED_KEY]");
 
   sanitized = sanitized.replace(/Bearer\s+[A-Za-z0-9\-._~+/]+=*/g, "Bearer [REDACTED]");
 
