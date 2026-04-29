@@ -31,7 +31,7 @@ export const NotificationSchema = z.object({
   severity: NotificationSeveritySchema,
   title: z.string().min(1).max(200),
   body: z.string().max(500).nullable(),
-  meta: z.record(z.unknown()).nullable(),
+  meta: z.record(z.string(), z.any()).nullable(),
   read_at: z.string().nullable(),
   created_at: z.string(),
 });
@@ -46,7 +46,7 @@ const CreateNotificationInputSchema = z.object({
   severity: NotificationSeveritySchema,
   title: z.string().min(1).max(200),
   body: z.string().max(500).optional(),
-  meta: z.record(z.unknown()).optional(),
+  meta: z.record(z.string(), z.any()).optional(),
 });
 
 export type CreateNotificationInput = z.infer<typeof CreateNotificationInputSchema>;
@@ -58,7 +58,8 @@ const ListNotificationsInputSchema = z.object({
   limit: z.number().int().min(1).max(100).optional().default(50),
 });
 
-export type ListNotificationsInput = z.infer<typeof ListNotificationsInputSchema>;
+// z.input<> donne le type "avant defaults" (unreadOnly et limit optionnels)
+export type ListNotificationsInput = z.input<typeof ListNotificationsInputSchema>;
 
 // ── CRUD ───────────────────────────────────────────────────────────────────
 
@@ -149,7 +150,7 @@ export async function listNotifications(
 
   return (data ?? [])
     .map((row) => NotificationSchema.safeParse(row))
-    .filter((r): r is z.SafeParseSuccess<Notification> => r.success)
+    .filter((r): r is z.ZodSafeParseSuccess<Notification> => r.success)
     .map((r) => r.data);
 }
 

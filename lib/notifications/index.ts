@@ -1,5 +1,5 @@
 /**
- * Public API du module alerting.
+ * Public API du module alerting + notifications in-app.
  */
 
 export {
@@ -36,3 +36,19 @@ export {
   THROTTLE_WINDOW_MS,
   type ThrottleStore,
 } from "./throttle";
+
+export {
+  createNotification,
+  listNotifications,
+  markRead,
+  markAllRead,
+  formatSignalTitle,
+  NotificationKindSchema,
+  NotificationSeveritySchema,
+  NotificationSchema,
+  type Notification,
+  type NotificationKind,
+  type NotificationSeverity,
+  type CreateNotificationInput,
+  type ListNotificationsInput,
+} from "./in-app";

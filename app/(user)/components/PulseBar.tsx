@@ -110,6 +110,8 @@ export function PulseBar() {
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">VOICE_ON</span>
           </div>
         )}
+
+        <NotificationBell />
       </div>
     </div>
   );

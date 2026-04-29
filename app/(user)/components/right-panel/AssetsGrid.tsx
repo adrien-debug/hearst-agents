@@ -31,48 +31,19 @@ interface AssetsGridProps {
 function AssetSkeleton() {
   return (
     <div
-      className="w-full text-left rounded-xl animate-pulse flex flex-col justify-between aspect-square p-4"
-      style={{
-        background: "rgba(255,255,255,0.015)",
-        border: "1px solid rgba(255,255,255,0.04)",
-      }}
+      className="w-full text-left rounded-xl animate-pulse flex flex-col items-center gap-2"
     >
-      <div className="flex items-start justify-between w-full">
-        <div
-          className="w-8 h-8 rounded-full"
-          style={{ background: "rgba(255,255,255,0.03)" }}
-        />
-        <div
-          className="w-8 h-3 rounded-sm mt-2"
-          style={{ background: "rgba(255,255,255,0.03)" }}
-        />
-      </div>
-      <div className="flex-1 flex items-center justify-center py-2">
-        <div
-          style={{
-            width: "var(--width-mini-chart)",
-            height: "var(--space-10)",
-            background: "rgba(255,255,255,0.02)",
-            borderRadius: "var(--radius-xs)",
-          }}
-        />
-      </div>
-      <div className="flex flex-col gap-1.5 w-full">
-        <div
-          className="h-3 rounded-sm"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            width: "80%",
-          }}
-        />
-        <div
-          className="h-3 rounded-sm"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            width: "60%",
-          }}
-        />
-      </div>
+      <div
+        className="w-full aspect-square rounded-xl"
+        style={{
+          background: "rgba(255,255,255,0.015)",
+          border: "1px solid rgba(255,255,255,0.04)",
+        }}
+      />
+      <div
+        className="w-3/4 h-3 rounded-sm"
+        style={{ background: "rgba(255,255,255,0.03)" }}
+      />
     </div>
   );
 }
@@ -119,9 +90,11 @@ function SuggestionSkeleton() {
 function AssetsSkeletonGrid() {
   return (
     <div
-      className="grid grid-cols-2 gap-2"
-      style={{ padding: "var(--space-3)" }}
+      className="grid grid-cols-3 gap-3"
+      style={{ padding: "var(--space-4)" }}
     >
+      <AssetSkeleton />
+      <AssetSkeleton />
       <AssetSkeleton />
       <AssetSkeleton />
       <AssetSkeleton />
@@ -232,41 +205,32 @@ export function AssetsGrid({
 
   return (
     <div className="flex flex-col">
-      <div className="grid grid-cols-2 gap-3" style={{ padding: "var(--space-4)" }}>
+      <div className="grid grid-cols-3 gap-3" style={{ padding: "var(--space-4)" }}>
         {visibleAssets.map((asset) => {
         const accent = assetAccent(asset.type);
         const isActive = activeAssetId === asset.id;
+        const shortTitle = asset.name ? asset.name.split(' ')[0] : "Asset";
+
         return (
           <div key={asset.id} className="relative group">
             <button
               type="button"
               onClick={() => useStageStore.getState().setMode({ mode: "asset", assetId: asset.id })}
-              className={`group relative flex flex-col justify-between aspect-square p-4 cursor-pointer rounded-xl transition-all duration-500 overflow-hidden text-left w-full ${
-                isActive 
-                  ? "bg-[rgba(45,212,191,0.05)] border border-[rgba(45,212,191,0.3)] shadow-[0_0_20px_rgba(45,212,191,0.1)]" 
-                  : "bg-[rgba(255,255,255,0.015)] border border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(45,212,191,0.3)] hover:shadow-[0_0_20px_rgba(45,212,191,0.05)]"
-              }`}
+              className="group flex flex-col items-center gap-2 cursor-pointer w-full"
               title={asset.name}
               data-active={isActive}
             >
-              <div className="flex items-start justify-between w-full">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-500 ${isActive ? "bg-[rgba(45,212,191,0.1)] text-[var(--cykan)]" : "bg-[rgba(255,255,255,0.03)] text-[rgba(255,255,255,0.6)] group-hover:bg-[rgba(45,212,191,0.1)] group-hover:text-[var(--cykan)]"}`}>
-                  <span className="w-4 h-4 flex items-center justify-center">
-                    <AssetGlyphSVG type={asset.type} />
-                  </span>
-                </div>
-                <span className={`t-9 tracking-[0.2em] uppercase transition-colors duration-500 ${isActive ? "text-[var(--cykan)]" : "text-[rgba(255,255,255,0.3)] group-hover:text-[var(--cykan)]"}`}>
-                  {asset.type}
+              <div className={`w-full aspect-square flex flex-col items-center justify-center gap-3 transition-all duration-300 relative overflow-hidden ${isActive ? "halo-cyan-sm" : "group-hover:halo-cyan-sm"}`}>
+                <span className={`transition-all duration-300 scale-150 ${isActive ? "opacity-100 text-[var(--cykan)]" : "opacity-40 group-hover:opacity-100 group-hover:text-[var(--cykan)]"}`}>
+                  <AssetGlyphSVG type={asset.type} />
                 </span>
               </div>
-              
-              <div className="flex-1 flex items-center justify-center py-2 opacity-40 group-hover:opacity-80 transition-opacity duration-500">
-                <AssetMiniChart type={asset.type} seed={asset.name} />
-              </div>
-
-              <div className="flex flex-col gap-1 w-full">
-                <span className={`t-13 font-light line-clamp-2 leading-snug transition-colors duration-500 ${isActive ? "text-[rgba(255,255,255,0.9)]" : "text-[rgba(255,255,255,0.7)] group-hover:text-[rgba(255,255,255,0.9)]"}`}>
-                  {asset.name}
+              <div className="flex flex-col items-center w-full">
+                <span className={`t-11 font-light truncate w-full text-center transition-colors duration-300 ${isActive ? "text-[rgba(255,255,255,0.95)]" : "text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.95)]"}`}>
+                  {shortTitle}
+                </span>
+                <span className="t-9 text-[rgba(255,255,255,0.3)] mt-0.5">
+                  {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
                 </span>
               </div>
             </button>
@@ -276,7 +240,7 @@ export function AssetsGrid({
                 e.stopPropagation();
                 void handleDelete(asset);
               }}
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-[rgba(255,255,255,0.3)] hover:text-[var(--danger)] transition-all rounded-md bg-[rgba(255,255,255,0.05)] backdrop-blur-sm border border-[rgba(255,255,255,0.1)]"
+              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-[rgba(255,255,255,0.3)] hover:text-[var(--danger)] transition-all rounded-md bg-[rgba(255,255,255,0.05)] backdrop-blur-sm border border-[rgba(255,255,255,0.1)]"
               title="Supprimer"
               aria-label={`Supprimer ${asset.name}`}
             >

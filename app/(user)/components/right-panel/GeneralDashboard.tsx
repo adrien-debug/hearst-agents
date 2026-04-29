@@ -12,20 +12,22 @@ interface GeneralDashboardProps {
 
 function ReportIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--cykan)] shrink-0">
-      <path d="M18 20V10M12 20V4M6 20v-6" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="9" y1="21" x2="9" y2="9" />
     </svg>
   );
 }
 
 function PdfIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-muted)] shrink-0">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <path d="M14 2v6h6" />
-      <path d="M16 13H8" />
-      <path d="M16 17H8" />
-      <path d="M10 9H8" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
     </svg>
   );
 }
@@ -173,27 +175,30 @@ export function GeneralDashboard({
             Aucun livrable récent.
           </p>
         ) : (
-          <div className="flex flex-col gap-1 mt-2">
+          <div className="grid grid-cols-3 gap-3 mt-2">
             {recentReports.map((report: any, i: number) => {
               const isPdf = report.name?.toLowerCase().endsWith('.pdf');
+              // Extract first word for the title
+              const shortTitle = report.name ? report.name.split(' ')[0] : "Report";
+              
               return (
                 <div
                   key={report.id}
-                  className="group flex items-center justify-between py-2.5 px-3 -mx-3 cursor-pointer rounded-md hover:bg-[rgba(255,255,255,0.04)] transition-colors duration-300"
+                  className="group flex flex-col items-center gap-2 cursor-pointer"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.03)] flex items-center justify-center shrink-0 group-hover:bg-[rgba(45,212,191,0.1)] transition-colors duration-300">
-                      <span className="opacity-60 group-hover:opacity-100 group-hover:text-[var(--cykan)] transition-all duration-300">
-                        {isPdf ? <PdfIcon /> : <ReportIcon />}
-                      </span>
-                    </div>
-                    <span className="t-13 font-light text-[rgba(255,255,255,0.7)] group-hover:text-[rgba(255,255,255,0.95)] truncate transition-colors duration-300">
-                      {report.name || "Report"}
+                  <div className="w-full aspect-square flex flex-col items-center justify-center gap-3 transition-all duration-300 group-hover:halo-cyan-sm relative overflow-hidden">
+                    <span className="opacity-40 group-hover:opacity-100 group-hover:text-[var(--cykan)] transition-all duration-300 scale-150">
+                      {isPdf ? <PdfIcon /> : <ReportIcon />}
                     </span>
                   </div>
-                  <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] shrink-0 pl-3 group-hover:text-[var(--cykan)] transition-colors duration-300">
-                    {isPdf ? "PDF" : "RPT"}
-                  </span>
+                  <div className="flex flex-col items-center w-full">
+                    <span className="t-11 font-light text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.95)] truncate w-full text-center transition-colors duration-300">
+                      {shortTitle}
+                    </span>
+                    <span className="t-9 text-[rgba(255,255,255,0.3)] mt-0.5">
+                      {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                    </span>
+                  </div>
                 </div>
               );
             })}

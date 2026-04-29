@@ -13,7 +13,7 @@
  * Aucun magic number CSS.
  */
 
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 import { BUSINESS_SIGNAL_TYPES } from "@/lib/reports/signals/types";
 import type { AlertingPreferences } from "@/lib/notifications/schema";
 
@@ -397,7 +397,7 @@ function SignalBadge({ type }: { type: keyof typeof SIGNAL_SEVERITY | "*" }) {
 
 export function AlertingSettings() {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const _saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // réservé pour future debounce
 
   // ── Chargement initial ───────────────────────────────────────────────────
   useEffect(() => {
