@@ -73,7 +73,9 @@ export type RunEvent =
   | CapabilityBlockedEvent
   // Warnings & violations
   | RuntimeWarningEvent
-  | OperatorViolationEvent;
+  | OperatorViolationEvent
+  // Stage routing — un tool demande à téléporter l'utilisateur sur un Stage
+  | StageRequestEvent;
 
 // ── Base ─────────────────────────────────────────────────
 
@@ -334,4 +336,20 @@ export interface OperatorViolationEvent extends BaseEvent {
   step_id: string;
   tool: string;
   violation: string;
+}
+
+// ── Stage routing ────────────────────────────────────────
+// Émis par les tools `start_*` / `generate_*` pour téléporter l'utilisateur
+// vers le Stage approprié dès que le tool aboutit. Le payload est un
+// StagePayload du store stage (mêmes shapes).
+
+export interface StageRequestEvent extends BaseEvent {
+  type: "stage_request";
+  stage:
+    | { mode: "asset"; assetId: string; variantKind?: string }
+    | { mode: "browser"; sessionId: string }
+    | { mode: "meeting"; meetingId: string }
+    | { mode: "kg"; entityId?: string; query?: string }
+    | { mode: "simulation"; scenario?: string }
+    | { mode: "voice"; sessionId?: string };
 }

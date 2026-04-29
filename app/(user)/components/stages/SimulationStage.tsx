@@ -8,7 +8,7 @@
  * validera les calculs, Exa enrichira les benchmarks.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { ThinkingDisclosure } from "../ThinkingDisclosure";
@@ -69,8 +69,11 @@ export function SimulationStage() {
     setReasoning(null);
   }, []);
 
-  const launchSimulation = useCallback(async () => {
-    const scenario = scenarioInput.trim();
+  // `scenarioOverride` permet à l'auto-run au mount (depuis le payload du
+  // Stage) de passer le scenario directement, sans dépendre du flush
+  // React de setScenarioInput qui ne serait pas encore appliqué.
+  const launchSimulation = useCallback(async (scenarioOverride?: string) => {
+    const scenario = (scenarioOverride ?? scenarioInput).trim();
     if (!scenario) {
       toast.error("Scénario requis", "Décris le scénario business à simuler.");
       return;
@@ -103,6 +106,25 @@ export function SimulationStage() {
       setPhase("idle");
     }
   }, [scenarioInput, variables]);
+
+  // Auto-run au mount si le payload du Stage contient un scenario (déclenché
+  // par le tool start_simulation côté chat). Le ref évite la double-exécution
+  // en Strict Mode dev. On passe le scenario directement à launchSimulation
+  // car setScenarioInput est async et n'aurait pas flushé au moment du call.
+  const stagePayload = useStageStore((s) => s.current);
+  const initialScenario =
+    stagePayload.mode === "simulation" ? stagePayload.scenario : undefined;
+  const autoRanRef = useRef(false);
+  useEffect(() => {
+    if (autoRanRef.current) return;
+    if (!initialScenario) return;
+    if (phase !== "idle") return;
+    autoRanRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot au mount : pré-remplit le textarea pour que l'utilisateur voie son scenario quand la stage atterrit, puis lance immédiatement avec le scenario passé en arg (setScenarioInput n'aurait pas flushé sinon)
+    setScenarioInput(initialScenario);
+    void launchSimulation(initialScenario);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot au mount, deps volontairement absentes pour ne pas re-fire
+  }, []);
 
   const headerLabel = phase === "running" ? "RAISONNEMENT" : phase === "done" ? "SCÉNARIOS" : "STANDBY";
 

@@ -5,7 +5,7 @@ import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
 import { useServicesStore } from "@/stores/services";
-import { useStageStore } from "@/stores/stage";
+import { useStageStore, type StagePayload } from "@/stores/stage";
 import type { Message, RightPanelData } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { Stage } from "./components/Stage";
@@ -243,6 +243,11 @@ export default function HomePage() {
             if (event.type === "text_delta" && event.delta) {
               assistantBufferRef.current += event.delta;
               updateMessageInThread(threadId, currentAssistantIdRef.current!, assistantBufferRef.current);
+            }
+            // Stage routing — un tool a demandé à téléporter l'utilisateur.
+            // Le payload `stage` matche la shape StagePayload du store.
+            if (event.type === "stage_request" && event.stage) {
+              setStageMode(event.stage as StagePayload);
             }
             const eventRunId = (event.run_id as string) || canonicalRunId || clientToken;
             addEvent({ ...event, run_id: eventRunId });

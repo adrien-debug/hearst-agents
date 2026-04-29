@@ -23,6 +23,7 @@ import {
   buildNativeGoogleTools,
   NATIVE_GOOGLE_TOOL_DESCRIPTORS,
 } from "@/lib/tools/native/google";
+import { buildHearstActionTools } from "@/lib/tools/native/hearst-actions";
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
@@ -386,8 +387,19 @@ export async function runAiPipeline(
   // Native Google tools live alongside Composio tools — the model picks
   // whichever fits the user's request. Meta tools (request_connection,
   // create_scheduled_mission) are appended last.
+  const hearstActionTools = buildHearstActionTools({
+    scope: {
+      userId: input.userId,
+      tenantId: input.tenantId ?? "dev-tenant",
+      workspaceId: input.workspaceId ?? "dev-workspace",
+    },
+    eventBus,
+    runId: engine.id,
+  });
+
   const aiTools = {
     ...nativeGoogleTools,
+    ...hearstActionTools,
     ...toAiTools(filteredComposio, input.userId),
     request_connection: buildRequestConnectionTool(engine, eventBus),
     create_scheduled_mission: buildCreateScheduledMissionTool(engine, eventBus, {

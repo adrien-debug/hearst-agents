@@ -297,6 +297,10 @@ export class SSEAdapter {
           message: event.message,
         };
 
+      // ── Stage routing (visible — téléporte l'utilisateur) ─
+      case "stage_request":
+        return { type: "stage_request", stage: event.stage };
+
       // ── Internal events NOT exposed to the UI ────────────
       case "run_created":
       case "run_cancelled":
