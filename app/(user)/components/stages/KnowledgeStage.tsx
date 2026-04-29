@@ -24,20 +24,35 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
   const back = useStageStore((s) => s.back);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 relative" style={{ background: "var(--bg-center)" }}>
+    <div
+      className="flex-1 flex flex-col min-h-0 relative"
+      style={{ background: "var(--bg-center)" }}
+    >
       <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--surface-2)]">
         <div className="flex items-center gap-4">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">KNOWLEDGE_GRAPH</span>
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            KNOWLEDGE_GRAPH
+          </span>
           {entityId && (
             <>
-              <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">{entityId.slice(0, 16)}</span>
+              <span
+                className="rounded-pill bg-[var(--text-ghost)]"
+                style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+              />
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                {entityId.slice(0, 16)}
+              </span>
             </>
           )}
           {query && (
             <>
-              <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-              <span className="t-9 font-mono italic text-[var(--text-muted)]">« {query.slice(0, 40)}... »</span>
+              <span
+                className="rounded-pill bg-[var(--text-ghost)]"
+                style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+              />
+              <span className="t-9 font-mono italic text-[var(--text-muted)]">
+                « {query.slice(0, 40)}... »
+              </span>
             </>
           )}
         </div>
@@ -50,7 +65,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
         </button>
       </header>
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center max-w-md" style={{ rowGap: "var(--space-6)", display: "flex", flexDirection: "column" }}>
+        <div className="text-center max-w-md flex flex-col gap-6">
           <span
             className="block text-[var(--cykan)] opacity-30 halo-cyan-md mx-auto t-34"
             style={{ height: "var(--height-stage-empty-icon)" }}
@@ -58,11 +73,23 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
           >
             ◈
           </span>
-          <p className="t-15 font-medium tracking-tight text-[var(--text)]" style={{ lineHeight: "var(--leading-snug)" }}>
+          <p
+            className="t-15 font-medium tracking-tight text-[var(--text)]"
+            style={{ lineHeight: "var(--leading-snug)" }}
+          >
             Knowledge Graph en construction
           </p>
-          <p className="t-13 text-[var(--text-muted)]" style={{ lineHeight: "var(--leading-base)" }}>
-            À chaque conversation, meeting ou rapport, l{"'"}agent extrait les entités (personnes, sociétés, projets, décisions) et les connecte. Bientôt, tu pourras explorer ton graphe personnel et demander : <span className="text-[var(--cykan)]">{"« qu'est-ce que je sais sur Marc Dupont ? »"}</span>.
+          <p
+            className="t-13 text-[var(--text-muted)]"
+            style={{ lineHeight: "var(--leading-base)" }}
+          >
+            À chaque conversation, meeting ou rapport, l{"'"}agent extrait les
+            entités (personnes, sociétés, projets, décisions) et les connecte.
+            Bientôt, tu pourras explorer ton graphe personnel et demander :{" "}
+            <span className="text-[var(--cykan)]">
+              {"« qu'est-ce que je sais sur Marc Dupont ? »"}
+            </span>
+            .
           </p>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] mt-4">
             CMD+L pour ouvrir le chat

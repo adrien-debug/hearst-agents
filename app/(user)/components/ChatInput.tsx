@@ -19,8 +19,13 @@ export function ChatInput({
   onProviderMention,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
-  const [attachment, setAttachment] = useState<{ fileName: string; text: string; pageCount: number } | null>(null);
+  const [attachment, setAttachment] = useState<{
+    fileName: string;
+    text: string;
+    pageCount: number;
+  } | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isRunning = useRuntimeStore((s) => s.coreState !== "idle");
@@ -38,7 +43,10 @@ export function ChatInput({
   // Close typeahead when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (typeaheadRef.current && !typeaheadRef.current.contains(e.target as Node)) {
+      if (
+        typeaheadRef.current &&
+        !typeaheadRef.current.contains(e.target as Node)
+      ) {
         setHideTypeahead(true);
       }
     }
@@ -55,10 +63,13 @@ export function ChatInput({
   }, [input, hideTypeahead]);
 
   // Filter services for typeahead (connected only)
-  const matchingServices = connectedServices.filter((service) =>
-    service.id.toLowerCase().includes(typeaheadQuery) ||
-    service.name.toLowerCase().includes(typeaheadQuery)
-  ).slice(0, 5);
+  const matchingServices = connectedServices
+    .filter(
+      (service) =>
+        service.id.toLowerCase().includes(typeaheadQuery) ||
+        service.name.toLowerCase().includes(typeaheadQuery),
+    )
+    .slice(0, 5);
 
   // Handle service selection from typeahead
   function selectService(service: ServiceDefinition) {
@@ -71,7 +82,9 @@ export function ChatInput({
     inputRef.current?.focus();
   }
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   function handleSubmit() {
     if (!input.trim() || isRunning) return;
@@ -122,12 +135,20 @@ export function ChatInput({
                     onClick={() => selectService(service)}
                     className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-[var(--surface-1)] transition-all duration-base group"
                   >
-                    <span className="t-18 grayscale group-hover:grayscale-0 transition-all">{service.icon}</span>
+                    <span className="t-18 grayscale group-hover:grayscale-0 transition-all">
+                      {service.icon}
+                    </span>
                     <div className="flex-1">
-                      <p className="t-13 font-medium tracking-tight text-[var(--text)]">@{service.id}</p>
-                      <p className="t-10 font-mono tracking-display text-[var(--text-faint)]">{service.name}</p>
+                      <p className="t-13 font-medium tracking-tight text-[var(--text)]">
+                        @{service.id}
+                      </p>
+                      <p className="t-10 font-mono tracking-display text-[var(--text-faint)]">
+                        {service.name}
+                      </p>
                     </div>
-                    <span className="t-10 font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">Link</span>
+                    <span className="t-10 font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">
+                      Link
+                    </span>
                   </button>
                 ))}
               </div>
@@ -142,9 +163,15 @@ export function ChatInput({
         >
           {attachment && (
             <div className="flex items-center gap-2 px-5 pt-3 pb-1">
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">PDF</span>
-              <span className="t-11 text-[var(--text-muted)] truncate max-w-xs">{attachment.fileName}</span>
-              <span className="t-9 font-mono text-[var(--text-faint)]">{attachment.pageCount}p</span>
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+                PDF
+              </span>
+              <span className="t-11 text-[var(--text-muted)] truncate max-w-xs">
+                {attachment.fileName}
+              </span>
+              <span className="t-9 font-mono text-[var(--text-faint)]">
+                {attachment.pageCount}p
+              </span>
               <button
                 type="button"
                 onClick={() => setAttachment(null)}
@@ -155,13 +182,18 @@ export function ChatInput({
               </button>
             </div>
           )}
+          {uploadError && (
+            <p className="t-9 font-mono text-[var(--danger)] px-5 pb-1">
+              {uploadError}
+            </p>
+          )}
           <textarea
             ref={inputRef}
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
               e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
+              e.target.style.height = `${e.target.scrollHeight}px`;
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -176,16 +208,23 @@ export function ChatInput({
                 setHideTypeahead(true);
               }
             }}
-            placeholder={placeholder || surfacePlaceholders[surface] || "Poser une question"}
+            placeholder={
+              placeholder ||
+              surfacePlaceholders[surface] ||
+              "Poser une question"
+            }
             rows={1}
             className="block w-full bg-transparent t-15 font-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed pt-4 pb-2 px-5"
-            style={{ minHeight: "var(--height-input-min)", maxHeight: "var(--height-input-max)" }}
+            style={{
+              minHeight: "var(--height-input-min)",
+              maxHeight: "var(--height-input-max)",
+            }}
           />
           <div className="flex items-center justify-between px-3 pb-3 pt-1">
             <span className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] px-2">
               Auto
             </span>
-            <>
+            <div className="flex items-center gap-2">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -198,15 +237,31 @@ export function ChatInput({
                   setUploading(true);
                   fetch("/api/v2/documents/upload", {
                     method: "POST",
-                    body: (() => { const fd = new FormData(); fd.append("file", file); return fd; })(),
+                    body: (() => {
+                      const fd = new FormData();
+                      fd.append("file", file);
+                      return fd;
+                    })(),
                     credentials: "include",
                   })
                     .then(async (r) => {
-                      const data = await r.json() as { fileName?: string; text?: string; pageCount?: number; error?: string };
+                      const data = (await r.json()) as {
+                        fileName?: string;
+                        text?: string;
+                        pageCount?: number;
+                        error?: string;
+                      };
                       if (!r.ok) throw new Error(data.error ?? "Erreur upload");
-                      setAttachment({ fileName: data.fileName ?? file.name, text: data.text ?? "", pageCount: data.pageCount ?? 0 });
+                      setAttachment({
+                        fileName: data.fileName ?? file.name,
+                        text: data.text ?? "",
+                        pageCount: data.pageCount ?? 0,
+                      });
                     })
-                    .catch(() => { /* silent — pas de toast ici */ })
+                    .catch(() => {
+                      setUploadError("Échec du parsing PDF");
+                      setTimeout(() => setUploadError(null), 4000);
+                    })
                     .finally(() => setUploading(false));
                 }}
               />
@@ -216,35 +271,61 @@ export function ChatInput({
                 disabled={uploading || isRunning}
                 title={uploading ? "Analyse en cours…" : "Joindre un PDF"}
                 className={`w-8 h-8 flex items-center justify-center transition-all duration-base ${
-                  uploading ? "text-[var(--warn)] animate-pulse" : attachment ? "text-[var(--cykan)]" : "text-[var(--text-faint)] hover:text-[var(--text-muted)]"
+                  uploading
+                    ? "text-[var(--warn)] animate-pulse"
+                    : attachment
+                      ? "text-[var(--cykan)]"
+                      : "text-[var(--text-faint)] hover:text-[var(--text-muted)]"
                 }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                 </svg>
               </button>
-            </>
-            {isRunning ? (
-              <div className="w-9 h-9 flex items-center justify-center shrink-0">
-                <div className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-pill animate-spin" />
-              </div>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!input.trim()}
-                className={`w-8 h-8 flex items-center justify-center shrink-0 transition-all duration-base ${
-                  input.trim()
-                    ? "bg-[var(--cykan)] text-[var(--bg)] border border-[var(--cykan)]"
-                    : "bg-transparent text-[var(--text-faint)] border border-[var(--border-default)] cursor-not-allowed"
-                }`}
-                style={input.trim() ? { boxShadow: "var(--shadow-glow-cykan-soft)" } : {}}
-                title="Envoyer"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </button>
-            )}
+              {isRunning ? (
+                <div className="w-9 h-9 flex items-center justify-center shrink-0">
+                  <div className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-pill animate-spin" />
+                </div>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={!input.trim()}
+                  className={`w-8 h-8 flex items-center justify-center shrink-0 transition-all duration-base ${
+                    input.trim()
+                      ? "bg-[var(--cykan)] text-[var(--bg)] border border-[var(--cykan)]"
+                      : "bg-transparent text-[var(--text-faint)] border border-[var(--border-default)] cursor-not-allowed"
+                  }`}
+                  style={
+                    input.trim()
+                      ? { boxShadow: "var(--shadow-glow-cykan-soft)" }
+                      : {}
+                  }
+                  title="Envoyer"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <div className="absolute left-0 right-0 -bottom-5 flex justify-center opacity-30 hover:opacity-100 transition-opacity">

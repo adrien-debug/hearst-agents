@@ -21,12 +21,23 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
   const back = useStageStore((s) => s.back);
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 relative" style={{ background: "var(--bg-center)" }}>
+    <div
+      className="flex-1 flex flex-col min-h-0 relative"
+      style={{ background: "var(--bg-center)" }}
+    >
       <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--surface-2)]">
         <div className="flex items-center gap-4">
-          <span className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot" style={{ width: "var(--space-2)", height: "var(--space-2)" }} />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">MEETING_LIVE</span>
-          <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+          <span
+            className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
+            style={{ width: "var(--space-2)", height: "var(--space-2)" }}
+          />
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            MEETING_LIVE
+          </span>
+          <span
+            className="rounded-pill bg-[var(--text-ghost)]"
+            style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+          />
           <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
             {meetingId ? meetingId.slice(0, 8) : "STANDBY"}
           </span>
@@ -40,7 +51,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
         </button>
       </header>
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center max-w-md" style={{ rowGap: "var(--space-6)", display: "flex", flexDirection: "column" }}>
+        <div className="text-center max-w-md flex flex-col gap-6">
           <span
             className="block text-[var(--cykan)] opacity-30 halo-cyan-md mx-auto t-34"
             style={{ height: "var(--height-stage-empty-icon)" }}
@@ -48,11 +59,23 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
           >
             ◍
           </span>
-          <p className="t-15 font-medium tracking-tight text-[var(--text)]" style={{ lineHeight: "var(--leading-snug)" }}>
+          <p
+            className="t-15 font-medium tracking-tight text-[var(--text)]"
+            style={{ lineHeight: "var(--leading-snug)" }}
+          >
             Aucun meeting actif
           </p>
-          <p className="t-13 text-[var(--text-muted)]" style={{ lineHeight: "var(--leading-base)" }}>
-            L{"'"}agent peut rejoindre tes meetings Zoom, Meet ou Teams, transcrire en temps réel, détecter les <em>action items</em> et te proposer de les exécuter via Slack, Notion, Linear, Gmail. Demande : <span className="text-[var(--cykan)]">« Rejoins mon Zoom à 14h »</span>.
+          <p
+            className="t-13 text-[var(--text-muted)]"
+            style={{ lineHeight: "var(--leading-base)" }}
+          >
+            L{"'"}agent peut rejoindre tes meetings Zoom, Meet ou Teams,
+            transcrire en temps réel, détecter les <em>action items</em> et te
+            proposer de les exécuter via Slack, Notion, Linear, Gmail. Demande :{" "}
+            <span className="text-[var(--cykan)]">
+              « Rejoins mon Zoom à 14h »
+            </span>
+            .
           </p>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] mt-4">
             CMD+L pour ouvrir le chat

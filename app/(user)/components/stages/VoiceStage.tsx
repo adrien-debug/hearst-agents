@@ -28,9 +28,17 @@ export function VoiceStage({ sessionId }: VoiceStageProps) {
     >
       <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--surface-2)]">
         <div className="flex items-center gap-4">
-          <span className="rounded-pill bg-[var(--cykan)] halo-cyan-sm" style={{ width: "var(--space-2)", height: "var(--space-2)" }} />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">VOICE_AMBIENT</span>
-          <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+          <span
+            className="rounded-pill bg-[var(--cykan)] halo-cyan-sm"
+            style={{ width: "var(--space-2)", height: "var(--space-2)" }}
+          />
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            VOICE_AMBIENT
+          </span>
+          <span
+            className="rounded-pill bg-[var(--text-ghost)]"
+            style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+          />
           <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
             {sessionId ? sessionId.slice(0, 8) : "STANDBY"}
           </span>
@@ -44,7 +52,7 @@ export function VoiceStage({ sessionId }: VoiceStageProps) {
         </button>
       </header>
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center max-w-md" style={{ rowGap: "var(--space-6)", display: "flex", flexDirection: "column" }}>
+        <div className="text-center max-w-md flex flex-col gap-6">
           <span
             className="block text-[var(--cykan)] halo-cyan-lg mx-auto t-34 animate-pulse"
             style={{ height: "var(--height-stage-empty-icon)" }}
@@ -52,11 +60,20 @@ export function VoiceStage({ sessionId }: VoiceStageProps) {
           >
             ⌬
           </span>
-          <p className="t-15 font-medium tracking-tight text-[var(--text)]" style={{ lineHeight: "var(--leading-snug)" }}>
+          <p
+            className="t-15 font-medium tracking-tight text-[var(--text)]"
+            style={{ lineHeight: "var(--leading-snug)" }}
+          >
             Mode voix prêt à activer
           </p>
-          <p className="t-13 text-[var(--text-muted)]" style={{ lineHeight: "var(--leading-base)" }}>
-            Conversation full-duplex avec l{"'"}agent, latence sous 500&nbsp;ms. Parle naturellement pendant que tu travailles, l{"'"}agent répond ET déclenche des actions Composio en parallèle (envoie un Slack, crée un ticket, planifie un meeting).
+          <p
+            className="t-13 text-[var(--text-muted)]"
+            style={{ lineHeight: "var(--leading-base)" }}
+          >
+            Conversation full-duplex avec l{"'"}agent, latence sous 500&nbsp;ms.
+            Parle naturellement pendant que tu travailles, l{"'"}agent répond ET
+            déclenche des actions Composio en parallèle (envoie un Slack, crée
+            un ticket, planifie un meeting).
           </p>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] mt-4">
             CMD+7 pour activer
