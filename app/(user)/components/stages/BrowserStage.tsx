@@ -166,7 +166,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
         className="flex-1 flex flex-col min-h-0 relative"
         style={{ background: "var(--bg-center)" }}
       >
-        <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--surface-2)]">
+        <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
           <div className="flex items-center gap-4">
             <span
               className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
@@ -255,7 +255,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--surface-2)]">
+      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
         <div className="flex items-center gap-4">
           <span
             className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
@@ -321,7 +321,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
         )}
 
         <footer
-          className="flex-shrink-0 border-t border-[var(--surface-2)] px-12 py-4 flex flex-col gap-2"
+          className="flex-shrink-0 border-t border-[var(--border-default)] px-12 py-4 flex flex-col gap-2"
           style={{ height: "var(--height-action-log)" }}
         >
           <div className="flex items-center justify-between">

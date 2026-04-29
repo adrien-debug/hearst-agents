@@ -104,7 +104,7 @@ export function SimulationStage() {
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--surface-2)]">
+      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
         <div className="flex items-center gap-4">
           <span
             className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"

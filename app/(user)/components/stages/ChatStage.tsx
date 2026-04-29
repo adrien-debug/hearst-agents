@@ -59,8 +59,8 @@ export function ChatStage({ messages, hasMessages, onSubmit, connectedServices }
           : [{ label: threadLabel || "Hearst" }, { label: focalTypeLabel }, { label: focal.title, accent: true }];
 
         return (
-          <div className="flex-1 flex flex-col min-h-0 border-b border-[var(--surface-2)] bg-gradient-to-b from-[var(--surface-1)] to-transparent">
-            <div className="flex items-center justify-between px-12 py-6 flex-shrink-0 relative z-10 border-b border-[var(--surface-2)]">
+          <div className="flex-1 flex flex-col min-h-0 border-b border-[var(--border-default)] bg-gradient-to-b from-[var(--surface-1)] to-transparent">
+            <div className="flex items-center justify-between px-12 py-6 flex-shrink-0 relative z-10 border-b border-[var(--border-default)]">
               <Breadcrumb trail={trail} className="min-w-0 truncate" />
               <button
                 onClick={hideFocalStage}
@@ -95,7 +95,7 @@ export function ChatStage({ messages, hasMessages, onSubmit, connectedServices }
       )}
 
       {hasMessages && (
-        <div className={focalVisible ? "flex-shrink-0 border-t border-[var(--surface-2)] bg-gradient-to-b from-[var(--surface-1)] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[var(--mat-050)] to-[var(--bg-soft)]"} style={focalVisible ? { height: "var(--height-chat-collapsed)" } : undefined}>
+        <div className={focalVisible ? "flex-shrink-0 border-t border-[var(--border-default)] bg-gradient-to-b from-[var(--surface-1)] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[var(--mat-050)] to-[var(--bg-soft)]"} style={focalVisible ? { height: "var(--height-chat-collapsed)" } : undefined}>
           <ChatMessages
             messages={messages}
             compact={focalVisible}

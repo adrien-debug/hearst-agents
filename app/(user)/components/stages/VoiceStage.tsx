@@ -70,7 +70,7 @@ export function VoiceStage(_props: VoiceStageProps) {
     >
       <VoicePulse />
 
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--surface-2)]">
+      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
         <div className="flex items-center gap-4">
           <span
             className="rounded-pill bg-[var(--cykan)] halo-cyan-sm"
@@ -133,7 +133,7 @@ export function VoiceStage(_props: VoiceStageProps) {
       </div>
 
       <footer
-        className="flex-shrink-0 border-t border-[var(--surface-2)] flex flex-col gap-2 overflow-y-auto"
+        className="flex-shrink-0 border-t border-[var(--border-default)] flex flex-col gap-2 overflow-y-auto"
         style={{ padding: "var(--space-6) var(--space-12)", maxHeight: "var(--space-64)" }}
       >
         <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">

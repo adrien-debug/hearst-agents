@@ -215,7 +215,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--surface-2)]">
+      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
         <div className="flex items-center gap-4">
           <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
             KNOWLEDGE_GRAPH
@@ -344,7 +344,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
 
           {selectedNode && (
             <aside
-              className="border-t border-[var(--surface-2)] bg-[var(--bg-elev)] flex flex-col gap-3"
+              className="border-t border-[var(--border-default)] bg-[var(--bg-elev)] flex flex-col gap-3"
               style={{ padding: "var(--space-6) var(--space-12)" }}
             >
               <header className="flex items-center justify-between">
@@ -383,7 +383,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
           )}
 
           <footer
-            className="flex-shrink-0 border-t border-[var(--surface-2)] flex items-center justify-center"
+            className="flex-shrink-0 border-t border-[var(--border-default)] flex items-center justify-center"
             style={{ padding: "var(--space-3) var(--space-8)" }}
           >
             <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
