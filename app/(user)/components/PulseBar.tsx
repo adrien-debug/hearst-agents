@@ -89,7 +89,7 @@ export function PulseBar() {
         <button
           type="button"
           onClick={() => router.push("/apps")}
-          className="flex items-center gap-2 text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
+          className="flex items-center gap-2 text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
           title={
             connectedCount > 0
               ? `${connectedCount} source${connectedCount !== 1 ? "s" : ""} connectée${connectedCount !== 1 ? "s" : ""} — Gérer`
@@ -128,7 +128,7 @@ export function PulseBar() {
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">RUN_ACTIVE</span>
           </div>
         ) : (
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">IDLE</span>
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">IDLE</span>
         )}
 
         {isVoiceActive && (
@@ -143,7 +143,7 @@ export function PulseBar() {
         )}
 
         <div className="flex items-center gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">CREDITS</span>
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">CREDITS</span>
           <span className="t-9 font-mono tracking-display text-[var(--text-muted)]">$1.00</span>
         </div>
       </div>
