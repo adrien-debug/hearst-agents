@@ -11,12 +11,16 @@
 --  préalable, ces rows email deviennent invisibles pour leur propriétaire.
 --
 -- Cette migration :
+--  0. DROP les RLS policies qui référencent user_id (Postgres refuse
+--     l'ALTER TYPE tant qu'une policy dépend de la colonne).
 --  1. UPDATE chaque table user_id text — remplace email par UUID via
 --     jointure sur public.users(email).
 --  2. ALTER COLUMN user_id TYPE uuid (cast text → uuid).
 --  3. UPDATE assets.provenance->>'userId' (jsonb_set) pour les rows
 --     legacy (5 rows attendus selon audit Adrien).
---  4. Garde-fou défensif : RAISE EXCEPTION si des rows non résolus
+--  4. Recrée les policies droppées avec comparaison UUID native
+--     (auth.uid() retourne déjà uuid → plus besoin de cast ::text).
+--  5. Garde-fou défensif : RAISE EXCEPTION si des rows non résolus
 --     restent (user_id qui n'est ni UUID ni email connu).
 --
 -- Tables couvertes (12 au total) :
@@ -25,11 +29,29 @@
 --  Vides — ALTER seulement (4) : agent_events, agent_runs_log,
 --    creative_jobs, subscriptions
 --
+-- Policies user_id-dépendantes droppées en Section 0 et recréées en
+-- Section 4 (audit_logs.Users can view own audit logs +
+-- user_roles.Users can view own roles). Les autres policies sur les
+-- 12 tables sont USING(true) (permissives) → non bloquantes pour
+-- l'ALTER TYPE. Les policies runs_*_auth de la migration 0003 sont
+-- aussi USING(true) → non bloquantes ici, et 0028 les drop+recrée
+-- proprement.
+--
 -- ⚠️ Avant d'apply cette migration, run le DRYRUN
 -- (0026_user_identity_uuid_cleanup_DRYRUN.sql) pour voir le delta.
 -- ============================================================
 
 BEGIN;
+
+-- ── 0. DROP policies user_id-dépendantes avant ALTER TYPE ──
+-- Postgres refuse l'ALTER COLUMN TYPE tant qu'une policy référence la
+-- colonne dans son USING/WITH CHECK. Identifié via :
+--   SELECT tablename, policyname FROM pg_policies WHERE schemaname='public'
+--    AND (qual::text LIKE '%user_id%' OR with_check::text LIKE '%user_id%');
+-- Si une 3e policy bloque l'ALTER, l'ajouter ici puis dans la Section 4.
+
+DROP POLICY IF EXISTS "Users can view own audit logs" ON public.audit_logs;
+DROP POLICY IF EXISTS "Users can view own roles" ON public.user_roles;
 
 -- ── 1. Tables avec data : UPDATE + ALTER ────────────────────
 
@@ -170,5 +192,17 @@ BEGIN
 
   RAISE NOTICE 'Migration 0026: assets.provenance.userId nettoyé';
 END $$;
+
+-- ── 4. Recrée les policies droppées en Section 0 ────────────
+-- Comparaison UUID native maintenant que user_id est typé uuid —
+-- auth.uid() retourne uuid, plus besoin de cast ::text.
+
+CREATE POLICY "Users can view own audit logs" ON public.audit_logs
+  FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Users can view own roles" ON public.user_roles
+  FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
 
 COMMIT;
