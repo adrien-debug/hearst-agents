@@ -5,8 +5,8 @@
  *
  * - ⌘K        : toggle Commandeur (palette)
  * - ⌘L        : toggle floating chat
- * - ⌘⇧V       : mode voix ambient
- * - ⌘1..⌘7    : switch direct vers un Stage
+ * - ⌘1..⌘7    : switch direct vers un Stage (cockpit/chat/asset/browser/
+ *               meeting/kg/voice — grille systématique, voir STAGE_HOTKEYS)
  * - ⌘⌫        : back stage
  *
  * Ignore les inputs / textarea / contenteditable pour ne pas voler les
@@ -14,7 +14,7 @@
  */
 
 import { useEffect } from "react";
-import { useStageStore, STAGE_HOTKEYS, type StagePayload } from "@/stores/stage";
+import { useStageStore, STAGE_HOTKEYS } from "@/stores/stage";
 
 export function useGlobalHotkeys() {
   const toggleCommandeur = useStageStore((s) => s.toggleCommandeur);
@@ -49,14 +49,7 @@ export function useGlobalHotkeys() {
       // Le reste : skip si user en train de taper
       if (isInInput(e)) return;
 
-      // ⌘⇧V : mode voix
-      if (e.shiftKey && (e.key === "v" || e.key === "V")) {
-        e.preventDefault();
-        setMode({ mode: "voice" } as StagePayload);
-        return;
-      }
-
-      // ⌘1..⌘7 : switch stages
+      // ⌘1..⌘7 : switch stages (voice = ⌘7, plus de ⌘⇧V redondant)
       const hk = STAGE_HOTKEYS.find((h) => h.key === e.key);
       if (hk) {
         e.preventDefault();

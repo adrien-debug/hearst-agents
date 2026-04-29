@@ -103,9 +103,9 @@ export const useStageStore = create<StageState>((set, get) => ({
 }));
 
 /**
- * Mapping hotkey → stage. Cmd+1..7 = switch direct vers un Stage.
+ * Mapping hotkey → stage. Cmd+1..7 = switch direct vers un Stage
+ * (cockpit/chat/asset/browser/meeting/kg/voice — grille systématique).
  * Cmd+K = ouvrir Commandeur. Cmd+L = toggle floating chat.
- * Cmd+Shift+V = mode voice ambient.
  * Cmd+Backspace = back.
  */
 export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [

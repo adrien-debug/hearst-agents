@@ -13,10 +13,10 @@ interface VoiceStageProps {
  * WebRTC (latence < 500ms) + tools function calling pendant la voix +
  * waveform visuelle ambient.
  *
- * Trigger user : Cmd+Shift+V (hotkey global) → mint ephemeral token →
- * RTCPeerConnection → user parle naturellement, agent répond ET déclenche
- * des missions Composio en parallèle. Mode persistant tant que l'overlay
- * est ouvert.
+ * Trigger user : ⌘7 (hotkey global, position 7 dans la grille des Stages)
+ * → mint ephemeral token → RTCPeerConnection → user parle naturellement,
+ * agent répond ET déclenche des missions Composio en parallèle. Mode
+ * persistant tant que l'overlay est ouvert.
  */
 export function VoiceStage({ sessionId }: VoiceStageProps) {
   const back = useStageStore((s) => s.back);
@@ -59,7 +59,7 @@ export function VoiceStage({ sessionId }: VoiceStageProps) {
             Conversation full-duplex avec l'agent, latence sous 500&nbsp;ms. Parle naturellement pendant que tu travailles, l'agent répond ET déclenche des actions Composio en parallèle (envoie un Slack, crée un ticket, planifie un meeting).
           </p>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] mt-4">
-            CMD+SHIFT+V pour activer
+            CMD+7 pour activer
           </p>
         </div>
       </div>
