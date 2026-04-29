@@ -503,6 +503,107 @@ describe("extractSignals — burnout_risk via late_activity_ratio", () => {
   });
 });
 
+// ── Signal V2.3 — meeting_overload ──────────────────────────
+
+describe("extractSignals — meeting_overload", () => {
+  it("émet warning si heures de meeting > 30h/semaine", () => {
+    const out = extractSignals(payload({ "kpi_meeting_hours.value": 35 }));
+    const sig = out.signals.find((s) => s.type === "meeting_overload");
+    expect(sig).toBeDefined();
+    expect(sig?.severity).toBe("warning");
+    expect(sig?.blockId).toBe("kpi_meeting_hours");
+  });
+
+  it("n'émet pas exactement au seuil 30h (strict >)", () => {
+    const out = extractSignals(payload({ "kpi_meeting_hours.value": 30 }));
+    expect(out.signals.find((s) => s.type === "meeting_overload")).toBeUndefined();
+  });
+
+  it("n'émet pas si heures < 30h", () => {
+    const out = extractSignals(payload({ "kpi_meeting_hours.value": 20 }));
+    expect(out.signals).toHaveLength(0);
+  });
+
+  it("n'émet pas si scalaire manquant", () => {
+    const out = extractSignals(payload({}));
+    expect(out.signals.find((s) => s.type === "meeting_overload")).toBeUndefined();
+  });
+
+  it("meeting_overload contribue à severity warning globale", () => {
+    const out = extractSignals(payload({ "kpi_meeting_hours.value": 40 }));
+    expect(out.severity).toBe("warning");
+  });
+});
+
+describe("extractSignals — integration : support-health csat_drop + sla_breach", () => {
+  it("détecte csat_drop + sla_breach depuis un payload support-health", async () => {
+    const { renderBlocks } = await import(
+      "@/lib/reports/engine/render-blocks"
+    );
+    const spec = {
+      id: "00000000-0000-4000-8000-100000000006",
+      version: 1,
+      meta: {
+        title: "Support",
+        summary: "",
+        domain: "support" as const,
+        persona: "csm" as const,
+        cadence: "daily" as const,
+        confidentiality: "internal" as const,
+      },
+      scope: { tenantId: "t", workspaceId: "w" },
+      sources: [
+        { id: "src", kind: "composio" as const, spec: { action: "X", params: {} } },
+      ],
+      transforms: [],
+      blocks: [
+        {
+          id: "kpi_csat_7d",
+          type: "kpi" as const,
+          label: "CSAT 7j",
+          dataRef: "src",
+          layout: { col: 1 as const, row: 0 },
+          props: {
+            field: "csat",
+            subScalars: { baseline: "baseline" },
+          },
+        },
+        {
+          id: "kpi_sla",
+          type: "kpi" as const,
+          label: "SLA",
+          dataRef: "src",
+          layout: { col: 1 as const, row: 0 },
+          props: { field: "value" },
+        },
+      ],
+      refresh: { mode: "manual" as const, cooldownHours: 0 },
+      cacheTTL: { raw: 60, transform: 600, render: 3600 },
+      createdAt: 0,
+      updatedAt: 0,
+    };
+    // CSAT 7j = 0.78, baseline 30j = 0.90 → drop de 12pp > 5pp → csat_drop
+    // SLA compliance = 0.82 → < 90% → sla_breach
+    const datasets = new Map([
+      ["src", [{ csat: 0.78, baseline: 0.90, value: 0.82 }]],
+    ]);
+    const out = renderBlocks(spec, datasets, 0);
+    expect(out.scalars["kpi_csat_7d.value"]).toBe(0.78);
+    expect(out.scalars["kpi_csat_7d.baseline"]).toBe(0.90);
+    expect(out.scalars["kpi_sla.value"]).toBe(0.82);
+
+    const signals = extractSignals(out);
+    const csatSig = signals.signals.find((s) => s.type === "csat_drop");
+    const slaSig = signals.signals.find((s) => s.type === "sla_breach");
+    expect(csatSig).toBeDefined();
+    expect(csatSig?.severity).toBe("warning");
+    expect(slaSig).toBeDefined();
+    expect(slaSig?.severity).toBe("critical");
+    // Severity globale = critical (sla_breach est critical)
+    expect(signals.severity).toBe("critical");
+  });
+});
+
 describe("extractSignals — integration : baseline_3m généré par renderBlocks", () => {
   it("financial-pnl rule expense_spike consomme baseline_3m issu d'un transform", async () => {
     // Simule l'intégration end-to-end : un block KPI avec subScalars publie

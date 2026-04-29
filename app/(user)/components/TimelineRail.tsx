@@ -120,22 +120,16 @@ function groupThreadsByDate(threads: Thread[]): {
 
 function SectionHeader({
   label,
-  count,
   action,
 }: {
   label: string;
-  count: number;
-  accent?: boolean;
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between first:mt-0 mt-6 mb-3">
-      <span className="rail-section-label">{label}</span>
+    <div className="flex items-center justify-between first:mt-0 mt-6 mb-2 px-3">
+      <span className="t-12 font-semibold text-[rgba(255,255,255,0.9)]">{label}</span>
       <span className="flex items-center gap-2">
         {action}
-        <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
-          {count.toString().padStart(2, "0")}
-        </span>
       </span>
     </div>
   );
@@ -143,7 +137,7 @@ function SectionHeader({
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-10 tracking-[0.15em] text-[rgba(255,255,255,0.3)] uppercase pl-3 py-2 font-light">
+    <p className="t-12 text-[rgba(255,255,255,0.4)] pl-3 py-2 font-light">
       {children}
     </p>
   );
@@ -162,22 +156,16 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
   return (
     <div
       onClick={onSelect}
-      className="group cursor-pointer py-2.5 -mx-2 px-2 transition-all duration-300 flex items-center gap-3 rounded-md hover:bg-[rgba(255,255,255,0.02)]"
+      className={`group cursor-pointer py-2 px-3 transition-all duration-300 flex items-center gap-3 rounded-md ${
+        isActive ? "bg-[rgba(255,255,255,0.08)]" : "hover:bg-[rgba(255,255,255,0.04)]"
+      }`}
       title={thread.name}
     >
-      <span
-        className={`rounded-full shrink-0 transition-all duration-300 ${
-          isActive
-            ? "bg-[var(--cykan)] shadow-[0_0_10px_rgba(45,212,191,0.4)]"
-            : "border border-[rgba(255,255,255,0.2)] group-hover:border-[rgba(255,255,255,0.4)]"
-        }`}
-        style={{ width: "6px", height: "6px" }}
-      />
       <p
-        className={`flex-1 t-13 font-light truncate min-w-0 transition-colors duration-300 ${
+        className={`flex-1 t-14 truncate min-w-0 transition-colors duration-300 ${
           isActive
-            ? "text-[var(--cykan)]"
-            : "text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)]"
+            ? "text-[rgba(255,255,255,1)] font-medium"
+            : "text-[rgba(255,255,255,0.7)] font-light group-hover:text-[rgba(255,255,255,0.9)]"
         }`}
         style={{ lineHeight: "var(--leading-base)" }}
       >
@@ -192,7 +180,7 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
             e.stopPropagation();
             onArchive();
           }}
-          className="text-[rgba(255,255,255,0.3)] hover:text-[var(--cykan)] p-1 transition-colors"
+          className="text-[rgba(255,255,255,0.4)] hover:text-[rgba(255,255,255,0.9)] p-1 transition-colors"
           title={isArchived ? "Désarchiver" : "Archiver"}
           aria-label={isArchived ? "Désarchiver le thread" : "Archiver le thread"}
         >
@@ -208,7 +196,7 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
             e.stopPropagation();
             if (window.confirm(`Supprimer "${thread.name}" ?`)) onDelete();
           }}
-          className="text-[rgba(255,255,255,0.3)] hover:text-[var(--danger)] p-1 transition-colors"
+          className="text-[rgba(255,255,255,0.4)] hover:text-[var(--danger)] p-1 transition-colors"
           title="Supprimer"
           aria-label="Supprimer le thread"
         >
@@ -335,31 +323,60 @@ export function TimelineRail() {
             ))}
           </div>
         ) : (
-          <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col" style={{ gap: "var(--space-4)" }}>
-            {/* Today */}
+          <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col" style={{ gap: "var(--space-2)" }}>
+            
+            {/* Top Menu */}
+            <div className="flex flex-col gap-1 mb-4">
+              <button onClick={handleNewThread} className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </span>
+                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Nouvelle conversation</span>
+              </button>
+              <button className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
+                    <path d="M12 12L2.1 7.1" />
+                    <path d="M12 12l9.9 4.9" />
+                  </svg>
+                </span>
+                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Hearst</span>
+              </button>
+              <button className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <path d="M9 3v18" />
+                    <path d="M15 3v18" />
+                    <path d="M3 9h18" />
+                    <path d="M3 15h18" />
+                  </svg>
+                </span>
+                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">App</span>
+              </button>
+            </div>
+
+            {/* Récents */}
             <section>
-              <SectionHeader
-                label="Today"
-                count={groups.today.length}
-                action={
-                  <button
-                    type="button"
-                    onClick={handleNewThread}
-                    title="Nouvelle conversation"
-                    aria-label="Nouvelle conversation"
-                    className="w-5 h-5 flex items-center justify-center rounded-full border border-[rgba(255,255,255,0.1)] text-[rgba(255,255,255,0.4)] hover:text-[var(--cykan)] hover:border-[rgba(45,212,191,0.3)] hover:bg-[rgba(45,212,191,0.05)] transition-all duration-300"
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </button>
-                }
-              />
-              {groups.today.length === 0 ? (
-                <EmptyHint>{"Aucune activité aujourd'hui"}</EmptyHint>
+              <SectionHeader label="Récents" />
+              {groups.today.length === 0 && groups.thisWeek.length === 0 ? (
+                <EmptyHint>Aucune activité récente</EmptyHint>
               ) : (
                 <div className="space-y-px">
                   {groups.today.map((t) => (
+                    <ThreadRow
+                      key={t.id}
+                      thread={t}
+                      isActive={t.id === activeThreadId}
+                      onSelect={() => handleThreadSelect(t.id)}
+                      onDelete={() => handleThreadDelete(t.id)}
+                      onArchive={() => toggleArchived(t.id)}
+                    />
+                  ))}
+                  {groups.thisWeek.map((t) => (
                     <ThreadRow
                       key={t.id}
                       thread={t}
@@ -373,27 +390,10 @@ export function TimelineRail() {
               )}
             </section>
 
-            {groups.thisWeek.length > 0 && (
-              <section>
-                <SectionHeader label="7 derniers jours" count={groups.thisWeek.length} />
-                <div className="space-y-px">
-                  {groups.thisWeek.map((t) => (
-                    <ThreadRow
-                      key={t.id}
-                      thread={t}
-                      isActive={t.id === activeThreadId}
-                      onSelect={() => handleThreadSelect(t.id)}
-                      onDelete={() => handleThreadDelete(t.id)}
-                      onArchive={() => toggleArchived(t.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
+            {/* Archive */}
             {groups.archive.length > 0 && (
-              <section>
-                <SectionHeader label="Archive" count={groups.archive.length} />
+              <section className="mt-4">
+                <SectionHeader label="Archive" />
                 <div className="space-y-px">
                   {groups.archive.map((t) => (
                     <ThreadRow
