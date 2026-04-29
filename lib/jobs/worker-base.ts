@@ -85,7 +85,12 @@ export function startWorker<P extends JobPayload>(handler: WorkerHandler<P>): Wo
   const worker = new Worker<P, JobResult>(config.queueName, processor, {
     connection,
     concurrency: config.concurrency,
-    lockDuration: Math.min(config.maxDurationMs, 60_000), // BullMQ recommend max 30s
+    // lockDuration doit couvrir le processing réel le plus long. Sinon
+    // BullMQ considère le job stalled et le retry — ce qui facture le
+    // provider 2× (ElevenLabs, fal, HeyGen, etc.) pour le même travail.
+    // On prend 2× la durée max attendue pour absorber un débordement
+    // ponctuel (upload R2 lent, blocking call provider).
+    lockDuration: config.maxDurationMs * 2,
     stalledInterval: 30_000,
   });
 

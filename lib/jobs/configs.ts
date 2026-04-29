@@ -36,7 +36,10 @@ export const JOB_QUEUE_CONFIGS: Record<JobKind, JobQueueConfig> = {
   "audio-gen": {
     queueName: "audio-gen",
     concurrency: 5,
-    maxDurationMs: 120_000,
+    // 180s : couvre texte long ElevenLabs (jusqu'à ~5000 chars en
+    // multilingual_v2 ≈ 30s) + upload R2 lent (parfois > 60s sur cold
+    // bucket). lockDuration = 2× via worker-base = 360s, marge confortable.
+    maxDurationMs: 180_000,
     retryAttempts: 2,
     retryDelayMs: 3_000,
     priority: 2,
