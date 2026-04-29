@@ -4,18 +4,18 @@
 
 Toute tâche qui touche à un composant, une page ou un style doit suivre ces règles. Si une règle ne peut pas être respectée, **arrête-toi et demande** avant de coder.
 
-### 1. Aucun magic number
+### 1. Aucun magic number côté valeurs CSS
 
-Tout passe par les tokens définis dans [app/globals.css](app/globals.css) :
+Tout passe par les tokens définis dans [app/globals.css](app/globals.css). Tailwind v4 + `@theme inline` mappe les utilities Tailwind sur les tokens — donc utiliser `px-12`, `gap-4`, `mb-4`, `w-8` est OK : ces utilities résolvent vers `var(--space-N)` automatiquement (mapping `--spacing-N → var(--space-N)` dans le bloc `@theme inline`).
 
-- **Spacing** → variables `--space-1` à `--space-32` (jamais `px-12`, `gap-5`, `mt-4`, etc.)
-- **Typo** → classes `.t-9`, `.t-13`, `.t-15`, `.t-28`… ou `.halo-title-xl`, `.halo-mono-label` (jamais `text-5xl` + inline `style={{ fontWeight, letterSpacing }}`)
-- **Radius** → `--radius-xs` à `--radius-pill` (jamais `rounded-xl` brut)
-- **Couleurs** → `var(--cykan)`, `var(--text-muted)`, `var(--border-default)` (jamais `#fff`, `text-white`, `text-gray-400`)
-- **Shadows** → `--shadow-card`, `--shadow-card-hover`, `--shadow-input-focus` (jamais inline `box-shadow:`)
-- **Motion** → `--duration-*` + `--ease-*` (jamais `transition-all duration-300` brut)
+- **Spacing** → utilities Tailwind `p-N`, `gap-N`, `m-N`, `w-N`, `h-N` (résolues vers `var(--space-N)` via `@theme inline`) **OU** `style={{ padding: "var(--space-N)" }}` quand l'utility ne suffit pas. Jamais `style={{ padding: "12px" }}` brut (bloqué par lint:visual sur STRICT_PATHS).
+- **Typo** → classes `.t-9`, `.t-13`, `.t-15`, `.t-28`… ou `.halo-title-xl`, `.halo-mono-label`. Jamais `text-[18px]` arbitraire (bloqué par `no-arbitrary-text-size`), ni `text-5xl` + inline `style={{ fontWeight, letterSpacing }}`.
+- **Radius** → `--radius-xs` à `--radius-pill` ou utilities `rounded-pill`/`rounded-md`. Pas de `rounded-[Npx]` arbitraire (bloqué par `no-arbitrary-non-token` sur STRICT_PATHS).
+- **Couleurs** → `var(--cykan)`, `var(--text-muted)`, `var(--border-default)`. Jamais `#fff` ou `rgba(...)` en dur (bloqués par `no-hex` / `no-rgba`).
+- **Shadows** → `--shadow-card`, `--shadow-card-hover`, `--shadow-input-focus`. Jamais `shadow-xl`/`shadow-2xl` Tailwind brut (bloqué par `no-tailwind-shadow`), ni inline `boxShadow: "0 2px 8px rgba(...)"` (bloqué par `no-inline-shadow`).
+- **Motion** → `--duration-*` + `--ease-*`. Jamais `transition-all duration-300` brut.
 
-Si un token manque pour ce que tu veux faire : **stop. Demande à Adrien.** Ne crée pas un magic number "temporaire".
+Si un token manque pour ce que tu veux faire : **stop. Demande à Adrien.** Ne crée pas un magic number "temporaire". La source de vérité des règles bloquantes est [scripts/lint-visual.mjs](scripts/lint-visual.mjs) — ce qu'il laisse passer est autorisé, ce qu'il bloque ne l'est pas.
 
 ### 2. Une seule source de vérité par propriété
 
