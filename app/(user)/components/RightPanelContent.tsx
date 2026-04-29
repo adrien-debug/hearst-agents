@@ -38,20 +38,21 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const [data, setData] = useState<RightPanelData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  // Lazy init : on lit localStorage une fois au mount au lieu d'un setState
-  // dans useEffect (anti-pattern react-hooks/set-state-in-effect).
-  const [activeView, setActiveView] = useState<PanelView>(() => {
-    if (typeof window === "undefined") return "general";
+  const [activeView, setActiveView] = useState<PanelView>("general");
+
+  // localStorage lu en useEffect (pas en useState initializer) sinon
+  // hydration mismatch : SSR retourne "general", client retourne la valeur
+  // sauvegardée → tiles d'activeView désynchronisées entre serveur et client.
+  useEffect(() => {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY) as PanelView | null;
       if (saved && ["general", "reports", "missions", "assets"].includes(saved)) {
-        return saved;
+        setActiveView(saved);
       }
     } catch {
       /* ignore */
     }
-    return "general";
-  });
+  }, []);
 
   // Save view when changed
   const handleViewChange = (view: PanelView) => {
