@@ -6,13 +6,17 @@
 --    → tout user authentifié peut lire les runs de tous les tenants.
 --  - migration 0017 n'a PAS activé RLS sur `assets` ni `actions`
 --    → données accessibles sans scoping côté Postgres.
+--  - migration 0026 (préalable) a typé runs.user_id en uuid. Donc on
+--    compare `user_id = auth.uid()` (uuid native), plus de cast ::text.
 --
 -- Cette migration :
 --  1. Drop les policies trop permissives sur runs.
 --  2. Active RLS sur assets et actions.
---  3. Crée des policies user-scoped (scoping via user_id pour runs,
---     via provenance->>'userId' pour assets, via thread_id pour actions
---     joint sur assets).
+--  3. Crée des policies user-scoped :
+--     - runs.user_id : uuid → comparaison `auth.uid()` directe
+--     - assets.provenance->>'userId' : jsonb extract → text → cast ::text
+--       sur auth.uid() (jsonb extract retourne text)
+--     - actions : jointure sur assets (idem cast ::text)
 --  4. Ajoute un index GIN sur provenance jsonb pour les perfs.
 -- ============================================================
 
@@ -23,22 +27,23 @@ DROP POLICY IF EXISTS runs_insert_auth ON public.runs;
 DROP POLICY IF EXISTS runs_update_auth ON public.runs;
 DROP POLICY IF EXISTS runs_delete_auth ON public.runs;
 
+-- runs.user_id est typé uuid post-0026 → comparaison native sans cast.
 CREATE POLICY runs_select_user ON public.runs
   FOR SELECT TO authenticated
-  USING (user_id = auth.uid()::text OR user_id IS NULL);
+  USING (user_id = auth.uid() OR user_id IS NULL);
 
 CREATE POLICY runs_insert_user ON public.runs
   FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid()::text OR user_id IS NULL);
+  WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
 CREATE POLICY runs_update_user ON public.runs
   FOR UPDATE TO authenticated
-  USING (user_id = auth.uid()::text OR user_id IS NULL)
-  WITH CHECK (user_id = auth.uid()::text OR user_id IS NULL);
+  USING (user_id = auth.uid() OR user_id IS NULL)
+  WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
 CREATE POLICY runs_delete_user ON public.runs
   FOR DELETE TO authenticated
-  USING (user_id = auth.uid()::text OR user_id IS NULL);
+  USING (user_id = auth.uid() OR user_id IS NULL);
 
 -- Service role bypass (server writes go through service_role key)
 CREATE POLICY runs_service_all ON public.runs

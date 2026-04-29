@@ -16,7 +16,10 @@
 -- ── user_credits — solde courant ───────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.user_credits (
-  user_id        text NOT NULL,
+  -- user_id uuid pour cohérence avec le cleanup 0026 (toutes les
+  -- tables user_id sont passées en uuid). auth.uid() retourne uuid,
+  -- donc comparaison native dans les policies plus bas.
+  user_id        uuid NOT NULL,
   tenant_id      text NOT NULL,
   balance_usd    numeric(18,6) NOT NULL DEFAULT 0,
   reserved_usd   numeric(18,6) NOT NULL DEFAULT 0,
@@ -34,7 +37,7 @@ CREATE INDEX IF NOT EXISTS idx_user_credits_user
 
 CREATE TABLE IF NOT EXISTS public.credit_ledger (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id             text NOT NULL,
+  user_id             uuid NOT NULL,
   tenant_id           text NOT NULL,
   operation           text NOT NULL CHECK (operation IN (
     'purchase','refund','job_debit','job_settle','admin_grant','trial_grant'
@@ -61,7 +64,7 @@ ALTER TABLE public.credit_ledger ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY user_credits_select_user ON public.user_credits
   FOR SELECT TO authenticated
-  USING (user_id = auth.uid()::text);
+  USING (user_id = auth.uid());
 
 CREATE POLICY user_credits_service_all ON public.user_credits
   FOR ALL TO service_role
@@ -69,7 +72,7 @@ CREATE POLICY user_credits_service_all ON public.user_credits
 
 CREATE POLICY credit_ledger_select_user ON public.credit_ledger
   FOR SELECT TO authenticated
-  USING (user_id = auth.uid()::text);
+  USING (user_id = auth.uid());
 
 CREATE POLICY credit_ledger_service_all ON public.credit_ledger
   FOR ALL TO service_role
@@ -78,7 +81,7 @@ CREATE POLICY credit_ledger_service_all ON public.credit_ledger
 -- ── Trial grant function (1 USD par défaut) ─────────────────
 
 CREATE OR REPLACE FUNCTION public.grant_trial_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_tenant_id text,
   p_amount_usd numeric DEFAULT 1.0
 ) RETURNS void AS $$
@@ -102,7 +105,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- ── Atomic debit/credit functions (race-safe) ──────────────
 
 CREATE OR REPLACE FUNCTION public.reserve_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_tenant_id text,
   p_amount_usd numeric,
   p_job_id text,
@@ -131,7 +134,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION public.settle_credits(
-  p_user_id text,
+  p_user_id uuid,
   p_tenant_id text,
   p_reserved_usd numeric,
   p_actual_usd numeric,
