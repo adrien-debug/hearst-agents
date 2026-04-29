@@ -16,6 +16,8 @@
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { useVoiceStore } from "@/stores/voice";
+import { useServicesStore } from "@/stores/services";
+import { voiceToolDefs, VOICE_TOOL_LABELS } from "@/lib/voice/tool-defs";
 import { RightPanelContent } from "./RightPanelContent";
 
 interface ContextRailProps {
@@ -234,7 +236,12 @@ function ContextRailForKnowledge() {
 function ContextRailForVoice() {
   const transcript = useVoiceStore((s) => s.transcript);
   const phase = useVoiceStore((s) => s.phase);
+  const services = useServicesStore((s) => s.services);
+  const connectedApps = services.filter((s) => s.connectionStatus === "connected");
   const last10 = transcript.slice(-10);
+  // Tools dispo : les 3 hearst statiques + les apps Composio connectées
+  // (le mint per-user injecte jusqu'à 4 tools par app, max 20 total).
+  const totalToolsCount = voiceToolDefs.length + connectedApps.length;
   return (
     <div className="h-full overflow-y-auto">
       <Section label="Transcript live" count={transcript.length}>
@@ -259,9 +266,12 @@ function ContextRailForVoice() {
           </ul>
         )}
       </Section>
-      <Section label="Tools disponibles" count={3}>
+      <Section label="Tools disponibles" count={totalToolsCount}>
         <p className="t-11 font-mono uppercase tracking-display text-[var(--text-faint)]">
-          Composio · KG · Missions
+          {[
+            ...voiceToolDefs.map((t) => VOICE_TOOL_LABELS[t.name] ?? t.name),
+            ...connectedApps.map((a) => a.name),
+          ].join(" · ")}
         </p>
       </Section>
       <Section label="Voice settings">

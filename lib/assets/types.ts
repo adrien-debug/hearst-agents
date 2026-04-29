@@ -159,7 +159,7 @@ export function clearAllAssetCaches(): void {
   actionCache.clear();
 }
 
-export function storeAsset(asset: Asset): void {
+export async function storeAsset(asset: Asset): Promise<void> {
   // Reject assets without a meaningful title at the source rather than
   // letting them land in the DB and filtering them out everywhere downstream.
   // Avoids the previous "Untitled" rows that polluted the right-panel and
@@ -182,32 +182,35 @@ export function storeAsset(asset: Asset): void {
     );
   }
 
-  // In-memory cache
+  // In-memory cache (immédiat — visible avant le retour de la Promise)
   const list = assetCache.get(asset.threadId) ?? [];
   list.push(asset);
   assetCache.set(asset.threadId, list);
 
-  // DB persistence (fire-and-forget)
+  // DB persistence — async pour permettre aux callers d'await la visibilité
+  // DB avant d'enchaîner sur des INSERTs liés (ex: asset_variants FK). Les
+  // callers historiques qui n'await pas conservent le comportement
+  // fire-and-forget : la Promise est silencieusement dropped.
   const sb = getServerSupabase();
-  if (sb) {
-    rawDb(sb)!.from("assets")
-      .upsert({
-        id: asset.id,
-        thread_id: asset.threadId,
-        run_id: asset.runId ?? null,
-        kind: asset.kind,
-        title: cleanTitle,
-        summary: asset.summary ?? null,
-        content_ref: asset.contentRef ?? null,
-        output_tier: asset.outputTier ?? null,
-        provenance: asset.provenance as unknown as Record<string, unknown>,
-        created_at: new Date(asset.createdAt).toISOString(),
-      })
-      .then(({ error }) => {
-        if (error) console.error("[AssetStore] DB write failed:", error.message);
-        else console.log(`[AssetStore] persisted asset ${asset.id}`);
-      });
-  }
+  if (!sb) return;
+
+  const { error } = await rawDb(sb)!
+    .from("assets")
+    .upsert({
+      id: asset.id,
+      thread_id: asset.threadId,
+      run_id: asset.runId ?? null,
+      kind: asset.kind,
+      title: cleanTitle,
+      summary: asset.summary ?? null,
+      content_ref: asset.contentRef ?? null,
+      output_tier: asset.outputTier ?? null,
+      provenance: asset.provenance as unknown as Record<string, unknown>,
+      created_at: new Date(asset.createdAt).toISOString(),
+    });
+
+  if (error) console.error("[AssetStore] DB write failed:", error.message);
+  else console.log(`[AssetStore] persisted asset ${asset.id}`);
 }
 
 /**

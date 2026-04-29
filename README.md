@@ -42,6 +42,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 | [`HEARST-OS-DESIGN-SYSTEM.html`](./HEARST-OS-DESIGN-SYSTEM.html) | Langage visuel canonique — tokens, classes, composants |
 | [`hearst-ui-vision.html`](./hearst-ui-vision.html) | Interface utilisateur — 2 états (IDLE/ACTIVE), chat-first, assets, missions |
 | [`mock-chat-central.html`](./mock-chat-central.html) | Mock de la surface principale (chat-first) |
+| [`mock-cockpit-dashboard.html`](./mock-cockpit-dashboard.html) | Maquette accueil 3 colonnes — **direction visuelle libre** (split rail sombre / centre papier / panneau sauge, typo Fraunces + DM Sans) |
 
 ### Core Types — Architecture Finale
 

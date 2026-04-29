@@ -1,0 +1,44 @@
+---
+description: Règles de sécurité strictes pour les modifications UI/Design (Ne jamais casser la logique)
+globs: **/*.tsx, **/*.ts, **/*.jsx, **/*.js
+alwaysApply: true
+---
+
+# UI & Design Safety Rules (NEVER BREAK LOGIC)
+
+Quand l'utilisateur demande une modification de design, de layout, ou d'UI (ex: "refais le design", "challenge l'UI", "modifie le header") :
+
+## 1. NE TOUCHE QU'À LA COUCHE PRÉSENTATION
+- Modifie **uniquement** les classes Tailwind (`className="..."`), les styles inline (`style={{...}}`), et la structure HTML/JSX (divs, spans, ordre des éléments).
+- Utilise les tokens CSS existants du design system (`var(--cykan)`, `var(--bg-elev)`, etc.).
+
+## 2. INTERDICTION ABSOLUE DE MODIFIER LA LOGIQUE MÉTIER
+- Ne supprime **JAMAIS** les hooks d'état (`useState`, `useEffect`, `useMemo`, `useCallback`).
+- Ne supprime **JAMAIS** les appels aux stores Zustand (ex: `useStageStore`, `useNavigationStore`, `useRuntimeStore`).
+- Ne supprime **JAMAIS** les appels API (`fetch`, etc.) ou la logique de récupération de données.
+- Ne remplace **JAMAIS** des données dynamiques par des données en dur (mock data) pour faire "joli", sauf si explicitement demandé pour un prototype jetable.
+
+## 3. PRÉSERVE L'ARCHITECTURE DES COMPOSANTS
+- Ne supprime pas les props passées aux composants enfants.
+- Ne modifie pas les signatures des fonctions (handlers `onClick`, `onSubmit`, etc.).
+- Si un composant conditionnel dépend d'un état (ex: `if (!isOpen) return null;`), conserve cette logique vitale.
+
+## 4. EN CAS DE DOUTE
+- Si le nouveau design nécessite de changer la structure des données ou de supprimer un composant fonctionnel clé, **demande l'autorisation** avant de casser l'existant.
+- Concentre-toi sur le "Comment ça s'affiche" (CSS/HTML) et non sur le "Comment ça marche" (JS/React Hooks).
+
+```tsx
+// ❌ BAD: L'agent supprime la logique pour faire une belle UI statique
+export function Inbox() {
+  // Supprime le fetch API et met des fausses données
+  return <div><Card title="3 emails" /></div>;
+}
+
+// ✅ GOOD: L'agent garde la logique et sublime l'UI
+export function Inbox() {
+  const { data } = useStore(); // Garde la logique intacte
+  useEffect(() => { fetchData() }, []); // Garde le cycle de vie
+  
+  return <div className="nouvelle-ui-sublime">{data.map(...)}</div>;
+}
+```

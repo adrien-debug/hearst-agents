@@ -20,6 +20,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { useVoiceStore } from "@/stores/voice";
+import { useStageStore, type StagePayload } from "@/stores/stage";
 
 const REALTIME_MODEL = "gpt-4o-realtime-preview";
 const REALTIME_SDP_URL = `https://api.openai.com/v1/realtime?model=${REALTIME_MODEL}`;
@@ -38,6 +39,10 @@ interface RealtimeServerEvent {
   transcript?: string;
   delta?: string;
   item_id?: string;
+  /** Function calling — arrivent dans `response.function_call_arguments.done`. */
+  call_id?: string;
+  name?: string;
+  arguments?: string;
 }
 
 export function VoicePulse() {
@@ -78,6 +83,73 @@ export function VoicePulse() {
     if (audioElRef.current) audioElRef.current.srcObject = null;
     reset();
   }, [reset]);
+
+  /**
+   * handleFunctionCall — Exécute un function_call émis par le modèle
+   * Realtime, renvoie l'output au DataChannel pour que le modèle continue
+   * sa réponse, et applique le stageRequest s'il y en a un.
+   *
+   * Les tools voix retournent généralement un stageRequest (ex: meeting,
+   * simulation, asset image) — on téléporte l'utilisateur immédiatement
+   * pour que la voix et le visuel restent synchronisés.
+   */
+  const handleFunctionCall = useCallback(
+    async (callId: string, name: string, argsJson: string) => {
+      setPhase("processing");
+
+      let args: Record<string, unknown> = {};
+      try {
+        args = JSON.parse(argsJson) as Record<string, unknown>;
+      } catch {
+        // Args malformés — on continue, le tool retournera un message d'erreur
+      }
+
+      let output = "Erreur d'exécution de l'outil.";
+      let stageRequest: StagePayload | undefined;
+
+      try {
+        const res = await fetch("/api/v2/voice/tool-call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ name, args }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          output?: string;
+          stageRequest?: StagePayload;
+          error?: string;
+        };
+        if (res.ok) {
+          output = data.output ?? output;
+          stageRequest = data.stageRequest;
+        } else {
+          output = data.output ?? data.error ?? `HTTP ${res.status}`;
+        }
+      } catch (err) {
+        output = err instanceof Error ? err.message : "Erreur réseau";
+      }
+
+      const dc = dcRef.current;
+      if (dc && dc.readyState === "open") {
+        dc.send(
+          JSON.stringify({
+            type: "conversation.item.create",
+            item: {
+              type: "function_call_output",
+              call_id: callId,
+              output,
+            },
+          }),
+        );
+        dc.send(JSON.stringify({ type: "response.create" }));
+      }
+
+      if (stageRequest) {
+        useStageStore.getState().setMode(stageRequest);
+      }
+    },
+    [setPhase],
+  );
 
   const start = useCallback(async () => {
     if (isStarting || activePc) {
@@ -197,6 +269,14 @@ export function VoicePulse() {
             currentAssistantIdRef.current = null;
             setPhase("listening");
             break;
+          case "response.function_call_arguments.done":
+            // Le modèle a fini de cracher les arguments d'un tool. On exécute
+            // côté serveur, on renvoie l'output via DataChannel, et on applique
+            // le stageRequest si présent (ex: téléporter sur MeetingStage).
+            if (msg.call_id && msg.name && typeof msg.arguments === "string") {
+              void handleFunctionCall(msg.call_id, msg.name, msg.arguments);
+            }
+            break;
           case "error":
             setError("Erreur OpenAI Realtime");
             setPhase("error");
@@ -242,6 +322,7 @@ export function VoicePulse() {
     setAudioLevel,
     setError,
     teardown,
+    handleFunctionCall,
   ]);
 
   useEffect(() => {
