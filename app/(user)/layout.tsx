@@ -78,7 +78,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
             <div
               className="flex-1 flex flex-col min-w-0 min-h-0 relative my-3 mx-3 rounded-2xl overflow-hidden border border-[var(--border-subtle)] shadow-2xl"
-              style={{ background: "var(--bg-elev)", color: "var(--text)" }}
+              style={{ background: "var(--bg-light-stage)", color: "var(--text-dark-strong)" }}
             >
               <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
                 {children}
