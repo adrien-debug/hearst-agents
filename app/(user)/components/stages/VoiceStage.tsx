@@ -140,7 +140,7 @@ export function VoiceStage(_props: VoiceStageProps) {
           TRANSCRIPT
         </span>
         {tail.length === 0 ? (
-          <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+          <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
             En attente du premier échange…
           </p>
         ) : (

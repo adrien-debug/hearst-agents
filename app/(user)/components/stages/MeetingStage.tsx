@@ -215,7 +215,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
             </header>
             <div className="flex-1 min-h-0 overflow-y-auto">
               {transcript.trim().length === 0 ? (
-                <p className="t-13 text-[var(--text-muted)]">
+                <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
                   En attente du transcript…
                 </p>
               ) : (
@@ -238,8 +238,8 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
               style={{ gap: "var(--space-3)" }}
             >
               {actionItems.length === 0 ? (
-                <p className="t-13 text-[var(--text-muted)]">
-                  Aucune action détectée pour le moment.
+                <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                  Aucune action détectée pour le moment
                 </p>
               ) : (
                 actionItems.map((item, idx) => {
