@@ -55,15 +55,18 @@ function ContextRailShell({ children, onClose }: { children: React.ReactNode; on
     >
       {onClose && (
         <div
-          className="flex items-center justify-between border-b border-[var(--border-shell)]"
+          className="flex items-center justify-between border-b border-[var(--border-default)]"
           style={{ padding: "var(--space-4)" }}
         >
           <p className="t-13 font-medium">Contexte</p>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)]"
+            aria-label="Fermer"
+            className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
           >
-            ✕
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
           </button>
         </div>
       )}
@@ -76,11 +79,11 @@ function ContextRailShell({ children, onClose }: { children: React.ReactNode; on
 
 function Section({ label, count, children }: { label: string; count?: number; children: React.ReactNode }) {
   return (
-    <section className="border-b border-[var(--surface-2)] py-6 px-6">
+    <section className="border-b border-[var(--border-default)] py-6 px-6">
       <header className="flex items-center justify-between mb-4">
         <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">{label}</span>
         {typeof count === "number" && (
-          <span className="t-9 font-mono tracking-display text-[var(--text-ghost)]">
+          <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
             {count.toString().padStart(2, "0")}
           </span>
         )}
@@ -92,7 +95,7 @@ function Section({ label, count, children }: { label: string; count?: number; ch
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-11 font-mono tracking-display uppercase text-[var(--text-ghost)]">
+    <p className="t-11 font-mono tracking-display uppercase text-[var(--text-faint)]">
       {children}
     </p>
   );
