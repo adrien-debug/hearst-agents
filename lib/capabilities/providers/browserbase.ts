@@ -46,6 +46,8 @@ export async function getSession(sessionId: string): Promise<{
   status: string;
   createdAt?: string;
   stoppedAt?: string;
+  debugViewerUrl?: string;
+  connectUrl?: string;
 }> {
   const res = await fetch(`${BB_API_BASE}/sessions/${sessionId}`, {
     headers: { "X-BB-API-Key": getApiKey() },
@@ -60,12 +62,16 @@ export async function getSession(sessionId: string): Promise<{
     status: string;
     createdAt?: string;
     stoppedAt?: string;
+    debugViewerUrl?: string;
+    connectUrl?: string;
   };
 
   return {
     status: data.status,
     createdAt: data.createdAt,
     stoppedAt: data.stoppedAt,
+    debugViewerUrl: data.debugViewerUrl,
+    connectUrl: data.connectUrl,
   };
 }
 

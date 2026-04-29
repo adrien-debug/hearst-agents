@@ -129,6 +129,7 @@
   --height-chat-collapsed: 320px;      /* Chat reduced quand FocalStage actif */
   --height-stage-empty-icon: 80px;     /* Empty state Stage : hauteur icône signature */
   --height-pulsebar: 32px;             /* PulseBar top fixed : hauteur */
+  --height-action-log: 120px;          /* BrowserStage Action Log footer : hauteur */
 
   /* ─── AgentActivityStrip ─────────────────────────────────────── */
   --width-activity-label: 180px;       /* Libellé d'activité : max-width */
