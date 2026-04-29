@@ -1,9 +1,8 @@
 /**
- * Pure event → canvas-state diff.
+ * Réducteur pur event → canvas-state diff.
  *
- * Decoupled from React + zustand so it can be unit-tested and reused for
- * both live SSE and replay. Returns a list of side-effect-free operations
- * that the caller applies to the store.
+ * Découplé de React + zustand — testable en isolation, réutilisé pour le live
+ * SSE et le replay. Retourne une liste d'opérations sans effets de bord.
  */
 
 import type { NodeId } from "./topology";
@@ -21,25 +20,23 @@ interface MinEvent {
 }
 
 /**
- * Map a single event to canvas operations.
+ * Mappe un event SSE en liste d'opérations canvas.
  *
- * Mapping rules:
- *  - `run_started` → entry active
- *  - `execution_mode_selected` → router success, intent active
- *  - `capability_blocked` → safety blocked (best heuristic — capability gate
- *    refusals always pre-empt the rest of the pipeline)
- *  - `app_connect_required` → preflight blocked
- *  - `tool_surface` → tools active
- *  - `agent_selected` → agent success
- *  - `tool_call_started` → pipeline active + packet from tools to pipeline
- *  - `tool_call_completed` → pipeline success
- *  - `step_started` (research) → research active
- *  - `asset_generated` → research success
- *  - `text_delta` → pipeline active (no packet — too noisy)
- *  - `orchestrator_log` containing "Safety gate refuse" / "Safety gate clarify"
- *    → safety failed / blocked
- *  - `run_completed` → complete success
- *  - `run_failed` → complete failed
+ * Règles :
+ *  - run_started          → reset + entry active
+ *  - execution_mode_selected → entry/router success, safety active→success, intent active
+ *  - capability_blocked   → safety blocked
+ *  - app_connect_required → preflight blocked
+ *  - tool_surface         → intent/preflight success, tools active
+ *  - agent_selected       → tools success, agent success
+ *  - tool_call_started    → tools success, pipeline active + packet
+ *  - tool_call_completed  → pipeline success
+ *  - step_started research → tools success, research active + packet
+ *  - asset_generated      → research success, pipeline success
+ *  - text_delta           → pipeline active
+ *  - orchestrator_log Safety gate → safety failed / blocked
+ *  - run_completed        → pipeline success, complete success (research inchangé)
+ *  - run_failed           → complete failed
  */
 export function reduceEvent(event: MinEvent): CanvasOp[] {
   switch (event.type) {
@@ -50,9 +47,14 @@ export function reduceEvent(event: MinEvent): CanvasOp[] {
       ];
 
     case "execution_mode_selected":
+      // Safety est traversée en happy path : elle est active puis immédiatement
+      // success avant de passer le relais à intent. Sans cela, safety reste idle
+      // sur tout le run normal.
       return [
         { kind: "node", id: "entry", state: "success" },
         { kind: "node", id: "router", state: "success" },
+        { kind: "node", id: "safety", state: "active" },
+        { kind: "node", id: "safety", state: "success" },
         { kind: "node", id: "intent", state: "active" },
       ];
 
@@ -89,9 +91,7 @@ export function reduceEvent(event: MinEvent): CanvasOp[] {
       ];
 
     case "tool_call_completed":
-      return [
-        { kind: "node", id: "pipeline", state: "success" },
-      ];
+      return [{ kind: "node", id: "pipeline", state: "success" }];
 
     case "step_started": {
       const agent = (event.agent ?? "").toString().toLowerCase();
@@ -106,18 +106,13 @@ export function reduceEvent(event: MinEvent): CanvasOp[] {
     }
 
     case "asset_generated":
-      // Asset can come from research path or AI pipeline. We light up both
-      // candidates as success since we don't always know the originating
-      // branch from the event payload alone.
       return [
         { kind: "node", id: "research", state: "success" },
         { kind: "node", id: "pipeline", state: "success" },
       ];
 
     case "focal_object_ready":
-      return [
-        { kind: "node", id: "complete", state: "active" },
-      ];
+      return [{ kind: "node", id: "complete", state: "active" }];
 
     case "text_delta":
       return [{ kind: "node", id: "pipeline", state: "active" }];
@@ -134,9 +129,10 @@ export function reduceEvent(event: MinEvent): CanvasOp[] {
     }
 
     case "run_completed":
+      // research n'est pas forcé ici : si la branche research n'a pas été active,
+      // elle reste idle. asset_generated a déjà posé research à success si besoin.
       return [
         { kind: "node", id: "pipeline", state: "success" },
-        { kind: "node", id: "research", state: "success" },
         { kind: "node", id: "complete", state: "success" },
       ];
 

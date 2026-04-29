@@ -9,7 +9,6 @@ import StageIcon from "./icons/StageIcons";
 
 interface Props {
   node: CanvasNode;
-  /** Optional micro-metric rendered in the bottom strip ("p50 8ms · 12/min"). */
   metric?: string;
 }
 
@@ -30,23 +29,20 @@ function pad2(n: number): string {
 }
 
 /**
- * Carte « stage » du pipeline admin — surface holographique en grille 3 rangs :
+ * Carte stage du pipeline — grille 3 rangs :
  *   Row 1 — disque icône · kicker mono · LED voyant
  *   Row 2 — label principal
  *   Row 3 — micro-metric · pastille d'état
  *
- * Toute la matérialité (surface, ombres, ring, glow d'état) vient de la classe
- * `.pipeline-card` dans globals.css. Le composant React ne fait que poser les
- * data-attributes (`data-kind`, `data-state`, `data-selected`) et écrire les
- * variables CSS de position calculées depuis le viewBox.
+ * La matérialité (surface, ombres, ring, glow) vient de `.pipeline-card`
+ * dans globals.css. Le composant pose uniquement data-kind, data-state,
+ * data-selected et les CSS vars de position calculées depuis le viewBox.
  */
 export default function FlowNode({ node, metric }: Props) {
   const state = useCanvasStore((s) => s.nodeStates[node.id]);
   const setSelected = useCanvasStore((s) => s.setSelectedNodeId);
   const isSelected = useCanvasStore((s) => s.selectedNodeId === node.id);
 
-  // Position + size in % of viewBox so the node layer scales with the canvas.
-  // Pass through CSS custom properties — the .pipeline-card class consumes them.
   const cssVars: CSSProperties & Record<string, string> = {
     "--pl-left": `${(node.x / VIEWBOX.width) * 100}%`,
     "--pl-top": `${(node.y / VIEWBOX.height) * 100}%`,
@@ -75,36 +71,13 @@ export default function FlowNode({ node, metric }: Props) {
       className="pipeline-card pointer-events-auto"
       style={cssVars}
     >
-      <span aria-hidden className="pipeline-card-gloss" />
-
       <span aria-hidden className="pipeline-port" data-side="in" />
       <span aria-hidden className="pipeline-port" data-side="out" />
 
-      {/* Row 1 — halo orbital 3D + disque icône · kicker · LED */}
+      {/* Row 1 — disque icône simple · kicker · LED */}
       <div className="pipeline-card-row pipeline-card-row-top">
-        <span className="pipeline-icon-halo">
-          <svg
-            aria-hidden
-            viewBox="-1.8 -1.8 3.6 3.6"
-            className="pipeline-icon-orbit"
-            preserveAspectRatio="xMidYMid meet"
-          >
-            <ellipse
-              cx="0" cy="0" rx="1.4" ry="1.4"
-              className="pipeline-icon-orbit-ring pipeline-icon-orbit-ring--1"
-            />
-            <ellipse
-              cx="0" cy="0" rx="1.4" ry="0.45"
-              className="pipeline-icon-orbit-ring pipeline-icon-orbit-ring--2"
-            />
-            <ellipse
-              cx="0" cy="0" rx="0.45" ry="1.4"
-              className="pipeline-icon-orbit-ring pipeline-icon-orbit-ring--3"
-            />
-          </svg>
-          <span className="pipeline-icon-disc">
-            <StageIcon kind={node.kind} className="pipeline-icon-glyph" />
-          </span>
+        <span className="pipeline-icon-disc">
+          <StageIcon kind={node.kind} className="pipeline-icon-glyph" />
         </span>
         <span className="pipeline-kicker">{kicker}</span>
         <span aria-hidden className="pipeline-led" />

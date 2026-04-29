@@ -1,12 +1,9 @@
 /**
- * Canvas topology — single source of truth for node positions + edges.
+ * Canvas topology — source de vérité unique pour les positions des nœuds et les edges.
  *
- * Maps the runtime pipeline (lib/engine/orchestrator/index.ts) onto a
- * deterministic SVG layout (left → right horizontal flow). Coordinates are
- * absolute within the canvas viewBox.
- *
- * Adding a stage? Add it here, then map the relevant SSE event types in
- * event-reducer.ts. Couleurs famille : `KIND_COLOR` + tokens `app/globals.css`.
+ * Mappe le pipeline runtime (lib/engine/orchestrator/index.ts) sur un layout SVG
+ * déterministe (flux horizontal gauche → droite). Les coordonnées sont absolues
+ * dans le viewBox du canvas.
  */
 
 export type NodeId =
@@ -21,10 +18,6 @@ export type NodeId =
   | "pipeline"
   | "complete";
 
-/**
- * Visual family of a stage. Drives icon + accent color in FlowNode and the
- * source-side coloring of edges that converge into it.
- */
 export type StageKind =
   | "entry"
   | "router"
@@ -47,15 +40,10 @@ export interface CanvasNode {
   toggleable?: boolean;
   flagKey?: string;
   fileHint: string;
-  /** Paragraphe court — ce que fait ce stage exactement. */
   description: string;
-  /** Inputs principaux du stage (court, max 6 mots). */
   inputs: string;
-  /** Outputs / side-effects du stage (court). */
   outputs: string;
-  /** SSE event types qui font passer ce node en `active` ou `success`. */
   events: string[];
-  /** Branchements possibles depuis ce node (texte humain). */
   branches?: string[];
 }
 
@@ -64,30 +52,19 @@ export interface CanvasEdge {
   from: NodeId;
   to: NodeId;
   branch?: "research" | "retrieval" | "pipeline" | "agent";
-  /** Override the auto-computed port directions for this edge. */
   ports?: { out: PortDir; in: PortDir };
 }
 
 export const VIEWBOX = { width: 1920, height: 1080 } as const;
 
-/**
- * Card geometry. 220×180 laisse la place à un disque orbital (halo 3D + icône),
- * un bloc label + kicker, un bandeau metric/pill et de l'air autour.
- */
 export const NODE_SIZE = { w: 220, h: 180 } as const;
 
-// Y-axis canon: research above / main trunk / agent below
 const Y_TOP = 260;
 const Y_MID = 540;
 const Y_BOT = 820;
 
-// X-axis: 8 trunk slots stepped by 240px (220 card + 20 gap), centered in 1920.
 const X = [130, 370, 610, 850, 1090, 1330, 1570, 1810] as const;
 
-/**
- * Color of the family. Read by FlowNode for icon tint and selection halo,
- * and by FlowEdge to color the trail of an arriving edge.
- */
 export const KIND_COLOR: Record<StageKind, string> = {
   entry: "var(--cykan)",
   router: "var(--cykan)",
@@ -101,7 +78,6 @@ export const KIND_COLOR: Record<StageKind, string> = {
   complete: "var(--color-success)",
 };
 
-/** Grille SVG — alignée sur `--space-10` (lignes) et `--space-5` (points). */
 export const PIPELINE_GRID_STEP_PX = 40 as const;
 export const PIPELINE_DOT_STEP_PX = 20 as const;
 
@@ -303,10 +279,6 @@ export function getNode(id: NodeId): CanvasNode {
 
 export type PortDir = "right" | "left" | "top" | "bottom";
 
-/**
- * Compute the port position for a given side of a node. Nodes are positioned
- * by center, so the port sits on the corresponding rectangle edge.
- */
 export function portAt(node: CanvasNode, dir: PortDir): { x: number; y: number } {
   const halfW = NODE_SIZE.w / 2;
   const halfH = NODE_SIZE.h / 2;
@@ -322,12 +294,6 @@ export function portAt(node: CanvasNode, dir: PortDir): { x: number; y: number }
   }
 }
 
-/**
- * Resolve the natural exit/entry sides for an edge based on the relative
- * positions of its endpoints. Same-row edges flow right→left horizontally;
- * branches above leave from the top and arrive at the bottom of the next
- * row, etc.
- */
 export function edgePorts(from: CanvasNode, to: CanvasNode): {
   out: PortDir;
   in: PortDir;
@@ -339,30 +305,19 @@ export function edgePorts(from: CanvasNode, to: CanvasNode): {
   const goingRight = to.x > from.x;
 
   if (goingUp) {
-    // Branch upward (e.g. intent → research) or convergence from below.
     return goingRight
       ? { out: "top", in: "left" }
       : { out: "top", in: "right" };
   }
-  // Branch downward (e.g. tools → agent) or convergence from above.
   return goingRight
     ? { out: "bottom", in: "left" }
     : { out: "bottom", in: "right" };
 }
 
 /**
- * Orthogonal path with a single rounded corner.
- *
- * Routes from `a` exiting in direction `aDir` to `b` entering from `bDir`.
- * Supports the four production cases:
- *   - right → left   (horizontal trunk): straight line if y matches.
- *   - top   → left   (intent → research): up then right.
- *   - bottom→ left   (tools → agent): down then right.
- *   - right → top    (agent → complete): right then up.
- *   - right → bottom (research → complete): right then down.
- *
- * The corner radius `r` is clamped so it never exceeds the available leg
- * lengths (half of the perpendicular distance on each axis).
+ * Chemin orthogonal avec un seul coin arrondi.
+ * Supporte les 4 cas canoniques du pipeline (right→left, top→left,
+ * bottom→left, right→top, right→bottom).
  */
 export function bezierPath(
   a: { x: number; y: number },
@@ -374,20 +329,16 @@ export function bezierPath(
     return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
   }
   if (aDir === "top" || aDir === "bottom") {
-    // Vertical exit then horizontal arrival on b.y.
     const r = Math.min(16, Math.abs(a.y - b.y) / 2, Math.abs(a.x - b.x) / 2);
     const dirX = b.x > a.x ? 1 : -1;
     const dirY = b.y > a.y ? 1 : -1;
     return `M ${a.x} ${a.y} L ${a.x} ${b.y - r * dirY} Q ${a.x} ${b.y} ${a.x + r * dirX} ${b.y} L ${b.x} ${b.y}`;
   }
   if (aDir === "right" && (bDir === "top" || bDir === "bottom")) {
-    // Horizontal exit then vertical arrival on b.x.
     const r = Math.min(16, Math.abs(a.y - b.y) / 2, Math.abs(a.x - b.x) / 2);
     const dirX = b.x > a.x ? 1 : -1;
     const dirY = b.y > a.y ? 1 : -1;
     return `M ${a.x} ${a.y} L ${b.x - r * dirX} ${a.y} Q ${b.x} ${a.y} ${b.x} ${a.y + r * dirY} L ${b.x} ${b.y}`;
   }
-  // Fallback — should not happen for the canonical pipeline, but keep a sane
-  // straight line so we never throw at render time.
   return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
 }

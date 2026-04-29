@@ -14,13 +14,12 @@ interface PersistedRun {
 
 interface Props {
   onSelect: (runId: string) => void;
-  /** Colonne runs dans le flux (sans largeur fixe — la colonne parent définit la largeur). */
   className?: string;
 }
 
 const STATUS_DOT: Record<PersistedRun["status"], string> = {
   running: "var(--warn)",
-  completed: "var(--cykan)",
+  completed: "var(--color-success)",
   failed: "var(--danger)",
 };
 

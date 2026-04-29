@@ -1,11 +1,3 @@
-/**
- * Canvas zustand store — node states, packets, mode.
- *
- * Drives all visual changes in the canvas. Updated by the event reducer
- * (event-reducer.ts) when SSE events arrive (live) or when the replay
- * timer fires (use-replay).
- */
-
 "use client";
 
 import { create } from "zustand";
@@ -33,11 +25,11 @@ export interface CanvasState {
   selectedRunId: string | null;
   selectedNodeId: NodeId | null;
   lastEventAt: number | null;
-  /** Recent edge traversals — drives the trailing 4s afterglow on FlowEdge. */
+  /** Traversées récentes des edges — alimente le trail 4s sur FlowEdge. */
   runTrail: RunTrailEntry[];
-  /** Collapses the right-hand canvas aside (NodeDetailPanel + RunRail). */
+  /** Replie la colonne droite (NodeDetailPanel + RunRail). */
   asideCollapsed: boolean;
-  /** Per-edge usage count from the last 100 runs — null while loading. */
+  /** Usage par edge sur les 100 derniers runs — null pendant le chargement. */
   edgeUsage: Record<string, number> | null;
   edgeUsageTotal: number;
 
@@ -78,15 +70,6 @@ let packetCounter = 0;
 
 const ASIDE_STORAGE_KEY = "canvas-aside-collapsed";
 
-function readAsideCollapsed(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return window.localStorage.getItem(ASIDE_STORAGE_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
 export const useCanvasStore = create<CanvasState>((set) => ({
   mode: "idle",
   nodeStates: freshNodeStates(),
@@ -95,7 +78,8 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   selectedNodeId: null,
   lastEventAt: null,
   runTrail: [],
-  asideCollapsed: readAsideCollapsed(),
+  // Initialisé à false — lecture localStorage dans le composant avec mounted guard.
+  asideCollapsed: false,
   edgeUsage: null,
   edgeUsageTotal: 0,
 
@@ -132,15 +116,17 @@ export const useCanvasStore = create<CanvasState>((set) => ({
   setSelectedRunId: (id) => set({ selectedRunId: id }),
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
   setLastEventAt: (ts) => set({ lastEventAt: ts }),
+
   toggleAsideCollapsed: () =>
     set((s) => {
       const next = !s.asideCollapsed;
       try {
         window.localStorage.setItem(ASIDE_STORAGE_KEY, next ? "1" : "0");
       } catch {
-        // localStorage unavailable — in-memory only.
+        // localStorage indisponible — état en mémoire uniquement.
       }
       return { asideCollapsed: next };
     }),
+
   setEdgeUsage: (usage, total) => set({ edgeUsage: usage, edgeUsageTotal: total }),
 }));
