@@ -20,6 +20,7 @@ import { useNavigationStore } from "@/stores/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useFocalStore } from "@/stores/focal";
 import { assetToFocal } from "@/lib/ui/focal-mappers";
+import { isPlaceholderAssetId } from "@/lib/ui/asset-id";
 import { toast } from "@/app/hooks/use-toast";
 import { AssetGlyphSVG } from "../right-panel-helpers";
 import { RelativeTime } from "../RelativeTime";
@@ -91,10 +92,13 @@ export function CockpitInbox() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { assetId: string | null; title: string };
-      if (data.assetId) {
+      if (data.assetId && !isPlaceholderAssetId(data.assetId)) {
         // Téléporte sur l'AssetStage pour que le ReportLayout s'affiche.
         // Avant : setFocal seul, mais en mode cockpit le FocalStage n'est
         // pas rendu — l'asset était créé sans surface de visualisation.
+        // Guard : on ne navigue pas vers un assetId placeholder (specId
+        // de catalogue, fixture de test, asset orphelin) sinon AssetStage
+        // tombe en error et AssetVariantTabs poll dans le vide.
         useFocalStore
           .getState()
           .setFocal(
@@ -121,6 +125,13 @@ export function CockpitInbox() {
   };
 
   const onAssetClick = (assetId: string) => {
+    // Guard : un asset placeholder (UUID fixture de catalogue ou cache
+    // périmé via /api/v2/right-panel) ouvrirait un AssetStage cassé qui
+    // poll les variants dans le vide.
+    if (isPlaceholderAssetId(assetId)) {
+      toast.error("Asset indisponible", "Cet asset n'est plus accessible.");
+      return;
+    }
     setStageMode({ mode: "asset", assetId });
   };
 

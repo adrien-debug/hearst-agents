@@ -23,6 +23,7 @@ import { ReportLayout } from "../ReportLayout";
 import { AssetVariantTabs } from "../AssetVariantTabs";
 import { isHtmlContent, tryParseReportPayload } from "@/lib/assets/content-parser";
 import type { Asset } from "@/lib/assets/types";
+import { isPlaceholderAssetId } from "@/lib/ui/asset-id";
 
 interface AssetStageProps {
   assetId: string;
@@ -61,6 +62,20 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
 
   useEffect(() => {
     let cancelled = false;
+    // Guard placeholder : assetId vide ou fixture (preset catalogue,
+    // mock e2e, cache périmé) → on n'essaie pas de fetch ni de poll
+    // les variants. Affiche un état error explicite.
+    if (isPlaceholderAssetId(assetId)) {
+      // Defer le set d'état error pour ne pas violer
+      // react-hooks/set-state-in-effect (sync setState dans effect).
+      void Promise.resolve().then(() => {
+        if (cancelled) return;
+        setLoading(false);
+        setError("Asset introuvable");
+        setAsset(null);
+      });
+      return;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset intentionnel avant fetch : nécessaire pour afficher le loading au changement d'assetId
     setLoading(true);
     setError(null);
