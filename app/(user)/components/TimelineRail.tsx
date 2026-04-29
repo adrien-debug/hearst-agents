@@ -110,11 +110,11 @@ function snippetOf(msgs: Message[] | undefined): string | null {
 
 function SectionHeader({ label, count, accent }: { label: string; count: number; accent?: boolean }) {
   return (
-    <div className="flex items-center justify-between mt-3 mb-1.5 first:mt-0">
-      <span className={`t-9 font-mono tracking-marquee uppercase ${accent ? "text-[var(--cykan)]" : "text-[var(--text-ghost)]"}`}>
+    <div className="flex items-center justify-between mt-6 mb-3 pb-2 border-b border-[var(--surface-2)] first:mt-0">
+      <span className={`t-9 font-mono tracking-marquee uppercase ${accent ? "text-[var(--cykan)]" : "text-[var(--text-muted)]"}`}>
         {label}
       </span>
-      <span className="t-9 font-mono tracking-display text-[var(--text-ghost)]">
+      <span className={`t-9 font-mono tracking-display ${accent ? "text-[var(--cykan)]" : "text-[var(--text-ghost)]"}`}>
         {count.toString().padStart(2, "0")}
       </span>
     </div>
@@ -134,9 +134,10 @@ interface ThreadRowProps {
   isActive: boolean;
   snippet: string | null;
   onSelect: () => void;
+  onDelete: () => void;
 }
 
-function ThreadRow({ thread, isActive, snippet, onSelect }: ThreadRowProps) {
+function ThreadRow({ thread, isActive, snippet, onSelect, onDelete }: ThreadRowProps) {
   return (
     <div
       onClick={onSelect}
@@ -161,6 +162,21 @@ function ThreadRow({ thread, isActive, snippet, onSelect }: ThreadRowProps) {
         >
           {thread.name}
         </p>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (window.confirm(`Supprimer "${thread.name}" ?`)) onDelete();
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-[var(--text-ghost)] hover:text-[var(--danger)] p-1"
+          title="Supprimer"
+          aria-label="Supprimer le thread"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+        </button>
       </div>
       {snippet && (
         <p
@@ -209,6 +225,7 @@ export function TimelineRail() {
     activeThreadId,
     setActiveThread,
     addThread,
+    removeThread,
     leftCollapsed,
     toggleLeftCollapsed,
     messages,
@@ -224,6 +241,11 @@ export function TimelineRail() {
   const handleThreadSelect = (threadId: string) => {
     setActiveThread(threadId);
     setStageMode({ mode: "chat", threadId });
+  };
+
+  const handleThreadDelete = (threadId: string) => {
+    if (threadId === activeThreadId) setActiveThread(null);
+    removeThread(threadId);
   };
 
   const handleNewThread = () => {
@@ -316,6 +338,7 @@ export function TimelineRail() {
                     isActive={t.id === activeThreadId}
                     snippet={snippetOf(messages[t.id])}
                     onSelect={() => handleThreadSelect(t.id)}
+                    onDelete={() => handleThreadDelete(t.id)}
                   />
                 ))}
               </div>
@@ -334,6 +357,7 @@ export function TimelineRail() {
                     isActive={t.id === activeThreadId}
                     snippet={snippetOf(messages[t.id])}
                     onSelect={() => handleThreadSelect(t.id)}
+                    onDelete={() => handleThreadDelete(t.id)}
                   />
                 ))}
               </div>

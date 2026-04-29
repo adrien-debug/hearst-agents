@@ -100,7 +100,7 @@
    * les tailles, sans zones mortes en grand écran. */
   --width-threads: clamp(220px, 20vw, 480px);
   --width-threads-collapsed: 64px;
-  --width-context: clamp(220px, 20vw, 480px);
+  --width-context: clamp(280px, 22vw, 480px);
   --width-center-max: 960px;
   --width-actions: clamp(440px, 36vw, 720px);
   --width-admin-sidebar: 240px;
