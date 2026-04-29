@@ -47,7 +47,10 @@ function NavTile({ id, icon, label, count, isActive, onClick, accent }: NavTileP
 interface RightPanelNavProps {
   activeView: PanelView;
   onChangeView: (view: PanelView) => void;
+  /** Total des livrables (inclut les rapports — sémantique inclusive). */
   assetsCount: number;
+  /** Sous-ensemble : assets dont type=report. Affiché dans la tuile "Rapports". */
+  reportsCount: number;
   missionsCount: number;
   suggestionsCount: number;
   eventsCount: number;
@@ -57,6 +60,7 @@ export function RightPanelNav({
   activeView,
   onChangeView,
   assetsCount,
+  reportsCount,
   missionsCount,
   suggestionsCount,
   eventsCount: _eventsCount,
@@ -82,7 +86,7 @@ export function RightPanelNav({
         id="reports"
         icon="⚡"
         label="Rapports"
-        count={suggestionsCount}
+        count={reportsCount}
         isActive={activeView === "reports"}
         onClick={onChangeView}
         accent={activeView === "reports" ? "var(--cykan)" : undefined}

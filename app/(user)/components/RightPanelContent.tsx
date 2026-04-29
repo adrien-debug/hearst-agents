@@ -263,6 +263,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         activeView={activeView}
         onChangeView={handleViewChange}
         assetsCount={assets.length}
+        reportsCount={assets.filter((a) => a.type === "report").length}
         missionsCount={missions.length}
         suggestionsCount={reportSuggestions?.length ?? 0}
         eventsCount={runtimeEvents.length}
