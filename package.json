@@ -31,6 +31,7 @@
     "@aws-sdk/lib-storage": "^3.1037.0",
     "@aws-sdk/s3-request-presigner": "^3.1037.0",
     "@composio/core": "^0.6.11",
+    "@deepgram/sdk": "^5.1.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@react-three/postprocessing": "^3.0.4",
