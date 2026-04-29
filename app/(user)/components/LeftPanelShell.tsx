@@ -4,7 +4,7 @@
  * LeftPanelShell — Container responsive autour de LeftPanel.
  *
  * Desktop (>= md): rendu inline classique, sidebar fixe.
- * Mobile (< md): drawer caché par défaut, ouvert via hamburger TopBar
+ * Mobile (< md): drawer caché par défaut, ouvert via hamburger PulseBar
  * (`useNavigationStore.toggleLeftDrawer`). Backdrop cliquable pour fermer.
  *
  * Mirroir du pattern utilisé par [RightPanel.tsx](./RightPanel.tsx). Z-index

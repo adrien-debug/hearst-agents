@@ -3,7 +3,6 @@
 import { SessionProvider } from "next-auth/react";
 import { LeftPanelShell } from "./components/LeftPanelShell";
 import { RightPanel } from "./components/RightPanel";
-import { TopBar } from "./components/TopBar";
 import { PulseBar } from "./components/PulseBar";
 import { Commandeur } from "./components/Commandeur";
 import { ToastContainer } from "@/app/components/ToastContainer";
@@ -51,7 +50,6 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             <LeftPanelShell />
 
             <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
-              <TopBar />
               {children}
             </main>
 
