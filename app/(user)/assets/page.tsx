@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useFocalStore } from "@/stores/focal";
-import { useNavigationStore } from "@/stores/navigation";
-import { assetToFocal } from "@/lib/ui/focal-mappers";
+import { useStageStore } from "@/stores/stage";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { toast } from "@/app/hooks/use-toast";
 
@@ -54,8 +52,6 @@ function formatRelative(iso: string): string {
 
 export default function AssetsPage() {
   const router = useRouter();
-  const setFocal = useFocalStore((s) => s.setFocal);
-  const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,10 +73,11 @@ export default function AssetsPage() {
   }, []);
 
   const handleOpen = (asset: AssetListItem) => {
-    setFocal(assetToFocal(
-      { id: asset.id, name: asset.title, type: asset.kind },
-      activeThreadId,
-    ));
+    // Cohérence avec AssetsGrid (rail droit) post-pivot 2026-04-29 :
+    // useStageStore.setMode → AssetStage standalone qui hydrate l'asset
+    // via fetch /api/v2/assets/[id]. Le router.push("/") ramène sur la
+    // home où le Stage polymorphe est rendu.
+    useStageStore.getState().setMode({ mode: "asset", assetId: asset.id });
     router.push("/");
   };
 

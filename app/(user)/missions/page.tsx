@@ -5,9 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MissionEditor } from "../components/MissionEditor";
 import { toast } from "@/app/hooks/use-toast";
 import { GhostIconPencil, GhostIconPlay, GhostIconTrash, GhostIconX } from "../components/ghost-icons";
-import { useFocalStore } from "@/stores/focal";
-import { useNavigationStore } from "@/stores/navigation";
-import { missionToFocal } from "@/lib/ui/focal-mappers";
+import { useStageStore } from "@/stores/stage";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 
 type MissionOpsStatus = "idle" | "running" | "success" | "failed" | "blocked";
@@ -30,8 +28,6 @@ interface Mission {
 function MissionsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const setFocal = useFocalStore((s) => s.setFocal);
-  const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditor, setShowEditor] = useState(() => searchParams.get("new") === "1");
@@ -46,7 +42,16 @@ function MissionsPageContent() {
   }, [searchParams, router]);
 
   const handleRowOpen = (mission: Mission) => {
-    setFocal(missionToFocal(mission, activeThreadId));
+    // Cohérence post-pivot : pas de "mode mission" dédié dans le Stage
+    // polymorphe — une mission s'observe depuis son thread chat. Si la
+    // mission n'a pas de threadId associé (mission ad hoc / sans run),
+    // fallback sur cockpit où les missions du jour sont visibles.
+    const threadId = (mission as { threadId?: string }).threadId;
+    if (threadId) {
+      useStageStore.getState().setMode({ mode: "chat", threadId });
+    } else {
+      useStageStore.getState().setMode({ mode: "cockpit" });
+    }
     router.push("/");
   };
 
