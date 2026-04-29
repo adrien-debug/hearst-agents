@@ -170,6 +170,18 @@ export function storeAsset(asset: Asset): void {
     return;
   }
 
+  // Garde-fou anti-orphelin : tout asset persisté doit avoir un userId
+  // dans son provenance. Sans ça, l'asset passe les RLS user-scoped via
+  // le fallback `OR IS NULL` mais perd la traçabilité. On warn plutôt
+  // que reject pour ne pas casser des flows en cours pendant la migration —
+  // post-cleanup user_identity, ce warn doit retourner zéro hit en logs.
+  if (!asset.provenance?.userId) {
+    console.warn(
+      `[AssetStore] Asset ${asset.id} (${asset.kind}) has no provenance.userId — ` +
+      `bug d'auth en amont, à fixer côté call site (run-research-report, planner, etc.).`,
+    );
+  }
+
   // In-memory cache
   const list = assetCache.get(asset.threadId) ?? [];
   list.push(asset);

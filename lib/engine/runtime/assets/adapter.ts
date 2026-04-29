@@ -56,6 +56,7 @@ export async function saveAsset(asset: Asset): Promise<boolean> {
       provenance: {
         tenantId: asset.tenantId,
         workspaceId: asset.workspaceId,
+        userId: asset.userId,
         type: asset.type,
         ...asset.metadata,
       },

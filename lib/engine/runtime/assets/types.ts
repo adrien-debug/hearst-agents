@@ -31,6 +31,11 @@ export interface RuntimeAsset {
   run_id: string;
   tenantId: string;
   workspaceId: string;
+  /** UUID utilisateur — propagé vers provenance.userId à la persistance.
+   * Optionnel pour rétro-compat, mais doit être fourni par tout call site
+   * post-cleanup user_identity. Sans userId, l'asset devient orphelin
+   * (RLS-invisible quand fallback `OR IS NULL` retiré). */
+  userId?: string;
   created_at: number;
   url?: string;
   metadata?: Record<string, unknown>;

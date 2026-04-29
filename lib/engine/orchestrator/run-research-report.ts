@@ -196,6 +196,7 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
         providerId: "system",
         tenantId: scope.tenantId,
         workspaceId: scope.workspaceId,
+        userId: scope.userId,
         specId: "research",
         runArtifact: true,
         reportMeta: { signals: [], severity: "info" },

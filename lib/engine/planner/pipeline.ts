@@ -124,7 +124,14 @@ export async function executeIntent(
           if (result.data?.content && tool !== "send_message") {
             const tier = detectOutputTier(intent);
             const formatted = formatOutput(result.data.content as string, tier);
-            const asset = createAssetFromOutput(ctx.threadId, formatted.title, tier, providerId, result.assetId);
+            const asset = createAssetFromOutput(
+              ctx.threadId,
+              formatted.title,
+              tier,
+              providerId,
+              { tenantId: ctx.tenantId, workspaceId: ctx.workspaceId, userId: ctx.userId },
+              result.assetId,
+            );
             storeAsset(asset);
             producedAssets.push(asset);
           }
@@ -423,6 +430,7 @@ function createAssetFromOutput(
   title: string,
   tier: string,
   providerId: ProviderId,
+  scope: { tenantId: string; workspaceId?: string; userId: string },
   existingId?: string,
 ): Asset {
   const kind = tier === "report" ? "report" as const : tier === "brief" ? "brief" as const : "document" as const;
@@ -432,7 +440,15 @@ function createAssetFromOutput(
     kind,
     title: title || (kind === "report" ? "Rapport" : "Synthèse"),
     outputTier: tier as Asset["outputTier"],
-    provenance: { providerId },
+    // Provenance complète : sans userId, l'asset devient orphelin et passe
+    // les RLS user-scoped via le fallback `OR IS NULL` mais perd la
+    // traçabilité. Le scope est requis depuis cette construction.
+    provenance: {
+      providerId,
+      tenantId: scope.tenantId,
+      workspaceId: scope.workspaceId,
+      userId: scope.userId,
+    },
     createdAt: Date.now(),
   };
 }
