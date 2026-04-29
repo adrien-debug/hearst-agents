@@ -25,10 +25,13 @@ const REALTIME_MODEL = "gpt-4o-realtime-preview";
 const REALTIME_SDP_URL = `https://api.openai.com/v1/realtime?model=${REALTIME_MODEL}`;
 const AUDIO_LEVEL_BOOST = 4;
 
-// Singleton guard module-level — empêche deux PeerConnections OpenAI
-// concurrentes même si React Strict Mode ou un re-render parasite remonte
-// le composant. Si une session est déjà active, le nouveau start() est no-op.
+// Singleton guards module-level — empêchent deux sessions OpenAI Realtime
+// concurrentes même si React Strict Mode remonte le composant pendant
+// qu'un start() async est en vol. activePc = guard sur PeerConnection
+// vivante. isStarting = guard synchrone (set AVANT tout await) qui
+// bouche la fenêtre entre l'entrée dans start() et l'assignation d'activePc.
 let activePc: RTCPeerConnection | null = null;
+let isStarting = false;
 
 interface RealtimeServerEvent {
   type: string;
@@ -77,10 +80,11 @@ export function VoicePulse() {
   }, [reset]);
 
   const start = useCallback(async () => {
-    if (activePc) {
-      console.warn("[VoicePulse] Session déjà active, skip nouveau start");
+    if (isStarting || activePc) {
+      console.warn("[VoicePulse] Session déjà active ou en cours, skip");
       return;
     }
+    isStarting = true;
     setError(null);
     setPhase("connecting");
     try {
@@ -227,6 +231,8 @@ export function VoicePulse() {
       setError(msg);
       setPhase("error");
       teardown();
+    } finally {
+      isStarting = false;
     }
   }, [
     setPhase,

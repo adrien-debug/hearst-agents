@@ -53,9 +53,18 @@ export function VoiceStage(_props: VoiceStageProps) {
   // Ordre important : on désactive la session WebRTC AVANT de quitter la
   // stage, sinon le teardown peut foirer si le composant racine VoicePulse
   // unmount pendant que back() change le mode.
-  const stopAndExit = () => {
+  //
+  // Fallback cockpit : si l'user arrive direct sur voice via ⌘7 sans
+  // navigation préalable, history est vide → back() no-op → user resterait
+  // visuellement sur voice avec l'orb mais le pipeline coupé.
+  const handleCut = () => {
     useVoiceStore.getState().setVoiceActive(false);
-    back();
+    const stage = useStageStore.getState();
+    if (stage.history.length > 0) {
+      stage.back();
+    } else {
+      stage.setMode({ mode: "cockpit" });
+    }
   };
 
   const phaseColor = PHASE_COLOR[phase];
@@ -85,7 +94,7 @@ export function VoiceStage(_props: VoiceStageProps) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={stopAndExit}
+            onClick={handleCut}
             className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--danger)] hover:border-[var(--danger)] transition-all shrink-0"
           >
             Couper

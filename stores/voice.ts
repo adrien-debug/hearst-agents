@@ -76,6 +76,8 @@ export const useVoiceStore = create<VoiceState>((set) => ({
       transcript: [],
       audioLevel: 0,
       error: null,
-      voiceActive: false,
+      // voiceActive volontairement omis — il est piloté par les actions
+      // utilisateur (setVoiceActive), pas par les cleanups WebRTC. Sinon
+      // boucle teardown → reset → unmount → teardown qui coupait le son.
     }),
 }));
