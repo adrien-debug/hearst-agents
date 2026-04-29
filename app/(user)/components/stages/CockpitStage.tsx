@@ -169,7 +169,7 @@ export function CockpitStage({ onSubmit, connectedServices }: CockpitStageProps)
             </div>
 
             <div className="text-center" style={{ rowGap: "var(--space-2)", display: "flex", flexDirection: "column" }}>
-              <p className="t-26 font-medium tracking-tight text-[var(--text)]" style={{ lineHeight: "var(--leading-snug)" }}>
+              <p className="t-26 font-semibold tracking-tight text-[var(--text)]" style={{ lineHeight: "var(--leading-snug)" }}>
                 {greeting}{firstName ? <span className="text-[var(--cykan)]">, {firstName}</span> : ""}
               </p>
               <p className="t-13 text-[var(--text-subtitle)]" style={{ lineHeight: "var(--leading-base)" }}>

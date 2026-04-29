@@ -110,11 +110,17 @@ function snippetOf(msgs: Message[] | undefined): string | null {
 
 function SectionHeader({ label, count, accent }: { label: string; count: number; accent?: boolean }) {
   return (
-    <div className="flex items-center justify-between mt-6 mb-3 pb-2 pl-1 border-b border-[var(--surface-2)] first:mt-0">
+    <div
+      className={`flex items-center justify-between mt-6 mb-3 pb-2 pl-2 border-b border-l-2 first:mt-0 ${
+        accent
+          ? "border-b-[var(--cykan)]/40 border-l-[var(--cykan)]"
+          : "border-b-[var(--border-default)] border-l-transparent"
+      }`}
+    >
       <span className={`t-9 font-mono tracking-marquee uppercase ${accent ? "text-[var(--cykan)]" : "text-[var(--text-muted)]"}`}>
         {label}
       </span>
-      <span className={`t-9 font-mono tracking-display ${accent ? "text-[var(--cykan)]" : "text-[var(--text-ghost)]"}`}>
+      <span className={`t-9 font-mono tracking-display ${accent ? "text-[var(--cykan)]" : "text-[var(--text-faint)]"}`}>
         {count.toString().padStart(2, "0")}
       </span>
     </div>
@@ -123,7 +129,7 @@ function SectionHeader({ label, count, accent }: { label: string; count: number;
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-11 font-mono tracking-display text-[var(--text-ghost)] uppercase pl-1 py-1">
+    <p className="t-11 font-mono tracking-display text-[var(--text-faint)] uppercase pl-3 py-1">
       {children}
     </p>
   );
@@ -156,7 +162,7 @@ function ThreadRow({ thread, isActive, snippet, onSelect, onDelete }: ThreadRowP
         />
         <p
           className={`flex-1 t-13 font-light truncate min-w-0 transition-colors ${
-            isActive ? "text-[var(--text)]" : "text-[var(--text-inactive)] group-hover:text-[var(--text)]"
+            isActive ? "text-[var(--text)]" : "text-[var(--text-muted)] group-hover:text-[var(--text)]"
           }`}
           style={{ lineHeight: "var(--leading-base)" }}
         >
@@ -181,7 +187,7 @@ function ThreadRow({ thread, isActive, snippet, onSelect, onDelete }: ThreadRowP
       {snippet && (
         <p
           className={`t-11 font-light truncate min-w-0 ${
-            isActive ? "text-[var(--text-muted)]" : "text-[var(--text-faint)]"
+            isActive ? "text-[var(--text-soft)]" : "text-[var(--text-muted)]"
           }`}
           style={{ paddingLeft: "var(--space-4)", lineHeight: "var(--leading-base)" }}
         >
