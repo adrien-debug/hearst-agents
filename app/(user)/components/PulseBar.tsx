@@ -25,6 +25,7 @@ import { useRuntimeStore } from "@/stores/runtime";
 import { useStageStore } from "@/stores/stage";
 import { useNavigationStore } from "@/stores/navigation";
 import { GhostIconMenu } from "./ghost-icons";
+import { NotificationBell } from "./NotificationBell";
 
 export function PulseBar() {
   const router = useRouter();

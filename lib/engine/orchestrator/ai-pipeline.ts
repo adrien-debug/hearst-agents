@@ -32,6 +32,7 @@ import { appendModelMessages, getRecentModelMessages } from "@/lib/memory/store"
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import { buildAgentSystemPrompt } from "./system-prompt";
 import { storeAsset, type Asset, type AssetKind } from "@/lib/assets/types";
+import { getApplicableReports } from "@/lib/reports/catalog";
 import { randomUUID } from "crypto";
 import { buildProposeReportSpecTool } from "@/lib/reports/spec/llm-tool";
 import { defaultMetrics as defaultLlmMetrics } from "@/lib/llm/metrics";
@@ -459,10 +460,26 @@ export async function runAiPipeline(
           parameters: {} as Record<string, unknown>,
         }))
       : [];
+  // Calcule les rapports applicables depuis les apps connectées pour guider le LLM
+  // vers les templates du catalogue plutôt qu'une génération from scratch.
+  const connectedAppNames = [...new Set([
+    ...(nativeCount > 0 ? ["google", "gmail", "calendar", "drive"] : []),
+    ...composioToolsRaw.map((t) => t.app.toLowerCase()),
+  ])];
+  const applicableReports = getApplicableReports(connectedAppNames)
+    .filter((r): r is typeof r & { status: "ready" | "partial" } => r.status !== "blocked")
+    .map((r) => ({
+      id: r.id,
+      title: r.title,
+      status: r.status,
+      missingApps: r.missingApps,
+    }));
+
   const systemPrompt = buildAgentSystemPrompt({
     composioTools: [...nativeForPrompt, ...composioForPrompt],
     surface: input.surface,
     scheduleDirective: input.scheduleDirective ?? false,
+    applicableReports: applicableReports.length > 0 ? applicableReports : undefined,
   });
 
   // ── 4. Build message history ────────────────────────────────

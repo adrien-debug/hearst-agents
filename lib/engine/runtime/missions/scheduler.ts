@@ -184,6 +184,17 @@ async function tick(
 
       if (result.status === "success") {
         console.log(`[Scheduler] Mission "${mission.name}" completed → run ${runId}`);
+        // ── Webhook mission.completed (fire-and-forget) ───────
+        try {
+          const { dispatchWebhookEvent } = await import("@/lib/webhooks/dispatcher");
+          dispatchWebhookEvent("mission.completed", mission.tenantId, {
+            missionId: mission.id,
+            missionName: mission.name,
+            runId: runId ?? null,
+          });
+        } catch {
+          // Webhook system unavailable — ignoré
+        }
         // ── Export automatique si configuré ───────────────────
         if (mission.autoExport?.enabled) {
           const jobPayload = buildExportJobPayload(
@@ -212,6 +223,18 @@ async function tick(
         lastRunStatus: result.status,
         lastError: result.message,
       });
+
+      // ── Webhook mission.failed (fire-and-forget) ───────────
+      try {
+        const { dispatchWebhookEvent } = await import("@/lib/webhooks/dispatcher");
+        dispatchWebhookEvent("mission.failed", mission.tenantId, {
+          missionId: mission.id,
+          missionName: mission.name,
+          error: result.message ?? "unknown error",
+        });
+      } catch {
+        // Webhook system unavailable — ignoré
+      }
 
       console.error(`[Scheduler] Mission "${mission.name}" ${result.status}: ${result.message}`);
     } finally {

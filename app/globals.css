@@ -251,13 +251,13 @@
   --leading-loose: 1.8;
 
   /* ─── Hearst Connect — Motion ───────────────────────────────── */
-  --duration-fast: 150ms;
-  --duration-base: 200ms;
-  --duration-slow: 300ms;
+  --duration-fast: 75ms;
+  --duration-base: 150ms;
+  --duration-slow: 200ms;
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out-soft: cubic-bezier(0.2, 1, 0.2, 1);
-  --duration-emphasis: 500ms;
+  --duration-emphasis: 300ms;
   /* Ligne tête de lecture timeline admin (glow discret). */
   --shadow-playhead-cykan: 0 0 6px var(--cykan);
 

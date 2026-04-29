@@ -91,13 +91,22 @@ function ContextRailShell({
 }) {
   return (
     <aside
-      className="h-full flex flex-col z-20 relative border-l border-[rgba(255,255,255,0.06)]"
-      style={{ width: "var(--width-context)", background: "rgba(255,255,255,0.01)" }}
+      className="h-full flex flex-col z-20 relative rounded-2xl overflow-hidden"
+      style={{
+        width: "var(--width-context)",
+        background: "rgba(255,255,255,0.02)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+      }}
     >
       {onClose && (
         <div
-          className="flex items-center justify-between border-b border-[rgba(255,255,255,0.06)]"
-          style={{ padding: "var(--space-4)" }}
+          className="flex items-center justify-between"
+          style={{
+            padding: "var(--space-4)",
+            boxShadow: "inset 0 -1px 0 0 rgba(255,255,255,0.02)",
+          }}
         >
           <p className="t-13 font-light text-[rgba(255,255,255,0.9)]">Contexte</p>
           <button

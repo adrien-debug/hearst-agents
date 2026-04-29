@@ -273,15 +273,21 @@ export function TimelineRail() {
 
   return (
     <aside
-      className="h-full flex flex-col z-20 relative border-r border-[rgba(255,255,255,0.06)] transition-[width] duration-slow ease-out-soft"
+      className="h-full flex flex-col z-20 relative transition-[width] duration-slow ease-out-soft rounded-2xl overflow-hidden"
       style={{
         width: leftCollapsed ? "var(--width-threads-collapsed)" : "var(--width-threads)",
-        background: "rgba(255,255,255,0.01)",
+        background: "rgba(255,255,255,0.02)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
       }}
     >
       {/* Logo */}
       <div
-        className="shrink-0 border-b border-[rgba(255,255,255,0.06)] flex items-center justify-center pt-8 pb-8 px-8"
+        className="shrink-0 flex items-center justify-center pt-8 pb-8 px-8"
+        style={{
+          boxShadow: "inset 0 -1px 0 0 rgba(255,255,255,0.02)",
+        }}
       >
         <button
           onClick={() => {
@@ -327,45 +333,57 @@ export function TimelineRail() {
             
             {/* Top Menu */}
             <div className="flex flex-col gap-1 mb-4">
-              <button onClick={handleNewThread} className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
-                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </span>
-                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Nouvelle conversation</span>
+              <button onClick={handleNewThread} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <div className="flex items-center gap-3">
+                  <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </span>
+                  <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] transition-colors">Nouvelle conversation</span>
+                </div>
+                <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] opacity-0 group-hover:opacity-100 transition-opacity">⌘N</span>
               </button>
-              <button className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
-                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
-                    <path d="M12 12L2.1 7.1" />
-                    <path d="M12 12l9.9 4.9" />
-                  </svg>
-                </span>
-                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Hearst</span>
+              <button className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <div className="flex items-center gap-3">
+                  <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
+                      <path d="M12 12L2.1 7.1" />
+                      <path d="M12 12l9.9 4.9" />
+                    </svg>
+                  </span>
+                  <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] transition-colors">Hearst</span>
+                </div>
+                <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] opacity-0 group-hover:opacity-100 transition-opacity">⌘1</span>
               </button>
-              <button onClick={() => router.push("/apps")} className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
-                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <path d="M9 3v18" />
-                    <path d="M15 3v18" />
-                    <path d="M3 9h18" />
-                    <path d="M3 15h18" />
-                  </svg>
-                </span>
-                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">App</span>
+              <button onClick={() => router.push("/apps")} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <div className="flex items-center gap-3">
+                  <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <path d="M9 3v18" />
+                      <path d="M15 3v18" />
+                      <path d="M3 9h18" />
+                      <path d="M3 15h18" />
+                    </svg>
+                  </span>
+                  <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] transition-colors">App</span>
+                </div>
+                <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] opacity-0 group-hover:opacity-100 transition-opacity">⌘2</span>
               </button>
-              <button onClick={() => router.push("/reports")} className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
-                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10" />
-                    <line x1="12" y1="20" x2="12" y2="4" />
-                    <line x1="6" y1="20" x2="6" y2="14" />
-                  </svg>
-                </span>
-                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Rapports</span>
+              <button onClick={() => router.push("/reports")} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <div className="flex items-center gap-3">
+                  <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="20" x2="18" y2="10" />
+                      <line x1="12" y1="20" x2="12" y2="4" />
+                      <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                  </span>
+                  <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] transition-colors">Rapports</span>
+                </div>
+                <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] opacity-0 group-hover:opacity-100 transition-opacity">⌘3</span>
               </button>
             </div>
 
@@ -424,8 +442,14 @@ export function TimelineRail() {
 
       {/* Footer — identité discrète + actions secondaires */}
       <div
-        className={`shrink-0 border-t border-[rgba(255,255,255,0.06)] flex flex-col items-center ${sectionPadX}`}
-        style={{ paddingTop: "var(--space-4)", paddingBottom: "var(--space-4)", gap: "var(--space-3)", background: "rgba(255,255,255,0.01)" }}
+        className={`shrink-0 flex flex-col items-center ${sectionPadX}`}
+        style={{
+          paddingTop: "var(--space-4)",
+          paddingBottom: "var(--space-4)",
+          gap: "var(--space-3)",
+          background: "rgba(255,255,255,0.01)",
+          boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.02)",
+        }}
       >
         {leftCollapsed ? (
           <>
@@ -481,7 +505,7 @@ export function TimelineRail() {
               <Link
                 href="/admin"
                 title="Console admin"
-                className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.4)] hover:text-[var(--cykan)] transition-colors"
+                className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] hover:text-[var(--cykan)] transition-colors"
               >
                 Admin
               </Link>
@@ -492,7 +516,7 @@ export function TimelineRail() {
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/login" })}
                 title="Se déconnecter"
-                className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.4)] hover:text-[var(--danger)] transition-colors"
+                className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] hover:text-[var(--danger)] transition-colors"
               >
                 Exit
               </button>

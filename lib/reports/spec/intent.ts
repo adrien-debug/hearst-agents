@@ -35,8 +35,8 @@ const REPORT_KEYWORDS = [
   /\bhr\s+(people|report)\b/i,
   /\bpeople\s+report\b/i,
   /\bv[eé]locit[eé]\b/i,         // "vélocité engineering"
-  /\brunway\b/i,                   // "mon runway"
-  /\bm(?:r|r+)r\b/i,             // "MRR", "ARR"
+  /\bmon\s+runway\b/i,             // "mon runway" — pas "analyse du runway"
+  /\b(rapport|cockpit|tableau|bilan|synth[èe]se|vue)\s+(?:du\s+|de\s+(?:la\s+|l['']|mon\s+|ma\s+)?)?(?:MRR|ARR|runway)\b/i, // "rapport MRR", "cockpit ARR"
   // EN
   /\breport\b(?!\s+(a\s+)?bug)/i,
   /\boverview\b/i,

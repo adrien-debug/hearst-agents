@@ -103,8 +103,27 @@ export default function ReportsDiscoveryPage() {
     }
   };
 
+  // Chargement initial au mount
   useEffect(() => {
-    void fetchReports();
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch async : setState appelé uniquement dans les callbacks .then/.catch, pas synchrone
+    setLoading(true);
+    setError(null);
+    fetch("/api/reports")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Erreur ${res.status}`);
+        return res.json() as Promise<{ reports: ApplicableReport[] }>;
+      })
+      .then((data) => {
+        if (!cancelled) setReports(data.reports ?? []);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Erreur inconnue");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, []);
 
   // ── Computed counts ─────────────────────────────────────────
@@ -267,11 +286,11 @@ export default function ReportsDiscoveryPage() {
                 Connectez une première app
               </p>
               <p className="t-13 font-light" style={{ color: "var(--text-ghost)" }}>
-                Les rapports apparaissent dès qu'une app est connectée.
+                Les rapports apparaissent dès qu&apos;une app est connectée.
               </p>
             </div>
             <a
-              href="/settings/connections"
+              href="/apps"
               className="inline-flex items-center gap-2 px-5 py-2.5 t-13 font-semibold rounded-md transition-all"
               style={{
                 background: "var(--cykan)",

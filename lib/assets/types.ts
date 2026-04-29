@@ -209,8 +209,22 @@ export async function storeAsset(asset: Asset): Promise<void> {
       created_at: new Date(asset.createdAt).toISOString(),
     });
 
-  if (error) console.error("[AssetStore] DB write failed:", error.message);
-  else console.log(`[AssetStore] persisted asset ${asset.id}`);
+  if (error) {
+    console.error("[AssetStore] DB write failed:", error.message);
+  } else {
+    console.log(`[AssetStore] persisted asset ${asset.id}`);
+    // ── Webhook asset.created (fire-and-forget) ──────────────
+    const tenantId = asset.provenance?.tenantId;
+    if (tenantId) {
+      import("@/lib/webhooks/dispatcher").then(({ dispatchWebhookEvent }) => {
+        dispatchWebhookEvent("asset.created", tenantId, {
+          assetId: asset.id,
+          kind: asset.kind,
+          title: cleanTitle,
+        });
+      }).catch(() => {});
+    }
+  }
 }
 
 /**

@@ -255,7 +255,7 @@ function defaultRunResponse(payload: ReturnType<typeof mockRenderPayload>) {
     assetId: ASSET_ID,
     title: "Founder Cockpit",
     payload,
-    narration: "MRR en hausse de 8 % à 24 500 €. Pipeline solide à 180 k€. Runway confortable à 14,5 mois.",
+    narration: "MRR en hausse de 8 % à 24 500 €. Pipeline solide à 180 k€. Runway confortable à 14,5 mois." as string | undefined,
     signals: [{ type: "mrr_spike", severity: "info", value: 0.08, unit: "ratio" }],
     severity: "ok",
     cost: { inputTokens: 4800, outputTokens: 320, usd: 0.019, exceeded: false },

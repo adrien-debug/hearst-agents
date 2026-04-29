@@ -70,24 +70,22 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       <BriefingAutoTrigger />
       <ToastProvider>
         <div
-          className="h-screen w-full flex flex-col overflow-hidden"
-          style={{ background: "var(--bg-center)", color: "var(--text)" }}
+          className="h-screen w-full flex overflow-hidden p-4 gap-4"
+          style={{ background: "#000000", color: "var(--text)" }}
         >
-          <div className="flex flex-1 min-h-0 w-full">
-            <LeftPanelShell />
+          <LeftPanelShell />
 
-            <div
-              className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden"
-              style={{ background: "var(--bg-center)", color: "var(--text)" }}
-            >
-              <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
-                {children}
-              </main>
-              <ChatDock />
-            </div>
-
-            <RightPanel />
+          <div
+            className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden rounded-2xl"
+            style={{ background: "#000000", color: "var(--text)" }}
+          >
+            <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
+              {children}
+            </main>
+            <ChatDock />
           </div>
+
+          <RightPanel />
 
           {/* Overlay global — toujours monté, contrôlé par useStageStore.commandeurOpen */}
           <Commandeur />

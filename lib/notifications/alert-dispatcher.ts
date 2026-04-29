@@ -39,6 +39,7 @@ import {
   shouldThrottle,
   type ThrottleStore,
 } from "./throttle";
+import { createNotification, formatSignalTitle } from "./in-app";
 
 const SEVERITY_RANK: Record<Severity, number> = {
   info: 0,
@@ -232,6 +233,26 @@ export async function dispatchAlerts(
     // Marque comme émis même si tous les canaux ont échoué — on ne veut pas
     // retry agressivement le même signal toutes les minutes.
     store.markEmitted(`${input.tenantId}:${sig.type}`, now);
+
+    // ── Notification in-app (critical + warning) ───────────────
+    if (
+      input.db &&
+      (sig.severity === "critical" || sig.severity === "warning")
+    ) {
+      void createNotification(input.db, {
+        tenantId: input.tenantId,
+        kind: "signal",
+        severity: sig.severity,
+        title: formatSignalTitle(sig.severity, sig.type, input.report.title),
+        body: sig.message,
+        meta: {
+          signal_type: sig.type,
+          report_id: input.report.id,
+          report_title: input.report.title,
+          block_id: sig.blockId ?? null,
+        },
+      });
+    }
   }
 
   const anyDelivered = results.some((r) => r.ok);

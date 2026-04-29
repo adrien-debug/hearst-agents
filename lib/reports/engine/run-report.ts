@@ -210,6 +210,19 @@ export async function runReport(
     durationMs: Date.now() - t0,
   };
 
+  // ── 8b. Webhook event report.generated (fire-and-forget) ────
+  try {
+    const { dispatchWebhookEvent } = await import("@/lib/webhooks/dispatcher");
+    dispatchWebhookEvent("report.generated", spec.scope.tenantId, {
+      reportId: spec.id,
+      title: spec.meta.title,
+      severity,
+      durationMs: result.durationMs,
+    });
+  } catch {
+    // Webhook system unavailable — ignoré silencieusement
+  }
+
   // ── 8. Versioning (fire-and-forget, best-effort) ─────────────
   const vOpts = options.versioning;
   if (vOpts?.enabled !== false && vOpts?.assetId && vOpts?.tenantId) {

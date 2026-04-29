@@ -221,11 +221,23 @@ export const REQUEST_CONNECTION_TOOL = {
 
 // ── Dynamic system prompt for the AI pipeline ───────────────
 
+export interface ApplicableReportHint {
+  id: string;
+  title: string;
+  status: "ready" | "partial";
+  missingApps: ReadonlyArray<string>;
+}
+
 interface AgentSystemPromptOpts {
   composioTools: DiscoveredTool[];
   surface?: string;
   /** When true, prepends a forcing directive to call create_scheduled_mission first. */
   scheduleDirective?: boolean;
+  /**
+   * Rapports du catalogue applicables au user (calculés depuis ses apps connectées).
+   * Injectés dans le system prompt pour guider le LLM vers les templates prédéfinis.
+   */
+  applicableReports?: ApplicableReportHint[];
 }
 
 /**
@@ -237,7 +249,7 @@ interface AgentSystemPromptOpts {
  * surface and the model decides what to call.
  */
 export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
-  const { composioTools, surface, scheduleDirective } = opts;
+  const { composioTools, surface, scheduleDirective, applicableReports } = opts;
 
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -264,6 +276,21 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
 
   const surfaceNote = surface ? `\nSurface active : ${surface}` : "";
 
+  // Section rapports disponibles (catalogue) — injectée si des rapports sont prêts ou partiels.
+  const applicableReportsSection =
+    applicableReports && applicableReports.length > 0
+      ? `\nRAPPORTS DISPONIBLES POUR CET UTILISATEUR (catalogue prédéfini) :
+${applicableReports
+  .map((r) => {
+    if (r.status === "ready") {
+      return `- "${r.title}" [PRÊT — toutes les apps connectées]`;
+    }
+    return `- "${r.title}" [PARTIEL — apps manquantes : ${r.missingApps.join(", ")}]`;
+  })
+  .join("\n")}
+Quand l'utilisateur demande un rapport qui correspond à l'un des templates ci-dessus, UTILISE le template comme base pour \`propose_report_spec\` (reproduis ses sources et blocks adaptés aux apps connectées).`
+      : "";
+
   const scheduleHeader = scheduleDirective
     ? `[DIRECTIVE PRIORITAIRE — INTENT RÉCURRENT]
 Le message utilisateur décrit une AUTOMATION RÉCURRENTE (par ex. « tous les matins à 8h », « chaque vendredi à 17h »).
@@ -279,7 +306,7 @@ Déduis les paramètres directement depuis le message :
     : "";
 
   return `${scheduleHeader}Tu es Hearst, un assistant exécutif intelligent pour les professionnels des médias.
-Aujourd'hui : ${today}${surfaceNote}
+Aujourd'hui : ${today}${surfaceNote}${applicableReportsSection}
 
 ⚠️ RÈGLE ZÉRO — GÉNÉRATION DE CONTENU :
 Si l'utilisateur demande un contenu textuel ou du code (HTML, CSS, JS, JSON, code dans n'importe quel langage, prompt, exemple, snippet, mock, structure, démo, page web, document Markdown, template…), tu DOIS le produire — jamais refuser. Tu as deux modes de livraison :
@@ -353,9 +380,26 @@ RÈGLES :
 8. LANGUE : réponds TOUJOURS en français. La seule exception est si l'utilisateur écrit son message en anglais. Ne mélange JAMAIS les deux langues dans une même réponse.
 9. PAS D'EMOJIS ni de pictogrammes dans tes réponses. Le seul moment où des caractères spéciaux apparaissent c'est dans le draft d'un tool de write-action — et ce draft tu le recopies tel quel sans modification.
 10. Sois concis dans les réponses conversationnelles, complet dans les livrables.
-11. REPORTS CROSS-APP (\`propose_report_spec\`) — utilise CE tool uniquement quand l'utilisateur demande explicitement un rapport, cockpit, tableau de bord, synthèse de plusieurs sources ou vue d'ensemble (FR : "rapport", "cockpit", "tableau de bord", "synthèse", "vue d'ensemble", "bilan" ; EN : "report", "dashboard", "overview", "summary"). Il compose un report visuel (KPI tiles, sparkline, bar, table, funnel) à partir de plusieurs apps connectées et l'affiche directement dans le focal de l'utilisateur.
+11. REPORTS CROSS-APP (\`propose_report_spec\`) — utilise CE tool uniquement quand l'utilisateur demande explicitement un rapport, cockpit, tableau de bord, synthèse de plusieurs sources ou vue d'ensemble.
+   Mots-clés qui DÉCLENCHENT ce tool (FR) : "rapport", "cockpit", "tableau de bord", "synthèse", "vue d'ensemble", "bilan", "analyse", "P&L", "montre-moi / montrez-moi", "génère un rapport", "runway", "MRR", "ARR", "vélocité".
+   Mots-clés EN : "report", "dashboard", "overview", "summary", "show me", "give me a report".
+
+   RAPPORTS PRÉDÉFINIS DU CATALOGUE (préférer ces templates à une génération from scratch) :
+   - "Founder Cockpit" — persona founder : MRR, pipeline, emails, semaine, vélocité dev (apps : stripe, hubspot, gmail, github)
+   - "Customer 360" — persona csm : LTV, support, échanges, paiements (apps : hubspot, zendesk, stripe, gmail)
+   - "Deal-to-Cash" — persona ops/finance : funnel pipeline, cycle time, deals bloqués (apps : hubspot, stripe)
+   - "Financial P&L" — persona finance/founder : P&L mensuel, cash flow, runway, top expenses (apps : stripe, qbo/xero)
+   - "Product Analytics" — persona product/founder : funnel AARRR, rétention, NPS, features (apps : mixpanel/amplitude, hubspot)
+   - "Support Health" — persona support/csm : CSAT, SLA, volume tickets, top issues (apps : zendesk, intercom)
+   - "Engineering Velocity" — persona engineering : DORA metrics, cycle time, PRs (apps : github, linear/jira)
+   - "Marketing AARRR" — persona marketing : CAC, LTV, payback par cohorte (apps : google_ads, hubspot, stripe)
+   - "HR / People" — persona people : hiring funnel, burnout signals, headcount (apps : greenhouse/lever, bamboo)
+
+   RÈGLES :
+   - Quand la demande correspond à un rapport du catalogue ci-dessus, UTILISE le template (décris les sources selon les apps connectées disponibles dans OUTILS).
    - Pour une question simple sur une seule app ("combien j'ai d'emails", "mes deals ouverts"), N'UTILISE PAS ce tool — appelle directement l'outil de lecture concerné.
    - Tu DOIS référencer dans \`sources[]\` des actions Composio qui existent dans la liste OUTILS ci-dessus, ou des ops Google natives (\`gmail.messages.list\`, \`calendar.events.upcoming\`, \`drive.files.recent\`).
+   - Si une app requise n'est pas connectée : indique-le dans \`meta.summary\` et utilise les sources disponibles.
    - Choisis 1-4 KPI tiles + 1-2 visualisations (sparkline / bar / table / funnel) — pas plus, pour rester lisible.
    - Le résultat est persistant (asset). Pas besoin de recopier le payload dans ta réponse — dis simplement à l'utilisateur que le report est prêt dans son focal et qu'il peut demander des ajustements.`;
 }

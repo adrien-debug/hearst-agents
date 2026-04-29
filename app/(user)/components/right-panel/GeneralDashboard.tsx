@@ -93,7 +93,7 @@ export function GeneralDashboard({
             onClick={() => onViewChange("assets")}
             className="group flex flex-col items-center text-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
+            <span className="t-28 font-light text-[rgba(255,255,255,0.95)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
               {assetsCount.toString().padStart(2, "0")}
             </span>
             <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] group-hover:text-[var(--cykan)] transition-colors">
@@ -103,9 +103,10 @@ export function GeneralDashboard({
           <button
             type="button"
             onClick={() => onViewChange("missions")}
-            className="group flex flex-col items-center text-center gap-3 border-l border-[rgba(255,255,255,0.06)] hover:opacity-80 transition-opacity cursor-pointer"
+            className="group flex flex-col items-center text-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+            style={{ boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.04)" }}
           >
-            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
+            <span className="t-28 font-light text-[rgba(255,255,255,0.95)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
               {missionsCount.toString().padStart(2, "0")}
             </span>
             <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] group-hover:text-[var(--cykan)] transition-colors">
@@ -115,9 +116,10 @@ export function GeneralDashboard({
           <button
             type="button"
             onClick={() => onViewChange("reports")}
-            className="group flex flex-col items-center text-center gap-3 border-l border-[rgba(255,255,255,0.06)] hover:opacity-80 transition-opacity cursor-pointer"
+            className="group flex flex-col items-center text-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+            style={{ boxShadow: "inset 1px 0 0 0 rgba(255,255,255,0.04)" }}
           >
-            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
+            <span className="t-28 font-light text-[rgba(255,255,255,0.95)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
               {reportsCount.toString().padStart(2, "0")}
             </span>
             <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] group-hover:text-[var(--cykan)] transition-colors">
@@ -171,29 +173,27 @@ export function GeneralDashboard({
             Aucun livrable récent.
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 mt-2">
+          <div className="flex flex-col gap-1 mt-2">
             {recentReports.map((report: any, i: number) => {
               const isPdf = report.name?.toLowerCase().endsWith('.pdf');
               return (
                 <div
                   key={report.id}
-                  className="group relative flex flex-col justify-between aspect-square p-4 cursor-pointer rounded-xl bg-[rgba(255,255,255,0.015)] border border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(45,212,191,0.3)] hover:shadow-[0_0_20px_rgba(45,212,191,0.05)] transition-all duration-500 overflow-hidden"
+                  className="group flex items-center justify-between py-2.5 px-3 -mx-3 cursor-pointer rounded-md hover:bg-[rgba(255,255,255,0.04)] transition-colors duration-300"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.03)] flex items-center justify-center group-hover:bg-[rgba(45,212,191,0.1)] transition-colors duration-500">
-                      <span className="opacity-60 group-hover:opacity-100 group-hover:text-[var(--cykan)] transition-all duration-500">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.03)] flex items-center justify-center shrink-0 group-hover:bg-[rgba(45,212,191,0.1)] transition-colors duration-300">
+                      <span className="opacity-60 group-hover:opacity-100 group-hover:text-[var(--cykan)] transition-all duration-300">
                         {isPdf ? <PdfIcon /> : <ReportIcon />}
                       </span>
                     </div>
-                    <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] group-hover:text-[var(--cykan)] transition-colors duration-500">
-                      {isPdf ? "PDF" : "RPT"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-1 mt-2">
-                    <span className="t-13 font-light text-[rgba(255,255,255,0.7)] group-hover:text-[rgba(255,255,255,0.9)] line-clamp-3 leading-snug transition-colors duration-500">
+                    <span className="t-13 font-light text-[rgba(255,255,255,0.7)] group-hover:text-[rgba(255,255,255,0.95)] truncate transition-colors duration-300">
                       {report.name || "Report"}
                     </span>
                   </div>
+                  <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] shrink-0 pl-3 group-hover:text-[var(--cykan)] transition-colors duration-300">
+                    {isPdf ? "PDF" : "RPT"}
+                  </span>
                 </div>
               );
             })}
