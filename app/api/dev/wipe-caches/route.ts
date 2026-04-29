@@ -11,7 +11,6 @@
 
 import { NextResponse } from "next/server";
 import { clearAllAssetCaches } from "@/lib/assets/types";
-import { clearAllAssets } from "@/lib/engine/runtime/assets/create-asset";
 import { clearAllMissions } from "@/lib/engine/runtime/missions/store";
 import { clearAllRuns } from "@/lib/engine/runtime/runs/store";
 import { clearAllPlannerStores } from "@/lib/engine/planner/store";
@@ -27,7 +26,6 @@ export async function POST() {
   }
 
   clearAllAssetCaches();
-  clearAllAssets();
   clearAllMissions();
   clearAllRuns();
   clearAllPlannerStores();
@@ -37,7 +35,6 @@ export async function POST() {
     wiped: {
       assetCache: 0,
       actionCache: 0,
-      assetStore: 0,
       missionStore: 0,
       runStore: 0,
       plannerStore: 0,

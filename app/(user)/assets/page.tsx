@@ -8,13 +8,16 @@ import { assetToFocal } from "@/lib/ui/focal-mappers";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { toast } from "@/app/hooks/use-toast";
 
-interface Asset {
+// Format V2 retourné par GET /api/v2/assets (Asset canonique).
+interface AssetListItem {
   id: string;
-  name: string;
-  type: string;
-  size: number;
-  createdAt: string;
-  url?: string;
+  title: string;
+  kind: string;
+  createdAt: number;
+  contentRef?: string;
+  provenance?: {
+    pdfFile?: { sizeBytes?: number };
+  };
 }
 
 const TYPE_GLYPH: Record<string, string> = {
@@ -53,7 +56,7 @@ export default function AssetsPage() {
   const router = useRouter();
   const setFocal = useFocalStore((s) => s.setFocal);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [assets, setAssets] = useState<AssetListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -73,28 +76,29 @@ export default function AssetsPage() {
     loadAssets();
   }, []);
 
-  const handleOpen = (asset: Asset) => {
-    setFocal(assetToFocal(asset, activeThreadId));
+  const handleOpen = (asset: AssetListItem) => {
+    setFocal(assetToFocal(
+      { id: asset.id, name: asset.title, type: asset.kind },
+      activeThreadId,
+    ));
     router.push("/");
   };
 
-  const handleDownload = (asset: Asset, e: React.MouseEvent) => {
+  const handleDownload = (asset: AssetListItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (asset.url) {
-      window.open(asset.url, "_blank");
-    }
+    window.open(`/api/v2/assets/${encodeURIComponent(asset.id)}/download`, "_blank");
   };
 
-  const handleDelete = async (asset: Asset, e: React.MouseEvent) => {
+  const handleDelete = async (asset: AssetListItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Supprimer "${asset.name}" ? Cette action est irréversible.`)) return;
+    if (!confirm(`Supprimer "${asset.title}" ? Cette action est irréversible.`)) return;
     try {
       const res = await fetch(`/api/v2/assets/${encodeURIComponent(asset.id)}`, {
         method: "DELETE",
       });
       if (res.ok) {
         setAssets((prev) => prev.filter((a) => a.id !== asset.id));
-        toast.success("Asset supprimé", asset.name);
+        toast.success("Asset supprimé", asset.title);
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -159,27 +163,29 @@ export default function AssetsPage() {
                   key={asset.id}
                   onClick={() => handleOpen(asset)}
                   className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 items-center px-2 py-4 hover:bg-[var(--surface-1)] transition-colors border-b border-[var(--surface-2)] group cursor-pointer"
-                  title={`Open ${asset.name}`}
+                  title={`Open ${asset.title}`}
                 >
                   <span className="t-15 text-[var(--cykan)] opacity-40 group-hover:opacity-100 transition-opacity leading-none w-4 text-center">
-                    {glyph(asset.type)}
+                    {glyph(asset.kind)}
                   </span>
                   <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors truncate">
-                    {asset.name}
+                    {asset.title}
                   </span>
                   <span className="t-9 font-mono tracking-display text-[var(--text-faint)] uppercase text-right">
-                    {asset.type}
+                    {asset.kind}
                   </span>
                   <span className="t-9 font-mono text-[var(--text-faint)] text-right">
-                    {(asset.size / 1024).toFixed(1)} KB
+                    {asset.provenance?.pdfFile?.sizeBytes
+                      ? `${(asset.provenance.pdfFile.sizeBytes / 1024).toFixed(1)} KB`
+                      : "—"}
                   </span>
                   <span className="t-9 font-mono tracking-display text-[var(--text-ghost)] uppercase text-right">
-                    {formatRelative(asset.createdAt)}
+                    {formatRelative(new Date(asset.createdAt).toISOString())}
                   </span>
                   <button
                     type="button"
                     onClick={(e) => handleDownload(asset, e)}
-                    disabled={!asset.url}
+                    disabled={!asset.provenance?.pdfFile}
                     className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                   >
                     Télécharger
@@ -188,8 +194,8 @@ export default function AssetsPage() {
                     type="button"
                     onClick={(e) => handleDelete(asset, e)}
                     className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-all"
-                    title={`Supprimer ${asset.name}`}
-                    aria-label={`Supprimer ${asset.name}`}
+                    title={`Supprimer ${asset.title}`}
+                    aria-label={`Supprimer ${asset.title}`}
                   >
                     Supprimer
                   </button>

@@ -181,9 +181,13 @@ export async function getAssetDetail(input: {
     return assetToDetail(assetRef, run.id, fullAsset);
   }
 
-  // Final fallback — direct query on the `assets` table for assets persisted
-  // outside the runs path (e.g. via the `create_artifact` tool, which stores
-  // raw content in `content_ref` column directly via lib/assets/types).
+  // Final fallback — direct query on the `assets` table pour les assets
+  // persistés hors du chemin runs (research path V2, V2 catalog, tool
+  // `create_artifact`, etc.). Le `content_ref` peut être :
+  //   - du texte / markdown brut (legacy create_artifact)
+  //   - du JSON `{ payload, narration, research?, ... }` (research path,
+  //     V2 catalog) — on extrait `narration` pour le viewer.
+  // Le PDF associé (s'il existe) est dans `provenance.pdfFile`.
   const sb = getServerSupabase();
   if (sb) {
     const { data, error } = await sb
@@ -203,6 +207,34 @@ export async function getAssetDetail(input: {
         return null;
       }
       const kindStr = String(data.kind ?? "doc");
+
+      // Extraction du contenu lisible : si content_ref est du JSON avec
+      // une clé `narration`, on prend la narration ; sinon on prend la
+      // string telle quelle.
+      const rawRef = (data.content_ref as string | null) ?? undefined;
+      let displayContent = rawRef;
+      if (rawRef && rawRef.trimStart().startsWith("{")) {
+        try {
+          const parsed = JSON.parse(rawRef) as { narration?: string };
+          if (typeof parsed.narration === "string" && parsed.narration.length > 0) {
+            displayContent = parsed.narration;
+          }
+        } catch {
+          /* contentRef pas du JSON valide → on garde tel quel */
+        }
+      }
+
+      // Reconstitue le fichier binaire si présent dans la provenance.
+      const pdfFile = prov.pdfFile as
+        | {
+            storageKind: "inline" | "file";
+            fileName: string;
+            mimeType: string;
+            filePath: string;
+            sizeBytes: number;
+          }
+        | undefined;
+
       const fullAsset: Asset = {
         id: String(data.id),
         type: kindStr as Asset["type"],
@@ -211,7 +243,18 @@ export async function getAssetDetail(input: {
         tenantId: tenantId ?? input.tenantId ?? "",
         workspaceId: workspaceId ?? input.workspaceId ?? "",
         created_at: data.created_at ? new Date(data.created_at as string).getTime() : Date.now(),
-        metadata: { content: (data.content_ref as string | null) ?? undefined },
+        metadata: {
+          content: displayContent,
+          ...(pdfFile
+            ? {
+                _filePath: pdfFile.filePath,
+                _fileName: pdfFile.fileName,
+                _mimeType: pdfFile.mimeType,
+                _sizeBytes: pdfFile.sizeBytes,
+              }
+            : {}),
+        },
+        ...(pdfFile ? { file: pdfFile } : {}),
       };
       return assetToDetail(
         { id: fullAsset.id, name: fullAsset.name, type: fullAsset.type },

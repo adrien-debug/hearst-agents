@@ -56,7 +56,7 @@ function MissionSkeleton() {
         className="shrink-0 h-3 rounded-sm"
         style={{
           background: "var(--surface-2)",
-          width: "40px",
+          width: "var(--space-10)",
         }}
       />
     </div>
@@ -95,7 +95,8 @@ export function MissionsList({ missions, activeThreadId, loading }: MissionsList
         <button
           type="button"
           onClick={() => router.push("/missions?new=1")}
-          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-[0.22em] border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
+          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
+          style={{ letterSpacing: "var(--tracking-section)" }}
         >
           <span>Nouvelle mission</span>
           <span aria-hidden>+</span>

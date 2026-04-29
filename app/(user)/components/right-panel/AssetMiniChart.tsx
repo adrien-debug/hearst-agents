@@ -19,6 +19,8 @@ interface AssetMiniChartProps {
   seed?: string;
 }
 
+// Doivent rester alignés sur --width-mini-chart / --space-10 dans globals.css
+// (le SVG `width`/`height` ne peut pas lire une CSS var au render).
 const W = 96;
 const H = 40;
 

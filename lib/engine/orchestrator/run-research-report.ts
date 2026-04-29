@@ -1,16 +1,24 @@
 /**
  * Deterministic Research Report Runner.
  *
- * Bypasses the probabilistic planner for obvious research/report requests.
- * Uses real web search → structured synthesis → asset creation.
+ * Bypasses the probabilistic planner for obvious research/report requests
+ * (« cherche … », « rapport sur … »). Uses real web search → structured LLM
+ * synthesis → asset persisté V2 + PDF artifact.
+ *
+ * **Recâblé V2 (29/04/2026)** — l'asset produit suit le même schéma que les
+ * reports catalog (`kind="report"`, `provenance.specId="research"`,
+ * `runArtifact: true`, `contentRef` JSON `{ payload, narration, research,
+ * pdfFile? }`). Persisté via `storeAsset` de `lib/assets/types.ts` → table
+ * Supabase `assets`. Plus de `createAsset` runtime in-memory only.
  */
-
+import { randomUUID } from "crypto";
 import type { RunEngine } from "@/lib/engine/runtime/engine";
 import type { RunEventBus } from "@/lib/events/bus";
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import { searchWeb, type WebSearchResult } from "@/lib/tools/handlers/web-search";
-import { createAsset } from "@/lib/engine/runtime/assets/create-asset";
+import { storeAsset, type Asset } from "@/lib/assets/types";
 import { generatePdfArtifact } from "@/lib/engine/runtime/assets/generators/pdf";
+import type { AssetFileInfo } from "@/lib/engine/runtime/assets/types";
 import { extractResearchQuery, isReportIntent } from "./research-intent";
 import Anthropic from "@anthropic-ai/sdk";
 
@@ -134,21 +142,43 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
     delta: reportText,
   });
 
-  // ── 4. Create asset (always for report intent, conditionally for pure research) ──
+  // ── 4. Persist asset (V2 — même chemin que /api/v2/reports/[specId]/run) ─
   const shouldCreateAsset = isReportIntent(input.message) || reportText.length > 500;
 
   if (shouldCreateAsset) {
+    const assetId = randomUUID();
     const assetName = buildAssetName(query);
-    const asset = createAsset({
-      type: "report",
-      name: assetName,
-      run_id: engine.id,
-      tenantId: scope.tenantId,
-      workspaceId: scope.workspaceId,
-      metadata: {
-        query,
+    const threadId = input.threadId ?? engine.id;
+
+    // Génère le PDF avant de persister, pour pouvoir inclure ses infos
+    // dans le contentRef de l'asset.
+    let pdfFile: AssetFileInfo | null = null;
+    try {
+      pdfFile = await generatePdfArtifact({
+        tenantId: scope.tenantId,
+        runId: engine.id,
+        assetId,
+        title: assetName,
         content: reportText,
-        sources_count: searchResult.results.length,
+      });
+      console.log(
+        `[ResearchReport] PDF generated: ${pdfFile.fileName} (${pdfFile.sizeBytes} bytes)`,
+      );
+    } catch (err) {
+      console.error("[ResearchReport] PDF generation failed:", err);
+    }
+
+    // Format contentRef aligné sur les reports V2 catalog : `payload` reste
+    // vide (pas de blocks pour une recherche libre), `narration` porte le
+    // markdown synthétisé, `research` garde sources/query. Le `pdfFile`
+    // est dans la provenance — pas dans le contentRef — pour que le
+    // download endpoint le retrouve sans parser le JSON.
+    const contentRef = JSON.stringify({
+      payload: { blocks: [], generatedAt: Date.now() },
+      narration: reportText,
+      research: {
+        query,
+        sourcesCount: searchResult.results.length,
         sources: searchResult.results.slice(0, 5).map((r) => ({
           title: r.title,
           url: r.url,
@@ -156,39 +186,42 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
       },
     });
 
-    // Generate real PDF artifact
-    try {
-      const fileInfo = await generatePdfArtifact({
+    const asset: Asset = {
+      id: assetId,
+      threadId,
+      kind: "report",
+      title: assetName,
+      summary: reportText.slice(0, 200),
+      provenance: {
+        providerId: "system",
         tenantId: scope.tenantId,
-        runId: engine.id,
-        assetId: asset.id,
-        title: assetName,
-        content: reportText,
-      });
-      asset.file = fileInfo;
-      if (asset.metadata) {
-        asset.metadata._filePath = fileInfo.filePath;
-        asset.metadata._fileName = fileInfo.fileName;
-        asset.metadata._mimeType = fileInfo.mimeType;
-        asset.metadata._sizeBytes = fileInfo.sizeBytes;
-      }
-      console.log(`[ResearchReport] PDF generated: ${fileInfo.fileName} (${fileInfo.sizeBytes} bytes)`);
-    } catch (err) {
-      console.error("[ResearchReport] PDF generation failed:", err);
-    }
+        workspaceId: scope.workspaceId,
+        specId: "research",
+        runArtifact: true,
+        reportMeta: { signals: [], severity: "info" },
+        ...(pdfFile ? { pdfFile } : {}),
+      },
+      createdAt: Date.now(),
+      contentRef,
+      runId: engine.id,
+    };
+
+    storeAsset(asset);
 
     eventBus.emit({
       type: "asset_generated",
       run_id: engine.id,
       asset_id: asset.id,
-      asset_type: asset.type,
-      name: asset.name,
-      ...(asset.file ? {
-        filePath: asset.file.filePath,
-        fileName: asset.file.fileName,
-        mimeType: asset.file.mimeType,
-        sizeBytes: asset.file.sizeBytes,
-      } : {}),
+      asset_type: "report",
+      name: asset.title,
+      ...(pdfFile
+        ? {
+            filePath: pdfFile.filePath,
+            fileName: pdfFile.fileName,
+            mimeType: pdfFile.mimeType,
+            sizeBytes: pdfFile.sizeBytes,
+          }
+        : {}),
     });
 
     eventBus.emit({
@@ -197,11 +230,11 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
       focal_object: {
         objectType: "report",
         id: `fo_${asset.id}`,
-        threadId: input.threadId ?? engine.id,
-        title: asset.name,
+        threadId,
+        title: asset.title,
         status: "delivered",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: asset.createdAt,
+        updatedAt: asset.createdAt,
         sourceAssetId: asset.id,
         morphTarget: null,
         summary: reportText.slice(0, 200),
@@ -215,7 +248,7 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
     eventBus.emit({
       type: "orchestrator_log",
       run_id: engine.id,
-      message: `Asset created: ${asset.name}${asset.file ? ` (${asset.file.fileName})` : ""}`,
+      message: `Asset created: ${asset.title}${pdfFile ? ` (${pdfFile.fileName})` : ""}`,
     });
   }
 

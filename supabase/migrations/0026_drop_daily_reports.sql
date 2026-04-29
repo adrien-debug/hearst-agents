@@ -1,0 +1,30 @@
+-- Migration 0026: drop daily_reports
+-- Created: 2026-04-29
+-- Depends: 0010_daily_reports (création initiale)
+--
+-- Contexte
+-- ─────────
+-- La table `daily_reports` était le registry du sous-système legacy de
+-- rapports crons (`crypto_daily` / `market_watch` / `market_alert`).
+-- Tout le code de production qui la lisait/écrivait a été supprimé le
+-- 29/04/2026 dans le commit `32667f1` :
+--   - app/api/cron/{daily-report,market-alert,market-watch}
+--   - app/api/reports/{route,today,health}
+--   - lib/engine/runtime/report-runner.ts
+--
+-- Le pipeline reports actuel (V2 catalog + research path) ne dépend
+-- d'aucune de ces structures : il persiste les rapports comme assets
+-- standards (`kind = 'report'`) dans la table `assets`, avec leurs signaux
+-- dans `provenance.reportMeta`.
+--
+-- La table devient dead weight et brouille `lib/database.types.ts`. On
+-- la drop. L'index unique conditionnel et les index secondaires partent
+-- avec elle (drop cascade).
+--
+-- Action après application
+-- ────────────────────────
+-- Régénérer les types Supabase :
+--   npx supabase gen types typescript --project-id <id> > lib/database.types.ts
+-- Le bloc `daily_reports` disparaîtra automatiquement.
+
+drop table if exists daily_reports;

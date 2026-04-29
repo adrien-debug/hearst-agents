@@ -114,6 +114,29 @@
   /* ─── Hearst Connect — Halo core (idle home centerpiece) ────── */
   --size-halo-core: 112px;
 
+  /* ─── RightPanel — composants spécifiques ──────────────────── */
+  --height-strip-pulse: 72px;       /* PulseStrip : bandeau de status */
+  --width-nav-tile-min: 60px;       /* RightPanelNav : largeur min d'une tuile */
+  --width-mini-chart: 96px;         /* AssetMiniChart : largeur du SVG (hauteur = --space-10) */
+
+  /* ─── ChatInput ─────────────────────────────────────────────── */
+  --height-input-min: var(--space-8);  /* textarea : hauteur min 1 ligne = 32px */
+  --height-input-max: 200px;           /* textarea : hauteur max avant scroll */
+
+  /* ─── FocalStage ─────────────────────────────────────────────── */
+  --height-focal-min: 320px;           /* Surface focale : hauteur minimale */
+
+  /* ─── AgentActivityStrip ─────────────────────────────────────── */
+  --width-activity-label: 180px;       /* Libellé d'activité : max-width */
+
+  /* ─── Tracking — valeurs intermédiaires ────────────────────── */
+  --tracking-snug: 0.10em;   /* Entre caption (0.08) et wide (0.12) — RunTimeline */
+  --tracking-body: 0.15em;   /* Entre label (0.14) et stretch (0.18) — corps de chat */
+
+  /* ─── Shadows composants ────────────────────────────────────── */
+  --shadow-glow-cykan-soft: 0 0 24px rgba(45,212,191,0.40);   /* ChatInput focus cykan */
+  --shadow-thread-active: inset 2px 0 0 var(--cykan);           /* LeftPanel thread actif */
+
   /* ─── Hearst Connect — Cards (suggestion grid) ─────────────── */
   --card-width: 312px;
   --card-height: 88px;
@@ -213,8 +236,6 @@
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out-soft: cubic-bezier(0.2, 1, 0.2, 1);
   --duration-emphasis: 500ms;
-  /* Scanline décorative canvas pipeline (SMIL) — même valeur que `FlowCanvas` / `topology`. */
-  --duration-pipeline-scanline: 11s;
   /* Ligne tête de lecture timeline admin (glow discret). */
   --shadow-playhead-cykan: 0 0 6px var(--cykan);
 
@@ -326,71 +347,37 @@
   --shadow-input-focus: 4px 4px 0px var(--cyan-accent);
 }
 
-/* ─── Pipeline admin — « Orbital HUD » (îlot sombre futuriste dans shell light) ─
- * Portée : `[data-pipeline-visual="orbit"]` sur le wrapper `FlowCanvas` uniquement.
- * Réinjecte contrastes type cockpit sur grille cyan + verre fumé. */
-[data-pipeline-visual="orbit"] {
-  --foreground: #f2faf8;
-  --text: rgba(242, 250, 248, 0.96);
-  --text-soft: rgba(232, 244, 242, 0.88);
-  --text-muted: rgba(195, 218, 214, 0.72);
-  --text-faint: rgba(155, 185, 180, 0.52);
-  --text-ghost: rgba(110, 145, 138, 0.38);
-  --surface: rgba(10, 16, 18, 0.88);
-  --bg-soft: rgba(6, 12, 14, 0.92);
-  --bg-elev: rgba(8, 14, 16, 0.94);
-  --border-default: rgba(45, 212, 191, 0.26);
-  --border-subtle: rgba(45, 212, 191, 0.14);
-  --line: rgba(45, 212, 191, 0.16);
-  --line-strong: rgba(45, 212, 191, 0.28);
-  --line-active: rgba(45, 212, 191, 0.45);
-  --cykan-bg-active: rgba(45, 212, 191, 0.22);
-  --cykan-surface: rgba(45, 212, 191, 0.14);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 24px rgba(45, 212, 191, 0.08);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 40px rgba(45, 212, 191, 0.06);
-  --pipeline-base-fill: #030708;
-  /* Centre transparent → bords assombris (SVG vignette) */
-  --pipeline-vignette-mid: transparent;
-  --pipeline-vignette-edge: rgba(0, 0, 0, 0.82);
-
-  /* Perspective cockpit (assumée, pas invisible) + ratio canvas */
-  --pipeline-perspective: 1800px;
-  --pipeline-tilt: 1.2deg;
-  --pipeline-aspect: 1920 / 820;
-
-  /* ─── Pipeline node — accents par famille (lus par .pipeline-*[data-kind]) ─ */
-  --pipeline-accent: var(--cykan);
-  --pipeline-accent-soft: rgba(45, 212, 191, 0.18);
-  --pipeline-accent-glow: var(--glow-cyan-sm);
-  --pipeline-accent-glow-md: var(--glow-cyan-md);
-  --pipeline-ring-idle: rgba(45, 212, 191, 0.18);
-  --pipeline-ring-active: rgba(45, 212, 191, 0.55);
-  --pipeline-port-socket: var(--pipeline-base-fill);
-}
-
-/* ── Pipeline canvas wrapper — pleine page, sans bordure visible.
- * Pas de box-shadow, pas de border, pas de border-radius : le pipeline
- * est l'écran. Conservation de la perspective subtile pour la 3D. */
+/* ─── Pipeline admin — surface technique sur thème courant ─────────────
+ * Le canvas hérite du thème actif (light dans `AdminShell`). Les accents
+ * par famille de stage (data-kind) sont scopés sur `.pipeline-canvas-frame`
+ * et restent stables quel que soit le thème. */
 .pipeline-canvas-frame {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: var(--pipeline-base-fill);
-  transform: perspective(var(--pipeline-perspective)) rotateX(var(--pipeline-tilt));
+  background: var(--bg);
   transform-style: preserve-3d;
+
+  /* Pipeline accents — defaults cykan, override par data-kind plus bas */
+  --pipeline-accent: var(--cykan);
+  --pipeline-accent-soft: color-mix(in srgb, var(--cykan) 18%, transparent);
+  --pipeline-accent-glow: var(--glow-cyan-sm);
+  --pipeline-accent-glow-md: var(--glow-cyan-md);
+  --pipeline-ring-idle: color-mix(in srgb, var(--cykan) 18%, transparent);
+  --pipeline-ring-active: color-mix(in srgb, var(--cykan) 55%, transparent);
+  --pipeline-port-socket: var(--surface);
 }
 
-/* Couche cards — calée sur la zone de rendu SVG (meet) pour aligner les ports
- * à tous les viewports. aspect-ratio + max-* reproduit le comportement xMidYMid meet. */
+/* Couche cards — dimensions posées en pixels par `FlowCanvas` via un
+ * ResizeObserver (vars `--pl-layer-w` / `--pl-layer-h`) pour matcher
+ * exactement la zone de rendu SVG (xMidYMid meet) à tout viewport. */
 .pipeline-node-layer {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  aspect-ratio: 1920 / 1080;
-  max-width: 100%;
-  max-height: 100%;
+  width: var(--pl-layer-w, 100%);
+  height: var(--pl-layer-h, 100%);
   transform-style: preserve-3d;
 }
 
@@ -398,45 +385,45 @@
  * Le composant React applique data-kind="entry|router|gate|...". Le CSS
  * porte la couleur de famille via --pipeline-accent. Aucune valeur en dur
  * dans le React. */
-[data-pipeline-visual="orbit"] [data-kind="entry"],
-[data-pipeline-visual="orbit"] [data-kind="router"],
-[data-pipeline-visual="orbit"] [data-kind="intent"],
-[data-pipeline-visual="orbit"] [data-kind="check"],
-[data-pipeline-visual="orbit"] [data-kind="tools"] {
+.pipeline-canvas-frame [data-kind="entry"],
+.pipeline-canvas-frame [data-kind="router"],
+.pipeline-canvas-frame [data-kind="intent"],
+.pipeline-canvas-frame [data-kind="check"],
+.pipeline-canvas-frame [data-kind="tools"] {
   --pipeline-accent: var(--cykan);
-  --pipeline-accent-soft: rgba(45, 212, 191, 0.20);
+  --pipeline-accent-soft: color-mix(in srgb, var(--cykan) 20%, transparent);
   --pipeline-accent-glow: var(--glow-cyan-sm);
   --pipeline-accent-glow-md: var(--glow-cyan-md);
-  --pipeline-ring-active: rgba(45, 212, 191, 0.55);
+  --pipeline-ring-active: color-mix(in srgb, var(--cykan) 55%, transparent);
 }
-[data-pipeline-visual="orbit"] [data-kind="gate"] {
+.pipeline-canvas-frame [data-kind="gate"] {
   --pipeline-accent: var(--warn);
-  --pipeline-accent-soft: rgba(245, 158, 11, 0.20);
+  --pipeline-accent-soft: color-mix(in srgb, var(--warn) 20%, transparent);
   --pipeline-accent-glow: var(--glow-warn-sm);
   --pipeline-accent-glow-md: var(--glow-warn-md);
-  --pipeline-ring-active: rgba(245, 158, 11, 0.55);
+  --pipeline-ring-active: color-mix(in srgb, var(--warn) 55%, transparent);
 }
-[data-pipeline-visual="orbit"] [data-kind="search"],
-[data-pipeline-visual="orbit"] [data-kind="llm"] {
+.pipeline-canvas-frame [data-kind="search"],
+.pipeline-canvas-frame [data-kind="llm"] {
   --pipeline-accent: var(--accent-llm);
   --pipeline-accent-soft: color-mix(in srgb, var(--accent-llm) 20%, transparent);
   --pipeline-accent-glow: 0 0 14px color-mix(in srgb, var(--accent-llm) 55%, transparent);
   --pipeline-accent-glow-md: 0 0 32px color-mix(in srgb, var(--accent-llm) 45%, transparent);
   --pipeline-ring-active: color-mix(in srgb, var(--accent-llm) 55%, transparent);
 }
-[data-pipeline-visual="orbit"] [data-kind="agent"] {
+.pipeline-canvas-frame [data-kind="agent"] {
   --pipeline-accent: var(--accent-agent);
   --pipeline-accent-soft: color-mix(in srgb, var(--accent-agent) 20%, transparent);
   --pipeline-accent-glow: 0 0 14px color-mix(in srgb, var(--accent-agent) 55%, transparent);
   --pipeline-accent-glow-md: 0 0 32px color-mix(in srgb, var(--accent-agent) 45%, transparent);
   --pipeline-ring-active: color-mix(in srgb, var(--accent-agent) 55%, transparent);
 }
-[data-pipeline-visual="orbit"] [data-kind="complete"] {
+.pipeline-canvas-frame [data-kind="complete"] {
   --pipeline-accent: var(--color-success);
-  --pipeline-accent-soft: rgba(45, 197, 88, 0.20);
+  --pipeline-accent-soft: color-mix(in srgb, var(--color-success) 20%, transparent);
   --pipeline-accent-glow: var(--glow-success-sm);
   --pipeline-accent-glow-md: var(--glow-success-md);
-  --pipeline-ring-active: rgba(45, 197, 88, 0.55);
+  --pipeline-ring-active: color-mix(in srgb, var(--color-success) 55%, transparent);
 }
 
 /* ── Pipeline card — surface holographique (verre fumé + halo cykan) ──

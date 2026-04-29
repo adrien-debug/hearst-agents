@@ -169,7 +169,7 @@ function ensureScreenshotsDir() {
   return dir;
 }
 
-test.describe("Visual — RightPanel suggestions @skip-ci", () => {
+test.describe("Visual — RightPanel suggestions", () => {
   test.beforeEach(async ({ request }) => {
     await requireServer(request);
   });
@@ -246,7 +246,7 @@ test.describe("Visual — RightPanel suggestions @skip-ci", () => {
   });
 });
 
-test.describe("Visual — tokens design system @skip-ci", () => {
+test.describe("Visual — tokens design system", () => {
   test.beforeEach(async ({ request }) => {
     await requireServer(request);
   });

@@ -191,7 +191,7 @@ export function ServiceIdGlyph({
         : "t-10 min-w-[2.25rem] px-2 py-1";
   return (
     <span
-      className={`inline-flex items-center justify-center border font-mono uppercase tracking-[0.12em] text-[var(--text-muted)] border-[var(--line-strong)] bg-transparent shrink-0 ${sz} ${className}`}
+      className={`inline-flex items-center justify-center border font-mono uppercase tracking-wide text-[var(--text-muted)] border-[var(--line-strong)] bg-transparent shrink-0 ${sz} ${className}`}
       title={`ID_REF: ${id}`}
     >
       {label}

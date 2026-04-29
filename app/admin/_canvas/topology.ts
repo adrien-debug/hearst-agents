@@ -101,10 +101,9 @@ export const KIND_COLOR: Record<StageKind, string> = {
   complete: "var(--color-success)",
 };
 
-/** Grille / scanline SVG — alignés sur `--space-10`, `--space-5`, `--space-24`. */
+/** Grille SVG — alignée sur `--space-10` (lignes) et `--space-5` (points). */
 export const PIPELINE_GRID_STEP_PX = 40 as const;
 export const PIPELINE_DOT_STEP_PX = 20 as const;
-export const PIPELINE_SCANLINE_HEIGHT_PX = 120 as const;
 
 export const NODES: CanvasNode[] = [
   {

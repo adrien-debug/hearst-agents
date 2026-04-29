@@ -27,8 +27,13 @@ export default function CanvasShell() {
   const selectedRunId = useCanvasStore((s) => s.selectedRunId);
   const selectedNodeId = useCanvasStore((s) => s.selectedNodeId);
   const setSelectedNodeId = useCanvasStore((s) => s.setSelectedNodeId);
-  const asideCollapsed = useCanvasStore((s) => s.asideCollapsed);
+  const asideCollapsedStore = useCanvasStore((s) => s.asideCollapsed);
   const toggleAsideCollapsed = useCanvasStore((s) => s.toggleAsideCollapsed);
+  // Évite le mismatch SSR/client : le store lit localStorage (client-only).
+  // On expose false jusqu'au premier useEffect, puis la vraie valeur.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const asideCollapsed = mounted ? asideCollapsedStore : false;
 
   const [events, setEvents] = useState<PersistedEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
@@ -95,6 +100,17 @@ export default function CanvasShell() {
 
   return (
     <div className="flex flex-col h-full bg-bg overflow-hidden text-text">
+      {/* Guard mobile — le canvas n'est pas adapté aux petits écrans. */}
+      <div className="lg:hidden flex flex-col items-center justify-center h-full gap-(--space-4) px-(--space-6) text-center">
+        <span className="t-28 text-text-faint">⌥</span>
+        <p className="t-15 font-medium text-text">Vue desktop requise</p>
+        <p className="t-13 text-text-muted max-w-xs">
+          Le canvas pipeline est optimisé pour les écrans larges. Ouvre cette page depuis un ordinateur.
+        </p>
+      </div>
+
+      {/* Contenu principal — masqué sous lg */}
+      <div className="hidden lg:flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Action strip — page chrome is in AdminTopbar; keep this thin. */}
       <header className="flex items-center justify-between gap-(--space-4) px-(--space-6) py-(--space-2) border-b border-line bg-surface shrink-0 relative z-20">
         <span className="t-10 font-mono uppercase tracking-(--tracking-stretch) text-text-faint truncate">
@@ -153,9 +169,9 @@ export default function CanvasShell() {
             <FlowCanvas />
 
             {showIdleHint && (
-              <div className="absolute top-(--space-8) left-1/2 -translate-x-1/2 pointer-events-none z-10 max-w-[min(100%,var(--width-center-max))] text-center">
-                <div className="rounded-(--radius-pill) border border-(--cykan)/35 bg-(--surface)/95 backdrop-blur-md px-(--space-5) py-(--space-2) t-11 font-mono uppercase tracking-(--tracking-stretch) text-(--cykan) shadow-(--shadow-md)">
-                  active le live ↑ — la fiche du stage s’affiche à droite · runs en dessous
+              <div className="absolute top-(--space-8) left-1/2 -translate-x-1/2 pointer-events-none z-10">
+                <div className="whitespace-nowrap rounded-(--radius-pill) border border-(--cykan)/35 bg-(--surface)/95 backdrop-blur-md px-(--space-5) py-(--space-2) t-11 font-mono uppercase tracking-(--tracking-stretch) text-(--cykan) shadow-(--shadow-md)">
+                  active le live ↑ · clique un stage pour sa fiche
                 </div>
               </div>
             )}
@@ -175,23 +191,24 @@ export default function CanvasShell() {
           )}
         </main>
 
+        {/* Aside droite — flex-col direct, largeur animée 0 ↔ --width-context.
+            overflow-hidden + width:0 masque tout le contenu sans changer display. */}
         <aside
-          className={[
-            "flex-col shrink-0 w-(--width-context) min-w-0 min-h-0 border-l border-line bg-bg-elev",
-            asideCollapsed ? "hidden" : "hidden lg:flex",
-          ].join(" ")}
+          className="hidden lg:flex flex-col shrink-0 min-h-0 overflow-hidden border-l border-line bg-bg-elev transition-[width] duration-(--duration-base) ease-(--ease-standard)"
+          style={{ width: asideCollapsed ? "0" : "var(--width-context)" }}
         >
-          <section className="flex-3 min-h-0 flex flex-col overflow-hidden border-b border-line bg-surface">
+          <section className="flex-[3] min-h-0 flex flex-col overflow-hidden border-b border-line bg-surface">
             <NodeDetailPanel
               node={selectedNode}
               onClear={() => setSelectedNodeId(null)}
             />
           </section>
-          <section className="flex-2 min-h-0 flex flex-col overflow-hidden">
+          <section className="flex-[2] min-h-0 flex flex-col overflow-hidden">
             <RunRail onSelect={onSelectRun} />
           </section>
         </aside>
       </div>
+      </div>{/* fin desktop wrapper */}
     </div>
   );
 }

@@ -156,7 +156,7 @@ export function ChatInput({
             placeholder={placeholder || surfacePlaceholders[surface] || "Poser une question"}
             rows={1}
             className="block w-full bg-transparent t-15 font-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed pt-4 pb-2 px-5"
-            style={{ minHeight: "32px", maxHeight: "200px" }}
+            style={{ minHeight: "var(--height-input-min)", maxHeight: "var(--height-input-max)" }}
           />
           <div className="flex items-center justify-between px-3 pb-3 pt-1">
             <span className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] px-2">
@@ -175,7 +175,7 @@ export function ChatInput({
                     ? "bg-[var(--cykan)] text-[var(--bg)] border border-[var(--cykan)]"
                     : "bg-transparent text-[var(--text-faint)] border border-[var(--border-default)] cursor-not-allowed"
                 }`}
-                style={input.trim() ? { boxShadow: "0 0 24px rgba(45,212,191,0.40)" } : {}}
+                style={input.trim() ? { boxShadow: "var(--shadow-glow-cykan-soft)" } : {}}
                 title="Envoyer"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

@@ -97,14 +97,14 @@ function ConfirmActionChips({
     <div className="flex gap-2 mt-3">
       <button
         onClick={onConfirm}
-        className="halo-on-hover inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-[0.15em] uppercase border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors"
+        className="halo-on-hover inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors"
       >
         <span>Confirmer</span>
         <span aria-hidden>✓</span>
       </button>
       <button
         onClick={onCancel}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-[0.15em] uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-colors"
       >
         <span>Annuler</span>
         <span aria-hidden>✕</span>

@@ -142,7 +142,7 @@ async function mountMocks(page: Page) {
   );
 }
 
-test.describe("Suggestion → ReportLayout flow @skip-ci", () => {
+test.describe("Suggestion → ReportLayout flow", () => {
   test.beforeEach(async ({ request }) => {
     await requireServer(request);
   });
@@ -216,7 +216,7 @@ test.describe("Suggestion → ReportLayout flow @skip-ci", () => {
   });
 });
 
-test.describe("ReportLayout — rendu des primitives @skip-ci", () => {
+test.describe("ReportLayout — rendu des primitives", () => {
   test.beforeEach(async ({ request }) => {
     await requireServer(request);
   });

@@ -13,6 +13,7 @@ import { ChatInput } from "./components/ChatInput";
 import { ChatMessages } from "./components/ChatMessages";
 import { Breadcrumb, type Crumb } from "./components/Breadcrumb";
 import { AgentActivityStrip } from "./components/AgentActivityStrip";
+import { RunProgressBanner } from "./components/RunProgressBanner";
 import { getAllServices } from "@/lib/integrations/catalog";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { toast } from "@/app/hooks/use-toast";
@@ -524,6 +525,7 @@ export default function HomePage() {
           />
         </div>
       )}
+      <RunProgressBanner />
       <ChatInput
         onSubmit={handleSubmit}
         placeholder={focal ? "Continuer sur ce document…" : undefined}

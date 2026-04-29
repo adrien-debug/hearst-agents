@@ -108,7 +108,7 @@ function ThreadRow({ thread, isActive, snippet, onSelect, onTogglePin, onRemove 
       className={`group cursor-pointer py-2 -mx-2 px-2 transition-colors flex flex-col gap-1 ${
         isActive ? "bg-[var(--cykan-bg-active)]" : "hover:bg-[var(--surface-2)]"
       }`}
-      style={isActive ? { boxShadow: "inset 2px 0 0 var(--cykan)" } : undefined}
+      style={isActive ? { boxShadow: "var(--shadow-thread-active)" } : undefined}
       title={thread.name}
     >
       <div className="flex items-center gap-3">

@@ -51,7 +51,7 @@ function StatusHalo({ state: _state, config }: { state: SystemState; config: Sta
   return (
     <div
       className="relative flex items-center justify-center"
-      style={{ width: "48px", height: "48px" }}
+      style={{ width: "var(--space-12)", height: "var(--space-12)" }}
     >
       {/* Cercle extérieur */}
       <div
@@ -114,7 +114,7 @@ export function PulseStrip() {
     <div
       className="border-b border-[var(--border-shell)] flex items-center gap-4 px-4"
       style={{
-        height: "72px",
+        height: "var(--height-strip-pulse)",
         background: "var(--bg-rail)",
       }}
       role="status"
@@ -127,8 +127,8 @@ export function PulseStrip() {
         {/* État */}
         <div className="flex items-center gap-2">
           <span
-            className="t-9 font-mono uppercase tracking-[0.2em]"
-            style={{ color: config.color }}
+            className="t-9 font-mono uppercase"
+            style={{ color: config.color, letterSpacing: "var(--tracking-display)" }}
           >
             {config.label}
           </span>
@@ -151,20 +151,23 @@ export function PulseStrip() {
         </span>
       </div>
 
-      {/* Compteur events (subtil) */}
-      {events.length > 0 && (
-        <div
-          className="flex flex-col items-end"
-          style={{ minWidth: "48px" }}
+      {/* Compteur events — toujours rendu pour stabilité layout */}
+      <div
+        className="flex flex-col items-end"
+        style={{ minWidth: "var(--space-12)" }}
+      >
+        <span
+          className="t-15 font-bold font-mono"
+          style={{
+            color: events.length > 0 ? config.color : "var(--text-ghost)",
+          }}
         >
-          <span className="t-15 font-bold font-mono" style={{ color: config.color }}>
-            {events.length.toString().padStart(2, "0")}
-          </span>
-          <span className="t-8 font-mono uppercase text-[var(--text-ghost)]">
-            evt
-          </span>
-        </div>
-      )}
+          {events.length.toString().padStart(2, "0")}
+        </span>
+        <span className="t-8 font-mono uppercase text-[var(--text-ghost)]">
+          evt
+        </span>
+      </div>
 
       {/* Animation keyframes inline */}
       <style jsx>{`

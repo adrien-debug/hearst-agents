@@ -17,7 +17,7 @@ export function Breadcrumb({ trail, className }: BreadcrumbProps) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className={`flex items-center gap-2 t-9 font-mono uppercase tracking-[0.3em] ${className ?? ""}`}
+      className={`flex items-center gap-2 t-9 font-mono uppercase tracking-marquee ${className ?? ""}`}
     >
       {trail.map((crumb, idx) => {
         const isLast = idx === trail.length - 1;

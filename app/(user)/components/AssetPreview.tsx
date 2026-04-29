@@ -1,21 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import type { RuntimeAsset, AssetType } from "@/lib/engine/runtime/assets/types";
+import type { Asset, AssetKind } from "@/lib/assets/types";
 
 interface AssetPreviewProps {
-  asset: RuntimeAsset;
+  asset: Asset;
   onDownload?: () => void;
 }
 
-const TYPE_REF: Record<AssetType, string> = {
-  pdf: "TYPE_PDF",
-  excel: "TYPE_XLSX",
-  doc: "TYPE_DOC",
-  json: "TYPE_JSON",
-  csv: "TYPE_CSV",
+// Libellé lisible par `kind` V2 (report/brief/document/spreadsheet/message/task/event).
+const KIND_REF: Record<AssetKind, string> = {
   report: "TYPE_RPT",
-  text: "TYPE_TXT",
+  brief: "TYPE_BRF",
+  document: "TYPE_DOC",
+  spreadsheet: "TYPE_XLSX",
+  message: "TYPE_TXT",
+  task: "TYPE_TASK",
+  event: "TYPE_EVT",
 };
 
 const MIME_TYPE_LABELS: Record<string, string> = {
@@ -25,6 +26,18 @@ const MIME_TYPE_LABELS: Record<string, string> = {
   "application/json": "JSON File",
   "text/plain": "Text File",
 };
+
+// Extrait le texte de narration quand contentRef est du JSON V2.
+function extractNarration(contentRef: string | undefined): string | undefined {
+  if (!contentRef) return undefined;
+  if (!contentRef.trimStart().startsWith("{")) return contentRef;
+  try {
+    const parsed = JSON.parse(contentRef) as { narration?: string };
+    return parsed.narration;
+  } catch {
+    return contentRef;
+  }
+}
 
 export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -39,45 +52,65 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
     }
   };
 
-  const canPreviewInline = ["json", "csv", "text"].includes(asset.type);
-  const typeRef = TYPE_REF[asset.type] ?? "TYPE_ASSET";
+  const pdfFile = asset.provenance?.pdfFile;
+  const kindRef = KIND_REF[asset.kind] ?? "TYPE_ASSET";
+  const mimeLabel = pdfFile?.mimeType ? (MIME_TYPE_LABELS[pdfFile.mimeType] ?? asset.kind.toUpperCase()) : asset.kind.toUpperCase();
+  const canPreviewInline = ["message", "brief"].includes(asset.kind);
+  const narration = extractNarration(asset.contentRef);
 
   return (
     <div className="border-t border-[var(--ghost-modal-top)] bg-[var(--bg)] overflow-hidden">
       <div className="p-6 border-b border-[var(--line)] flex flex-wrap items-start gap-6">
-        <span className="font-mono t-9 uppercase tracking-[0.25em] text-[var(--text-muted)] border-b border-[var(--cykan)] pb-1">{typeRef}</span>
+        <span
+          className="font-mono t-9 uppercase text-[var(--text-muted)] border-b border-[var(--cykan)] pb-1"
+          style={{ letterSpacing: "var(--tracking-banner)" }}
+        >
+          {kindRef}
+        </span>
         <div className="flex-1 min-w-0">
-          <h3 className="t-15 font-black uppercase tracking-tighter text-[var(--text)] truncate">{asset.name}</h3>
+          <h3 className="t-15 font-black uppercase tracking-tighter text-[var(--text)] truncate">
+            {asset.title}
+          </h3>
           <p className="t-11 font-light text-[var(--text-muted)] mt-2">
-            {MIME_TYPE_LABELS[asset.file?.mimeType || ""] || asset.type.toUpperCase()}
-            {asset.file?.sizeBytes && (
-              <span className="ml-3 font-mono t-10">SIZE_{(asset.file.sizeBytes / 1024).toFixed(1)}KB</span>
+            {mimeLabel}
+            {pdfFile?.sizeBytes != null && (
+              <span className="ml-3 font-mono t-10">
+                SIZE_{(pdfFile.sizeBytes / 1024).toFixed(1)}KB
+              </span>
             )}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleDownload}
-          disabled={isLoading}
-          className="ghost-btn-solid ghost-btn-cykan rounded-sm shrink-0 disabled:opacity-40"
-        >
-          {isLoading ? "FETCH…" : "DOWNLOAD"}
-        </button>
+        {onDownload && (
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={isLoading || !pdfFile}
+            className="ghost-btn-solid ghost-btn-cykan rounded-sm shrink-0 disabled:opacity-40"
+          >
+            {isLoading ? "FETCH…" : "DOWNLOAD"}
+          </button>
+        )}
       </div>
 
       <div className="p-6 min-h-[200px] flex items-center justify-center border-b border-[var(--line)]">
-        {canPreviewInline ? (
+        {canPreviewInline && narration ? (
           <div className="w-full max-h-96 overflow-auto bg-[var(--bg-elev)] p-4 font-mono t-11 text-[var(--text-muted)] border border-[var(--line)]">
-            <p className="text-[var(--text-faint)] italic">PREVIEW_PENDING</p>
+            <pre className="whitespace-pre-wrap">{narration}</pre>
+          </div>
+        ) : narration ? (
+          <div className="w-full max-h-96 overflow-auto p-4 t-13 text-[var(--text-soft)] leading-relaxed prose prose-invert max-w-none">
+            {narration}
           </div>
         ) : (
           <div className="text-center space-y-4">
-            <p className="font-mono t-10 uppercase tracking-[0.3em] text-[var(--text-faint)]">{typeRef}_VIEW</p>
+            <p
+              className="font-mono t-10 uppercase text-[var(--text-faint)]"
+              style={{ letterSpacing: "var(--tracking-marquee)" }}
+            >
+              {kindRef}_VIEW
+            </p>
             <p className="t-9 font-light text-[var(--text-muted)]">
-              {asset.type === "pdf" && "PDF — téléchargement requis"}
-              {asset.type === "excel" && "Excel — téléchargement requis"}
-              {asset.type === "doc" && "Document — téléchargement requis"}
-              {asset.type === "report" && "Rapport — téléchargement requis"}
+              {pdfFile ? "Fichier binaire — téléchargement disponible" : "Aucun contenu preview disponible"}
             </p>
           </div>
         )}
@@ -90,26 +123,28 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
             <span className="text-[var(--text-faint)]">ID_REF</span>
             <span className="ml-2">{asset.id.slice(0, 8)}…</span>
           </div>
-          <div>
-            <span className="text-[var(--text-faint)]">RUN_REF</span>
-            <span className="ml-2">{asset.run_id.slice(0, 8)}…</span>
-          </div>
+          {asset.runId && (
+            <div>
+              <span className="text-[var(--text-faint)]">RUN_REF</span>
+              <span className="ml-2">{asset.runId.slice(0, 8)}…</span>
+            </div>
+          )}
           <div className="col-span-2 sm:col-span-1">
             <span className="text-[var(--text-faint)]">TS_CREATED</span>
-            <span className="ml-2">{new Date(asset.created_at).toLocaleString()}</span>
+            <span className="ml-2">{new Date(asset.createdAt).toLocaleString()}</span>
           </div>
-          {(() => {
-            const createdBy = asset.metadata?.createdBy;
-            if (typeof createdBy === "string") {
-              return (
-                <div>
-                  <span className="text-[var(--text-faint)]">ACTOR</span>
-                  <span className="ml-2">{createdBy}</span>
-                </div>
-              );
-            }
-            return null;
-          })()}
+          {asset.provenance?.userId && (
+            <div>
+              <span className="text-[var(--text-faint)]">ACTOR</span>
+              <span className="ml-2">{asset.provenance.userId}</span>
+            </div>
+          )}
+          {asset.provenance?.specId && (
+            <div>
+              <span className="text-[var(--text-faint)]">SPEC</span>
+              <span className="ml-2">{asset.provenance.specId}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

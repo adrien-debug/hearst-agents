@@ -55,11 +55,11 @@ export function RunTimeline({ timeline, isLive }: RunTimelineProps) {
 
         return (
           <div key={item.id} className={`flex items-start gap-4 py-3 px-2 ${isLast && isLive ? "bg-[var(--bg-soft)]" : ""}`}>
-            <span className={`font-mono t-8 uppercase tracking-[0.12em] shrink-0 pt-0.5 border-b pb-0.5 ${severityClass} border-current`}>
+            <span className={`font-mono t-8 uppercase tracking-wide shrink-0 pt-0.5 border-b pb-0.5 ${severityClass} border-current`}>
               {sevRef}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-mono t-9 uppercase tracking-[0.1em] text-[var(--text-faint)] mb-1">{typeRef}</p>
+              <p className="font-mono t-9 uppercase tracking-snug text-[var(--text-faint)] mb-1">{typeRef}</p>
               <p className={`t-13 font-light leading-snug ${severityClass}`}>{item.title}</p>
               {item.description && (
                 <p className="t-11 text-[var(--text-muted)] truncate mt-1">{item.description}</p>

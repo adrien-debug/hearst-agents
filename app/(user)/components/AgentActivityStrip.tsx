@@ -90,9 +90,9 @@ export function AgentActivityStrip() {
               const isCompleted = event.type === "tool_call_completed";
               const isStep = event.type === "step_started";
               const chipBg = isCompleted
-                ? "rgba(45, 197, 88, 0.10)"
+                ? "var(--color-success-bg)"
                 : isStep
-                  ? "rgba(245, 158, 11, 0.10)"
+                  ? "var(--color-warning-bg)"
                   : "var(--cykan-bg-active)";
               const chipColor = isCompleted
                 ? "var(--color-success)"
@@ -108,7 +108,7 @@ export function AgentActivityStrip() {
                     background: chipBg,
                     color: chipColor,
                     opacity: isLatest ? 1 : 0.65,
-                    maxWidth: "180px",
+                    maxWidth: "var(--width-activity-label)",
                   }}
                   title={label}
                 >

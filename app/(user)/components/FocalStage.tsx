@@ -228,7 +228,7 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               srcDoc={previewContent}
               sandbox="allow-same-origin"
               className="w-full rounded-sm border border-[var(--surface-2)] bg-white"
-              style={{ height: "var(--space-32)", minHeight: "320px" }}
+              style={{ height: "var(--space-32)", minHeight: "var(--height-focal-min)" }}
             />
           ) : previewContent ? (
             <pre className="t-13 font-mono leading-[1.5] text-[var(--text-soft)] bg-[var(--surface-1)] rounded-sm p-4 overflow-auto whitespace-pre-wrap" style={{ maxHeight: "var(--space-32)" }}>

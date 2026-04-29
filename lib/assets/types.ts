@@ -44,6 +44,27 @@ export interface AssetProvenance {
   /** True quand l'asset est un rendu (run artifact) plutôt qu'un Spec persisté. */
   runArtifact?: boolean;
   /**
+   * Type runtime original (pdf/excel/doc/json/csv/text) préservé au POST
+   * `/api/v2/assets`. Le `kind` canonique (`document`, `spreadsheet`, etc.)
+   * perd l'info au mapping ; ce champ permet à l'adapter (`mapKindToType`)
+   * de retrouver la valeur exacte au round-trip.
+   */
+  type?: string;
+  /**
+   * Fichier binaire associé (PDF, Excel, etc.) — chemin storage + mime.
+   * Utilisé par les research reports et toute capability qui produit un
+   * artefact téléchargeable. Persisté ici plutôt que dans `contentRef`
+   * pour que `/api/v2/assets/[id]/download` puisse l'atteindre sans
+   * parser le contentRef.
+   */
+  pdfFile?: {
+    storageKind: "inline" | "file";
+    fileName: string;
+    mimeType: string;
+    filePath: string;
+    sizeBytes: number;
+  };
+  /**
    * Signaux extraits du report. Persistés dans le provenance pour le
    * filtrage/listing côté UI sans avoir à reparser le contentRef.
    */
@@ -224,6 +245,99 @@ export async function loadAssetsForThread(threadId: string): Promise<Asset[]> {
 
   assetCache.set(threadId, assets);
   return assets;
+}
+
+/**
+ * Async loader — retourne les assets d'un scope (tenant + workspace), sans
+ * filter par thread. Remplace `getAssets` de l'adapter runtime dans les
+ * routes de listing (GET /api/v2/assets) pour éviter le double-modèle
+ * RuntimeAsset ↔ Asset V2.
+ *
+ * Les assets issus des deux paths de création (catalog + research) sont
+ * retournés ici en format V2 canonique, puisque les deux écrivent via
+ * `storeAsset` depuis le 29/04/2026.
+ */
+export async function loadAssetsForScope({
+  tenantId,
+  workspaceId,
+  userId,
+  limit = 50,
+}: {
+  tenantId: string;
+  workspaceId: string;
+  userId?: string;
+  limit?: number;
+}): Promise<Asset[]> {
+  const sb = getServerSupabase();
+  if (!sb) return [];
+
+  const { data, error } = await rawDb(sb)!
+    .from("assets")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+
+  return (data as Record<string, unknown>[])
+    .map((row): Asset => ({
+      id: row.id as string,
+      threadId: (row.thread_id as string) ?? "default",
+      kind: row.kind as AssetKind,
+      title: (row.title as string) ?? "Untitled",
+      summary: (row.summary as string | undefined) ?? undefined,
+      outputTier: (row.output_tier as OutputTier | undefined) ?? undefined,
+      provenance: (row.provenance ?? {}) as AssetProvenance,
+      createdAt: new Date(row.created_at as string).getTime(),
+      contentRef: (row.content_ref as string | undefined) ?? undefined,
+      runId: (row.run_id as string | undefined) ?? undefined,
+    }))
+    .filter((asset) => {
+      const prov = asset.provenance;
+      if (prov.tenantId && prov.tenantId !== tenantId) return false;
+      if (prov.workspaceId && prov.workspaceId !== workspaceId) return false;
+      if (userId) {
+        const owner = prov.userId;
+        if (owner && owner !== userId) return false;
+      }
+      return true;
+    });
+}
+
+/** Charge un seul Asset V2 par ID depuis Supabase. Vérifie le scope tenant. */
+export async function loadAssetById(
+  id: string,
+  scope?: { tenantId?: string; workspaceId?: string },
+): Promise<Asset | null> {
+  const sb = getServerSupabase();
+  if (!sb) return null;
+
+  const { data, error } = await rawDb(sb)!
+    .from("assets")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const row = data as Record<string, unknown>;
+  const prov = (row.provenance ?? {}) as AssetProvenance;
+
+  if (scope?.tenantId && prov.tenantId && prov.tenantId !== scope.tenantId) return null;
+  if (scope?.workspaceId && prov.workspaceId && prov.workspaceId !== scope.workspaceId) return null;
+
+  return {
+    id: row.id as string,
+    threadId: (row.thread_id as string) ?? "default",
+    kind: row.kind as AssetKind,
+    title: (row.title as string) ?? "Untitled",
+    summary: (row.summary as string | undefined) ?? undefined,
+    outputTier: (row.output_tier as OutputTier | undefined) ?? undefined,
+    provenance: prov,
+    createdAt: new Date(row.created_at as string).getTime(),
+    contentRef: (row.content_ref as string | undefined) ?? undefined,
+    runId: (row.run_id as string | undefined) ?? undefined,
+  };
 }
 
 export function storeAction(action: Action): void {

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAssetDetail } from "@/lib/engine/runtime/assets/detail";
 import { deleteAssetById } from "@/lib/engine/runtime/assets/adapter";
-import { evictAsset } from "@/lib/engine/runtime/assets/create-asset";
-import { evictAssetById } from "@/lib/assets/types";
+import { evictAssetById, loadAssetById } from "@/lib/assets/types";
 import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +17,9 @@ export async function GET(
       return NextResponse.json({ error: error?.message ?? "not_authenticated" }, { status: error?.status ?? 401 });
     }
 
-    const asset = await getAssetDetail({
-      assetId: id,
+    const asset = await loadAssetById(id, {
       tenantId: scope.tenantId,
       workspaceId: scope.workspaceId,
-      userId: scope.userId,
     });
 
     if (!asset) {
@@ -63,10 +59,7 @@ export async function DELETE(
     workspaceId: scope.workspaceId,
   });
 
-  // Always evict from the in-memory caches, even when the DB row is already
-  // gone. The two paths drift (Supabase vs in-process Maps in the dev server)
-  // and the UI's fallback reads were keeping ghost rows alive after a wipe.
-  evictAsset(id);
+  // Evict du cache V2 in-memory (assetCache dans lib/assets/types.ts).
   evictAssetById(id);
 
   if (!result.ok) {

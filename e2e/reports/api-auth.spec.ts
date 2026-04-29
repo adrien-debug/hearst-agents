@@ -7,7 +7,7 @@ import { test, expect } from "@playwright/test";
 
 const FAKE_SPEC_ID = "00000000-0000-4000-8000-000000000001";
 
-test.describe("Reports API — protection auth @skip-ci", () => {
+test.describe("Reports API — protection auth", () => {
   test("GET /api/v2/reports renvoie 401 ou redirect sans session", async ({ request }) => {
     const res = await request.get("/api/v2/reports").catch(() => null);
     if (!res) test.skip();
@@ -23,7 +23,7 @@ test.describe("Reports API — protection auth @skip-ci", () => {
   });
 });
 
-test.describe("Reports API — format catalogue @skip-ci", () => {
+test.describe("Reports API — format catalogue", () => {
   test("GET /api/v2/reports renvoie un tableau catalogue si auth OK", async ({ request, page }) => {
     // Nécessite serveur actif + session — skip si indisponible.
     const check = await request.get("/api/v2/reports").catch(() => null);

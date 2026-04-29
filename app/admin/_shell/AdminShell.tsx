@@ -15,16 +15,12 @@ const STORAGE_KEY = "admin-sidebar-collapsed";
 
 export default function AdminShell({ children, userLabel, userInitial, env }: Props) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState<boolean | null>(null);
-
-  // Read persisted state once on mount, then mirror updates back to storage.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const id = requestAnimationFrame(() => {
-      setCollapsed(window.localStorage.getItem(STORAGE_KEY) === "1");
-    });
-    return () => cancelAnimationFrame(id);
-  }, []);
+  // Initialise depuis localStorage côté client (iife synchrone) pour éviter
+  // le flash expanded→collapsed au premier render.
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try { return window.localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
+  });
 
   const onToggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -38,10 +34,10 @@ export default function AdminShell({ children, userLabel, userInitial, env }: Pr
     });
   };
 
-  const isCollapsed = collapsed === true;
+  const isCollapsed = collapsed;
 
   return (
-    <div className="flex h-screen w-screen bg-bg text-text overflow-hidden">
+    <div data-theme="light" className="flex h-screen w-screen bg-bg text-text overflow-hidden">
       {/* Desktop sidebar — width follows the persisted collapsed state. */}
       <div
         className="hidden md:flex shrink-0 transition-[width] duration-(--duration-base) ease-(--ease-standard)"

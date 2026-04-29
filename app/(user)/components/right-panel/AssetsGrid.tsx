@@ -50,8 +50,8 @@ function AssetSkeleton() {
       <div className="px-2 py-2 flex items-center justify-center">
         <div
           style={{
-            width: "96px",
-            height: "40px",
+            width: "var(--width-mini-chart)",
+            height: "var(--space-10)",
             background: "var(--surface-1)",
             borderRadius: "var(--radius-xs)",
           }}
@@ -326,8 +326,8 @@ export function AssetsGrid({
             >
               <div className="flex items-center justify-between px-2 pt-2">
                 <span
-                  className="t-9 font-mono uppercase tracking-[0.22em]"
-                  style={{ color: accent }}
+                  className="t-9 font-mono uppercase"
+                  style={{ color: accent, letterSpacing: "var(--tracking-section)" }}
                 >
                   {asset.type}
                 </span>

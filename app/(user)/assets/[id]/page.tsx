@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AssetPreview } from "../../components/AssetPreview";
-import type { RuntimeAsset } from "@/lib/engine/runtime/assets/types";
+import type { Asset } from "@/lib/assets/types";
 import { toast } from "@/app/hooks/use-toast";
 import { GhostIconChevronLeft } from "../../components/ghost-icons";
 
@@ -12,7 +12,7 @@ export default function AssetDetailPage() {
   const router = useRouter();
   const assetId = params.id as string;
 
-  const [asset, setAsset] = useState<RuntimeAsset | null>(null);
+  const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function AssetDetailPage() {
       const res = await fetch(`/api/v2/assets/${assetId}/download`);
       if (!res.ok) {
         console.error("Download failed:", res.status);
-        toast.error("Téléchargement échoué", `Impossible de télécharger ${asset?.name || "l'asset"}`);
+        toast.error("Téléchargement échoué", `Impossible de télécharger ${asset?.title || "l'asset"}`);
         return;
       }
       
@@ -45,12 +45,12 @@ export default function AssetDetailPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = asset?.name || "download";
+      a.download = asset?.title || "download";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success("Téléchargement réussi", asset?.name || "Asset téléchargé");
+      toast.success("Téléchargement réussi", asset?.title || "Asset téléchargé");
     } catch (error) {
       console.error("Download failed:", error);
       toast.error("Erreur de téléchargement", "Une erreur est survenue");

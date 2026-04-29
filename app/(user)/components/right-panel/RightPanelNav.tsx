@@ -32,7 +32,7 @@ function NavTile({ id, icon, label, count, isActive, onClick, accent }: NavTileP
         background: isActive ? "var(--surface-1)" : "transparent",
         border: isActive ? "1px solid var(--cykan)" : "1px solid var(--border-shell)",
         borderRadius: "var(--radius-xs)",
-        minWidth: "60px",
+        minWidth: "var(--width-nav-tile-min)",
       }}
     >
       <span className="t-13">{icon}</span>

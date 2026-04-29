@@ -4,87 +4,36 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 
 **UI — Ghost Protocol (26/04/2026)** : surface cockpit sombre (`app/globals.css` tokens), typographie Satoshi + Geist Mono, séparateurs `var(--line)`, glyphes SVG filaires (`app/(user)/components/ghost-icons.tsx`), intégrations affichées en `ServiceIdGlyph` (plus d’emojis dans l’UI). Classes utilitaires Ghost (`.ghost-meta-label`, `.ghost-btn-solid`, modales, skeleton scanline) et `.status-dot*` (`box-shadow: none`) sont définies dans `app/globals.css` et couvertes par `__tests__/ui/design-tokens.test.ts`. La landing admin (`app/admin/page.tsx`) est l’**accueil** (raccourcis) ; le graphe live est sur **`/admin/pipeline`** (`CanvasShell` / `FlowCanvas`, `data-pipeline-visual="orbit"`). La colonne droite du canvas (`w-[var(--width-context)]`) empile **fiche stage** (`NodeDetailPanel`) et **derniers runs** (`RunRail`). **Pas de route canvas en double** : un seul canvas sur `/admin/pipeline` ; `/admin/audit` reste le journal. La liste Skills pointe vers `/admin/skills/[id]` (`app/admin/skills/[id]/page.tsx`).
 
-> 🚀 **Quick Start**: `npm run dev` = **hearst-os seul** sur **:9000**  
-> `npm run launch` = stack complète + nohup + purge `.next`
+> 🚀 **Quick Start** : `npm run dev` = hearst-os seul sur `:9000`. `npm run launch` = stack complète.
 
-> **🆕 Mise à jour 26/04/2026 — Cleanup complet terminé** :  
-> ✅ 30+ fichiers morts supprimés  
-> ✅ Shims `lib/planner/` et `lib/orchestrator/` nettoyés  
-> ✅ Nango configuré (200+ OAuth providers)  
-> ✅ 407 tests pass • Build ✅ • TypeScript 0 erreur
->
-> **🆕 Mise à jour 26/04/2026 — Capability-First Runtime** :  
-> ✅ Taxonomie centralisée (`lib/capabilities/taxonomy.ts`) — domaines, capabilities, tools, agents  
-> ✅ Capability Router (`lib/capabilities/router.ts`) — résolution unifiée domaine/mode/providers  
-> ✅ Capability Guard hard block dans `delegate()` — `PERMISSION_DENIED` si agent hors domaine  
-> ✅ Planner contraint — `step.agent` validé contre taxonomie, remappé si invalide  
-> ✅ Heuristiques spécialisées remplacées par routage domain-first (`DOMAIN_AGENT_ROUTES`)  
-> ✅ `detectRetrievalMode` supprimé — remplacé par `resolveRetrievalMode` (taxonomie)  
-> ✅ `execution-mode-selector.ts` + `types/execution-mode.ts` supprimés — remplacés par `resolveExecutionMode` (router)  
-> ✅ Provider preflight unifié via `scopeRequiresProviders(capScope)`  
-> ✅ Keywords dédupliquées : `resolveDataIntent` centralisé, `isXTask` supprimés du pipeline  
-> ✅ Exports morts nettoyés : `getRetrievalModeForDomain`, `isXTask` dans barrel  
-> ✅ Suite intégration runtime capability-first : `__tests__/runtime/capability-runtime-integration.test.ts` (router, guard, planner mock, `delegate()`, backend v2, providers, contrat SSE)  
-> ✅ 491 tests passent (0 régression)
+## État du repo (29/04/2026)
 
-> ✅ **Phase 1 — V2 Foundation TERMINÉE (23/04/2026)**  
-> Legacy supprimé : `app/api/chat/route.ts`, `lib/orchestrator.ts`, `app/lib/missions/*`  
-> Structure V2 créée : `lib/agents/backend-v2/`, `lib/agents/sessions/`
+| Métrique | Valeur |
+|----------|--------|
+| TypeScript | ✅ 0 erreur (`npx tsc --noEmit`) |
+| Lint visuel | ✅ 0 violation (`npm run lint:visual`) |
+| Build | ✅ via `npm run build` (bloque si lint visuel échoue) |
+| Pipeline runtime | Capability-first (`lib/capabilities/router.ts`) + Backend V2 multi-provider |
+| Connector Packs | 5 (finance, crm, productivity, design, developer) — 200+ OAuth via Nango |
+| Reports | V2 catalog (`/api/v2/reports/[specId]/run`) — cron Railway *supprimés* (voir section Reports) |
+| RightPanel | Structure fixe : 4 sections always-on, empty states internes, scope strict du lint |
 
-> ✅ **Backend V2 — Multi-Provider TERMINÉ (24/04/2026)**  
-> 5 backends unifiés • 384 tests • 98.3% pass rate  
-> [`lib/orchestrator/orchestrate-v2.ts`](./lib/orchestrator/orchestrate-v2.ts)
+**Dernière session 29/04/2026 — cleanup right-panel + lint bloquant** :
+- 6 composants UI orphelins supprimés (`LibraryTabs`, `GeneralRecap`, `ActivityTimeline`, `HaloLogo3D`, `HaloLogo3D.canvas`, doublon `RightPanelContent`)
+- Sous-système reports legacy supprimé (~700 lignes : `app/api/cron/{daily-report,market-alert,market-watch}`, `app/api/reports/{route,today,health}`, `lib/engine/runtime/report-runner.ts`)
+- Hook partagé [`useRunReportSuggestion`](./app/(user)/components/right-panel/useRunReportSuggestion.ts) câblé dans les 3 vues du panneau
+- Types signaux mono-domaine business → [`lib/reports/signals/types.ts`](./lib/reports/signals/types.ts)
+- Lint visuel renforcé (8 règles) + chaîné dans `npm run lint` + `prebuild` — voir section *Lint visuel* sous Tokens
 
-> ✅ **Fondations — Semaines 0-6 TERMINÉES (25/04/2026)**  
-> Sécurité env • Responsive shell • Toasts/feedback • Login FR • Core types unifiés • Analytics 4 events • E2E complet (mobile+desktop)
+**Dette restante priorisée** :
+- ⚠️ P0 — Migration `0026_drop_daily_reports.sql` à **appliquer en DB** + regen `lib/database.types.ts` (la table orpheline est marquée pour drop, le SQL est prêt)
+- 🟡 P1 — Triple chemin de persistance assets (`storeAsset` × 2 + `saveAsset`) à consolider
+- 🟡 P1 — Recâbler `runResearchReport` sur le pipeline V2
+- 🟢 P2 — Élargir `STRICT_PATHS` du lint visuel au-delà de `right-panel/`
+- 🟢 P2 — Réactiver E2E reports en CI (retirer `@skip-ci`)
+- 🟢 P2 — Indicateur progress chat surface pendant un run report
+- 🟢 P2 — Décision macro spacing Tailwind v4 (~532 occurrences `px-N`/`gap-N` brutes)
 
-> ✅ **Phase 7 — Convergence Architecture** — **Terminé 25/04/2026**  
-> Runtime migré (52 fichiers) • Settings dynamiques (4 fichiers + SQL) • Auth réorganisé • 404 tests ✅
-
-> ✅ **Phase 8.0 — Infrastructure (scale)** — `lib/engine/runtime/assets/storage/` (local, R2, hybrid) • `scripts/migrate-assets.ts` • `lib/connectors/packs/` (loader, `finance-pack` + Stripe) — **Terminé 25/04/2026**
-
-> ✅ **Phase A — Connector Router** — `lib/connectors/router.ts` • Routing Pack-first (Stripe) • Fallback Nango • Stats + diagnostics — **Terminé 25/04/2026**
->
-> ✅ **Phase B — Finance Agent** — `lib/agents/specialized/finance.ts` • Stripe Agent (list/get payments, invoices, subscriptions, balance, customers, summarize) • Router integration — **Terminé 25/04/2026**
->
-> ✅ **Phase 9 — Architecture Finale Alignment** — Structure réorganisée et alignée sur l'architecture cible
-> - `lib/agents/specialized/` — Agents métier (finance.ts)
-> - `lib/agents/index.ts` — Barrel export restauré
-> - `lib/connectors/packs/finance-pack/{auth,services,mappers,schemas}/` — Connector Pack structure
-> - `lib/engine/runtime/assets/{generators,cache,cleanup,api}/` — Asset subsystems
-> - `lib/admin/{settings,permissions,connectors,health,audit}.ts` — Admin API complets
-> - `lib/platform/db/{supabase,schema,index}.ts` — Database layer
->
-> ✅ **Phase 10 — Connector Packs Expansion** — 5 Packs avec services complets
-> - `finance-pack/` — Stripe (payments, invoices, subscriptions, balance, customers)
-> - `crm-pack/` — HubSpot (contacts, companies, deals), Salesforce (planned)
-> - `productivity-pack/` — Notion (pages, databases, blocks, search), Trello/Asana (planned)
-> - `design-pack/` — Figma (files, components, variables, comments), Adobe/Canva (planned)
-> - `developer-pack/` — GitHub (repos, PRs, issues, commits) — ✅ **Phase 4**
->
-> **Métriques actuelles (26/04/2026)** :
-> | Métrique | Valeur |
-> |----------|--------|
-> | Fichiers TypeScript | 274 lib/ + 63 app/ = **337 total** |
-> | Tests | **407 pass** (35 fichiers) |
-> | Build | ✅ **Succès** |
-> | TypeScript | ✅ **0 erreur** |
-> | Code mort | ✅ **Supprimé** (30+ fichiers) |
-> | Connector Packs | **5** (finance, crm, productivity, design, developer) |
-> | Specialized Agents | **5** (finance, crm, productivity, design, developer) |
-> | OAuth Providers | **200+** via Nango |
->
-> **Phase 0–5 + UI Improvements COMPLÈTES (26/04/2026)**:
-> - **Phase 0-4** — Infrastructure alignment + Admin APIs + Platform settings + Agents capabilities
-> - **Priorité 2-5** — Planner stubs → Real API calls + Stripe OAuth + Redis cache + Structure refactor
-> - **Corrections finales** — Barrel export exhaustif, Vrai LRU cache, Types Asset unifiés
-> 
-> **UI Improvements (26/04/2026)**:
-> - ✅ **OAuth Connectors** — Flow fonctionnel avec Nango SDK popup (@nangohq/frontend)
-> - ✅ **Assets Liste** — Page `/assets` découvrable avec search, filtres, pagination
-> - ✅ **Error Handling** — Remplacement alerts par système toast unifié
-> - ✅ **Security** — Validation stricte NEXT_PUBLIC_NANGO_PUBLIC_KEY (pas de fallback secret key)
->
 
 ## 📚 Références visuelles
 
@@ -110,59 +59,52 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 - **Rail droit compact** (`RightPanel`) — Surface de confiance scannable. Architecture v2 (avril 2026) : 4 strates empilées + navigation tuiles. Voir section RightPanel Structure ci-dessous.
 - **Navigation gauche** (`LeftPanel`) — Mémoire des threads uniquement. Navigation chat-first.
 
-### RightPanel Structure (v2 — avril 2026)
+### RightPanel — structure fixe (avril 2026)
 
-Le RightPanel est constitué de **4 strates empilées** + **navigation tuiles** :
+Règle non négociable : **toutes les sections sont toujours rendues.** Une donnée vide → empty state interne (`EmptyRow` muted, compteur `00`, skeleton). Jamais de `{xxx.length > 0 && (…)}` qui escamote un bloc — ça provoque des sauts de layout et brise le modèle mental « droite = bibliothèque + contexte permanent ».
+
+Empilement vertical (orchestré par [`RightPanelContent`](./app/(user)/components/RightPanelContent.tsx)) :
 
 ```
-┌─────────────────────────────────────┐
-│ 1. PULSE STRIP (72px)               │
-│    ◉ En cours · Founder Cockpit     │  ← Status système + contexte
-├─────────────────────────────────────┤
-│ 2. FOCAL CARD (96px)                │
-│    🔔 Email reçu : Facture Q4       │  ← Notifications communication
-├─────────────────────────────────────┤
-│ 3. NAVIGATION TUILES (sticky)       │
-│    ┌────┬────┬────┬────┐          │
-│    │ ⊞  │ ⚡  │ 🎯  │ 📦 │          │
-│    │GÉN │RAP│MIS│LIV│          │
-│    │  5 │ 2  │ 3  │ 12 │          │  ← Click = switch vue
-│    └────┴────┴────┴────┘          │
-├─────────────────────────────────────┤
-│ 4. CONTENT VIEW (scrollable)        │
-│    [Vue Général/Rapports/Missions/  │  ← Dépend de la tuile active
-│     Livrables]                      │
-├─────────────────────────────────────┤
-│ 5. FOOTER SSE status                │
-│    ● LIVE                           │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────┐
+│ OAuthStatusCard (visible pendant flow)   │
+├──────────────────────────────────────────┤
+│ 1. PulseStrip — height: --height-strip-pulse (72px)
+│    Halo + label état + compteur events (toujours rendu)
+├──────────────────────────────────────────┤
+│ 2. FocalCard — height: --space-32 (160px)
+│    Notifications (header always-on, corps swap plein/vide)
+├──────────────────────────────────────────┤
+│ 3. RightPanelNav — 4 tuiles (Général / Rapports / Missions / Livrables)
+│    minWidth tuile: --width-nav-tile-min (60px)
+├──────────────────────────────────────────┤
+│ 4. ContentView (scrollable, flex-1)
+│    Selon la tuile active : GeneralDashboard / AssetsGrid / MissionsList
+├──────────────────────────────────────────┤
+│ 5. Footer SSE — standby / live / offline
+└──────────────────────────────────────────┘
 ```
 
-| Strate | Composant | Fichier | Description |
-|--------|-----------|---------|-------------|
-| **Pulse** | `PulseStrip` | `app/(user)/components/right-panel/PulseStrip.tsx` | Halo status + label état + compteur events. Épuré (72px), pas de "Système en veille" redondant. |
-| **Notifications** | `FocalCard` | `app/(user)/components/right-panel/FocalCard.tsx` | Zone communication (emails, messages, alerts). Remplace l'ancien focal asset redondant. |
-| **Navigation** | `RightPanelNav` | `app/(user)/components/right-panel/RightPanelNav.tsx` | 4 tuiles cliquables : Général/Rapports/Missions/Livrables. Compteurs live. |
-| **Contenu** | `GeneralDashboard` | `app/(user)/components/right-panel/GeneralDashboard.tsx` | Vue par défaut (suggestions + previews). Les autres vues utilisent `AssetsGrid` et `MissionsList`. |
-| **Data** | `RightPanelContent` | `app/(user)/components/RightPanelContent.tsx` | Orchestrateur SSE + fetch. Point d'entrée unique. |
+| Composant | Fichier | Rôle |
+|-----------|---------|------|
+| `RightPanelContent` | [`app/(user)/components/RightPanelContent.tsx`](./app/(user)/components/RightPanelContent.tsx) | Orchestrateur SSE + state. Point d'entrée unique. |
+| `PulseStrip` | [`right-panel/PulseStrip.tsx`](./app/(user)/components/right-panel/PulseStrip.tsx) | Halo + label état (idle/running/awaiting/error) + compteur events permanent. |
+| `FocalCard` | [`right-panel/FocalCard.tsx`](./app/(user)/components/right-panel/FocalCard.tsx) | Notifications (emails, messages, approvals). Pas d'early return — un seul container, corps swap. |
+| `RightPanelNav` | [`right-panel/RightPanelNav.tsx`](./app/(user)/components/right-panel/RightPanelNav.tsx) | 4 tuiles cliquables avec compteurs live. |
+| `GeneralDashboard` | [`right-panel/GeneralDashboard.tsx`](./app/(user)/components/right-panel/GeneralDashboard.tsx) | Vue défaut. 4 sections always-on (Suggestions / Missions / Livrables / Alertes), chacune avec son `EmptyRow` ou `SkeletonRow`. |
+| `AssetsGrid` | [`right-panel/AssetsGrid.tsx`](./app/(user)/components/right-panel/AssetsGrid.tsx) | Grille 2 colonnes des livrables + bandeau suggestions cliquable. |
+| `MissionsList` | [`right-panel/MissionsList.tsx`](./app/(user)/components/right-panel/MissionsList.tsx) | Liste verticale des missions avec ring SVG par état. |
+| `useRunReportSuggestion` | [`right-panel/useRunReportSuggestion.ts`](./app/(user)/components/right-panel/useRunReportSuggestion.ts) | Hook partagé : déclenche `POST /api/v2/reports/[specId]/run`, ouvre le focal sur l'asset généré. Câblé dans les 3 vues. |
 
-**Navigation** :
-- **Général** (défaut au chargement) — Dashboard résumé avec suggestions prioritaires, missions actives preview, derniers livrables preview, alertes récentes
-- **Rapports** — Suggestions cataloguées prêtes à lancer (liste complète)
-- **Missions** — Toutes les missions avec statut running/armed
-- **Livrables** — Grille complète des assets générés
-
-**État** : La vue active est persistée dans `localStorage` (`hearst.rightpanel.view`). Au changement de thread, on reset vers "general".
+**État** : la vue active est persistée dans `localStorage` (`hearst.rightpanel.view`). Au changement de thread, reset vers `general` + `setData(null)`.
 
 **Anti-confusion pour agents** :
-- ❌ **PAS** d'onglets classiques (ASSETS / MISSIONS / ACTIVITÉ) — remplacés par les 4 tuiles
-- ❌ **PAS** de LibraryTabs — composant supprimé
-- ❌ **PAS** de GeneralRecap — remplacé par GeneralDashboard
-- ✅ Les imports sont depuis `app/(user)/components/right-panel/`
-- ✅ Le point d'entrée unique est `RightPanelContent.tsx` (pas de fichier dans `right-panel/` pour l'orchestrateur principal)
-- **Momentum** — *Cible non montée* — rappel discret des activités. `TopContextBar` et `MomentumIndicator` sont des cibles de convergence.
-- **Surfaces** : `/` (home) — entrée chat-first. Routes legacy accessibles mais non exposées.
-- Layout user : `LeftPanel` (threads) + zone centrale (`main` avec chat + FocalStage toggleable) + `RightPanel` (index/confiance)
+- ❌ Pas d'onglets classiques (ASSETS / MISSIONS / ACTIVITÉ) — remplacés par les 4 tuiles
+- ❌ Pas de `LibraryTabs`, `GeneralRecap`, `ActivityTimeline`, `HaloLogo3D`, doublon `right-panel/RightPanelContent.tsx` — **tous supprimés** (29/04/2026)
+- ❌ Pas de `{data && (...)}` autour d'une section entière — viole la règle structure fixe
+- ✅ Imports depuis `@/app/(user)/components/right-panel/`
+- ✅ Orchestrateur unique : [`RightPanelContent.tsx`](./app/(user)/components/RightPanelContent.tsx) (au niveau `components/`, pas dans `right-panel/`)
+- ✅ Scope strict du lint visuel actif sur `right-panel/` — toute violation `tracking-[…]`, `style={{ height: "Npx" }}`, `rgba(…)`, `shadow-md` etc. bloque le build (voir section *Lint visuel*)
 
 ### Tokens (source `app/globals.css`)
 
@@ -177,6 +119,25 @@ Modèle d'élévation (du plus profond au plus clair) : **rail < background < su
 | `--glow-cyan-{sm,md,core,soft,dot}` | — | rgba(0,229,255,…) | Halos centralisés — **ne pas dupliquer en `rgba` dans les composants** |
 
 Garde-fou : `__tests__/ui/design-tokens.test.ts` valide la présence de tous ces tokens dans `app/globals.css` et dans le bloc `@theme inline`.
+
+#### Lint visuel — bloquant depuis 29/04/2026
+
+[`scripts/lint-visual.mjs`](./scripts/lint-visual.mjs) interdit les magic numbers et les mélanges Tailwind/inline qui violent le DS. Branché sur `npm run lint` (eslint chainé) et `npm run build` (via `prebuild`) — le build est refusé si violation.
+
+| Règle | Scope | Fix |
+|-------|-------|-----|
+| `no-hex` | global | `#abc123` hors brand allowlist → `var(--token-couleur)` |
+| `no-arbitrary-text-size` | global | `text-[Npx]` → classe `.t-N` |
+| `no-arbitrary-tracking` | strict | `tracking-[0.22em]` → `tracking-section`, `tracking-display`, `tracking-stretch`, `tracking-label`, etc. |
+| `no-rgba` | strict | `rgba(…)` littéral → token `--xxx-bg` ou `--xxx-tint` |
+| `no-tailwind-shadow` | strict | `shadow-md/lg/xl/2xl` → `var(--shadow-card)` / `--shadow-card-hover` / `--shadow-input-focus` |
+| `no-magic-px-style` | strict | `style={{ height: "72px" }}` → `var(--space-N)` ou nouveau token sémantique |
+| `no-arbitrary-non-token` | strict | `bg-[#xxx]` → `bg-[var(--token)]` |
+| `no-inline-shadow` | strict | `boxShadow:` inline → `box-shadow: var(--shadow-XXX)` |
+
+**Scope strict actuel** (`STRICT_PATHS` en tête de [`lint-visual.mjs`](./scripts/lint-visual.mjs)) : `app/(user)/components/right-panel/`. Élargir fichier par fichier au fur et à mesure du clean.
+
+**Opt-out par fichier** : `// lint-visual-disable-file` dans les 5 premières lignes (réservé WebGL, Three.js, refs visuelles statiques).
 
 #### Guide de style — surfaces actuelles
 
@@ -915,12 +876,8 @@ run_completed
 | `/api/signals` | GET | Liste signals (filtrable) |
 | `/api/signals/[id]/resolve` | POST | Apply/dismiss/acknowledge + change tracking |
 | `/api/changes` | GET | Audit trail des changements |
-| `/api/cron/daily-report` | GET/POST | Cron daily crypto (scheduled, idempotent) |
-| `/api/cron/market-watch` | GET/POST | Cron market watch (scheduled, idempotent) |
-| `/api/cron/market-alert` | GET/POST | Cron market alert (conditional, 8h cooldown) |
-| `/api/reports` | GET | Liste des rapports (filtre `type`, `status`) |
-| `/api/reports/today` | GET | Statut du rapport du jour par type |
-| `/api/reports/health` | GET | Health dashboard par type (streak, taux 14j) |
+| `/api/v2/reports` | GET | Catalog des reports disponibles (Founder Cockpit, Customer 360, Deal-to-Cash) |
+| `/api/v2/reports/[specId]/run` | POST | Exécute un report catalogué (deterministic pipeline → asset persisté) |
 
 ## Connectors (User Integrations)
 
@@ -1160,7 +1117,7 @@ Coexiste avec le legacy `RunTracer` (`lib/engine/runtime/tracer.ts`). Phase 1 ut
 **Memory** : agent_memory
 **Integrations** : integration_connections
 **Decisions** : improvement_signals, applied_changes
-**Reports** : daily_reports (registry produit, idempotent)
+**Reports** : assets (kind='report', `provenance.reportMeta` porte signaux + sévérité ; pas de table dédiée — l'ancien `daily_reports` est marqué pour drop via [migration 0026](./supabase/migrations/0026_drop_daily_reports.sql))
 **Missions** : missions, mission_runs (persistance des missions utilisateur + exécutions)
 **Engine v2** : run_steps, run_approvals, run_logs, artifacts, artifact_versions, document_sessions, plans, plan_steps, action_plans, action_plan_steps, action_executions
 **Legacy** : usage_logs, workflow_runs
@@ -1229,230 +1186,34 @@ Couverture : lifecycle, cost sentinel, prompt guards, output validator, tracer i
 | Full workflow E2E | Multi-step, cost accumulation, stub replay zero cost |
 | Drift detection | success_rate drop, latency spike, signal tool_replacement |
 
-## Report Capabilities (Cron Production)
+## Reports — Pipeline V2
 
-Infrastructure partagée (`lib/engine/runtime/report-runner.ts`) pour toutes les capabilities de reporting.
+Le système legacy (cron Railway + `report-runner.ts` + endpoints `/api/cron/{daily-report,market-alert,market-watch}` + `/api/reports/{route,today,health}`) a été **entièrement supprimé le 29/04/2026** (~700 lignes). Reste deux systèmes :
 
-### Architecture d'exécution
+### V2 catalog (chemin principal)
 
-| Rôle | Responsable | Notes |
-|------|-------------|-------|
-| Runtime + Cron | **Railway** | Source unique d'exécution des reports |
-| Frontend / UI | **Vercel** | Console opérateur et API lecture |
+Entry point UI : la tuile « Rapports » du RightPanel ([`AssetsGrid`](./app/(user)/components/right-panel/AssetsGrid.tsx) + [`GeneralDashboard`](./app/(user)/components/right-panel/GeneralDashboard.tsx)) liste les `reportSuggestions` venant du panneau SSE et déclenche la génération via le hook partagé [`useRunReportSuggestion`](./app/(user)/components/right-panel/useRunReportSuggestion.ts) → `POST /api/v2/reports/[specId]/run` → [`lib/reports/engine/run-report.ts`](./lib/reports/engine/run-report.ts).
 
-**Railway est le cron owner.** Pas de crons définis dans `vercel.json`.
-Un seul runtime exécute les workflows pour éviter doublons et fragmentation.
+Pendant le run : `runningSpecs` masque la suggestion en optimistic. Au retour : ouverture du focal sur l'asset généré + toast `Report généré`.
 
-### Reports actifs
+### Research path (à recâbler)
 
-| Report | Type | Cron Railway | Endpoint | Env var | Mode |
-|--------|------|-------------|----------|---------|------|
-| Daily Crypto Report | `crypto_daily` | 7h UTC | `/api/cron/daily-report` | `DAILY_REPORT_WORKFLOW_ID` | Scheduled |
-| Market Watch Report | `market_watch` | 8h UTC | `/api/cron/market-watch` | `MARKET_WATCH_WORKFLOW_ID` | Scheduled |
-| Market Alert | `market_alert` | `*/4h` UTC | `/api/cron/market-alert` | `MARKET_ALERT_WORKFLOW_ID` | Conditional |
+`runResearchReport()` reste un chemin séparé (research intent → pipeline IA). 🟡 **Dette P1** : à aligner sur le V2 catalog pour avoir un seul orchestrateur de génération de reports.
 
-### Authentification
+### Signaux business
 
-**Obligatoire.** Tout appel sans `CRON_SECRET` est rejeté (401).
+[`lib/reports/signals/types.ts`](./lib/reports/signals/types.ts) — 10 signal types mono-domaine business (`mrr_drop`, `mrr_spike`, `pipeline_thin`, `runway_risk`, `cycle_time_drift`, `customer_at_risk`, `support_overload`, `commit_velocity_drop`, `calendar_overload`, `auth_expiring`) + `determineSeverity()`. Plus aucune cohabitation avec les anciens signaux crypto V1.
 
-```bash
-curl -X GET https://hearst-agents-production.up.railway.app/api/cron/daily-report \
-  -H "Authorization: Bearer $CRON_SECRET"
-```
+Extracteur déterministe : [`lib/reports/signals/extract.ts`](./lib/reports/signals/extract.ts).
 
-Variables requises : `CRON_SECRET`, `DAILY_REPORT_WORKFLOW_ID`, `MARKET_WATCH_WORKFLOW_ID`, `MARKET_ALERT_WORKFLOW_ID`.
-Variable optionnelle : `ALERT_WEBHOOK_URL` (Discord/Slack webhook pour alertes échec).
+### Table Supabase obsolète — drop programmé
 
-### Idempotence (reports programmés)
+La table `daily_reports` ([0010_daily_reports.sql](./supabase/migrations/0010_daily_reports.sql)) — registry du legacy cron — n'a plus aucun lecteur/écrivain depuis le commit `32667f1` (29/04/2026). La migration de drop est prête : [0026_drop_daily_reports.sql](./supabase/migrations/0026_drop_daily_reports.sql).
 
-Un seul rapport `completed` par date UTC + type (index unique conditionnel sur `daily_reports`).
-S'applique à `crypto_daily` et `market_watch`.
-
-| Situation | Comportement |
-|-----------|-------------|
-| Aucun rapport pour la date | Exécution normale |
-| Rapport `completed` | Skip (`already_ran`) |
-| Rapport `running` | Skip |
-| Rapport `failed` | Retry automatique |
-| Rapport `completed` + `force: true` | Force rerun |
-
-### Relance manuelle
-
-```bash
-# Retry du jour
-curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
-  -H "Authorization: Bearer $CRON_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"triggered_by": "manual", "reason": "Relance après fix"}'
-
-# Date spécifique
-curl -X POST https://hearst-agents-production.up.railway.app/api/cron/market-watch \
-  -H "Authorization: Bearer $CRON_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"date": "2026-04-17", "triggered_by": "manual", "reason": "Rapport manqué"}'
-
-# Force rerun
-curl -X POST https://hearst-agents-production.up.railway.app/api/cron/daily-report \
-  -H "Authorization: Bearer $CRON_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"force": true, "triggered_by": "manual", "reason": "Données corrigées"}'
-```
-
-### Market Alert — Exécution conditionnelle
-
-Le Market Alert est différent des reports programmés :
-- **Fréquence** : toutes les 4h (6x/jour)
-- **Conditionnel** : ne produit un rapport que si des signaux significatifs sont détectés
-- **Cooldown** : 8h entre deux reports `completed` (pas de spam)
-- **No signal** : si rien de notable → `status = skipped`, `idempotency_decision = no_signal`
-
-#### Signal types
-
-| Signal | Condition déclenchante | Sévérité |
-|--------|----------------------|----------|
-| `flash_move` | Variation 24h > ±10% sur un top-50 coin | `critical` |
-| `volume_spike` | Volume exchange significativement au-dessus de la normale | `warning` |
-| `new_trending` | Coin trending qui n'apparaissait pas récemment | `info` |
-| `defi_stress` | Variation TVL DeFi > ±8% en 24h | `warning` |
-
-#### Sévérité
-
-Déterminée par les signaux détectés, pas par le LLM :
-- `critical` : `flash_move` présent
-- `warning` : `defi_stress` ou `volume_spike` présent
-- `info` : `new_trending` uniquement
-
-#### Cooldown
-
-- Fenêtre de 8h : pas de nouveau report `completed` ou `running` dans la fenêtre
-- Si un report a été produit il y a < 8h → `cooldown_blocked`
-- `force: true` permet de bypasser le cooldown
-
-#### Test manuel
-
-```bash
-# Déclencher un scan
-curl -X GET https://hearst-agents-production.up.railway.app/api/cron/market-alert \
-  -H "Authorization: Bearer $CRON_SECRET"
-
-# Force rerun (bypass cooldown)
-curl -X POST https://hearst-agents-production.up.railway.app/api/cron/market-alert \
-  -H "Authorization: Bearer $CRON_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"force": true, "triggered_by": "manual", "reason": "Test signal detection"}'
-```
-
-#### Webhook
-
-L'alerting webhook est envoyé **uniquement quand un signal réel est détecté** (report `completed`).
-Aucune notification pour `no_signal` ou `cooldown_blocked`.
-Le message inclut la sévérité et les signal types détectés.
-
-### Registry (`daily_reports`)
-
-Chaque rapport est un **objet produit** séparé du run technique :
-
-| Champ | Description |
-|-------|-------------|
-| `report_date` | Date UTC du rapport |
-| `report_type` | `crypto_daily` / `market_watch` / `market_alert` |
-| `run_id` | Lien vers le run source |
-| `status` | `pending` / `running` / `completed` / `failed` / `skipped` |
-| `content_markdown` | Rapport complet (null si `skipped`) |
-| `summary` | Résumé (préfixé `[SEVERITY]` pour alertes) |
-| `highlights` | Points clés + métadonnées (`severity: X`, `signal_types: Y`) |
-| `error_message` | Cause d'échec / raison rerun |
-| `triggered_by` | `cron` / `manual` |
-| `idempotency_decision` | `run` / `retry` / `skip` / `no_signal` / `cooldown_passed` |
-
-### Alerting
-
-**Échecs** : Log structuré `[cron/{type}] [ALERT]` + webhook si configuré.
-**Alertes marché** : Webhook avec sévérité + signaux détectés (uniquement si signal réel).
-Aucune notification pour `no_signal`.
-
-### Visibilité opérateur
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/reports?type=X` | Liste paginée (filtre `type`, `status`) |
-| `GET /api/reports/today?type=X` | Statut du jour + dernier succès |
-| `GET /api/reports/health?type=X` | Dashboard santé (streak, taux 14j, dernier échec) |
-| `/reports` | Console opérateur (health multi-type, filtre, détails) |
-
-### Investigation d'un échec
-
-| Étape | Action |
-|-------|--------|
-| 1 | `GET /api/reports/today?type=X` → `status` + `error_message` |
-| 2 | `GET /api/reports/health?type=X` → streak cassé ? taux en baisse ? |
-| 3 | `GET /api/runs/{run_id}` → traces (tool calls, LLM, erreurs) |
-| 4 | Logs Railway → chercher `[cron/{type}]` |
-| 5 | Relancer → `POST /api/cron/{name}` avec auth + reason |
-
-### Ajouter un nouveau type de report (spec canonique)
-
-Toute nouvelle capability doit suivre ce pattern exact. Un 3e report est **un fichier de ~30 lignes**.
-
-**Prérequis obligatoires** :
-
-| Élément | Obligatoire | Fourni par |
-|---------|:-----------:|------------|
-| Agent dédié (system prompt spécifique) | Oui | Créer via `/api/agents` |
-| Workflow (tools → collect → template → chat) | Oui | Créer via `/api/workflows` + steps Supabase |
-| Endpoint cron `app/api/cron/{name}/route.ts` | Oui | ~30 lignes, wrapper `report-runner.ts` |
-| `ReportConfig` dans l'endpoint | Oui | `reportType`, `label`, `workflowIdEnvVar`, `workflowNamePattern`, `missionLabel` |
-| Env var `{NAME}_WORKFLOW_ID` sur Railway | Oui | Dashboard Railway |
-| Entrée dans le README (table "Reports actifs") | Oui | Manuel |
-
-**Ce qui est automatique** (hérité de `report-runner.ts`) :
-- Auth cron (`CRON_SECRET`)
-- Idempotence quotidienne (registry `daily_reports`)
-- Alerting webhook
-- Report extraction (content, summary, highlights)
-- Visibilité opérateur (APIs + UI `/reports`)
-
-**Checklist de validation** :
-
-1. `GET /api/cron/{name}` avec auth → `completed`
-2. 2e appel → `already_ran` (idempotence)
-3. `GET /api/reports/today?type={type}` → rapport visible
-4. `GET /api/reports/health?type={type}` → streak = 1
-5. UI `/reports` → rapport visible avec badge type + détails
-
-**Template endpoint cron** :
-
-```typescript
-import { NextRequest } from "next/server";
-import { err } from "@/lib/domain";
-import { authenticateCron, runReport, parseCronBody, type ReportConfig } from "@/lib/engine/runtime/report-runner";
-
-export const dynamic = "force-dynamic";
-export const maxDuration = 120;
-
-const CONFIG: ReportConfig = {
-  reportType: "your_type",
-  label: "Your Report Label",
-  workflowIdEnvVar: "YOUR_TYPE_WORKFLOW_ID",
-  workflowNamePattern: "your%pattern",
-  missionLabel: "Your Mission Label",
-};
-
-export async function GET(req: NextRequest) {
-  const auth = authenticateCron(req.headers.get("authorization"), `cron/${CONFIG.reportType}`, req.headers.get("x-forwarded-for") ?? "unknown");
-  if (!auth.ok) return err(auth.reason, 401);
-  return runReport(CONFIG, "cron");
-}
-
-export async function POST(req: NextRequest) {
-  const auth = authenticateCron(req.headers.get("authorization"), `cron/${CONFIG.reportType}`, req.headers.get("x-forwarded-for") ?? "unknown");
-  if (!auth.ok) return err(auth.reason, 401);
-  let body: unknown = null;
-  try { body = await req.json(); } catch { /* ok */ }
-  const p = body ? parseCronBody(body) : { triggeredBy: "manual", forceRerun: false };
-  return runReport(CONFIG, p.triggeredBy, p.dateOverride, p.rerunReason, p.forceRerun);
-}
-```
+Étapes restantes côté ops :
+1. Appliquer la migration 0026 sur l'environnement Supabase cible
+2. Régénérer les types : `npx supabase gen types typescript --project-id <id> > lib/database.types.ts`
+3. Le bloc `daily_reports` disparaît automatiquement de [`lib/database.types.ts`](./lib/database.types.ts)
 
 ## Deploy
 
@@ -1474,8 +1235,10 @@ docker run -p 9000:3000 --env-file .env.local hearst-agents
 | `npm run launch` | 🚀 **Lance TOUS les services** (kill + redémarre 9000, 8100, 3000) |
 | `npm run launch:all` | Alias de `npm run launch` |
 | `npm run stop` | 🛑 Arrête tous les services |
-| `npm run build` | Build production |
+| `npm run build` | Build production (refusé si `lint:visual` échoue, via `prebuild`) |
 | `npm run start` | Serveur production |
-| `npm run lint` | ESLint (0 erreur ; des warnings peuvent rester) |
+| `npm run lint` | ESLint + lint visuel chainés (échec si l'un des deux casse) |
+| `npm run lint:visual` | Lint visuel seul — détecte magic numbers, mélanges Tailwind/inline ([`scripts/lint-visual.mjs`](./scripts/lint-visual.mjs)) |
 | `npm test` | Tests (vitest) |
 | `npm run test:watch` | Tests en watch mode |
+| `npm run test:e2e` | Tests Playwright (e2e) |
