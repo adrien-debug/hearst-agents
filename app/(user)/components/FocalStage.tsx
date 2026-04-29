@@ -282,7 +282,7 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
         }
         hydrateThreadState(mappedFocal, secondary.slice(0, 3));
       }
-    } catch (_err) {}
+    } catch {}
   };
 
   if (!focal) {

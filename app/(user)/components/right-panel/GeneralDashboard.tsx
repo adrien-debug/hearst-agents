@@ -3,8 +3,8 @@
 /**
  * GeneralDashboard — Vue d'accueil par défaut du RightPanel.
  *
- * Structure FIXE : 4 sections toujours rendues (Suggestions / Missions /
- * Livrables / Alertes). Vide → empty state interne, jamais de bloc escamoté.
+ * Structure FIXE : 3 sections toujours rendues (Missions / Livrables / Alertes).
+ * Vide → empty state interne, jamais de bloc escamoté.
  */
 
 import type { RightPanelData } from "@/lib/core/types";
@@ -14,12 +14,9 @@ import { AssetGlyphSVG } from "../right-panel-helpers";
 interface GeneralDashboardProps {
   assets: RightPanelData["assets"];
   missions: RightPanelData["missions"];
-  reportSuggestions?: RightPanelData["reportSuggestions"];
   onViewChange: (view: "reports" | "missions" | "assets") => void;
   activeThreadId: string | null;
   loading: boolean;
-  runningSpecs: Set<string>;
-  onRunSuggestion: (specId: string, title: string) => Promise<void>;
 }
 
 function SectionTitle({
@@ -84,60 +81,14 @@ function SkeletonRow({ height = 60 }: { height?: number }) {
   );
 }
 
-function SuggestionRow({
-  suggestion,
-  onRun,
-  isRunning,
-}: {
-  suggestion: NonNullable<RightPanelData["reportSuggestions"]>[number];
-  onRun: () => void;
-  isRunning: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onRun}
-      disabled={isRunning}
-      className="w-full text-left flex items-center justify-between border border-[var(--card-flat-border)] border-l-2 border-l-[var(--cykan)]"
-      style={{
-        padding: "var(--space-3)",
-        background: "var(--card-flat-bg)",
-      }}
-    >
-      <div className="flex-1 min-w-0">
-        <p className="t-13 font-medium text-[var(--text-soft)] truncate">{suggestion.title}</p>
-        <p className="t-9 text-[var(--text-faint)] truncate mt-0.5">{suggestion.description}</p>
-      </div>
-      <span
-        className="t-9 font-mono uppercase tracking-section ml-3 shrink-0"
-        style={{
-          color: suggestion.status === "ready" ? "var(--cykan)" : "var(--text-faint)",
-        }}
-      >
-        {isRunning
-          ? "..."
-          : suggestion.status === "ready"
-            ? "lancer"
-            : `${suggestion.requiredApps.length - suggestion.missingApps.length}/${suggestion.requiredApps.length}`}
-      </span>
-    </button>
-  );
-}
-
 export function GeneralDashboard({
   assets,
   missions,
-  reportSuggestions,
   onViewChange,
   activeThreadId: _activeThreadId,
   loading,
-  runningSpecs,
-  onRunSuggestion,
 }: GeneralDashboardProps) {
   const events = useRuntimeStore((s) => s.events);
-  const visibleSuggestions = (reportSuggestions ?? []).filter(
-    (s) => !runningSpecs.has(s.specId),
-  );
 
   const recentAssets = assets.slice(0, 3);
   const activeMissions = missions
@@ -152,33 +103,7 @@ export function GeneralDashboard({
       className="flex flex-col"
       style={{ padding: "var(--space-3)", gap: "var(--space-4)" }}
     >
-      {/* Section 1 — Suggestions */}
-      <section>
-        <SectionTitle
-          count={visibleSuggestions.length}
-          action={{ label: "Tous", onClick: () => onViewChange("reports") }}
-        >
-          Suggestions
-        </SectionTitle>
-        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-          {loading && visibleSuggestions.length === 0 ? (
-            <SkeletonRow height={64} />
-          ) : visibleSuggestions.length === 0 ? (
-            <EmptyRow>Aucune suggestion disponible.</EmptyRow>
-          ) : (
-            visibleSuggestions.slice(0, 2).map((s) => (
-              <SuggestionRow
-                key={s.specId}
-                suggestion={s}
-                onRun={() => onRunSuggestion(s.specId, s.title)}
-                isRunning={runningSpecs.has(s.specId)}
-              />
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* Section 2 — Missions actives */}
+      {/* Section 1 — Missions actives */}
       <section>
         <SectionTitle
           count={activeMissions.length}
@@ -220,7 +145,7 @@ export function GeneralDashboard({
         </div>
       </section>
 
-      {/* Section 3 — Derniers livrables */}
+      {/* Section 2 — Derniers livrables */}
       <section>
         <SectionTitle
           count={recentAssets.length}
@@ -258,7 +183,7 @@ export function GeneralDashboard({
         </div>
       </section>
 
-      {/* Section 4 — Alertes */}
+      {/* Section 3 — Alertes */}
       <section>
         <SectionTitle count={alerts.length}>Alertes</SectionTitle>
         <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>

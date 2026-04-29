@@ -69,7 +69,7 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
       if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data.variants)) setVariants(data.variants as AssetVariant[]);
-    } catch (_err) {
+    } catch {
       // Non-fatal — on retry au prochain poll.
     }
   }, [assetId]);

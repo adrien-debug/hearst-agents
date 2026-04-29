@@ -3,10 +3,9 @@
 /**
  * ContextRail — Rail droit polymorphe (post-pivot 2026-04-29).
  *
- * Remplace RightPanelContent comme entrée. Dispatch selon
- * `useStageStore.current.mode`. Pour les modes chat/cockpit, on délègue
- * au RightPanelContent existant (compat totale). Pour les nouveaux modes
- * (asset/browser/meeting/kg/voice), on rend des sub-rails spécialisés.
+ * Dispatch selon `useStageStore.current.mode`. Chaque mode rend ses propres
+ * sections directement — pas de sous-navigation à onglets, pas de composant
+ * orchestrateur intermédiaire (RightPanelContent retiré du chemin critique).
  *
  * Règle « structure fixe par Stage » : chaque sub-rail rend SES sections
  * inconditionnellement, avec empty state interne. Pas de
@@ -18,7 +17,8 @@ import { useStageData } from "@/stores/stage-data";
 import { useVoiceStore } from "@/stores/voice";
 import { useServicesStore } from "@/stores/services";
 import { voiceToolDefs, VOICE_TOOL_LABELS } from "@/lib/voice/tool-defs";
-import { RightPanelContent } from "./RightPanelContent";
+import { useRightPanelData } from "./right-panel/useRightPanelData";
+import { GeneralDashboard } from "./right-panel/GeneralDashboard";
 
 interface ContextRailProps {
   onClose?: () => void;
@@ -29,30 +29,65 @@ export function ContextRail({ onClose }: ContextRailProps) {
 
   switch (mode) {
     case "cockpit":
-      // Refonte 2026-04-29 : Stage cockpit prend tout l'espace, pas de
-      // right panel. Le cockpit est inbox-first et n'a pas besoin d'un
-      // duplicat des suggestions/missions/assets dans un panel séparé.
-      return null;
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForCockpit />
+        </ContextRailShell>
+      );
     case "chat":
-      return <RightPanelContent onClose={onClose} />;
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForChat />
+        </ContextRailShell>
+      );
     case "asset":
-      return <ContextRailShell onClose={onClose}><ContextRailForAsset /></ContextRailShell>;
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForAsset />
+        </ContextRailShell>
+      );
     case "browser":
-      return <ContextRailShell onClose={onClose}><ContextRailForBrowser /></ContextRailShell>;
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForBrowser />
+        </ContextRailShell>
+      );
     case "meeting":
-      return <ContextRailShell onClose={onClose}><ContextRailForMeeting /></ContextRailShell>;
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForMeeting />
+        </ContextRailShell>
+      );
     case "kg":
-      return <ContextRailShell onClose={onClose}><ContextRailForKnowledge /></ContextRailShell>;
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForKnowledge />
+        </ContextRailShell>
+      );
     case "voice":
-      return <ContextRailShell onClose={onClose}><ContextRailForVoice /></ContextRailShell>;
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForVoice />
+        </ContextRailShell>
+      );
     case "simulation":
-      return <ContextRailShell onClose={onClose}><ContextRailForSimulation /></ContextRailShell>;
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForSimulation />
+        </ContextRailShell>
+      );
     default:
       return null;
   }
 }
 
-function ContextRailShell({ children, onClose }: { children: React.ReactNode; onClose?: () => void }) {
+function ContextRailShell({
+  children,
+  onClose,
+}: {
+  children: React.ReactNode;
+  onClose?: () => void;
+}) {
   return (
     <aside
       className="h-full flex flex-col z-20 relative border-l border-[var(--border-shell)]"
@@ -69,7 +104,16 @@ function ContextRailShell({ children, onClose }: { children: React.ReactNode; on
             aria-label="Fermer"
             className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -82,11 +126,21 @@ function ContextRailShell({ children, onClose }: { children: React.ReactNode; on
 
 // ── Section primitive (stable structure across sub-rails) ─
 
-function Section({ label, count, children }: { label: string; count?: number; children: React.ReactNode }) {
+function Section({
+  label,
+  count,
+  children,
+}: {
+  label: string;
+  count?: number;
+  children: React.ReactNode;
+}) {
   return (
     <section className="border-b border-[var(--border-default)] py-6 px-6">
       <header className="flex items-center justify-between mb-4">
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">{label}</span>
+        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          {label}
+        </span>
         {typeof count === "number" && (
           <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
             {count.toString().padStart(2, "0")}
@@ -106,6 +160,44 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ── Sub-rails cockpit / chat ───────────────────────────────
+
+function ContextRailForCockpit() {
+  const { assets, missions, activeThreadId, loading } = useRightPanelData();
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+        <GeneralDashboard
+          assets={assets}
+          missions={missions}
+          onViewChange={() => {}}
+          activeThreadId={activeThreadId}
+          loading={loading}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ContextRailForChat() {
+  const { assets, missions, activeThreadId, loading } = useRightPanelData();
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+        <GeneralDashboard
+          assets={assets}
+          missions={missions}
+          onViewChange={() => {}}
+          activeThreadId={activeThreadId}
+          loading={loading}
+        />
+      </div>
+    </div>
+  );
+}
+
 // ── Sub-rails par Stage (Phase A skeletons) ────────────────
 
 function ContextRailForAsset() {
@@ -114,11 +206,15 @@ function ContextRailForAsset() {
   return (
     <div className="h-full overflow-y-auto">
       <Section label="Asset focus">
-        <p className="t-13 text-[var(--text-muted)] truncate">{assetTitle || "—"}</p>
+        <p className="t-13 text-[var(--text-muted)] truncate">
+          {assetTitle || "—"}
+        </p>
       </Section>
       <Section label="Variants" count={readyVariants.length}>
         {readyVariants.length === 0 ? (
-          <EmptyHint>Texte uniquement — génère audio/vidéo/code via les onglets</EmptyHint>
+          <EmptyHint>
+            Texte uniquement — génère audio/vidéo/code via les onglets
+          </EmptyHint>
         ) : (
           <ul className="flex flex-col gap-1">
             {readyVariants.map((v) => (
@@ -126,7 +222,9 @@ function ContextRailForAsset() {
                 <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
                   {v.kind.toUpperCase()}
                 </span>
-                <span className="t-11 text-[var(--text-faint)]">{v.provider ?? ""}</span>
+                <span className="t-11 text-[var(--text-faint)]">
+                  {v.provider ?? ""}
+                </span>
               </li>
             ))}
           </ul>
@@ -150,7 +248,8 @@ function ContextRailForBrowser() {
       </Section>
       <Section label="Co-pilote">
         <p className="t-13 font-light text-[var(--text-muted)]">
-          L{"'"}agent navigue dans la session live. Take Over arrivera avec Stagehand.
+          L{"'"}agent navigue dans la session live. Take Over arrivera avec
+          Stagehand.
         </p>
       </Section>
     </div>
@@ -163,12 +262,19 @@ function ContextRailForMeeting() {
     <div className="h-full overflow-y-auto">
       <Section label="Action Items" count={actionItems.length}>
         {actionItems.length === 0 ? (
-          <EmptyHint>{status ? "Analyse en cours…" : "En attente du transcript"}</EmptyHint>
+          <EmptyHint>
+            {status ? "Analyse en cours…" : "En attente du transcript"}
+          </EmptyHint>
         ) : (
           <ul className="flex flex-col gap-2">
             {actionItems.map((item, i) => (
-              <li key={i} className="border-l-2 border-[var(--cykan)]/30 pl-3 py-1">
-                <p className="t-13 text-[var(--text)] truncate">{item.action}</p>
+              <li
+                key={i}
+                className="border-l-2 border-[var(--cykan)]/30 pl-3 py-1"
+              >
+                <p className="t-13 text-[var(--text)] truncate">
+                  {item.action}
+                </p>
                 {(item.owner || item.deadline) && (
                   <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
                     {[item.owner, item.deadline].filter(Boolean).join(" · ")}
@@ -204,14 +310,18 @@ function ContextRailForKnowledge() {
             <p className="t-13 text-[var(--text)]">{selectedNode.label}</p>
             {Object.keys(selectedNode.properties ?? {}).length > 0 && (
               <ul className="flex flex-col gap-1 mt-2">
-                {Object.entries(selectedNode.properties as Record<string, unknown>)
+                {Object.entries(
+                  selectedNode.properties as Record<string, unknown>,
+                )
                   .slice(0, 6)
                   .map(([k, v]) => (
                     <li key={k} className="flex items-baseline gap-2">
                       <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] truncate">
                         {k}
                       </span>
-                      <span className="t-11 text-[var(--text-muted)] truncate">{String(v)}</span>
+                      <span className="t-11 text-[var(--text-muted)] truncate">
+                        {String(v)}
+                      </span>
                     </li>
                   ))}
               </ul>
@@ -239,15 +349,15 @@ function ContextRailForVoice() {
   const services = useServicesStore((s) => s.services);
   const connectedApps = services.filter((s) => s.connectionStatus === "connected");
   const last10 = transcript.slice(-10);
-  // Tools dispo : les 3 hearst statiques + les apps Composio connectées
-  // (le mint per-user injecte jusqu'à 4 tools par app, max 20 total).
   const totalToolsCount = voiceToolDefs.length + connectedApps.length;
   return (
     <div className="h-full overflow-y-auto">
       <Section label="Transcript live" count={transcript.length}>
         {transcript.length === 0 ? (
           <EmptyHint>
-            {phase === "idle" ? "Active le mode voix pour démarrer" : "En attente du premier échange"}
+            {phase === "idle"
+              ? "Active le mode voix pour démarrer"
+              : "En attente du premier échange"}
           </EmptyHint>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -255,12 +365,16 @@ function ContextRailForVoice() {
               <li key={entry.id} className="flex flex-col gap-1">
                 <span
                   className={`t-9 font-mono uppercase tracking-marquee ${
-                    entry.role === "user" ? "text-[var(--cykan)]" : "text-[var(--text-faint)]"
+                    entry.role === "user"
+                      ? "text-[var(--cykan)]"
+                      : "text-[var(--text-faint)]"
                   }`}
                 >
                   {entry.role === "user" ? "USER" : "AGENT"}
                 </span>
-                <p className="t-11 text-[var(--text-muted)] line-clamp-2">{entry.text}</p>
+                <p className="t-11 text-[var(--text-muted)] line-clamp-2">
+                  {entry.text}
+                </p>
               </li>
             ))}
           </ul>
@@ -276,7 +390,9 @@ function ContextRailForVoice() {
       </Section>
       <Section label="Voice settings">
         <p className="t-13 font-light text-[var(--text-muted)]">
-          Modèle <span className="text-[var(--cykan)]">openai-realtime</span>, latence cible &lt; 500&nbsp;ms.
+          Modèle{" "}
+          <span className="text-[var(--cykan)]">openai-realtime</span>, latence
+          cible &lt; 500&nbsp;ms.
         </p>
       </Section>
     </div>
@@ -298,7 +414,9 @@ function ContextRailForSimulation() {
                 <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] truncate">
                   {v.key}
                 </span>
-                <span className="t-13 text-[var(--text)] truncate">{v.value || "—"}</span>
+                <span className="t-13 text-[var(--text)] truncate">
+                  {v.value || "—"}
+                </span>
               </li>
             ))}
           </ul>
@@ -306,11 +424,16 @@ function ContextRailForSimulation() {
       </Section>
       <Section label="Scénarios générés" count={scenarios.length}>
         {scenarios.length === 0 ? (
-          <EmptyHint>{phase === "running" ? "DeepSeek raisonne…" : "Aucun scénario"}</EmptyHint>
+          <EmptyHint>
+            {phase === "running" ? "DeepSeek raisonne…" : "Aucun scénario"}
+          </EmptyHint>
         ) : (
           <ul className="flex flex-col gap-2">
             {scenarios.map((s, i) => (
-              <li key={i} className="border-l-2 border-[var(--cykan)]/30 pl-3 py-1">
+              <li
+                key={i}
+                className="border-l-2 border-[var(--cykan)]/30 pl-3 py-1"
+              >
                 <p className="t-13 text-[var(--text)] truncate">{s.name}</p>
                 <p className="t-9 font-mono tracking-marquee text-[var(--text-faint)]">
                   PROB · {(s.probability * 100).toFixed(0)}%

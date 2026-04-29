@@ -101,7 +101,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
           setDebugViewerByid((prev) => ({ ...prev, [sessionId]: data.debugViewerUrl as string }));
           return true;
         }
-      } catch (_err) {
+      } catch {
         // Non-fatal — retry au prochain tick.
       }
       return false;
