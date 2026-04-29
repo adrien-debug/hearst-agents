@@ -34,6 +34,7 @@ export default function CanvasShell() {
   // côté client uniquement après le premier mount pour éviter le mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- pattern "mounted" SSR-safe : le store Zustand est initialisé à false côté serveur, la valeur réelle ne peut être lue qu'après hydration
     setMounted(true);
     // Synchro initiale depuis localStorage
     try {

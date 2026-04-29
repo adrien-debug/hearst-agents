@@ -142,6 +142,7 @@ export function Commandeur() {
   // Reset query on open/close
   useEffect(() => {
     if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset de l'état interne requis à la fermeture, le render-time pattern déclencherait set-state-in-render
       setQuery("");
       setActiveIndex(0);
     }

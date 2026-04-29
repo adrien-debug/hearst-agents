@@ -96,7 +96,7 @@ export default function HomePage() {
   }, [activeThreadId, hydrateThreadState]);
 
   const [services, setServicesLocal] = useState<ServiceWithConnectionStatus[]>(initialServices);
-  const [connectionsLoaded, setConnectionsLoadedLocal] = useState(false);
+  const [, setConnectionsLoadedLocal] = useState(false);
   const hideFocalStage = useFocalStore((s) => s.hide);
   const setStoreServices = useServicesStore((s) => s.setServices);
   const setStoreLoaded = useServicesStore((s) => s.setLoaded);

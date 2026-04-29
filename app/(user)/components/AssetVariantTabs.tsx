@@ -60,6 +60,7 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
 
   // Initial fetch
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetchVariants est async : setVariants ne s'appelle qu'après await, pas synchrone
     void fetchVariants();
   }, [fetchVariants]);
 

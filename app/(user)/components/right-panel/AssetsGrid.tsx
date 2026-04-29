@@ -170,7 +170,6 @@ function assetAccent(type: string): string {
 export function AssetsGrid({
   assets,
   reportSuggestions,
-  activeThreadId,
   loading,
   runningSpecs,
   onRunSuggestion,

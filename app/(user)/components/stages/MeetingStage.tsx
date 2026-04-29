@@ -52,7 +52,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
             Aucun meeting actif
           </p>
           <p className="t-13 text-[var(--text-muted)]" style={{ lineHeight: "var(--leading-base)" }}>
-            L'agent peut rejoindre tes meetings Zoom, Meet ou Teams, transcrire en temps réel, détecter les <em>action items</em> et te proposer de les exécuter via Slack, Notion, Linear, Gmail. Demande : <span className="text-[var(--cykan)]">« Rejoins mon Zoom à 14h »</span>.
+            L{"'"}agent peut rejoindre tes meetings Zoom, Meet ou Teams, transcrire en temps réel, détecter les <em>action items</em> et te proposer de les exécuter via Slack, Notion, Linear, Gmail. Demande : <span className="text-[var(--cykan)]">« Rejoins mon Zoom à 14h »</span>.
           </p>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] mt-4">
             CMD+L pour ouvrir le chat

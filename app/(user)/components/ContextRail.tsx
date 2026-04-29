@@ -85,7 +85,7 @@ function ContextRailForAsset() {
         <EmptyHint>Données provenance bientôt visibles ici</EmptyHint>
       </Section>
       <Section label="Knowledge Graph">
-        <EmptyHint>Entités liées en cours d'extraction</EmptyHint>
+        <EmptyHint>{"Entités liées en cours d'extraction"}</EmptyHint>
       </Section>
     </div>
   );
@@ -102,7 +102,7 @@ function ContextRailForBrowser() {
       </Section>
       <Section label="Co-pilote">
         <p className="t-13 font-light text-[var(--text-muted)]">
-          L'agent navigue. <span className="text-[var(--cykan)]">Take Over</span> à tout moment.
+          L{"'"}agent navigue. <span className="text-[var(--cykan)]">Take Over</span> à tout moment.
         </p>
       </Section>
     </div>
@@ -138,7 +138,7 @@ function ContextRailForKnowledge() {
       </Section>
       <Section label="Suggested explorations">
         <p className="t-13 font-light text-[var(--text-muted)]">
-          L'agent peut suggérer des chemins d'exploration depuis ton historique.
+          {"L'agent peut suggérer des chemins d'exploration depuis ton historique."}
         </p>
       </Section>
     </div>

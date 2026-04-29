@@ -62,7 +62,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
             Knowledge Graph en construction
           </p>
           <p className="t-13 text-[var(--text-muted)]" style={{ lineHeight: "var(--leading-base)" }}>
-            À chaque conversation, meeting ou rapport, l'agent extrait les entités (personnes, sociétés, projets, décisions) et les connecte. Bientôt, tu pourras explorer ton graphe personnel et demander : <span className="text-[var(--cykan)]">« qu'est-ce que je sais sur Marc Dupont ? »</span>.
+            À chaque conversation, meeting ou rapport, l{"'"}agent extrait les entités (personnes, sociétés, projets, décisions) et les connecte. Bientôt, tu pourras explorer ton graphe personnel et demander : <span className="text-[var(--cykan)]">{"« qu'est-ce que je sais sur Marc Dupont ? »"}</span>.
           </p>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] mt-4">
             CMD+L pour ouvrir le chat

@@ -306,7 +306,7 @@ export function TimelineRail() {
             {/* Today */}
             <SectionHeader label="Today" count={groups.today.length} />
             {groups.today.length === 0 ? (
-              <EmptyHint>Aucune activité aujourd'hui</EmptyHint>
+              <EmptyHint>{"Aucune activité aujourd'hui"}</EmptyHint>
             ) : (
               <div className="space-y-px">
                 {groups.today.map((t) => (

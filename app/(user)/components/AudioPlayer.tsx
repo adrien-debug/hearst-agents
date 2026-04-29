@@ -24,7 +24,6 @@ function formatBytes(bytes?: number): string {
 export function AudioPlayer({ variant }: AudioPlayerProps) {
   const isReady = variant.status === "ready" && !!variant.storageUrl;
   const isFailed = variant.status === "failed";
-  const isGenerating = variant.status === "pending" || variant.status === "generating";
 
   const meta = (variant.metadata ?? {}) as { voice?: string; model?: string; chars?: number };
 
@@ -56,13 +55,13 @@ export function AudioPlayer({ variant }: AudioPlayerProps) {
 
       {isReady && variant.storageUrl ? (
         <audio controls className="w-full" preload="metadata" src={variant.storageUrl}>
-          Votre navigateur ne supporte pas l'audio HTML5.
+          {"Votre navigateur ne supporte pas l'audio HTML5."}
         </audio>
       ) : isFailed ? (
         <p className="t-13 text-[var(--danger)]">{variant.error ?? "Génération échouée"}</p>
       ) : (
         <p className="t-13 font-light text-[var(--text-muted)]">
-          Synthèse en cours via ElevenLabs… L'audio apparaîtra ici dès qu'il sera prêt.
+          {"Synthèse en cours via ElevenLabs… L'audio apparaîtra ici dès qu'il sera prêt."}
         </p>
       )}
     </div>

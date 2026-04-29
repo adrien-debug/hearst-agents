@@ -47,6 +47,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY) as PanelView | null;
       if (saved && ["general", "reports", "missions", "assets"].includes(saved)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- initialisation SSR-safe : le lazy-initializer causerait un hydration mismatch (server vs client localStorage)
         setActiveView(saved);
       }
     } catch {

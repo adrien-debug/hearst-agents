@@ -56,7 +56,7 @@ export function VoiceStage({ sessionId }: VoiceStageProps) {
             Mode voix prêt à activer
           </p>
           <p className="t-13 text-[var(--text-muted)]" style={{ lineHeight: "var(--leading-base)" }}>
-            Conversation full-duplex avec l'agent, latence sous 500&nbsp;ms. Parle naturellement pendant que tu travailles, l'agent répond ET déclenche des actions Composio en parallèle (envoie un Slack, crée un ticket, planifie un meeting).
+            Conversation full-duplex avec l{"'"}agent, latence sous 500&nbsp;ms. Parle naturellement pendant que tu travailles, l{"'"}agent répond ET déclenche des actions Composio en parallèle (envoie un Slack, crée un ticket, planifie un meeting).
           </p>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] mt-4">
             CMD+7 pour activer

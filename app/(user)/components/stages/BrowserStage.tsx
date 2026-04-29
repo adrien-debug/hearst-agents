@@ -52,7 +52,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
             Aucune session browser active
           </p>
           <p className="t-13 text-[var(--text-muted)]" style={{ lineHeight: "var(--leading-base)" }}>
-            Demande à l'agent de naviguer pour toi : <span className="text-[var(--cykan)]">« compare les prix de livraison sur ces 5 sites »</span>. La session live s'affichera ici, avec un bouton <em>Take Over</em> pour reprendre la main à tout moment.
+            Demande à l{"'"}agent de naviguer pour toi : <span className="text-[var(--cykan)]">« compare les prix de livraison sur ces 5 sites »</span>. La session live s{"'"}affichera ici, avec un bouton <em>Take Over</em> pour reprendre la main à tout moment.
           </p>
           <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] mt-4">
             CMD+L pour ouvrir le chat

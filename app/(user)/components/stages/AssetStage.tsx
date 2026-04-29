@@ -44,6 +44,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset intentionnel avant fetch : nécessaire pour afficher le loading au changement d'assetId
     setLoading(true);
     setError(null);
     fetch(`/api/v2/assets/${encodeURIComponent(assetId)}`, { credentials: "include" })
@@ -111,7 +112,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                 style={{ width: "var(--space-2)", height: "var(--space-2)" }}
                 aria-hidden
               />
-              <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">Chargement de l'asset…</p>
+              <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">{"Chargement de l'asset…"}</p>
             </div>
           )}
 
