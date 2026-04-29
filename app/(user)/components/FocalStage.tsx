@@ -146,7 +146,7 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
             </span>
           </div>
         </div>
-        <div className="font-mono t-9 uppercase tracking-marquee text-[var(--text-ghost)]">
+        <div className="font-mono t-9 uppercase tracking-marquee text-[var(--text-faint)]">
           {focal.sourcePlanId && (
             <span>ID: {focal.sourcePlanId.slice(0, 8)}</span>
           )}

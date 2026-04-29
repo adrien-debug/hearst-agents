@@ -213,7 +213,7 @@ export function Commandeur() {
             placeholder="Que veux-tu faire ?"
             className="flex-1 bg-transparent t-15 text-[var(--text)] placeholder-[var(--text-faint)] outline-none"
           />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">ESC</span>
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">ESC</span>
         </div>
 
         <div className="max-h-96 overflow-y-auto py-2">
@@ -240,7 +240,7 @@ export function Commandeur() {
                   <span className="t-11 font-light text-[var(--text-faint)] truncate">{action.hint}</span>
                 </span>
                 {action.hotkey && (
-                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)] shrink-0">
+                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] shrink-0">
                     {action.hotkey}
                   </span>
                 )}
