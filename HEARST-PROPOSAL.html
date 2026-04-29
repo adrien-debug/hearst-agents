@@ -1,0 +1,2708 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1480">
+<title>Hearst OS — Proposition de redesign</title>
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+:root{
+  --bg:#000000;
+  --bg-elev:#040404;
+  --bg-soft:#080808;
+  --surface:#060606;
+  --surface-1:rgba(255,255,255,0.025);
+  --surface-2:rgba(255,255,255,0.04);
+  --surface-card:rgba(255,255,255,0.035);
+  --bg-center:#0A0D10;
+  --bg-rail:#16191D;
+  --text:#ffffff;
+  --text-soft:rgba(255,255,255,0.88);
+  --text-muted:rgba(255,255,255,0.65);
+  --text-faint:rgba(255,255,255,0.45);
+  --text-ghost:rgba(255,255,255,0.25);
+  --cykan:#2DD4BF;
+  --cykan-bg-active:rgba(45,212,191,0.08);
+  --cykan-bg-hover:rgba(45,212,191,0.05);
+  --cykan-border:rgba(45,212,191,0.25);
+  --cykan-surface:rgba(45,212,191,0.06);
+  --warn:#ffcc00;
+  --danger:#ff3333;
+  --accent-llm:#A78BFA;
+  --accent-agent:#fbbf24;
+  --border-soft:rgba(255,255,255,0.04);
+  --border-shell:rgba(255,255,255,0.06);
+  --border-input:rgba(255,255,255,0.08);
+  --border-subtle:rgba(255,255,255,0.08);
+  --border-default:rgba(255,255,255,0.12);
+  --border-strong:rgba(255,255,255,0.14);
+  --border-focus:rgba(255,255,255,0.40);
+  --text-on-cykan:#000000;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  background:var(--bg);
+  color:var(--text-soft);
+  font-family:"Inter",system-ui,-apple-system,sans-serif;
+  font-feature-settings:"cv11","ss01","ss03";
+  -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+  line-height:1.5;
+}
+body{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:64px 32px 128px;
+  gap:88px;
+}
+
+/* ── HEADER & MANIFESTE ──────────────────────────────────── */
+.deck-head{
+  width:1440px;
+  max-width:100%;
+}
+.deck-head .eyebrow{
+  font-size:11px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  font-weight:500;
+}
+.deck-head h1{
+  font-size:48px;
+  font-weight:600;
+  letter-spacing:-0.025em;
+  color:var(--text);
+  margin-top:8px;
+  line-height:1.05;
+}
+.deck-head h1 em{
+  font-style:normal;
+  color:var(--cykan);
+}
+.deck-head .signature{
+  font-size:13px;
+  color:var(--text-faint);
+  margin-top:16px;
+}
+
+.manifesto{
+  width:1440px;
+  max-width:100%;
+  margin-top:48px;
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:72px;
+  padding:48px 0;
+  border-top:1px solid var(--border-shell);
+  border-bottom:1px solid var(--border-shell);
+}
+.manifesto h2{
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+}
+.manifesto h2 .num{
+  display:inline-block;
+  width:24px;
+  color:var(--cykan);
+  font-variant-numeric:tabular-nums;
+}
+.manifesto-body{
+  display:flex;
+  flex-direction:column;
+  gap:28px;
+  font-size:16px;
+  line-height:1.65;
+  color:var(--text-soft);
+  max-width:780px;
+}
+.manifesto-body p{
+  font-weight:400;
+}
+.manifesto-body p strong{
+  color:var(--text);
+  font-weight:500;
+}
+.manifesto-body .pillar{
+  display:flex;
+  gap:16px;
+  align-items:flex-start;
+}
+.manifesto-body .pillar .q{
+  font-size:11px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--cykan);
+  font-weight:500;
+  width:120px;
+  flex-shrink:0;
+  padding-top:4px;
+}
+.manifesto-body .pillar .a{
+  font-size:15px;
+  color:var(--text-soft);
+  line-height:1.6;
+}
+
+/* ── FRAME (chaque maquette) ─────────────────────────────── */
+.frame-wrap{
+  width:1440px;
+  max-width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+.frame-meta{
+  display:flex;
+  align-items:baseline;
+  gap:24px;
+  padding-bottom:8px;
+}
+.frame-meta .num{
+  font-size:13px;
+  font-weight:500;
+  color:var(--cykan);
+  letter-spacing:0.04em;
+}
+.frame-meta .title{
+  font-size:22px;
+  font-weight:600;
+  color:var(--text);
+  letter-spacing:-0.015em;
+}
+.frame-meta .sub{
+  font-size:13px;
+  color:var(--text-faint);
+  margin-left:auto;
+}
+.frame{
+  width:100%;
+  height:900px;
+  background:var(--bg-center);
+  border:1px solid var(--border-shell);
+  border-radius:14px;
+  overflow:hidden;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ── SPINE GAUCHE (fil rouge des maquettes) ──────────────── */
+.shell{
+  flex:1;
+  display:grid;
+  grid-template-columns:280px 1fr;
+  min-height:0;
+}
+.shell.shell-collapsed{ grid-template-columns:56px 1fr; }
+.shell.shell-naked{ grid-template-columns:1fr; }
+
+.spine{
+  background:var(--bg-rail);
+  border-right:1px solid var(--border-shell);
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+.spine-head{
+  padding:20px 20px 16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border-bottom:1px solid var(--border-soft);
+}
+.brand{
+  width:24px;
+  height:24px;
+  border-radius:6px;
+  background:linear-gradient(135deg,var(--cykan),color-mix(in srgb,var(--cykan) 30%,transparent));
+  position:relative;
+}
+.brand::after{
+  content:"";
+  position:absolute;
+  inset:6px;
+  background:var(--bg-rail);
+  border-radius:2px;
+}
+.brand-text{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+  letter-spacing:-0.01em;
+}
+.spine .me{
+  margin-left:auto;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:color-mix(in srgb,var(--accent-llm) 70%,#000);
+  font-size:10px;
+  font-weight:600;
+  color:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  letter-spacing:0;
+}
+.spine-section{
+  padding:20px 12px 8px;
+}
+.spine-section h3{
+  font-size:10px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--text-ghost);
+  font-weight:500;
+  padding:0 8px 8px;
+}
+.spine-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
+  border-radius:8px;
+  font-size:13px;
+  color:var(--text-muted);
+  cursor:pointer;
+  position:relative;
+}
+.spine-row:hover{ background:var(--surface-1); color:var(--text-soft); }
+.spine-row.active{
+  background:var(--cykan-bg-active);
+  color:var(--text);
+}
+.spine-row.active::before{
+  content:"";
+  position:absolute;
+  left:-12px;
+  top:6px;
+  bottom:6px;
+  width:2px;
+  background:var(--cykan);
+  border-radius:0 2px 2px 0;
+}
+.spine-row .glyph{
+  width:14px;
+  height:14px;
+  flex-shrink:0;
+  color:var(--text-ghost);
+}
+.spine-row.active .glyph{ color:var(--cykan); }
+.spine-row .label{ flex:1; }
+.spine-row .meta{
+  font-size:11px;
+  color:var(--text-ghost);
+  font-variant-numeric:tabular-nums;
+}
+.spine-row.active .meta{ color:var(--cykan); }
+.spine-row.live::after{
+  content:"";
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--cykan);
+  box-shadow:0 0 0 0 color-mix(in srgb,var(--cykan) 60%,transparent);
+  animation:livePulse 1.6s ease-out infinite;
+}
+@keyframes livePulse{
+  0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--cykan) 60%,transparent)}
+  100%{box-shadow:0 0 0 6px color-mix(in srgb,var(--cykan) 0%,transparent)}
+}
+
+.spine-foot{
+  margin-top:auto;
+  padding:12px;
+  border-top:1px solid var(--border-soft);
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.spine-foot .ghost{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  font-size:12px;
+  color:var(--text-faint);
+}
+.spine-foot .ghost .dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--cykan);
+}
+
+/* Spine en mode collapsed — icônes only */
+.spine-mini{
+  background:var(--bg-rail);
+  border-right:1px solid var(--border-shell);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:18px 0;
+  gap:6px;
+}
+.spine-mini .brand{margin-bottom:8px}
+.mini-icon{
+  width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-ghost);
+  border-radius:8px;
+  cursor:pointer;
+  position:relative;
+}
+.mini-icon:hover{background:var(--surface-1);color:var(--text-soft)}
+.mini-icon.active{background:var(--cykan-bg-active);color:var(--cykan)}
+.mini-icon.active::before{
+  content:"";position:absolute;left:-1px;top:8px;bottom:8px;width:2px;
+  background:var(--cykan);border-radius:0 2px 2px 0;
+}
+.mini-icon svg{width:16px;height:16px}
+
+/* ── STAGE CENTRAL ───────────────────────────────────────── */
+.stage{
+  background:var(--bg-center);
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  position:relative;
+}
+.stage-head{
+  padding:18px 32px 16px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  border-bottom:1px solid var(--border-soft);
+}
+.stage-head .crumbs{
+  font-size:12px;
+  color:var(--text-faint);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.stage-head .crumbs span{color:var(--text-ghost)}
+.stage-head .crumbs strong{color:var(--text-soft);font-weight:500}
+.stage-head .h-actions{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:var(--text-faint);
+}
+.kbd{
+  display:inline-flex;
+  align-items:center;
+  padding:2px 6px;
+  font-size:10px;
+  font-weight:500;
+  font-family:"Inter",sans-serif;
+  font-variant-numeric:tabular-nums;
+  background:var(--surface-2);
+  border:1px solid var(--border-input);
+  border-radius:4px;
+  color:var(--text-muted);
+  letter-spacing:0;
+}
+
+.run-bar{
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,
+    transparent 0%,
+    var(--cykan) 35%,
+    color-mix(in srgb,var(--cykan) 80%,#fff) 50%,
+    var(--cykan) 65%,
+    transparent 100%);
+  background-size:200% 100%;
+  animation:runShimmer 2.4s linear infinite;
+  z-index:10;
+  box-shadow:0 0 12px color-mix(in srgb,var(--cykan) 50%,transparent);
+}
+@keyframes runShimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+
+/* ── VOIX (ribbon bas + mode actif) ──────────────────────── */
+.voice-ribbon{
+  height:56px;
+  background:var(--bg-soft);
+  border-top:1px solid var(--border-soft);
+  display:flex;
+  align-items:center;
+  padding:0 28px;
+  gap:18px;
+  flex-shrink:0;
+}
+.voice-pulse-mini{
+  width:24px;height:24px;
+  border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,
+    color-mix(in srgb,var(--cykan) 60%,transparent) 0%,
+    color-mix(in srgb,var(--cykan) 15%,transparent) 60%,
+    transparent 100%);
+  position:relative;
+}
+.voice-pulse-mini::after{
+  content:"";
+  position:absolute;
+  inset:8px;
+  background:var(--cykan);
+  border-radius:50%;
+  box-shadow:0 0 8px color-mix(in srgb,var(--cykan) 60%,transparent);
+  animation:breathing 2.8s ease-in-out infinite;
+}
+@keyframes breathing{
+  0%,100%{transform:scale(0.85);opacity:0.7}
+  50%{transform:scale(1.1);opacity:1}
+}
+.voice-ribbon .v-label{
+  font-size:12px;
+  color:var(--text-muted);
+}
+.voice-ribbon .v-label .live{color:var(--cykan);font-weight:500}
+.voice-ribbon .v-hint{
+  margin-left:auto;
+  font-size:11px;
+  color:var(--text-ghost);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.voice-ribbon .wave{
+  width:120px;
+  height:18px;
+  display:flex;
+  align-items:center;
+  gap:2px;
+}
+.voice-ribbon .wave span{
+  flex:1;
+  background:color-mix(in srgb,var(--cykan) 35%,transparent);
+  border-radius:2px;
+  display:block;
+  height:30%;
+  animation:wave 1.2s ease-in-out infinite;
+}
+.voice-ribbon .wave span:nth-child(1){animation-delay:.0s;height:40%}
+.voice-ribbon .wave span:nth-child(2){animation-delay:.1s;height:65%}
+.voice-ribbon .wave span:nth-child(3){animation-delay:.2s;height:30%}
+.voice-ribbon .wave span:nth-child(4){animation-delay:.3s;height:80%}
+.voice-ribbon .wave span:nth-child(5){animation-delay:.4s;height:55%}
+.voice-ribbon .wave span:nth-child(6){animation-delay:.5s;height:35%}
+.voice-ribbon .wave span:nth-child(7){animation-delay:.6s;height:70%}
+.voice-ribbon .wave span:nth-child(8){animation-delay:.7s;height:45%}
+.voice-ribbon .wave span:nth-child(9){animation-delay:.8s;height:60%}
+.voice-ribbon .wave span:nth-child(10){animation-delay:.9s;height:25%}
+.voice-ribbon .wave span:nth-child(11){animation-delay:1.0s;height:50%}
+.voice-ribbon .wave span:nth-child(12){animation-delay:1.1s;height:35%}
+@keyframes wave{
+  0%,100%{transform:scaleY(0.4)}
+  50%{transform:scaleY(1)}
+}
+
+/* ── COCKPIT (matin) ─────────────────────────────────────── */
+.cockpit{
+  flex:1;
+  padding:48px 64px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  gap:36px;
+  min-height:0;
+}
+.morning{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+}
+.morning h2{
+  font-size:32px;
+  font-weight:500;
+  letter-spacing:-0.025em;
+  color:var(--text);
+  line-height:1.1;
+}
+.morning h2 span{color:var(--text-faint);font-weight:400}
+.morning .when{
+  font-size:13px;
+  color:var(--text-faint);
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+}
+.morning .when strong{display:block;color:var(--text-muted);font-weight:500;margin-bottom:2px}
+
+.lanes{
+  display:grid;
+  grid-template-columns:1.2fr 1fr 1fr;
+  gap:24px;
+  flex:1;
+  min-height:0;
+}
+.lane{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-height:0;
+}
+.lane h3{
+  font-size:11px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  font-weight:500;
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+}
+.lane h3 .count{
+  font-size:11px;
+  color:var(--cykan);
+  letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+}
+
+.suggestion{
+  background:var(--surface-card);
+  border:1px solid var(--border-soft);
+  border-radius:12px;
+  padding:18px 20px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  cursor:pointer;
+  transition:border-color .2s, background .2s;
+}
+.suggestion:hover{
+  border-color:var(--cykan-border);
+  background:var(--cykan-surface);
+}
+.suggestion .head{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:11px;
+  color:var(--text-faint);
+  letter-spacing:0.04em;
+}
+.suggestion .head .tag{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:2px 7px;
+  background:color-mix(in srgb,var(--accent-llm) 14%,transparent);
+  color:var(--accent-llm);
+  border-radius:4px;
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+}
+.suggestion .head .tag.agent{
+  background:color-mix(in srgb,var(--accent-agent) 14%,transparent);
+  color:var(--accent-agent);
+}
+.suggestion .body{
+  font-size:14px;
+  color:var(--text-soft);
+  line-height:1.45;
+  font-weight:400;
+}
+.suggestion .body strong{color:var(--text);font-weight:500}
+.suggestion .actions{
+  display:flex;
+  gap:6px;
+  margin-top:4px;
+}
+.btn-small{
+  font-size:11px;
+  padding:5px 10px;
+  border-radius:6px;
+  font-weight:500;
+  cursor:pointer;
+  border:1px solid var(--border-input);
+  background:var(--surface-1);
+  color:var(--text-muted);
+}
+.btn-small.primary{
+  background:var(--cykan);
+  color:var(--text-on-cykan);
+  border-color:transparent;
+}
+.btn-small:hover{ border-color:var(--border-default); color:var(--text-soft); }
+.btn-small.primary:hover{filter:brightness(1.05)}
+
+.thread-card{
+  background:var(--surface-card);
+  border:1px solid var(--border-soft);
+  border-radius:12px;
+  padding:16px 18px;
+  cursor:pointer;
+}
+.thread-card:hover{ border-color:var(--border-default); background:var(--surface-2); }
+.thread-card .meta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:11px;
+  color:var(--text-faint);
+}
+.thread-card .meta .pin{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--cykan);
+}
+.thread-card .meta .pin.agent{background:var(--accent-agent)}
+.thread-card .meta .pin.llm{background:var(--accent-llm)}
+.thread-card h4{
+  font-size:14px;
+  font-weight:500;
+  color:var(--text);
+  margin-top:6px;
+  letter-spacing:-0.01em;
+  line-height:1.3;
+}
+.thread-card .last{
+  font-size:12px;
+  color:var(--text-muted);
+  margin-top:6px;
+  line-height:1.45;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.thread-card .foot{
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+  font-size:11px;
+  color:var(--text-ghost);
+  font-variant-numeric:tabular-nums;
+}
+
+.asset-row{
+  background:var(--surface-card);
+  border:1px solid var(--border-soft);
+  border-radius:10px;
+  padding:12px 14px;
+  display:grid;
+  grid-template-columns:32px 1fr auto;
+  gap:12px;
+  align-items:center;
+  cursor:pointer;
+}
+.asset-row:hover{ border-color:var(--border-default); background:var(--surface-2); }
+.asset-row .icon{
+  width:32px;height:32px;
+  border-radius:8px;
+  background:var(--surface-2);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-faint);
+  border:1px solid var(--border-soft);
+}
+.asset-row .icon svg{width:14px;height:14px}
+.asset-row.doc .icon{color:var(--accent-llm);background:color-mix(in srgb,var(--accent-llm) 8%,transparent);border-color:color-mix(in srgb,var(--accent-llm) 20%,transparent)}
+.asset-row.report .icon{color:var(--cykan);background:color-mix(in srgb,var(--cykan) 8%,transparent);border-color:var(--cykan-border)}
+.asset-row.audio .icon{color:var(--accent-agent);background:color-mix(in srgb,var(--accent-agent) 10%,transparent);border-color:color-mix(in srgb,var(--accent-agent) 25%,transparent)}
+.asset-row .info{min-width:0}
+.asset-row .info h4{
+  font-size:13px;font-weight:500;color:var(--text);
+  letter-spacing:-0.005em;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.asset-row .info p{
+  font-size:11px;color:var(--text-faint);margin-top:2px;
+}
+.asset-row .when{
+  font-size:11px;color:var(--text-ghost);font-variant-numeric:tabular-nums;
+}
+
+/* ── CHAT ────────────────────────────────────────────────── */
+.chat{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+.chat-stream{
+  flex:1;
+  padding:32px 64px 24px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+  min-height:0;
+}
+.msg{ max-width:720px; display:flex; flex-direction:column; gap:6px; }
+.msg.user{ align-self:flex-end; align-items:flex-end; }
+.msg .meta{
+  font-size:10px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--text-ghost);
+  font-weight:500;
+}
+.msg.user .meta{color:var(--text-faint)}
+.msg .bubble{
+  font-size:14px;
+  line-height:1.55;
+  color:var(--text-soft);
+}
+.msg.user .bubble{
+  background:var(--surface-2);
+  border:1px solid var(--border-soft);
+  padding:12px 16px;
+  border-radius:12px;
+  color:var(--text);
+}
+.msg.agent .bubble strong{color:var(--text);font-weight:500}
+
+.tool-trace{
+  background:color-mix(in srgb,var(--accent-llm) 5%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent-llm) 22%,transparent);
+  border-radius:12px;
+  padding:14px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-width:720px;
+  font-size:13px;
+}
+.tool-trace .ttitle{
+  font-size:10px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--accent-llm);
+  font-weight:500;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.tool-trace .step{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  color:var(--text-muted);
+  font-variant-numeric:tabular-nums;
+}
+.tool-trace .step .ok{ color:var(--cykan); }
+.tool-trace .step .running{ color:var(--accent-llm); }
+.tool-trace .step code{
+  font-family:"Inter",sans-serif;
+  background:var(--surface-2);
+  padding:1px 6px;
+  border-radius:3px;
+  border:1px solid var(--border-soft);
+  font-size:11px;
+  color:var(--text-soft);
+}
+
+.asset-inline{
+  background:var(--surface-card);
+  border:1px solid var(--cykan-border);
+  border-radius:12px;
+  padding:18px 20px;
+  max-width:720px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.asset-inline .head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:11px;
+  color:var(--cykan);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  font-weight:500;
+}
+.asset-inline h4{
+  font-size:15px;
+  font-weight:500;
+  color:var(--text);
+  letter-spacing:-0.01em;
+}
+.asset-inline .progress{
+  height:3px;
+  background:var(--surface-2);
+  border-radius:2px;
+  overflow:hidden;
+  position:relative;
+}
+.asset-inline .progress span{
+  display:block;
+  height:100%;
+  width:47%;
+  background:linear-gradient(90deg,var(--cykan),color-mix(in srgb,var(--cykan) 40%,transparent));
+  border-radius:2px;
+}
+.asset-inline .meta-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--text-faint);
+  font-variant-numeric:tabular-nums;
+}
+.asset-inline .open-link{
+  font-size:12px;
+  color:var(--cykan);
+  font-weight:500;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+
+.composer{
+  margin:0 64px 28px;
+  background:var(--surface-1);
+  border:1px solid var(--border-default);
+  border-radius:14px;
+  padding:14px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.composer .input{
+  font-size:14px;
+  color:var(--text-soft);
+  padding:6px 0;
+  min-height:24px;
+}
+.composer .input .ph{ color:var(--text-ghost); }
+.composer .input .typing::after{
+  content:"";
+  display:inline-block;
+  width:1px;
+  height:14px;
+  background:var(--cykan);
+  margin-left:1px;
+  vertical-align:-2px;
+  animation:caret 1s steps(2) infinite;
+}
+@keyframes caret{ 50%{opacity:0} }
+.composer .row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.composer .row .actions{
+  display:flex;
+  gap:6px;
+  font-size:11px;
+  color:var(--text-faint);
+  align-items:center;
+}
+.composer .pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 9px;
+  background:var(--surface-2);
+  border:1px solid var(--border-input);
+  border-radius:20px;
+  font-size:11px;
+  color:var(--text-muted);
+  cursor:pointer;
+}
+.composer .pill .dot{
+  width:6px;height:6px;border-radius:50%;
+}
+.composer .pill .dot.cykan{background:var(--cykan)}
+.composer .pill .dot.purple{background:var(--accent-llm)}
+.composer .send{
+  width:30px;height:30px;
+  border-radius:50%;
+  background:var(--cykan);
+  color:var(--text-on-cykan);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+}
+.composer .send svg{width:14px;height:14px}
+
+/* ── ASSET FOCALISÉ ──────────────────────────────────────── */
+.asset-stage{
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 280px;
+  min-height:0;
+}
+.asset-canvas{
+  padding:48px 72px 32px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+  min-height:0;
+}
+.asset-canvas .doc-meta{
+  font-size:11px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  font-weight:500;
+  display:flex;gap:14px;align-items:center;
+}
+.asset-canvas .doc-meta .dot{width:3px;height:3px;border-radius:50%;background:var(--text-ghost)}
+.asset-canvas h1{
+  font-size:36px;
+  font-weight:600;
+  letter-spacing:-0.025em;
+  color:var(--text);
+  line-height:1.1;
+  max-width:780px;
+}
+.asset-canvas .lede{
+  font-size:16px;
+  color:var(--text-muted);
+  line-height:1.6;
+  max-width:720px;
+}
+.asset-canvas .doc-section h2{
+  font-size:18px;
+  font-weight:500;
+  color:var(--text);
+  letter-spacing:-0.01em;
+  margin-top:32px;
+  margin-bottom:14px;
+  padding-bottom:8px;
+  border-bottom:1px solid var(--border-soft);
+}
+.asset-canvas .doc-section p{
+  font-size:14px;
+  color:var(--text-muted);
+  line-height:1.7;
+  margin-bottom:12px;
+  max-width:720px;
+}
+.asset-canvas .doc-section p strong{color:var(--text-soft);font-weight:500}
+.asset-canvas .doc-section .kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:12px;
+  max-width:720px;
+}
+.kpi{
+  background:var(--surface-1);
+  border:1px solid var(--border-soft);
+  border-radius:10px;
+  padding:14px 16px;
+}
+.kpi .l{
+  font-size:11px;
+  color:var(--text-faint);
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+}
+.kpi .v{
+  font-size:24px;
+  font-weight:500;
+  color:var(--text);
+  letter-spacing:-0.02em;
+  margin-top:6px;
+  font-variant-numeric:tabular-nums;
+}
+.kpi .d{
+  font-size:11px;
+  color:var(--cykan);
+  margin-top:4px;
+  font-variant-numeric:tabular-nums;
+}
+.kpi .d.warn{color:var(--warn)}
+
+.asset-aside{
+  background:var(--bg-soft);
+  border-left:1px solid var(--border-soft);
+  padding:32px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+  overflow-y:auto;
+}
+.asset-aside h3{
+  font-size:10px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  font-weight:500;
+}
+.asset-aside .toc-row{
+  font-size:13px;
+  color:var(--text-muted);
+  padding:6px 0;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.asset-aside .toc-row:hover{color:var(--text)}
+.asset-aside .toc-row.active{
+  color:var(--text);
+}
+.asset-aside .toc-row .bar{
+  width:2px;height:14px;
+  background:var(--border-soft);
+  border-radius:1px;
+}
+.asset-aside .toc-row.active .bar{background:var(--cykan)}
+.asset-aside .source{
+  background:var(--surface-1);
+  border:1px solid var(--border-soft);
+  border-radius:8px;
+  padding:10px 12px;
+  font-size:12px;
+  color:var(--text-muted);
+  display:flex;flex-direction:column;gap:3px;
+}
+.asset-aside .source .url{
+  font-size:11px;color:var(--text-faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.asset-aside .source .label{color:var(--text-soft);font-weight:500}
+
+/* ── VOICE MODE ACTIF ────────────────────────────────────── */
+.voice-takeover{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  z-index:5;
+  pointer-events:none;
+}
+.voice-stage-fade{
+  flex:0 0 32%;
+  border-bottom:1px solid var(--border-soft);
+  background:linear-gradient(180deg,
+    color-mix(in srgb,var(--bg-center) 80%,transparent) 0%,
+    color-mix(in srgb,var(--bg) 90%,transparent) 100%);
+  position:relative;
+  overflow:hidden;
+}
+.voice-stage-fade::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  backdrop-filter:blur(2px);
+  background:rgba(0,0,0,0.35);
+}
+.voice-fade-content{
+  padding:24px 64px;
+  opacity:0.35;
+  font-size:13px;
+  color:var(--text-faint);
+}
+.voice-fade-content h3{
+  font-size:16px;color:var(--text-muted);font-weight:500;margin-bottom:8px;
+  letter-spacing:-0.01em;
+}
+.voice-active{
+  flex:1;
+  background:radial-gradient(ellipse at 50% 65%,
+    color-mix(in srgb,var(--cykan) 6%,transparent) 0%,
+    transparent 60%),
+    var(--bg);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:36px;
+  padding:48px;
+  pointer-events:auto;
+}
+.voice-pulse-big{
+  width:200px;
+  height:200px;
+  border-radius:50%;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.voice-pulse-big::before,
+.voice-pulse-big::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  border:1px solid color-mix(in srgb,var(--cykan) 35%,transparent);
+  animation:ringExpand 3.2s ease-out infinite;
+}
+.voice-pulse-big::after{ animation-delay:1.6s; }
+@keyframes ringExpand{
+  0%{transform:scale(0.6);opacity:0.9}
+  100%{transform:scale(1.6);opacity:0}
+}
+.voice-pulse-core{
+  width:96px;
+  height:96px;
+  border-radius:50%;
+  background:radial-gradient(circle at 50% 40%,
+    color-mix(in srgb,var(--cykan) 60%,#fff) 0%,
+    var(--cykan) 30%,
+    color-mix(in srgb,var(--cykan) 30%,transparent) 100%);
+  box-shadow:
+    0 0 40px color-mix(in srgb,var(--cykan) 40%,transparent),
+    inset 0 0 40px color-mix(in srgb,#fff 20%,transparent);
+  animation:breathing 2.8s ease-in-out infinite;
+}
+.transcript-live{
+  font-size:18px;
+  color:var(--text-soft);
+  font-weight:400;
+  letter-spacing:-0.01em;
+  text-align:center;
+  max-width:600px;
+  line-height:1.5;
+}
+.transcript-live .past{ color:var(--text-faint); }
+.transcript-live .now{ color:var(--text); }
+.transcript-live .now::after{
+  content:"";display:inline-block;width:1px;height:18px;background:var(--cykan);margin-left:2px;vertical-align:-2px;animation:caret 1s steps(2) infinite;
+}
+
+.voice-confirm{
+  background:var(--surface-card);
+  border:1px solid var(--border-default);
+  border-radius:14px;
+  padding:24px 28px;
+  width:520px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  box-shadow:0 0 0 1px var(--border-soft), 0 24px 48px rgba(0,0,0,0.6);
+}
+.voice-confirm .vc-head{
+  font-size:11px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--accent-agent);
+  font-weight:500;
+  display:flex;align-items:center;gap:10px;
+}
+.voice-confirm h3{
+  font-size:15px;
+  color:var(--text);
+  font-weight:500;
+  letter-spacing:-0.01em;
+  line-height:1.4;
+}
+.voice-confirm .summary{
+  background:var(--surface-1);
+  border:1px solid var(--border-soft);
+  border-radius:10px;
+  padding:12px 14px;
+  display:grid;
+  grid-template-columns:80px 1fr;
+  gap:6px 14px;
+  font-size:12px;
+}
+.voice-confirm .summary .k{color:var(--text-faint);letter-spacing:0.04em;text-transform:uppercase;font-size:10px;font-weight:500;align-self:center}
+.voice-confirm .summary .v{color:var(--text-soft);}
+.voice-confirm .voice-cta{
+  display:flex;
+  gap:10px;
+}
+.voice-confirm .vbtn{
+  flex:1;
+  padding:12px;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:500;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  cursor:pointer;
+}
+.voice-confirm .vbtn.confirm{
+  background:var(--cykan);
+  color:var(--text-on-cykan);
+}
+.voice-confirm .vbtn.cancel{
+  background:transparent;
+  color:var(--text-muted);
+  border:1px solid var(--border-default);
+}
+.voice-confirm .vbtn .v-keyword{
+  font-size:10px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  opacity:0.7;
+  font-weight:500;
+}
+.voice-confirm .quiet{
+  font-size:11px;
+  color:var(--text-faint);
+  text-align:center;
+}
+.voice-confirm .quiet kbd{
+  display:inline-block;
+  padding:1px 5px;
+  background:var(--surface-2);
+  border:1px solid var(--border-input);
+  border-radius:3px;
+  color:var(--text-muted);
+  font-size:10px;
+  font-family:inherit;
+}
+
+/* ── COMMANDEUR (Cmd+K) ──────────────────────────────────── */
+.cmdk-overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.62);
+  backdrop-filter:blur(8px);
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding-top:120px;
+  z-index:10;
+}
+.cmdk{
+  width:640px;
+  background:color-mix(in srgb,var(--bg-soft) 92%,transparent);
+  border:1px solid var(--border-default);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px var(--border-soft);
+}
+.cmdk-input{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:18px 22px;
+  border-bottom:1px solid var(--border-soft);
+}
+.cmdk-input svg{width:16px;height:16px;color:var(--text-faint)}
+.cmdk-input .field{
+  flex:1;
+  font-size:15px;
+  color:var(--text);
+  font-weight:400;
+}
+.cmdk-input .field .typed{color:var(--text)}
+.cmdk-input .field .ph{color:var(--text-ghost)}
+.cmdk-input .field::after{
+  content:"";display:inline-block;width:1px;height:16px;background:var(--cykan);margin-left:2px;vertical-align:-2px;animation:caret 1s steps(2) infinite;
+}
+.cmdk-results{
+  max-height:480px;
+  overflow-y:auto;
+  padding:8px 0 12px;
+}
+.cmdk-group{
+  padding:10px 22px 4px;
+  font-size:10px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--text-ghost);
+  font-weight:500;
+  display:flex;align-items:baseline;justify-content:space-between;
+}
+.cmdk-row{
+  padding:9px 22px;
+  display:grid;
+  grid-template-columns:24px 1fr auto auto;
+  align-items:center;
+  gap:14px;
+  cursor:pointer;
+  font-size:13px;
+  color:var(--text-soft);
+}
+.cmdk-row:hover{ background:var(--surface-1); }
+.cmdk-row.active{
+  background:var(--cykan-bg-active);
+  color:var(--text);
+}
+.cmdk-row.active::before{
+  display:none;
+}
+.cmdk-row .glyph{
+  width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-faint);
+}
+.cmdk-row.active .glyph{color:var(--cykan)}
+.cmdk-row .glyph svg{width:14px;height:14px}
+.cmdk-row .label{
+  font-weight:400;
+  letter-spacing:-0.005em;
+  display:flex;align-items:center;gap:8px;
+}
+.cmdk-row .label .live{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--cykan);
+}
+.cmdk-row .label small{
+  color:var(--text-faint);font-size:11px;font-weight:400;
+}
+.cmdk-row .meta{
+  font-size:11px;color:var(--text-faint);
+}
+.cmdk-row.active .meta{color:var(--text-muted)}
+.cmdk-row .keys{
+  display:flex;gap:3px;
+}
+.cmdk-foot{
+  display:flex;
+  gap:18px;
+  padding:12px 22px;
+  border-top:1px solid var(--border-soft);
+  font-size:11px;
+  color:var(--text-faint);
+  align-items:center;
+}
+.cmdk-foot .cell{display:flex;align-items:center;gap:6px}
+
+/* Le cockpit en arrière-plan flouté */
+.cmdk-bg{
+  position:absolute;inset:0;
+  filter:blur(10px) saturate(0.8) brightness(0.5);
+  pointer-events:none;
+  opacity:0.55;
+}
+
+/* ── CAPTION sous chaque maquette ────────────────────────── */
+.caption{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:24px;
+  padding:8px 4px 0;
+}
+.caption .col{}
+.caption .col .l{
+  font-size:10px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  font-weight:500;
+  color:var(--text-faint);
+  margin-bottom:6px;
+}
+.caption .col.l1 .l{color:var(--text-faint)}
+.caption .col.l2 .l{color:var(--accent-agent)}
+.caption .col.l3 .l{color:var(--cykan)}
+.caption .col p{
+  font-size:13px;
+  color:var(--text-soft);
+  line-height:1.55;
+}
+
+/* ── ÉTATS ANNEXES ───────────────────────────────────────── */
+.annex-section{
+  width:1440px;
+  max-width:100%;
+  margin-top:24px;
+}
+.annex-section h2{
+  font-size:13px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--text-faint);
+  font-weight:500;
+  margin-bottom:8px;
+}
+.annex-section .lede{
+  font-size:15px;
+  color:var(--text-muted);
+  margin-bottom:32px;
+  max-width:680px;
+  line-height:1.6;
+}
+.annex-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:24px;
+}
+.mini{
+  background:var(--surface);
+  border:1px solid var(--border-shell);
+  border-radius:12px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.mini .mini-canvas{
+  width:100%;
+  height:300px;
+  background:var(--bg-center);
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.mini .mini-meta{
+  padding:14px 16px;
+  border-top:1px solid var(--border-shell);
+  background:var(--bg-elev);
+}
+.mini .mini-meta .t{
+  font-size:13px;
+  font-weight:500;
+  color:var(--text);
+  letter-spacing:-0.005em;
+}
+.mini .mini-meta .d{
+  font-size:11px;
+  color:var(--text-faint);
+  margin-top:4px;
+  line-height:1.5;
+}
+
+/* mini : Empty cockpit */
+.mini-empty{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  padding:32px;
+  text-align:center;
+}
+.mini-empty .pulse-static{
+  width:48px;height:48px;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,
+    color-mix(in srgb,var(--cykan) 40%,transparent) 0%,
+    color-mix(in srgb,var(--cykan) 8%,transparent) 60%,
+    transparent 100%);
+  position:relative;
+}
+.mini-empty .pulse-static::after{
+  content:"";position:absolute;inset:18px;background:var(--cykan);border-radius:50%;
+}
+.mini-empty h3{font-size:15px;color:var(--text);font-weight:500;letter-spacing:-0.01em}
+.mini-empty p{font-size:12px;color:var(--text-muted);max-width:240px;line-height:1.5}
+.mini-empty .ghost-hint{
+  font-size:11px;color:var(--text-ghost);display:flex;gap:6px;align-items:center;margin-top:6px;
+}
+
+/* mini : Erreur */
+.mini-error{
+  flex:1;
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.mini-error .err-banner{
+  background:color-mix(in srgb,var(--danger) 8%,transparent);
+  border:1px solid color-mix(in srgb,var(--danger) 30%,transparent);
+  border-radius:10px;
+  padding:12px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.mini-error .err-head{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--danger);font-weight:500;
+  letter-spacing:0.08em;text-transform:uppercase;
+}
+.mini-error .err-head .pip{width:6px;height:6px;border-radius:50%;background:var(--danger)}
+.mini-error .err-msg{font-size:12px;color:var(--text-soft);line-height:1.5}
+.mini-error .err-actions{display:flex;gap:8px;margin-top:4px}
+.mini-error .stale{
+  background:var(--surface-1);border:1px dashed var(--border-input);
+  border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;
+  opacity:0.7;
+}
+.mini-error .stale .label{font-size:10px;color:var(--text-faint);letter-spacing:0.16em;text-transform:uppercase}
+.mini-error .stale .content{font-size:12px;color:var(--text-muted);line-height:1.5}
+
+/* mini : OAuth wait */
+.mini-oauth{
+  flex:1;
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.mini-oauth .blocker{
+  background:color-mix(in srgb,var(--accent-agent) 7%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent-agent) 30%,transparent);
+  border-radius:10px;
+  padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.mini-oauth .blocker .h{
+  font-size:11px;color:var(--accent-agent);
+  letter-spacing:0.08em;text-transform:uppercase;font-weight:500;
+  display:flex;align-items:center;gap:8px;
+}
+.mini-oauth .blocker .h::before{
+  content:"";width:6px;height:6px;border-radius:50%;
+  background:var(--accent-agent);
+  animation:livePulse 1.6s ease-out infinite;
+  box-shadow:0 0 0 0 color-mix(in srgb,var(--accent-agent) 60%,transparent);
+}
+.mini-oauth .blocker .b{font-size:13px;color:var(--text);line-height:1.4}
+.mini-oauth .blocker .b strong{font-weight:500;color:var(--text)}
+.mini-oauth .ctas{display:flex;gap:8px}
+
+/* mini : Mobile */
+.mini-mobile{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(180deg,#000 0%,var(--bg-center) 100%);
+  padding:14px;
+}
+.phone{
+  width:140px;
+  height:280px;
+  background:var(--bg);
+  border:1px solid var(--border-default);
+  border-radius:18px;
+  padding:6px;
+  display:flex;
+  flex-direction:column;
+}
+.phone .notch{
+  width:36px;height:5px;background:var(--text-ghost);border-radius:3px;
+  margin:2px auto 6px;
+}
+.phone .p-stage{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg-center);
+  border-radius:12px;
+  padding:8px;
+  gap:6px;
+}
+.phone .p-stage .row{
+  background:var(--surface-1);
+  border:1px solid var(--border-soft);
+  border-radius:6px;
+  padding:5px 7px;
+  font-size:8px;
+  color:var(--text-muted);
+  line-height:1.3;
+}
+.phone .p-stage .row strong{color:var(--text);font-weight:500;display:block}
+.phone .p-stage .row .when{font-size:7px;color:var(--text-ghost)}
+.phone .voice-row{
+  margin-top:auto;
+  background:var(--bg-soft);
+  border:1px solid var(--border-soft);
+  border-radius:8px;
+  padding:6px 8px;
+  display:flex;align-items:center;gap:6px;
+  font-size:8px;color:var(--text-muted);
+}
+.phone .voice-row .vp{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--cykan);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--cykan) 25%,transparent);
+}
+
+/* mini : Run silencieux */
+.mini-silent{
+  flex:1;
+  padding:24px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.mini-silent .running{
+  background:var(--surface-card);
+  border:1px solid var(--cykan-border);
+  border-radius:10px;
+  padding:14px;
+  display:flex;flex-direction:column;gap:10px;
+  position:relative;
+  overflow:hidden;
+}
+.mini-silent .running::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cykan),transparent);
+  background-size:200% 100%;animation:runShimmer 2.4s linear infinite;
+}
+.mini-silent .running .h{
+  font-size:11px;color:var(--cykan);letter-spacing:0.08em;text-transform:uppercase;font-weight:500;
+}
+.mini-silent .running h4{font-size:13px;color:var(--text);font-weight:500;letter-spacing:-0.005em}
+.mini-silent .running p{font-size:11px;color:var(--text-muted);line-height:1.5}
+.mini-silent .meta-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.mini-silent .meta-grid .cell{
+  background:var(--surface-1);border:1px solid var(--border-soft);
+  border-radius:8px;padding:10px;
+}
+.mini-silent .meta-grid .l{font-size:9px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase}
+.mini-silent .meta-grid .v{font-size:13px;color:var(--text);font-weight:500;margin-top:4px;font-variant-numeric:tabular-nums}
+
+/* ── icon set inline (SVG) ───────────────────────────────── */
+.icon-stack svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* utility for "mode tag" tags */
+.mode-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 8px;
+  background:var(--surface-2);
+  border:1px solid var(--border-input);
+  border-radius:5px;
+  font-size:10px;
+  color:var(--text-muted);
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  font-weight:500;
+}
+.mode-tag.cykan{
+  background:var(--cykan-surface);
+  border-color:var(--cykan-border);
+  color:var(--cykan);
+}
+.mode-tag.purple{
+  background:color-mix(in srgb,var(--accent-llm) 8%,transparent);
+  border-color:color-mix(in srgb,var(--accent-llm) 25%,transparent);
+  color:var(--accent-llm);
+}
+.mode-tag.agent{
+  background:color-mix(in srgb,var(--accent-agent) 8%,transparent);
+  border-color:color-mix(in srgb,var(--accent-agent) 25%,transparent);
+  color:var(--accent-agent);
+}
+.mode-tag .ddot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* footer */
+.deck-foot{
+  width:1440px;max-width:100%;
+  padding-top:48px;border-top:1px solid var(--border-shell);
+  font-size:12px;color:var(--text-faint);
+  display:flex;justify-content:space-between;align-items:baseline;
+}
+.deck-foot .l{color:var(--text-muted)}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     ICONS (inline SVG sprite)
+============================================================ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-cockpit" viewBox="0 0 16 16"><path d="M8 1.5L1.5 4.5v7L8 14.5l6.5-3v-7L8 1.5z M8 1.5v13 M1.5 4.5L14.5 11.5 M14.5 4.5L1.5 11.5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 16 16"><path d="M2.5 4a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 13.5 4v5a1.5 1.5 0 0 1-1.5 1.5H6.5L4 13v-2.5h0a1.5 1.5 0 0 1-1.5-1.5V4z" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-asset" viewBox="0 0 16 16"><path d="M3.5 2.5h6L12.5 5.5v8a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z M9.5 2.5v3h3 M5.5 8h5 M5.5 10.5h5 M5.5 5.5h2" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-browser" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M2 8h12 M8 2c2 2 2 10 0 12 M8 2c-2 2-2 10 0 12" stroke="currentColor" stroke-width="1.3" fill="none"/></symbol>
+    <symbol id="i-meeting" viewBox="0 0 16 16"><circle cx="8" cy="6" r="2.5" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M3 13.5c0-2.5 2.2-4 5-4s5 1.5 5 4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-knowledge" viewBox="0 0 16 16"><circle cx="8" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="3" cy="11" r="1.5" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="13" cy="11" r="1.5" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M8 4.5L4 9.5 M8 4.5L12 9.5 M4.5 11h7" stroke="currentColor" stroke-width="1.3" fill="none"/></symbol>
+    <symbol id="i-voice" viewBox="0 0 16 16"><rect x="6" y="2" width="4" height="8" rx="2" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0 M8 12.5v2" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-sim" viewBox="0 0 16 16"><path d="M3 13.5L3 5.5L8 2.5L13 5.5v8 M3 13.5h10 M6 13.5V8.5h4v5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 16 16"><path d="M8 13V3 M3.5 7.5L8 3l4.5 4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-spinner" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-dasharray="20 14" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="1.2s" repeatCount="indefinite"/></circle></symbol>
+    <symbol id="i-circle" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.3" fill="none"/></symbol>
+    <symbol id="i-now" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M8 5v3.5l2 1.5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M3 6.5V13a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V6.5 M6.5 9h3" stroke="currentColor" stroke-width="1.3" fill="none"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10 M3 8h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-paperclip" viewBox="0 0 16 16"><path d="M11.5 4.5L5 11a2.121 2.121 0 0 0 3 3l6.5-6.5a3.5 3.5 0 1 0-5-5L4 9a4.5 4.5 0 0 0 6.5 6.5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 16 16"><path d="M3.5 2.5h6L12.5 5.5v8a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z M9.5 2.5v3h3" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-mic-x" viewBox="0 0 16 16"><rect x="6" y="2" width="4" height="8" rx="2" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M3 3l10 10" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 16 16"><path d="M11 2L14 5L10.5 6L9 9L7 7L4 10.5L4 12L5.5 12L9 8.5L11 10.5L12 7Z" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 16 16"><path d="M3.5 3.5l9 9 M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></symbol>
+    <symbol id="i-link" viewBox="0 0 16 16"><path d="M5 4H3.5A1.5 1.5 0 0 0 2 5.5v6A1.5 1.5 0 0 0 3.5 13h6A1.5 1.5 0 0 0 11 11.5V10 M8 8L14 2 M9 2h5v5" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============================================================
+     HEADER
+============================================================ -->
+<header class="deck-head">
+  <div class="eyebrow">PROPOSITION DE REDESIGN — DOCUMENT DE TRAVAIL</div>
+  <h1>Hearst&nbsp;OS&nbsp;<em>—</em>&nbsp;une seule scène, une voix qui&nbsp;respire.</h1>
+  <div class="signature">DA / produit · 2026-04-29 · pour Adrien · à valider avant code</div>
+</header>
+
+<!-- ============================================================
+     MANIFESTE
+============================================================ -->
+<section class="manifesto">
+  <div>
+    <h2><span class="num">01</span> Manifeste</h2>
+  </div>
+  <div class="manifesto-body">
+    <p>L'app empile aujourd'hui deux coquilles parce qu'elle traite chaque mode comme un écran. Je propose l'inverse&nbsp;: <strong>un plateau unique</strong> qui change de nature selon ce qu'on y fait. Plus de TopBar, plus de rail droit, plus de RunBanner. Le chrome se réduit à <strong>une colonne mémoire à gauche</strong>, <strong>un ruban voix en bas</strong>, et <strong>la scène entre les deux</strong>. Chaque indicateur n'a qu'un seul lieu autorisé.</p>
+    <div class="pillar">
+      <div class="q">Métaphore</div>
+      <div class="a"><strong>Le plateau d'observatoire.</strong> Une seule grande surface focalisée sur ce qui compte maintenant. La voix est l'horizon&nbsp;: toujours là, jamais au centre tant qu'on ne lui parle pas. La mémoire est la colonne porteuse à gauche.</div>
+    </div>
+    <div class="pillar">
+      <div class="q">Voix</div>
+      <div class="a">Quand idle, ruban 56&nbsp;px en bas (pulse + état). Quand active, elle <strong>monte verticalement</strong> sur la scène et l'écran derrière s'estompe, mais ne disparaît pas&nbsp;— l'utilisateur sait toujours où il était.</div>
+    </div>
+    <div class="pillar">
+      <div class="q">Anti double-shell</div>
+      <div class="a">Une seule règle&nbsp;: <strong>un état = un endroit</strong>. Run = un trait luminescent en haut de la scène. Connexions OAuth = une carte inline dans la scène concernée, pas une icône en TopBar. Stage = le contenu de la scène, point.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     MOCKUP 1 — COCKPIT
+============================================================ -->
+<div class="frame-wrap">
+  <div class="frame-meta">
+    <div class="num">M·01</div>
+    <div class="title">Cockpit — matin, tout va bien</div>
+    <div class="sub">État inbox dense, voix ambiante, aucun run en cours</div>
+  </div>
+  <div class="frame">
+    <div class="shell">
+      <!-- SPINE -->
+      <aside class="spine">
+        <div class="spine-head">
+          <span class="brand"></span>
+          <span class="brand-text">Hearst OS</span>
+          <span class="me">A</span>
+        </div>
+
+        <div class="spine-section">
+          <h3>Maintenant</h3>
+          <div class="spine-row active">
+            <span class="glyph icon-stack"><svg><use href="#i-cockpit"/></svg></span>
+            <span class="label">Cockpit</span>
+            <span class="meta">3 sugg.</span>
+          </div>
+        </div>
+
+        <div class="spine-section">
+          <h3>En cours</h3>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-chat"/></svg></span>
+            <span class="label">Plan stratégique 2026</span>
+            <span class="meta">2h</span>
+          </div>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-chat"/></svg></span>
+            <span class="label">Recrutement Head of Eng</span>
+            <span class="meta">hier</span>
+          </div>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-meeting"/></svg></span>
+            <span class="label">Board notes — mars</span>
+            <span class="meta">6 j</span>
+          </div>
+        </div>
+
+        <div class="spine-section">
+          <h3>Cette semaine</h3>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-asset"/></svg></span>
+            <span class="label">Synthèse board meeting</span>
+            <span class="meta">lun.</span>
+          </div>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-asset"/></svg></span>
+            <span class="label">Brief produit MVP</span>
+            <span class="meta">mar.</span>
+          </div>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-browser"/></svg></span>
+            <span class="label">Veille concurrence Q2</span>
+            <span class="meta">mar.</span>
+          </div>
+        </div>
+
+        <div class="spine-foot">
+          <div class="ghost"><span class="dot"></span> 2 agents en background</div>
+          <div class="ghost"><span class="kbd">⌘</span><span class="kbd">K</span><span style="margin-left:6px">naviguer</span></div>
+        </div>
+      </aside>
+
+      <!-- STAGE -->
+      <main class="stage">
+        <div class="stage-head">
+          <div class="crumbs">
+            <span>Plateau</span>
+            <span>›</span>
+            <strong>Cockpit</strong>
+          </div>
+          <div class="h-actions">
+            <span class="mode-tag cykan"><span class="ddot"></span>Voix ambiante</span>
+            <span class="mode-tag">Tout en clair</span>
+          </div>
+        </div>
+
+        <div class="cockpit">
+          <div class="morning">
+            <h2>Bonjour Adrien.<br><span>Mercredi 29 avril, 09:14. Trois choses que tu devrais regarder.</span></h2>
+            <div class="when">
+              <strong>0 alerte critique</strong>
+              2 runs background · 0 OAuth bloqué
+            </div>
+          </div>
+
+          <div class="lanes">
+            <!-- Lane 1 : suggestions IA -->
+            <div class="lane">
+              <h3>Suggestions IA <span class="count">3</span></h3>
+
+              <div class="suggestion">
+                <div class="head">
+                  <span class="tag">Relance</span>
+                  <span>Pierre Martin · CFO</span>
+                </div>
+                <div class="body"><strong>Pierre n'a pas répondu</strong> à ton mail d'hier sur le pricing. Sa moyenne de réponse est 4h, on est à&nbsp;19h. Je relance avec un ton tranquille&nbsp;?</div>
+                <div class="actions">
+                  <button class="btn-small primary">Préparer la relance</button>
+                  <button class="btn-small">Plus tard</button>
+                </div>
+              </div>
+
+              <div class="suggestion">
+                <div class="head">
+                  <span class="tag agent">Lecture</span>
+                  <span>Rapport Q1 — déposé hier 23:47</span>
+                </div>
+                <div class="body">Le <strong>rapport Q1</strong> que Marie t'a envoyé fait 12&nbsp;min de lecture. Je peux te sortir le résumé 3 points avant ton 10:00 avec le board.</div>
+                <div class="actions">
+                  <button class="btn-small primary">Résumer maintenant</button>
+                  <button class="btn-small">Lire en entier</button>
+                </div>
+              </div>
+
+              <div class="suggestion">
+                <div class="head">
+                  <span class="tag">Préparation</span>
+                  <span>Demain</span>
+                </div>
+                <div class="body"><strong>3 réunions demain</strong>, dont 2 sans agenda&nbsp;: «&nbsp;Quick sync produit&nbsp;» et «&nbsp;Catch-up Léa&nbsp;». Je te prépare une note d'intention pour chacune&nbsp;?</div>
+                <div class="actions">
+                  <button class="btn-small primary">Préparer les 2</button>
+                  <button class="btn-small">Choisir</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lane 2 : threads -->
+            <div class="lane">
+              <h3>Conversations vivantes <span class="count">3</span></h3>
+
+              <div class="thread-card">
+                <div class="meta">
+                  <span class="pin"></span>
+                  <span>Plan stratégique 2026</span>
+                  <span style="margin-left:auto">14 messages</span>
+                </div>
+                <h4>Comparer les deux propositions de pricing en regardant Vercel et Linear</h4>
+                <div class="last">«&nbsp;Je pense qu'on devrait pousser le palier Pro à 79&nbsp;€ en se basant sur la grille de Linear, mais Vercel reste l'ancre…&nbsp;»</div>
+                <div class="foot"><span>il y a 2h&nbsp;·&nbsp;suite à un asset</span><span>repris hier</span></div>
+              </div>
+
+              <div class="thread-card">
+                <div class="meta">
+                  <span class="pin agent"></span>
+                  <span>Recrutement Head of Eng</span>
+                  <span style="margin-left:auto">7 messages</span>
+                </div>
+                <h4>Short-list de 4 profils — l'agent compose les briefs</h4>
+                <div class="last">L'agent a sourcé 11 profils LinkedIn, j'en ai gardé 4. Il compose les premiers messages pour validation.</div>
+                <div class="foot"><span>hier 17:32</span><span>1 livrable prêt</span></div>
+              </div>
+
+              <div class="thread-card">
+                <div class="meta">
+                  <span class="pin llm"></span>
+                  <span>Brouillon&nbsp;: réponse à l'investisseur</span>
+                  <span style="margin-left:auto">3 messages</span>
+                </div>
+                <h4>Reformuler le pitch Series A en gardant le ton sec</h4>
+                <div class="last">Je propose une version courte. Tu retravailles&nbsp;?</div>
+                <div class="foot"><span>il y a 5j</span><span>brouillon</span></div>
+              </div>
+            </div>
+
+            <!-- Lane 3 : assets -->
+            <div class="lane">
+              <h3>Livrables récents <span class="count">5</span></h3>
+
+              <div class="asset-row report">
+                <div class="icon"><svg><use href="#i-doc"/></svg></div>
+                <div class="info">
+                  <h4>Synthèse board meeting — mars</h4>
+                  <p>Rapport · 6 pages · agent Pierre</p>
+                </div>
+                <div class="when">il y a 27 min</div>
+              </div>
+
+              <div class="asset-row doc">
+                <div class="icon"><svg><use href="#i-doc"/></svg></div>
+                <div class="info">
+                  <h4>Brief produit MVP v2</h4>
+                  <p>Document · 4 pages · exporté Notion</p>
+                </div>
+                <div class="when">hier 22:14</div>
+              </div>
+
+              <div class="asset-row report">
+                <div class="icon"><svg><use href="#i-doc"/></svg></div>
+                <div class="info">
+                  <h4>Rapport burn rate avril</h4>
+                  <p>Tableau financier · 4 pages</p>
+                </div>
+                <div class="when">hier 18:02</div>
+              </div>
+
+              <div class="asset-row audio">
+                <div class="icon"><svg><use href="#i-meeting"/></svg></div>
+                <div class="info">
+                  <h4>Transcript — call Léa Bertin</h4>
+                  <p>Audio + texte · 38 min</p>
+                </div>
+                <div class="when">hier 14:37</div>
+              </div>
+
+              <div class="asset-row doc">
+                <div class="icon"><svg><use href="#i-knowledge"/></svg></div>
+                <div class="info">
+                  <h4>Graphe relation — pipeline US</h4>
+                  <p>Connaissance · 23 nœuds</p>
+                </div>
+                <div class="when">2 j</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice ribbon -->
+        <div class="voice-ribbon">
+          <div class="voice-pulse-mini"></div>
+          <div class="v-label"><span class="live">Voix</span>&nbsp;·&nbsp;ambiante, parle quand tu veux. «&nbsp;Hé&nbsp;» ou maintiens <span class="kbd">⎵</span>.</div>
+          <div class="v-hint">
+            <span class="kbd">⌘</span><span class="kbd">K</span>
+            <span>commander</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="caption">
+    <div class="col l1"><div class="l">Ce qu'on voit</div>
+      <p>Trois colonnes lisibles&nbsp;: ce que l'IA pense que tu devrais faire, ce qui est vivant, ce qui vient d'arriver. La spine te dit où tu en es. La voix respire en bas. Pas de TopBar, pas de RunBanner, pas de notif ailleurs.</p>
+    </div>
+    <div class="col l2"><div class="l">Le pari</div>
+      <p>Un cockpit éditorial. La densité ne vient pas du nombre de cellules mais de la qualité du tri. Si l'IA n'a rien à proposer, la lane 1 se vide&nbsp;— elle ne se remplit pas de bruit pour exister.</p>
+    </div>
+    <div class="col l3"><div class="l">Vs aujourd'hui</div>
+      <p>Suppression de la TopBar, de la PulseBar haute, du RightPanelNav 4-onglets, de l'AgentActivityStrip. Tout converge vers la spine + la scène. Le statut OAuth devient une carte inline dans la suggestion concernée.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MOCKUP 2 — CHAT en plein run
+============================================================ -->
+<div class="frame-wrap">
+  <div class="frame-meta">
+    <div class="num">M·02</div>
+    <div class="title">Chat — l'agent travaille, un asset se génère, tu peux continuer à taper</div>
+    <div class="sub">Run actif. Indicateur unique en haut de scène. Asset apparaît inline.</div>
+  </div>
+  <div class="frame">
+    <div class="shell">
+      <aside class="spine">
+        <div class="spine-head">
+          <span class="brand"></span>
+          <span class="brand-text">Hearst OS</span>
+          <span class="me">A</span>
+        </div>
+        <div class="spine-section">
+          <h3>Maintenant</h3>
+          <div class="spine-row active live">
+            <span class="glyph icon-stack"><svg><use href="#i-chat"/></svg></span>
+            <span class="label">Plan stratégique 2026</span>
+          </div>
+        </div>
+        <div class="spine-section">
+          <h3>En cours</h3>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-cockpit"/></svg></span>
+            <span class="label">Cockpit</span>
+            <span class="meta">3</span>
+          </div>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-chat"/></svg></span>
+            <span class="label">Recrutement Head of Eng</span>
+            <span class="meta">hier</span>
+          </div>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-browser"/></svg></span>
+            <span class="label">Veille concurrence Q2</span>
+            <span class="meta">mar.</span>
+          </div>
+        </div>
+        <div class="spine-section">
+          <h3>Cette semaine</h3>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-asset"/></svg></span>
+            <span class="label">Synthèse board meeting</span>
+            <span class="meta">lun.</span>
+          </div>
+          <div class="spine-row">
+            <span class="glyph icon-stack"><svg><use href="#i-asset"/></svg></span>
+            <span class="label">Brief produit MVP</span>
+            <span class="meta">mar.</span>
+          </div>
+        </div>
+        <div class="spine-foot">
+          <div class="ghost"><span class="dot"></span> 1 agent au travail · 1m 24s</div>
+        </div>
+      </aside>
+
+      <main class="stage">
+        <div class="run-bar"></div>
+        <div class="stage-head">
+          <div class="crumbs">
+            <span>Plateau</span>
+            <span>›</span>
+            <span>Conversations</span>
+            <span>›</span>
+            <strong>Plan stratégique 2026</strong>
+          </div>
+          <div class="h-actions">
+            <span class="mode-tag purple"><span class="ddot"></span>Run · 1m 24s</span>
+            <span class="mode-tag cykan"><span class="ddot"></span>Voix ambiante</span>
+          </div>
+        </div>
+
+        <div class="chat">
+          <div class="chat-stream">
+            <div class="msg user">
+              <div class="meta">Adrien · 14:32</div>
+              <div class="bubble">Compare les deux propositions de pricing en regardant ce que fait Vercel et Linear&nbsp;— je veux savoir si on est trop bas sur le palier Pro.</div>
+            </div>
+
+            <div class="msg agent">
+              <div class="meta">Hearst · 14:32</div>
+              <div class="bubble">D'accord. Je récupère les pages pricing publiques de Vercel et Linear, je note les paliers et les ratios features/prix, et je te sors un tableau comparatif avec une recommandation. <strong>Estimation 3 min.</strong></div>
+            </div>
+
+            <div class="tool-trace">
+              <div class="ttitle">
+                <svg style="width:12px;height:12px;color:var(--accent-llm)"><use href="#i-spinner"/></svg>
+                Trace d'outil — agent web
+              </div>
+              <div class="step"><span class="ok">✓</span> <code>browser.fetch</code> vercel.com/pricing — 280 ms</div>
+              <div class="step"><span class="ok">✓</span> <code>browser.fetch</code> linear.app/pricing — 410 ms</div>
+              <div class="step"><span class="running">↻</span> <code>analyze.tabulate</code> en cours — 6 colonnes, 4 paliers</div>
+              <div class="step" style="color:var(--text-ghost)">○ <code>asset.compose</code> — en file</div>
+            </div>
+
+            <div class="asset-inline">
+              <div class="head">
+                <svg style="width:12px;height:12px"><use href="#i-asset"/></svg>
+                Livrable en cours · rapport
+              </div>
+              <h4>Tableau comparatif pricing — Vercel vs Linear vs nous</h4>
+              <div class="progress"><span></span></div>
+              <div class="meta-row">
+                <span>47&nbsp;%&nbsp;·&nbsp;tableau structuré, recommandation à venir</span>
+                <span>~ 1m 36s restantes</span>
+              </div>
+              <div>
+                <span class="open-link">Voir le brouillon en direct →</span>
+              </div>
+            </div>
+
+            <div class="msg user">
+              <div class="meta">Adrien · 14:33</div>
+              <div class="bubble">Pendant que tu fais ça, regarde aussi ce que fait Replit. C'est devenu une référence cette année.</div>
+            </div>
+
+            <div class="msg agent">
+              <div class="meta">Hearst · maintenant</div>
+              <div class="bubble">Noté. J'ajoute Replit en quatrième colonne, ça décale la livraison à <strong>~ 2&nbsp;min</strong>. Continue, je gère.</div>
+            </div>
+          </div>
+
+          <div class="composer">
+            <div class="input"><span class="typing">Et regarde si Replit propose un palier&nbsp;«&nbsp;team&nbsp;» séparé du palier&nbsp;«&nbsp;pro&nbsp;»</span></div>
+            <div class="row">
+              <div class="actions">
+                <span class="pill"><span class="dot cykan"></span>Plan stratégique 2026</span>
+                <span class="pill"><span class="dot purple"></span>Hearst · agent</span>
+                <span class="pill"><svg style="width:12px;height:12px;stroke:currentColor;stroke-width:1.5;fill:none"><use href="#i-paperclip"/></svg> joindre</span>
+              </div>
+              <div class="send"><svg style="stroke:currentColor;stroke-width:1.5;fill:none"><use href="#i-arrow-up"/></svg></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="voice-ribbon">
+          <div class="voice-pulse-mini"></div>
+          <div class="v-label"><span class="live">Voix</span>&nbsp;·&nbsp;peut interrompre l'agent. Dis «&nbsp;stop&nbsp;» pour annuler le run.</div>
+          <div class="v-hint">
+            <span class="kbd">⌘</span><span class="kbd">K</span>
+            <span>commander</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="caption">
+    <div class="col l1"><div class="l">Ce qu'on voit</div>
+      <p>Trace d'outil + carte asset en cours, posées <strong>dans la conversation</strong>, pas dans un panneau parallèle. L'utilisateur tape encore — la deuxième question s'ajoute au run au lieu de l'interrompre.</p>
+    </div>
+    <div class="col l2"><div class="l">Le pari</div>
+      <p>L'asset live n'est pas dans un rail droit. Il est <strong>dans le flux</strong>, comme un message à part entière. L'utilisateur clique pour zoomer (transition vers M·03), sinon il continue à parler à l'agent.</p>
+    </div>
+    <div class="col l3"><div class="l">Vs aujourd'hui</div>
+      <p>Disparition de l'AgentActivityStrip + RunProgressBanner + sub-rail asset. Une seule trace de run&nbsp;: la barre fine en haut. Une seule trace de l'asset&nbsp;: la carte inline. Une seule trace de l'outil&nbsp;: le bloc trace.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MOCKUP 3 — ASSET FOCALISÉ
+============================================================ -->
+<div class="frame-wrap">
+  <div class="frame-meta">
+    <div class="num">M·03</div>
+    <div class="title">Asset — focalisé, lecture profonde, voix toujours là</div>
+    <div class="sub">Spine collapsée à l'icône. Aside contextuel dérivé du contenu, pas d'un sub-rail générique.</div>
+  </div>
+  <div class="frame">
+    <div class="shell shell-collapsed">
+      <aside class="spine-mini">
+        <span class="brand" style="margin-bottom:14px"></span>
+        <div class="mini-icon"><svg><use href="#i-cockpit"/></svg></div>
+        <div class="mini-icon"><svg><use href="#i-chat"/></svg></div>
+        <div class="mini-icon active"><svg><use href="#i-asset"/></svg></div>
+        <div class="mini-icon"><svg><use href="#i-meeting"/></svg></div>
+        <div class="mini-icon"><svg><use href="#i-browser"/></svg></div>
+        <div class="mini-icon"><svg><use href="#i-knowledge"/></svg></div>
+        <div class="mini-icon" style="margin-top:auto;color:var(--text-faint)"><svg><use href="#i-search"/></svg></div>
+      </aside>
+
+      <main class="stage">
+        <div class="stage-head">
+          <div class="crumbs">
+            <span>Plateau</span>
+            <span>›</span>
+            <span>Livrables</span>
+            <span>›</span>
+            <strong>Synthèse board meeting — mars</strong>
+          </div>
+          <div class="h-actions">
+            <span class="mode-tag">PDF · Notion · partage</span>
+            <span class="mode-tag cykan"><span class="ddot"></span>Voix ambiante</span>
+          </div>
+        </div>
+
+        <div class="asset-stage">
+          <div class="asset-canvas">
+            <div class="doc-meta">
+              <span>Rapport</span><span class="dot"></span>
+              <span>généré par agent · Pierre</span><span class="dot"></span>
+              <span>il y a 27 min</span><span class="dot"></span>
+              <span>6 pages · 1 425 mots</span>
+            </div>
+            <h1>Synthèse du board meeting — mars 2026</h1>
+            <p class="lede">Trois décisions actées, deux points reportés, une question stratégique non tranchée. Cette synthèse a été générée à partir du transcript audio du 27 mars (durée&nbsp;: 1h&nbsp;48), recoupé avec les slides envoyées en amont par Marie&nbsp;C. et la note d'intention rédigée par Adrien.</p>
+
+            <div class="doc-section">
+              <h2>1. Décisions actées</h2>
+              <p><strong>Pricing palier Pro à 79&nbsp;€</strong>&nbsp;— validé à l'unanimité après la présentation comparative Vercel&#8202;/&#8202;Linear. Marie&nbsp;C. a souligné le risque sur la conversion des comptes existants&nbsp;: un plan de transition est demandé pour le 15 mai.</p>
+              <p><strong>Recrutement d'un Head of Eng</strong>&nbsp;— budget validé. La short-list de 4 profils sourcée par l'agent IA est approuvée comme point de départ. Premier rendez-vous visé pour fin avril.</p>
+              <p><strong>Suspension du projet «&nbsp;Atlas&nbsp;»</strong>&nbsp;— pas de ressources avant Q3. La proposition de Pierre&nbsp;M. de pivoter vers une licence externe est notée mais non tranchée.</p>
+
+              <div class="kpi-grid">
+                <div class="kpi"><div class="l">Burn mensuel</div><div class="v">142 k€</div><div class="d">+8 % vs fév.</div></div>
+                <div class="kpi"><div class="l">Runway</div><div class="v">14 mois</div><div class="d">à pricing 79 €</div></div>
+                <div class="kpi"><div class="l">MRR mars</div><div class="v">87 k€</div><div class="d warn">−3 % vs fév.</div></div>
+              </div>
+            </div>
+
+            <div class="doc-section">
+              <h2>2. Points reportés</h2>
+              <p><strong>Refonte du onboarding self-serve</strong>&nbsp;— reportée au prochain board (fin avril). Le travail de discovery mené par Léa n'était pas suffisamment avancé pour décider, mais une note de cadrage est attendue.</p>
+              <p><strong>Stratégie d'acquisition US</strong>&nbsp;— reportée à mai. Les chiffres actuels ne permettent pas de trancher entre embauche d'un BD US et partenariat avec une agence locale.</p>
+            </div>
+
+            <div class="doc-section">
+              <h2>3. Question non tranchée</h2>
+              <p>Faut-il accepter la proposition de Sequoia pour un seed extension à 2&nbsp;M$&nbsp;? Trois positions différentes au board, aucune majorité claire. Adrien&nbsp;a proposé un délai d'une semaine pour relancer la discussion en bilatéral avec chaque membre.</p>
+            </div>
+          </div>
+
+          <aside class="asset-aside">
+            <div>
+              <h3>Sommaire</h3>
+              <div class="toc-row active"><span class="bar"></span>Décisions actées</div>
+              <div class="toc-row"><span class="bar"></span>Points reportés</div>
+              <div class="toc-row"><span class="bar"></span>Question non tranchée</div>
+              <div class="toc-row"><span class="bar"></span>Annexe&nbsp;: chiffres bruts</div>
+            </div>
+            <div>
+              <h3>Sources</h3>
+              <div class="source"><span class="label">Transcript audio</span><span class="url">meeting-2026-03-27.m4a · 1h&nbsp;48</span></div>
+              <div class="source" style="margin-top:8px"><span class="label">Slides Marie</span><span class="url">drive · board-q1-mar.pdf</span></div>
+              <div class="source" style="margin-top:8px"><span class="label">Note Adrien</span><span class="url">notion · intention-board-mars</span></div>
+            </div>
+            <div>
+              <h3>Suite logique</h3>
+              <button class="btn-small" style="text-align:left;font-size:12px;padding:9px 12px">→ Préparer la note de transition pricing</button>
+              <button class="btn-small" style="text-align:left;font-size:12px;padding:9px 12px;margin-top:6px">→ Relancer Sequoia en bilatéral</button>
+              <button class="btn-small" style="text-align:left;font-size:12px;padding:9px 12px;margin-top:6px">→ Partager au board</button>
+            </div>
+          </aside>
+        </div>
+
+        <div class="voice-ribbon">
+          <div class="voice-pulse-mini"></div>
+          <div class="v-label"><span class="live">Voix</span>&nbsp;·&nbsp;dis «&nbsp;ajoute une section sur la trésorerie&nbsp;» — l'agent éditera ce rapport en place.</div>
+          <div class="v-hint">
+            <span class="kbd">⌘</span><span class="kbd">K</span>
+            <span>commander</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="caption">
+    <div class="col l1"><div class="l">Ce qu'on voit</div>
+      <p>L'asset prend toute la scène, comme un Notion plein écran. La spine s'auto-collapse pour laisser respirer la lecture. L'aside droit n'est <strong>pas</strong> un sub-rail générique&nbsp;: c'est <strong>le sommaire de ce document précis</strong> + ses sources + ses suites logiques.</p>
+    </div>
+    <div class="col l2"><div class="l">Le pari</div>
+      <p>Le contexte est <strong>dérivé du contenu</strong>, pas d'un nav universel. Pas de copy-paste entre Asset / Browser / Meeting. Quand le contenu change, l'aside se recompose. C'est ce qui tue le polymorphisme invisible.</p>
+    </div>
+    <div class="col l3"><div class="l">Vs aujourd'hui</div>
+      <p>Le clic depuis le cockpit et le clic depuis /assets ouvrent <strong>le même écran</strong>&nbsp;: ce stage. Plus de divergence AssetStage vs router.push. Plus de RightPanelNav 4-onglets. Le sub-rail asset est mort, vive l'aside contextuel.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MOCKUP 4 — VOICE MODE actif
+============================================================ -->
+<div class="frame-wrap">
+  <div class="frame-meta">
+    <div class="num">M·04</div>
+    <div class="title">Voice — actif, l'écran derrière reste contextuel, l'agent demande confirmation</div>
+    <div class="sub">La voix monte verticalement. Le stage précédent est encore là, mais en retrait.</div>
+  </div>
+  <div class="frame">
+    <div class="shell shell-collapsed">
+      <aside class="spine-mini">
+        <span class="brand" style="margin-bottom:14px"></span>
+        <div class="mini-icon"><svg><use href="#i-cockpit"/></svg></div>
+        <div class="mini-icon active"><svg><use href="#i-chat"/></svg></div>
+        <div class="mini-icon"><svg><use href="#i-asset"/></svg></div>
+        <div class="mini-icon"><svg><use href="#i-meeting"/></svg></div>
+        <div class="mini-icon"><svg><use href="#i-browser"/></svg></div>
+        <div class="mini-icon"><svg><use href="#i-knowledge"/></svg></div>
+      </aside>
+
+      <main class="stage">
+        <!-- Stage estompé en arrière -->
+        <div style="opacity:0.32;filter:blur(0.4px);pointer-events:none;display:flex;flex-direction:column;flex:1;min-height:0">
+          <div class="stage-head">
+            <div class="crumbs">
+              <span>Plateau</span>
+              <span>›</span>
+              <span>Conversations</span>
+              <span>›</span>
+              <strong>Plan stratégique 2026</strong>
+            </div>
+          </div>
+          <div class="chat">
+            <div class="chat-stream">
+              <div class="msg user"><div class="meta">Adrien · 14:32</div><div class="bubble">Compare les deux propositions de pricing…</div></div>
+              <div class="msg agent"><div class="meta">Hearst · 14:32</div><div class="bubble">D'accord. Je récupère les pages pricing publiques de Vercel et Linear…</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice takeover overlay -->
+        <div class="voice-active" style="position:absolute;inset:0;top:60px;background:radial-gradient(ellipse at 50% 65%,color-mix(in srgb,var(--cykan) 6%,transparent) 0%,transparent 60%),color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);">
+          <div class="voice-pulse-big">
+            <div class="voice-pulse-core"></div>
+          </div>
+
+          <div class="transcript-live">
+            <span class="past">«&nbsp;</span><span class="past">envoie un mail à Pierre pour caler un point demain matin sur le</span> <span class="now">pricing</span><span class="past">&nbsp;»</span>
+          </div>
+
+          <div class="voice-confirm">
+            <div class="vc-head">
+              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent-agent)"></span>
+              Confirmation orale demandée — action externe
+            </div>
+            <h3>J'envoie ce mail à Pierre Martin&nbsp;?</h3>
+            <div class="summary">
+              <div class="k">À</div><div class="v">Pierre Martin · pierre@hearstcorporation.io</div>
+              <div class="k">Sujet</div><div class="v">Point pricing — demain matin&nbsp;?</div>
+              <div class="k">Corps</div><div class="v">«&nbsp;Salut Pierre, est-ce qu'on peut se caler 30&nbsp;min demain matin sur le pricing&nbsp;? Je voudrais qu'on aligne avant le board. — A.&nbsp;»</div>
+              <div class="k">Outil</div><div class="v">Composio · Gmail</div>
+            </div>
+            <div class="voice-cta">
+              <div class="vbtn confirm">
+                <svg style="width:14px;height:14px;stroke:var(--text-on-cykan);stroke-width:1.6;fill:none"><use href="#i-check"/></svg>
+                Envoyer
+                <span class="v-keyword">dis «&nbsp;confirme&nbsp;»</span>
+              </div>
+              <div class="vbtn cancel">
+                <svg style="width:13px;height:13px;stroke:currentColor;stroke-width:1.5;fill:none"><use href="#i-x"/></svg>
+                Annuler
+                <span class="v-keyword">dis «&nbsp;annule&nbsp;»</span>
+              </div>
+            </div>
+            <div class="quiet">Tu peux aussi <kbd>esc</kbd> pour quitter le mode voix sans envoyer.</div>
+          </div>
+        </div>
+
+        <div class="voice-ribbon" style="background:color-mix(in srgb,var(--cykan) 4%, var(--bg-soft));border-top:1px solid var(--cykan-border);position:relative;z-index:6">
+          <div class="voice-pulse-mini" style="background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--cykan) 80%,transparent) 0%,color-mix(in srgb,var(--cykan) 25%,transparent) 60%,transparent 100%)"></div>
+          <div class="wave">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="v-label" style="color:var(--cykan)"><strong style="font-weight:500">Voix active</strong>&nbsp;·&nbsp;j'écoute. <span style="color:var(--text-faint)">Action en attente de validation orale.</span></div>
+          <div class="v-hint">
+            <span class="kbd">esc</kbd>
+            <span>quitter</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <div class="caption">
+    <div class="col l1"><div class="l">Ce qu'on voit</div>
+      <p>Quand l'utilisateur parle, la voix prend l'espace mais sans casser la continuité&nbsp;: le chat est encore visible derrière, à 32 % d'opacité. La transcription monte en gros au centre. Une carte de confirmation apparaît pour toute action externe (mail, Slack, calendrier).</p>
+    </div>
+    <div class="col l2"><div class="l">Le pari</div>
+      <p>Tout ce qui sort du système (envoi de mail, écriture dans une app tierce) <strong>demande une validation</strong>, par voix ou clavier. Jamais d'action externe silencieuse. Jamais de modal qui bloque la voix&nbsp;— la voix reste le canal principal de réponse.</p>
+    </div>
+    <div class="col l3"><div class="l">Vs aujourd'hui</div>
+      <p>La voix n'est plus un cercle dans un coin&nbsp;: elle prend l'écran quand active, redevient ribbon quand idle. Une seule disposition vocale, pas un mode séparé. Le passage chat → voix → chat est une transition, pas un changement d'écran.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MOCKUP 5 — COMMANDEUR (Cmd+K)
+============================================================ -->
+<div class="frame-wrap">
+  <div class="frame-meta">
+    <div class="num">M·05</div>
+    <div class="title">Commandeur — Cmd+K, point d'entrée unique de navigation</div>
+    <div class="sub">Stages, threads, assets, personnes. ⌘1..⌘7 visibles. Rien d'autre n'a besoin d'exister.</div>
+  </div>
+  <div class="frame">
+    <!-- Background flouté du cockpit -->
+    <div class="cmdk-bg">
+      <div class="shell">
+        <aside class="spine">
+          <div class="spine-head"><span class="brand"></span><span class="brand-text">Hearst OS</span></div>
+          <div class="spine-section"><h3>Maintenant</h3>
+            <div class="spine-row active"><span class="glyph icon-stack"><svg><use href="#i-cockpit"/></svg></span><span class="label">Cockpit</span></div>
+          </div>
+          <div class="spine-section"><h3>En cours</h3>
+            <div class="spine-row"><span class="glyph icon-stack"><svg><use href="#i-chat"/></svg></span><span class="label">Plan stratégique 2026</span></div>
+            <div class="spine-row"><span class="glyph icon-stack"><svg><use href="#i-chat"/></svg></span><span class="label">Recrutement Head of Eng</span></div>
+          </div>
+        </aside>
+        <main class="stage">
+          <div class="stage-head"><div class="crumbs"><strong>Cockpit</strong></div></div>
+          <div class="cockpit"><div class="morning"><h2>Bonjour Adrien.</h2></div></div>
+        </main>
+      </div>
+    </div>
+
+    <div class="cmdk-overlay">
+      <div class="cmdk">
+        <div class="cmdk-input">
+          <svg><use href="#i-search"/></svg>
+          <div class="field"><span class="typed">pric</span><span class="ph">… aller à un stage, ouvrir un thread, lancer une action</span></div>
+        </div>
+
+        <div class="cmdk-results">
+          <div class="cmdk-group">Stages <span style="color:var(--text-ghost)">⌘1..⌘8</span></div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-cockpit"/></svg></span>
+            <span class="label">Cockpit</span>
+            <span class="meta">vue principale</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">1</span></span>
+          </div>
+          <div class="cmdk-row active">
+            <span class="glyph"><svg><use href="#i-chat"/></svg></span>
+            <span class="label">Conversation active <small>· Plan stratégique 2026</small> <span class="live"></span></span>
+            <span class="meta">il y a 2h</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">2</span></span>
+          </div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-asset"/></svg></span>
+            <span class="label">Livrables</span>
+            <span class="meta">5 récents</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">3</span></span>
+          </div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-browser"/></svg></span>
+            <span class="label">Browser agent</span>
+            <span class="meta">idle</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">4</span></span>
+          </div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-meeting"/></svg></span>
+            <span class="label">Réunions</span>
+            <span class="meta">aucune en live</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">5</span></span>
+          </div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-knowledge"/></svg></span>
+            <span class="label">Connaissance</span>
+            <span class="meta">412 nœuds</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">6</span></span>
+          </div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-sim"/></svg></span>
+            <span class="label">Simulation</span>
+            <span class="meta">2 scénarios sauvés</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">7</span></span>
+          </div>
+
+          <div class="cmdk-group" style="margin-top:8px">Concerne «&nbsp;pric&nbsp;»</div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-chat"/></svg></span>
+            <span class="label">Plan stratégique 2026 — pricing palier Pro</span>
+            <span class="meta">thread · 14 messages</span>
+            <span class="keys"><span class="kbd">↵</span></span>
+          </div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-asset"/></svg></span>
+            <span class="label">Tableau comparatif pricing — Vercel · Linear · nous</span>
+            <span class="meta">en cours · 47 %</span>
+            <span class="keys"><span class="kbd">↵</span></span>
+          </div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-browser"/></svg></span>
+            <span class="label">Veille pricing concurrence Q2</span>
+            <span class="meta">browser · planifié mar.</span>
+            <span class="keys"><span class="kbd">↵</span></span>
+          </div>
+
+          <div class="cmdk-group" style="margin-top:8px">Actions</div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-plus"/></svg></span>
+            <span class="label">Lancer une nouvelle conversation</span>
+            <span class="meta">avec contexte&nbsp;: pric…</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">N</span></span>
+          </div>
+          <div class="cmdk-row">
+            <span class="glyph"><svg><use href="#i-mic-x"/></svg></span>
+            <span class="label">Couper la voix ambiante</span>
+            <span class="meta">elle est ON</span>
+            <span class="keys"><span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">M</span></span>
+          </div>
+        </div>
+
+        <div class="cmdk-foot">
+          <div class="cell"><span class="kbd">↑</span><span class="kbd">↓</span> <span>naviguer</span></div>
+          <div class="cell"><span class="kbd">↵</span> <span>ouvrir</span></div>
+          <div class="cell"><span class="kbd">⌘</span><span class="kbd">↵</span> <span>ouvrir en parallèle</span></div>
+          <div class="cell" style="margin-left:auto"><span class="kbd">esc</span> <span>fermer</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">
+    <div class="col l1"><div class="l">Ce qu'on voit</div>
+      <p>Une seule modale&nbsp;: stages avec ⌘1..⌘7, résultats contextuels par requête, actions au bas. Le Cmd+K est <strong>l'unique</strong> point d'entrée navigation&nbsp;— pas de menu, pas de TopBar, pas de sidebar additionnelle.</p>
+    </div>
+    <div class="col l2"><div class="l">Le pari</div>
+      <p>L'ordre des stages est <strong>numéroté et stable</strong>, les mnémoniques restent une chimère. Cockpit = ⌘1, Conversation = ⌘2 (parce que c'est ce qu'on fait 80 % du temps), Livrables = ⌘3. Le numéro est mémorable parce que court.</p>
+    </div>
+    <div class="col l3"><div class="l">Vs aujourd'hui</div>
+      <p>Plus de TopBar avec menu déroulant, plus de boutons d'action en haut à droite. Toute action / nav passe par Cmd+K. Une seule chose à apprendre, une seule chose à maintenir.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ÉTATS ANNEXES
+============================================================ -->
+<section class="annex-section">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+    <h2 style="margin-bottom:0">États annexes</h2>
+    <div style="font-size:11px;color:var(--text-ghost);letter-spacing:0.04em">5 cartes · 400×300</div>
+  </div>
+  <p class="lede">Les états qu'un audit oublie&nbsp;: premier login, panne réseau, agent qui attend une OAuth, mobile, run silencieux. Pas un mode clair&nbsp;— je le déconseille (la voix est nocturne, la lecture profonde aussi).</p>
+
+  <div class="annex-grid">
+
+    <!-- 1. Empty cockpit -->
+    <div class="mini">
+      <div class="mini-canvas">
+        <div style="height:36px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;padding:0 18px;font-size:10px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase">Plateau · Cockpit</div>
+        <div class="mini-empty">
+          <div class="pulse-static"></div>
+          <h3>Bienvenue, Adrien.</h3>
+          <p>Je n'ai encore rien vu de toi. Connecte ta boîte mail ou ton calendrier, ou commence une conversation et je commencerai à comprendre.</p>
+          <div class="ghost-hint"><span class="kbd">⌘</span><span class="kbd">K</span> commencer</div>
+        </div>
+        <div style="height:36px;border-top:1px solid var(--border-soft);display:flex;align-items:center;padding:0 18px;gap:10px;background:var(--bg-soft)">
+          <div class="voice-pulse-mini" style="width:14px;height:14px"></div>
+          <div style="font-size:10px;color:var(--text-muted)">Voix ambiante — parle quand tu veux.</div>
+        </div>
+      </div>
+      <div class="mini-meta">
+        <div class="t">Premier login — empty cockpit</div>
+        <div class="d">Une seule action proposée à la fois. La voix est déjà disponible. Aucune fausse densité.</div>
+      </div>
+    </div>
+
+    <!-- 2. Erreur réseau pendant run -->
+    <div class="mini">
+      <div class="mini-canvas">
+        <div style="height:36px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;padding:0 18px;font-size:10px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase">Conversation · Plan stratégique 2026</div>
+        <div class="mini-error">
+          <div class="err-banner">
+            <div class="err-head"><span class="pip"></span>Réseau perdu — l'agent est en pause</div>
+            <div class="err-msg">Le run a été suspendu à 47&nbsp;%. Je reprends automatiquement quand la connexion revient. Tu n'as rien perdu.</div>
+            <div class="err-actions">
+              <button class="btn-small primary">Réessayer maintenant</button>
+              <button class="btn-small">Reprendre plus tard</button>
+            </div>
+          </div>
+          <div class="stale">
+            <div class="label">Brouillon partiel — visible</div>
+            <div class="content">«&nbsp;Vercel propose 4 paliers (Hobby, Pro à 20 $, Team à 30 $/seat, Enterprise sur devis). Linear propose 3 paliers… <span style="color:var(--text-ghost)">[suite en attente]</span>&nbsp;»</div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-meta">
+        <div class="t">Erreur réseau pendant un run</div>
+        <div class="d">Le run ne disparaît pas. Le travail déjà fait reste lisible. La reprise est automatique.</div>
+      </div>
+    </div>
+
+    <!-- 3. OAuth bloqué -->
+    <div class="mini">
+      <div class="mini-canvas">
+        <div style="height:36px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;padding:0 18px;font-size:10px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase">Conversation · Recrutement Head of Eng</div>
+        <div class="mini-oauth">
+          <div class="blocker">
+            <div class="h">L'agent attend une autorisation</div>
+            <div class="b"><strong>Pour envoyer ces messages LinkedIn,</strong> j'ai besoin que tu connectes ton compte LinkedIn une fois. Je m'arrêtais sinon.</div>
+            <div class="ctas">
+              <button class="btn-small primary">Connecter LinkedIn</button>
+              <button class="btn-small">Sauter cette étape</button>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-faint);line-height:1.5">L'agent a déjà composé les 4 messages. Tu pourras les relire avant envoi. Aucune autre action n'a été déclenchée pendant l'attente.</div>
+        </div>
+      </div>
+      <div class="mini-meta">
+        <div class="t">Agent bloqué — OAuth manquante</div>
+        <div class="d">La demande est <strong>dans la conversation concernée</strong>, pas dans une TopBar séparée. Une seule autorité.</div>
+      </div>
+    </div>
+
+    <!-- 4. Mobile portrait -->
+    <div class="mini">
+      <div class="mini-canvas mini-mobile">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="p-stage">
+            <div style="font-size:8px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase;padding:2px 0">Cockpit · 09:14</div>
+            <div class="row">
+              <strong>Pierre n'a pas répondu</strong>
+              à ton mail d'hier. Je relance&nbsp;?
+              <div class="when">il y a 19h</div>
+            </div>
+            <div class="row">
+              <strong>Rapport Q1 — résumé&nbsp;?</strong>
+              12 min de lecture. Avant ton 10:00.
+              <div class="when">déposé hier</div>
+            </div>
+            <div class="row">
+              <strong>3 réunions demain</strong>
+              dont 2 sans agenda. Préparer&nbsp;?
+              <div class="when">demain</div>
+            </div>
+            <div class="voice-row">
+              <div class="vp"></div>
+              <div>parle, je gère.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-meta">
+        <div class="t">Mobile portrait — voix d'abord</div>
+        <div class="d">Pas de spine, pas d'aside. Une pile de suggestions + voix toujours présente. Le téléphone est une <strong>télécommande vocale</strong>, pas un mini-cockpit.</div>
+      </div>
+    </div>
+
+    <!-- 5. Run silencieux background -->
+    <div class="mini">
+      <div class="mini-canvas">
+        <div style="height:36px;border-bottom:1px solid var(--border-soft);display:flex;align-items:center;padding:0 18px;font-size:10px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase;justify-content:space-between">
+          <span>Cockpit</span>
+          <span style="color:var(--cykan);display:flex;align-items:center;gap:6px"><span style="width:5px;height:5px;border-radius:50%;background:var(--cykan)"></span>1 agent travaille</span>
+        </div>
+        <div class="mini-silent">
+          <div class="running">
+            <div class="h">En arrière-plan · 6 min déjà</div>
+            <h4>Veille concurrence Q2 — analyse de 12 sites</h4>
+            <p>Tu peux fermer l'onglet, je continue. Je te ping ici quand c'est prêt — estimation 18&nbsp;min restantes.</p>
+          </div>
+          <div class="meta-grid">
+            <div class="cell"><div class="l">Sites scrapés</div><div class="v">7 / 12</div></div>
+            <div class="cell"><div class="l">Données extraites</div><div class="v">214 KB</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="mini-meta">
+        <div class="t">Agent en background, plusieurs minutes</div>
+        <div class="d">Le run a une <strong>seule représentation</strong> dans toute l'app&nbsp;: cette carte. Pas de strip, pas de banner, pas de toast.</div>
+      </div>
+    </div>
+
+    <!-- placeholder pour équilibrer la grille — vide volontaire -->
+    <div class="mini" style="border-style:dashed;background:transparent">
+      <div class="mini-canvas" style="background:transparent;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center">
+        <div style="font-size:12px;color:var(--text-faint);line-height:1.6;max-width:240px">
+          <strong style="display:block;color:var(--text-soft);margin-bottom:6px;font-weight:500">Pas de mode clair.</strong>
+          La voix est nocturne, la lecture profonde aussi, et la palette est calibrée pour le contraste sur fond noir. Ouvrir un mode clair ouvrirait deux design systems à maintenir. Je préfère que tu refuses.
+        </div>
+      </div>
+      <div class="mini-meta" style="background:transparent">
+        <div class="t" style="color:var(--text-faint)">Mode clair — refusé volontairement</div>
+        <div class="d">Choix à valider. Si tu veux du clair, c'est un autre projet.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- footer -->
+<footer class="deck-foot">
+  <div class="l">Hearst OS — proposition de redesign · standalone HTML · réutilise uniquement la palette canonique du repo</div>
+  <div>Les 5 maquettes + 5 cartes annexes sont une <strong>vision</strong>, pas une spec d'implémentation.</div>
+</footer>
+
+</body>
+</html>
