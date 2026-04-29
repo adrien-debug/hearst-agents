@@ -36,7 +36,7 @@ function SectionTitle({
       <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] inline-flex items-baseline gap-2">
         <span>{children}</span>
         {typeof count === "number" && (
-          <span className="t-9 font-mono tracking-display text-[var(--text-ghost)]">
+          <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
             {count.toString().padStart(2, "0")}
           </span>
         )}
@@ -64,7 +64,7 @@ function EmptyRow({ children }: { children: React.ReactNode }) {
         border: "1px dashed var(--card-flat-border)",
       }}
     >
-      <span className="t-11 font-mono uppercase text-[var(--text-ghost)]">
+      <span className="t-11 font-mono uppercase text-[var(--text-faint)]">
         {children}
       </span>
     </div>

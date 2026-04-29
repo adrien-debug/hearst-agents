@@ -89,7 +89,7 @@ export function MissionsList({ missions, activeThreadId, loading }: MissionsList
           <circle cx="24" cy="24" r="20" fill="none" stroke="var(--border-default)" strokeWidth="1.5" />
           <circle cx="24" cy="24" r="3" fill="var(--text-ghost)" />
         </svg>
-        <p className="t-11 font-mono uppercase tracking-display text-[var(--text-ghost)] text-center">
+        <p className="t-11 font-mono uppercase tracking-display text-[var(--text-faint)] text-center">
           Aucune mission armée
         </p>
         <button

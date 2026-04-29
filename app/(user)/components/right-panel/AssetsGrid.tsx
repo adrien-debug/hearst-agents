@@ -221,7 +221,7 @@ export function AssetsGrid({
         <span className="w-12 h-12 text-[var(--text-faint)]" style={{ opacity: 0.3 }} aria-hidden>
           <AssetGlyphSVG type="brief" />
         </span>
-        <p className="t-11 font-mono uppercase tracking-display text-[var(--text-ghost)] text-center">
+        <p className="t-11 font-mono uppercase tracking-display text-[var(--text-faint)] text-center">
           Aucun asset.
           <br />
           Les livrables apparaîtront ici.

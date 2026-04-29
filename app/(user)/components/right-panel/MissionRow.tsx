@@ -121,7 +121,7 @@ export function MissionRow({ mission, activeThreadId }: MissionRowProps) {
 
       <span className="flex-1 min-w-0 flex flex-col">
         <span className="t-13 font-medium text-[var(--text-soft)] truncate">{mission.name}</span>
-        <span className="t-9 font-mono uppercase tracking-label text-[var(--text-ghost)] mt-0.5 truncate">
+        <span className="t-9 font-mono uppercase tracking-label text-[var(--text-faint)] mt-0.5 truncate">
           {humanSchedule(mission.schedule)}
         </span>
       </span>

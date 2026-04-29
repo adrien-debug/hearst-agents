@@ -126,7 +126,7 @@ export function FocalCard({ activeThreadId: _activeThreadId }: FocalCardProps) {
         <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
           Notifications
         </p>
-        <span className="t-9 font-mono tracking-display text-[var(--text-ghost)]">
+        <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
           {hasNotifications && rest.length > 0
             ? `+${rest.length}`
             : notifications.length.toString().padStart(2, "0")}
