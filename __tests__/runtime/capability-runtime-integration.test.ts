@@ -68,6 +68,9 @@ const DOMAIN_SURFACES: Record<Domain, { surface?: string; message: string }> = {
   developer: { message: "corrige ma pull request github" },
   design: { message: "ouvre ma maquette figma" },
   crm: { message: "liste mes leads hubspot" },
+  media: { message: "génère une image d'un coucher de soleil" },
+  analysis: { message: "exécute ce script python" },
+  documents: { message: "parse ce fichier pdf" },
   general: { surface: "home", message: "bonjour" },
 };
 

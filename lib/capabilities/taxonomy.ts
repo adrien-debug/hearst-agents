@@ -18,6 +18,9 @@ export type Domain =
   | "developer"
   | "design"
   | "crm"
+  | "media"
+  | "analysis"
+  | "documents"
   | "general";
 
 // ── Capability ──────────────────────────────────────────────
@@ -45,7 +48,11 @@ export type Capability =
   | "crm.write"
   | "notion.read"
   | "notion.write"
-  | "schedule.create";
+  | "schedule.create"
+  | "image.generate"
+  | "video.generate"
+  | "code.execute"
+  | "document.parse";
 
 // ── Retrieval Mode (maps to existing delegate retrieval_mode) ──
 
@@ -215,6 +222,68 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
       en: [
         "hubspot", "crm", "contact", "contacts", "customer", "customers",
         "lead", "leads", "prospect", "pipeline", "deal",
+      ],
+    },
+  },
+
+  media: {
+    capabilities: ["image.generate", "video.generate"],
+    connectorCapabilities: [],
+    providers: ["fal_ai", "heygen", "runway"],
+    tools: ["generate_image", "generate_video"],
+    validAgents: ["Operator", "DocBuilder"],
+    retrievalMode: null,
+    keywords: {
+      fr: [
+        "image", "illustration", "photo", "visuel", "visuels",
+        "génère une image", "crée une image", "visualise",
+        "vidéo", "video", "animation", "avatar", "clip",
+        "présentation animée",
+      ],
+      en: [
+        "illustration", "visual", "visuals",
+        "generate image", "create image",
+        "video", "animation", "avatar", "clip",
+      ],
+    },
+  },
+
+  analysis: {
+    capabilities: ["code.execute", "data.analyze"],
+    connectorCapabilities: [],
+    providers: ["e2b"],
+    tools: ["execute_code", "analyze_data"],
+    validAgents: ["Analyst", "Operator"],
+    retrievalMode: null,
+    keywords: {
+      fr: [
+        "exécute", "exécuter", "sandbox", "script python",
+        "code python", "lance ce code", "analyse données",
+        "calcul numérique", "run python",
+      ],
+      en: [
+        "execute code", "run code", "python script",
+        "sandbox", "analyze data", "code execution", "run python",
+      ],
+    },
+  },
+
+  documents: {
+    capabilities: ["document.parse"],
+    connectorCapabilities: [],
+    providers: ["llama_parse"],
+    tools: ["parse_document"],
+    validAgents: ["KnowledgeRetriever", "DocBuilder"],
+    retrievalMode: "documents",
+    keywords: {
+      fr: [
+        "pdf", "parse", "lis ce fichier", "extraire texte",
+        "convertir pdf", "fichier pdf", "document pdf",
+        "analyse ce document", "extraction",
+      ],
+      en: [
+        "pdf", "parse", "read this file", "extract text",
+        "convert pdf", "pdf file", "pdf document", "extraction",
       ],
     },
   },

@@ -55,6 +55,9 @@ const DOMAIN_TO_TOOL_CONTEXT: Record<Domain, ToolContext> = {
   developer: "general",
   design: "general",
   crm: "general",
+  media: "general",
+  analysis: "research",
+  documents: "files",
   general: "general",
 };
 
@@ -202,4 +205,62 @@ function surfaceToDomain(surface: string): Domain {
     case "research": return "research";
     default: return "general";
   }
+}
+
+// ── Tool Intent Resolution ───────────────────────────────────
+
+export type ToolIntent =
+  | "generate_image"
+  | "execute_code"
+  | "parse_document"
+  | "generate_video"
+  | "search_web"
+  | null;
+
+const TOOL_INTENT_PATTERNS: Array<{ tool: ToolIntent; patterns: string[] }> = [
+  {
+    tool: "generate_image",
+    patterns: [
+      "image", "illustration", "génère une image", "crée une image",
+      "visualise", "generate image", "create image",
+    ],
+  },
+  {
+    tool: "generate_video",
+    patterns: [
+      "vidéo", "video", "présentation animée", "avatar", "clip",
+      "animation", "generate video", "create video",
+    ],
+  },
+  {
+    tool: "execute_code",
+    patterns: [
+      "exécute", "execute", "calcule", "script", "analyse données",
+      "sandbox", "python", "run code", "execute code",
+    ],
+  },
+  {
+    tool: "parse_document",
+    patterns: [
+      "pdf", "parse", "lis ce fichier", "extraire", "extraction",
+      "document pdf", "fichier pdf", "read this file",
+    ],
+  },
+  {
+    tool: "search_web",
+    patterns: ["recherche", "cherche sur le web", "search", "actualité", "news"],
+  },
+];
+
+/**
+ * Resolve the primary tool intent from a message.
+ * Returns null when no specific tool pattern matches.
+ * Used to enrich the CapabilityScope with a direct tool hint.
+ */
+export function resolveToolIntent(message: string): ToolIntent {
+  const lower = message.toLowerCase();
+  for (const { tool, patterns } of TOOL_INTENT_PATTERNS) {
+    if (patterns.some((p) => lower.includes(p))) return tool;
+  }
+  return null;
 }
