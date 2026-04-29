@@ -113,7 +113,7 @@ export async function chatWithProfile(
   sb: SupabaseClient<Database>,
   profileId: string,
   messages: ChatRequest["messages"],
-  overrides?: Partial<Pick<ChatRequest, "temperature" | "max_tokens" | "top_p">>,
+  overrides?: Partial<Pick<ChatRequest, "temperature" | "max_tokens" | "top_p" | "timeoutMs">>,
   userId?: string,
 ): Promise<ChatResponse & { profile_used: string }> {
   const chain = await loadFallbackChain(sb, profileId);
@@ -143,6 +143,7 @@ export async function chatWithProfile(
           temperature: overrides?.temperature ?? profile.temperature,
           max_tokens: overrides?.max_tokens ?? profile.max_tokens,
           top_p: overrides?.top_p ?? profile.top_p,
+          timeoutMs: overrides?.timeoutMs,
         }),
       );
 
@@ -186,7 +187,7 @@ export async function* streamChatWithProfile(
   sb: SupabaseClient<Database>,
   profileId: string,
   messages: ChatRequest["messages"],
-  overrides?: Partial<Pick<ChatRequest, "temperature" | "max_tokens" | "top_p">>,
+  overrides?: Partial<Pick<ChatRequest, "temperature" | "max_tokens" | "top_p" | "timeoutMs">>,
   userId?: string,
 ): AsyncGenerator<StreamChunk & { profile_used?: string }> {
   const chain = await loadFallbackChain(sb, profileId);
@@ -218,6 +219,7 @@ export async function* streamChatWithProfile(
             max_tokens: overrides?.max_tokens ?? profile.max_tokens,
             top_p: overrides?.top_p ?? profile.top_p,
             stream: true,
+            timeoutMs: overrides?.timeoutMs,
           }),
         ),
       );
@@ -278,6 +280,7 @@ export interface SmartChatOptions {
   days?: number;
   userId?: string;
   max_cost_per_run?: number;
+  timeoutMs?: number;
 }
 
 export async function smartChat(
@@ -319,6 +322,7 @@ export async function smartChat(
           temperature: opts.temperature,
           max_tokens: opts.max_tokens,
           top_p: opts.top_p,
+          timeoutMs: opts.timeoutMs,
         }),
       );
 
@@ -398,6 +402,7 @@ export async function* smartStreamChat(
             max_tokens: opts.max_tokens,
             top_p: opts.top_p,
             stream: true,
+            timeoutMs: opts.timeoutMs,
           }),
         ),
       );

@@ -16,7 +16,8 @@ export class OpenAIProvider implements LLMProvider {
 
   async chat(req: ChatRequest): Promise<ChatResponse> {
     const start = Date.now();
-    const signal = makeAbortSignal(CHAT_TIMEOUT_MS, req.signal);
+    const timeoutMs = req.timeoutMs ?? CHAT_TIMEOUT_MS;
+    const signal = makeAbortSignal(timeoutMs, req.signal);
     const res = await this.client.chat.completions.create({
       model: req.model,
       messages: req.messages.map((m) => ({
@@ -43,7 +44,8 @@ export class OpenAIProvider implements LLMProvider {
   }
 
   async *streamChat(req: ChatRequest): AsyncGenerator<StreamChunk> {
-    const signal = makeAbortSignal(STREAM_TIMEOUT_MS, req.signal);
+    const timeoutMs = req.timeoutMs ?? STREAM_TIMEOUT_MS;
+    const signal = makeAbortSignal(timeoutMs, req.signal);
     const stream = await this.client.chat.completions.create({
       model: req.model,
       messages: req.messages.map((m) => ({

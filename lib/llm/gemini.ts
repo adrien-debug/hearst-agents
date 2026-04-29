@@ -69,7 +69,8 @@ export class GeminiProvider implements LLMProvider {
     }
     const start = Date.now();
     const url = this.generateUrl(req.model, false);
-    const signal = makeAbortSignal(CHAT_TIMEOUT_MS, req.signal);
+    const timeoutMs = req.timeoutMs ?? CHAT_TIMEOUT_MS;
+    const signal = makeAbortSignal(timeoutMs, req.signal);
 
     const res = await fetch(url, {
       method: "POST",
@@ -126,7 +127,8 @@ export class GeminiProvider implements LLMProvider {
       throw new Error("GEMINI_API_KEY is not set — add it to .env.local");
     }
     const url = this.generateUrl(req.model, true);
-    const signal = makeAbortSignal(STREAM_TIMEOUT_MS, req.signal);
+    const timeoutMs = req.timeoutMs ?? STREAM_TIMEOUT_MS;
+    const signal = makeAbortSignal(timeoutMs, req.signal);
 
     const res = await fetch(url, {
       method: "POST",

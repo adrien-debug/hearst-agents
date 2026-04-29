@@ -95,17 +95,16 @@ export function GeneralDashboard({
   activeThreadId: _activeThreadId,
   loading: _loading,
 }: GeneralDashboardProps) {
-  // Mock data pour démo
-  const assetsCount = 7;
-  const missionsCount = 0;
-  const reportsCount = 6;
+  const assetsCount = Array.isArray(_assets) ? _assets.length : 0;
+  const missionsCount = Array.isArray(_missions) ? _missions.length : 0;
+  const reportsCount = Array.isArray(_assets)
+    ? _assets.filter((a: any) => a.type === "report").length
+    : 0;
 
-  const recentReports = [
-    { id: "1", name: "Report 1", type: "REPORT" },
-    { id: "2", name: "Report 2", type: "REPORT" },
-    { id: "3", name: "Report 3", type: "REPORT" },
-  ];
-  const activeMissions: typeof recentReports = [];
+  const recentReports = Array.isArray(_assets)
+    ? _assets.filter((a: any) => a.type === "report").slice(0, 3)
+    : [];
+  const activeMissions = Array.isArray(_missions) ? _missions : [];
 
   return (
     <div className="flex flex-col h-full" style={{ padding: "var(--space-3)", gap: "var(--space-4)" }}>

@@ -53,7 +53,8 @@ export class AnthropicProvider implements LLMProvider {
       params.tools = tools;
     }
 
-    const signal = makeAbortSignal(CHAT_TIMEOUT_MS, req.signal);
+    const timeoutMs = req.timeoutMs ?? CHAT_TIMEOUT_MS;
+    const signal = makeAbortSignal(timeoutMs, req.signal);
     const res = await this.client.messages.create({ ...params, stream: false }, { signal });
 
     const text = res.content
@@ -81,6 +82,18 @@ export class AnthropicProvider implements LLMProvider {
     const start = Date.now();
     const result = await this.chatWithTools(req);
 
+    const cacheInfo = {
+      ...(result.cacheCreationTokens ? { cache_creation_tokens: result.cacheCreationTokens } : {}),
+      ...(result.cacheReadTokens ? { cache_read_tokens: result.cacheReadTokens } : {}),
+    };
+
+    // Log cache metrics for observability
+    if (result.cacheReadTokens > 0 || result.cacheCreationTokens > 0) {
+      console.log(
+        `[Anthropic] Cache metrics - read: ${result.cacheReadTokens}, created: ${result.cacheCreationTokens}, model: ${req.model}`
+      );
+    }
+
     return {
       content: result.text,
       model: req.model,
@@ -89,8 +102,7 @@ export class AnthropicProvider implements LLMProvider {
       tokens_out: result.tokensOut,
       cost_usd: 0,
       latency_ms: Date.now() - start,
-      ...(result.cacheCreationTokens ? { cache_creation_tokens: result.cacheCreationTokens } : {}),
-      ...(result.cacheReadTokens ? { cache_read_tokens: result.cacheReadTokens } : {}),
+      ...cacheInfo,
     };
   }
 
@@ -104,7 +116,8 @@ export class AnthropicProvider implements LLMProvider {
       params.tools = tools;
     }
 
-    const signal = makeAbortSignal(STREAM_TIMEOUT_MS, req.signal);
+    const timeoutMs = req.timeoutMs ?? STREAM_TIMEOUT_MS;
+    const signal = makeAbortSignal(timeoutMs, req.signal);
     const stream = this.client.messages.stream(params as Anthropic.MessageStreamParams, { signal });
 
     for await (const event of stream) {
@@ -144,11 +157,17 @@ export class AnthropicProvider implements LLMProvider {
    * If the system message carries a cache_control hint, send it as a single
    * cacheable text content block. Otherwise pass the raw string for the
    * smallest possible request payload.
+   *
+   * Auto-apply cache_control for system prompts > 1024 tokens (Anthropic
+   * minimum) to optimize repeated calls. The ephemeral 5-min TTL is perfect
+   * for chat sessions where the system context is stable.
    */
   private buildSystem(
     systemMsg: ChatMessage | undefined,
   ): Anthropic.MessageCreateParams["system"] {
     if (!systemMsg) return undefined;
+
+    // If explicitly set, respect it
     if (systemMsg.cache_control) {
       return [
         {
@@ -158,6 +177,20 @@ export class AnthropicProvider implements LLMProvider {
         },
       ];
     }
+
+    // Auto-cache system prompts that are reasonably large (>500 chars ≈ ~125 tokens)
+    // Anthropic requires min 1024 tokens for cache hit, but we can start caching
+    // earlier to warm up. The system prompt is typically static across turns.
+    if (systemMsg.content.length > 500) {
+      return [
+        {
+          type: "text",
+          text: systemMsg.content,
+          cache_control: { type: "ephemeral" },
+        },
+      ];
+    }
+
     return systemMsg.content;
   }
 

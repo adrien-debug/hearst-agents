@@ -14,6 +14,7 @@
 import { streamText, stepCountIs, jsonSchema } from "ai";
 import type { ModelMessage, Tool } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { z } from "zod";
 import type { RunEngine } from "@/lib/engine/runtime/engine";
 import type { RunEventBus } from "@/lib/events/bus";
 import { getToolsForUser } from "@/lib/connectors/composio/discovery";
@@ -33,6 +34,16 @@ import { buildAgentSystemPrompt } from "./system-prompt";
 import { storeAsset, type Asset, type AssetKind } from "@/lib/assets/types";
 import { randomUUID } from "crypto";
 import { buildProposeReportSpecTool } from "@/lib/reports/spec/llm-tool";
+
+// Schema for validating tool results from the AI pipeline
+const ToolResultSchema = z.object({
+  ok: z.boolean(),
+  errorCode: z.string().optional(),
+  error: z.string().optional(),
+  data: z.unknown().optional(),
+});
+
+type ToolResult = z.infer<typeof ToolResultSchema>;
 
 export interface AiPipelineInput {
   userId: string;
@@ -505,6 +516,11 @@ export async function runAiPipeline(
     const toolCallNames = new Map<string, string>();
     const skippedToolCalls = new Set<string>();
 
+    // Loop detection: track tool calls with same name + args
+    const toolCallLoopDetector = new Map<string, number>(); // key: toolName:argsHash -> count
+    const LOOP_WARNING_THRESHOLD = 2;
+    const LOOP_ABORT_THRESHOLD = 3;
+
     const isInternalMetaTool = (name: string): boolean =>
       name === "request_connection" || name === "create_scheduled_mission";
 
@@ -516,10 +532,32 @@ export async function runAiPipeline(
     // including synthetic retrieval / research.)
     let assistantTextBuffer = "";
 
+    // Track streaming token count for runaway detection
+    let streamingTokenCount = 0;
+    const MAX_STREAMING_TOKENS = 10000; // Safety limit above maxOutputTokens
+
     for await (const event of result.fullStream) {
       switch (event.type) {
         case "text-delta": {
           assistantTextBuffer += event.text;
+
+          // Rough token estimation (1 token ≈ 4 chars for English/French)
+          streamingTokenCount += Math.max(1, Math.ceil(event.text.length / 4));
+
+          // Runaway generation detection: early abort if greatly exceeding limit
+          if (streamingTokenCount > MAX_STREAMING_TOKENS) {
+            console.error(
+              `[AiPipeline] Runaway generation detected: ${streamingTokenCount} tokens emitted. ` +
+              `Max expected: ${MAX_STREAMING_TOKENS}. Aborting run ${engine.id}.`
+            );
+            eventBus.emit({
+              type: "orchestrator_log",
+              run_id: engine.id,
+              message: `Response too long (${streamingTokenCount} tokens). Stopping generation.`,
+            });
+            throw new Error(`Runaway generation: exceeded ${MAX_STREAMING_TOKENS} tokens`);
+          }
+
           eventBus.emit({
             type: "text_delta",
             run_id: engine.id,
@@ -538,6 +576,36 @@ export async function runAiPipeline(
           const isPreviewWrite =
             isWriteAction(event.toolName) && args._preview !== false;
           const skip = isInternalMetaTool(event.toolName) || isPreviewWrite;
+
+          // Loop detection: check if same tool with same args is called repeatedly
+          const argsHash = JSON.stringify(args);
+          const loopKey = `${event.toolName}:${argsHash}`;
+          const loopCount = (toolCallLoopDetector.get(loopKey) ?? 0) + 1;
+          toolCallLoopDetector.set(loopKey, loopCount);
+
+          if (loopCount >= LOOP_WARNING_THRESHOLD) {
+            console.warn(
+              `[AiPipeline] Potential loop detected: ${event.toolName} called ${loopCount} times with same args. ` +
+              `Run=${engine.id}, step=${event.toolCallId}`
+            );
+            eventBus.emit({
+              type: "orchestrator_log",
+              run_id: engine.id,
+              message: `Warning: ${event.toolName} called ${loopCount} times with identical arguments`,
+            });
+          }
+
+          if (loopCount >= LOOP_ABORT_THRESHOLD) {
+            console.error(
+              `[AiPipeline] Loop abort: ${event.toolName} exceeded ${LOOP_ABORT_THRESHOLD} identical calls. Stopping run.`
+            );
+            eventBus.emit({
+              type: "orchestrator_log",
+              run_id: engine.id,
+              message: `Loop detected: ${event.toolName} called too many times with same arguments. Stopping.`,
+            });
+            throw new Error(`Tool call loop detected for ${event.toolName}`);
+          }
 
           if (skip) {
             skippedToolCalls.add(event.toolCallId);
@@ -571,12 +639,23 @@ export async function runAiPipeline(
             providerId: "composio",
           });
 
+          // Validate tool result with Zod schema for security
+          const parseResult = ToolResultSchema.safeParse(event.output);
+          if (!parseResult.success) {
+            console.warn(
+              `[AiPipeline] Invalid tool result format for ${name ?? event.toolCallId}:`,
+              parseResult.error.issues,
+            );
+            break;
+          }
+
+          const out = parseResult.data;
+
           // Auto-trigger OAuth card on Composio AUTH_REQUIRED. The token has
           // expired or was revoked — the model would otherwise just relay the
           // raw error to the user. Surfacing the connect card here makes the
           // recovery path one click instead of one chat turn.
-          const out = event.output as { ok?: boolean; errorCode?: string; error?: string } | undefined;
-          if (out && out.ok === false && out.errorCode === "AUTH_REQUIRED" && name) {
+          if (out.ok === false && out.errorCode === "AUTH_REQUIRED" && name) {
             const app = name.split("_")[0]?.toLowerCase();
             if (app) {
               eventBus.emit({

@@ -56,7 +56,8 @@ export class ComposerProvider implements LLMProvider {
     }
     const base = process.env.COMPOSER_API_BASE_URL ?? "https://api.cursor.com/v1";
     const start = Date.now();
-    const signal = makeAbortSignal(CHAT_TIMEOUT_MS, req.signal);
+    const timeoutMs = req.timeoutMs ?? CHAT_TIMEOUT_MS;
+    const signal = makeAbortSignal(timeoutMs, req.signal);
 
     const res = await fetch(chatCompletionsUrl(base), {
       method: "POST",
@@ -114,7 +115,8 @@ export class ComposerProvider implements LLMProvider {
       throw new Error("COMPOSER_API_KEY is not set — add it to .env.local");
     }
     const base = process.env.COMPOSER_API_BASE_URL ?? "https://api.cursor.com/v1";
-    const signal = makeAbortSignal(STREAM_TIMEOUT_MS, req.signal);
+    const timeoutMs = req.timeoutMs ?? STREAM_TIMEOUT_MS;
+    const signal = makeAbortSignal(timeoutMs, req.signal);
 
     const res = await fetch(chatCompletionsUrl(base), {
       method: "POST",

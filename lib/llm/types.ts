@@ -19,6 +19,8 @@ export interface ChatRequest {
   top_p?: number;
   stream?: boolean;
   signal?: AbortSignal;
+  /** Optional timeout override in milliseconds. If not provided, defaults are used. */
+  timeoutMs?: number;
 }
 
 export interface ChatResponse {

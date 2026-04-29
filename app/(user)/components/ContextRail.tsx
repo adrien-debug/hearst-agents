@@ -353,9 +353,7 @@ function ContextRailForAsset() {
           </ul>
         )}
       </Section>
-      <Section label="Provenance">
-        <EmptyHint>Phase B — sources & embeddings</EmptyHint>
-      </Section>
+      
     </div>
   );
 }
@@ -363,12 +361,8 @@ function ContextRailForAsset() {
 function ContextRailForBrowser() {
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Action Log">
-        <EmptyHint>Phase B.8 — Stagehand events à brancher</EmptyHint>
-      </Section>
-      <Section label="Sources">
-        <EmptyHint>Phase B.8 — extraction post-task</EmptyHint>
-      </Section>
+      
+      
       <Section label="Co-pilote">
         <p className="t-13 font-light text-[var(--text-muted)]">
           L{"'"}agent navigue dans la session live. Take Over arrivera avec
@@ -408,9 +402,7 @@ function ContextRailForMeeting() {
           </ul>
         )}
       </Section>
-      <Section label="Speakers">
-        <EmptyHint>Phase B — diarisation Deepgram à brancher</EmptyHint>
-      </Section>
+      
       <Section label="Templates Mission">
         <p className="t-13 font-light text-[var(--text-muted)]">
           Approve all → exécution Composio (Slack, Linear, Notion, Gmail).
@@ -459,9 +451,7 @@ function ContextRailForKnowledge() {
           {graph.nodes.length} entités · {graph.edges.length} relations
         </p>
       </Section>
-      <Section label="Requêtes récentes">
-        <EmptyHint>Phase B — historique queries</EmptyHint>
-      </Section>
+      
     </div>
   );
 }
@@ -566,11 +556,7 @@ function ContextRailForSimulation() {
           </ul>
         )}
       </Section>
-      <Section label="Validation">
-        <p className="t-13 font-light text-[var(--text-muted)]">
-          Phase B — E2B vérifiera les calculs.
-        </p>
-      </Section>
+      
     </div>
   );
 }

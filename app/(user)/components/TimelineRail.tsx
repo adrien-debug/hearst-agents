@@ -253,6 +253,38 @@ export function TimelineRail() {
 
   const handleNewThread = () => {
     const id = addThread("New", "home");
+      {/* Tools & Apps Menu — ChatGPT style */}
+      {!leftCollapsed && (
+        <div className={`shrink-0 flex flex-col gap-4 border-t border-[var(--border-shell)] py-6 ${sectionPadX}`}>
+          {/* Tools */}
+          <div className="flex flex-col gap-2">
+            <span className="rail-section-label t-10 uppercase">Tools</span>
+            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
+              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">⚡</span>
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Hearst Tool</span>
+            </button>
+            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
+              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">🔧</span>
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Custom Tool</span>
+            </button>
+          </div>
+
+          {/* Apps */}
+          <div className="flex flex-col gap-2">
+            <span className="rail-section-label t-10 uppercase">Apps</span>
+            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
+              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">📱</span>
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Hearst App</span>
+            </button>
+            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
+              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">🎯</span>
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Analytics</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+
     setStageMode({ mode: "chat", threadId: id });
   };
 
@@ -384,37 +416,6 @@ export function TimelineRail() {
           </div>
         )}
       </div>
-
-      {/* Tools & Apps Menu — ChatGPT style */}
-      {!leftCollapsed && (
-        <div className={`shrink-0 flex flex-col gap-4 border-t border-[var(--border-shell)] py-6 ${sectionPadX}`}>
-          {/* Tools */}
-          <div className="flex flex-col gap-2">
-            <span className="rail-section-label t-10 uppercase">Tools</span>
-            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
-              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">⚡</span>
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Hearst Tool</span>
-            </button>
-            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
-              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">🔧</span>
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Custom Tool</span>
-            </button>
-          </div>
-
-          {/* Apps */}
-          <div className="flex flex-col gap-2">
-            <span className="rail-section-label t-10 uppercase">Apps</span>
-            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
-              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">📱</span>
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Hearst App</span>
-            </button>
-            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
-              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">🎯</span>
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Analytics</span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Footer — identité discrète + actions secondaires */}
       <div

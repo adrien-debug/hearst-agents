@@ -29,7 +29,23 @@ const walKey = (conversationId: string) => `wal:msg:${conversationId}`;
 const walModelKey = (conversationId: string) => `wal:msgmodel:${conversationId}`;
 
 // ── In-memory write-buffer (per process / request) ──────────
+const MAX_BUFFERED_CONVERSATIONS = Number(process.env.MEMORY_BUFFER_MAX_CONVERSATIONS ?? "1000");
 const buffer: Map<string, ConversationMemory> = new Map();
+
+// LRU helper: move key to end (most recently used) and evict oldest if needed
+function touchBuffer(key: string, conv: ConversationMemory): void {
+  buffer.delete(key); // Remove if exists to update order
+  buffer.set(key, conv);
+
+  // Evict oldest if over limit
+  if (buffer.size > MAX_BUFFERED_CONVERSATIONS) {
+    const oldestKey = buffer.keys().next().value;
+    if (oldestKey) {
+      buffer.delete(oldestKey);
+      console.warn(`[Memory] LRU evicted conversation ${oldestKey} (max ${MAX_BUFFERED_CONVERSATIONS})`);
+    }
+  }
+}
 
 // ── Supabase client (service role — server only) ─────────────
 let _sb: SupabaseClient | null = null;
@@ -79,7 +95,6 @@ export async function appendMessage(
       messages: [],
       updatedAt: Date.now(),
     };
-    buffer.set(key, conv);
   }
 
   conv.messages.push(message);
@@ -88,6 +103,9 @@ export async function appendMessage(
   if (conv.messages.length > MAX_MESSAGES_PER_CONVERSATION) {
     conv.messages = conv.messages.slice(-MAX_MESSAGES_PER_CONVERSATION);
   }
+
+  // Update LRU order and evict if needed
+  touchBuffer(key, conv);
 
   // AWAIT la WAL durable (rapide, <5ms) — garantit que le message est
   // récupérable depuis Redis si le process crash avant le persist
@@ -206,7 +224,22 @@ async function persistMessage(
 // ── Structured (ModelMessage) persistence ────────────────────
 
 /** In-process buffer of structured messages keyed by `tenant::conversation`. */
+const MAX_BUFFERED_STRUCTURED = Number(process.env.MEMORY_BUFFER_MAX_STRUCTURED ?? "500");
 const structuredBuffer: Map<string, ModelMessage[]> = new Map();
+
+// LRU helper for structured buffer
+function touchStructuredBuffer(key: string, messages: ModelMessage[]): void {
+  structuredBuffer.delete(key);
+  structuredBuffer.set(key, messages);
+
+  if (structuredBuffer.size > MAX_BUFFERED_STRUCTURED) {
+    const oldestKey = structuredBuffer.keys().next().value;
+    if (oldestKey) {
+      structuredBuffer.delete(oldestKey);
+      console.warn(`[Memory] LRU evicted structured ${oldestKey} (max ${MAX_BUFFERED_STRUCTURED})`);
+    }
+  }
+}
 
 function structuredKey(conversationId: string, tenantId: string): string {
   return `${tenantId}::${conversationId}::struct`;
@@ -238,7 +271,9 @@ export function appendModelMessages(
   const key = structuredKey(conversationId, scope.tenantId);
   const existing = structuredBuffer.get(key) ?? [];
   const next = [...existing, ...modelMessages].slice(-MAX_MESSAGES_PER_CONVERSATION);
-  structuredBuffer.set(key, next);
+
+  // Update LRU order for structured buffer
+  touchStructuredBuffer(key, next);
 
   // Même pattern WAL Redis → Supabase pour les structured messages (tool
   // calls / tool results). La perte de ces rows casse les flows de
