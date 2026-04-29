@@ -62,11 +62,13 @@ function NavTile({ id, icon, label, count, isActive, onClick, accent }: NavTileP
     <button
       type="button"
       onClick={() => onClick(id)}
-      className={`flex flex-col items-center justify-center gap-1 transition-all ${
+      title={label}
+      aria-label={`${label}: ${count}`}
+      className={`flex flex-col items-center justify-center gap-1.5 transition-all ${
         isActive ? "opacity-100" : "opacity-60 hover:opacity-80"
       }`}
       style={{
-        padding: "var(--space-2)",
+        padding: "var(--space-3)",
         background: isActive ? "var(--surface-1)" : "transparent",
         border: isActive ? "1px solid var(--cykan)" : "1px solid var(--border-shell)",
         borderRadius: "var(--radius-xs)",
@@ -75,9 +77,6 @@ function NavTile({ id, icon, label, count, isActive, onClick, accent }: NavTileP
       <span className="text-[var(--text-muted)]">{icon}</span>
       <span className="t-15 font-bold font-mono" style={{ color: accent || "var(--text)" }}>
         {count.toString().padStart(2, "0")}
-      </span>
-      <span className="t-9 font-mono uppercase text-[var(--text-faint)] truncate w-full text-center">
-        {label}
       </span>
     </button>
   );

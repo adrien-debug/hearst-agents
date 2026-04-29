@@ -110,7 +110,7 @@ function snippetOf(msgs: Message[] | undefined): string | null {
 
 function SectionHeader({ label, count, accent }: { label: string; count: number; accent?: boolean }) {
   return (
-    <div className="flex items-center justify-between mt-6 mb-3 pb-2 border-b border-[var(--surface-2)] first:mt-0">
+    <div className="flex items-center justify-between mt-6 mb-3 pb-2 pl-1 border-b border-[var(--surface-2)] first:mt-0">
       <span className={`t-9 font-mono tracking-marquee uppercase ${accent ? "text-[var(--cykan)]" : "text-[var(--text-muted)]"}`}>
         {label}
       </span>
@@ -123,7 +123,7 @@ function SectionHeader({ label, count, accent }: { label: string; count: number;
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-11 font-mono tracking-display text-[var(--text-ghost)] uppercase py-1">
+    <p className="t-11 font-mono tracking-display text-[var(--text-ghost)] uppercase pl-1 py-1">
       {children}
     </p>
   );
@@ -274,7 +274,7 @@ export function TimelineRail() {
           {leftCollapsed ? (
             <span className="t-28 font-medium tracking-tight text-[var(--cykan)] halo-cyan-sm leading-none">H</span>
           ) : (
-            <HearstLogo className="w-32 h-32 object-contain transition-all duration-slow" />
+            <HearstLogo className="h-12 w-auto object-contain transition-all duration-slow" />
           )}
         </button>
       </div>
