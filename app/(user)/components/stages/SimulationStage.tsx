@@ -235,10 +235,12 @@ function SimulationForm({
                 type="button"
                 onClick={() => onVariableRemove(idx)}
                 disabled={variables.length === 1}
-                className="halo-on-hover w-8 h-8 flex items-center justify-center t-13 text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="halo-on-hover w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label="Retirer la variable"
               >
-                ×
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
               </button>
             </div>
           ))}
@@ -273,7 +275,7 @@ function SimulationRunning() {
       >
         Génération de scénarios… DeepSeek R1 raisonne.
       </p>
-      <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+      <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
         30-50 secondes habituellement
       </p>
     </div>
