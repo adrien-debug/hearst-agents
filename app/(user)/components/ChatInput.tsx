@@ -19,7 +19,10 @@ export function ChatInput({
   onProviderMention,
 }: ChatInputProps) {
   const [input, setInput] = useState("");
+  const [attachment, setAttachment] = useState<{ fileName: string; text: string; pageCount: number } | null>(null);
+  const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isRunning = useRuntimeStore((s) => s.coreState !== "idle");
   const surface = useNavigationStore((s) => s.surface);
   const typeaheadRef = useRef<HTMLDivElement>(null);
@@ -72,8 +75,13 @@ export function ChatInput({
 
   function handleSubmit() {
     if (!input.trim() || isRunning) return;
-    onSubmit(input.trim());
+    const finalMessage = attachment
+      ? `Document analysé (${attachment.fileName}, ${attachment.pageCount} pages) :\n\n${attachment.text}\n\n---\n\n${input.trim()}`
+      : input.trim();
+    onSubmit(finalMessage);
     setInput("");
+    setAttachment(null);
+    setUploading(false);
     setHideTypeahead(true);
   }
 
@@ -132,6 +140,21 @@ export function ChatInput({
           className="bg-[var(--card-flat-bg)] border border-[var(--border-input)] rounded-sm transition-colors duration-base group focus-within:border-[var(--cykan-border-hover)]"
           style={{ boxShadow: "var(--shadow-card)" }}
         >
+          {attachment && (
+            <div className="flex items-center gap-2 px-5 pt-3 pb-1">
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">PDF</span>
+              <span className="t-11 text-[var(--text-muted)] truncate max-w-xs">{attachment.fileName}</span>
+              <span className="t-9 font-mono text-[var(--text-faint)]">{attachment.pageCount}p</span>
+              <button
+                type="button"
+                onClick={() => setAttachment(null)}
+                className="ml-auto t-9 font-mono text-[var(--text-ghost)] hover:text-[var(--danger)] transition-colors"
+                aria-label="Retirer le document"
+              >
+                ×
+              </button>
+            </div>
+          )}
           <textarea
             ref={inputRef}
             value={input}
@@ -162,6 +185,45 @@ export function ChatInput({
             <span className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] px-2">
               Auto
             </span>
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  e.target.value = "";
+                  setUploading(true);
+                  fetch("/api/v2/documents/upload", {
+                    method: "POST",
+                    body: (() => { const fd = new FormData(); fd.append("file", file); return fd; })(),
+                    credentials: "include",
+                  })
+                    .then(async (r) => {
+                      const data = await r.json() as { fileName?: string; text?: string; pageCount?: number; error?: string };
+                      if (!r.ok) throw new Error(data.error ?? "Erreur upload");
+                      setAttachment({ fileName: data.fileName ?? file.name, text: data.text ?? "", pageCount: data.pageCount ?? 0 });
+                    })
+                    .catch(() => { /* silent — pas de toast ici */ })
+                    .finally(() => setUploading(false));
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || isRunning}
+                title={uploading ? "Analyse en cours…" : "Joindre un PDF"}
+                className={`w-8 h-8 flex items-center justify-center transition-all duration-base ${
+                  uploading ? "text-[var(--warn)] animate-pulse" : attachment ? "text-[var(--cykan)]" : "text-[var(--text-faint)] hover:text-[var(--text-muted)]"
+                }`}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                </svg>
+              </button>
+            </>
             {isRunning ? (
               <div className="w-9 h-9 flex items-center justify-center shrink-0">
                 <div className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-pill animate-spin" />
