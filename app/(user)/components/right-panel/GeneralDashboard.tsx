@@ -33,12 +33,10 @@ function SectionTitle({
 }) {
   return (
     <div className="flex items-center justify-between mb-2">
-      <span
-        className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)] inline-flex items-baseline gap-2"
-      >
+      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] inline-flex items-baseline gap-2">
         <span>{children}</span>
         {typeof count === "number" && (
-          <span className="text-[var(--text-ghost)]">
+          <span className="t-9 font-mono tracking-display text-[var(--text-ghost)]">
             {count.toString().padStart(2, "0")}
           </span>
         )}
@@ -47,7 +45,7 @@ function SectionTitle({
         <button
           type="button"
           onClick={action.onClick}
-          className="t-9 font-mono text-[var(--cykan)] hover:underline"
+          className="t-9 font-mono uppercase tracking-section text-[var(--cykan)] hover:underline"
         >
           {action.label} →
         </button>
@@ -66,7 +64,9 @@ function EmptyRow({ children }: { children: React.ReactNode }) {
         border: "1px dashed var(--card-flat-border)",
       }}
     >
-      <span className="t-11 text-[var(--text-ghost)]">{children}</span>
+      <span className="t-11 font-mono uppercase tracking-display text-[var(--text-ghost)]">
+        {children}
+      </span>
     </div>
   );
 }

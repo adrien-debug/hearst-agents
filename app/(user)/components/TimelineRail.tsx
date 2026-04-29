@@ -6,11 +6,11 @@
  * Remplace LeftPanel (= "conversations only"). Affiche 4 sections
  * canoniques toujours rendues avec empty states internes :
  *
- *   🔴 Now              sessions actives (browser, meeting, voice) +
- *                       missions running (Phase B)
- *   📅 Today            threads + briefings + missions du jour
- *   📆 7 derniers jours threads + assets de la semaine
- *   📚 Archive          lien vers /archive plein écran
+ *   Now              sessions actives (browser, meeting, voice) +
+ *                    missions running (Phase B)
+ *   Today            threads + briefings + missions du jour
+ *   7 derniers jours threads + assets de la semaine
+ *   Archive          lien vers /archive plein écran
  *
  * Click sur une entrée → setActiveThread + setStageMode approprié.
  * Mode collapsed conservé (toggle bottom rail).

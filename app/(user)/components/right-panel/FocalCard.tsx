@@ -99,11 +99,10 @@ function NotificationPill({ priority }: { priority: CommNotification["priority"]
   const c = config[priority];
   return (
     <span
-      className="t-9 font-mono uppercase px-2 py-0.5 rounded-sm"
+      className="t-9 font-mono uppercase tracking-stretch px-2 py-0.5 rounded-sm"
       style={{
         color: c.color,
         background: c.bg,
-        letterSpacing: "var(--tracking-stretch)",
       }}
     >
       {c.label}
@@ -124,13 +123,10 @@ export function FocalCard({ activeThreadId: _activeThreadId }: FocalCardProps) {
     >
       {/* Header — toujours rendu */}
       <div className="flex items-center justify-between mb-2 shrink-0">
-        <p
-          className="t-9 font-mono uppercase text-[var(--text-ghost)]"
-          style={{ letterSpacing: "var(--tracking-section)" }}
-        >
+        <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
           Notifications
         </p>
-        <span className="t-9 font-mono text-[var(--text-faint)]">
+        <span className="t-9 font-mono tracking-display text-[var(--text-ghost)]">
           {hasNotifications && rest.length > 0
             ? `+${rest.length}`
             : notifications.length.toString().padStart(2, "0")}
@@ -185,11 +181,11 @@ export function FocalCard({ activeThreadId: _activeThreadId }: FocalCardProps) {
           >
             <AssetGlyphSVG type="message" />
           </span>
-          <div className="flex-1 min-w-0 flex flex-col">
-            <p className="t-13 text-[var(--text-faint)] leading-snug">
-              Aucune notification récente.
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <p className="t-11 font-mono uppercase tracking-display text-[var(--text-ghost)]">
+              Aucune notification récente
             </p>
-            <p className="t-9 text-[var(--text-ghost)] mt-0.5">
+            <p className="t-9 font-mono tracking-display text-[var(--text-ghost)]">
               Les emails et messages apparaîtront ici.
             </p>
           </div>

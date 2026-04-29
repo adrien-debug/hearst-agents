@@ -89,14 +89,13 @@ export function MissionsList({ missions, activeThreadId, loading }: MissionsList
           <circle cx="24" cy="24" r="20" fill="none" stroke="var(--border-default)" strokeWidth="1.5" />
           <circle cx="24" cy="24" r="3" fill="var(--text-ghost)" />
         </svg>
-        <p className="t-11 text-[var(--text-faint)] text-center">
-          Aucune mission armée.
+        <p className="t-11 font-mono uppercase tracking-display text-[var(--text-ghost)] text-center">
+          Aucune mission armée
         </p>
         <button
           type="button"
           onClick={() => router.push("/missions?new=1")}
-          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
-          style={{ letterSpacing: "var(--tracking-section)" }}
+          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
         >
           <span>Nouvelle mission</span>
           <span aria-hidden>+</span>

@@ -127,8 +127,8 @@ export function PulseStrip() {
         {/* État */}
         <div className="flex items-center gap-2">
           <span
-            className="t-9 font-mono uppercase"
-            style={{ color: config.color, letterSpacing: "var(--tracking-display)" }}
+            className="t-9 font-mono uppercase tracking-display"
+            style={{ color: config.color }}
           >
             {config.label}
           </span>

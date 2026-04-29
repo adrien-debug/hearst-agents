@@ -215,8 +215,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         return (
           <div className="flex flex-col h-full">
             <div style={{ padding: "var(--space-3)", borderBottom: "1px solid var(--border-shell)" }}>
-              <span className="t-9 font-mono uppercase text-[var(--text-faint)]" style={{ letterSpacing: "0.22em" }}>
-                Tous les livrables ({assets.length})
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                Tous les livrables {assets.length.toString().padStart(2, "0")}
               </span>
             </div>
             <div className="flex-1 overflow-y-auto">
@@ -245,8 +245,14 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
       {onClose && (
         <div className="p-4 flex items-center justify-between md:hidden border-b border-[var(--border-shell)]">
           <p className="t-13 font-medium">Contexte</p>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)]">
-            ✕
+          <button
+            onClick={onClose}
+            aria-label="Fermer"
+            className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
           </button>
         </div>
       )}
@@ -278,8 +284,7 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
       {/* STATUS footer */}
       <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2 flex items-center gap-2">
         <span
-          style={{ letterSpacing: "var(--tracking-section)" }}
-          className={`inline-flex items-center gap-2 t-9 font-mono uppercase px-2 py-1 rounded-sm shrink-0 ${
+          className={`inline-flex items-center gap-2 t-9 font-mono uppercase tracking-section px-2 py-1 rounded-sm shrink-0 ${
             !activeThreadId
               ? "text-[var(--text-faint)]"
               : isConnected

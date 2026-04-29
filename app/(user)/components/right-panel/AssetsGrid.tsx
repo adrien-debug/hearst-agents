@@ -201,11 +201,8 @@ export function AssetsGrid({
             }}
           >
             <div
-              className="t-9 font-mono uppercase text-[var(--text-faint)]"
-              style={{
-                letterSpacing: "0.22em",
-                paddingBottom: "var(--space-1)",
-              }}
+              className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]"
+              style={{ paddingBottom: "var(--space-1)" }}
             >
               Reports suggérés
             </div>
@@ -224,7 +221,7 @@ export function AssetsGrid({
         <span className="w-12 h-12 text-[var(--text-faint)]" style={{ opacity: 0.3 }} aria-hidden>
           <AssetGlyphSVG type="brief" />
         </span>
-        <p className="t-11 text-[var(--text-faint)] text-center">
+        <p className="t-11 font-mono uppercase tracking-display text-[var(--text-ghost)] text-center">
           Aucun asset.
           <br />
           Les livrables apparaîtront ici.
@@ -261,8 +258,8 @@ export function AssetsGrid({
       {visibleSuggestions.length > 0 && (
         <div className="flex flex-col" style={{ paddingLeft: "var(--space-3)", paddingRight: "var(--space-3)", paddingTop: "var(--space-3)", gap: "var(--space-2)" }}>
           <div
-            className="t-9 font-mono uppercase text-[var(--text-faint)]"
-            style={{ letterSpacing: "0.22em", paddingBottom: "var(--space-1)" }}
+            className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]"
+            style={{ paddingBottom: "var(--space-1)" }}
           >
             Reports suggérés
           </div>
@@ -287,10 +284,9 @@ export function AssetsGrid({
                 <div className="flex items-center justify-between">
                   <span className="t-11 text-[var(--text-soft)] font-medium">{s.title}</span>
                   <span
-                    className="t-9 font-mono uppercase inline-flex items-center gap-1.5"
+                    className="t-9 font-mono uppercase tracking-marquee inline-flex items-center gap-1.5"
                     style={{
                       color: isRunning ? "var(--cykan)" : s.status === "ready" ? "var(--cykan)" : "var(--text-faint)",
-                      letterSpacing: "0.22em",
                     }}
                   >
                     {isRunning ? (
@@ -328,8 +324,8 @@ export function AssetsGrid({
             >
               <div className="flex items-center justify-between px-2 pt-2">
                 <span
-                  className="t-9 font-mono uppercase"
-                  style={{ color: accent, letterSpacing: "var(--tracking-section)" }}
+                  className="t-9 font-mono uppercase tracking-section"
+                  style={{ color: accent }}
                 >
                   {asset.type}
                 </span>
