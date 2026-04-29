@@ -108,7 +108,10 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
       .map((idx) => actionItems[idx])
       .filter((a): a is ActionItem => Boolean(a));
     console.log("[approval] actions:", selected);
-    toast.info("Approval simulé", "Wiring Composio en Phase B suivante");
+    toast.info(
+      "Composio non branché",
+      "L'exécution réelle des actions arrive en Phase B — pour l'instant les sélections sont loguées en console.",
+    );
   };
 
   const headerLabel = meetingId
@@ -274,9 +277,12 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
             {selectedActions.size > 0 && (
               <button
                 onClick={onApproveSelected}
-                className="halo-on-hover inline-flex items-center justify-center gap-2 px-4 py-2 t-9 font-mono uppercase tracking-section border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors"
+                className="halo-on-hover inline-flex items-center justify-center gap-3 px-4 py-2 t-9 font-mono uppercase tracking-section border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors"
               >
-                Approuver les sélectionnés ({selectedActions.size})
+                <span>Approuver les sélectionnés ({selectedActions.size})</span>
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
+                  PREVIEW
+                </span>
               </button>
             )}
           </section>

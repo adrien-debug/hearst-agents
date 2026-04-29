@@ -34,6 +34,9 @@ const FORMATTER = new Intl.DateTimeFormat("fr-FR", {
   month: "short",
   hour: "2-digit",
   minute: "2-digit",
+  // Stable serveur ↔ client : évite hydration mismatch SSR (UTC) vs client
+  // (timezone locale).
+  timeZone: "Europe/Paris",
 });
 
 export function AssetStage({ assetId, variantKind }: AssetStageProps) {

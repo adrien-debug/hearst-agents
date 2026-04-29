@@ -29,8 +29,9 @@ const STATUS_POLL_MAX_ATTEMPTS = 30;
  *
  * Signature 3 — Co-Browsing : empty state offre un input pour décrire la
  * tâche, puis POST /api/v2/browser/start crée la session Browserbase et
- * affiche le debug viewer en iframe plein écran. Boutons Take Over et Stop
- * permettent à l'utilisateur de reprendre la main ou couper la session.
+ * affiche le debug viewer en iframe plein écran. Le bouton Stop coupe la
+ * session ; le pilotage manuel (« Take Over ») arrive en Phase B.8 avec
+ * Stagehand.
  *
  * Phase B.8 stub : Stagehand pas encore branché — l'iframe montre la
  * session vide, l'ACTION_LOG reste à venir.
@@ -44,7 +45,6 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [takeOverNotice, setTakeOverNotice] = useState<string | null>(null);
   const pollAttemptsRef = useRef(0);
 
   const debugViewerUrl = sessionId ? debugViewerByid[sessionId] : undefined;
@@ -154,11 +154,6 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
     }
   }, [sessionId, setMode]);
 
-  const handleTakeOver = useCallback(() => {
-    setTakeOverNotice("Take Over simulé — pilotage manuel disponible Phase B.8 Stagehand.");
-    window.setTimeout(() => setTakeOverNotice(null), 3_000);
-  }, []);
-
   // ── Empty state ──────────────────────────────────────────────
   if (!sessionId) {
     return (
@@ -211,8 +206,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
               style={{ lineHeight: "var(--leading-base)" }}
             >
               Décris la tâche à confier au browser agent — la session live
-              s{"'"}affichera ici, avec un bouton{" "}
-              <em>Take Over</em> pour reprendre la main à tout moment.
+              s{"'"}affichera ici. Le pilotage manuel arrive en Phase B.8.
             </p>
             <div className="flex flex-col gap-4 w-full mt-2">
               <input
@@ -275,13 +269,6 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleTakeOver}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--warn)] hover:border-[var(--warn)] transition-all shrink-0"
-          >
-            Take Over
-          </button>
-          <button
-            type="button"
             onClick={() => void stopCurrentSession()}
             disabled={stopping}
             className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--danger)] hover:border-[var(--danger)] transition-all shrink-0 disabled:opacity-60"
@@ -328,12 +315,10 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
               ACTION_LOG
             </span>
-            {takeOverNotice && (
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
-                {takeOverNotice}
-              </span>
-            )}
-            {error && !takeOverNotice && (
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+              PILOTAGE MANUEL — PHASE B.8 STAGEHAND
+            </span>
+            {error && (
               <span className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
                 {error}
               </span>
