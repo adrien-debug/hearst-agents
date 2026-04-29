@@ -143,3 +143,37 @@ SELECT a.email,
   FROM all_emails a
   LEFT JOIN public.users u ON u.email = a.email
  ORDER BY (u.id IS NULL) DESC, a.email;
+
+-- ── Section 5 : Sanity post-migration ───────────────────────
+-- À run APRÈS avoir appliqué 0026. Toutes ces queries doivent retourner 0.
+-- Si une renvoie > 0, c'est qu'il reste des rows non migrées (à traiter
+-- avant d'apply 0028 RLS).
+
+-- Aucun row user_id non-UUID dans les 8 tables avec data
+-- Note : après ALTER TYPE uuid, ces queries peuvent throw — utiliser
+-- ::text d'abord pour cast, puis comparer regex.
+
+SELECT 'runs' AS tbl, count(*) AS non_uuid_rows
+  FROM public.runs WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+UNION ALL SELECT 'chat_messages', count(*)
+  FROM public.chat_messages WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+UNION ALL SELECT 'missions', count(*)
+  FROM public.missions WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+UNION ALL SELECT 'audit_logs', count(*)
+  FROM public.audit_logs WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+UNION ALL SELECT 'user_tokens', count(*)
+  FROM public.user_tokens WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+UNION ALL SELECT 'user_roles', count(*)
+  FROM public.user_roles WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+UNION ALL SELECT 'artifacts', count(*)
+  FROM public.artifacts WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+UNION ALL SELECT 'document_sessions', count(*)
+  FROM public.document_sessions WHERE user_id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+
+-- Aucun row assets.provenance.userId non-UUID (5 rows attendus migrés)
+SELECT 'assets.provenance.userId' AS check,
+       count(*) AS non_uuid_provenance
+  FROM public.assets
+ WHERE provenance ? 'userId'
+   AND provenance->>'userId' IS NOT NULL
+   AND provenance->>'userId' !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
