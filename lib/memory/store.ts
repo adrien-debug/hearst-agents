@@ -62,11 +62,11 @@ export function getConversationMemory(
   return null;
 }
 
-export function appendMessage(
+export async function appendMessage(
   conversationId: string,
   message: ChatMessageMemory,
   scope: TenantScope,
-): void {
+): Promise<void> {
   const key = bufferKey(conversationId, scope.tenantId);
   let conv = buffer.get(key);
 
@@ -89,29 +89,30 @@ export function appendMessage(
     conv.messages = conv.messages.slice(-MAX_MESSAGES_PER_CONVERSATION);
   }
 
-  // WAL Redis d'abord (durable, <5ms) puis Supabase async. Si le process
-  // crash entre les deux, le message est récupérable depuis Redis WAL et
-  // peut être drainé par un worker dédié. Sans Redis, on retombe direct
-  // sur le path Supabase fire-and-forget (comportement antérieur).
-  void walAndPersist(conversationId, message, scope);
+  // AWAIT la WAL durable (rapide, <5ms) — garantit que le message est
+  // récupérable depuis Redis si le process crash avant le persist
+  // Supabase. En serverless (Vercel), le process peut être tué après
+  // la réponse HTTP : sans await, le lpush peut être perdu. Le persist
+  // Supabase lui reste fire-and-forget pour ne pas bloquer la réponse.
+  await walMessage(conversationId, message, scope);
+  void persistMessage(conversationId, message, scope);
 }
 
-async function walAndPersist(
+async function walMessage(
   conversationId: string,
   message: ChatMessageMemory,
   scope: TenantScope,
 ): Promise<void> {
   const redis = getRedis();
-  if (redis) {
-    try {
-      const payload = JSON.stringify({ conversationId, message, scope, ts: Date.now() });
-      await redis.lpush(walKey(conversationId), payload);
-      await redis.expire(walKey(conversationId), WAL_TTL_SECONDS);
-    } catch (err) {
-      console.warn("[Memory] WAL write failed, falling back to direct persist:", err);
-    }
+  if (!redis) return; // Sans Redis, fallback direct sur persist (best-effort).
+  try {
+    const payload = JSON.stringify({ conversationId, message, scope, ts: Date.now() });
+    await redis.lpush(walKey(conversationId), payload);
+    await redis.expire(walKey(conversationId), WAL_TTL_SECONDS);
+  } catch (err) {
+    console.warn("[Memory] WAL write failed:", err);
+    // Non-fatal : la persist Supabase tentera quand même.
   }
-  await persistMessage(conversationId, message, scope);
 }
 
 export async function getRecentMessages(

@@ -11,6 +11,60 @@ export const runtime = "nodejs";
 // connexion ouverte côté proxies et empêcher les timeouts intermédiaires.
 export const maxDuration = 300;
 
+const HEARTBEAT_INTERVAL_MS = 20_000;
+
+/**
+ * Wrap un ReadableStream SSE pour injecter `: heartbeat\n\n` toutes les 20s.
+ *
+ * Les commentaires SSE (lignes commençant par `:`) ne déclenchent aucun
+ * handler côté client mais maintiennent la connexion vivante face aux
+ * proxies (Cloudflare, Vercel, nginx) qui ferment les sockets idle au-delà
+ * de ~30s. Belt-and-suspenders avec le heartbeat interne au SSEAdapter :
+ * ce wrapper est le dernier rempart au niveau du Response.
+ */
+function withHeartbeat(stream: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  const reader = stream.getReader();
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
+  const stopHeartbeat = () => {
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+  };
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      heartbeatTimer = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(": heartbeat\n\n"));
+        } catch {
+          // Si le controller est fermé, on stop le timer pour éviter la fuite.
+          stopHeartbeat();
+        }
+      }, HEARTBEAT_INTERVAL_MS);
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+      } catch (err) {
+        controller.error(err);
+      } finally {
+        stopHeartbeat();
+        controller.close();
+      }
+    },
+    cancel() {
+      stopHeartbeat();
+      void reader.cancel();
+    },
+  });
+}
+
 // Start the mission scheduler exactly once (module scope, survives hot-reload).
 // Primary boot is instrumentation.ts; this is a secondary guard.
 void ensureSchedulerStarted();
@@ -66,7 +120,7 @@ export async function POST(req: NextRequest) {
     workspaceId: scope.workspaceId,
   });
 
-  return new Response(stream, {
+  return new Response(withHeartbeat(stream), {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",

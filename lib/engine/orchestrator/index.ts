@@ -182,7 +182,10 @@ async function runPipeline(
 
   // ── Memory: load conversation context ──────────────────────
   if (input.conversationId) {
-    appendMessage(input.conversationId, {
+    // Await la WAL durable côté store : garantit que le message user est
+    // récupérable depuis Redis même si le process meurt avant le persist
+    // Supabase. Coût ~5ms — négligeable face au LLM call qui suit.
+    await appendMessage(input.conversationId, {
       role: "user",
       content: input.message,
       createdAt: Date.now(),
@@ -432,10 +435,12 @@ async function runPipeline(
     }
   });
 
-  const storeAssistantMemory = () => {
+  const storeAssistantMemory = async (): Promise<void> => {
     unsubscribe();
     if (input.conversationId && assistantOutput.length > 0) {
-      appendMessage(input.conversationId, {
+      // Await la WAL durable (~5ms Redis) avant de rendre la main : le
+      // message assistant doit survivre au teardown du process serverless.
+      await appendMessage(input.conversationId, {
         role: "assistant",
         content: assistantOutput,
         createdAt: Date.now(),
@@ -572,7 +577,7 @@ async function runPipeline(
     // — there is no orchestrator-level pre-fetch of user data.
     await handleAiPipeline(engine, eventBus, input, scope);
   } finally {
-    storeAssistantMemory();
+    await storeAssistantMemory();
   }
 }
 
