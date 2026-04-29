@@ -181,12 +181,9 @@ export function FocalCard({ activeThreadId: _activeThreadId }: FocalCardProps) {
           >
             <AssetGlyphSVG type="message" />
           </span>
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <div className="flex-1 min-w-0 flex flex-col">
             <p className="t-11 font-mono uppercase text-[var(--text-faint)]">
               Aucune notification récente
-            </p>
-            <p className="t-9 font-mono text-[var(--text-ghost)]">
-              Les emails et messages apparaîtront ici.
             </p>
           </div>
         </div>
