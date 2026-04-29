@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hearst OS — Mock Hospitality Cockpit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #FDFCF9;
+  --bg-soft: #F5F0E8;
+  --bg-rail: #FAF8F3;
+  --bg-card: #FFFFFF;
+  --bg-elev: #F7F4EE;
+  --mat-050: #FDFCFA;
+  --mat-100: #F5F0E8;
+  --mat-200: #EAE4D8;
+  --line: rgba(26,23,18,0.07);
+  --line-strong: rgba(26,23,18,0.12);
+  --line-bright: rgba(26,23,18,0.20);
+  --text: #1A1714;
+  --text-soft: rgba(26,23,20,0.88);
+  --text-muted: rgba(26,23,20,0.65);
+  --text-faint: rgba(26,23,20,0.42);
+  --text-ghost: rgba(26,23,20,0.24);
+  --cykan: #C9A84C;
+  --cykan-soft: rgba(201,168,76,0.12);
+  --cykan-line: rgba(201,168,76,0.40);
+  --ok: #B8952C;
+  --ok-soft: rgba(184,149,44,0.10);
+  --warn: #7A5C1E;
+  --warn-soft: rgba(122,92,30,0.10);
+  --crit: #3A3A3C;
+  --crit-soft: rgba(58,58,60,0.07);
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "DM Mono", "Geist Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ── */
+.mono { font-family: var(--font-mono); }
+.label-xs { font-family: var(--font-mono); font-size: 9px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; }
+.label-sm { font-family: var(--font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; }
+.label-md { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase; }
+.t-sm { font-size: 11px; line-height: 1.4; }
+.t-md { font-size: 13px; line-height: 1.5; }
+.t-lg { font-size: 15px; line-height: 1.5; }
+.t-xl { font-size: 18px; line-height: 1.3; font-weight: 500; }
+.t-2xl { font-size: 22px; line-height: 1.2; font-weight: 600; }
+.t-3xl { font-size: 28px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
+
+.muted { color: var(--text-muted); }
+.faint { color: var(--text-faint); }
+.gold { color: var(--cykan); }
+.ok-c { color: var(--ok); }
+.warn-c { color: var(--warn); }
+.crit-c { color: var(--crit); }
+
+/* ── Layout shell ── */
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── PulseBar ── */
+.pulsebar {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 24px;
+  background: var(--bg-rail);
+  border-bottom: 1px solid var(--line-strong);
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.pulsebar-left { display: flex; align-items: center; gap: 16px; }
+.pulsebar-center { flex: 1; display: flex; justify-content: center; }
+.pulsebar-right { display: flex; align-items: center; gap: 16px; }
+
+.pulse-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--cykan);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.18);
+}
+.pulse-dot.warn { background: var(--warn); box-shadow: 0 0 0 3px rgba(122,92,30,0.18); }
+.pulse-dot.crit { background: var(--crit); box-shadow: none; }
+
+.kpi-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-card);
+  border-radius: 3px;
+}
+.kpi-chip.up { border-color: var(--cykan-line); background: var(--cykan-soft); }
+.kpi-chip.alert { border-color: rgba(122,92,30,0.35); background: var(--warn-soft); }
+
+/* ── Main grid ── */
+.main-grid {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── TimelineRail ── */
+.timeline-rail {
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg-rail);
+  border-right: 1px solid var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.rail-section-header {
+  padding: 14px 16px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.rail-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.rail-item:hover { background: var(--mat-100); }
+.rail-item.active {
+  background: var(--cykan-soft);
+  border-right: 2px solid var(--cykan);
+}
+.rail-item-title { font-size: 12px; font-weight: 500; color: var(--text); }
+.rail-item-meta { font-size: 10px; color: var(--text-faint); margin-top: 2px; }
+
+/* ── Stage area ── */
+.stage-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* ── ContextRail ── */
+.context-rail {
+  width: 280px;
+  min-width: 280px;
+  background: var(--bg-rail);
+  border-left: 1px solid var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* ── Page sections ── */
+.page-section {
+  padding: 40px 48px;
+  border-bottom: 3px solid var(--mat-200);
+  position: relative;
+}
+.section-label {
+  position: absolute;
+  top: 16px; left: 48px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-ghost);
+}
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+.section-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 20px;
+}
+.card-sm {
+  background: var(--bg-card);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 14px 16px;
+}
+.card-gold {
+  background: var(--cykan-soft);
+  border: 1px solid var(--cykan-line);
+  border-radius: 4px;
+  padding: 20px;
+}
+
+/* ── KPI grid ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.kpi-block { background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 4px; padding: 16px; }
+.kpi-block.gold-border { border-color: var(--cykan-line); }
+.kpi-val { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; color: var(--text); }
+.kpi-delta { font-family: var(--font-mono); font-size: 10px; margin-top: 4px; }
+.kpi-delta.up { color: var(--ok); }
+.kpi-delta.down { color: var(--warn); }
+.kpi-delta.crit { color: var(--crit); }
+
+/* ── Heatmap ── */
+.heatmap-table { width: 100%; border-collapse: collapse; }
+.heatmap-table th, .heatmap-table td {
+  padding: 8px 10px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.heatmap-table th {
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background: var(--bg-soft);
+  font-weight: 500;
+}
+.heatmap-table td:first-child { text-align: left; font-weight: 500; font-family: var(--font-sans); font-size: 12px; }
+.cell-ok { background: rgba(201,168,76,0.08); color: var(--ok); }
+.cell-warn { background: rgba(122,92,30,0.08); color: var(--warn); font-weight: 600; }
+.cell-crit { background: rgba(58,58,60,0.07); color: var(--crit); font-weight: 700; }
+.cell-n { color: var(--text-muted); }
+.heatmap-table tr:hover td { background: var(--mat-100) !important; }
+
+/* ── Signal badges ── */
+.signal-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.signal-ok { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(184,149,44,0.25); }
+.signal-warn { background: var(--warn-soft); color: var(--warn); border: 1px solid rgba(122,92,30,0.25); }
+.signal-crit { background: var(--crit-soft); color: var(--crit); border: 1px solid rgba(58,58,60,0.20); }
+
+/* ── LLM narration box ── */
+.narration-box {
+  background: var(--bg-soft);
+  border-left: 3px solid var(--cykan);
+  padding: 16px 20px;
+  border-radius: 0 4px 4px 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-soft);
+}
+.narration-box .narration-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cykan);
+  margin-bottom: 8px;
+}
+
+/* ── Tabs ── */
+.tab-row { display: flex; gap: 2px; border-bottom: 1px solid var(--line-strong); margin-bottom: 20px; }
+.tab-btn {
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.12s;
+}
+.tab-btn.active { color: var(--cykan); border-bottom-color: var(--cykan); }
+.tab-btn:hover:not(.active) { color: var(--text-muted); }
+
+/* ── Stage selector ── */
+.stage-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 48px;
+  background: var(--bg-rail);
+  border-bottom: 1px solid var(--line-strong);
+}
+.stage-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-card);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.stage-btn.active {
+  background: var(--cykan-soft);
+  border-color: var(--cykan-line);
+  color: var(--cykan);
+}
+.stage-kbd {
+  font-size: 8px;
+  padding: 1px 4px;
+  border: 1px solid var(--line-bright);
+  border-radius: 2px;
+  color: var(--text-ghost);
+}
+.stage-btn.active .stage-kbd { border-color: var(--cykan-line); color: var(--cykan); opacity: 0.7; }
+
+/* ── Audio player ── */
+.audio-player {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--cykan-line);
+  border-radius: 4px;
+  padding: 14px 18px;
+}
+.audio-play-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--cykan);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.audio-waveform { flex: 1; display: flex; align-items: center; gap: 2px; height: 28px; }
+.audio-bar {
+  width: 3px; border-radius: 2px;
+  background: var(--cykan);
+  opacity: 0.6;
+  animation: wavepulse 1.2s ease-in-out infinite;
+}
+.audio-bar:nth-child(odd) { animation-delay: 0.2s; }
+.audio-bar:nth-child(3n) { animation-delay: 0.5s; }
+@keyframes wavepulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(0.5); }
+  50% { opacity: 0.9; transform: scaleY(1); }
+}
+
+/* ── SVG Map ── */
+.map-container { position: relative; background: var(--bg-soft); border-radius: 4px; border: 1px solid var(--line-strong); overflow: hidden; }
+
+/* ── City score bars ── */
+.city-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.city-rank { font-family: var(--font-mono); font-size: 11px; color: var(--text-ghost); width: 20px; text-align: right; }
+.city-name { font-size: 13px; font-weight: 500; width: 120px; }
+.city-bar-track { flex: 1; height: 4px; background: var(--mat-200); border-radius: 2px; }
+.city-bar-fill { height: 100%; border-radius: 2px; background: var(--cykan); }
+.city-score-val { font-family: var(--font-mono); font-size: 12px; color: var(--cykan); width: 36px; text-align: right; }
+
+/* ── Commandeur ── */
+.cmd-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--line-bright);
+  border-radius: 6px;
+  box-shadow: 0 20px 60px rgba(26,23,18,0.16), 0 4px 16px rgba(26,23,18,0.10);
+  max-width: 560px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.cmd-input-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.cmd-icon { color: var(--cykan); font-size: 16px; }
+.cmd-input { border: none; outline: none; background: none; font-size: 15px; flex: 1; color: var(--text); }
+.cmd-input::placeholder { color: var(--text-ghost); }
+.cmd-group-label { padding: 10px 18px 6px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-ghost); }
+.cmd-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
+.cmd-item.focused { background: var(--cykan-soft); }
+.cmd-item-icon { width: 28px; height: 28px; background: var(--bg-soft); border: 1px solid var(--line-strong); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.cmd-item.focused .cmd-item-icon { background: var(--cykan-soft); border-color: var(--cykan-line); }
+.cmd-item-text { font-size: 13px; color: var(--text); }
+.cmd-item-sub { font-size: 11px; color: var(--text-faint); }
+.cmd-kbd { margin-left: auto; font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; border: 1px solid var(--line-bright); border-radius: 3px; color: var(--text-ghost); }
+
+/* ── Mobile card ── */
+.mobile-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  padding: 16px;
+  width: 320px;
+  box-shadow: 0 4px 16px rgba(26,23,18,0.07);
+}
+
+/* ── Architect brief ── */
+.brief-stream {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-soft);
+  white-space: pre-wrap;
+}
+.brief-cursor { display: inline-block; width: 8px; height: 14px; background: var(--cykan); vertical-align: middle; animation: blink 0.9s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+.cabinet-card {
+  background: var(--bg-soft);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 14px;
+}
+
+/* ── Delta section ── */
+.delta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.delta-col-label {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 8px 14px; border-bottom: 1px solid var(--line-strong); margin-bottom: 12px;
+}
+.delta-col-label.before { color: var(--text-ghost); }
+.delta-col-label.after { color: var(--cykan); }
+
+/* ── Live service ── */
+.live-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.live-indicator { display: inline-flex; align-items: center; gap: 6px; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; animation: livepulse 2s ease-in-out infinite; }
+.live-dot.green { background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
+.live-dot.amber { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
+@keyframes livepulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* ── Separator ── */
+.section-sep {
+  text-align: center;
+  padding: 20px 0;
+  color: var(--text-ghost);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+}
+
+/* ── Progress bar ── */
+.progress-track { height: 3px; background: var(--mat-200); border-radius: 2px; }
+.progress-fill { height: 100%; border-radius: 2px; background: var(--cykan); }
+
+/* ── Divider ── */
+.divider { height: 1px; background: var(--line-strong); margin: 20px 0; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--mat-200); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 0 — INTRO                                                  -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div style="background:var(--bg-soft);border-bottom:2px solid var(--cykan-line);padding:28px 48px;">
+  <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:8px;">
+    <span class="label-xs" style="color:var(--cykan);">HEARST OS</span>
+    <span class="label-xs" style="color:var(--text-ghost);">MOCK — VERTICAL HOSPITALITY</span>
+    <span class="label-xs" style="color:var(--text-ghost);">PALETTE: OR CLASSIQUE · CRÈME · NOIR CENDRÉ</span>
+  </div>
+  <h1 class="t-3xl" style="color:var(--text);margin-bottom:8px;">Cockpit Hospitality Haut de Gamme</h1>
+  <p style="font-size:14px;color:var(--text-muted);max-width:640px;">
+    Plateforme de pilotage spécialisée pour groupes de restauration premium. 8 vues illustrées ci-dessous — du cockpit groupe temps réel au brief architecte en streaming, en passant par le scoring territorial et le briefing audio matinal.
+  </p>
+  <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+    <span class="signal-ok">PulseBar Groupe</span>
+    <span class="signal-ok">Stage 1 Cockpit</span>
+    <span class="signal-ok">Stage 8 Site</span>
+    <span class="signal-ok">Stage 3 Asset</span>
+    <span class="signal-ok">Stage E City Score</span>
+    <span class="signal-ok">Stage E Architect</span>
+    <span class="signal-ok">⌘K Commandeur</span>
+    <span class="signal-ok">Briefing Audio</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 1 — PULSEBAR HOSPITALITY                                  -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section" style="padding:24px 48px 28px;">
+  <span class="section-label">ZONE 1 · PULSEBAR — BARRE DE STATUT GROUPE</span>
+  <div style="margin-top:28px;">
+
+    <div class="pulsebar" style="position:relative;top:auto;border-radius:4px;border:1px solid var(--line-bright);">
+      <!-- Gauche -->
+      <div class="pulsebar-left">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="pulse-dot"></div>
+          <span class="label-xs" style="color:var(--text-faint);">SYSTEM_OK</span>
+        </div>
+        <button class="kpi-chip up">
+          <span class="label-xs" style="color:var(--text-faint);">CONNECTORS</span>
+          <span class="mono" style="font-size:11px;color:var(--ok);">08/12</span>
+        </button>
+        <button class="kpi-chip alert">
+          <div class="pulse-dot warn"></div>
+          <span class="label-xs" style="color:var(--warn);">2 SITES ALERTE</span>
+        </button>
+      </div>
+
+      <!-- Centre -->
+      <div class="pulsebar-center">
+        <span style="font-size:13px;font-weight:600;letter-spacing:-0.01em;color:var(--text);">Groupe Maison L. — Pulse Semaine S17</span>
+      </div>
+
+      <!-- Droite -->
+      <div class="pulsebar-right">
+        <div class="kpi-chip up">
+          <span class="label-xs" style="color:var(--text-faint);">REV·J</span>
+          <span class="mono" style="font-size:11px;color:var(--ok);">€48 240</span>
+          <span class="label-xs" style="color:var(--ok);">+6.2%</span>
+        </div>
+        <div class="kpi-chip">
+          <span class="label-xs" style="color:var(--text-faint);">LABOR</span>
+          <span class="mono" style="font-size:11px;color:var(--warn);">34.8%</span>
+        </div>
+        <div class="kpi-chip">
+          <span class="label-xs" style="color:var(--text-faint);">FOOD</span>
+          <span class="mono" style="font-size:11px;color:var(--text-muted);">28.3%</span>
+        </div>
+        <div class="kpi-chip up">
+          <span class="label-xs" style="color:var(--text-faint);">CASH·30J</span>
+          <span class="mono" style="font-size:11px;color:var(--ok);">€312k</span>
+        </div>
+        <span class="label-xs" style="color:var(--cykan);">RUN_ACTIVE</span>
+        <div class="pulse-dot"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 2 — STAGE 1 COCKPIT GROUPE                               -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section">
+  <span class="section-label">ZONE 2 · STAGE 1 (⌘1) — COCKPIT GROUPE</span>
+  <div style="margin-top:28px;">
+
+    <!-- Stage selector -->
+    <div class="stage-selector" style="padding:8px 0;margin-bottom:24px;background:none;border:none;border-bottom:1px solid var(--line-strong);">
+      <button class="stage-btn active"><span class="stage-kbd">⌘1</span> Cockpit</button>
+      <button class="stage-btn"><span class="stage-kbd">⌘2</span> Chat</button>
+      <button class="stage-btn"><span class="stage-kbd">⌘3</span> Asset</button>
+      <button class="stage-btn"><span class="stage-kbd">⌘4</span> Browser</button>
+      <button class="stage-btn"><span class="stage-kbd">⌘5</span> Meeting</button>
+      <button class="stage-btn"><span class="stage-kbd">⌘6</span> KG</button>
+      <button class="stage-btn"><span class="stage-kbd">⌘8</span> Site</button>
+      <button class="stage-btn" style="margin-left:auto;color:var(--cykan);border-color:var(--cykan-line);background:var(--cykan-soft);"><span class="stage-kbd" style="border-color:var(--cykan-line);color:var(--cykan);">⌘E</span> Expansion</button>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-grid" style="margin-bottom:28px;">
+      <div class="kpi-block gold-border">
+        <div class="label-xs muted">Revenu semaine</div>
+        <div class="kpi-val" style="color:var(--ok);">€337k</div>
+        <div class="kpi-delta up">↑ +5.4% vs S16</div>
+        <div class="kpi-delta up">↑ +12.1% vs N-1</div>
+      </div>
+      <div class="kpi-block">
+        <div class="label-xs muted">Labor ratio groupe</div>
+        <div class="kpi-val" style="color:var(--warn);">34.8%</div>
+        <div class="kpi-delta down">↑ +1.2pts vs cible 33%</div>
+        <div class="kpi-delta" style="color:var(--text-ghost);">Lyon + Nice en dérive</div>
+      </div>
+      <div class="kpi-block">
+        <div class="label-xs muted">Food cost ratio</div>
+        <div class="kpi-val">28.3%</div>
+        <div class="kpi-delta up">↓ −0.8pts vs S16</div>
+        <div class="kpi-delta" style="color:var(--text-ghost);">Cible : 27–30%</div>
+      </div>
+      <div class="kpi-block">
+        <div class="label-xs muted">EBITDA projeté M</div>
+        <div class="kpi-val" style="color:var(--ok);">€82k</div>
+        <div class="kpi-delta up">↑ Scénario médian</div>
+        <div class="kpi-delta" style="color:var(--text-ghost);">vs €74k M-1</div>
+      </div>
+      <div class="kpi-block">
+        <div class="label-xs muted">Sites actifs</div>
+        <div class="kpi-val">8<span style="font-size:14px;font-weight:400;color:var(--text-ghost);">/8</span></div>
+        <div class="kpi-delta" style="color:var(--warn);">▲ 2 sites alerte RH</div>
+        <div class="kpi-delta up">● 6 sites green</div>
+      </div>
+    </div>
+
+    <!-- Heatmap + Timeline side by side -->
+    <div style="display:grid;grid-template-columns:1fr 240px;gap:24px;align-items:start;">
+
+      <!-- Heatmap -->
+      <div>
+        <div class="label-sm muted" style="margin-bottom:12px;">HEAT-MAP SITES × KPIs — SEMAINE S17</div>
+        <table class="heatmap-table">
+          <thead>
+            <tr>
+              <th style="text-align:left;width:160px;">Site</th>
+              <th>Labor %</th>
+              <th>Food%</th>
+              <th>Rev·J (k€)</th>
+              <th>Couverts/j</th>
+              <th>Taux Occu.</th>
+              <th>Ticket moy.</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Paris 8e — Élysées</td>
+              <td class="cell-ok">31.2%</td>
+              <td class="cell-ok">27.1%</td>
+              <td class="cell-ok">9.4</td>
+              <td class="cell-ok">148</td>
+              <td class="cell-ok">82%</td>
+              <td class="cell-ok">€63</td>
+            </tr>
+            <tr>
+              <td>Paris 6e — Saint-Germain</td>
+              <td class="cell-ok">32.8%</td>
+              <td class="cell-ok">28.5%</td>
+              <td class="cell-ok">8.1</td>
+              <td class="cell-ok">124</td>
+              <td class="cell-ok">79%</td>
+              <td class="cell-ok">€65</td>
+            </tr>
+            <tr>
+              <td>Lyon 2e — Presqu'île</td>
+              <td class="cell-warn">37.4%</td>
+              <td class="cell-n">29.2%</td>
+              <td class="cell-n">5.2</td>
+              <td class="cell-warn">86</td>
+              <td class="cell-warn">61%</td>
+              <td class="cell-n">€60</td>
+            </tr>
+            <tr>
+              <td>Lyon 1er — Croix-Rousse</td>
+              <td class="cell-n">33.9%</td>
+              <td class="cell-ok">27.8%</td>
+              <td class="cell-ok">6.3</td>
+              <td class="cell-n">104</td>
+              <td class="cell-ok">76%</td>
+              <td class="cell-ok">€61</td>
+            </tr>
+            <tr>
+              <td>Bordeaux — Chartrons</td>
+              <td class="cell-ok">32.1%</td>
+              <td class="cell-ok">26.9%</td>
+              <td class="cell-ok">5.8</td>
+              <td class="cell-ok">96</td>
+              <td class="cell-ok">78%</td>
+              <td class="cell-n">€60</td>
+            </tr>
+            <tr>
+              <td>Nice — Vieux-Port</td>
+              <td class="cell-crit">39.1%</td>
+              <td class="cell-warn">31.2%</td>
+              <td class="cell-warn">4.1</td>
+              <td class="cell-crit">68</td>
+              <td class="cell-crit">52%</td>
+              <td class="cell-n">€60</td>
+            </tr>
+            <tr>
+              <td>Marseille — Panier</td>
+              <td class="cell-n">34.5%</td>
+              <td class="cell-warn">30.1%</td>
+              <td class="cell-n">4.8</td>
+              <td class="cell-n">80</td>
+              <td class="cell-n">70%</td>
+              <td class="cell-n">€60</td>
+            </tr>
+            <tr>
+              <td>Aix-en-Provence — Centre</td>
+              <td class="cell-ok">31.8%</td>
+              <td class="cell-ok">27.4%</td>
+              <td class="cell-ok">3.3</td>
+              <td class="cell-ok">54</td>
+              <td class="cell-ok">75%</td>
+              <td class="cell-ok">€61</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:16px;">
+          <span class="label-xs" style="color:var(--text-ghost);">Source : POS Lightspeed + Merge.dev HRIS · Actualisé il y a 4 min</span>
+          <span class="signal-warn" style="font-size:8px;padding:2px 8px;">2 SITES EN DÉRIVE</span>
+        </div>
+      </div>
+
+      <!-- TimelineRail métier (mini) -->
+      <div>
+        <div class="label-sm muted" style="margin-bottom:12px;">TIMELINE MÉTIER</div>
+        <div style="background:var(--bg-rail);border:1px solid var(--line-strong);border-radius:4px;overflow:hidden;">
+          <div style="padding:8px 12px;background:var(--cykan-soft);border-bottom:1px solid var(--cykan-line);">
+            <div class="label-xs" style="color:var(--cykan);">MAINTENANT</div>
+            <div class="rail-item-title" style="margin-top:4px;">Service déjeuner en cours</div>
+            <div class="rail-item-meta">8 sites · 680 couverts réels</div>
+          </div>
+          <div style="padding:8px 12px;border-bottom:1px solid var(--line);">
+            <div class="label-xs muted">AUJOURD'HUI</div>
+            <div style="margin-top:4px;">
+              <div class="rail-item-title" style="font-size:11px;margin-bottom:2px;">Pulse S17 généré</div>
+              <div class="rail-item-title" style="font-size:11px;margin-bottom:2px;">Alerte labor Lyon 2e</div>
+              <div class="rail-item-title" style="font-size:11px;">Payroll PayFit synchronisé</div>
+            </div>
+          </div>
+          <div style="padding:8px 12px;border-bottom:1px solid var(--line);">
+            <div class="label-xs muted">7 JOURS</div>
+            <div style="margin-top:4px;">
+              <div class="rail-item-title" style="font-size:11px;margin-bottom:2px;">Rapport Food Cost M04</div>
+              <div class="rail-item-title" style="font-size:11px;margin-bottom:2px;">Brief ouverture Nantes</div>
+              <div class="rail-item-title" style="font-size:11px;">Budget travaux v2 archivé</div>
+            </div>
+          </div>
+          <div style="padding:8px 12px;">
+            <div class="label-xs muted">ARCHIVE</div>
+            <div class="rail-item-meta" style="margin-top:4px;">124 assets · 38 rapports</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LLM Narration -->
+    <div class="narration-box" style="margin-top:24px;">
+      <div class="narration-label">ANALYSE LLM — AGENT DIRECTEUR EXPLOITATION</div>
+      La semaine S17 confirme la polarisation du groupe : les deux sites parisiens et Bordeaux maintiennent un labor ratio sain (31–33 %) grâce à une brigade calibrée sur 82 % d'occupation. Lyon 2e et Nice sont en situation de dérive préoccupante — la faible fréquentation hivernale amplifie mécaniquement le ratio à personnel constant. <strong style="color:var(--warn);">Recommandation urgente :</strong> activer le plan de sous-effectif partiel sur les services creux (lun–mar midi) à Lyon 2e ; envisager la fermeture hebdomadaire du lundi pour Nice jusqu'au pic estival (projection +14 couverts/j dès juin selon saisonnalité 3 ans).
+    </div>
+
+    <!-- Signals -->
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+      <span class="signal-crit">⚠ Labor Nice &gt;39% — Action requise</span>
+      <span class="signal-warn">▲ Food cost Lyon &gt;30%</span>
+      <span class="signal-ok">✓ Bordeaux EBITDA cible atteint</span>
+      <span class="signal-ok">✓ Revenue groupe +5.4% S/S</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 3 — STAGE 8 : VUE PAR ÉTABLISSEMENT                     -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section">
+  <span class="section-label">ZONE 3 · STAGE 8 (⌘8) — VUE ÉTABLISSEMENT — PARIS 8E ÉLYSÉES</span>
+  <div style="margin-top:28px;">
+
+    <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:20px;">
+      <h2 class="t-2xl">Paris 8e — Élysées</h2>
+      <span class="signal-ok">OUVERT · Service déjeuner</span>
+      <span class="label-xs" style="color:var(--text-ghost);margin-left:auto;">Gastro · 68 couverts · 580m² · Brigade 14</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;">
+
+      <!-- Live service -->
+      <div class="card">
+        <div class="label-sm muted" style="margin-bottom:12px;">SERVICE DÉJEUNER EN DIRECT</div>
+        <div class="live-row">
+          <div class="live-indicator"><div class="live-dot green"></div><span class="t-md">Couverts servis</span></div>
+          <span class="mono" style="font-size:18px;font-weight:700;color:var(--ok);">92</span>
+        </div>
+        <div class="live-row">
+          <span class="t-md muted">Couverts réservés</span>
+          <span class="mono" style="font-size:14px;">148 / 148</span>
+        </div>
+        <div class="live-row">
+          <span class="t-md muted">Ticket moyen estimé</span>
+          <span class="mono" style="font-size:14px;color:var(--ok);">€67</span>
+        </div>
+        <div class="live-row">
+          <span class="t-md muted">Rev. déjeuner projeté</span>
+          <span class="mono" style="font-size:14px;color:var(--cykan);">€9 916</span>
+        </div>
+        <div class="live-row">
+          <div class="live-indicator"><div class="live-dot amber"></div><span class="t-md">Heures supplémentaires</span></div>
+          <span class="mono" style="font-size:14px;color:var(--warn);">+3.2h</span>
+        </div>
+        <div class="live-row" style="border:none;">
+          <span class="t-md muted">POS Lightspeed · synchro</span>
+          <span class="label-xs" style="color:var(--ok);">LIVE</span>
+        </div>
+      </div>
+
+      <!-- KPIs site -->
+      <div>
+        <div class="card-sm" style="margin-bottom:12px;">
+          <div class="label-sm muted" style="margin-bottom:10px;">KPIs SEMAINE S17</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <div class="label-xs muted">Labor ratio</div>
+              <div style="font-size:20px;font-weight:700;color:var(--ok);">31.2%</div>
+              <div class="label-xs" style="color:var(--ok);">Cible ≤33% ✓</div>
+            </div>
+            <div>
+              <div class="label-xs muted">Food cost</div>
+              <div style="font-size:20px;font-weight:700;color:var(--ok);">27.1%</div>
+              <div class="label-xs" style="color:var(--ok);">Cible ≤29% ✓</div>
+            </div>
+            <div>
+              <div class="label-xs muted">Taux occupation</div>
+              <div style="font-size:20px;font-weight:700;">82%</div>
+              <div class="label-xs muted">+4pts vs S16</div>
+            </div>
+            <div>
+              <div class="label-xs muted">EBITDA mois projeté</div>
+              <div style="font-size:20px;font-weight:700;color:var(--cykan);">€28k</div>
+              <div class="label-xs" style="color:var(--ok);">Scénario optimiste</div>
+            </div>
+          </div>
+        </div>
+        <!-- Saisonnalité mini chart -->
+        <div class="card-sm">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div class="label-sm muted">SAISONNALITÉ 12 MOIS</div>
+            <span class="label-xs" style="color:var(--cykan);">Pearson météo : 0.72</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:4px;height:48px;">
+            <!-- Bars representing monthly revenue index -->
+            <div style="flex:1;background:var(--mat-200);border-radius:2px 2px 0 0;" title="Jan"></div>
+            <div style="flex:1;height:45%;background:var(--mat-200);border-radius:2px 2px 0 0;" title="Fév"></div>
+            <div style="flex:1;height:60%;background:var(--cykan);opacity:0.5;border-radius:2px 2px 0 0;" title="Mar"></div>
+            <div style="flex:1;height:80%;background:var(--cykan);opacity:0.65;border-radius:2px 2px 0 0;" title="Avr"></div>
+            <div style="flex:1;height:100%;background:var(--cykan);border-radius:2px 2px 0 0;" title="Mai"></div>
+            <div style="flex:1;height:95%;background:var(--cykan);opacity:0.9;border-radius:2px 2px 0 0;" title="Jun"></div>
+            <div style="flex:1;height:85%;background:var(--cykan);opacity:0.8;border-radius:2px 2px 0 0;" title="Jul"></div>
+            <div style="flex:1;height:70%;background:var(--cykan);opacity:0.65;border-radius:2px 2px 0 0;" title="Aoû"></div>
+            <div style="flex:1;height:88%;background:var(--cykan);opacity:0.8;border-radius:2px 2px 0 0;" title="Sep"></div>
+            <div style="flex:1;height:72%;background:var(--cykan);opacity:0.6;border-radius:2px 2px 0 0;" title="Oct"></div>
+            <div style="flex:1;height:50%;background:var(--mat-200);border-radius:2px 2px 0 0;" title="Nov"></div>
+            <div style="flex:1;height:38%;background:var(--mat-200);border-radius:2px 2px 0 0;opacity:0.6;" title="Déc"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span class="label-xs muted">Jan</span>
+            <span class="label-xs muted">Avr</span>
+            <span class="label-xs" style="color:var(--cykan);">Mai–Oct ↑</span>
+            <span class="label-xs muted">Déc</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brigade -->
+    <div class="card">
+      <div class="label-sm muted" style="margin-bottom:14px;">BRIGADE — PLANIFICATION vs RÉEL (MERGE.DEV × SKELLO)</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        <div>
+          <div class="label-xs muted">Chef de cuisine</div>
+          <div style="font-size:16px;font-weight:700;margin:4px 0;">1 <span style="font-size:12px;color:var(--text-ghost);">/ 1</span></div>
+          <div class="label-xs" style="color:var(--ok);">Conforme CCN HCR</div>
+        </div>
+        <div>
+          <div class="label-xs muted">Cuisiniers</div>
+          <div style="font-size:16px;font-weight:700;margin:4px 0;">5 <span style="font-size:12px;color:var(--text-ghost);">/ 5</span></div>
+          <div class="label-xs" style="color:var(--ok);">Ratio: 1/30 couverts ✓</div>
+        </div>
+        <div>
+          <div class="label-xs muted">Salle</div>
+          <div style="font-size:16px;font-weight:700;margin:4px 0;">7 <span style="font-size:12px;color:var(--text-ghost);">/ 6</span></div>
+          <div class="label-xs" style="color:var(--warn);">+1 extra ce soir</div>
+        </div>
+        <div>
+          <div class="label-xs muted">Total heures planif.</div>
+          <div style="font-size:16px;font-weight:700;margin:4px 0;">312h</div>
+          <div class="label-xs muted">dont +3.2h supp.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 4 — STAGE 3 : ASSET PULSE GROUPE                         -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section">
+  <span class="section-label">ZONE 4 · STAGE 3 (⌘3) — ASSET : PULSE GROUPE S17</span>
+  <div style="margin-top:28px;">
+
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:24px;">
+
+      <!-- Asset content -->
+      <div>
+        <div style="margin-bottom:20px;">
+          <div class="label-sm muted" style="margin-bottom:6px;">RAPPORT · GÉNÉRÉ PAR AGENT DIRECTEUR EXPLOITATION</div>
+          <h2 class="t-2xl" style="margin-bottom:4px;">Pulse Groupe — Semaine S17 2026</h2>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="label-xs muted">Mercredi 29 avril 2026</span>
+            <span style="color:var(--line-bright);">·</span>
+            <span class="label-xs muted">8 sites · 3 signaux</span>
+          </div>
+        </div>
+
+        <!-- Signals -->
+        <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+          <span class="signal-crit">CRITIQUE — Labor Nice +6.1pts</span>
+          <span class="signal-warn">VIGILANCE — Food Lyon +2.2pts</span>
+          <span class="signal-ok">POSITIF — Rev groupe +5.4%</span>
+        </div>
+
+        <!-- Narration excerpt -->
+        <div class="narration-box" style="margin-bottom:20px;">
+          <div class="narration-label">SYNTHÈSE EXÉCUTIVE — 4 MIN DE LECTURE</div>
+          La semaine S17 marque une <strong>progression solide du revenu groupe</strong> (+5,4% vs S16, +12,1% vs N-1), portée par les deux sites parisiens et Bordeaux qui maintiennent une fréquentation soutenue. L'exposition saisonnière de Lyon et Nice pèse néanmoins sur la performance RH globale…
+        </div>
+
+        <!-- Variant tabs -->
+        <div style="border-top:1px solid var(--line-strong);padding-top:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <span class="label-sm muted">FORMATS ALTERNATIFS</span>
+            <div style="display:flex;gap:6px;">
+              <button class="tab-btn active" style="padding:5px 12px;">
+                <span style="display:flex;align-items:center;gap:6px;">
+                  <span class="pulse-dot" style="width:5px;height:5px;box-shadow:none;"></span>Audio
+                </span>
+              </button>
+              <button class="tab-btn" style="padding:5px 12px;opacity:0.5;cursor:not-allowed;">Vidéo <span style="font-size:8px;">SOON</span></button>
+              <button class="tab-btn" style="padding:5px 12px;opacity:0.5;cursor:not-allowed;">Slides <span style="font-size:8px;">SOON</span></button>
+            </div>
+          </div>
+
+          <!-- Audio player -->
+          <div class="audio-player">
+            <div class="audio-play-btn">
+              <svg width="12" height="14" viewBox="0 0 12 14" fill="#1A1714"><path d="M0 0l12 7-12 7z"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:12px;font-weight:500;margin-bottom:4px;color:var(--text);">Pulse Groupe S17 — Narration ElevenLabs</div>
+              <div class="audio-waveform">
+                <div class="audio-bar" style="height:40%"></div>
+                <div class="audio-bar" style="height:70%"></div>
+                <div class="audio-bar" style="height:50%"></div>
+                <div class="audio-bar" style="height:90%"></div>
+                <div class="audio-bar" style="height:60%"></div>
+                <div class="audio-bar" style="height:80%"></div>
+                <div class="audio-bar" style="height:45%"></div>
+                <div class="audio-bar" style="height:75%"></div>
+                <div class="audio-bar" style="height:55%"></div>
+                <div class="audio-bar" style="height:85%"></div>
+                <div class="audio-bar" style="height:65%"></div>
+                <div class="audio-bar" style="height:40%"></div>
+                <div class="audio-bar" style="height:70%"></div>
+                <div class="audio-bar" style="height:50%"></div>
+                <div class="audio-bar" style="height:88%"></div>
+                <div class="audio-bar" style="height:62%"></div>
+                <div class="audio-bar" style="height:78%"></div>
+                <div class="audio-bar" style="height:48%"></div>
+                <div class="audio-bar" style="height:92%"></div>
+                <div class="audio-bar" style="height:58%"></div>
+                <div class="audio-bar" style="height:82%"></div>
+                <div class="audio-bar" style="height:44%"></div>
+                <div class="audio-bar" style="height:72%"></div>
+                <div class="audio-bar" style="height:52%"></div>
+                <div class="audio-bar" style="height:86%"></div>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <div class="label-xs" style="color:var(--ok);">PRÊT</div>
+              <div class="label-xs muted" style="margin-top:2px;">4 min 32 s</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ContextRail Asset -->
+      <div style="background:var(--bg-rail);border:1px solid var(--line-strong);border-radius:4px;padding:16px;font-size:12px;">
+        <div class="label-sm muted" style="margin-bottom:12px;">CONTEXTE ASSET</div>
+        <div style="margin-bottom:12px;">
+          <div class="label-xs muted">Type</div>
+          <div style="margin-top:3px;font-weight:500;">Rapport · Pulse hebdomadaire</div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="label-xs muted">Agents liés</div>
+          <div style="margin-top:3px;">Directeur Exploitation</div>
+          <div>Agent Chef RH</div>
+          <div>Agent Analyste F&B</div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <div class="label-xs muted">Sources utilisées</div>
+          <div style="margin-top:3px;">POS Lightspeed (8 sites)</div>
+          <div>Merge.dev PayFit HRIS</div>
+          <div>Open-Meteo (météo)</div>
+          <div>Vacances scolaires</div>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <div class="label-xs muted" style="margin-bottom:8px;">ACTIONS</div>
+          <button style="width:100%;padding:8px;background:var(--cykan);color:#1A1714;border:none;border-radius:3px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.10em;text-transform:uppercase;cursor:pointer;margin-bottom:6px;">Partager via Slack</button>
+          <button style="width:100%;padding:8px;background:var(--bg-card);border:1px solid var(--line-strong);border-radius:3px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.10em;text-transform:uppercase;cursor:pointer;color:var(--text-muted);">Exporter PDF</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 5 — STAGE E : CITY SCORE OPENING                         -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section">
+  <span class="section-label">ZONE 5 · STAGE EXPANSION (⌘E) — CITY SCORE OPENING</span>
+  <div style="margin-top:28px;">
+
+    <div style="margin-bottom:20px;">
+      <h2 class="t-2xl" style="margin-bottom:6px;">Scoring Territorial — Top Villes FR</h2>
+      <p class="t-md muted">Analyse de 42 villes françaises sur 8 axes · Cible : bistronomie gastro · Ticket moyen €55–70 · Sources : INSEE Sirene, Filosofi, OSM, Open-Meteo</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;">
+
+      <!-- France SVG map -->
+      <div class="map-container">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--line-strong);display:flex;align-items:center;justify-content:space-between;">
+          <span class="label-sm muted">CARTE FRANCE — SCORES PAR VILLE</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="label-xs muted">Score ≥80</span>
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--cykan);display:inline-block;box-shadow:0 0 0 3px rgba(201,168,76,0.2);"></span>
+            <span class="label-xs muted">Score 60–79</span>
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--ok);opacity:0.6;display:inline-block;"></span>
+            <span class="label-xs muted">Score &lt;60</span>
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--mat-200);display:inline-block;"></span>
+          </div>
+        </div>
+        <div style="padding:20px;background:var(--bg-soft);">
+          <svg viewBox="0 0 400 440" width="100%" style="display:block;">
+            <!-- Simplified France outline -->
+            <path d="M160,20 L220,18 L280,40 L310,80 L340,120 L350,160 L340,200 L320,240 L300,280 L280,310 L260,340 L230,360 L200,380 L170,370 L140,360 L110,340 L90,310 L70,280 L60,240 L50,200 L55,160 L70,120 L90,80 L120,45 Z"
+              fill="none" stroke="var(--line-bright)" stroke-width="1.5"/>
+            <!-- Départements simplified hint -->
+            <path d="M160,20 L220,18 L280,40 L310,80" fill="none" stroke="var(--line)" stroke-width="0.5"/>
+            <path d="M310,80 L340,120 L350,160 L340,200" fill="none" stroke="var(--line)" stroke-width="0.5"/>
+            <path d="M60,240 L55,160 L70,120 L90,80" fill="none" stroke="var(--line)" stroke-width="0.5"/>
+            <path d="M90,310 L60,240" fill="none" stroke="var(--line)" stroke-width="0.5"/>
+            <path d="M170,370 L140,360 L110,340 L90,310" fill="none" stroke="var(--line)" stroke-width="0.5"/>
+
+            <!-- City dots -->
+            <!-- Paris -->
+            <circle cx="205" cy="110" r="10" fill="var(--cykan)" opacity="0.9"/>
+            <circle cx="205" cy="110" r="16" fill="var(--cykan)" opacity="0.12"/>
+            <text x="225" y="114" fill="#1A1714" font-size="10" font-weight="600">Paris</text>
+            <text x="225" y="126" fill="rgba(26,23,20,0.55)" font-size="9">Score: 94</text>
+
+            <!-- Lyon -->
+            <circle cx="270" cy="220" r="8" fill="var(--cykan)" opacity="0.85"/>
+            <circle cx="270" cy="220" r="14" fill="var(--cykan)" opacity="0.10"/>
+            <text x="286" y="224" fill="#1A1714" font-size="10" font-weight="600">Lyon</text>
+            <text x="286" y="235" fill="rgba(26,23,20,0.55)" font-size="9">Score: 88</text>
+
+            <!-- Bordeaux -->
+            <circle cx="110" cy="280" r="7" fill="var(--ok)" opacity="0.8"/>
+            <circle cx="110" cy="280" r="12" fill="var(--ok)" opacity="0.10"/>
+            <text x="126" y="284" fill="#1A1714" font-size="10" font-weight="600">Bordeaux</text>
+            <text x="126" y="295" fill="rgba(26,23,20,0.55)" font-size="9">Score: 82</text>
+
+            <!-- Nantes -->
+            <circle cx="95" cy="185" r="7" fill="var(--ok)" opacity="0.75"/>
+            <text x="110" y="189" fill="#1A1714" font-size="10" font-weight="600">Nantes</text>
+            <text x="110" y="200" fill="rgba(26,23,20,0.55)" font-size="9">Score: 79</text>
+
+            <!-- Toulouse -->
+            <circle cx="180" cy="330" r="7" fill="var(--ok)" opacity="0.7"/>
+            <text x="195" y="334" fill="#1A1714" font-size="10" font-weight="600">Toulouse</text>
+            <text x="195" y="345" fill="rgba(26,23,20,0.55)" font-size="9">Score: 76</text>
+
+            <!-- Marseille -->
+            <circle cx="285" cy="330" r="6" fill="var(--warn)" opacity="0.7"/>
+            <text x="298" y="334" fill="#1A1714" font-size="10">Marseille</text>
+            <text x="298" y="345" fill="rgba(26,23,20,0.55)" font-size="9">Score: 71</text>
+
+            <!-- Nice -->
+            <circle cx="320" cy="305" r="5" fill="var(--warn)" opacity="0.6"/>
+            <text x="330" y="309" fill="#1A1714" font-size="10">Nice</text>
+
+            <!-- Strasbourg -->
+            <circle cx="330" cy="125" r="5" fill="var(--mat-200)" stroke="var(--line-bright)" stroke-width="1"/>
+            <text x="340" y="129" fill="rgba(26,23,20,0.55)" font-size="9">Stras.</text>
+
+            <!-- Rennes -->
+            <circle cx="95" cy="135" r="5" fill="var(--mat-200)" stroke="var(--line-bright)" stroke-width="1"/>
+            <text x="105" y="139" fill="rgba(26,23,20,0.55)" font-size="9">Rennes</text>
+
+            <!-- Cible indicator -->
+            <circle cx="148" cy="288" r="22" fill="none" stroke="var(--cykan)" stroke-width="1" stroke-dasharray="4 3" opacity="0.4"/>
+            <text x="115" y="316" fill="var(--cykan)" font-size="8" font-style="italic">Cible expansion</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- City ranking -->
+      <div>
+        <div class="label-sm muted" style="margin-bottom:12px;">CLASSEMENT TOP 10 VILLES</div>
+        <div>
+          <div class="city-row">
+            <span class="city-rank">01</span>
+            <span class="city-name" style="color:var(--cykan);font-weight:700;">Paris — Marais</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:94%"></div></div>
+            <span class="city-score-val">94</span>
+          </div>
+          <div class="city-row">
+            <span class="city-rank">02</span>
+            <span class="city-name" style="font-weight:600;">Lyon — Confluence</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:88%"></div></div>
+            <span class="city-score-val">88</span>
+          </div>
+          <div class="city-row">
+            <span class="city-rank">03</span>
+            <span class="city-name">Bordeaux — Chartrons</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:82%"></div></div>
+            <span class="city-score-val">82</span>
+          </div>
+          <div class="city-row">
+            <span class="city-rank">04</span>
+            <span class="city-name">Nantes — Bouffay</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:79%;background:var(--ok);"></div></div>
+            <span class="city-score-val" style="color:var(--ok);">79</span>
+          </div>
+          <div class="city-row">
+            <span class="city-rank">05</span>
+            <span class="city-name">Strasbourg — Centre</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:77%;background:var(--ok);"></div></div>
+            <span class="city-score-val" style="color:var(--ok);">77</span>
+          </div>
+          <div class="city-row">
+            <span class="city-rank">06</span>
+            <span class="city-name">Toulouse — Capitole</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:76%;background:var(--ok);"></div></div>
+            <span class="city-score-val" style="color:var(--ok);">76</span>
+          </div>
+          <div class="city-row">
+            <span class="city-rank">07</span>
+            <span class="city-name">Rennes — Thabor</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:73%;background:var(--warn);opacity:0.8;"></div></div>
+            <span class="city-score-val" style="color:var(--warn);">73</span>
+          </div>
+          <div class="city-row">
+            <span class="city-rank">08</span>
+            <span class="city-name">Aix-en-Provence</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:72%;background:var(--warn);opacity:0.8;"></div></div>
+            <span class="city-score-val" style="color:var(--warn);">72</span>
+          </div>
+          <div class="city-row">
+            <span class="city-rank">09</span>
+            <span class="city-name">Marseille — Endoume</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:71%;background:var(--warn);opacity:0.7;"></div></div>
+            <span class="city-score-val" style="color:var(--warn);">71</span>
+          </div>
+          <div class="city-row" style="border:none;">
+            <span class="city-rank">10</span>
+            <span class="city-name">Montpellier — Écusson</span>
+            <div class="city-bar-track"><div class="city-bar-fill" style="width:69%;background:var(--warn);opacity:0.6;"></div></div>
+            <span class="city-score-val" style="color:var(--warn);">69</span>
+          </div>
+        </div>
+
+        <!-- Axes -->
+        <div class="card-sm" style="margin-top:16px;">
+          <div class="label-sm muted" style="margin-bottom:10px;">8 AXES DE SCORING</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">
+            <span class="t-sm muted">01 CSP+ / revenu médian</span>
+            <span class="t-sm muted">05 Densité tertiaire</span>
+            <span class="t-sm muted">02 Concurrence haut de gamme</span>
+            <span class="t-sm muted">06 Foncier €/m²</span>
+            <span class="t-sm muted">03 Pouvoir d'achat touristique</span>
+            <span class="t-sm muted">07 Transport public</span>
+            <span class="t-sm muted">04 Croissance population</span>
+            <span class="t-sm muted">08 Foot traffic estimé</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 6 — STAGE E : ARCHITECT BRIEF GENERATOR                  -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section">
+  <span class="section-label">ZONE 6 · STAGE EXPANSION — ARCHITECT BRIEF GENERATOR</span>
+  <div style="margin-top:28px;">
+
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <h2 class="t-2xl" style="margin-bottom:4px;">Brief Architecte — Bordeaux Chartrons</h2>
+        <p class="t-md muted">Génération en cours · Style: Bistronomie Gastro · 380m² · 72 couverts · Ticket moyen €62</p>
+      </div>
+      <span class="signal-warn">STREAMING…</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 260px;gap:24px;align-items:start;">
+
+      <!-- Brief streaming -->
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line);">
+          <span class="label-sm muted">BRIEF PROGRAMME — EN COURS DE GÉNÉRATION</span>
+          <div class="pulse-dot" style="margin-left:auto;"></div>
+        </div>
+        <div class="brief-stream">PROGRAMME ARCHITECTURAL — BISTRONOMIE GASTRO
+Site : Bordeaux, Quartier des Chartrons
+Surface totale : 380 m² (R+0 + mezzanine 45m²)
+Ouverture cible : T1 2027
+
+══ RÉPARTITION FONCTIONNELLE ══
+  Salle principale (R+0)       142 m²   [37%]   56 couverts en banquette + free
+  Mezzanine lounge              45 m²   [12%]   16 couverts · privatisable
+  Cuisine ouverte               96 m²   [25%]   Ilot central visible · pass vitré
+  Office / Garde-manger         22 m²   [6%]    Chambre froide positive+négative
+  Bar comptoir                  18 m²   [5%]    11 tabourets · service cocktails
+  Cave à vins thématique        16 m²   [4%]    500 références · mur verre
+  Sanitaires ERP type N         24 m²   [6%]    PMR conforme · local entretien
+  Réserve / Vestiaires          17 m²   [4%]    dont vestiaire brigade 8m²
+
+══ AMBIANCE & RÉFÉRENCES ══
+  Tonalité : Warmth industrielle raffinée — pierre de taille Chartrons,
+  acier patiné, bois chêne massif, cuivre brossé. Éviter le « loft
+  parisien » générique. Ancrer dans le terroir girondin sans folklore.
+
+  Références mood :
+    — Septime (Paris 11e) : rigueur, sobriété, matière brute noble
+    — Prairial (Lyon 2e) : lumière naturelle, végétal discret, intimité
+    — Le Gabriel (Bordeaux) : monumentalité douce, héritage raisonné
+<div class="brief-cursor"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:64%;transition:width 1s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <span class="label-xs muted">Génération : 64% — Budget m² en cours…</span>
+          <span class="label-xs" style="color:var(--cykan);">Agent Architecte Virtuel</span>
+        </div>
+      </div>
+
+      <!-- Cabinet shortlist -->
+      <div>
+        <div class="label-sm muted" style="margin-bottom:12px;">3 CABINETS SHORTLISTÉS</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="cabinet-card">
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px;">Studio KO</div>
+            <div class="label-xs muted">Paris · International</div>
+            <div style="margin-top:8px;margin-bottom:8px;height:1px;background:var(--line);"></div>
+            <div class="t-sm muted" style="margin-bottom:4px;">References : Costes, Hôtel de Crillon, Café de Flore renovation.</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="label-xs muted">Honoraires estimés</span>
+              <span class="mono" style="font-size:11px;color:var(--cykan);">12–15% CAPEX</span>
+            </div>
+          </div>
+          <div class="cabinet-card" style="border-color:var(--cykan-line);background:var(--cykan-soft);">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <div style="font-size:12px;font-weight:700;">Humbert & Poyet</div>
+              <span class="signal-ok" style="font-size:8px;padding:1px 6px;">RECOMMANDÉ</span>
+            </div>
+            <div class="label-xs muted">Paris · Spécialiste Gastro</div>
+            <div style="margin-top:8px;margin-bottom:8px;height:1px;background:var(--cykan-line);"></div>
+            <div class="t-sm muted" style="margin-bottom:4px;">References : Le Grand Restaurant, L'Arpège rénovation, Maison Ruinart.</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="label-xs muted">Honoraires estimés</span>
+              <span class="mono" style="font-size:11px;color:var(--cykan);">10–13% CAPEX</span>
+            </div>
+          </div>
+          <div class="cabinet-card">
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px;">Dorothée Meilichzon</div>
+            <div class="label-xs muted">Paris · Atmosphère & Récit</div>
+            <div style="margin-top:8px;margin-bottom:8px;height:1px;background:var(--line);"></div>
+            <div class="t-sm muted" style="margin-bottom:4px;">References : Hôtel du Temps, Compagnie des Vins Surnaturels, Café Oberkampf.</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="label-xs muted">Honoraires estimés</span>
+              <span class="mono" style="font-size:11px;color:var(--cykan);">11–14% CAPEX</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget rapide -->
+        <div class="card-sm" style="margin-top:14px;">
+          <div class="label-sm muted" style="margin-bottom:10px;">BUDGET TRAVAUX ESTIMÉ</div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span class="t-sm muted">Gros œuvre / second œuvre</span>
+            <span class="mono" style="font-size:11px;">€760–820k</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span class="t-sm muted">Cuisine professionnelle</span>
+            <span class="mono" style="font-size:11px;">€180–240k</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span class="t-sm muted">Mobilier & aménagement</span>
+            <span class="mono" style="font-size:11px;">€120–160k</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span class="t-sm muted">Design fees (10–14%)</span>
+            <span class="mono" style="font-size:11px;">€106–170k</span>
+          </div>
+          <div style="height:1px;background:var(--line-strong);margin-bottom:8px;"></div>
+          <div style="display:flex;justify-content:space-between;">
+            <span class="t-sm" style="font-weight:600;">Total estimé</span>
+            <span class="mono" style="font-size:12px;font-weight:700;color:var(--cykan);">€1.17–1.39M</span>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+            <span class="label-xs muted">soit €3 080–3 660 / m²</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 7 — COMMANDEUR ⌘K                                        -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section" style="background:var(--bg-soft);">
+  <span class="section-label">ZONE 7 · COMMANDEUR ⌘K — PALETTE HOSPITALITY</span>
+  <div style="margin-top:28px;">
+
+    <div class="cmd-modal">
+      <div class="cmd-input-row">
+        <span class="cmd-icon">◈</span>
+        <input type="text" class="cmd-input" value="labor ratio lyon" readonly />
+        <span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;color:var(--text-ghost);padding:2px 6px;border:1px solid var(--line-bright);border-radius:2px;">ESC</span>
+      </div>
+
+      <div class="cmd-group-label">RAPPORTS HOSPITALITY</div>
+
+      <div class="cmd-item focused">
+        <div class="cmd-item-icon">📊</div>
+        <div>
+          <div class="cmd-item-text">Labor Ratio — Lyon 2e Presqu'île</div>
+          <div class="cmd-item-sub">Semaine S17 · 37.4% · Dérive +4.4pts · Action requise</div>
+        </div>
+        <span class="cmd-kbd">⏎</span>
+      </div>
+      <div class="cmd-item">
+        <div class="cmd-item-icon">📈</div>
+        <div>
+          <div class="cmd-item-text">Saisonnalité — Groupe Maison L.</div>
+          <div class="cmd-item-sub">36 mois · Corrélation météo Pearson 0.72</div>
+        </div>
+        <span class="cmd-kbd">⏎</span>
+      </div>
+      <div class="cmd-item">
+        <div class="cmd-item-icon">🍽</div>
+        <div>
+          <div class="cmd-item-text">Food Cost Ratio — Tous sites · M04</div>
+          <div class="cmd-item-sub">Moyen groupe 28.3% · Lyon au-dessus cible</div>
+        </div>
+        <span class="cmd-kbd">⏎</span>
+      </div>
+
+      <div class="cmd-group-label">EXPANSION & OUVERTURE</div>
+
+      <div class="cmd-item">
+        <div class="cmd-item-icon">🗺</div>
+        <div>
+          <div class="cmd-item-text">City Score Opening — Bordeaux Chartrons</div>
+          <div class="cmd-item-sub">Score 82/100 · Recommandé pour ouverture T1 2027</div>
+        </div>
+        <span class="cmd-kbd">⏎</span>
+      </div>
+      <div class="cmd-item">
+        <div class="cmd-item-icon">🏗</div>
+        <div>
+          <div class="cmd-item-text">Brief Architecte — Générer pour Bordeaux</div>
+          <div class="cmd-item-sub">380m² · Bistronomie gastro · Budget €1.1–1.4M</div>
+        </div>
+        <span class="cmd-kbd">⏎</span>
+      </div>
+      <div class="cmd-item">
+        <div class="cmd-item-icon">📐</div>
+        <div>
+          <div class="cmd-item-text">Layout Efficiency — Paris 8e Élysées</div>
+          <div class="cmd-item-sub">580m² · 68 couverts · Conformité ERP type N ✓</div>
+        </div>
+        <span class="cmd-kbd">⏎</span>
+      </div>
+
+      <div class="cmd-group-label">ACTIONS RAPIDES</div>
+
+      <div class="cmd-item">
+        <div class="cmd-item-icon">🔔</div>
+        <div>
+          <div class="cmd-item-text">Envoyer alerte RH — Nice équipe</div>
+          <div class="cmd-item-sub">Labor 39.1% · Slack → chef-de-site-nice</div>
+        </div>
+        <span class="cmd-kbd">⏎</span>
+      </div>
+      <div class="cmd-item" style="border-bottom:none;">
+        <div class="cmd-item-icon">🎙</div>
+        <div>
+          <div class="cmd-item-text">Générer audio — Pulse S17 groupe</div>
+          <div class="cmd-item-sub">ElevenLabs · Voix Xavier · ~4 min 30 s</div>
+        </div>
+        <span class="cmd-kbd">⏎</span>
+      </div>
+
+      <div style="padding:10px 18px;border-top:1px solid var(--line);display:flex;gap:16px;">
+        <span class="label-xs muted">↑↓ Naviguer</span>
+        <span class="label-xs muted">⏎ Sélectionner</span>
+        <span class="label-xs muted">⌘K Ouvrir</span>
+        <span class="label-xs" style="color:var(--cykan);margin-left:auto;">MODE HOSPITALITY</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 8 — BRIEFING AUDIO MATINAL                               -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section">
+  <span class="section-label">ZONE 8 · BRIEFING AUDIO MATINAL — LIVRAISON SLACK</span>
+  <div style="margin-top:28px;">
+
+    <div style="margin-bottom:20px;">
+      <h2 class="t-2xl" style="margin-bottom:6px;">Briefing 6h30 — Mercredi 29 Avril</h2>
+      <p class="t-md muted">Livraison automatique via Slack · Canal #hearst-groupe-maison-l · ElevenLabs TTS · 2 formats : synthèse groupe + par site</p>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+
+      <!-- Mobile card 1 — Groupe -->
+      <div class="mobile-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--cykan-soft);border:1px solid var(--cykan-line);display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:14px;">◈</span>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;">Hearst OS</div>
+            <div style="font-size:10px;color:var(--text-faint);">Aujourd'hui à 6:30</div>
+          </div>
+          <span class="signal-ok" style="margin-left:auto;font-size:8px;padding:1px 6px;">NOUVEAU</span>
+        </div>
+
+        <div style="font-size:12px;color:var(--text-soft);line-height:1.6;margin-bottom:14px;">
+          <strong style="color:var(--text);">📊 Pulse Groupe — Mercredi 29/04</strong><br/>
+          Revenu J-1 : <strong style="color:var(--ok);">€48 240</strong> (+6.2% / lun)<br/>
+          Labor groupe : <span style="color:var(--warn);">34.8%</span> — Nice en alerte<br/>
+          Food cost : 28.3% — stable<br/>
+          <em style="color:var(--text-faint);">Narration complète → audio ↓</em>
+        </div>
+
+        <div class="audio-player" style="background:var(--bg-soft);">
+          <div class="audio-play-btn" style="width:30px;height:30px;">
+            <svg width="10" height="12" viewBox="0 0 10 12" fill="#1A1714"><path d="M0 0l10 6-10 6z"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:11px;font-weight:500;margin-bottom:3px;color:var(--text);">Pulse Groupe — Voix Xavier</div>
+            <div class="audio-waveform" style="height:20px;">
+              <div class="audio-bar" style="height:40%"></div>
+              <div class="audio-bar" style="height:75%"></div>
+              <div class="audio-bar" style="height:50%"></div>
+              <div class="audio-bar" style="height:90%"></div>
+              <div class="audio-bar" style="height:60%"></div>
+              <div class="audio-bar" style="height:80%"></div>
+              <div class="audio-bar" style="height:45%"></div>
+              <div class="audio-bar" style="height:70%"></div>
+              <div class="audio-bar" style="height:55%"></div>
+              <div class="audio-bar" style="height:85%"></div>
+              <div class="audio-bar" style="height:65%"></div>
+              <div class="audio-bar" style="height:40%"></div>
+              <div class="audio-bar" style="height:75%"></div>
+              <div class="audio-bar" style="height:50%"></div>
+              <div class="audio-bar" style="height:88%"></div>
+              <div class="audio-bar" style="height:62%"></div>
+            </div>
+          </div>
+          <span class="label-xs muted">4:32</span>
+        </div>
+      </div>
+
+      <!-- Mobile card 2 — Site Nice -->
+      <div class="mobile-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--crit-soft);border:1px solid rgba(58,58,60,0.20);display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:14px;">◈</span>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;">Hearst OS</div>
+            <div style="font-size:10px;color:var(--text-faint);">Aujourd'hui à 6:31</div>
+          </div>
+          <span class="signal-crit" style="margin-left:auto;font-size:8px;padding:1px 6px;">ALERTE</span>
+        </div>
+
+        <div style="font-size:12px;color:var(--text-soft);line-height:1.6;margin-bottom:14px;">
+          <strong style="color:var(--crit);">⚠ Site Nice — Action requise</strong><br/>
+          Labor J-1 : <strong style="color:var(--crit);">39.1%</strong> (cible ≤33%)<br/>
+          Couverts : 68 (52% occupation)<br/>
+          Recommandation : fermeture lundi + plan sous-effectif mars–mai<br/>
+          <em style="color:var(--text-faint);">Détail RH → audio ↓</em>
+        </div>
+
+        <div class="audio-player" style="background:var(--bg-soft);">
+          <div class="audio-play-btn" style="width:30px;height:30px;background:var(--crit);">
+            <svg width="10" height="12" viewBox="0 0 10 12" fill="#FDFCF9"><path d="M0 0l10 6-10 6z"/></svg>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:11px;font-weight:500;margin-bottom:3px;color:var(--text);">Alerte RH Nice — Voix Xavier</div>
+            <div class="audio-waveform" style="height:20px;">
+              <div class="audio-bar" style="height:60%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:85%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:50%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:75%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:90%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:65%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:80%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:55%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:70%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:88%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:62%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:78%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:48%;background:var(--crit);"></div>
+              <div class="audio-bar" style="height:92%;background:var(--crit);"></div>
+            </div>
+          </div>
+          <span class="label-xs muted">2:18</span>
+        </div>
+      </div>
+
+      <!-- Context box -->
+      <div style="flex:1;min-width:220px;">
+        <div class="card-gold" style="margin-bottom:16px;">
+          <div class="label-sm" style="color:var(--cykan);margin-bottom:8px;">BRIEFING MATINAL CONFIGURÉ</div>
+          <div class="t-sm muted" style="line-height:1.7;">
+            Livraison automatique chaque matin à 6h30 · Slack #hearst-groupe-maison-l et DM chef-de-site respectif · ElevenLabs voix Xavier · Langue : FR
+          </div>
+        </div>
+        <div class="card-sm">
+          <div class="label-sm muted" style="margin-bottom:10px;">PROCHAINES LIVRAISONS</div>
+          <div class="live-row">
+            <span class="t-sm muted">Jeudi 30/04 — 6:30</span>
+            <span class="label-xs" style="color:var(--ok);">Planifié</span>
+          </div>
+          <div class="live-row">
+            <span class="t-sm muted">Vendredi 01/05 — Férié</span>
+            <span class="label-xs" style="color:var(--text-ghost);">Suspendu</span>
+          </div>
+          <div class="live-row" style="border:none;">
+            <span class="t-sm muted">Lundi 04/05 — 6:30</span>
+            <span class="label-xs" style="color:var(--ok);">Planifié</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!--  ZONE 9 — DELTA AVANT / APRÈS                                  -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<div class="page-section" style="background:var(--bg-soft);">
+  <span class="section-label">ZONE 9 · DELTA — AVANT / APRÈS LA SPÉCIALISATION HOSPITALITY</span>
+  <div style="margin-top:28px;">
+    <h2 class="t-2xl" style="margin-bottom:6px;">Ce que change la verticalisation</h2>
+    <p class="t-md muted" style="margin-bottom:28px;">Hearst OS générique vs Hearst OS Hospitality — même plateforme, même architecture cockpit, domaine métier complet.</p>
+
+    <div class="delta-grid">
+      <!-- Avant -->
+      <div>
+        <div class="delta-col-label before">AVANT — Hearst OS générique</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="card-sm" style="opacity:0.7;">
+            <div class="t-md" style="margin-bottom:4px;">Stage 1 — Cockpit générique</div>
+            <div class="t-sm muted">KPIs abstrats (usage API, tokens consommés, crédits). Aucun KPI métier.</div>
+          </div>
+          <div class="card-sm" style="opacity:0.7;">
+            <div class="t-md" style="margin-bottom:4px;">Connecteurs Composio uniquement</div>
+            <div class="t-sm muted">Slack, Notion, Gmail, Calendar, Drive. Zéro POS, zéro planning RH resto, zéro POS FR.</div>
+          </div>
+          <div class="card-sm" style="opacity:0.7;">
+            <div class="t-md" style="margin-bottom:4px;">Assets : texte brut + audio</div>
+            <div class="t-sm muted">Rapports génériques sans contexte business. Narration LLM sans données sectorielles.</div>
+          </div>
+          <div class="card-sm" style="opacity:0.7;">
+            <div class="t-md" style="margin-bottom:4px;">TimelineRail : conversations</div>
+            <div class="t-sm muted">Thread-centric uniquement. Pas de timeline événements opérationnels.</div>
+          </div>
+          <div class="card-sm" style="opacity:0.7;">
+            <div class="t-md" style="margin-bottom:4px;">Commandeur ⌘K — commandes système</div>
+            <div class="t-sm muted">Naviguer, ouvrir, créer thread. Aucune action métier hospitality.</div>
+          </div>
+          <div class="card-sm" style="opacity:0.7;">
+            <div class="t-md" style="margin-bottom:4px;">Pas de vue "site"</div>
+            <div class="t-sm muted">Aucun Stage par établissement. Impossible de piloter site par site.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Après -->
+      <div>
+        <div class="delta-col-label after">APRÈS — Hearst OS Hospitality</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="card-gold">
+            <div class="t-md" style="margin-bottom:4px;font-weight:600;color:var(--text);">Stage 1 — Cockpit Groupe</div>
+            <div class="t-sm" style="color:var(--text-muted);">Heat-map 8 sites × 6 KPIs (labor, food cost, couverts, taux occupation, ticket, EBITDA). Narration LLM contextuelle. Alerte temps réel POS+RH.</div>
+          </div>
+          <div class="card-gold">
+            <div class="t-md" style="margin-bottom:4px;font-weight:600;color:var(--text);">3 couches connecteurs</div>
+            <div class="t-sm" style="color:var(--text-muted);">Composio (SaaS génériques) + Capability providers (POS Lightspeed/Tiller, HRIS Merge.dev, Météo Open-Meteo, INSEE) + Custom tools (laborRatio, foodCost, cityScore).</div>
+          </div>
+          <div class="card-gold">
+            <div class="t-md" style="margin-bottom:4px;font-weight:600;color:var(--text);">Assets polymorphes métier</div>
+            <div class="t-sm" style="color:var(--text-muted);">Pulse hebdo, Labor Ratio, Food Cost, City Score, Architect Brief — narration audio ElevenLabs, variants slides + vidéo Phase B.</div>
+          </div>
+          <div class="card-gold">
+            <div class="t-md" style="margin-bottom:4px;font-weight:600;color:var(--text);">TimelineRail métier</div>
+            <div class="t-sm" style="color:var(--text-muted);">Services en cours, alertes, rapports générés, événements opérationnels (payroll sync, POS anomalie, ouverture de site). Now / Today / 7j / Archive.</div>
+          </div>
+          <div class="card-gold">
+            <div class="t-md" style="margin-bottom:4px;font-weight:600;color:var(--text);">Commandeur ⌘K Hospitality</div>
+            <div class="t-sm" style="color:var(--text-muted);">Labor Ratio, Saisonnalité, City Score, Brief Architecte, Alerte RH, Générer audio — commandes métier directes avec contexte site/groupe.</div>
+          </div>
+          <div class="card-gold">
+            <div class="t-md" style="margin-bottom:4px;font-weight:600;color:var(--text);">Stage 8 — Vue par établissement</div>
+            <div class="t-sm" style="color:var(--text-muted);">POS live, brigade Merge.dev×Skello, saisonnalité 12 mois, KPIs site, occupation en temps réel. Un stage par site, navigable depuis le cockpit groupe.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer summary -->
+    <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--line-strong);display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+      <div>
+        <div class="label-xs muted">Rapports hospitality</div>
+        <div style="font-size:20px;font-weight:700;color:var(--cykan);">22</div>
+      </div>
+      <div>
+        <div class="label-xs muted">Nouveaux connecteurs à créer</div>
+        <div style="font-size:20px;font-weight:700;">14</div>
+      </div>
+      <div>
+        <div class="label-xs muted">Agents spécialisés</div>
+        <div style="font-size:20px;font-weight:700;">5</div>
+      </div>
+      <div>
+        <div class="label-xs muted">Migrations DB requises</div>
+        <div style="font-size:20px;font-weight:700;">5</div>
+      </div>
+      <div style="margin-left:auto;max-width:340px;">
+        <div class="narration-box" style="font-size:12px;padding:12px 16px;">
+          <div class="narration-label" style="font-size:8px;margin-bottom:6px;">FONDATION — BLOCKER P0</div>
+          Ajouter <code style="background:var(--mat-200);padding:1px 4px;border-radius:2px;font-size:11px;">site_id</code> sur toutes les tables hospitality_* avant toute chose. Sans ça, impossible de comparer sites et aucun rapport multi-établissement n'est calculable.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<div style="padding:20px 48px;border-top:1px solid var(--line-strong);background:var(--bg-rail);display:flex;align-items:center;justify-content:space-between;">
+  <span class="label-xs muted">HEARST OS · VERTICAL HOSPITALITY · MOCK 2026-04-29</span>
+  <span class="label-xs muted">Or classique #C9A84C · Crème #FDFCF9 · Noir cendré #3A3A3C · Satoshi / DM Mono</span>
+</div>
+
+</div><!-- .shell -->
+</body>
+</html>
