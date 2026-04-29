@@ -118,6 +118,7 @@
   --height-strip-pulse: 72px;       /* PulseStrip : bandeau de status */
   --width-nav-tile-min: 60px;       /* RightPanelNav : largeur min d'une tuile */
   --width-mini-chart: 96px;         /* AssetMiniChart : largeur du SVG (hauteur = --space-10) */
+  --width-title-max: 480px;         /* TopBar / breadcrumbs : titre tronqué au max */
 
   /* ─── ChatInput ─────────────────────────────────────────────── */
   --height-input-min: var(--space-8);  /* textarea : hauteur min 1 ligne = 32px */

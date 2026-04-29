@@ -54,7 +54,11 @@ export function TopBar() {
         >
           <GhostIconMenu className="w-5 h-5" />
         </button>
-        <span className="t-13 font-medium tracking-tight text-[var(--text)] truncate" title={title}>
+        <span
+          className="t-13 font-medium tracking-tight text-[var(--text)] truncate"
+          style={{ maxWidth: "var(--width-title-max)" }}
+          title={title}
+        >
           {title}
         </span>
       </div>

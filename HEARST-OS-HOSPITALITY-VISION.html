@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HEARST OS — Hospitality Vision</title>
+
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,300&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #000;
+      --bg-card: #0a0a0c;
+      --bg-elev: #101013;
+      --cykan: #2DD4BF;
+      --cykan-soft: rgba(45, 212, 191, 0.08);
+      --cykan-line: rgba(45, 212, 191, 0.18);
+      --text: rgba(255, 255, 255, 0.95);
+      --text-muted: rgba(255, 255, 255, 0.6);
+      --text-ghost: rgba(255, 255, 255, 0.28);
+      --line: rgba(255, 255, 255, 0.06);
+      --line-strong: rgba(255, 255, 255, 0.12);
+      --warn: #F59E0B;
+      --crit: #EF4444;
+      --ok: #10B981;
+      --font-mono: 'Geist Mono', monospace;
+      --font-sans: 'Satoshi', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .grid-bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        linear-gradient(rgba(45, 212, 191, 0.012) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(45, 212, 191, 0.012) 1px, transparent 1px);
+      background-size: 80px 80px;
+      mask-image: radial-gradient(circle at 50% 30%, black, transparent 75%);
+    }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 80px 40px; position: relative; z-index: 1; }
+
+    /* ── HERO ── */
+    .hero { padding: 60px 0 100px; border-bottom: 1px solid var(--line); margin-bottom: 80px; }
+    .kicker {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.4em;
+      color: var(--cykan); text-transform: uppercase; margin-bottom: 32px;
+    }
+    .hero h1 {
+      font-size: clamp(56px, 9vw, 128px);
+      font-weight: 900; letter-spacing: -0.05em; line-height: 0.92;
+      margin-bottom: 32px;
+    }
+    .hero h1 .accent {
+      color: var(--cykan);
+      display: block;
+    }
+    .hero .lead {
+      font-size: 22px; color: var(--text-muted); max-width: 720px;
+      font-weight: 300; line-height: 1.5;
+    }
+    .meta-bar {
+      margin-top: 64px; display: flex; gap: 48px; flex-wrap: wrap;
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-ghost);
+    }
+    .meta-bar span strong { color: var(--text); font-weight: 500; }
+
+    /* ── SECTION ── */
+    section { margin-bottom: 96px; }
+    .section-tag {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.4em;
+      color: var(--cykan); text-transform: uppercase;
+      padding-bottom: 16px; border-bottom: 1px solid var(--cykan-line);
+      margin-bottom: 48px; display: block;
+    }
+    h2 {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 800; letter-spacing: -0.03em; line-height: 1;
+      margin-bottom: 32px;
+    }
+    h2 .num {
+      color: var(--text-ghost); font-family: var(--font-mono);
+      font-weight: 300; font-size: 0.45em; vertical-align: top;
+      margin-right: 24px; letter-spacing: 0;
+    }
+    h3 {
+      font-size: 22px; font-weight: 700;
+      margin-bottom: 16px; letter-spacing: -0.01em;
+    }
+    h4 {
+      font-size: 14px; font-weight: 600;
+      color: var(--cykan); margin-bottom: 12px;
+      font-family: var(--font-mono); letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    p { color: var(--text-muted); margin-bottom: 16px; max-width: 780px; }
+    p strong { color: var(--text); font-weight: 600; }
+    p em { color: var(--cykan); font-style: normal; }
+
+    /* ── PROBLEM CARD ── */
+    .problem-block {
+      background: var(--bg-card); border: 1px solid var(--line);
+      padding: 48px; border-radius: 4px; position: relative;
+    }
+    .problem-block::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+      background: var(--cykan);
+    }
+    .problem-quote {
+      font-size: 28px; font-weight: 500; line-height: 1.35;
+      letter-spacing: -0.015em; color: var(--text);
+    }
+    .problem-quote span { color: var(--text-muted); font-weight: 300; }
+
+    /* ── PERSONAS ── */
+    .personas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .persona { background: var(--bg); padding: 32px; }
+    .persona-role { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; color: var(--cykan); text-transform: uppercase; margin-bottom: 12px; }
+    .persona-name { font-size: 20px; font-weight: 700; margin-bottom: 12px; letter-spacing: -0.01em; }
+    .persona-pain { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+    .persona-pain strong { color: var(--text); }
+
+    /* ── PILLARS ── */
+    .pillars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    @media (max-width: 900px) { .pillars { grid-template-columns: 1fr 1fr; } }
+    .pillar {
+      padding: 32px 24px; border: 1px solid var(--line);
+      background: var(--bg-card); border-radius: 4px; position: relative;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .pillar:hover { border-color: var(--cykan-line); background: var(--bg-elev); }
+    .pillar-num { font-family: var(--font-mono); font-size: 10px; color: var(--text-ghost); letter-spacing: 0.3em; }
+    .pillar-name { font-size: 28px; font-weight: 800; margin: 12px 0 16px; letter-spacing: -0.02em; line-height: 1; }
+    .pillar-name .accent { color: var(--cykan); }
+    .pillar-desc { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+    .pillar-count { margin-top: 24px; font-family: var(--font-mono); font-size: 11px; color: var(--cykan); letter-spacing: 0.15em; }
+
+    /* ── REPORTS ── */
+    .reports-intro { margin-bottom: 64px; }
+    .pillar-section { margin-bottom: 80px; }
+    .pillar-header {
+      display: flex; align-items: baseline; gap: 24px;
+      margin-bottom: 32px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .pillar-header .pillar-tag {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.3em; color: var(--cykan); text-transform: uppercase;
+    }
+    .pillar-header h3.pillar-title {
+      font-size: 36px; font-weight: 800; letter-spacing: -0.02em;
+      margin-bottom: 0;
+    }
+    .pillar-header .count {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-ghost); letter-spacing: 0.2em; margin-left: auto;
+    }
+
+    .report {
+      border: 1px solid var(--line); background: var(--bg-card);
+      padding: 32px 36px; margin-bottom: 16px; border-radius: 4px;
+      transition: border-color 0.3s ease;
+    }
+    .report:hover { border-color: var(--cykan-line); }
+    .report-head {
+      display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .report-id {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--cykan); letter-spacing: 0.2em;
+    }
+    .report-title {
+      font-size: 22px; font-weight: 700; letter-spacing: -0.015em;
+    }
+    .report-meta {
+      margin-left: auto; display: flex; gap: 16px;
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-ghost); letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .report-meta .freq { color: var(--cykan); }
+    .report-body {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;
+      margin-top: 16px;
+    }
+    @media (max-width: 800px) { .report-body { grid-template-columns: 1fr; } }
+    .report-cell h5 {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-ghost); letter-spacing: 0.25em;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .report-cell p {
+      font-size: 13px; color: var(--text-muted); line-height: 1.55; margin: 0;
+    }
+    .report-cell p code {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text); background: var(--cykan-soft);
+      padding: 2px 6px; border-radius: 3px;
+    }
+    .report-example {
+      margin-top: 24px; padding-top: 24px;
+      border-top: 1px solid var(--line);
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--cykan); line-height: 1.7;
+    }
+    .report-example::before {
+      content: 'OUTPUT — '; color: var(--text-ghost); letter-spacing: 0.2em;
+    }
+
+    /* ── SCENARIOS ── */
+    .scenario {
+      padding: 48px; border: 1px solid var(--line);
+      background: var(--bg-card); border-radius: 4px; margin-bottom: 24px;
+      position: relative;
+    }
+    .scenario::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+      background: var(--cykan); opacity: 0.4;
+    }
+    .scenario-time {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--cykan); letter-spacing: 0.3em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .scenario-title {
+      font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+      margin-bottom: 24px; line-height: 1.2;
+    }
+    .scenario-body { font-size: 16px; color: var(--text-muted); line-height: 1.7; max-width: 760px; }
+    .scenario-body strong { color: var(--text); }
+    .scenario-body .voice { color: var(--cykan); font-style: italic; }
+
+    /* ── DATA STACK ── */
+    .stack-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    }
+    @media (max-width: 800px) { .stack-grid { grid-template-columns: 1fr; } }
+    .stack-col {
+      padding: 32px; background: var(--bg-card); border: 1px solid var(--line);
+      border-radius: 4px;
+    }
+    .stack-col h4 { color: var(--cykan); margin-bottom: 16px; }
+    .stack-col ul { list-style: none; }
+    .stack-col li {
+      font-size: 13px; padding: 10px 0; border-bottom: 1px solid var(--line);
+      display: flex; justify-content: space-between; gap: 12px;
+    }
+    .stack-col li:last-child { border-bottom: none; }
+    .stack-col li .name { color: var(--text); font-weight: 500; }
+    .stack-col li .tag {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-ghost); letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .stack-col li .tag.ok { color: var(--ok); }
+    .stack-col li .tag.warn { color: var(--warn); }
+
+    /* ── AGENTS ── */
+    .agents { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .agent {
+      padding: 28px; border: 1px solid var(--line); background: var(--bg-card);
+      border-radius: 4px;
+    }
+    .agent-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .agent-id { font-family: var(--font-mono); font-size: 10px; color: var(--cykan); letter-spacing: 0.15em; margin-bottom: 16px; }
+    .agent-skills { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── RECO ── */
+    .reco-list { counter-reset: reco; }
+    .reco {
+      padding: 32px 0; border-bottom: 1px solid var(--line);
+      display: grid; grid-template-columns: 80px 1fr; gap: 32px;
+      counter-increment: reco;
+    }
+    .reco:last-child { border-bottom: none; }
+    .reco::before {
+      content: counter(reco, decimal-leading-zero);
+      font-family: var(--font-mono); font-size: 32px;
+      color: var(--cykan); font-weight: 300;
+    }
+    .reco h4 { font-family: var(--font-sans); font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.015em; text-transform: none; margin-bottom: 12px; }
+    .reco p { font-size: 14px; max-width: 680px; }
+
+    /* ── ROADMAP ── */
+    .timeline {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+      background: var(--line); border: 1px solid var(--line);
+    }
+    @media (max-width: 800px) { .timeline { grid-template-columns: 1fr 1fr; } }
+    .quarter { background: var(--bg); padding: 32px 24px; }
+    .quarter-tag { font-family: var(--font-mono); font-size: 10px; color: var(--cykan); letter-spacing: 0.25em; margin-bottom: 8px; }
+    .quarter-name { font-size: 18px; font-weight: 700; margin-bottom: 16px; letter-spacing: -0.01em; }
+    .quarter ul { list-style: none; }
+    .quarter li { font-size: 12px; color: var(--text-muted); padding: 6px 0; line-height: 1.4; border-top: 1px solid var(--line); }
+    .quarter li:first-child { border-top: none; }
+
+    /* ── DELTA ── */
+    .delta-block { background: var(--bg-card); border: 1px solid var(--line); padding: 48px; border-radius: 4px; }
+    .delta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+    @media (max-width: 700px) { .delta-row { grid-template-columns: 1fr; } }
+    .delta-col h4 { margin-bottom: 16px; }
+    .delta-col.no h4 { color: var(--crit); }
+    .delta-col.yes h4 { color: var(--ok); }
+    .delta-col ul { list-style: none; }
+    .delta-col li { padding: 10px 0; font-size: 14px; color: var(--text-muted); border-top: 1px solid var(--line); }
+    .delta-col li:first-child { border-top: none; }
+    .delta-col li::before { content: '— '; color: var(--text-ghost); }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 120px; padding-top: 48px; border-top: 1px solid var(--line);
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em;
+      color: var(--text-ghost); text-transform: uppercase;
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <main class="wrap">
+
+    <!-- ──────────── HERO ──────────── -->
+    <header class="hero">
+      <div class="kicker">Vision Document · v1.0 · 2026-04-29</div>
+      <h1>
+        Hospitality<br>
+        <span class="accent">Intelligence.</span>
+      </h1>
+      <p class="lead">
+        Une plateforme unique pour piloter, optimiser et faire grandir un groupe de
+        restauration haut de gamme. Pas un BI. Pas un ERP. Un système d'exploitation
+        qui parle, alerte, projette — et qui livre les rapports au format texte,
+        audio, vidéo ou slides selon le moment.
+      </p>
+      <div class="meta-bar">
+        <span><strong>22</strong> rapports propriétaires</span>
+        <span><strong>5</strong> agents IA spécialisés</span>
+        <span><strong>16</strong> connecteurs hospitality</span>
+        <span><strong>4</strong> piliers métier</span>
+      </div>
+    </header>
+
+    <!-- ──────────── PROBLÈME ──────────── -->
+    <section>
+      <span class="section-tag">01 · Pourquoi maintenant</span>
+      <h2><span class="num">01</span>Le problème.</h2>
+
+      <div class="problem-block">
+        <p class="problem-quote">
+          Un groupe premium pilote 8 restaurants avec <span>20 outils déconnectés</span> :
+          Pennylane pour la compta, Combo pour les plannings, Tiller pour l'encaissement,
+          Foodvisor pour les fiches techniques, <span>et Excel pour tout le reste.</span>
+          Aucune vue intégrée. Les arbitrages d'ouverture se font sur intuition + un PDF
+          d'étude immo facturé 30 000 €. Le directeur d'expé reçoit l'écart de food cost
+          <span>trois semaines après le service.</span>
+        </p>
+      </div>
+
+      <p style="margin-top: 32px; font-size: 17px; max-width: 820px;">
+        Hearst OS hospitality fusionne ces vingt outils en une couche cognitive unique.
+        Chaque rapport est <strong>ingéré, calculé, narré, projeté</strong> — disponible
+        à la demande dans la stage centrale, en briefing audio à 7h, ou en présentation
+        vidéo générée pour le board. <em>L'analyse devient instantanée et omniprésente.</em>
+      </p>
+    </section>
+
+    <!-- ──────────── PERSONAS ──────────── -->
+    <section>
+      <span class="section-tag">02 · Pour qui</span>
+      <h2><span class="num">02</span>Sept rôles. Une plateforme.</h2>
+      <p style="margin-bottom: 48px;">
+        La plateforme s'adresse à toute la chaîne décisionnelle d'un groupe premium —
+        du briefing matinal du manager de site à l'arbitrage d'expansion du DG.
+        Chaque persona reçoit ce qui lui est utile, dans le format adapté.
+      </p>
+
+      <div class="personas">
+        <div class="persona">
+          <div class="persona-role">Stratégie</div>
+          <div class="persona-name">Le Directeur Général</div>
+          <p class="persona-pain"><strong>Veut</strong> arbitrer l'expansion, anticiper les chocs, comparer ses sites entre eux. Reçoit aujourd'hui des PDF en retard.</p>
+        </div>
+        <div class="persona">
+          <div class="persona-role">Opérations</div>
+          <div class="persona-name">Le Directeur d'Exploitation</div>
+          <p class="persona-pain"><strong>Veut</strong> détecter les dérives temps réel sur 8 sites simultanés. Aujourd'hui : passe son lundi à consolider Excel.</p>
+        </div>
+        <div class="persona">
+          <div class="persona-role">Finance</div>
+          <div class="persona-name">Le DAF</div>
+          <p class="persona-pain"><strong>Veut</strong> EBITDA par site, cash 30j, projections fiables sur l'ouverture #9. Aujourd'hui : modèle Excel fragile.</p>
+        </div>
+        <div class="persona">
+          <div class="persona-role">Cuisine</div>
+          <div class="persona-name">Le Chef Exécutif</div>
+          <p class="persona-pain"><strong>Veut</strong> savoir quel plat est star vs dog, food cost par fiche, écart inventaire. Aujourd'hui : reporting hebdo manuel.</p>
+        </div>
+        <div class="persona">
+          <div class="persona-role">Humain</div>
+          <div class="persona-name">La RH Groupe</div>
+          <p class="persona-pain"><strong>Veut</strong> turnover par site, dérives heures sup, conformité HCR-CCN, plan de recrutement. Aujourd'hui : multiples HRIS.</p>
+        </div>
+        <div class="persona">
+          <div class="persona-role">Expansion</div>
+          <div class="persona-name">Le Real Estate Manager</div>
+          <p class="persona-pain"><strong>Veut</strong> scorer 30 villes, négocier un bail, brief un architecte. Aujourd'hui : étude immo 30k€ par site.</p>
+        </div>
+        <div class="persona">
+          <div class="persona-role">Terrain</div>
+          <div class="persona-name">Le Manager de Site</div>
+          <p class="persona-pain"><strong>Veut</strong> son briefing du jour avant ouverture : météo, réservations, brigade, ruptures. Aujourd'hui : il bricole.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── PILIERS ──────────── -->
+    <section>
+      <span class="section-tag">03 · Architecture produit</span>
+      <h2><span class="num">03</span>Quatre piliers.</h2>
+      <p style="margin-bottom: 48px;">
+        Toute fonctionnalité hospitality s'inscrit dans un de ces quatre piliers.
+        Cette taxonomie guide l'ordre de livraison et la priorité des données à brancher.
+      </p>
+
+      <div class="pillars">
+        <div class="pillar">
+          <div class="pillar-num">P · 01</div>
+          <h3 class="pillar-name"><span class="accent">Pilotage.</span></h3>
+          <p class="pillar-desc">Voir l'existant en temps réel. Performance par site, par jour, par persona. Briefing matinal et pulse hebdo.</p>
+          <div class="pillar-count">7 RAPPORTS</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">P · 02</div>
+          <h3 class="pillar-name"><span class="accent">Optimisation.</span></h3>
+          <p class="pillar-desc">Détecter les dérives, prescrire les actions. Right-sizing brigade, menu engineering, alerte rupture.</p>
+          <div class="pillar-count">5 RAPPORTS</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">P · 03</div>
+          <h3 class="pillar-name"><span class="accent">Expansion.</span></h3>
+          <p class="pillar-desc">Préparer l'ouverture #N+1. City scoring, deep dive de quartier, brief architecte, projection 5 ans.</p>
+          <div class="pillar-count">7 RAPPORTS</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">P · 04</div>
+          <h3 class="pillar-name"><span class="accent">Conformité.</span></h3>
+          <p class="pillar-desc">Sécuriser le légal, le bail, l'ERP, l'hygiène. Veille HCR, audit loyer, accessibilité.</p>
+          <div class="pillar-count">3 RAPPORTS</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── CATALOGUE RAPPORTS ──────────── -->
+    <section>
+      <span class="section-tag">04 · Catalogue détaillé</span>
+      <h2><span class="num">04</span>Vingt-deux rapports.</h2>
+      <p class="reports-intro" style="font-size: 17px; max-width: 820px;">
+        Chaque rapport est défini par <strong>quatre éléments</strong> : son
+        <em>déclencheur</em> (cron, événement, demande), ses <em>sources</em>
+        (capability providers + tables internes), son <em>output</em>
+        (chiffres clés + narration LLM + signal severity) et son
+        <em>format de livraison</em> (texte focal, audio briefing, slides board, vidéo pitch).
+      </p>
+
+      <!-- ===== PILIER 1 : PILOTAGE ===== -->
+      <div class="pillar-section">
+        <div class="pillar-header">
+          <span class="pillar-tag">PILIER 01</span>
+          <h3 class="pillar-title">Pilotage temps réel</h3>
+          <span class="count">07 RAPPORTS</span>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P01.01</span>
+            <span class="report-title">Briefing Matinal</span>
+            <div class="report-meta"><span>Manager site</span><span class="freq">Quotidien · 7h</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>POS (réservations J), Open-Meteo, planning RH (Combo), stock J-1, événements locaux (OSM).</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Couverts probables = base saison × <code>weatherFactor</code> × <code>eventFactor</code>. Brigade target vs planning. Top 5 ruptures stock.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Audio 90s (ElevenLabs) + push Slack du site + asset texte focal.</p></div>
+          </div>
+          <div class="report-example">"Bonjour, ce mardi 12 mai. 18°C ensoleillé, terrasse activable. 78 couverts probables (+12% vs moyenne mardi). Brigade complète. Attention : rupture probable sur Saint-Pierre, prévoir alternatif."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P01.02</span>
+            <span class="report-title">Pulse Groupe</span>
+            <div class="report-meta"><span>DG · DEX</span><span class="freq">Hebdo · Lundi 8h</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Tous les sites : revenue, payroll, food cost, EBITDA estimé, NPS, turnover.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Heat-map 8 sites × 6 KPIs. Détection d'écart > 2σ vs benchmark interne. Narration LLM des 3 signaux forts.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Slides 10 pages (variant Phase B) + audio 4min + asset texte.</p></div>
+          </div>
+          <div class="report-example">"3 signaux cette semaine : Lyon 2e décroche en labor ratio (38% vs 32% groupe). Bordeaux Chartrons +14% revenue grâce à la météo. Paris 8e perd son chef de partie pâtisserie — turnover à 22%."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P01.03</span>
+            <span class="report-title">Labor Ratio Live</span>
+            <div class="report-meta"><span>DEX · RH</span><span class="freq">Quotidien · streaming</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Combo (heures pointées), POS (revenue temps réel), conventions HCR-CCN.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p><code>labor_cost / revenue</code> par service, comparé seuil par style (gastro 35%, bistro 28%, brasserie 25%). Alerte si > seuil 3 services consécutifs.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Tile cockpit live + alerte Slack si breach.</p></div>
+          </div>
+          <div class="report-example">"⚠ Lyon 2e — labor ratio 41% sur 3 services consécutifs. Cause probable : 2 extras non couverts par revenue. Recommandation : revoir planning vendredi."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P01.04</span>
+            <span class="report-title">Food Cost Hebdo</span>
+            <div class="report-meta"><span>Chef · DEX</span><span class="freq">Hebdo · Lundi</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Achats (Metro, Pomona via parser invoices), inventaire, ventes POS, fiches techniques (Foodvisor).</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p><code>(stock_début + achats − stock_fin) / CA HT food</code>. Comparé fiches techniques théoriques. Top 5 dérives par fiche.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset texte focal + Slack chef. Audio optionnel.</p></div>
+          </div>
+          <div class="report-example">"Food cost réel S19 : 31.4% (cible 28%). Dérive principale : Risotto truffe (théo 24% / réel 38%) — vérifier grammage truffe."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P01.05</span>
+            <span class="report-title">Cash Position 30 jours</span>
+            <div class="report-meta"><span>DAF · DG</span><span class="freq">Hebdo · Vendredi</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Compta (Pennylane), encaissements POS, échéancier fournisseurs, payroll, loyers.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Cash projeté 30j par site et consolidé. Détection point bas. Sensibilité ±10% revenue.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset spreadsheet + slides board.</p></div>
+          </div>
+          <div class="report-example">"Cash groupe au 30/05 projeté : 412k€. Point bas : 18/05 à 187k€ (échéance loyer Q2 + TVA). Marge confort : 47k€."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P01.06</span>
+            <span class="report-title">Heat-map Sites</span>
+            <div class="report-meta"><span>DG</span><span class="freq">Mensuel</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Toutes tables hospitality_* + benchmarks internes 36 mois.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Matrice 8 sites × 12 KPIs (revenue, EBITDA, food cost, labor, NPS, turnover, ticket moyen, occupancy, RevPAS, COGS, opex, marge nette). Score composite par site.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Slides board + asset texte narré + KG view.</p></div>
+          </div>
+          <div class="report-example">"Top performer mois : Bordeaux Chartrons (score 87/100). Sous-performer : Marseille Vieux-Port (52/100) — 4 KPIs en zone rouge."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P01.07</span>
+            <span class="report-title">Audit Saisonnalité</span>
+            <div class="report-meta"><span>DEX · DAF</span><span class="freq">Mensuel</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Revenue 36 mois par site, météo historique (Open-Meteo), vacances scolaires, événements locaux.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Index saison = revenue mensuel / médiane 3 ans. Corrélation Pearson revenue × température, précipitations, week-ends, vacances. Élasticité par variable.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset texte + graphes + audio synthèse.</p></div>
+          </div>
+          <div class="report-example">"Paris 8e : élasticité +1°C = +2.4% revenue (terrasse). Élasticité pluie = −7% revenue. Pic absolu : juillet (index 132). Creux : février (index 78)."</div>
+        </div>
+      </div>
+
+      <!-- ===== PILIER 2 : OPTIMISATION ===== -->
+      <div class="pillar-section">
+        <div class="pillar-header">
+          <span class="pillar-tag">PILIER 02</span>
+          <h3 class="pillar-title">Optimisation prescriptive</h3>
+          <span class="count">05 RAPPORTS</span>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P02.01</span>
+            <span class="report-title">Right-Sizing Brigade</span>
+            <div class="report-meta"><span>RH · DEX</span><span class="freq">Mensuel</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Headcount par site, occupancy moyenne, ratios HCR par style (1 cuisinier / 25 couverts gastro, 1/40 bistro, 1/60 brasserie).</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Brigade target = couverts moy × ratio style × coef saison. Comparé brigade réelle. Recommandation : recruter / redéployer / former.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset texte + plan d'action en 3 actions max.</p></div>
+          </div>
+          <div class="report-example">"Lyon 2e : sur-staffé de 1.4 ETP cuisine. Sous-staffé de 0.8 ETP salle. Action proposée : redéployer extra cuisine vers salle vendredi-samedi."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P02.02</span>
+            <span class="report-title">Wastage Detection</span>
+            <div class="report-meta"><span>Chef</span><span class="freq">Hebdo</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Mouvements stock (entrées achats / sorties ventes POS).</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Écart inventaire théorique vs réel par item. Top 5 fuites en valeur. Cause probable LLM (vol, perte, sur-portionnement, casse).</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset texte + push chef.</p></div>
+          </div>
+          <div class="report-example">"Top fuite S19 : foie gras (−380€). Probable sur-portionnement amuse-bouche. Truffe (−210€) — possible vol. À investiguer."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P02.03</span>
+            <span class="report-title">Menu Engineering Matrix</span>
+            <div class="report-meta"><span>Chef · DEX</span><span class="freq">Trimestriel</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Ventes POS par plat, fiches techniques (coût matière), prix de vente.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Matrice 4 quadrants (star / plowhorse / puzzle / dog) sur axes <code>marge × popularité</code>. Recommandation par quadrant.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Slides board + asset focal.</p></div>
+          </div>
+          <div class="report-example">"Stars (à mettre en avant) : risotto truffe, tartare. Dogs (à retirer) : tartelette champignons (3 ventes/sem, marge 42%). Puzzles (à repromouvoir) : Saint-Pierre."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P02.04</span>
+            <span class="report-title">Weather Impact Forecast</span>
+            <div class="report-meta"><span>Manager site · DEX</span><span class="freq">Hebdo · Jeudi</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Forecast météo 7j (Open-Meteo), élasticité historique du site.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Couverts projetés J+1 à J+7 = base saison × <code>weatherFactor</code>. Brigade ajustée. Suggestion menu (terrasse, plats chauds, etc.).</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Tile cockpit + push Slack manager.</p></div>
+          </div>
+          <div class="report-example">"Week-end Paris 8e : samedi 22°C ensoleillé → +18% couverts probables, terrasse pleine. Dimanche pluie → −9%. Anticiper brigade samedi."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P02.05</span>
+            <span class="report-title">Recipe Margin Alert</span>
+            <div class="report-meta"><span>Chef · DAF</span><span class="freq">Continu</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Cours matières (mercuriales fournisseurs), fiches techniques, prix de vente.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Recalcul food cost % par fiche à chaque variation cours > 5%. Alerte si marge tombe sous seuil (typique 70% gastro).</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Notification + asset détaillé.</p></div>
+          </div>
+          <div class="report-example">"⚠ Truffe noire +22% sur 30j. Risotto truffe : marge tombée de 76% à 68%. Repricer ou réduire grammage."</div>
+        </div>
+      </div>
+
+      <!-- ===== PILIER 3 : EXPANSION ===== -->
+      <div class="pillar-section">
+        <div class="pillar-header">
+          <span class="pillar-tag">PILIER 03 · LE DIFFÉRENCIATEUR</span>
+          <h3 class="pillar-title">Expansion · Nouvelles ouvertures</h3>
+          <span class="count">07 RAPPORTS</span>
+        </div>
+        <p style="margin-bottom: 32px; max-width: 820px;">
+          <strong>C'est ici que Hearst OS justifie son positionnement premium.</strong>
+          Aucun outil concurrent ne couple les données opérationnelles, territoriales,
+          immobilières et architecturales à ce niveau. Chaque rapport remplace un PDF
+          consultant facturé entre 5 000 et 30 000 €.
+        </p>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P03.01</span>
+            <span class="report-title">City Score Opening</span>
+            <div class="report-meta"><span>DG · RE Manager</span><span class="freq">Ad-hoc</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>INSEE Filosofi (revenu médian, CSP), Sirene (concurrence), api-adresse, OSM (transport, bureaux), Foursquare (resto premium radius).</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Score composite 8 axes : densité CSP+, revenu médian, concurrence haut de gamme, densité tertiaire, transport, foncier €/m², pricing-power touristique, croissance population.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Top 20 villes ranked + map + slides board.</p></div>
+          </div>
+          <div class="report-example">"Top 5 villes pour bistronomie ticket 65€ : Bordeaux (87), Lyon (84), Nantes (79), Aix (78), Annecy (76). Marseille (62) sous-évalué — concurrence faible mais pouvoir d'achat moyen."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P03.02</span>
+            <span class="report-title">Neighborhood Deep Dive</span>
+            <div class="report-meta"><span>RE Manager</span><span class="freq">Ad-hoc</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>INSEE IRIS (carreau 200m), OSM POI, Google Places concurrence, base événements culturels.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Heat-map 10 quartiers d'une ville sur 8 axes. Profil chalandise par IRIS. Concurrence directe localisée.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Carte interactive + slides board.</p></div>
+          </div>
+          <div class="report-example">"Bordeaux : Chartrons 91/100 (CSP++ + tertiaire + faible concurrence). St-Pierre 78 (touriste). Bastide 64 (en gentrification, opportunité 18-24 mois)."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P03.03</span>
+            <span class="report-title">Location Deep Dive</span>
+            <div class="report-meta"><span>RE Manager · DG</span><span class="freq">Ad-hoc</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Cadastre, géoportail-urbanisme, OSM Overpass (POI radius 800m), Google Places, Bureauxlocaux (offre commerciale active).</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Adresse précise → flux piéton estimé (POI density × transport × bureau), mix chalandise 800m, concurrence directe radius 300m, contraintes PLU, ERP type N feasibility, accessibilité PMR.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset texte + plans annotés + slides.</p></div>
+          </div>
+          <div class="report-example">"24 rue X, Bordeaux : flux piéton estimé 8 200/jour. 47 bureaux à <500m. 3 concurrents directs <300m (1 gastro, 2 brasseries). PLU : ZAC zone UC, gabarit OK. ERP type N : capacité max 89 couverts validée."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P03.04</span>
+            <span class="report-title">M² Budget by Style</span>
+            <div class="report-meta"><span>RE · Architecte · DAF</span><span class="freq">Ad-hoc</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Base coûts BTP interne (alimentée par devis clients réels), Batichiffrage (optionnel), grille designers signature.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Style + surface + ville → fourchette €/m² décomposée : gros œuvre / second œuvre / CVC / cuisine pro / mobilier / signature designer / honoraires architecte.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset spreadsheet + narration + slides board.</p></div>
+          </div>
+          <div class="report-example">"Bistronomie 180m² Bordeaux centre : budget travaux 480-620k€. Cuisine pro 95-130k€. Mobilier 80-110k€. Designer signature (Meilichzon-tier) +120k€. Total 775k-980k€."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P03.05</span>
+            <span class="report-title">Layout Efficiency</span>
+            <div class="report-meta"><span>Architecte · DEX</span><span class="freq">Ad-hoc</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Surface totale, style cible, normes ERP type N (encodées en règles Zod).</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Split obligatoire : cuisine 25-35% selon style, salle 45-55%, sanitaires/réserve/vestiaires 15-20%. Couverts max théoriques (1.8m² par couvert gastro, 1.4 bistro, 1.1 brasserie). Conformité ERP automatique.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Plan schématique + asset texte + RFP architecte.</p></div>
+          </div>
+          <div class="report-example">"180m² gastro : cuisine 54m² (30%), salle 99m² (55% → 55 couverts max à 1.8m²/couvert), sanitaires + réserve 27m² (15%). 2 issues secours requises. PMR conforme."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P03.06</span>
+            <span class="report-title">Architect Brief Generator</span>
+            <div class="report-meta"><span>DG · RE Manager</span><span class="freq">Ad-hoc</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Style cible, ticket visé, références client, annuaire architectes signature (Studio KO, Humbert & Poyet, Meilichzon, Joseph Dirand…).</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Génération brief structuré : programme, ambiance, contraintes, budget, références mood. Shortlist 3 cabinets compatibles. RFP comparable.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Brief PDF + variant slides (Phase B) + variant vidéo pitch (Runway, Phase B).</p></div>
+          </div>
+          <div class="report-example">"Brief généré : 'Bistronomie haut de gamme 180m² Bordeaux Chartrons. Ambiance terrazzo + bois clair + laiton. Références : Beefbar Paris (Humbert & Poyet), Drouant. Budget 850k€. Délai 8 mois.' Shortlist : Humbert & Poyet, Friedmann & Versace, Atelier Ramoisy."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P03.07</span>
+            <span class="report-title">Financial Projection 5Y</span>
+            <div class="report-meta"><span>DAF · DG</span><span class="freq">Ad-hoc</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Site projeté (m², seats, ticket, ouverture), benchmarks groupe internes, courbe de ramp-up sectorielle.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Revenue projeté = seats × occupancy_par_jour-saison × ticket × 365. Coûts : labor (ratio style) + COGS (food cost cible) + rent + énergie + marketing. EBITDA / cash break-even mensuel sur 60 mois. 3 scénarios pessimiste/médian/optimiste.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset spreadsheet + slides board + variant vidéo pitch.</p></div>
+          </div>
+          <div class="report-example">"Site Bordeaux 180m² : break-even cash mois 14 (médian), mois 22 (pessimiste). EBITDA Y3 : 480k€ médian. ROI investissement total (1.2M€) : 6.2 ans médian."</div>
+        </div>
+      </div>
+
+      <!-- ===== PILIER 4 : CONFORMITÉ ===== -->
+      <div class="pillar-section">
+        <div class="pillar-header">
+          <span class="pillar-tag">PILIER 04</span>
+          <h3 class="pillar-title">Conformité & légal</h3>
+          <span class="count">03 RAPPORTS</span>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P04.01</span>
+            <span class="report-title">Legal Pulse HCR</span>
+            <div class="report-meta"><span>RH · DG</span><span class="freq">Mensuel</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Légifrance, JO HCR, conventions HCR-CCN, mises à jour réglementaires.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Veille auto sur HCR + droit du travail. Sévérité par mise à jour. Action requise oui/non.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset texte + push RH si critique.</p></div>
+          </div>
+          <div class="report-example">"3 mises à jour HCR S19 : nouvelle grille salariale niveau 2 (impact +1.8% masse salariale), durcissement règles temps partiel, FAQ DGEFP sur les extras."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P04.02</span>
+            <span class="report-title">Bail & Loyer Audit</span>
+            <div class="report-meta"><span>DAF · RE Manager</span><span class="freq">Trimestriel</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Baux ingérés (parser PDF), indices ICC/ILAT/ILC, hospitality_rents.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Vérif révisions triennales, plafond ILAT, échéances, ratio loyer/CA par site (alerte si > 12%).</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset texte + spreadsheet.</p></div>
+          </div>
+          <div class="report-example">"Lyon 2e : ratio loyer/CA = 14.2% (seuil critique). Révision triennale en novembre — préparer renégo. Marseille : indice ILAT mal appliqué (+1.8% au lieu de 1.2%)."</div>
+        </div>
+
+        <div class="report">
+          <div class="report-head">
+            <span class="report-id">P04.03</span>
+            <span class="report-title">ERP & Accessibilité Check</span>
+            <div class="report-meta"><span>DEX</span><span class="freq">Annuel</span></div>
+          </div>
+          <div class="report-body">
+            <div class="report-cell"><h5>Sources</h5><p>Plans, normes ERP type N, registre sécurité, audit PMR.</p></div>
+            <div class="report-cell"><h5>Calcul</h5><p>Checklist conformité par site. Échéances visites commission sécurité. Scoring risque.</p></div>
+            <div class="report-cell"><h5>Livré en</h5><p>Asset texte + plan d'action.</p></div>
+          </div>
+          <div class="report-example">"Marseille Vieux-Port : visite commission sécurité dans 4 mois. PMR conforme. Désenfumage cuisine à revoir (norme 2024)."</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── SCÉNARIOS NARRATIFS ──────────── -->
+    <section>
+      <span class="section-tag">05 · Le moment magique</span>
+      <h2><span class="num">05</span>Trois scénarios.</h2>
+      <p style="margin-bottom: 48px; max-width: 820px;">
+        Ce que la plateforme rend possible — concrètement, dans la vie d'un groupe.
+      </p>
+
+      <div class="scenario">
+        <div class="scenario-time">Lundi 7h12 · Voiture du DG vers Paris</div>
+        <div class="scenario-title">Le briefing groupe arrive en audio.</div>
+        <div class="scenario-body">
+          <p>Le DG monte dans sa voiture. Hearst OS lui pousse <strong>Pulse Groupe</strong>
+          en audio (4 minutes, voix ElevenLabs). <span class="voice">"Trois signaux cette
+          semaine. Bordeaux Chartrons performe — +14% revenue grâce à la météo. Lyon 2e
+          décroche en labor ratio, je recommande qu'Antoine appelle Marie pour revoir
+          les plannings vendredi. Et Paris 8e perd son chef de partie pâtisserie — turnover
+          à 22%, c'est le 3e mois consécutif au-dessus du seuil."</span></p>
+          <p>À 7h45 il arrive au bureau, il a déjà arbitré. Il pose une question vocale :
+          <span class="voice">"Sors-moi le détail Lyon labor ratio sur les 6 dernières
+          semaines."</span> La réponse arrive en 4 secondes en focal stage.</p>
+        </div>
+      </div>
+
+      <div class="scenario">
+        <div class="scenario-time">Mardi 14h · Comité expansion · Bordeaux ou Lille ?</div>
+        <div class="scenario-title">L'arbitrage en deux minutes.</div>
+        <div class="scenario-body">
+          <p>Le comité expansion hésite entre Bordeaux Chartrons et Lille Vieux. Le DG ouvre
+          le commandeur Cmd+K. <span class="voice">"Compare Bordeaux Chartrons 24 rue X
+          et Lille Vieux place Y pour bistronomie ticket 65€."</span></p>
+          <p>En 90 secondes, l'agent <strong>Real Estate Scout</strong> compose un asset
+          comparatif : <strong>City Score</strong>, <strong>Neighborhood Deep Dive</strong>,
+          <strong>Location Deep Dive</strong>, <strong>Financial Projection 5Y</strong>
+          consolidés. Bordeaux gagne sur 6 axes / 8. Lille gagne sur foncier et croissance.
+          Break-even Bordeaux mois 14 (médian) vs Lille mois 19. Décision : Bordeaux.
+          <em>Coût d'opportunité d'une mauvaise décision : 800 k€. Coût de la décision : 2 minutes.</em></p>
+        </div>
+      </div>
+
+      <div class="scenario">
+        <div class="scenario-time">Vendredi 18h30 · Service du soir · Paris 8e</div>
+        <div class="scenario-title">L'anticipation opérationnelle.</div>
+        <div class="scenario-body">
+          <p>Le manager de site reçoit son <strong>Briefing Service</strong> sur Slack :
+          <span class="voice">"Ce soir, 92 couverts probables (+18% vs vendredi moyen).
+          Météo 21°C dégagé, terrasse pleine attendue. Brigade actuelle suffisante mais
+          extra runner conseillé (déjà confirmé par Combo). Stock OK sauf Saint-Pierre
+          rupture probable 21h — alternative tarif équivalent : daurade royale (+3% marge)."</span></p>
+          <p>Pendant le service, l'alerte <strong>Labor Ratio Live</strong> reste verte.
+          À 23h, le manager clôt le service. Le lendemain matin, le <strong>Food Cost Hebdo</strong>
+          intègre déjà la performance du soir.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── DATA STACK ──────────── -->
+    <section>
+      <span class="section-tag">06 · La couche données</span>
+      <h2><span class="num">06</span>Trois couches de connecteurs.</h2>
+      <p style="margin-bottom: 48px; max-width: 820px;">
+        Composio couvre les SaaS génériques (1030+ apps), mais <strong>aucun POS resto FR
+        n'y est aujourd'hui</strong>. La couche capability providers est donc l'extension
+        principale. Les calculs métier propriétaires restent en custom tools internes.
+      </p>
+
+      <div class="stack-grid">
+        <div class="stack-col">
+          <h4>01 · Composio</h4>
+          <p style="font-size: 13px; margin-bottom: 16px;">SaaS génériques OAuth standard. Déjà en place.</p>
+          <ul>
+            <li><span class="name">Pennylane</span><span class="tag ok">Compta</span></li>
+            <li><span class="name">Sage / Cegid</span><span class="tag ok">Compta</span></li>
+            <li><span class="name">Notion</span><span class="tag ok">Docs</span></li>
+            <li><span class="name">Slack</span><span class="tag ok">Notif</span></li>
+            <li><span class="name">Gmail / GCal / Drive</span><span class="tag ok">Bureau</span></li>
+            <li><span class="name">Hubspot / Pipedrive</span><span class="tag ok">CRM</span></li>
+          </ul>
+        </div>
+
+        <div class="stack-col">
+          <h4>02 · Capability providers</h4>
+          <p style="font-size: 13px; margin-bottom: 16px;">À créer dans <code style="font-family: var(--font-mono); font-size: 11px;">lib/capabilities/providers/</code>. Pattern ElevenLabs.</p>
+          <ul>
+            <li><span class="name">Merge.dev</span><span class="tag warn">P0 · HRIS</span></li>
+            <li><span class="name">Open-Meteo</span><span class="tag warn">P0 · Météo</span></li>
+            <li><span class="name">INSEE Sirene + Filosofi</span><span class="tag warn">P1 · Territoire</span></li>
+            <li><span class="name">Géoportail + api-adresse</span><span class="tag warn">P1 · Urbanisme</span></li>
+            <li><span class="name">OSM Overpass</span><span class="tag warn">P1 · POI</span></li>
+            <li><span class="name">Lightspeed / Tiller / Zelty / Sunday</span><span class="tag warn">P1 · POS FR</span></li>
+            <li><span class="name">Combo / Skello / Snapshift</span><span class="tag warn">P1 · Planning</span></li>
+            <li><span class="name">Foursquare Places</span><span class="tag">P2 · Concurrence</span></li>
+            <li><span class="name">Foodvisor / Easilys</span><span class="tag">P2 · Recettes</span></li>
+            <li><span class="name">Runway / HeyGen</span><span class="tag">B · Vidéo</span></li>
+          </ul>
+        </div>
+
+        <div class="stack-col">
+          <h4>03 · Custom tools</h4>
+          <p style="font-size: 13px; margin-bottom: 16px;">Calculs métier propriétaires. Dans <code style="font-family: var(--font-mono); font-size: 11px;">lib/tools/native/</code>.</p>
+          <ul>
+            <li><span class="name">laborRatio</span><span class="tag">Finance</span></li>
+            <li><span class="name">foodCostRatio</span><span class="tag">Finance</span></li>
+            <li><span class="name">seasonalityIndex</span><span class="tag">Finance</span></li>
+            <li><span class="name">weatherImpact</span><span class="tag">Forecast</span></li>
+            <li><span class="name">cityScoreOpening</span><span class="tag">Expansion</span></li>
+            <li><span class="name">footTrafficEstimate</span><span class="tag">Expansion</span></li>
+            <li><span class="name">m2CostEstimate</span><span class="tag">Real Estate</span></li>
+            <li><span class="name">layoutEfficiency</span><span class="tag">Real Estate</span></li>
+            <li><span class="name">brigadeRightSize</span><span class="tag">RH</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── AGENTS ──────────── -->
+    <section>
+      <span class="section-tag">07 · La couche IA</span>
+      <h2><span class="num">07</span>Cinq agents virtuels.</h2>
+      <p style="margin-bottom: 48px; max-width: 820px;">
+        Chaque persona reçoit son interlocuteur IA dédié, avec ses skills propres et
+        son ton. Les agents s'invoquent via Cmd+K ou le chat central, et orchestrent
+        les rapports automatiquement.
+      </p>
+
+      <div class="agents">
+        <div class="agent">
+          <div class="agent-id">AGENT · 01</div>
+          <div class="agent-title">Le Chef de Produit RH</div>
+          <div class="agent-skills">analyse_payroll · optim_brigade · alerte_overtime · turnover_tracker · veille_HCR</div>
+        </div>
+        <div class="agent">
+          <div class="agent-id">AGENT · 02</div>
+          <div class="agent-title">L'Analyste F&B</div>
+          <div class="agent-skills">food_cost_audit · menu_engineering · wastage_detection · recipe_margin · cours_matières</div>
+        </div>
+        <div class="agent">
+          <div class="agent-id">AGENT · 03</div>
+          <div class="agent-title">Le Real Estate Scout</div>
+          <div class="agent-skills">city_score · neighborhood_deep_dive · location_deep_dive · lease_analyzer · plu_check</div>
+        </div>
+        <div class="agent">
+          <div class="agent-id">AGENT · 04</div>
+          <div class="agent-title">L'Architecte Virtuel</div>
+          <div class="agent-skills">m2_budget · layout_efficiency · architect_brief · permis_feasibility · designer_match</div>
+        </div>
+        <div class="agent">
+          <div class="agent-id">AGENT · 05</div>
+          <div class="agent-title">Le Directeur d'Exploitation IA</div>
+          <div class="agent-skills">pulse_groupe · seasonality · weather_forecast · financial_projection · heat_map_sites</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── DELTA ──────────── -->
+    <section>
+      <span class="section-tag">08 · Positionnement</span>
+      <h2><span class="num">08</span>Ce qu'on fait. Ce qu'on ne fait pas.</h2>
+      <p style="margin-bottom: 48px; max-width: 820px;">
+        La discipline du périmètre est le différenciateur. Hearst OS hospitality
+        n'est pas un nouveau POS, ni un nouveau HRIS, ni un nouveau BI generic.
+      </p>
+
+      <div class="delta-block">
+        <div class="delta-row">
+          <div class="delta-col no">
+            <h4>Ce qu'on ne fait pas</h4>
+            <ul>
+              <li>Remplacer le POS — on s'y connecte (Lightspeed, Tiller, Zelty…)</li>
+              <li>Remplacer le HRIS — on l'unifie (via Merge.dev)</li>
+              <li>Remplacer la compta — on la consomme (Pennylane, Sage)</li>
+              <li>Vendre des dashboards génériques — on vend des réponses</li>
+              <li>Faire du BI horizontal — on fait du métier resto premium</li>
+              <li>Tout couvrir d'emblée — on livre par pilier</li>
+            </ul>
+          </div>
+          <div class="delta-col yes">
+            <h4>Ce qu'on fait, seuls</h4>
+            <ul>
+              <li>Coupler données opé + territoire + immobilier + architecture</li>
+              <li>Livrer chaque rapport en texte / audio / slides / vidéo selon le moment</li>
+              <li>Anticiper le service du soir avec météo + saison + événements</li>
+              <li>Générer un brief architecte + shortlist en 90 secondes</li>
+              <li>Projeter un break-even cash mensuel sur 60 mois pour une ouverture</li>
+              <li>Faire parler 5 agents IA spécialisés à 5 personas distinctes</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── RECOMMANDATIONS ──────────── -->
+    <section>
+      <span class="section-tag">09 · Mes recommandations</span>
+      <h2><span class="num">09</span>Ce que je conseille.</h2>
+      <p style="margin-bottom: 48px; max-width: 820px;">
+        Réflexion d'un agent qui a vu le code et le contexte — à challenger.
+      </p>
+
+      <div class="reco-list">
+        <div class="reco">
+          <div>
+            <h4>Démarrer sur un client pilote unique, 3 à 5 sites max.</h4>
+            <p>Ne pas chercher le SaaS générique d'emblée. Un seul groupe premium en pilote
+            paie deux fois : sa subscription et sa donnée pour calibrer la base de coûts.
+            Effet réseau impossible sans ce pied dans la porte.</p>
+          </div>
+        </div>
+        <div class="reco">
+          <div>
+            <h4>Stack P0 = gratuit ou quasi-gratuit.</h4>
+            <p>Open-Meteo, INSEE Sirene + Filosofi, api-adresse, OSM Overpass, géoportail
+            sont gratuits. Merge.dev est par-connection (raisonnable). Aucune raison de
+            payer Batichiffrage avant d'avoir 5 clients qui justifient le ROI. La base de
+            coûts BTP se construit avec les <em>devis réels</em> du pilote.</p>
+          </div>
+        </div>
+        <div class="reco">
+          <div>
+            <h4>France only au démarrage.</h4>
+            <p>INSEE n'existe qu'en FR. La donnée territoriale fine est <em>la</em>
+            barrière concurrentielle. Multi-pays = dilution. L'expansion EU se fera après,
+            par marché (Eurostat, ONS UK, Istat IT, INE ES) — pas avant 2027.</p>
+          </div>
+        </div>
+        <div class="reco">
+          <div>
+            <h4>Préalable bloquant : multi-établissement.</h4>
+            <p>Les 22 tables hospitality_* actuelles ont <code>tenant_id</code> mais
+            <strong>pas de <code>site_id</code></strong>. Sans ça, comparer Lyon vs Paris
+            est impossible. Migration <code>0033_hospitality_sites.sql</code> +
+            <code>0034_hospitality_site_id.sql</code> à livrer avant tout rapport.</p>
+          </div>
+        </div>
+        <div class="reco">
+          <div>
+            <h4>Versionner le baseline DB avant toute mutation.</h4>
+            <p>Les types TypeScript exposent 22 tables hospitality_* mais aucune migration
+            n'existe dans le repo. Risque drift critique. Faire un <code>pg_dump --schema-only</code>
+            du remote, le poser en migration <code>0033_hospitality_baseline.sql</code>,
+            et seulement après pousser les nouvelles migrations.</p>
+          </div>
+        </div>
+        <div class="reco">
+          <div>
+            <h4>Audio en priorité 1, vidéo en priorité 2.</h4>
+            <p>ElevenLabs est déjà branché. Le briefing matinal audio est le moment
+            magique le plus rapide à livrer (low effort, high impact). La vidéo
+            (Runway / HeyGen) attend l'<code>ArchitectBriefGenerator</code> — c'est là
+            qu'elle génère vraiment de la valeur (pitch projet d'ouverture).</p>
+          </div>
+        </div>
+        <div class="reco">
+          <div>
+            <h4>Le différenciateur, c'est le pilier Expansion.</h4>
+            <p>Pilotage et Optimisation existent ailleurs (sous forme dégradée). Le pilier
+            Expansion (City Score, Architect Brief, Financial Projection 5Y) est
+            <em>unique</em> sur le marché. Investir là pour la narrative commerciale,
+            même si on livre Pilotage en premier pour la rétention.</p>
+          </div>
+        </div>
+        <div class="reco">
+          <div>
+            <h4>White-label visuel = phase 2.</h4>
+            <p>Avant de skinner pour 10 clients, valider le produit chez 1. Le white-label
+            visuel (logo, palette, copy pack par tenant) vient après le product-market fit,
+            pas avant. Tenter les deux en parallèle = tunnel.</p>
+          </div>
+        </div>
+        <div class="reco">
+          <div>
+            <h4>Construire le moat dans la donnée propriétaire.</h4>
+            <p>La base coûts BTP (devis clients), l'annuaire architectes signature, les
+            benchmarks groupe par style — c'est ce qui empêche la copie. Plus le pilote
+            opère, plus les rapports d'expansion deviennent précis. <em>Effet réseau
+            silencieux mais durable.</em></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── ROADMAP ──────────── -->
+    <section>
+      <span class="section-tag">10 · Roadmap par trimestre</span>
+      <h2><span class="num">10</span>Douze mois.</h2>
+      <p style="margin-bottom: 48px; max-width: 820px;">
+        Hypothèse : 1 pilote signé Q2 2026. Ramp-up progressif. Marketplace architectes en Q1 2027.
+      </p>
+
+      <div class="timeline">
+        <div class="quarter">
+          <div class="quarter-tag">Q2 · 2026</div>
+          <div class="quarter-name">Foundations + Pilotage</div>
+          <ul>
+            <li>Migration baseline + sites + site_id</li>
+            <li>Provider Merge.dev + Open-Meteo</li>
+            <li>P01.01 Briefing Matinal (audio)</li>
+            <li>P01.02 Pulse Groupe</li>
+            <li>P01.03 Labor Ratio Live</li>
+            <li>P01.07 Audit Saisonnalité</li>
+            <li>Agent DEX IA seed</li>
+          </ul>
+        </div>
+        <div class="quarter">
+          <div class="quarter-tag">Q3 · 2026</div>
+          <div class="quarter-name">Optimisation + POS</div>
+          <ul>
+            <li>Provider Lightspeed / Tiller / Zelty</li>
+            <li>P01.04 Food Cost Hebdo</li>
+            <li>P02.01 Right-Sizing Brigade</li>
+            <li>P02.02 Wastage Detection</li>
+            <li>P02.04 Weather Impact Forecast</li>
+            <li>Agents Chef RH + F&B</li>
+          </ul>
+        </div>
+        <div class="quarter">
+          <div class="quarter-tag">Q4 · 2026</div>
+          <div class="quarter-name">Expansion teasers</div>
+          <ul>
+            <li>Providers INSEE + Géoportail + OSM</li>
+            <li>P03.01 City Score Opening</li>
+            <li>P03.02 Neighborhood Deep Dive</li>
+            <li>P03.04 M² Budget by Style</li>
+            <li>P03.05 Layout Efficiency</li>
+            <li>Agent Real Estate Scout</li>
+          </ul>
+        </div>
+        <div class="quarter">
+          <div class="quarter-tag">Q1 · 2027</div>
+          <div class="quarter-name">Expansion deep + vidéo</div>
+          <ul>
+            <li>Providers Runway + HeyGen</li>
+            <li>P03.03 Location Deep Dive</li>
+            <li>P03.06 Architect Brief Generator</li>
+            <li>P03.07 Financial Projection 5Y</li>
+            <li>Variant vidéo pitch ouverture</li>
+            <li>Marketplace architectes signature</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──────────── FOOTER ──────────── -->
+    <footer>
+      <span>Hearst OS · Hospitality Vision · v1.0</span>
+      <span>2026-04-29</span>
+      <span>Pour Adrien</span>
+    </footer>
+  </main>
+</body>
+</html>
