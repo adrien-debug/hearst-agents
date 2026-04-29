@@ -47,6 +47,7 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
   const [variants, setVariants] = useState<AssetVariant[]>([]);
   const [generating, setGenerating] = useState<AssetVariantKind | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [videoProvider, setVideoProvider] = useState<"runway" | "heygen">("runway");
 
   const variantFor = (kind: AssetVariantKind) => variants.find((v) => v.kind === kind);
 
@@ -87,11 +88,19 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
       setGenerating(kind);
       setError(null);
       try {
+        const requestBody: Record<string, unknown> = { kind };
+        if (kind === "video") {
+          requestBody.provider = videoProvider;
+          requestBody.scriptText = sourceText;
+          requestBody.prompt = sourceText;
+        } else {
+          requestBody.text = sourceText;
+        }
         const res = await fetch(`/api/v2/assets/${encodeURIComponent(assetId)}/variants`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ kind, text: sourceText }),
+          body: JSON.stringify(requestBody),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -105,7 +114,7 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
         setGenerating(null);
       }
     },
-    [assetId, sourceText, fetchVariants],
+    [assetId, sourceText, fetchVariants, videoProvider],
   );
 
   return (
@@ -190,6 +199,22 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
         return (
           <div className="flex flex-col items-start gap-4">
             <p className="t-13 font-light text-[var(--text-muted)]">{meta.empty}</p>
+            {activeTab === "video" && (
+              <label className="flex flex-col gap-2">
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                  PROVIDER
+                </span>
+                <select
+                  value={videoProvider}
+                  onChange={(e) => setVideoProvider(e.target.value === "heygen" ? "heygen" : "runway")}
+                  disabled={generating === "video"}
+                  className="halo-on-hover px-3 py-2 t-11 font-mono text-[var(--text)] bg-[var(--card-flat-bg)] border border-[var(--border-shell)] hover:border-[var(--cykan-border-hover)] transition-colors disabled:opacity-60"
+                >
+                  <option value="runway">Runway (text-to-video)</option>
+                  <option value="heygen">HeyGen (avatar)</option>
+                </select>
+              </label>
+            )}
             <button
               type="button"
               onClick={() => void requestVariant(activeTab)}
