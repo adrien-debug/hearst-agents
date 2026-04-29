@@ -92,6 +92,9 @@ export function CockpitInbox() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { assetId: string | null; title: string };
       if (data.assetId) {
+        // Téléporte sur l'AssetStage pour que le ReportLayout s'affiche.
+        // Avant : setFocal seul, mais en mode cockpit le FocalStage n'est
+        // pas rendu — l'asset était créé sans surface de visualisation.
         useFocalStore
           .getState()
           .setFocal(
@@ -100,6 +103,7 @@ export function CockpitInbox() {
               null,
             ),
           );
+        setStageMode({ mode: "asset", assetId: data.assetId });
       }
       toast.success("Report généré", s.title);
     } catch (err) {
@@ -217,8 +221,10 @@ function SuggestionRow({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left flex items-center justify-between border-l-2 border-l-[var(--cykan)] hover:bg-[var(--surface-1)] focus-visible:outline-none focus-visible:bg-[var(--surface-1)] focus-visible:ring-1 focus-visible:ring-[var(--cykan)] transition-colors"
-      style={{ padding: "var(--space-3)" }}
+      data-testid={`report-suggestion-${suggestion.specId}`}
+      data-suggestion-status={suggestion.status}
+      className="w-full text-left flex items-center justify-between hover:bg-[var(--surface-1)] focus-visible:outline-none focus-visible:bg-[var(--surface-1)] focus-visible:ring-1 focus-visible:ring-[var(--cykan)] transition-colors"
+      style={{ padding: "var(--space-3)", borderLeft: "2px solid var(--cykan)" }}
     >
       <div className="flex-1 min-w-0">
         <p className="t-13 font-medium text-[var(--text)] truncate">{suggestion.title}</p>

@@ -76,7 +76,7 @@ async function mountMocks(page: Page) {
   );
 
   // Panel data avec suggestion Founder Cockpit
-  await page.route("**/api/v2/panel*", (route) =>
+  await page.route("**/api/v2/right-panel*", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -116,18 +116,22 @@ async function mountMocks(page: Page) {
     }),
   );
 
-  // Asset fetch depuis le focal
+  // Asset fetch depuis l'AssetStage (shape Asset V2 wrappé)
   await page.route(`**/api/v2/assets/${ASSET_ID}*`, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
-        id: ASSET_ID,
-        name: "Founder Cockpit",
-        type: "report",
-        content: JSON.stringify(MOCK_REPORT_PAYLOAD),
-        provenance: { specId: SPEC_ID, specVersion: 1 },
-        createdAt: Date.now(),
+        asset: {
+          id: ASSET_ID,
+          threadId: THREAD_ID,
+          kind: "report",
+          title: "Founder Cockpit",
+          summary: "MRR, pipeline, runway, commits — vue fondateur globale.",
+          contentRef: JSON.stringify(MOCK_REPORT_PAYLOAD),
+          createdAt: Date.now(),
+          provenance: { specId: SPEC_ID, specVersion: 1 },
+        },
       }),
     }),
   );
