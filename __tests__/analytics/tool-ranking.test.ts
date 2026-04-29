@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scoreTools, type ToolScore } from "@/lib/analytics/tool-ranking";
+import { scoreTools } from "@/lib/analytics/tool-ranking";
 import type { ToolMetrics } from "@/lib/analytics/metrics";
 
 function makeMetrics(overrides: Partial<ToolMetrics> & { tool_name: string }): ToolMetrics {

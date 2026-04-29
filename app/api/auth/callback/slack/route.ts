@@ -81,8 +81,6 @@ export async function GET(request: NextRequest) {
     }
 
     const teamId = data.team?.id as string | undefined;
-    const teamName = data.team?.name ?? "Slack";
-    const slackUserId = data.authed_user?.id as string | undefined;
     const refreshToken = (data.authed_user?.refresh_token ?? data.refresh_token ?? null) as string | null;
     const expiresIn = (data.authed_user?.expires_in ?? data.expires_in ?? 0) as number;
 

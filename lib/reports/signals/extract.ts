@@ -14,11 +14,8 @@
  */
 
 import type { RenderPayload } from "@/lib/reports/engine/render-blocks";
-import type {
-  BusinessSignalType,
-  Severity,
-} from "@/lib/engine/runtime/report-runner";
-import { determineSeverity } from "@/lib/engine/runtime/report-runner";
+import type { BusinessSignalType, Severity } from "./types";
+import { determineSeverity } from "./types";
 
 export interface BusinessSignal {
   type: BusinessSignalType;

@@ -119,28 +119,6 @@ const INTENT_KEYWORDS: { keywords: string[]; slugs: string[] }[] = [
   },
 ];
 
-// Bundles use-case : groupes pré-pensés de services qui couvrent un workflow
-// complet. L'utilisateur voit le progrès (X/N connectés) et peut connecter le
-// service suivant non-connecté en 1 clic. Pas de cascade automatique — chaque
-// OAuth est un click explicite (sinon 4 popups séquentielles = cauchemar UX).
-const BUNDLES: { id: string; label: string; slugs: string[] }[] = [
-  {
-    id: "productivity",
-    label: "Stack productivité",
-    slugs: ["googlecalendar", "googledrive", "notion", "slack"],
-  },
-  {
-    id: "sales",
-    label: "Stack ventes B2B",
-    slugs: ["hubspot", "googlecalendar", "gmail", "slack", "stripe"],
-  },
-  {
-    id: "dev",
-    label: "Stack dev",
-    slugs: ["github", "linear", "slack", "figma"],
-  },
-];
-
 // Picks recommandés par défaut. Liste large (≥10) pour qu'après filtrage
 // des déjà-connectés on ait toujours 3 dispos. `hint` = micro-descripteur
 // affiché sous le nom dans la card (remplace la catégorie générique pour
@@ -390,12 +368,13 @@ export function ConnectionsHub() {
     return [...fromPicks, ...fallbacks].slice(0, 3);
   }, [apps, connectedSlugs]);
 
-  // Catégories effectivement présentes dans le catalogue, triées par
-  // population décroissante pour mettre en avant celles qui couvrent le
-  // plus de services.
+  // Catégories effectivement présentes dans le catalogue. Les apps connectées
+  // sont exclues — elles ne figurent plus dans le wallpaper, leur catégorie
+  // ne doit pas gonfler les compteurs.
   const categoriesWithCount = useMemo(() => {
     const map = new Map<string, number>();
     for (const app of apps) {
+      if (connectedSlugs.has(app.key)) continue;
       for (const cat of app.categories) {
         map.set(cat, (map.get(cat) ?? 0) + 1);
       }
@@ -404,13 +383,14 @@ export function ConnectionsHub() {
       .map(([id, count]) => ({ id, label: categoryLabelById(id), count }))
       .sort((a, b) => b.count - a.count);
     return entries;
-  }, [apps]);
+  }, [apps, connectedSlugs]);
 
-  // Ordre du wallpaper : connectés d'abord (lecture immédiate de l'état
-  // de la stack), puis alphabétique. Filtre par activeCategory et/ou
-  // attentionFilter si définis.
+  // Wallpaper = catalogue des apps NON connectées. Les apps déjà branchées
+  // sont visibles dans la section "Connectés" en haut, on évite la
+  // duplication. Exception : `attentionFilter` cible justement les
+  // connexions dégradées (expired/error) — on les laisse passer.
   const wallpaperApps = useMemo(() => {
-    let filtered = apps;
+    let filtered = attentionFilter ? apps : apps.filter((a) => !connectedSlugs.has(a.key));
     if (activeCategory) {
       filtered = filtered.filter((a) => a.categories.includes(activeCategory));
     }
@@ -420,12 +400,7 @@ export function ConnectionsHub() {
         return status && status !== "active";
       });
     }
-    return [...filtered].sort((a, b) => {
-      const aConn = connectedSlugs.has(a.key) ? 0 : 1;
-      const bConn = connectedSlugs.has(b.key) ? 0 : 1;
-      if (aConn !== bConn) return aConn - bConn;
-      return a.name.localeCompare(b.name, "fr");
-    });
+    return [...filtered].sort((a, b) => a.name.localeCompare(b.name, "fr"));
   }, [apps, activeCategory, attentionFilter, connectedSlugs, statusBySlug]);
 
   const wallpaperVisible = useMemo(
@@ -709,21 +684,15 @@ export function ConnectionsHub() {
   useOAuthCompletionPoll(onOAuthSuccess);
 
   // Sync drawer ↔ accounts. Quand un OAuth réussit pendant que le drawer
-  // est ouvert, accounts se met à jour mais drawer.connectedAccount reste
-  // figé à la valeur capturée au clic — donc le drawer continue d'afficher
-  // "Connecter <app> →" alors que l'app est connectée. On re-aligne dès
-  // qu'accounts bouge. Symétrique pour la déconnexion.
-  useEffect(() => {
-    if (!drawer) return;
+  // est ouvert, accounts bouge mais drawer.connectedAccount resterait figé
+  // à la valeur capturée au clic. On dérive donc `liveDrawer` à chaque
+  // render au lieu d'un setState dans useEffect (anti-pattern react-hooks).
+  const liveDrawer = useMemo(() => {
+    if (!drawer) return null;
     const matched = accounts.find(
       (a) => a.appName.toLowerCase() === drawer.app.key,
     );
-    const same =
-      (matched && drawer.connectedAccount?.id === matched.id) ||
-      (!matched && !drawer.connectedAccount);
-    if (!same) {
-      setDrawer({ ...drawer, connectedAccount: matched });
-    }
+    return { ...drawer, connectedAccount: matched };
   }, [accounts, drawer]);
 
   // Quand on change de catégorie, on remet le wallpaper à zéro pour ne
@@ -781,13 +750,6 @@ export function ConnectionsHub() {
             )}
           </div>
 
-          {/* STACKS */}
-          <BundlesSection
-            apps={apps}
-            connectedSlugs={connectedSlugs}
-            onSelect={openDrawer}
-          />
-
           {/* POUR ALLER PLUS LOIN */}
           {suggestions.length > 0 && (
             <div
@@ -806,7 +768,7 @@ export function ConnectionsHub() {
           >
             <SectionLabel
               label={attentionFilter ? "À vérifier" : "Catalogue"}
-              count={attentionFilter ? wallpaperApps.length : apps.length}
+              count={wallpaperApps.length}
             />
             {attentionFilter && (
               <div className="px-8 pb-3">
@@ -840,17 +802,17 @@ export function ConnectionsHub() {
         </div>
       )}
 
-      {drawer && (
+      {liveDrawer && (
         <AppDrawer
-          state={drawer}
+          state={liveDrawer}
           actions={drawerActions}
           loadingActions={drawerLoadingActions}
-          busy={busy === drawer.app.key || busy === drawer.connectedAccount?.id}
+          busy={busy === liveDrawer.app.key || busy === liveDrawer.connectedAccount?.id}
           onClose={closeDrawer}
-          onConnect={() => handleConnect(drawer.app)}
+          onConnect={() => handleConnect(liveDrawer.app)}
           onDisconnect={
-            drawer.connectedAccount
-              ? () => handleDisconnect(drawer.connectedAccount!)
+            liveDrawer.connectedAccount
+              ? () => handleDisconnect(liveDrawer.connectedAccount!)
               : undefined
           }
         />
@@ -1196,148 +1158,6 @@ function StarterTile({
         style={{ letterSpacing: "var(--tracking-section)" }}
       >
         connecter →
-      </span>
-    </button>
-  );
-}
-
-// ─── Bundles use-case : 3 stacks pré-pensées ──────────────────
-
-function BundlesSection({
-  apps,
-  connectedSlugs,
-  onSelect,
-}: {
-  apps: ComposioApp[];
-  connectedSlugs: Set<string>;
-  onSelect: (app: ComposioApp) => void;
-}) {
-  // Pour chaque bundle : enrichir avec les apps disponibles + progress.
-  // Les apps qui ne sont pas dans le catalogue (rare — slug inconnu) sont
-  // silencieusement skippées.
-  const enriched = BUNDLES.map((b) => {
-    const bundleApps = b.slugs
-      .map((slug) => apps.find((a) => a.key === slug))
-      .filter((a): a is ComposioApp => Boolean(a));
-    const connectedCount = bundleApps.filter((a) =>
-      connectedSlugs.has(a.key),
-    ).length;
-    const next = bundleApps.find((a) => !connectedSlugs.has(a.key));
-    return { ...b, apps: bundleApps, connectedCount, total: bundleApps.length, next };
-  }).filter((b) => b.apps.length > 0);
-
-  // Si tous les bundles sont 100 % connectés (cas dégénéré : 10+ services
-  // déjà branchés), on cache la section — elle n'apporte plus rien.
-  const allComplete = enriched.every((b) => b.connectedCount === b.total);
-  if (allComplete) return null;
-
-  return (
-    <div
-      className="rounded-sm overflow-hidden"
-      style={{ background: "var(--bg-elev)", border: "1px solid var(--border-shell)" }}
-    >
-      <SectionLabel label="Stacks" count={enriched.length} />
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-8 pb-6">
-        {enriched.map((b) => (
-          <BundleCard
-            key={b.id}
-            label={b.label}
-            apps={b.apps}
-            connectedCount={b.connectedCount}
-            total={b.total}
-            connectedSlugs={connectedSlugs}
-            next={b.next}
-            onSelect={onSelect}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function BundleCard({
-  label,
-  apps,
-  connectedCount,
-  total,
-  connectedSlugs,
-  next,
-  onSelect,
-}: {
-  label: string;
-  apps: ComposioApp[];
-  connectedCount: number;
-  total: number;
-  connectedSlugs: Set<string>;
-  next: ComposioApp | undefined;
-  onSelect: (app: ComposioApp) => void;
-}) {
-  const isComplete = connectedCount === total;
-  return (
-    <button
-      type="button"
-      onClick={() => next && onSelect(next)}
-      disabled={isComplete}
-      className="group flex flex-col text-left transition-colors rounded-xs"
-      style={{
-        cursor: isComplete ? "default" : "pointer",
-        border: `1px solid ${isComplete ? "var(--cykan-border)" : "var(--border-shell)"}`,
-        padding: "var(--space-4)",
-      }}
-    >
-      <div className="flex items-baseline justify-between gap-2 mb-3">
-        <span
-          className="t-13 group-hover:text-[var(--cykan)] transition-colors"
-          style={{
-            fontWeight: "var(--weight-semibold)",
-            color: isComplete ? "var(--cykan-deep)" : "var(--text)",
-          }}
-        >
-          {label}
-        </span>
-        <span
-          className="t-9 font-mono uppercase whitespace-nowrap"
-          style={{
-            letterSpacing: "var(--tracking-section)",
-            color: isComplete ? "var(--cykan-deep)" : "var(--text-faint)",
-          }}
-        >
-          {connectedCount} / {total}
-        </span>
-      </div>
-
-      {/* Cluster de logos. Connectés en couleur, non-connectés en grayscale. */}
-      <div className="flex items-center gap-2 mb-3">
-        {apps.slice(0, 5).map((a) => {
-          const conn = connectedSlugs.has(a.key);
-          return (
-            <span
-              key={a.key}
-              className="inline-flex shrink-0"
-              style={{ filter: conn ? undefined : "grayscale(0.85) opacity(0.55)" }}
-            >
-              <AppLogo app={a} size={28} />
-            </span>
-          );
-        })}
-        {apps.length > 5 && (
-          <span
-            className="t-9 font-mono text-[var(--text-faint)]"
-            style={{ letterSpacing: "var(--tracking-hairline)" }}
-          >
-            +{apps.length - 5}
-          </span>
-        )}
-      </div>
-
-      <span
-        className="t-9 font-mono uppercase"
-        style={{
-          letterSpacing: "var(--tracking-section)",
-          color: isComplete ? "var(--cykan-deep)" : "var(--text-faint)",
-        }}
-      >
-        {isComplete ? "✓ complet" : `Connecter ${next?.name ?? ""} →`}
       </span>
     </button>
   );

@@ -27,7 +27,7 @@ import {
   extractSignals,
   type BusinessSignal,
 } from "@/lib/reports/signals/extract";
-import type { Severity } from "@/lib/engine/runtime/report-runner";
+import type { Severity } from "@/lib/reports/signals/types";
 import { checkReportBudget } from "./cost-meter";
 
 // ── Source loader (injection pour tests / P1.4) ────────────

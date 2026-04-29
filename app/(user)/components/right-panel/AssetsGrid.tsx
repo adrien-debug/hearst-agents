@@ -21,6 +21,8 @@ interface AssetsGridProps {
   reportSuggestions?: RightPanelData["reportSuggestions"];
   activeThreadId: string | null;
   loading: boolean;
+  runningSpecs: Set<string>;
+  onRunSuggestion: (specId: string, title: string) => Promise<void>;
 }
 
 function AssetSkeleton() {
@@ -162,11 +164,17 @@ function assetAccent(type: string): string {
   return "var(--text-faint)";
 }
 
-export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading }: AssetsGridProps) {
+export function AssetsGrid({
+  assets,
+  reportSuggestions,
+  activeThreadId,
+  loading,
+  runningSpecs,
+  onRunSuggestion,
+}: AssetsGridProps) {
   // Optimistic delete : on cache localement les ids supprimés en attendant
   // le refresh SSE. Pas de mutation directe de la prop `assets`.
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
-  const [runningSpecs, setRunningSpecs] = useState<Set<string>>(new Set());
 
   // Connect to focal store to highlight the active asset
   const focal = useFocalStore((s) => s.focal);
@@ -176,43 +184,6 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
   const visibleSuggestions = (reportSuggestions ?? []).filter(
     (s) => !runningSpecs.has(s.specId),
   );
-
-  const handleRunSuggestion = async (specId: string, title: string) => {
-    setRunningSpecs((prev) => new Set(prev).add(specId));
-    try {
-      const res = await fetch(
-        `/api/v2/reports/${encodeURIComponent(specId)}/run`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ threadId: activeThreadId ?? undefined }),
-          credentials: "include",
-        },
-      );
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      const data = (await res.json()) as { assetId: string | null; title: string };
-      // Ouvre directement le focal avec le nouvel asset — le SSE refetchera
-      // la grille de son côté dans la seconde qui suit.
-      if (data.assetId) {
-        useFocalStore.getState().setFocal(
-          assetToFocal(
-            { id: data.assetId, name: data.title ?? title, type: "report" },
-            activeThreadId,
-          ),
-        );
-      }
-      toast.success("Report généré", title);
-    } catch (err) {
-      setRunningSpecs((prev) => {
-        const next = new Set(prev);
-        next.delete(specId);
-        return next;
-      });
-      toast.error("Échec génération", err instanceof Error ? err.message : "Erreur inconnue");
-    }
-  };
 
   if (loading && visibleAssets.length === 0 && visibleSuggestions.length === 0) {
     return (
@@ -299,7 +270,7 @@ export function AssetsGrid({ assets, reportSuggestions, activeThreadId, loading 
               <button
                 key={s.specId}
                 type="button"
-                onClick={() => !isRunning && handleRunSuggestion(s.specId, s.title)}
+                onClick={() => !isRunning && onRunSuggestion(s.specId, s.title)}
                 disabled={isRunning}
                 className={`halo-asset-card w-full text-left flex flex-col ${isRunning ? "opacity-70" : ""}`}
                 data-testid={`report-suggestion-${s.specId}`}

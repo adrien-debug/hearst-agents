@@ -59,7 +59,7 @@ export function RightPanelNav({
   assetsCount,
   missionsCount,
   suggestionsCount,
-  eventsCount,
+  eventsCount: _eventsCount,
 }: RightPanelNavProps) {
   return (
     <div

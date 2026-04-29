@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/platform/db/supabase";
+import { getHearstSession } from "@/lib/platform/auth/session";
 import { createAgentSchema, ok, err, parseBody, dbErr, slugify } from "@/lib/domain";
 import type { Database } from "@/lib/database.types";
 
@@ -8,6 +9,9 @@ type AgentInsert = Database["public"]["Tables"]["agents"]["Insert"];
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const session = await getHearstSession();
+  if (!session) return err("unauthorized", 401);
+
   try {
     const sb = requireServerSupabase();
     const { data, error } = await sb
@@ -25,6 +29,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getHearstSession();
+  if (!session) return err("unauthorized", 401);
+
   try {
     const body = await req.json();
     const parsed = parseBody(createAgentSchema, body);

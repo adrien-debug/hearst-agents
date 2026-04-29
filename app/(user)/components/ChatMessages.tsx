@@ -143,7 +143,6 @@ export function ChatMessages({
 
   const lastMessage = messages[messages.length - 1];
   const lastIsUser = lastMessage?.role === "user";
-  const lastIsEmptyAssistant = lastMessage?.role === "assistant" && lastMessage.content.length === 0;
 
   return (
     <div ref={scrollRef} className={className ?? defaultClass}>

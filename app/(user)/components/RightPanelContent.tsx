@@ -24,6 +24,7 @@ import { RightPanelNav, type PanelView } from "./right-panel/RightPanelNav";
 import { GeneralDashboard } from "./right-panel/GeneralDashboard";
 import { AssetsGrid } from "./right-panel/AssetsGrid";
 import { MissionsList } from "./right-panel/MissionsList";
+import { useRunReportSuggestion } from "./right-panel/useRunReportSuggestion";
 
 interface RightPanelContentProps {
   onClose?: () => void;
@@ -37,19 +38,20 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const [data, setData] = useState<RightPanelData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<PanelView>("general");
-
-  // Restore saved view on mount
-  useEffect(() => {
+  // Lazy init : on lit localStorage une fois au mount au lieu d'un setState
+  // dans useEffect (anti-pattern react-hooks/set-state-in-effect).
+  const [activeView, setActiveView] = useState<PanelView>(() => {
+    if (typeof window === "undefined") return "general";
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY) as PanelView | null;
       if (saved && ["general", "reports", "missions", "assets"].includes(saved)) {
-        setActiveView(saved);
+        return saved;
       }
     } catch {
       /* ignore */
     }
-  }, []);
+    return "general";
+  });
 
   // Save view when changed
   const handleViewChange = (view: PanelView) => {
@@ -174,6 +176,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const missions = panelData?.missions ?? [];
   const reportSuggestions = panelData?.reportSuggestions;
 
+  const { runningSpecs, runSuggestion } = useRunReportSuggestion(activeThreadId);
+
   // Render content based on active view
   const renderContent = () => {
     switch (activeView) {
@@ -186,6 +190,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
             onViewChange={handleViewChange}
             activeThreadId={activeThreadId}
             loading={loading}
+            runningSpecs={runningSpecs}
+            onRunSuggestion={runSuggestion}
           />
         );
       case "reports":
@@ -195,6 +201,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
             reportSuggestions={reportSuggestions}
             activeThreadId={activeThreadId}
             loading={loading}
+            runningSpecs={runningSpecs}
+            onRunSuggestion={runSuggestion}
           />
         );
       case "missions":
@@ -215,6 +223,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
                 reportSuggestions={undefined}
                 activeThreadId={activeThreadId}
                 loading={loading}
+                runningSpecs={runningSpecs}
+                onRunSuggestion={runSuggestion}
               />
             </div>
           </div>

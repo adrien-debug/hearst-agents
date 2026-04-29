@@ -3,11 +3,8 @@
 /**
  * GeneralDashboard — Vue d'accueil par défaut du RightPanel.
  *
- * Dashboard résumé montrant :
- * - Suggestions de rapports prioritaires (action principale)
- * - Missions actives (aperçu)
- * - Derniers livrables (aperçu)
- * - Alertes récentes si urgent
+ * Structure FIXE : 4 sections toujours rendues (Suggestions / Missions /
+ * Livrables / Alertes). Vide → empty state interne, jamais de bloc escamoté.
  */
 
 import type { RightPanelData } from "@/lib/core/types";
@@ -21,16 +18,31 @@ interface GeneralDashboardProps {
   onViewChange: (view: "reports" | "missions" | "assets") => void;
   activeThreadId: string | null;
   loading: boolean;
+  runningSpecs: Set<string>;
+  onRunSuggestion: (specId: string, title: string) => Promise<void>;
 }
 
-function SectionTitle({ children, action }: { children: React.ReactNode; action?: { label: string; onClick: () => void } }) {
+function SectionTitle({
+  children,
+  count,
+  action,
+}: {
+  children: React.ReactNode;
+  count?: number;
+  action?: { label: string; onClick: () => void };
+}) {
   return (
     <div className="flex items-center justify-between mb-2">
       <span
-        className="t-9 font-mono uppercase text-[var(--text-faint)]"
-        style={{ letterSpacing: "0.22em" }}
+        className="t-9 font-mono uppercase text-[var(--text-faint)] inline-flex items-baseline gap-2"
+        style={{ letterSpacing: "var(--tracking-section)" }}
       >
-        {children}
+        <span>{children}</span>
+        {typeof count === "number" && (
+          <span className="text-[var(--text-ghost)]">
+            {count.toString().padStart(2, "0")}
+          </span>
+        )}
       </span>
       {action && (
         <button
@@ -45,12 +57,40 @@ function SectionTitle({ children, action }: { children: React.ReactNode; action?
   );
 }
 
+function EmptyRow({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="flex items-center"
+      style={{
+        padding: "var(--space-3)",
+        background: "var(--card-flat-bg)",
+        border: "1px dashed var(--card-flat-border)",
+      }}
+    >
+      <span className="t-11 text-[var(--text-ghost)]">{children}</span>
+    </div>
+  );
+}
+
+function SkeletonRow({ height = 60 }: { height?: number }) {
+  return (
+    <div
+      className="animate-pulse"
+      style={{
+        height: `${height}px`,
+        background: "var(--surface-1)",
+        borderRadius: "var(--radius-xs)",
+      }}
+    />
+  );
+}
+
 function SuggestionRow({
   suggestion,
   onRun,
   isRunning,
 }: {
-  suggestion: RightPanelData["reportSuggestions"][number];
+  suggestion: NonNullable<RightPanelData["reportSuggestions"]>[number];
   onRun: () => void;
   isRunning: boolean;
 }) {
@@ -75,9 +115,14 @@ function SuggestionRow({
         className="t-9 font-mono uppercase ml-3 shrink-0"
         style={{
           color: suggestion.status === "ready" ? "var(--cykan)" : "var(--text-faint)",
+          letterSpacing: "var(--tracking-section)",
         }}
       >
-        {isRunning ? "..." : suggestion.status === "ready" ? "LANCER" : `${suggestion.requiredApps.length - suggestion.missingApps.length}/${suggestion.requiredApps.length}`}
+        {isRunning
+          ? "..."
+          : suggestion.status === "ready"
+            ? "lancer"
+            : `${suggestion.requiredApps.length - suggestion.missingApps.length}/${suggestion.requiredApps.length}`}
       </span>
     </button>
   );
@@ -88,91 +133,113 @@ export function GeneralDashboard({
   missions,
   reportSuggestions,
   onViewChange,
-  activeThreadId,
+  activeThreadId: _activeThreadId,
   loading,
+  runningSpecs,
+  onRunSuggestion,
 }: GeneralDashboardProps) {
   const events = useRuntimeStore((s) => s.events);
+  const visibleSuggestions = (reportSuggestions ?? []).filter(
+    (s) => !runningSpecs.has(s.specId),
+  );
 
-  // Assets récents (3 derniers)
   const recentAssets = assets.slice(0, 3);
-
-  // Missions actives/running (2 max)
-  const activeMissions = missions.filter((m) => m.opsStatus === "running" || m.enabled).slice(0, 2);
-
-  // Alertes importantes
+  const activeMissions = missions
+    .filter((m) => m.opsStatus === "running" || m.enabled)
+    .slice(0, 2);
   const alerts = events
     .filter((e) => ["approval_requested", "run_failed", "email_received"].includes(e.type))
     .slice(0, 2);
 
-  if (loading) {
-    return (
-      <div style={{ padding: "var(--space-3)" }} className="animate-pulse space-y-4">
-        <div style={{ height: "80px", background: "var(--surface-1)", borderRadius: "var(--radius-xs)" }} />
-        <div style={{ height: "60px", background: "var(--surface-1)", borderRadius: "var(--radius-xs)" }} />
-        <div style={{ height: "60px", background: "var(--surface-1)", borderRadius: "var(--radius-xs)" }} />
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col" style={{ padding: "var(--space-3)", gap: "var(--space-4)" }}>
-      {/* Suggestions prioritaires */}
-      {reportSuggestions && reportSuggestions.length > 0 && (
-        <div>
-          <SectionTitle action={{ label: "Tous", onClick: () => onViewChange("reports") }}>
-            Suggestions ({reportSuggestions.length})
-          </SectionTitle>
-          <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-            {reportSuggestions.slice(0, 2).map((s) => (
+    <div
+      className="flex flex-col"
+      style={{ padding: "var(--space-3)", gap: "var(--space-4)" }}
+    >
+      {/* Section 1 — Suggestions */}
+      <section>
+        <SectionTitle
+          count={visibleSuggestions.length}
+          action={{ label: "Tous", onClick: () => onViewChange("reports") }}
+        >
+          Suggestions
+        </SectionTitle>
+        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+          {loading && visibleSuggestions.length === 0 ? (
+            <SkeletonRow height={64} />
+          ) : visibleSuggestions.length === 0 ? (
+            <EmptyRow>Aucune suggestion disponible.</EmptyRow>
+          ) : (
+            visibleSuggestions.slice(0, 2).map((s) => (
               <SuggestionRow
                 key={s.specId}
                 suggestion={s}
-                onRun={() => {/* TODO: handle run */}}
-                isRunning={false}
+                onRun={() => onRunSuggestion(s.specId, s.title)}
+                isRunning={runningSpecs.has(s.specId)}
               />
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      )}
+      </section>
 
-      {/* Missions actives preview */}
-      {activeMissions.length > 0 && (
-        <div>
-          <SectionTitle action={{ label: "Toutes", onClick: () => onViewChange("missions") }}>
-            Missions actives ({activeMissions.length})
-          </SectionTitle>
-          <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-            {activeMissions.map((m) => (
+      {/* Section 2 — Missions actives */}
+      <section>
+        <SectionTitle
+          count={activeMissions.length}
+          action={{ label: "Toutes", onClick: () => onViewChange("missions") }}
+        >
+          Missions actives
+        </SectionTitle>
+        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+          {loading && activeMissions.length === 0 ? (
+            <SkeletonRow height={40} />
+          ) : activeMissions.length === 0 ? (
+            <EmptyRow>Aucune mission armée.</EmptyRow>
+          ) : (
+            activeMissions.map((m) => (
               <div
                 key={m.id}
                 className="flex items-center justify-between"
                 style={{
                   padding: "var(--space-2) var(--space-3)",
                   background: "var(--card-flat-bg)",
-                  borderLeft: m.opsStatus === "running" ? "2px solid var(--cykan)" : "2px solid var(--text-faint)",
+                  borderLeft:
+                    m.opsStatus === "running"
+                      ? "2px solid var(--cykan)"
+                      : "2px solid var(--text-faint)",
                 }}
               >
                 <span className="t-11 text-[var(--text-soft)] truncate">{m.name}</span>
                 <span
                   className="t-9 font-mono uppercase"
-                  style={{ color: m.opsStatus === "running" ? "var(--cykan)" : "var(--text-faint)" }}
+                  style={{
+                    color: m.opsStatus === "running" ? "var(--cykan)" : "var(--text-faint)",
+                    letterSpacing: "var(--tracking-section)",
+                  }}
                 >
                   {m.opsStatus === "running" ? "running" : "armé"}
                 </span>
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      )}
+      </section>
 
-      {/* Derniers livrables */}
-      {recentAssets.length > 0 && (
-        <div>
-          <SectionTitle action={{ label: "Tous", onClick: () => onViewChange("assets") }}>
-            Derniers livrables
-          </SectionTitle>
-          <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-            {recentAssets.map((a) => (
+      {/* Section 3 — Derniers livrables */}
+      <section>
+        <SectionTitle
+          count={recentAssets.length}
+          action={{ label: "Tous", onClick: () => onViewChange("assets") }}
+        >
+          Derniers livrables
+        </SectionTitle>
+        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+          {loading && recentAssets.length === 0 ? (
+            <SkeletonRow height={40} />
+          ) : recentAssets.length === 0 ? (
+            <EmptyRow>Aucun livrable produit.</EmptyRow>
+          ) : (
+            recentAssets.map((a) => (
               <div
                 key={a.id}
                 className="flex items-center gap-3"
@@ -185,53 +252,55 @@ export function GeneralDashboard({
                   <AssetGlyphSVG type={a.type} />
                 </span>
                 <span className="t-11 text-[var(--text-soft)] truncate flex-1">{a.name}</span>
-                <span className="t-9 font-mono uppercase text-[var(--text-faint)]">{a.type}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Alertes récentes */}
-      {alerts.length > 0 && (
-        <div>
-          <SectionTitle>Alertes</SectionTitle>
-          <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-            {alerts.map((alert, idx) => (
-              <div
-                key={`${alert.timestamp}-${idx}`}
-                className="flex items-center gap-2"
-                style={{
-                  padding: "var(--space-2) var(--space-3)",
-                  background: "var(--card-flat-bg)",
-                  borderLeft: `2px solid ${
-                    alert.type === "approval_requested"
-                      ? "var(--warn)"
-                      : alert.type === "run_failed"
-                        ? "var(--danger)"
-                        : "var(--cykan)"
-                  }`,
-                }}
-              >
                 <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{
-                    background:
-                      alert.type === "approval_requested"
-                        ? "var(--warn)"
-                        : alert.type === "run_failed"
-                          ? "var(--danger)"
-                          : "var(--cykan)",
-                  }}
-                />
-                <span className="t-11 text-[var(--text-soft)] truncate flex-1">
-                  {(alert.title as string) || alert.type.replace(/_/g, " ")}
+                  className="t-9 font-mono uppercase text-[var(--text-faint)]"
+                  style={{ letterSpacing: "var(--tracking-section)" }}
+                >
+                  {a.type}
                 </span>
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      )}
+      </section>
+
+      {/* Section 4 — Alertes */}
+      <section>
+        <SectionTitle count={alerts.length}>Alertes</SectionTitle>
+        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+          {alerts.length === 0 ? (
+            <EmptyRow>Aucune alerte récente.</EmptyRow>
+          ) : (
+            alerts.map((alert, idx) => {
+              const accent =
+                alert.type === "approval_requested"
+                  ? "var(--warn)"
+                  : alert.type === "run_failed"
+                    ? "var(--danger)"
+                    : "var(--cykan)";
+              return (
+                <div
+                  key={`${alert.timestamp}-${idx}`}
+                  className="flex items-center gap-2"
+                  style={{
+                    padding: "var(--space-2) var(--space-3)",
+                    background: "var(--card-flat-bg)",
+                    borderLeft: `2px solid ${accent}`,
+                  }}
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-pill"
+                    style={{ background: accent }}
+                  />
+                  <span className="t-11 text-[var(--text-soft)] truncate flex-1">
+                    {(alert.title as string) || alert.type.replace(/_/g, " ")}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </section>
     </div>
   );
 }

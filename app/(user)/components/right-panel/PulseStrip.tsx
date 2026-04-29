@@ -47,7 +47,7 @@ const STATUS_CONFIG: Record<SystemState, StatusConfig> = {
   },
 };
 
-function StatusHalo({ state, config }: { state: SystemState; config: StatusConfig }) {
+function StatusHalo({ state: _state, config }: { state: SystemState; config: StatusConfig }) {
   return (
     <div
       className="relative flex items-center justify-center"

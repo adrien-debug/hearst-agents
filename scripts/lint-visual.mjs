@@ -5,6 +5,10 @@
  * - Hex color literals (allowlist below for legitimate brand colors).
  * - Arbitrary `text-[Npx]` font sizes (use `.t-N` utilities or Tailwind text-xs/sm/base/...).
  *
+ * Per-file opt-out: add `// lint-visual-disable-file` anywhere in the first 5
+ * lines. Reserved for cases where CSS tokens cannot be consumed — e.g.
+ * WebGL/Three.js color literals, dedicated visual reference pages.
+ *
  * Run: npm run lint:visual
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
@@ -47,6 +51,11 @@ const violations = [];
 for (const file of walk(SCAN_DIR)) {
   const text = readFileSync(file, "utf8");
   const lines = text.split("\n");
+
+  // File-level opt-out: must appear in the first 5 lines.
+  const head = lines.slice(0, 5).join("\n");
+  if (head.includes("lint-visual-disable-file")) continue;
+
   lines.forEach((line, i) => {
     const ln = i + 1;
 

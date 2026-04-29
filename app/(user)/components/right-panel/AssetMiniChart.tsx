@@ -122,7 +122,7 @@ export function AssetMiniChart({ type, seed = "" }: AssetMiniChartProps) {
     return (
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="plan preview">
         <title>plan preview</title>
-        <rect x="2" y="6"  width={widths[0]} height="6" fill="var(--color-success, #2DC558)" opacity="0.85" />
+        <rect x="2" y="6"  width={widths[0]} height="6" fill="var(--color-success)" opacity="0.85" />
         <rect x="2" y="17" width={widths[1]} height="6" fill="var(--text-muted)" opacity="0.7" />
         <rect x="2" y="28" width={widths[2]} height="6" fill="var(--text-faint)" opacity="0.6" />
       </svg>
