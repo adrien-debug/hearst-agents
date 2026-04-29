@@ -2,15 +2,16 @@
  * Stage Store — Zustand
  *
  * Pivot 2026-04-29 : l'app passe de chat-first à cockpit polymorphe.
- * Le Stage central peut afficher 7 modes différents :
+ * Le Stage central peut afficher 8 modes différents :
  *
- *   - cockpit  : home configurable (briefing du jour, agenda, missions, KPIs)
- *   - chat     : conversation classique (chat + ChatMessages)
- *   - asset    : asset focus avec variants tabs (anciennement FocalStage)
- *   - browser  : session browser live co-pilotable (Browserbase)
- *   - meeting  : meeting bot live + transcript + action items extraits
- *   - kg       : Knowledge Graph explorer (Cytoscape)
- *   - voice    : overlay voix ambient temps réel (WebRTC)
+ *   - cockpit    : home configurable (briefing du jour, agenda, missions, KPIs)
+ *   - chat       : conversation classique (chat + ChatMessages)
+ *   - asset      : asset focus avec variants tabs (anciennement FocalStage)
+ *   - browser    : session browser live co-pilotable (Browserbase)
+ *   - meeting    : meeting bot live + transcript + action items extraits
+ *   - kg         : Knowledge Graph explorer (Cytoscape)
+ *   - voice      : overlay voix ambient temps réel (WebRTC)
+ *   - simulation : DeepSeek scenarios chiffrés (Chambre de Simulation)
  *
  * Le store gère le mode actif, son payload contextuel, l'historique de
  * navigation (pour Back), et les hotkeys → mode mapping.
@@ -25,7 +26,8 @@ export type StageMode =
   | "browser"
   | "meeting"
   | "kg"
-  | "voice";
+  | "voice"
+  | "simulation";
 
 /** Payload contextuel attaché au mode (selon le Stage actif). */
 export type StagePayload =
@@ -35,7 +37,8 @@ export type StagePayload =
   | { mode: "browser"; sessionId: string }
   | { mode: "meeting"; meetingId: string }
   | { mode: "kg"; entityId?: string; query?: string }
-  | { mode: "voice"; sessionId?: string };
+  | { mode: "voice"; sessionId?: string }
+  | { mode: "simulation"; scenario?: string };
 
 export interface StageEntry {
   payload: StagePayload;
@@ -103,9 +106,9 @@ export const useStageStore = create<StageState>((set, get) => ({
 }));
 
 /**
- * Mapping hotkey → stage. Cmd+1..7 = switch direct vers un Stage
- * (cockpit/chat/asset/browser/meeting/kg/voice — grille systématique).
- * Cmd+K = ouvrir Commandeur. Cmd+L = toggle floating chat.
+ * Mapping hotkey → stage. Cmd+1..8 = switch direct vers un Stage
+ * (cockpit/chat/asset/browser/meeting/kg/voice/simulation — grille
+ * systématique). Cmd+K = ouvrir Commandeur. Cmd+L = toggle floating chat.
  * Cmd+Backspace = back.
  */
 export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [
@@ -116,4 +119,5 @@ export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [
   { key: "5", mode: "meeting" },
   { key: "6", mode: "kg" },
   { key: "7", mode: "voice" },
+  { key: "8", mode: "simulation" },
 ];

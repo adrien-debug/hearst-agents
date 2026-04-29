@@ -8,6 +8,7 @@ import { BrowserStage } from "./stages/BrowserStage";
 import { MeetingStage } from "./stages/MeetingStage";
 import { KnowledgeStage } from "./stages/KnowledgeStage";
 import { VoiceStage } from "./stages/VoiceStage";
+import { SimulationStage } from "./stages/SimulationStage";
 import type { Message } from "@/lib/core/types";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 
@@ -60,6 +61,8 @@ export function Stage(props: StageProps) {
       return <KnowledgeStage entityId={current.entityId} query={current.query} />;
     case "voice":
       return <VoiceStage sessionId={current.sessionId} />;
+    case "simulation":
+      return <SimulationStage />;
     default:
       return null;
   }

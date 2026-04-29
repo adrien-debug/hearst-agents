@@ -5,8 +5,9 @@
  *
  * - ⌘K        : toggle Commandeur (palette)
  * - ⌘L        : toggle floating chat
- * - ⌘1..⌘7    : switch direct vers un Stage (cockpit/chat/asset/browser/
- *               meeting/kg/voice — grille systématique, voir STAGE_HOTKEYS)
+ * - ⌘1..⌘8    : switch direct vers un Stage (cockpit/chat/asset/browser/
+ *               meeting/kg/voice/simulation — grille systématique,
+ *               voir STAGE_HOTKEYS)
  * - ⌘⌫        : back stage
  *
  * Ignore les inputs / textarea / contenteditable pour ne pas voler les
@@ -85,6 +86,9 @@ export function useGlobalHotkeys() {
             break;
           case "voice":
             setMode({ mode: "voice" });
+            break;
+          case "simulation":
+            setMode({ mode: "simulation" });
             break;
         }
         return;

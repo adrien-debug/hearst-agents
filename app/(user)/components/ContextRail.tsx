@@ -40,6 +40,8 @@ export function ContextRail({ onClose }: ContextRailProps) {
       return <ContextRailShell onClose={onClose}><ContextRailForKnowledge /></ContextRailShell>;
     case "voice":
       return <ContextRailShell onClose={onClose}><ContextRailForVoice /></ContextRailShell>;
+    case "simulation":
+      return <ContextRailShell onClose={onClose}><ContextRailForSimulation /></ContextRailShell>;
     default:
       return null;
   }
@@ -182,6 +184,24 @@ function ContextRailForVoice() {
       <Section label="Voice settings">
         <p className="t-13 font-light text-[var(--text-muted)]">
           Modèle <span className="text-[var(--cykan)]">openai-realtime</span>, latence cible &lt; 500&nbsp;ms.
+        </p>
+      </Section>
+    </div>
+  );
+}
+
+function ContextRailForSimulation() {
+  return (
+    <div className="h-full overflow-y-auto">
+      <Section label="Variables">
+        <EmptyHint>Définis les inputs dans le formulaire</EmptyHint>
+      </Section>
+      <Section label="Sources" count={0}>
+        <EmptyHint>Phase B suivante : Exa + Perplexity benchmarks</EmptyHint>
+      </Section>
+      <Section label="Validation">
+        <p className="t-13 font-light text-[var(--text-muted)]">
+          Phase B suivante : E2B vérifiera les calculs.
         </p>
       </Section>
     </div>

@@ -114,6 +114,16 @@ export function Commandeur() {
       },
     },
     {
+      id: "go-simulation",
+      label: "Chambre de Simulation",
+      hint: "DeepSeek R1 — 3-5 scénarios chiffrés",
+      hotkey: "⌘8",
+      perform: () => {
+        setStageMode({ mode: "simulation" } as StagePayload);
+        setOpen(false);
+      },
+    },
+    {
       id: "open-archive",
       label: "Voir l'archive",
       hint: "Tous les threads + assets > 7 jours",
