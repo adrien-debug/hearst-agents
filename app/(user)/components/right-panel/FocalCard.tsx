@@ -144,15 +144,7 @@ export function FocalCard({ activeThreadId: _activeThreadId }: FocalCardProps) {
           <NotificationGlyph type={latest.type} />
           <span className="flex-1 min-w-0 flex flex-col gap-1">
             <span className="flex items-center gap-2">
-              <span
-                className="t-13 font-medium text-[var(--text)] leading-snug truncate"
-                style={{
-                  display: "-webkit-box",
-                  WebkitLineClamp: 1,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}
-              >
+              <span className="t-13 font-medium text-[var(--text)] leading-snug line-clamp-1">
                 {latest.title}
               </span>
               <NotificationPill priority={latest.priority} />
@@ -175,8 +167,7 @@ export function FocalCard({ activeThreadId: _activeThreadId }: FocalCardProps) {
           }}
         >
           <span
-            className="shrink-0 w-8 h-8 text-[var(--text-faint)]"
-            style={{ opacity: 0.3 }}
+            className="shrink-0 w-8 h-8 text-[var(--text-faint)] opacity-30"
             aria-hidden
           >
             <AssetGlyphSVG type="message" />

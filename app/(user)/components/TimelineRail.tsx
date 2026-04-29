@@ -298,7 +298,7 @@ export function TimelineRail() {
         ) : (
           <button
             onClick={handleNewThread}
-            className="halo-on-hover w-full flex items-center justify-between mb-4 group/header text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+            className="halo-on-hover w-full flex items-center justify-between mb-4 pl-2 border-l-2 border-transparent group/header text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
             title="Nouvelle conversation"
           >
             <span className="flex items-center gap-2">

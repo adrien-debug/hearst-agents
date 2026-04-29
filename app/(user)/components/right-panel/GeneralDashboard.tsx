@@ -98,12 +98,10 @@ function SuggestionRow({
       type="button"
       onClick={onRun}
       disabled={isRunning}
-      className="w-full text-left flex items-center justify-between"
+      className="w-full text-left flex items-center justify-between border border-[var(--card-flat-border)] border-l-2 border-l-[var(--cykan)]"
       style={{
         padding: "var(--space-3)",
         background: "var(--card-flat-bg)",
-        border: "1px solid var(--card-flat-border)",
-        borderLeft: "2px solid var(--cykan)",
       }}
     >
       <div className="flex-1 min-w-0">

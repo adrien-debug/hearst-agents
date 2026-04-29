@@ -218,7 +218,7 @@ export function AssetsGrid({
   if (visibleAssets.length === 0 && visibleSuggestions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-10 gap-4">
-        <span className="w-12 h-12 text-[var(--text-faint)]" style={{ opacity: 0.3 }} aria-hidden>
+        <span className="w-12 h-12 text-[var(--text-faint)] opacity-30" aria-hidden>
           <AssetGlyphSVG type="brief" />
         </span>
         <p className="t-11 font-mono uppercase tracking-display text-[var(--text-faint)] text-center">
