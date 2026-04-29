@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useMemo, useState, useEffect } from "react";
+import { useRef, useCallback, useMemo, useEffect } from "react";
 import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
@@ -9,8 +9,6 @@ import { useStageStore, type StagePayload } from "@/stores/stage";
 import type { Message, RightPanelData } from "@/lib/core/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { Stage } from "./components/Stage";
-import { getAllServices } from "@/lib/integrations/catalog";
-import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { toast } from "@/app/hooks/use-toast";
 
 function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_failed", properties?: Record<string, unknown>) {
@@ -22,14 +20,6 @@ function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_fail
     body: JSON.stringify({ type, properties }),
   }).catch(() => {});
 }
-
-const initialServices = (() => {
-  const baseServices = getAllServices();
-  return baseServices.map((s) => ({
-    ...s,
-    connectionStatus: "disconnected" as const,
-  }));
-})();
 
 /**
  * HomePage — Pivot 2026-04-29 : devient un router de Stages polymorphes.
@@ -94,18 +84,14 @@ export default function HomePage() {
     fetchThreadState();
   }, [activeThreadId, hydrateThreadState]);
 
-  const [services, setServicesLocal] = useState<ServiceWithConnectionStatus[]>(initialServices);
-  const [, setConnectionsLoadedLocal] = useState(false);
   const hideFocalStage = useFocalStore((s) => s.hide);
   const setStoreServices = useServicesStore((s) => s.setServices);
   const setStoreLoaded = useServicesStore((s) => s.setLoaded);
 
   const setServices = useCallback((next: ServiceWithConnectionStatus[]) => {
-    setServicesLocal(next);
     setStoreServices(next);
   }, [setStoreServices]);
   const setConnectionsLoaded = useCallback((next: boolean) => {
-    setConnectionsLoadedLocal(next);
     setStoreLoaded(next);
   }, [setStoreLoaded]);
 
@@ -147,11 +133,6 @@ export default function HomePage() {
 
   const assistantBufferRef = useRef<string>("");
   const currentAssistantIdRef = useRef<string | null>(null);
-
-  const connectedServices = useMemo(
-    () => services.filter((s) => s.connectionStatus === "connected"),
-    [services],
-  );
 
   const handleSubmit = useCallback(async (message: string) => {
     const threadId = activeThreadId ?? addThread("New", surface);

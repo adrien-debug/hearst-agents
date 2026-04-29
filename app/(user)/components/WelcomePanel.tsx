@@ -1,19 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useNavigationStore } from "@/stores/navigation";
 import { useRightPanelData } from "./right-panel/useRightPanelData";
 import { useRouter } from "next/navigation";
 
 export function WelcomePanel() {
   const { data: session } = useSession();
   const router = useRouter();
-  const { assets, missions } = useRightPanelData();
+  const { missions } = useRightPanelData();
+  const [now, setNow] = useState(Date.now());
   const userName = session?.user?.name?.split(" ")[0] ?? "Adrien";
 
-  const now = new Date();
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nowDate = new Date(now);
+  const hours = String(nowDate.getHours()).padStart(2, "0");
+  const minutes = String(nowDate.getMinutes()).padStart(2, "0");
   const timeStr = `${hours}:${minutes}`;
 
   // Top 3 unique customers from missions (based on name)
@@ -138,7 +144,7 @@ export function WelcomePanel() {
                 </div>
                 <p className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)] group-hover:text-[var(--text-ghost)] mt-1">
                   {m.lastRunAt
-                    ? `${Math.floor((Date.now() - m.lastRunAt) / 60000)}m`
+                    ? `${Math.floor((now - m.lastRunAt) / 60000)}m`
                     : "—"}{" "}
                   ago
                 </p>
