@@ -4,7 +4,7 @@
  * FocalRetryButton — Shared retry action component
  *
  * Handles retry logic for failed focal objects (missions, plans, runs).
- * Used by FocalStage and RightPanelContent for consistency.
+ * Used by FocalStage.
  */
 
 import { useState } from "react";

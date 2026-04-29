@@ -10,16 +10,12 @@ import { KnowledgeStage } from "./stages/KnowledgeStage";
 import { VoiceStage } from "./stages/VoiceStage";
 import { SimulationStage } from "./stages/SimulationStage";
 import type { Message } from "@/lib/core/types";
-import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 
 interface StageProps {
   /** Messages du thread actif (utilisé par ChatStage). */
   messages: Message[];
-  /** Handler de soumission (utilisé par ChatStage et le ChatInput flottant). */
+  /** Handler quick-reply (consommé par ChatMessages). */
   onSubmit: (message: string) => Promise<void>;
-  /** Services connectés (Composio) — utilisé par ChatStage et CockpitStage. */
-  connectedServices: ServiceWithConnectionStatus[];
-  /** Onglet courant pour AssetStage variants — null si non applicable. */
   hasMessages: boolean;
 }
 
@@ -33,19 +29,13 @@ export function Stage(props: StageProps) {
 
   switch (current.mode) {
     case "cockpit":
-      return (
-        <CockpitStage
-          onSubmit={props.onSubmit}
-          connectedServices={props.connectedServices}
-        />
-      );
+      return <CockpitStage />;
     case "chat":
       return (
         <ChatStage
           messages={props.messages}
           hasMessages={props.hasMessages}
           onSubmit={props.onSubmit}
-          connectedServices={props.connectedServices}
         />
       );
     case "asset":

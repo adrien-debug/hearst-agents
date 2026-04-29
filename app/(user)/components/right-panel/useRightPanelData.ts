@@ -6,12 +6,16 @@ import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
+import { useRunReportSuggestion } from "./useRunReportSuggestion";
 
 export interface RightPanelDataState {
   loading: boolean;
   assets: RightPanelData["assets"];
   missions: RightPanelData["missions"];
+  reportSuggestions: RightPanelData["reportSuggestions"];
   activeThreadId: string | null;
+  runningSpecs: Set<string>;
+  runSuggestion: (specId: string, title: string) => Promise<void>;
 }
 
 export function useRightPanelData(): RightPanelDataState {
@@ -137,11 +141,17 @@ export function useRightPanelData(): RightPanelDataState {
 
   const assets = data?.assets ?? [];
   const missions = data?.missions ?? [];
+  const reportSuggestions = data?.reportSuggestions;
+
+  const { runningSpecs, runSuggestion } = useRunReportSuggestion(activeThreadId);
 
   return {
     loading,
     assets,
     missions,
+    reportSuggestions,
     activeThreadId,
+    runningSpecs,
+    runSuggestion,
   };
 }

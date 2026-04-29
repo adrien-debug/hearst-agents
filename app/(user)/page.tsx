@@ -298,7 +298,6 @@ export default function HomePage() {
       messages={messages}
       hasMessages={messages.length > 0}
       onSubmit={handleSubmit}
-      connectedServices={connectedServices}
     />
   );
 }

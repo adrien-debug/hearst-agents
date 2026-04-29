@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1480">
+<title>Hearst OS — Cockpit V·03 · avec panel droit</title>
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+:root{
+  --bg:#000000;
+  --bg-elev:#040404;
+  --bg-soft:#080808;
+  --surface:#060606;
+  --surface-1:rgba(255,255,255,0.025);
+  --surface-2:rgba(255,255,255,0.04);
+  --surface-card:rgba(255,255,255,0.035);
+  --bg-center:#0A0D10;
+  --bg-rail:#16191D;
+  --text:#ffffff;
+  --text-soft:rgba(255,255,255,0.88);
+  --text-muted:rgba(255,255,255,0.65);
+  --text-faint:rgba(255,255,255,0.45);
+  --text-ghost:rgba(255,255,255,0.25);
+  --cykan:#2DD4BF;
+  --cykan-bg-active:rgba(45,212,191,0.08);
+  --cykan-bg-hover:rgba(45,212,191,0.05);
+  --cykan-border:rgba(45,212,191,0.25);
+  --cykan-surface:rgba(45,212,191,0.06);
+  --warn:#ffcc00;
+  --danger:#ff3333;
+  --accent-llm:#A78BFA;
+  --accent-agent:#fbbf24;
+  --border-soft:rgba(255,255,255,0.04);
+  --border-shell:rgba(255,255,255,0.06);
+  --border-input:rgba(255,255,255,0.08);
+  --border-subtle:rgba(255,255,255,0.08);
+  --border-default:rgba(255,255,255,0.12);
+  --border-strong:rgba(255,255,255,0.14);
+  --border-focus:rgba(255,255,255,0.40);
+  --text-on-cykan:#000000;
+
+  --font-display:"Inter",system-ui,-apple-system,sans-serif;
+  --font-mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  background:var(--bg);
+  color:var(--text-soft);
+  font-family:var(--font-display);
+  font-feature-settings:"cv11","ss01","ss03";
+  -webkit-font-smoothing:antialiased;
+  line-height:1.5;
+}
+body{
+  display:flex;flex-direction:column;align-items:center;
+  padding:64px 32px 96px;
+  gap:48px;
+}
+
+/* ── HEADER ───────────────────────────────────────────── */
+.head{
+  width:1440px;max-width:100%;
+  display:grid;grid-template-columns:280px 1fr;gap:72px;
+  padding-bottom:36px;
+  border-bottom:1px solid var(--border-shell);
+}
+.head .l{
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text-faint);
+}
+.head .l strong{color:var(--cykan);font-weight:500;letter-spacing:0.18em}
+.head h1{
+  font-size:32px;font-weight:600;letter-spacing:-0.025em;
+  color:var(--text);line-height:1.1;max-width:760px;
+}
+.head h1 em{font-style:normal;color:var(--cykan)}
+.head .sub{
+  margin-top:14px;font-size:14px;color:var(--text-muted);
+  line-height:1.6;max-width:680px;
+}
+
+/* ── FRAME ────────────────────────────────────────────── */
+.frame-wrap{
+  width:1440px;max-width:100%;
+  display:flex;flex-direction:column;gap:18px;
+}
+.frame-meta{
+  display:flex;align-items:baseline;gap:18px;
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--text-faint);
+}
+.frame-meta .num{color:var(--cykan);font-weight:500}
+.frame-meta .title{
+  color:var(--text-soft);font-weight:500;
+  font-family:var(--font-display);
+  font-size:14px;letter-spacing:-0.005em;text-transform:none;
+}
+.frame-meta .sub{margin-left:auto}
+
+.frame{
+  width:100%;height:920px;
+  background:var(--bg);
+  border:1px solid var(--border-shell);
+  overflow:hidden;
+  position:relative;
+  display:flex;flex-direction:column;
+}
+.frame-top{
+  flex:1;display:flex;min-height:0;
+}
+
+/* ── SPINE ────────────────────────────────────────────── */
+.spine{
+  width:280px;flex-shrink:0;
+  background:var(--bg);
+  border-right:1px solid var(--border-shell);
+  display:flex;flex-direction:column;
+}
+.spine .wordmark{
+  padding:24px 24px 22px;
+  display:flex;align-items:baseline;gap:10px;
+  border-bottom:1px solid var(--border-shell);
+}
+.spine .wordmark .name{
+  font-family:var(--font-mono);
+  font-size:11px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text);font-weight:500;
+}
+.spine .wordmark .ver{
+  font-family:var(--font-mono);
+  font-size:10px;color:var(--text-ghost);
+  font-variant-numeric:tabular-nums;margin-left:auto;
+}
+.spine .group{padding:20px 24px 4px}
+.spine .group .label{
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:500;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.spine .group .label .n{color:var(--text-ghost);font-variant-numeric:tabular-nums}
+.spine .group .row{
+  padding:7px 0;font-size:13px;color:var(--text-muted);
+  display:flex;align-items:baseline;gap:10px;
+  cursor:pointer;letter-spacing:-0.005em;
+}
+.spine .group .row:hover{color:var(--text-soft)}
+.spine .group .row.active{color:var(--text);position:relative}
+.spine .group .row.active::before{
+  content:"";position:absolute;left:-24px;top:8px;bottom:8px;
+  width:2px;background:var(--cykan);
+}
+.spine .group .row .name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spine .group .row .meta{
+  font-family:var(--font-mono);font-size:10px;
+  color:var(--text-ghost);font-variant-numeric:tabular-nums;
+  letter-spacing:0.04em;text-transform:uppercase;
+}
+.spine .group .row.active .meta{color:var(--cykan)}
+.spine .foot{
+  margin-top:auto;
+  padding:16px 24px 22px;
+  border-top:1px solid var(--border-shell);
+  display:flex;flex-direction:column;gap:10px;
+}
+.spine .foot .item{
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:500;
+}
+.spine .foot .item .l{color:var(--text-ghost)}
+.spine .foot .item .v{color:var(--text-soft)}
+
+/* ── KBD ──────────────────────────────────────────────── */
+.kbd{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:10px;font-weight:500;
+  padding:1px 5px;
+  background:var(--surface-1);
+  border:1px solid var(--border-input);
+  color:var(--text-muted);
+  letter-spacing:0;font-variant-numeric:tabular-nums;
+}
+
+/* ── STAGE ────────────────────────────────────────────── */
+.stage{
+  flex:1;background:var(--bg);
+  display:flex;flex-direction:column;min-width:0;
+}
+.stage-bar{
+  height:36px;flex-shrink:0;
+  display:flex;align-items:center;
+  padding:0 36px;
+  border-bottom:1px solid var(--border-shell);
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--text-ghost);font-weight:500;
+}
+.stage-bar .crumb{display:flex;gap:10px;align-items:center}
+.stage-bar .crumb .sep{color:var(--text-ghost)}
+.stage-bar .crumb strong{color:var(--text-soft);font-weight:500}
+.stage-bar .clock{
+  margin-left:auto;color:var(--text-faint);
+  font-variant-numeric:tabular-nums;
+}
+.stage-body{
+  flex:1;padding:48px 56px 32px;
+  display:flex;flex-direction:column;
+  min-height:0;overflow:hidden;
+}
+
+/* ── OPENER ───────────────────────────────────────────── */
+.opener{
+  display:flex;flex-direction:column;
+  padding-bottom:28px;
+  border-bottom:1px solid var(--border-default);
+  margin-bottom:32px;
+}
+.opener h1{
+  font-size:52px;font-weight:600;letter-spacing:-0.035em;
+  line-height:1.0;color:var(--text);max-width:980px;
+}
+.opener h1 .quiet{color:var(--text-faint);font-weight:500;letter-spacing:-0.03em}
+.opener .lede{
+  font-size:15px;color:var(--text-muted);
+  line-height:1.6;margin-top:18px;max-width:780px;
+  letter-spacing:-0.005em;
+}
+.opener .lede strong{color:var(--text-soft);font-weight:500}
+
+/* ── LANES ────────────────────────────────────────────── */
+.lanes{
+  flex:1;
+  display:grid;grid-template-columns:1.25fr 1fr;
+  gap:48px;min-height:0;overflow:hidden;
+}
+.lane{display:flex;flex-direction:column;min-height:0}
+.lane > h2{
+  font-family:var(--font-mono);
+  font-size:11px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:500;
+  display:flex;align-items:baseline;gap:14px;
+  padding-bottom:18px;
+  border-bottom:1px solid var(--border-default);
+}
+.lane > h2 .n{color:var(--cykan);font-variant-numeric:tabular-nums}
+.lane > h2 .hint{
+  margin-left:auto;font-size:10px;
+  color:var(--text-ghost);letter-spacing:0.16em;
+}
+
+/* SUGGESTIONS */
+.lane.sugg-lane .body{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.sugg{padding:18px 0 20px;border-bottom:1px solid var(--border-soft)}
+.sugg:last-child{border-bottom:0}
+.sugg .head{
+  display:flex;align-items:baseline;gap:14px;
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:500;margin-bottom:8px;
+}
+.sugg .head .n{color:var(--text-ghost);font-variant-numeric:tabular-nums}
+.sugg .head .cat{color:var(--text-soft);font-weight:500}
+.sugg .head .meta{margin-left:auto;color:var(--text-ghost);letter-spacing:0.12em}
+.sugg .body-text{
+  font-size:14px;color:var(--text-soft);line-height:1.55;
+  letter-spacing:-0.005em;margin-bottom:10px;
+}
+.sugg .body-text strong{color:var(--text);font-weight:500}
+.sugg .body-text .num{
+  font-family:var(--font-mono);color:var(--text);
+  font-variant-numeric:tabular-nums;font-weight:500;letter-spacing:0;
+}
+.sugg .actions{display:flex;gap:24px;align-items:center;margin-top:6px}
+.btn-mono{
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  font-weight:500;background:transparent;color:var(--cykan);
+  border:0;padding:0;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  border-bottom:1px solid var(--cykan);padding-bottom:2px;
+}
+.btn-mono.ghost{color:var(--text-faint);border-bottom-color:var(--border-input)}
+.btn-mono:hover{filter:brightness(1.1)}
+
+/* THREADS */
+.lane.threads-lane .body{flex:1;overflow-y:auto}
+.thread{padding:18px 0 20px;border-bottom:1px solid var(--border-soft)}
+.thread:last-child{border-bottom:0}
+.thread .head{
+  display:flex;align-items:baseline;gap:14px;
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--text-soft);font-weight:500;margin-bottom:8px;
+}
+.thread .head .name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thread .head .meta{color:var(--text-ghost);font-variant-numeric:tabular-nums}
+.thread .head .live-dot{
+  display:inline-block;width:5px;height:5px;
+  background:var(--cykan);margin-right:2px;vertical-align:1px;
+}
+.thread .title{
+  font-size:14px;color:var(--text);font-weight:500;
+  line-height:1.4;letter-spacing:-0.01em;margin-bottom:6px;
+}
+.thread .quote{
+  font-size:12.5px;color:var(--text-muted);line-height:1.55;
+  border-left:1px solid var(--border-default);padding-left:12px;
+  letter-spacing:-0.005em;
+}
+
+/* ── RIGHT PANEL ──────────────────────────────────────── */
+.panel{
+  width:320px;flex-shrink:0;
+  background:var(--bg-soft);
+  border-left:1px solid var(--border-shell);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.panel .panel-bar{
+  height:36px;flex-shrink:0;
+  display:flex;align-items:center;
+  padding:0 24px;
+  border-bottom:1px solid var(--border-shell);
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:500;
+}
+.panel .panel-bar .day{color:var(--text);font-weight:500;letter-spacing:0.04em;text-transform:none;font-family:var(--font-display);font-size:12px}
+.panel .panel-bar .date{
+  margin-left:auto;
+  font-variant-numeric:tabular-nums;
+  color:var(--text-ghost);
+}
+.panel-body{
+  flex:1;overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+
+/* AGENDA */
+.panel-section{padding:24px 24px 8px}
+.panel-section h3{
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:500;
+  display:flex;align-items:baseline;gap:14px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--border-default);
+  margin-bottom:4px;
+}
+.panel-section h3 .n{color:var(--cykan);font-variant-numeric:tabular-nums}
+.panel-section h3 .hint{
+  margin-left:auto;font-size:10px;color:var(--text-ghost);
+}
+
+.event{
+  padding:14px 0;
+  border-bottom:1px solid var(--border-soft);
+  display:grid;
+  grid-template-columns:48px 1fr;
+  gap:14px;
+  align-items:start;
+}
+.event:last-child{border-bottom:0}
+.event .when{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+  color:var(--text-soft);
+  font-weight:500;
+  padding-top:1px;
+  letter-spacing:-0.01em;
+}
+.event.live .when{color:var(--cykan)}
+.event.past .when{color:var(--text-ghost);text-decoration:line-through;text-decoration-color:var(--border-default)}
+.event .body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.event .body .title{
+  font-size:13px;color:var(--text);font-weight:500;
+  letter-spacing:-0.005em;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.event.past .body .title{color:var(--text-faint)}
+.event .body .meta{
+  font-size:11px;color:var(--text-faint);
+  line-height:1.4;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.event .body .live-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);
+  font-size:9px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--cykan);font-weight:500;margin-top:2px;
+}
+.event .body .live-tag::before{
+  content:"";width:5px;height:5px;background:var(--cykan);
+  animation:livePulse 1.6s steps(1) infinite;
+}
+@keyframes livePulse{
+  0%,55%{opacity:1}
+  60%,100%{opacity:0.25}
+}
+
+/* PERSONNES À GARDER EN TÊTE */
+.person{
+  padding:14px 0;
+  border-bottom:1px solid var(--border-soft);
+  display:grid;
+  grid-template-columns:30px 1fr;
+  gap:14px;align-items:start;
+}
+.person:last-child{border-bottom:0}
+.person .ini{
+  width:30px;height:30px;
+  border:1px solid var(--border-default);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.04em;
+  color:var(--text-soft);font-weight:500;
+}
+.person.warn .ini{border-color:var(--cykan-border);color:var(--cykan)}
+.person .body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.person .body .name{
+  font-size:13px;color:var(--text);font-weight:500;
+  letter-spacing:-0.005em;line-height:1.35;
+}
+.person .body .role{
+  font-family:var(--font-mono);
+  font-size:9px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--text-ghost);font-weight:500;
+}
+.person .body .note{
+  font-size:11.5px;color:var(--text-muted);line-height:1.45;
+  margin-top:4px;letter-spacing:-0.005em;
+}
+.person .body .note strong{color:var(--text-soft);font-weight:500}
+
+/* PROCHAIN BLOC */
+.next-rdv{
+  margin-top:auto;
+  padding:18px 24px 22px;
+  border-top:1px solid var(--border-shell);
+  background:var(--bg);
+}
+.next-rdv .l{
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--cykan);font-weight:500;margin-bottom:8px;
+}
+.next-rdv .countdown{
+  font-family:var(--font-mono);
+  font-size:24px;color:var(--text);font-weight:500;
+  font-variant-numeric:tabular-nums;letter-spacing:-0.02em;
+  line-height:1;
+}
+.next-rdv .countdown .unit{
+  font-size:14px;color:var(--text-faint);font-weight:500;margin-left:4px;
+}
+.next-rdv .ev-name{
+  font-size:13px;color:var(--text-soft);
+  margin-top:8px;letter-spacing:-0.005em;
+}
+.next-rdv .ev-meta{
+  font-size:11px;color:var(--text-faint);
+  margin-top:2px;
+}
+
+/* ── VOICE RIBBON (full-width en bas) ─────────────────── */
+.voice{
+  flex-shrink:0;
+  height:56px;
+  display:flex;align-items:center;
+  padding:0 36px;gap:28px;
+  background:var(--bg);
+  border-top:1px solid var(--border-shell);
+}
+.voice .label-l{
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:500;
+  display:flex;align-items:center;gap:10px;white-space:nowrap;
+}
+.voice .label-l .pip{
+  display:inline-block;width:6px;height:6px;
+  background:var(--cykan);
+  animation:livePulse 1.6s steps(1) infinite;
+}
+.voice .label-l .state{color:var(--text-soft);font-weight:500}
+.wf{flex:1;height:24px;display:flex;align-items:center;gap:2px}
+.wf span{
+  flex:1;background:var(--text-ghost);display:block;height:8%;
+  animation:wfIdle 3.2s ease-in-out infinite;
+}
+.wf span:nth-child(1){animation-delay:.0s;height:14%}
+.wf span:nth-child(2){animation-delay:.05s;height:22%}
+.wf span:nth-child(3){animation-delay:.1s;height:10%}
+.wf span:nth-child(4){animation-delay:.15s;height:30%}
+.wf span:nth-child(5){animation-delay:.2s;height:18%}
+.wf span:nth-child(6){animation-delay:.25s;height:12%}
+.wf span:nth-child(7){animation-delay:.3s;height:24%}
+.wf span:nth-child(8){animation-delay:.35s;height:16%}
+.wf span:nth-child(9){animation-delay:.4s;height:32%}
+.wf span:nth-child(10){animation-delay:.45s;height:14%}
+.wf span:nth-child(11){animation-delay:.5s;height:20%}
+.wf span:nth-child(12){animation-delay:.55s;height:10%}
+.wf span:nth-child(13){animation-delay:.6s;height:26%}
+.wf span:nth-child(14){animation-delay:.65s;height:14%}
+.wf span:nth-child(15){animation-delay:.7s;height:22%}
+.wf span:nth-child(16){animation-delay:.75s;height:18%}
+.wf span:nth-child(17){animation-delay:.8s;height:30%}
+.wf span:nth-child(18){animation-delay:.85s;height:12%}
+.wf span:nth-child(19){animation-delay:.9s;height:20%}
+.wf span:nth-child(20){animation-delay:.95s;height:14%}
+.wf span:nth-child(21){animation-delay:1s;height:24%}
+.wf span:nth-child(22){animation-delay:1.05s;height:16%}
+.wf span:nth-child(23){animation-delay:1.1s;height:10%}
+.wf span:nth-child(24){animation-delay:1.15s;height:22%}
+.wf span:nth-child(25){animation-delay:1.2s;height:18%}
+.wf span:nth-child(26){animation-delay:1.25s;height:14%}
+.wf span:nth-child(27){animation-delay:1.3s;height:28%}
+.wf span:nth-child(28){animation-delay:1.35s;height:12%}
+.wf span:nth-child(29){animation-delay:1.4s;height:20%}
+.wf span:nth-child(30){animation-delay:1.45s;height:16%}
+.wf span:nth-child(31){animation-delay:1.5s;height:10%}
+.wf span:nth-child(32){animation-delay:1.55s;height:24%}
+.wf span:nth-child(33){animation-delay:1.6s;height:18%}
+.wf span:nth-child(34){animation-delay:1.65s;height:14%}
+.wf span:nth-child(35){animation-delay:1.7s;height:22%}
+.wf span:nth-child(36){animation-delay:1.75s;height:12%}
+.wf span:nth-child(37){animation-delay:1.8s;height:30%}
+.wf span:nth-child(38){animation-delay:1.85s;height:16%}
+.wf span:nth-child(39){animation-delay:1.9s;height:20%}
+.wf span:nth-child(40){animation-delay:1.95s;height:14%}
+.wf span:nth-child(41){animation-delay:2.0s;height:24%}
+.wf span:nth-child(42){animation-delay:2.05s;height:18%}
+.wf span:nth-child(43){animation-delay:2.1s;height:12%}
+.wf span:nth-child(44){animation-delay:2.15s;height:22%}
+.wf span:nth-child(45){animation-delay:2.2s;height:16%}
+.wf span:nth-child(46){animation-delay:2.25s;height:14%}
+.wf span:nth-child(47){animation-delay:2.3s;height:26%}
+.wf span:nth-child(48){animation-delay:2.35s;height:12%}
+@keyframes wfIdle{
+  0%,100%{transform:scaleY(1);background:var(--text-ghost)}
+  50%{transform:scaleY(0.6);background:var(--text-faint)}
+}
+.voice .label-r{
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text-faint);font-weight:500;
+  display:flex;align-items:center;gap:10px;white-space:nowrap;
+}
+.voice .label-r kbd{
+  font-family:var(--font-mono);font-size:10px;
+  padding:1px 5px;background:var(--surface-1);
+  border:1px solid var(--border-input);
+  color:var(--text-muted);letter-spacing:0;
+}
+
+/* ── CAPTION ──────────────────────────────────────────── */
+.caption{
+  width:1440px;max-width:100%;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:36px;
+  padding-top:24px;border-top:1px solid var(--border-shell);
+}
+.caption .col .l{
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  font-weight:500;margin-bottom:8px;
+}
+.caption .col.l1 .l{color:var(--text-faint)}
+.caption .col.l2 .l{color:var(--accent-agent)}
+.caption .col.l3 .l{color:var(--cykan)}
+.caption .col p{
+  font-size:13.5px;color:var(--text-soft);
+  line-height:1.6;letter-spacing:-0.005em;
+}
+.caption .col p strong{color:var(--text);font-weight:500}
+.caption .col p code{
+  font-family:var(--font-mono);font-size:11.5px;
+  color:var(--text);background:var(--surface-1);
+  padding:1px 6px;border:1px solid var(--border-soft);
+}
+
+.deck-foot{
+  width:1440px;max-width:100%;
+  font-family:var(--font-mono);
+  font-size:10px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--text-ghost);font-weight:500;
+  display:flex;justify-content:space-between;
+  padding-top:24px;border-top:1px solid var(--border-shell);
+}
+.deck-foot .l{color:var(--text-faint)}
+</style>
+</head>
+<body>
+
+<header class="head">
+  <div>
+    <div class="l"><strong>V·03</strong> · cockpit + panel droit</div>
+    <div class="l" style="margin-top:6px;color:var(--text-ghost)">2026·04·29</div>
+  </div>
+  <div>
+    <h1>Le panel droit revient — mais éditorial, pas instrument.</h1>
+    <p class="sub">Le cockpit reprend la grammaire V·02 (hairlines, mono, pas de cards, cykan parcimonieux). Le panel droit ne contient <strong>aucun</strong> chrome système, <strong>aucun</strong> KPI&nbsp;: c'est l'agenda du jour et les personnes à garder en tête. Du français pour humain, pas du dashboard pour ops.</p>
+  </div>
+</header>
+
+<div class="frame-wrap">
+  <div class="frame-meta">
+    <span class="num">M·01</span>
+    <span class="title">Cockpit — matin, voix idle, panel droit éditorial</span>
+    <span class="sub">1440 × 920</span>
+  </div>
+
+  <div class="frame">
+
+    <div class="frame-top">
+
+      <!-- SPINE -->
+      <aside class="spine">
+        <div class="wordmark">
+          <span class="name">Hearst&nbsp;OS</span>
+          <span class="ver">v0.4 · A</span>
+        </div>
+
+        <div class="group">
+          <div class="label"><span>Maintenant</span></div>
+          <div class="row active">
+            <span class="name">Cockpit</span>
+            <span class="meta">3 sugg</span>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="label"><span>En cours</span><span class="n">·03</span></div>
+          <div class="row">
+            <span class="name">Plan stratégique 2026</span>
+            <span class="meta">2h</span>
+          </div>
+          <div class="row">
+            <span class="name">Recrutement Head of Eng</span>
+            <span class="meta">hier</span>
+          </div>
+          <div class="row">
+            <span class="name">Board notes — mars</span>
+            <span class="meta">6j</span>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="label"><span>Cette semaine</span><span class="n">·05</span></div>
+          <div class="row">
+            <span class="name">Synthèse board meeting</span>
+            <span class="meta">lun</span>
+          </div>
+          <div class="row">
+            <span class="name">Brief produit MVP v2</span>
+            <span class="meta">mar</span>
+          </div>
+          <div class="row">
+            <span class="name">Veille concurrence Q2</span>
+            <span class="meta">mar</span>
+          </div>
+          <div class="row">
+            <span class="name">Note d'intention investisseur</span>
+            <span class="meta">jeu</span>
+          </div>
+          <div class="row">
+            <span class="name">Brouillon réponse Sequoia</span>
+            <span class="meta">ven</span>
+          </div>
+        </div>
+
+        <div class="foot">
+          <div class="item"><span class="l">Commande</span><span class="v"><span class="kbd">⌘</span> <span class="kbd">K</span></span></div>
+        </div>
+      </aside>
+
+      <!-- STAGE -->
+      <main class="stage">
+
+        <div class="stage-bar">
+          <div class="crumb">
+            <span>Plateau</span>
+            <span class="sep">/</span>
+            <strong>Cockpit</strong>
+          </div>
+          <div class="clock">Mer 29·04·26 — 09:14</div>
+        </div>
+
+        <div class="stage-body">
+
+          <div class="opener">
+            <h1>Bonjour, Adrien.<br><span class="quiet">Trois choses qui méritent ton regard.</span></h1>
+            <p class="lede">Mercredi 29 avril. <strong>Trois propositions</strong> attendent que tu tranches, une <strong>note de veille concurrentielle</strong> arrive d'ici une vingtaine de minutes, et tu as <strong>46 minutes</strong> avant ton premier rendez-vous.</p>
+          </div>
+
+          <div class="lanes">
+
+            <!-- SUGGESTIONS -->
+            <div class="lane sugg-lane">
+              <h2><span>Suggestions IA</span><span class="n">·03</span><span class="hint">⌘ + ↵ exécuter</span></h2>
+              <div class="body">
+
+                <div class="sugg">
+                  <div class="head">
+                    <span class="n">01</span>
+                    <span class="cat">Relance</span>
+                    <span class="meta">Pierre Martin · CFO</span>
+                  </div>
+                  <div class="body-text">
+                    <strong>Pierre n'a pas répondu</strong> à ton mail d'hier sur le pricing. Sa moyenne de réponse est <span class="num">4h</span>, on est à <span class="num">19h</span>. Je relance avec un ton tranquille&nbsp;?
+                  </div>
+                  <div class="actions">
+                    <button class="btn-mono">Préparer →</button>
+                    <button class="btn-mono ghost">Plus tard</button>
+                  </div>
+                </div>
+
+                <div class="sugg">
+                  <div class="head">
+                    <span class="n">02</span>
+                    <span class="cat">Lecture</span>
+                    <span class="meta">Rapport Q1 — déposé hier 23:47</span>
+                  </div>
+                  <div class="body-text">
+                    Le <strong>rapport Q1</strong> de Marie fait <span class="num">12&nbsp;min</span> de lecture. Je peux te sortir le résumé trois points avant ton 10:00 avec le board.
+                  </div>
+                  <div class="actions">
+                    <button class="btn-mono">Résumer →</button>
+                    <button class="btn-mono ghost">Lire en entier</button>
+                  </div>
+                </div>
+
+                <div class="sugg">
+                  <div class="head">
+                    <span class="n">03</span>
+                    <span class="cat">Préparation</span>
+                    <span class="meta">Demain</span>
+                  </div>
+                  <div class="body-text">
+                    <strong>Trois réunions demain</strong>, dont deux sans agenda&nbsp;: «&nbsp;Quick sync produit&nbsp;» et «&nbsp;Catch-up Léa&nbsp;». Je te prépare une note d'intention pour chacune&nbsp;?
+                  </div>
+                  <div class="actions">
+                    <button class="btn-mono">Préparer les 2 →</button>
+                    <button class="btn-mono ghost">Choisir</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- THREADS -->
+            <div class="lane threads-lane">
+              <h2><span>Conversations vivantes</span><span class="n">·03</span></h2>
+              <div class="body">
+
+                <div class="thread">
+                  <div class="head">
+                    <span class="name">Plan stratégique 2026</span>
+                    <span class="meta">2h · 14 msg</span>
+                  </div>
+                  <div class="title">Comparer les deux propositions de pricing en regardant Vercel et Linear</div>
+                  <div class="quote">«&nbsp;Je pense qu'on devrait pousser le palier Pro à 79&nbsp;€ en se basant sur la grille de Linear, mais Vercel reste l'ancre…&nbsp;»</div>
+                </div>
+
+                <div class="thread">
+                  <div class="head">
+                    <span class="live-dot"></span>
+                    <span class="name">Recrutement Head of Eng</span>
+                    <span class="meta">hier · 7 msg · 1 livrable</span>
+                  </div>
+                  <div class="title">Short-list de 4 profils — l'agent compose les briefs</div>
+                  <div class="quote">«&nbsp;L'agent a sourcé 11 profils LinkedIn, j'en ai gardé 4. Il compose les premiers messages pour validation.&nbsp;»</div>
+                </div>
+
+                <div class="thread">
+                  <div class="head">
+                    <span class="name">Brouillon — réponse investisseur</span>
+                    <span class="meta">5j · 3 msg</span>
+                  </div>
+                  <div class="title">Reformuler le pitch Series A en gardant le ton sec</div>
+                  <div class="quote">«&nbsp;Je propose une version courte. Tu retravailles&nbsp;?&nbsp;»</div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </main>
+
+      <!-- ─────────────── PANEL DROIT ─────────────── -->
+      <aside class="panel">
+
+        <div class="panel-bar">
+          <span class="day">Mercredi</span>
+          <span class="date">29·04 · S·18</span>
+        </div>
+
+        <div class="panel-body">
+
+          <!-- AGENDA -->
+          <div class="panel-section">
+            <h3><span>Aujourd'hui</span><span class="n">·05</span><span class="hint">⌘+2</span></h3>
+
+            <div class="event past">
+              <div class="when">08:30</div>
+              <div class="body">
+                <div class="title">Café — réflexion stratégique</div>
+                <div class="meta">solo · 30 min</div>
+              </div>
+            </div>
+
+            <div class="event">
+              <div class="when">10:00</div>
+              <div class="body">
+                <div class="title">Board meeting Q1</div>
+                <div class="meta">Marie · Pierre · Léa · +2 · Hangouts</div>
+              </div>
+            </div>
+
+            <div class="event">
+              <div class="when">14:30</div>
+              <div class="body">
+                <div class="title">Catch-up Léa</div>
+                <div class="meta">1·1 · pas d'agenda · 30 min</div>
+              </div>
+            </div>
+
+            <div class="event">
+              <div class="when">16:00</div>
+              <div class="body">
+                <div class="title">Quick sync produit</div>
+                <div class="meta">équipe produit · pas d'agenda</div>
+              </div>
+            </div>
+
+            <div class="event">
+              <div class="when">19:30</div>
+              <div class="body">
+                <div class="title">Dîner Pierre Martin</div>
+                <div class="meta">Septime · pricing · perso</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PERSONNES -->
+          <div class="panel-section">
+            <h3><span>À garder en tête</span><span class="n">·03</span></h3>
+
+            <div class="person warn">
+              <div class="ini">PM</div>
+              <div class="body">
+                <div class="role">CFO · interne</div>
+                <div class="name">Pierre Martin</div>
+                <div class="note"><strong>N'a pas répondu</strong> à ton mail d'hier sur le pricing. Tu le revois ce soir&nbsp;: prépare ta question avant.</div>
+              </div>
+            </div>
+
+            <div class="person">
+              <div class="ini">MC</div>
+              <div class="body">
+                <div class="role">Board · membre</div>
+                <div class="name">Marie&nbsp;C.</div>
+                <div class="note">A déposé le rapport Q1 hier soir à 23:47. <strong>12&nbsp;min</strong> de lecture avant 10:00.</div>
+              </div>
+            </div>
+
+            <div class="person">
+              <div class="ini">SQ</div>
+              <div class="body">
+                <div class="role">Investisseur · externe</div>
+                <div class="name">Sequoia</div>
+                <div class="note">Délai d'une semaine que tu as posé toi-même au board. Reste <strong>5&nbsp;jours</strong> avant qu'ils relancent.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- COUNTDOWN PROCHAIN RDV -->
+        <div class="next-rdv">
+          <div class="l">Dans 46 minutes</div>
+          <div class="countdown">10:00<span class="unit"></span></div>
+          <div class="ev-name">Board meeting Q1</div>
+          <div class="ev-meta">5 personnes · Hangouts · note d'intention prête</div>
+        </div>
+
+      </aside>
+
+    </div>
+
+    <!-- VOICE RIBBON full-width -->
+    <div class="voice">
+      <div class="label-l">
+        <span class="pip"></span>
+        <span class="state">Voix</span>
+        <span>idle · ambiante</span>
+      </div>
+      <div class="wf">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="label-r">
+        <span>Parle&nbsp;: maintien</span>
+        <kbd>⎵</kbd>
+        <span style="margin-left:18px">commande</span>
+        <kbd>⌘</kbd><kbd>K</kbd>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="caption">
+  <div class="col l1">
+    <div class="l">Ce qu'on voit</div>
+    <p>Trois colonnes&nbsp;: spine 280&nbsp;px (timeline + nav), stage central avec deux lanes (suggestions IA + threads vivants), panel droit 320&nbsp;px (<strong>agenda du jour + personnes à garder en tête + countdown du prochain RDV</strong>). Voice ribbon plein-largeur en bas. Aucun container arrondi, aucune card.</p>
+  </div>
+  <div class="col l2">
+    <div class="l">Le pari</div>
+    <p>Le panel droit revient mais reste <strong>éditorial</strong>&nbsp;: le client n'y voit ni KPI, ni latence, ni «&nbsp;OAuth bloqué : 00&nbsp;». Il y voit son agenda et trois personnes qu'il doit garder en tête. Le countdown 10:00 en mono géant en bas est la seule «&nbsp;mesure&nbsp;» — humaine, pas technique.</p>
+  </div>
+  <div class="col l3">
+    <div class="l">Vs V·02</div>
+    <p>La stage perd la 3<sup>e</sup> colonne (livrables récents) qui passe naturellement dans le panel droit ou dans le stage <code>Livrables</code> (⌘+3). Le voice ribbon devient plein-largeur sous spine + stage + panel. Tout le reste — typo, hairlines, mono, cykan parcimonieux — est strictement le même.</p>
+  </div>
+</div>
+
+<footer class="deck-foot">
+  <div class="l">Hearst OS · cockpit · v·03</div>
+  <div>standalone html · palette canonique · inter + ui-monospace</div>
+</footer>
+
+</body>
+</html>

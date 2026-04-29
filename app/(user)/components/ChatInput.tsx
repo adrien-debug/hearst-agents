@@ -108,7 +108,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="px-10 pt-5 pb-8 border-t border-[var(--border-shell)]">
+    <div className="px-10 pt-5 pb-8">
       <div
         className="mx-auto relative"
         style={{ maxWidth: "var(--input-max-width)" }}
@@ -156,10 +156,14 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Card — textarea en haut, actions en bas */}
+        {/* Input Card — capsule anthracite (même teinte que les rails), sans hover/effets */}
         <div
-          className="bg-[var(--card-flat-bg)] border border-[var(--border-input)] rounded-sm transition-colors duration-base group focus-within:border-[var(--cykan-border-hover)]"
-          style={{ boxShadow: "var(--shadow-card)" }}
+          data-theme="dark"
+          className="rounded-lg group"
+          style={{
+            background: "var(--bg-rail)",
+            color: "var(--text)",
+          }}
         >
           {attachment && (
             <div className="flex items-center gap-2 px-5 pt-3 pb-1">
@@ -299,16 +303,11 @@ export function ChatInput({
                 <button
                   onClick={handleSubmit}
                   disabled={!input.trim()}
-                  className={`w-8 h-8 flex items-center justify-center shrink-0 transition-all duration-base ${
+                  className={`w-8 h-8 flex items-center justify-center shrink-0 ${
                     input.trim()
                       ? "bg-[var(--cykan)] text-[var(--bg)] border border-[var(--cykan)]"
                       : "bg-transparent text-[var(--text-faint)] border border-[var(--border-default)] cursor-not-allowed"
                   }`}
-                  style={
-                    input.trim()
-                      ? { boxShadow: "var(--shadow-glow-cykan-soft)" }
-                      : {}
-                  }
                   title="Envoyer"
                 >
                   <svg

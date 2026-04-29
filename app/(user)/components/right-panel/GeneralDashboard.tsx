@@ -29,15 +29,15 @@ function SectionTitle({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex items-center justify-between mb-2">
-      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] inline-flex items-baseline gap-2">
+    <div className="flex items-baseline justify-between" style={{ marginBottom: "var(--space-3)" }}>
+      <h2 className="t-18 font-medium tracking-tight text-[var(--text)] inline-flex items-baseline" style={{ gap: "var(--space-2)" }}>
         <span>{children}</span>
         {typeof count === "number" && (
-          <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
+          <span className="t-11 font-mono tracking-display text-[var(--text-faint)]">
             {count.toString().padStart(2, "0")}
           </span>
         )}
-      </span>
+      </h2>
       {action && (
         <button
           type="button"

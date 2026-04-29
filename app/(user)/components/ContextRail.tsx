@@ -12,6 +12,7 @@
  * `{section.length > 0 && ...}` autour d'un bloc complet.
  */
 
+import { useRouter } from "next/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { useVoiceStore } from "@/stores/voice";
@@ -162,38 +163,163 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
 
 // ── Sub-rails cockpit / chat ───────────────────────────────
 
-function ContextRailForCockpit() {
-  const { assets, missions, activeThreadId, loading } = useRightPanelData();
+function CockpitChatBody() {
+  const router = useRouter();
+  const {
+    assets,
+    missions,
+    reportSuggestions,
+    activeThreadId,
+    loading,
+    runningSpecs,
+    runSuggestion,
+  } = useRightPanelData();
+
+  const handleViewChange = (view: "reports" | "missions" | "assets") => {
+    if (view === "missions") router.push("/missions");
+    else if (view === "assets") router.push("/assets");
+    else if (view === "reports") router.push("/runs");
+  };
+
+  const kpis = [
+    { label: "Assets", value: assets.length, onClick: () => router.push("/assets") },
+    { label: "Missions", value: missions.length, onClick: () => router.push("/missions") },
+    {
+      label: "Reports",
+      value: assets.filter((a) => a.type === "report").length,
+      onClick: () => router.push("/runs"),
+    },
+    {
+      label: "Suggest.",
+      value: (reportSuggestions ?? []).length,
+      onClick: () => router.push("/runs"),
+    },
+  ];
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
+      <KPIRow kpis={kpis} />
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
         <GeneralDashboard
           assets={assets}
           missions={missions}
-          onViewChange={() => {}}
+          onViewChange={handleViewChange}
           activeThreadId={activeThreadId}
           loading={loading}
         />
       </div>
+      <SuggestionsFooter
+        suggestions={reportSuggestions ?? []}
+        runningSpecs={runningSpecs}
+        onRun={runSuggestion}
+      />
     </div>
   );
 }
 
-function ContextRailForChat() {
-  const { assets, missions, activeThreadId, loading } = useRightPanelData();
-
+function KPIRow({
+  kpis,
+}: {
+  kpis: { label: string; value: number; onClick: () => void }[];
+}) {
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
-        <GeneralDashboard
-          assets={assets}
-          missions={missions}
-          onViewChange={() => {}}
-          activeThreadId={activeThreadId}
-          loading={loading}
-        />
+    <div
+      className="shrink-0 grid grid-cols-4 border-b border-[var(--border-default)]"
+      style={{ padding: "var(--space-4)", gap: "var(--space-2)" }}
+    >
+      {kpis.map((k, i) => (
+        <button
+          key={k.label}
+          type="button"
+          onClick={k.onClick}
+          className={`relative flex flex-col items-center justify-center text-center hover:bg-[var(--surface-1)] transition-colors ${
+            i > 0 ? "border-l border-[var(--border-default)]" : ""
+          }`}
+          style={{ padding: "var(--space-3) var(--space-2)", gap: "var(--space-2)" }}
+        >
+          <span className="t-15 font-medium tracking-tight text-[var(--text)] tabular-nums leading-none">
+            {k.value.toString().padStart(2, "0")}
+          </span>
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] leading-none">
+            {k.label}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ContextRailForCockpit() {
+  return <CockpitChatBody />;
+}
+
+function ContextRailForChat() {
+  return <CockpitChatBody />;
+}
+
+function SuggestionsFooter({
+  suggestions,
+  runningSpecs,
+  onRun,
+}: {
+  suggestions: NonNullable<
+    ReturnType<typeof useRightPanelData>["reportSuggestions"]
+  >;
+  runningSpecs: Set<string>;
+  onRun: (specId: string, title: string) => Promise<void>;
+}) {
+  const visible = suggestions.filter((s) => !runningSpecs.has(s.specId)).slice(0, 3);
+  return (
+    <div
+      className="shrink-0 border-t border-[var(--border-default)] flex flex-col"
+      style={{ padding: "var(--space-4)", gap: "var(--space-2)", background: "var(--bg-rail)" }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          Suggestions
+        </span>
+        <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
+          {visible.length.toString().padStart(2, "0")}
+        </span>
       </div>
+      {visible.length === 0 ? (
+        <p className="t-11 font-mono uppercase tracking-display text-[var(--text-faint)]">
+          Aucune suggestion disponible.
+        </p>
+      ) : (
+        <ul className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+          {visible.map((s) => {
+            const isRunning = runningSpecs.has(s.specId);
+            const isReady = s.status === "ready";
+            return (
+              <li key={s.specId}>
+                <button
+                  type="button"
+                  onClick={() => onRun(s.specId, s.title)}
+                  disabled={isRunning}
+                  className="w-full text-left flex items-center justify-between border border-[var(--card-flat-border)] border-l-2 border-l-[var(--cykan)] hover:bg-[var(--surface-1)] focus-visible:outline-none focus-visible:bg-[var(--surface-1)] focus-visible:ring-1 focus-visible:ring-[var(--cykan)] transition-colors"
+                  style={{ padding: "var(--space-3)", background: "var(--card-flat-bg)" }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="t-13 font-medium text-[var(--text-soft)] truncate">{s.title}</p>
+                    <p className="t-9 text-[var(--text-faint)] truncate mt-0.5">{s.description}</p>
+                  </div>
+                  <span
+                    className="t-9 font-mono uppercase tracking-marquee ml-3 shrink-0"
+                    style={{ color: isReady ? "var(--cykan)" : "var(--text-faint)" }}
+                  >
+                    {isRunning
+                      ? "..."
+                      : isReady
+                        ? "lancer"
+                        : `${s.requiredApps.length - s.missingApps.length}/${s.requiredApps.length}`}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

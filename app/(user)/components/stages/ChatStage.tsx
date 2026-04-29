@@ -2,19 +2,17 @@
 
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
-import { ChatInput } from "../ChatInput";
 import { ChatMessages } from "../ChatMessages";
 import { Breadcrumb, type Crumb } from "../Breadcrumb";
 import { RunProgressBanner } from "../RunProgressBanner";
 import { FocalStage } from "../FocalStage";
 import type { Message } from "@/lib/core/types";
-import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 
 interface ChatStageProps {
   messages: Message[];
   hasMessages: boolean;
   onSubmit: (message: string) => Promise<void>;
-  connectedServices: ServiceWithConnectionStatus[];
+  hasMessagesPlaceholder?: never;
 }
 
 /**
@@ -26,7 +24,7 @@ interface ChatStageProps {
  *
  * Le ChatInput est rendu en bas dans tous les cas — règle UX inchangée.
  */
-export function ChatStage({ messages, hasMessages, onSubmit, connectedServices }: ChatStageProps) {
+export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
   const focal = useFocalStore((s) => s.focal);
   const isFocalVisible = useFocalStore((s) => s.isVisible);
   const showFocalStage = useFocalStore((s) => s.show);
@@ -132,11 +130,6 @@ export function ChatStage({ messages, hasMessages, onSubmit, connectedServices }
       )}
 
       <RunProgressBanner />
-      <ChatInput
-        onSubmit={onSubmit}
-        placeholder={focal ? "Continuer sur ce document…" : undefined}
-        connectedServices={connectedServices}
-      />
     </div>
   );
 }

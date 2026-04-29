@@ -4,7 +4,7 @@
  * HEARST OS — Design Tokens v3 (Ghost Protocol).
  */
 
-:root {
+:root, [data-theme="dark"] {
   /* Core surfaces — deep dark hierarchy with 'material' */
   --bg: #000000;
   --bg-elev: #040404;
@@ -100,7 +100,7 @@
    * les tailles, sans zones mortes en grand écran. */
   --width-threads: clamp(220px, 20vw, 480px);
   --width-threads-collapsed: 64px;
-  --width-context: clamp(280px, 22vw, 480px);
+  --width-context: clamp(379px, 29vw, 650px);
   --width-center-max: 960px;
   --width-actions: clamp(440px, 36vw, 720px);
   --width-admin-sidebar: 240px;
@@ -115,10 +115,7 @@
   --size-halo-core: 112px;
 
   /* ─── RightPanel — composants spécifiques ──────────────────── */
-  --height-strip-pulse: 72px;       /* PulseStrip : bandeau de status */
-  --width-nav-tile-min: 60px;       /* RightPanelNav : largeur min d'une tuile */
   --width-mini-chart: 96px;         /* AssetMiniChart : largeur du SVG (hauteur = --space-10) */
-  --width-title-max: 480px;         /* TopBar / breadcrumbs : titre tronqué au max */
 
   /* ─── ChatInput ─────────────────────────────────────────────── */
   --height-input-min: var(--space-8);  /* textarea : hauteur min 1 ligne = 32px */
@@ -155,8 +152,8 @@
   /* ─── Hearst Connect — Surface levels (cockpit dark) ──────────
    * Variante par défaut = dark cockpit. Le user surface bascule en
    * light via [data-theme="light"] plus bas dans ce fichier. */
-  --bg-center: #0A0D10;
-  --bg-rail: #16191D;
+  --bg-center: #1F2024;
+  --bg-rail: #26272B;
 
   /* ─── Hearst Connect — Borders alpha (UI overhaul) ──────────── */
   --border-shell: rgba(255, 255, 255, 0.06);
@@ -169,6 +166,9 @@
   --text-on-cykan: #000000;
   --card-flat-bg: rgba(255, 255, 255, 0.02);
   --card-flat-border: rgba(255, 255, 255, 0.06);
+
+  /* Floating input capsule — version dark : translucide sur bg-rail */
+  --input-floating-bg: rgba(255, 255, 255, 0.06);
   --surface-card: rgba(255, 255, 255, 0.035);
   --cykan-bg-active: rgba(45, 212, 191, 0.08);
   --cykan-bg-hover: rgba(45, 212, 191, 0.05);
@@ -204,6 +204,11 @@
 
   /* Signature: offset cyan shadow used on focused inputs */
   --shadow-input-focus: 4px 4px 0px var(--cyan-accent);
+
+  /* Recessed look for inputs sitting on light surfaces */
+  --shadow-input-inset:
+    inset 0 1px 2px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 
   /* ─── Hearst Connect — Typography weights ───────────────────── */
   --weight-regular: 400;
@@ -300,6 +305,9 @@
   --mat-300: #E9E9EC;
   --mat-400: #E2E2E5;
   --mat-gray: #DCDCE0;
+
+  /* Floating input capsule — même teinte que les rails (anthracite) */
+  --input-floating-bg: #26272B;
 
   /* Text scale — sombre sur fond clair */
   --text: #1C1D20;
@@ -1502,289 +1510,6 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   50% { transform: scale(1.4); opacity: 0.7; }
 }
 
-/* ── halo-logo-3d — Pulsar Gyroscope (R3F) ───────────────────────
- * Le composant React (HaloLogo3D.tsx) lazy-charge un canvas R3F
- * qui rend la scène 3D ; ce CSS ne pilote que le wrapper et le
- * fallback statique 2D (reduced-motion / phase de chargement).
- * Aucune animation CSS — toute la motion est dans useFrame. */
-
-.halo-logo-3d {
-  --halo-color: var(--text-faint);
-  --halo-glow: 0 0 0 transparent;
-  position: relative;
-  display: block;
-  pointer-events: none;
-  /* overflow:visible critique → le canvas dépasse la box layout
-     pour que la 3D ne soit pas clippée en rectangle. */
-  overflow: visible;
-  color: var(--halo-color);
-  filter: drop-shadow(var(--halo-glow));
-  transition:
-    color var(--duration-base) var(--ease-standard),
-    filter var(--duration-slow) var(--ease-out-soft);
-}
-.halo-logo-3d[data-state="idle"]     { --halo-color: var(--text-faint); --halo-glow: 0 0 0 transparent; }
-.halo-logo-3d[data-state="running"]  { --halo-color: var(--cykan); --halo-glow: 0 0 14px color-mix(in srgb, var(--cykan) 45%, transparent); }
-.halo-logo-3d[data-state="awaiting"] { --halo-color: var(--warn); --halo-glow: 0 0 12px color-mix(in srgb, var(--warn) 45%, transparent); }
-.halo-logo-3d[data-state="error"]    { --halo-color: var(--danger); --halo-glow: 0 0 12px color-mix(in srgb, var(--danger) 45%, transparent); }
-
-/* Le canvas est rendu à la taille nominale (pas de débordement
-   layout). Le masque radial fait fader le rendu en cercle vers
-   transparent → plus de frontière rectangulaire perceptible. La 3D
-   flotte dans l'espace de la PulseStrip plutôt que dans une box. */
-.halo-logo-3d__canvas-wrap {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  -webkit-mask-image: radial-gradient(
-    circle at center,
-    #000 55%,
-    transparent 92%
-  );
-  mask-image: radial-gradient(
-    circle at center,
-    #000 55%,
-    transparent 92%
-  );
-}
-.halo-logo-3d__canvas-wrap canvas {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-  background: transparent !important;
-}
-
-/* Fallback statique 2D — utilisé pendant le download du chunk WebGL
-   et de manière permanente quand prefers-reduced-motion: reduce. */
-.halo-logo-3d__fallback,
-.halo-logo-3d--reduced {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--halo-color);
-}
-.halo-logo-3d--reduced {
-  position: relative;
-}
-.halo-logo-3d--reduced[data-state="idle"]     { color: var(--text-faint); }
-.halo-logo-3d--reduced[data-state="running"]  { color: var(--cykan); }
-.halo-logo-3d--reduced[data-state="awaiting"] { color: var(--warn); }
-.halo-logo-3d--reduced[data-state="error"]    { color: var(--danger); }
-.halo-logo-3d__fallback-svg {
-  width: 80%;
-  height: 80%;
-  display: block;
-}
-
-/* ── Run halo indicator — Phase clusters ──────────────────────
- * Header du RightPanel. 5 zones (intent / search / analyze /
- * synth / deliver), chaque zone = grille 4×5 de cells. État de
- * chaque cluster piloté par data-phase-state (todo/current/done)
- * lu depuis le composant. La couleur globale change selon
- * data-state (idle, streaming, awaiting_approval, error). */
-.halo-runs {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: 0 var(--space-2);
-  color: var(--text);
-}
-
-.halo-runs-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: var(--font-satoshi);
-  font-size: 9px;
-  letter-spacing: var(--tracking-section);
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.halo-runs-top strong {
-  color: var(--text);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-subtle);
-  margin-left: var(--space-1);
-}
-
-.halo-runs-state {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--cykan);
-}
-
-.halo-runs[data-state="awaiting_approval"]      .halo-runs-state,
-.halo-runs[data-state="awaiting_clarification"] .halo-runs-state {
-  color: var(--warn);
-}
-.halo-runs[data-state="error"] .halo-runs-state { color: var(--danger); }
-.halo-runs[data-state="idle"]  .halo-runs-state { color: var(--text-faint); }
-
-.halo-runs-flow {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 60%;
-  text-align: right;
-}
-
-.halo-runs-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: var(--space-2);
-  height: 60px;
-}
-
-.halo-runs-phase {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(5, 1fr);
-  gap: 2px;
-}
-
-/* Cell par défaut — todo (phases à venir ou état running) */
-.halo-runs-cell {
-  background: var(--border-soft);
-  border-radius: 1px;
-  transition: background var(--duration-base) var(--ease-standard);
-}
-
-/* Phase done — toutes les cells cykan */
-.halo-runs-phase[data-phase-state="done"] .halo-runs-cell {
-  background: var(--cykan);
-}
-
-/* Phase current — 12 / 20 cells cykan (60%), la 12e pulse */
-.halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+12) {
-  background: var(--cykan);
-}
-.halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(12) {
-  animation: halo-runs-cell-pulse 1.2s ease-in-out infinite;
-  box-shadow: 0 0 4px var(--cykan);
-}
-
-/* Awaiting approval — phase courante pleine en warn, dernière pulse */
-.halo-runs[data-state="awaiting_approval"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
-  background: var(--warn);
-}
-.halo-runs[data-state="awaiting_approval"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(20) {
-  animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
-  box-shadow: 0 0 4px var(--warn);
-}
-
-/* Awaiting clarification — phase 1 pleine en warn */
-.halo-runs[data-state="awaiting_clarification"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
-  background: var(--warn);
-}
-.halo-runs[data-state="awaiting_clarification"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(20) {
-  animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
-  box-shadow: 0 0 4px var(--warn);
-}
-
-/* Error — phase courante 60% en danger, statique */
-.halo-runs[data-state="error"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+12) {
-  background: var(--danger);
-}
-.halo-runs[data-state="error"] .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(12) {
-  animation: none;
-  box-shadow: none;
-}
-
-/* Idle — cells avec bordure visible mais pas de couleur pleine */
-.halo-runs[data-state="idle"] .halo-runs-cell {
-  background: transparent;
-  outline: 1px solid var(--border-default);
-  outline-offset: -1px;
-}
-
-@keyframes halo-runs-cell-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.45; }
-}
-
-.halo-runs-dot {
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 6px currentColor;
-  animation: halo-runs-dot-pulse 1.4s ease-in-out infinite;
-}
-
-.halo-runs[data-state="idle"] .halo-runs-dot,
-.halo-runs[data-state="error"] .halo-runs-dot,
-.halo-runs[data-state="awaiting_approval"] .halo-runs-dot,
-.halo-runs[data-state="awaiting_clarification"] .halo-runs-dot {
-  animation: none;
-}
-.halo-runs[data-state="idle"] .halo-runs-dot {
-  box-shadow: none;
-  opacity: 0.4;
-}
-
-@keyframes halo-runs-dot-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.45; }
-}
-
-/* ── halo-runs · density="compact" ─────────────────────────────────
-   Variante 5×8 cells (vs 5×20) pour intégration dans le PulseStrip
-   du RightPanel. Hauteur grille réduite, sélecteurs nth-child remappés
-   pour 8 cells/phase au lieu de 20. */
-.halo-runs[data-density="compact"] .halo-runs-grid {
-  height: 32px;
-  gap: var(--space-1);
-}
-.halo-runs[data-density="compact"] .halo-runs-phase {
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-}
-/* Phase current running : moitié des cells (4 sur 8) cykan, dernière pulse */
-.halo-runs[data-density="compact"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
-  background: var(--border-soft);
-}
-.halo-runs[data-density="compact"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+4) {
-  background: var(--cykan);
-}
-.halo-runs[data-density="compact"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(4) {
-  animation: halo-runs-cell-pulse 1.2s ease-in-out infinite;
-}
-/* Awaiting approval : dernière cell (8) pulse en warn */
-.halo-runs[data-density="compact"][data-state="awaiting_approval"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
-  background: var(--warn);
-}
-.halo-runs[data-density="compact"][data-state="awaiting_approval"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(8) {
-  animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
-}
-.halo-runs[data-density="compact"][data-state="awaiting_clarification"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell {
-  background: var(--warn);
-}
-.halo-runs[data-density="compact"][data-state="awaiting_clarification"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(8) {
-  animation: halo-runs-cell-pulse 1.4s ease-in-out infinite;
-}
-/* Error : 4 cells cykan + 1 danger pulse */
-.halo-runs[data-density="compact"][data-state="error"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(-n+4) {
-  background: var(--cykan);
-}
-.halo-runs[data-density="compact"][data-state="error"]
-  .halo-runs-phase[data-phase-state="current"] .halo-runs-cell:nth-child(4) {
-  background: var(--danger);
-  animation: halo-runs-cell-pulse 1s ease-in-out infinite;
-}
 
 /* ── Ghost Protocol — boutons & inputs minimalistes ──────────────
    Pattern : `.ghost-btn-solid` pose la base (layout, font, transition),

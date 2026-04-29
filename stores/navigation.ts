@@ -22,6 +22,7 @@ export interface Thread {
   surface: Surface;
   lastActivity: number;
   pinned?: boolean;
+  archived?: boolean;
 }
 
 interface NavigationState {
@@ -46,6 +47,7 @@ interface NavigationState {
   updateThreadName: (id: string, name: string) => void;
   removeThread: (id: string) => void;
   togglePinned: (id: string) => void;
+  toggleArchived: (id: string) => void;
 
   // Messages per thread
   messages: Record<string, Message[]>;
@@ -62,8 +64,8 @@ export const useNavigationStore = create<NavigationState>()(
       leftCollapsed: false,
       leftDrawerOpen: false,
       surface: "home",
-      threads: [{ id: "default", name: "Accueil", surface: "home", lastActivity: Date.now() }],
-      activeThreadId: "default",
+      threads: [],
+      activeThreadId: null,
       messages: {},
 
       // Left rail collapse
@@ -140,6 +142,18 @@ export const useNavigationStore = create<NavigationState>()(
           ),
         })),
 
+      toggleArchived: (id) =>
+        set((state) => {
+          const newThreads = state.threads.map((t) =>
+            t.id === id ? { ...t, archived: !t.archived } : t
+          );
+          const target = newThreads.find((t) => t.id === id);
+          const becameArchived = target?.archived === true;
+          const newActiveId =
+            becameArchived && state.activeThreadId === id ? null : state.activeThreadId;
+          return { threads: newThreads, activeThreadId: newActiveId };
+        }),
+
       // Messages per thread
       addMessageToThread: (threadId, message) =>
         set((state) => ({
@@ -173,6 +187,19 @@ export const useNavigationStore = create<NavigationState>()(
     }),
     {
       name: "hearst-navigation",
+      version: 2,
+      migrate: (persisted: unknown) => {
+        const s = (persisted ?? {}) as Partial<NavigationState>;
+        const cleaned = (s.threads ?? []).filter(
+          (t) => !(t.id === "default" && t.name === "Accueil"),
+        );
+        return {
+          ...s,
+          threads: cleaned,
+          activeThreadId:
+            s.activeThreadId === "default" ? null : s.activeThreadId ?? null,
+        } as NavigationState;
+      },
       partialize: (state) => ({
         threads: state.threads,
         activeThreadId: state.activeThreadId,
