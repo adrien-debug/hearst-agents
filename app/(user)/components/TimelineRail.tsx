@@ -345,7 +345,7 @@ export function TimelineRail() {
                 </span>
                 <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Hearst</span>
               </button>
-              <button className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+              <button onClick={() => router.push("/apps")} className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
                 <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -356,6 +356,16 @@ export function TimelineRail() {
                   </svg>
                 </span>
                 <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">App</span>
+              </button>
+              <button onClick={() => router.push("/reports")} className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10" />
+                    <line x1="12" y1="20" x2="12" y2="4" />
+                    <line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
+                </span>
+                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Rapports</span>
               </button>
             </div>
 

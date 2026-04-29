@@ -8,10 +8,12 @@
  *   - réorder up/down (premier ne peut pas monter, dernier ne peut pas descendre)
  *   - reset (revient au spec initial mémorisé au mount)
  *   - preview JSON (collapsible, contient le spec sérialisé)
+ *   - save template : formulaire, confirm → POST fetch, feedback
+ *   - load template : liste, sélection → GET fetch spec, onChange
  */
 
-import { describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { ReportEditor } from "@/app/(user)/components/reports/ReportEditor";
 import type { ReportSpec } from "@/lib/reports/spec/schema";
 
@@ -247,5 +249,258 @@ describe("ReportEditor — close", () => {
     const spec = buildSpec();
     render(<ReportEditor spec={spec} onChange={() => {}} />);
     expect(screen.queryByTestId("report-editor-close")).toBeNull();
+  });
+});
+
+// ── Template save/load ──────────────────────────────────────
+
+const SAVED_TEMPLATE_RESPONSE = {
+  template: {
+    id: "tpl-uuid-1",
+    tenantId: "t1",
+    createdBy: "00000000-0000-4000-8000-000000000001",
+    name: "Mon template",
+    domain: "founder",
+    isPublic: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+};
+
+const TEMPLATE_LIST_RESPONSE = {
+  templates: [
+    {
+      id: "tpl-uuid-1",
+      tenantId: "t1",
+      createdBy: "00000000-0000-4000-8000-000000000001",
+      name: "Mon template",
+      description: "Description du template",
+      domain: "founder",
+      isPublic: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ],
+};
+
+describe("ReportEditor — save template", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("affiche le bouton 'Sauvegarder template' par défaut", () => {
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+    expect(screen.getByTestId("report-editor-save-template")).toBeTruthy();
+  });
+
+  it("ouvre le formulaire au clic sur 'Sauvegarder template'", () => {
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+    fireEvent.click(screen.getByTestId("report-editor-save-template"));
+    expect(screen.getByTestId("report-editor-save-form")).toBeTruthy();
+    expect(screen.getByTestId("report-editor-save-name")).toBeTruthy();
+  });
+
+  it("le champ nom est pré-rempli avec spec.meta.title", () => {
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+    fireEvent.click(screen.getByTestId("report-editor-save-template"));
+    const input = screen.getByTestId("report-editor-save-name") as HTMLInputElement;
+    expect(input.value).toBe("Demo report");
+  });
+
+  it("Annuler ferme le formulaire sans appeler fetch", () => {
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+    fireEvent.click(screen.getByTestId("report-editor-save-template"));
+    fireEvent.click(screen.getByTestId("report-editor-save-cancel"));
+    expect(screen.queryByTestId("report-editor-save-form")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("Confirmer appelle POST /api/reports/templates avec le bon body", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => SAVED_TEMPLATE_RESPONSE,
+    });
+
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+    fireEvent.click(screen.getByTestId("report-editor-save-template"));
+
+    const nameInput = screen.getByTestId("report-editor-save-name");
+    fireEvent.change(nameInput, { target: { value: "Mon template" } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("report-editor-save-confirm"));
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/reports/templates",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body.name).toBe("Mon template");
+    expect(body.spec.id).toBe(spec.id);
+  });
+
+  it("affiche le feedback 'Template sauvegardé' après succès", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => SAVED_TEMPLATE_RESPONSE,
+    });
+
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+    fireEvent.click(screen.getByTestId("report-editor-save-template"));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("report-editor-save-confirm"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("report-editor-save-feedback").textContent).toMatch(
+        /template sauvegardé/i,
+      );
+    });
+  });
+
+  it("affiche le feedback d'erreur si fetch échoue", async () => {
+    fetchMock.mockResolvedValueOnce({ ok: false });
+
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+    fireEvent.click(screen.getByTestId("report-editor-save-template"));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("report-editor-save-confirm"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("report-editor-save-feedback").textContent).toMatch(
+        /erreur/i,
+      );
+    });
+  });
+});
+
+describe("ReportEditor — load template", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("affiche le bouton 'Charger template' par défaut", () => {
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+    expect(screen.getByTestId("report-editor-load-template")).toBeTruthy();
+  });
+
+  it("charge la liste des templates au clic", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => TEMPLATE_LIST_RESPONSE,
+    });
+
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("report-editor-load-template"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("report-editor-load-list")).toBeTruthy();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/reports/templates");
+  });
+
+  it("affiche 'Aucun template' si liste vide", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ templates: [] }),
+    });
+
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("report-editor-load-template"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("report-editor-load-empty")).toBeTruthy();
+    });
+  });
+
+  it("charger un template appelle GET /api/reports/templates/:id et émet onChange", async () => {
+    const specForTemplate = buildSpec();
+    specForTemplate.meta.title = "Spec depuis template";
+
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => TEMPLATE_LIST_RESPONSE,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ spec: specForTemplate }),
+      });
+
+    const onChange = vi.fn();
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={onChange} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("report-editor-load-template"));
+    });
+
+    await waitFor(() => screen.getByTestId("report-editor-load-list"));
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("report-editor-load-item-tpl-uuid-1"));
+    });
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const loaded = onChange.mock.calls[0][0] as ReportSpec;
+      expect(loaded.meta.title).toBe("Spec depuis template");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/reports/templates/tpl-uuid-1");
+  });
+
+  it("ferme la liste au clic 'Fermer'", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => TEMPLATE_LIST_RESPONSE,
+    });
+
+    const spec = buildSpec();
+    render(<ReportEditor spec={spec} onChange={() => {}} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("report-editor-load-template"));
+    });
+
+    await waitFor(() => screen.getByTestId("report-editor-load-list"));
+
+    fireEvent.click(screen.getByTestId("report-editor-load-cancel"));
+    expect(screen.queryByTestId("report-editor-load-list")).toBeNull();
   });
 });

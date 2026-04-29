@@ -184,35 +184,15 @@ export function AssetsGrid({
     (s) => !runningSpecs.has(s.specId),
   );
 
-  if (loading && visibleAssets.length === 0 && visibleSuggestions.length === 0) {
+  if (loading && visibleAssets.length === 0) {
     return (
       <div className="flex flex-col">
-        {reportSuggestions && reportSuggestions.length > 0 && (
-          <div
-            className="flex flex-col"
-            style={{
-              paddingLeft: "var(--space-3)",
-              paddingRight: "var(--space-3)",
-              paddingTop: "var(--space-3)",
-              gap: "var(--space-2)",
-            }}
-          >
-            <div
-              className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]"
-              style={{ paddingBottom: "var(--space-1)" }}
-            >
-              Reports suggérés
-            </div>
-            <SuggestionSkeleton />
-            <SuggestionSkeleton />
-          </div>
-        )}
         <AssetsSkeletonGrid />
       </div>
     );
   }
 
-  if (visibleAssets.length === 0 && visibleSuggestions.length === 0) {
+  if (visibleAssets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-10 gap-4">
         <span className="w-12 h-12 text-[rgba(255,255,255,0.1)]" aria-hidden>

@@ -88,30 +88,42 @@ export function GeneralDashboard({
       {/* KPIs */}
       <DashboardCard>
         <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-col items-center text-center gap-3">
-            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none">
+          <button
+            type="button"
+            onClick={() => onViewChange("assets")}
+            className="group flex flex-col items-center text-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
               {assetsCount.toString().padStart(2, "0")}
             </span>
-            <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
+            <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] group-hover:text-[var(--cykan)] transition-colors">
               Assets
             </span>
-          </div>
-          <div className="flex flex-col items-center text-center gap-3 border-l border-[rgba(255,255,255,0.06)]">
-            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none">
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewChange("missions")}
+            className="group flex flex-col items-center text-center gap-3 border-l border-[rgba(255,255,255,0.06)] hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
               {missionsCount.toString().padStart(2, "0")}
             </span>
-            <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
+            <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] group-hover:text-[var(--cykan)] transition-colors">
               Missions
             </span>
-          </div>
-          <div className="flex flex-col items-center text-center gap-3 border-l border-[rgba(255,255,255,0.06)]">
-            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none">
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewChange("reports")}
+            className="group flex flex-col items-center text-center gap-3 border-l border-[rgba(255,255,255,0.06)] hover:opacity-80 transition-opacity cursor-pointer"
+          >
+            <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-colors">
               {reportsCount.toString().padStart(2, "0")}
             </span>
-            <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
+            <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] group-hover:text-[var(--cykan)] transition-colors">
               Reports
             </span>
-          </div>
+          </button>
         </div>
       </DashboardCard>
 

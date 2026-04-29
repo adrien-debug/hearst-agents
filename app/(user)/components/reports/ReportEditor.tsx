@@ -44,7 +44,7 @@ export interface ReportEditorProps {
 
 // ── Statuts de feedback pour save/load template ─────────────
 
-type SaveStatus = "idle" | "form" | "saving" | "saved" | "error";
+type SaveStatus = "idle" | "form" | "saved" | "error";
 type LoadStatus = "idle" | "loading_list" | "list" | "loading_spec" | "error";
 
 export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
@@ -55,6 +55,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
 
   // ── Template save state ─────────────────────────────────────
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [isSaving, setIsSaving] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [saveDesc, setSaveDesc] = useState("");
   const saveNameRef = useRef<HTMLInputElement>(null);
@@ -116,7 +117,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
 
   const confirmSave = useCallback(async () => {
     if (!saveName.trim()) return;
-    setSaveStatus("saving");
+    setIsSaving(true);
     try {
       const res = await fetch("/api/reports/templates", {
         method: "POST",
@@ -129,11 +130,13 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
         }),
       });
       if (!res.ok) throw new Error("save_failed");
+      setIsSaving(false);
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2500);
       setSaveName("");
       setSaveDesc("");
     } catch {
+      setIsSaving(false);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
     }
@@ -236,7 +239,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
 
       {/* Toolbar : Reset + JSON toggle */}
       <div
-        className="flex items-center"
+        className="flex items-center flex-wrap"
         style={{ gap: "var(--space-2)" }}
       >
         <button
@@ -272,7 +275,248 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
         >
           {jsonOpen ? "Masquer JSON" : "Voir JSON"}
         </button>
+        {/* Sauvegarder comme template */}
+        {saveStatus === "idle" && (
+          <button
+            type="button"
+            onClick={openSaveForm}
+            data-testid="report-editor-save-template"
+            className="t-9 font-mono uppercase text-[var(--cykan)] hover:text-[var(--text-soft)]"
+            style={{
+              letterSpacing: "var(--tracking-display)",
+              padding: "var(--space-2) var(--space-3)",
+              border: "1px solid var(--cykan)",
+              borderRadius: "var(--radius-xs)",
+              background: "transparent",
+              transition: "color var(--duration-fast) var(--ease-standard)",
+            }}
+          >
+            Sauvegarder template
+          </button>
+        )}
+        {saveStatus === "saved" && (
+          <span
+            data-testid="report-editor-save-feedback"
+            className="t-9 font-mono uppercase text-[var(--cykan)]"
+            style={{ letterSpacing: "var(--tracking-display)" }}
+          >
+            Template sauvegardé
+          </span>
+        )}
+        {saveStatus === "error" && (
+          <span
+            data-testid="report-editor-save-feedback"
+            className="t-9 font-mono uppercase"
+            style={{ letterSpacing: "var(--tracking-display)", color: "var(--red)" }}
+          >
+            Erreur sauvegarde
+          </span>
+        )}
+        {/* Charger un template */}
+        {loadStatus === "idle" && (
+          <button
+            type="button"
+            onClick={openLoadList}
+            data-testid="report-editor-load-template"
+            className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
+            style={{
+              letterSpacing: "var(--tracking-display)",
+              padding: "var(--space-2) var(--space-3)",
+              border: "1px solid var(--surface-2)",
+              borderRadius: "var(--radius-xs)",
+              background: "transparent",
+              transition: "color var(--duration-fast) var(--ease-standard)",
+            }}
+          >
+            Charger template
+          </button>
+        )}
+        {(loadStatus === "loading_list" || loadStatus === "loading_spec") && (
+          <span
+            className="t-9 font-mono uppercase text-[var(--text-faint)]"
+            style={{ letterSpacing: "var(--tracking-display)" }}
+          >
+            Chargement…
+          </span>
+        )}
+        {loadStatus === "error" && (
+          <span
+            data-testid="report-editor-load-feedback"
+            className="t-9 font-mono uppercase"
+            style={{ letterSpacing: "var(--tracking-display)", color: "var(--red)" }}
+          >
+            Erreur chargement
+          </span>
+        )}
       </div>
+
+      {/* Formulaire save template */}
+      {saveStatus === "form" && (
+        <div
+          data-testid="report-editor-save-form"
+          className="flex flex-col"
+          style={{
+            gap: "var(--space-2)",
+            padding: "var(--space-3)",
+            background: "var(--surface-1)",
+            border: "1px solid var(--surface-2)",
+            borderRadius: "var(--radius-xs)",
+          }}
+        >
+          <span
+            className="t-9 font-mono uppercase text-[var(--text-muted)]"
+            style={{ letterSpacing: "var(--tracking-display)" }}
+          >
+            Nom du template
+          </span>
+          <input
+            ref={saveNameRef}
+            type="text"
+            value={saveName}
+            onChange={(e) => setSaveName(e.target.value)}
+            placeholder="Mon template…"
+            data-testid="report-editor-save-name"
+            maxLength={100}
+            className="t-11 text-[var(--text)]"
+            style={{
+              padding: "var(--space-2) var(--space-3)",
+              background: "var(--card-flat-bg)",
+              border: "1px solid var(--surface-2)",
+              borderRadius: "var(--radius-xs)",
+              outline: "none",
+            }}
+          />
+          <input
+            type="text"
+            value={saveDesc}
+            onChange={(e) => setSaveDesc(e.target.value)}
+            placeholder="Description optionnelle…"
+            data-testid="report-editor-save-desc"
+            maxLength={500}
+            className="t-11 text-[var(--text-soft)]"
+            style={{
+              padding: "var(--space-2) var(--space-3)",
+              background: "var(--card-flat-bg)",
+              border: "1px solid var(--surface-2)",
+              borderRadius: "var(--radius-xs)",
+              outline: "none",
+            }}
+          />
+          <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
+            <button
+              type="button"
+              onClick={confirmSave}
+              disabled={!saveName.trim() || isSaving}
+              data-testid="report-editor-save-confirm"
+              className="t-9 font-mono uppercase text-[var(--cykan)] disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                letterSpacing: "var(--tracking-display)",
+                padding: "var(--space-2) var(--space-3)",
+                border: "1px solid var(--cykan)",
+                borderRadius: "var(--radius-xs)",
+                background: "transparent",
+                transition: "opacity var(--duration-fast) var(--ease-standard)",
+              }}
+            >
+              {isSaving ? "Sauvegarde…" : "Confirmer"}
+            </button>
+            <button
+              type="button"
+              onClick={cancelSave}
+              data-testid="report-editor-save-cancel"
+              className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
+              style={{
+                letterSpacing: "var(--tracking-display)",
+                padding: "var(--space-2) var(--space-3)",
+                border: "1px solid var(--surface-2)",
+                borderRadius: "var(--radius-xs)",
+                background: "transparent",
+                transition: "color var(--duration-fast) var(--ease-standard)",
+              }}
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Liste des templates à charger */}
+      {loadStatus === "list" && (
+        <div
+          data-testid="report-editor-load-list"
+          className="flex flex-col"
+          style={{
+            gap: "var(--space-2)",
+            padding: "var(--space-3)",
+            background: "var(--surface-1)",
+            border: "1px solid var(--surface-2)",
+            borderRadius: "var(--radius-xs)",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <span
+              className="t-9 font-mono uppercase text-[var(--text-muted)]"
+              style={{ letterSpacing: "var(--tracking-display)" }}
+            >
+              Templates disponibles
+            </span>
+            <button
+              type="button"
+              onClick={cancelLoad}
+              data-testid="report-editor-load-cancel"
+              className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
+              style={{
+                letterSpacing: "var(--tracking-display)",
+                padding: "var(--space-1) var(--space-2)",
+                border: "1px solid var(--surface-2)",
+                borderRadius: "var(--radius-xs)",
+                background: "transparent",
+                transition: "color var(--duration-fast) var(--ease-standard)",
+              }}
+            >
+              Fermer
+            </button>
+          </div>
+          {templateList.length === 0 ? (
+            <span
+              className="t-11 text-[var(--text-faint)]"
+              data-testid="report-editor-load-empty"
+            >
+              Aucun template sauvegardé.
+            </span>
+          ) : (
+            <ul className="flex flex-col" style={{ gap: "var(--space-1)" }}>
+              {templateList.map((tpl) => (
+                <li key={tpl.id}>
+                  <button
+                    type="button"
+                    onClick={() => loadTemplateSpec(tpl.id)}
+                    data-testid={`report-editor-load-item-${tpl.id}`}
+                    className="w-full text-left t-11 text-[var(--text-soft)] hover:text-[var(--text)]"
+                    style={{
+                      padding: "var(--space-2) var(--space-3)",
+                      background: "transparent",
+                      border: "1px solid var(--surface-2)",
+                      borderRadius: "var(--radius-xs)",
+                      transition: "color var(--duration-fast) var(--ease-standard)",
+                    }}
+                  >
+                    <span className="block truncate">{tpl.name}</span>
+                    {tpl.description && (
+                      <span
+                        className="block truncate t-9 font-mono text-[var(--text-faint)]"
+                        style={{ letterSpacing: "var(--tracking-display)" }}
+                      >
+                        {tpl.description}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Liste des blocks — toggle + up/down */}
       <ul

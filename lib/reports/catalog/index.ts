@@ -140,7 +140,7 @@ export const CATALOG: ReadonlyArray<CatalogEntry> = [
     description:
       "DORA metrics (Deploy Freq, Lead Time, CFR, MTTR), cycle time et top long-running PRs.",
     domain: "ops-eng",
-    persona: "eng",
+    persona: "engineering",
     requiredApps: ENGINEERING_VELOCITY_REQUIRED_APPS,
     build: (scope) => buildEngineeringVelocity(scope),
   },
@@ -150,7 +150,7 @@ export const CATALOG: ReadonlyArray<CatalogEntry> = [
     description:
       "Funnel AARRR, CAC / LTV / payback par cohorte et canal sur 12 semaines.",
     domain: "growth",
-    persona: "ops",
+    persona: "marketing",
     requiredApps: MARKETING_AARRR_REQUIRED_APPS,
     build: (scope) => buildMarketingAarrr(scope),
   },
@@ -159,8 +159,8 @@ export const CATALOG: ReadonlyArray<CatalogEntry> = [
     title: "HR / People",
     description:
       "Hiring funnel, signaux burnout (heures tardives) et headcount plan sur 90 jours.",
-    domain: "ops",
-    persona: "ops",
+    domain: "people",
+    persona: "people",
     requiredApps: HR_PEOPLE_REQUIRED_APPS,
     build: (scope) => buildHrPeople(scope),
   },

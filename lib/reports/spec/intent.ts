@@ -8,20 +8,41 @@
  */
 
 const REPORT_KEYWORDS = [
-  // FR
+  // FR — verbes déclencheurs
   /\brapport(s)?\b(?!\s+de\s+bug)/i,
   /\bcockpit\b/i,
   /\btableau\s+de\s+bord\b/i,
-  /\bsynth[èe]se\s+(mensuelle|hebdo|quotidienne|trimestrielle)/i,
+  /\bsynth[èe]se\b/i,          // "synthèse mensuelle", "synthèse hebdo", "synthèse" seul
   /\bvue\s+d['']ensemble\b/i,
-  /\bbilan\s+(mensuel|hebdo|trimestriel|annuel)/i,
+  /\bbilan\b/i,                 // "bilan trimestriel", "bilan" seul
   /\b(KPI|kpis)\b/,
   /\bdashboard\b/i,
-  /\b360\b/, // "Customer 360", "vue 360"
+  /\b360\b/,                    // "Customer 360", "vue 360"
+  /\banalyse\b/i,               // "analyse du P&L", "analyse de la vélocité"
+  /\bP&L\b/i,                   // "P&L mensuel", "mon P&L"
+  /\bmontre(?:z)?[-\s]moi\b/i, // "montre-moi les ventes", "montrez-moi le cockpit"
+  /\bgén[eè]re\s+(?:un|une|le|la|mon|ma)\s+rapport\b/i, // "génère un rapport"
+  /\bgén[eè]re\s+(?:un|une|le|la|mon|ma)\s+cockpit\b/i,
+  // Noms du catalogue (9 rapports prédéfinis)
+  /\bfounder\s+cockpit\b/i,
+  /\bcustomer\s+360\b/i,
+  /\bdeal[- ]to[- ]cash\b/i,
+  /\bfinancial\s+p&l\b/i,
+  /\bproduct\s+analytics\b/i,
+  /\bsupport\s+health\b/i,
+  /\bengineering\s+velocity\b/i,
+  /\bmarketing\s+(aarrr|funnel)\b/i,
+  /\bhr\s+(people|report)\b/i,
+  /\bpeople\s+report\b/i,
+  /\bv[eé]locit[eé]\b/i,         // "vélocité engineering"
+  /\brunway\b/i,                   // "mon runway"
+  /\bm(?:r|r+)r\b/i,             // "MRR", "ARR"
   // EN
   /\breport\b(?!\s+(a\s+)?bug)/i,
   /\boverview\b/i,
-  /\bsummary\s+(report|view|of)/i,
+  /\bsummary\s+(report|view|of)\b/i,
+  /\bshow\s+me\s+(my|the)\b/i,   // "show me my metrics"
+  /\bgive\s+me\s+(a|an|my|the)\s+report\b/i,
 ];
 
 const NEGATIVE_KEYWORDS = [

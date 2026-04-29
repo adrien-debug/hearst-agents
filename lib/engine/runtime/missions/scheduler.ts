@@ -184,6 +184,21 @@ async function tick(
 
       if (result.status === "success") {
         console.log(`[Scheduler] Mission "${mission.name}" completed → run ${runId}`);
+        // ── Export automatique si configuré ───────────────────
+        if (mission.autoExport?.enabled) {
+          const jobPayload = buildExportJobPayload(
+            mission.id,
+            mission.tenantId,
+            mission.autoExport,
+          );
+          // Fire-and-forget : l'échec de l'export ne doit pas impacter le run.
+          runExportScheduledReportJob(jobPayload).catch((err) => {
+            console.error(
+              `[Scheduler] export-job failed for mission "${mission.name}":`,
+              err,
+            );
+          });
+        }
       } else {
         console.warn(`[Scheduler] Mission "${mission.name}" finished with status: ${result.status}`);
       }

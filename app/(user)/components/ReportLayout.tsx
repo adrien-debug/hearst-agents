@@ -16,10 +16,12 @@
  * sont filtrés du rendu côté UI sans toucher aux données amont.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import type { ReportSpec } from "@/lib/reports/spec/schema";
 import { ReportEditor } from "@/app/(user)/components/reports/ReportEditor";
 import { ReportActions } from "@/app/(user)/components/ReportActions";
+import type { VersionSummary } from "@/lib/reports/versions/store";
+import type { VersionDiff } from "@/lib/reports/versions/diff";
 import { KpiTile } from "@/lib/reports/blocks/KpiTile";
 import { Sparkline } from "@/lib/reports/blocks/Sparkline";
 import { Bar } from "@/lib/reports/blocks/Bar";
@@ -100,6 +102,7 @@ export function ReportLayout({
   readonly = false,
 }: ReportLayoutProps) {
   const [editorOpen, setEditorOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const editable = Boolean(spec && onSpecChange);
 
   // Set des ids hidden tirée du spec courant (si fourni). Les blocks sans entry
@@ -140,10 +143,29 @@ export function ReportLayout({
             {assetId && !readonly && (
               <ReportActions reportId={assetId} title={assetTitle} />
             )}
+            {assetId && !readonly && (
+              <button
+                type="button"
+                onClick={() => { setHistoryOpen((v) => !v); setEditorOpen(false); }}
+                data-testid="report-layout-history-toggle"
+                aria-expanded={historyOpen}
+                className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--cykan)]"
+                style={{
+                  letterSpacing: "var(--tracking-display)",
+                  padding: "var(--space-2) var(--space-3)",
+                  border: "1px solid var(--surface-2)",
+                  borderRadius: "var(--radius-xs)",
+                  background: "transparent",
+                  transition: "color var(--duration-fast) var(--ease-standard)",
+                }}
+              >
+                {historyOpen ? "Fermer" : "Historique"}
+              </button>
+            )}
             {editable && (
               <button
                 type="button"
-                onClick={() => setEditorOpen((v) => !v)}
+                onClick={() => { setEditorOpen((v) => !v); setHistoryOpen(false); }}
                 data-testid="report-layout-edit-toggle"
                 aria-expanded={editorOpen}
                 className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--cykan)]"
@@ -222,6 +244,19 @@ export function ReportLayout({
             spec={spec}
             onChange={onSpecChange}
             onClose={() => setEditorOpen(false)}
+          />
+        </div>
+      )}
+
+      {historyOpen && assetId && !readonly && (
+        <div
+          className="flex flex-col shrink-0"
+          style={{ width: "var(--width-context)" }}
+        >
+          <VersionHistoryPanel
+            assetId={assetId}
+            currentPayload={payload}
+            onClose={() => setHistoryOpen(false)}
           />
         </div>
       )}
@@ -396,4 +431,315 @@ function fmtTimestamp(ms: number): string {
   } catch {
     return "—";
   }
+}
+
+function fmtIso(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+// ── VersionHistoryPanel ──────────────────────────────────────
+
+interface VersionHistoryPanelProps {
+  assetId: string;
+  currentPayload: RenderPayload;
+  onClose: () => void;
+}
+
+function VersionHistoryPanel({ assetId, onClose }: VersionHistoryPanelProps) {
+  const [versions, setVersions] = useState<VersionSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [compareA, setCompareA] = useState<number | null>(null);
+  const [compareB, setCompareB] = useState<number | null>(null);
+  const [diffs, setDiffs] = useState<VersionDiff[] | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [restoring, setRestoring] = useState<number | null>(null);
+  const [restoreMsg, setRestoreMsg] = useState<string | null>(null);
+
+  const loadVersions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/reports/${assetId}/versions?limit=50`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json() as { versions: VersionSummary[] };
+      setVersions(json.versions ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur réseau");
+    } finally {
+      setLoading(false);
+    }
+  }, [assetId]);
+
+  useEffect(() => {
+    const run = async () => { await loadVersions(); };
+    run().catch(console.error);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assetId]);
+
+  const handleCompare = useCallback(async () => {
+    if (compareA === null || compareB === null) return;
+    const from = Math.min(compareA, compareB);
+    const to = Math.max(compareA, compareB);
+    setDiffLoading(true);
+    setDiffs(null);
+    try {
+      const res = await fetch(`/api/reports/${assetId}/versions/diff?from=${from}&to=${to}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json() as { diffs: VersionDiff[] };
+      setDiffs(json.diffs ?? []);
+    } catch (e) {
+      setDiffs([]);
+      console.error("[VersionHistoryPanel] diff error:", e);
+    } finally {
+      setDiffLoading(false);
+    }
+  }, [assetId, compareA, compareB]);
+
+  const handleRestore = useCallback(async (vn: number) => {
+    setRestoring(vn);
+    setRestoreMsg(null);
+    try {
+      const res = await fetch(`/api/reports/${assetId}/versions/${vn}`, { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json() as { version: VersionSummary };
+      setRestoreMsg(`Version ${vn} restaurée → nouvelle v${json.version.versionNumber}`);
+      void loadVersions();
+    } catch (e) {
+      setRestoreMsg(`Erreur : ${e instanceof Error ? e.message : "inconnue"}`);
+    } finally {
+      setRestoring(null);
+    }
+  }, [assetId, loadVersions]);
+
+  return (
+    <div
+      className="flex flex-col"
+      style={{
+        background: "var(--surface-1)",
+        border: "1px solid var(--border-default)",
+        borderRadius: "var(--radius-md)",
+        padding: "var(--space-4)",
+        gap: "var(--space-3)",
+        height: "100%",
+        overflowY: "auto",
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between" style={{ gap: "var(--space-2)" }}>
+        <span
+          className="t-9 font-mono uppercase text-[var(--text-muted)]"
+          style={{ letterSpacing: "var(--tracking-display)" }}
+        >
+          Historique
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="t-9 font-mono uppercase text-[var(--text-faint)] hover:text-[var(--cykan)]"
+          style={{
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            transition: "color var(--duration-fast) var(--ease-standard)",
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* États */}
+      {loading && (
+        <span className="t-9 font-mono text-[var(--text-faint)]">Chargement…</span>
+      )}
+      {error && (
+        <span className="t-9 font-mono text-[var(--danger)]">{error}</span>
+      )}
+      {!loading && !error && versions.length === 0 && (
+        <span className="t-9 font-mono text-[var(--text-faint)]">Aucune version enregistrée.</span>
+      )}
+
+      {/* Feedback restauration */}
+      {restoreMsg && (
+        <div
+          className="t-9 font-mono text-[var(--cykan)]"
+          style={{
+            padding: "var(--space-2) var(--space-3)",
+            border: "1px solid var(--border-default)",
+            borderRadius: "var(--radius-xs)",
+          }}
+        >
+          {restoreMsg}
+        </div>
+      )}
+
+      {/* Liste des versions */}
+      {!loading && versions.length > 0 && (
+        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+          {versions.map((v) => (
+            <div
+              key={v.id}
+              className="flex flex-col"
+              style={{
+                padding: "var(--space-3)",
+                background: "var(--card-flat-bg)",
+                border: "1px solid var(--card-flat-border)",
+                borderRadius: "var(--radius-xs)",
+                gap: "var(--space-2)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className="t-9 font-mono text-[var(--text-default)]"
+                  style={{ letterSpacing: "var(--tracking-display)" }}
+                >
+                  v{v.versionNumber}
+                </span>
+                <span
+                  className="t-9 font-mono uppercase text-[var(--text-faint)]"
+                  style={{ letterSpacing: "var(--tracking-display)" }}
+                >
+                  {v.triggeredBy}
+                </span>
+              </div>
+              <span className="t-9 font-mono text-[var(--text-muted)]">
+                {fmtIso(v.createdAt)}
+              </span>
+              <span className="t-9 font-mono text-[var(--text-faint)]">
+                {v.signalsCount} signal{v.signalsCount !== 1 ? "s" : ""}
+              </span>
+              <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
+                {/* Comparer */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (compareA === null) { setCompareA(v.versionNumber); }
+                    else if (compareB === null && v.versionNumber !== compareA) { setCompareB(v.versionNumber); }
+                    else { setCompareA(v.versionNumber); setCompareB(null); setDiffs(null); }
+                  }}
+                  className="t-9 font-mono uppercase"
+                  style={{
+                    color: compareA === v.versionNumber || compareB === v.versionNumber
+                      ? "var(--cykan)"
+                      : "var(--text-muted)",
+                    background: "transparent",
+                    border: "1px solid var(--border-default)",
+                    borderRadius: "var(--radius-xs)",
+                    padding: "var(--space-1) var(--space-2)",
+                    cursor: "pointer",
+                    letterSpacing: "var(--tracking-display)",
+                    transition: "color var(--duration-fast) var(--ease-standard)",
+                  }}
+                >
+                  {compareA === v.versionNumber ? "A" : compareB === v.versionNumber ? "B" : "Comparer"}
+                </button>
+                {/* Restaurer */}
+                <button
+                  type="button"
+                  onClick={() => void handleRestore(v.versionNumber)}
+                  disabled={restoring === v.versionNumber}
+                  className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--cykan)]"
+                  style={{
+                    background: "transparent",
+                    border: "1px solid var(--border-default)",
+                    borderRadius: "var(--radius-xs)",
+                    padding: "var(--space-1) var(--space-2)",
+                    cursor: restoring === v.versionNumber ? "not-allowed" : "pointer",
+                    opacity: restoring === v.versionNumber ? 0.5 : 1,
+                    letterSpacing: "var(--tracking-display)",
+                    transition: "color var(--duration-fast) var(--ease-standard)",
+                  }}
+                >
+                  {restoring === v.versionNumber ? "…" : "Restaurer"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Comparer deux versions */}
+      {compareA !== null && compareB !== null && (
+        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+          <button
+            type="button"
+            onClick={() => void handleCompare()}
+            disabled={diffLoading}
+            className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--cykan)]"
+            style={{
+              background: "transparent",
+              border: "1px solid var(--border-default)",
+              borderRadius: "var(--radius-xs)",
+              padding: "var(--space-2) var(--space-3)",
+              cursor: diffLoading ? "not-allowed" : "pointer",
+              opacity: diffLoading ? 0.6 : 1,
+              letterSpacing: "var(--tracking-display)",
+              transition: "color var(--duration-fast) var(--ease-standard)",
+            }}
+          >
+            {diffLoading
+              ? "Comparaison…"
+              : `Comparer v${Math.min(compareA, compareB)} → v${Math.max(compareA, compareB)}`}
+          </button>
+
+          {diffs !== null && (
+            <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
+              {diffs.length === 0 ? (
+                <span className="t-9 font-mono text-[var(--text-faint)]">Aucune différence détectée.</span>
+              ) : (
+                diffs.map((d, i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col"
+                    style={{
+                      padding: "var(--space-2) var(--space-3)",
+                      background: "var(--card-flat-bg)",
+                      border: "1px solid var(--card-flat-border)",
+                      borderRadius: "var(--radius-xs)",
+                      gap: "var(--space-1)",
+                    }}
+                  >
+                    <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
+                      <span
+                        className="t-9 font-mono text-[var(--text-default)]"
+                        style={{ letterSpacing: "var(--tracking-display)" }}
+                      >
+                        {d.blockRef}
+                      </span>
+                      <span
+                        className="t-9 font-mono uppercase"
+                        style={{
+                          letterSpacing: "var(--tracking-display)",
+                          color:
+                            d.kind === "added" ? "var(--cykan)"
+                            : d.kind === "removed" ? "var(--danger)"
+                            : "var(--text-muted)",
+                        }}
+                      >
+                        {d.kind}
+                      </span>
+                    </div>
+                    {d.fieldPath && (
+                      <span className="t-9 font-mono text-[var(--text-faint)]">
+                        {d.fieldPath}: {String(d.before)} → {String(d.after)}
+                      </span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
