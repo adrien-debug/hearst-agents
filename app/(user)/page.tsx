@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useCallback, useMemo, useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
@@ -14,11 +13,13 @@ import { getAllServices } from "@/lib/integrations/catalog";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { toast } from "@/app/hooks/use-toast";
 
-function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_failed", userId: string, properties?: Record<string, unknown>) {
+function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_failed", properties?: Record<string, unknown>) {
+  // Anti-pattern banni : pas d'userId envoyé au backend depuis le frontend.
+  // /api/analytics résout l'utilisateur via requireScope() côté serveur.
   fetch("/api/analytics", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ type, userId, properties }),
+    body: JSON.stringify({ type, properties }),
   }).catch(() => {});
 }
 
@@ -44,7 +45,6 @@ const initialServices = (() => {
  * par ChatStage spécifiquement.
  */
 export default function HomePage() {
-  const { data: session } = useSession();
   const hydrateThreadState = useFocalStore((s) => s.hydrateThreadState);
   const addEvent = useRuntimeStore((s) => s.addEvent);
   const startRun = useRuntimeStore((s) => s.startRun);
@@ -154,8 +154,6 @@ export default function HomePage() {
     [services],
   );
 
-  const userEmail = session?.user?.email || "anonymous";
-
   const handleSubmit = useCallback(async (message: string) => {
     const threadId = activeThreadId ?? addThread("New", surface);
     const clientToken = `client-${Date.now()}`;
@@ -174,7 +172,7 @@ export default function HomePage() {
     }
 
     if (messages.length === 0) {
-      trackAnalytics("first_message_sent", userEmail, { threadId });
+      trackAnalytics("first_message_sent", { threadId });
       const raw = message.slice(0, 50);
       const name = message.length > 40
         ? (raw.lastIndexOf(" ") > 15 ? raw.slice(0, raw.lastIndexOf(" ")) : raw.slice(0, 40))
@@ -256,7 +254,7 @@ export default function HomePage() {
         return;
       }
 
-      trackAnalytics("run_completed", userEmail, {
+      trackAnalytics("run_completed", {
         runId: canonicalRunId || clientToken,
         messageCount: messages.length,
       });
@@ -270,11 +268,11 @@ export default function HomePage() {
       const errorMsg = err instanceof Error ? err.message : "Échec de la connexion";
       toast.error("Erreur de connexion", errorMsg);
       addEvent({ type: "run_failed", error: errorMsg, run_id: clientToken });
-      trackAnalytics("run_failed", userEmail, { runId: clientToken, error: errorMsg });
+      trackAnalytics("run_failed", { runId: clientToken, error: errorMsg });
     } finally {
       setAbortController(null);
     }
-  }, [surface, activeThreadId, addThread, messages, addEvent, startRun, setAbortController, addMessageToThread, updateMessageInThread, updateThreadName, userEmail, stageMode, setStageMode]);
+  }, [surface, activeThreadId, addThread, messages, addEvent, startRun, setAbortController, addMessageToThread, updateMessageInThread, updateThreadName, stageMode, setStageMode]);
 
   // Esc ferme le focal stage. Ignore les inputs/textarea/contenteditable.
   useEffect(() => {

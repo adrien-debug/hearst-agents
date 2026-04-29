@@ -177,10 +177,17 @@ async function persistMessage(
 ): Promise<void> {
   const sb = db();
   if (!sb) return;
+  // Anti-fallback : pas d'identifiant "anonymous" en DB. Si le scope
+  // n'a pas d'userId UUID résolu, c'est un bug d'auth en amont — on
+  // refuse l'écriture plutôt que polluer chat_messages avec un
+  // placeholder qui ne correspond à aucun row de public.users.
+  if (!scope.userId) {
+    throw new Error("[memory/store] Cannot persist chat_message without authenticated userId");
+  }
   try {
     const { error } = await sb.from("chat_messages").insert({
       conversation_id: conversationId,
-      user_id: scope.userId ?? "anonymous",
+      user_id: scope.userId,
       tenant_id: scope.tenantId,
       workspace_id: scope.workspaceId,
       role: message.role,
@@ -263,11 +270,15 @@ async function persistModelMessages(
 ): Promise<void> {
   const sb = db();
   if (!sb) return;
+  // Même garde que persistMessage — pas de placeholder anonymous en DB.
+  if (!scope.userId) {
+    throw new Error("[memory/store] Cannot persist model_messages without authenticated userId");
+  }
   const now = Date.now();
   try {
     const rows = modelMessages.map((m, i) => ({
       conversation_id: conversationId,
-      user_id: scope.userId ?? "anonymous",
+      user_id: scope.userId,
       tenant_id: scope.tenantId,
       workspace_id: scope.workspaceId,
       role: m.role,

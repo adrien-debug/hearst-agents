@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import { saveTokens } from "@/lib/platform/auth/tokens";
 import { registerProviderUsage } from "@/lib/connectors/control-plane/register";
+import { resolveOrCreateUserUuid } from "./user-resolver";
 
 export const authOptions: AuthOptions = {
   pages: {
@@ -49,31 +50,52 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, account, profile }) {
       if (account && profile) {
-        const userId = (profile as { email?: string }).email ?? token.sub ?? "unknown";
-
+        const email = (profile as { email?: string }).email ?? null;
         const providerName = account.provider === "azure-ad" ? "microsoft" : "google";
+
+        // Résolution canonique de l'identifiant utilisateur :
+        // public.users.id (UUID) via lookup par email, auto-provisioning
+        // si l'utilisateur n'existe pas encore (premier login).
+        // Avant ce fix, token.userId = profile.email — ce qui faisait
+        // remonter un email comme identifiant dans toutes les écritures
+        // DB (cf. cleanup migration 0026_user_identity_uuid_cleanup.sql).
+        const uuid = email ? await resolveOrCreateUserUuid(email).catch((err) => {
+          console.error("[Auth] resolveOrCreateUserUuid failed:", err);
+          return null;
+        }) : null;
+
+        // Fallback strict : si la résolution échoue (DB indispo, email absent),
+        // on ne fabrique PAS d'identifiant artificiel. Le user n'aura pas
+        // d'userId valide → resolveScope() retournera null → 401 sur les
+        // routes auth-required. Préférable à un email silencieux qui pollue.
+        if (!uuid) {
+          console.warn(`[Auth] Unable to resolve UUID for email=${email ?? "<none>"}, provider=${providerName}`);
+        }
 
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at ?? 0;
-        token.userId = userId;
+        token.userId = uuid ?? undefined;
+        if (email) token.email = email;
 
-        await saveTokens(
-          userId,
-          {
-            accessToken: account.access_token ?? null,
-            refreshToken: account.refresh_token ?? null,
-            expiresAt: account.expires_at ?? 0,
-          },
-          providerName,
-        );
-        // Resolve scope from env (consistent with lib/scope.ts)
-        const tenantId = process.env.HEARST_TENANT_ID ?? "dev-tenant";
-        const workspaceId = process.env.HEARST_WORKSPACE_ID ?? "dev-workspace";
-        void registerProviderUsage({
-          provider: providerName as "google",
-          scope: { tenantId, workspaceId, userId },
-        });
+        if (uuid) {
+          await saveTokens(
+            uuid,
+            {
+              accessToken: account.access_token ?? null,
+              refreshToken: account.refresh_token ?? null,
+              expiresAt: account.expires_at ?? 0,
+            },
+            providerName,
+          );
+
+          const tenantId = process.env.HEARST_TENANT_ID ?? "dev-tenant";
+          const workspaceId = process.env.HEARST_WORKSPACE_ID ?? "dev-workspace";
+          void registerProviderUsage({
+            provider: providerName as "google",
+            scope: { tenantId, workspaceId, userId: uuid },
+          });
+        }
       }
       return token;
     },
@@ -81,6 +103,13 @@ export const authOptions: AuthOptions = {
       const s = session as unknown as Record<string, unknown>;
       s.accessToken = token.accessToken;
       s.userId = token.userId;
+      // Expose user.id (UUID) en plus de user.email pour que le frontend
+      // ait accès à l'identifiant canonique sans transiter par un appel
+      // serveur. À utiliser comme identifiant dans tout React state qui
+      // a besoin d'une key user.
+      if (session.user && typeof token.userId === "string") {
+        (session.user as { id?: string }).id = token.userId;
+      }
       return session;
     },
   },

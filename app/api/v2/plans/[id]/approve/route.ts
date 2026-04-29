@@ -22,12 +22,24 @@ export async function POST(
   try {
     const body = await request.json().catch(() => ({}));
     const { threadId, connectedProviders = [], forcedProviderId } = body;
-    const userId = scope?.userId ?? body.userId;
-    const tenantId = scope?.tenantId ?? body.tenantId;
 
-    if (!threadId || !userId) {
+    // Anti-pattern banni : userId / tenantId NE viennent PAS du body. Le
+    // scope a déjà été résolu via requireScope() ligne 17 (UUID issu de
+    // public.users via NextAuth callback). Logger un warning si le client
+    // envoie ces champs — signal d'un call site frontend pollué à fixer.
+    if (typeof body.userId !== "undefined" || typeof body.tenantId !== "undefined") {
+      console.warn(
+        `[Plans API] body contains userId/tenantId — ignored. Client should not send these fields. ` +
+        `Detected userId=${typeof body.userId}, tenantId=${typeof body.tenantId}`,
+      );
+    }
+
+    const userId = scope.userId;
+    const tenantId = scope.tenantId;
+
+    if (!threadId) {
       return NextResponse.json(
-        { error: "Missing required context: threadId, userId" },
+        { error: "Missing required context: threadId" },
         { status: 400 }
       );
     }
@@ -47,7 +59,7 @@ export async function POST(
     // Build pipeline context
     const ctx: PipelineContext = {
       userId,
-      tenantId: tenantId ?? "default",
+      tenantId,
       threadId,
       connectedProviders,
       forcedProviderId,

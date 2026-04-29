@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
-import { useSession } from "next-auth/react";
 import type { FocalObject, FocalStatus } from "@/lib/core/types";
 import { mapFocalObject } from "@/lib/core/types/focal";
 import { FocalRetryButton } from "./FocalRetryButton";
@@ -75,7 +74,6 @@ const TYPE_LABELS: Record<FocalObject["type"], string> = {
 };
 
 function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActionComplete: () => void }) {
-  const { data: session } = useSession();
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,12 +125,13 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
         if (!focal.sourcePlanId) throw new Error("Missing plan ID");
         const threadId = activeThreadId ?? focal.threadId;
         if (!threadId) throw new Error("Missing thread ID");
+        // Anti-pattern banni : ne pas envoyer d'identifiant utilisateur
+        // depuis le frontend. Le backend résout via requireScope().userId.
         response = await fetch(`/api/v2/plans/${focal.sourcePlanId}/approve`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             threadId,
-            userId: session?.user?.email ?? "anonymous",
             connectedProviders: [],
           }),
         });
