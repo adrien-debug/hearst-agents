@@ -77,9 +77,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             <LeftPanelShell />
 
             <div
-              data-theme="light"
-              className="flex-1 flex flex-col min-w-0 min-h-0 relative"
-              style={{ background: "var(--surface)", color: "var(--text)" }}
+              className="flex-1 flex flex-col min-w-0 min-h-0 relative my-3 mx-3 rounded-2xl overflow-hidden border border-[var(--border-subtle)] shadow-2xl"
+              style={{ background: "var(--bg-elev)", color: "var(--text)" }}
             >
               <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
                 {children}

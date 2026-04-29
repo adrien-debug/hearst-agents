@@ -108,7 +108,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="px-10 pt-5 pb-8">
+    <div className="px-6 py-4">
       <div
         className="mx-auto relative"
         style={{ maxWidth: "var(--input-max-width)" }}
@@ -117,7 +117,7 @@ export function ChatInput({
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="absolute bottom-full mb-8 w-full bg-[var(--bg)] rounded-sm border border-[var(--surface-2)] overflow-hidden z-50"
+            className="absolute bottom-full mb-4 w-full rounded-none border-t border-[var(--border-soft)] overflow-hidden z-50 bg-transparent"
           >
             {matchingServices.length === 0 ? (
               <div className="p-4 t-11 font-mono tracking-display text-[var(--text-faint)]">
@@ -133,7 +133,7 @@ export function ChatInput({
                   <button
                     key={service.id}
                     onClick={() => selectService(service)}
-                    className="w-full flex items-center gap-4 px-4 py-3 text-left hover:bg-[var(--surface-1)] transition-all duration-base group"
+                    className="w-full flex items-center gap-4 px-4 py-3 text-left border-b border-[var(--border-soft)] transition-all duration-base group hover:text-[var(--cykan)]"
                   >
                     <span className="t-18 grayscale group-hover:grayscale-0 transition-all">
                       {service.icon}
@@ -156,16 +156,16 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Card — capsule blanche, texte noir, sans hover/effets */}
+        {/* Input Pill — capsule avec focus cykan */}
         <div
-          className="rounded-lg group"
+          className="rounded-full group border border-[var(--border-subtle)] transition-all duration-base px-6 py-4 focus-within:shadow-[0_0_30px_rgba(45,212,191,0.1)] focus-within:border-[var(--cykan-border)]"
           style={{
-            background: "var(--surface)",
+            background: "var(--card-flat-bg)",
             color: "var(--text)",
           }}
         >
           {attachment && (
-            <div className="flex items-center gap-2 px-5 pt-3 pb-1">
+            <div className="flex items-center gap-2 px-1 pb-2">
               <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
                 PDF
               </span>
@@ -186,7 +186,7 @@ export function ChatInput({
             </div>
           )}
           {uploadError && (
-            <p className="t-9 font-mono text-[var(--danger)] px-5 pb-1">
+            <p className="t-9 font-mono text-[var(--danger)] px-1 pb-2">
               {uploadError}
             </p>
           )}
@@ -217,14 +217,14 @@ export function ChatInput({
               "Poser une question"
             }
             rows={1}
-            className="block w-full bg-transparent t-15 font-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed pt-4 pb-2 px-5"
+            className="block w-full bg-transparent t-15 font-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-2"
             style={{
               minHeight: "var(--height-input-min)",
               maxHeight: "var(--height-input-max)",
             }}
           />
-          <div className="flex items-center justify-between px-3 pb-3 pt-1">
-            <span className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] px-2">
+          <div className="flex items-center justify-between pt-2">
+            <span className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] px-1">
               Auto
             </span>
             <div className="flex items-center gap-2">
