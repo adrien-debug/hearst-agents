@@ -20,6 +20,7 @@ import { AudioPlayer } from "./AudioPlayer";
 import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer } from "./VideoPlayer";
 import { CodeRunner } from "./CodeRunner";
+import { useStageData } from "@/stores/stage-data";
 import type { AssetVariant, AssetVariantKind } from "@/lib/assets/variants";
 
 interface AssetVariantTabsProps {
@@ -48,6 +49,15 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
   const [generating, setGenerating] = useState<AssetVariantKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [videoProvider, setVideoProvider] = useState<"runway" | "heygen">("runway");
+
+  // Sync vers stage-data pour ContextRailForAsset (variants list).
+  // currentAsset est lu via getState() pour ne pas re-déclencher l'effect
+  // sur chaque changement d'autres champs (assetId/title) — sinon boucle.
+  const setAssetSlice = useStageData((s) => s.setAsset);
+  useEffect(() => {
+    const currentAsset = useStageData.getState().asset;
+    setAssetSlice({ ...currentAsset, variants });
+  }, [variants, setAssetSlice]);
 
   const variantFor = (kind: AssetVariantKind) => variants.find((v) => v.kind === kind);
 

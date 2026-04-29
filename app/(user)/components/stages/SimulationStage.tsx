@@ -8,8 +8,9 @@
  * validera les calculs, Exa enrichira les benchmarks.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useStageStore } from "@/stores/stage";
+import { useStageData } from "@/stores/stage-data";
 import { ThinkingDisclosure } from "../ThinkingDisclosure";
 import { toast } from "@/app/hooks/use-toast";
 
@@ -43,6 +44,12 @@ export function SimulationStage() {
   const [variables, setVariables] = useState<Variable[]>([{ key: "", value: "" }]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [reasoning, setReasoning] = useState<string | null>(null);
+
+  // Sync vers stage-data pour ContextRailForSimulation.
+  const setSimulationSlice = useStageData((s) => s.setSimulation);
+  useEffect(() => {
+    setSimulationSlice({ scenario: scenarioInput, variables, scenarios, phase });
+  }, [scenarioInput, variables, scenarios, phase, setSimulationSlice]);
 
   const updateVariable = useCallback((idx: number, patch: Partial<Variable>) => {
     setVariables((prev) => prev.map((v, i) => (i === idx ? { ...v, ...patch } : v)));

@@ -19,6 +19,7 @@
 
 import { useEffect, useState } from "react";
 import { useStageStore } from "@/stores/stage";
+import { useStageData } from "@/stores/stage-data";
 import { ReportLayout } from "../ReportLayout";
 import { AssetVariantTabs } from "../AssetVariantTabs";
 import { isHtmlContent, tryParseReportPayload } from "@/lib/assets/content-parser";
@@ -44,6 +45,20 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync vers stage-data pour ContextRailForAsset (titre + assetId).
+  // Les variants sont écrits par AssetVariantTabs séparément — on lit la
+  // valeur courante via getState() pour ne pas les écraser.
+  const setAssetSlice = useStageData((s) => s.setAsset);
+  useEffect(() => {
+    if (asset) {
+      setAssetSlice({
+        assetId,
+        assetTitle: asset.title,
+        variants: useStageData.getState().asset.variants,
+      });
+    }
+  }, [asset, assetId, setAssetSlice]);
 
   useEffect(() => {
     let cancelled = false;

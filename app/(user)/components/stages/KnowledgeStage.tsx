@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useStageStore } from "@/stores/stage";
 import { useNavigationStore } from "@/stores/navigation";
+import { useStageData } from "@/stores/stage-data";
 import { toast } from "@/app/hooks/use-toast";
 import type { KgEdge, KgNode } from "@/lib/memory/kg";
 
@@ -55,6 +56,15 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
   const [graph, setGraph] = useState<{ nodes: KgNode[]; edges: KgEdge[] }>({ nodes: [], edges: [] });
   const [ingesting, setIngesting] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Sync vers stage-data pour ContextRailForKnowledge.
+  const setKgSlice = useStageData((s) => s.setKg);
+  useEffect(() => {
+    const selected = selectedNodeId
+      ? graph.nodes.find((n) => n.id === selectedNodeId) ?? null
+      : null;
+    setKgSlice({ graph, selectedNode: selected });
+  }, [graph, selectedNodeId, setKgSlice]);
 
   const fetchGraph = useCallback(async (): Promise<{ nodes: KgNode[]; edges: KgEdge[] } | null> => {
     try {

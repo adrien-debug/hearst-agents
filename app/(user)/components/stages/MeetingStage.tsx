@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useStageStore } from "@/stores/stage";
+import { useStageData } from "@/stores/stage-data";
 import { toast } from "@/app/hooks/use-toast";
 
 interface MeetingStageProps {
@@ -32,6 +33,17 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
   const [transcript, setTranscript] = useState<string>("");
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [selectedActions, setSelectedActions] = useState<Set<number>>(new Set());
+
+  // Sync vers stage-data pour ContextRailForMeeting (C-light read-only).
+  const setMeetingSlice = useStageData((s) => s.setMeeting);
+  useEffect(() => {
+    setMeetingSlice({ actionItems, transcript, status });
+  }, [actionItems, transcript, status, setMeetingSlice]);
+
+  // Reset quand on quitte la session (meetingId vidé par le bouton Stop).
+  useEffect(() => {
+    if (!meetingId) setMeetingSlice({ actionItems: [], transcript: "", status: "" });
+  }, [meetingId, setMeetingSlice]);
 
   useEffect(() => {
     if (!meetingId) return;

@@ -14,6 +14,8 @@
  */
 
 import { useStageStore } from "@/stores/stage";
+import { useStageData } from "@/stores/stage-data";
+import { useVoiceStore } from "@/stores/voice";
 import { RightPanelContent } from "./RightPanelContent";
 
 interface ContextRailProps {
@@ -104,18 +106,31 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
 // ── Sub-rails par Stage (Phase A skeletons) ────────────────
 
 function ContextRailForAsset() {
+  const { variants, assetTitle } = useStageData((s) => s.asset);
+  const readyVariants = variants.filter((v) => v.status === "ready");
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Variants" count={1}>
-        <p className="t-13 font-light text-[var(--text-muted)]">
-          Texte (par défaut). Génère <span className="text-[var(--cykan)]">audio</span>, <span className="text-[var(--cykan)]">vidéo</span>, <span className="text-[var(--cykan)]">slides</span> ou <span className="text-[var(--cykan)]">site</span> à la demande.
-        </p>
+      <Section label="Asset focus">
+        <p className="t-13 text-[var(--text-muted)] truncate">{assetTitle || "—"}</p>
+      </Section>
+      <Section label="Variants" count={readyVariants.length}>
+        {readyVariants.length === 0 ? (
+          <EmptyHint>Texte uniquement — génère audio/vidéo/code via les onglets</EmptyHint>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {readyVariants.map((v) => (
+              <li key={v.id} className="flex items-baseline gap-2">
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+                  {v.kind.toUpperCase()}
+                </span>
+                <span className="t-11 text-[var(--text-faint)]">{v.provider ?? ""}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
       <Section label="Provenance">
-        <EmptyHint>Données provenance bientôt visibles ici</EmptyHint>
-      </Section>
-      <Section label="Knowledge Graph">
-        <EmptyHint>{"Entités liées en cours d'extraction"}</EmptyHint>
+        <EmptyHint>Phase B — sources & embeddings</EmptyHint>
       </Section>
     </div>
   );
@@ -124,15 +139,15 @@ function ContextRailForAsset() {
 function ContextRailForBrowser() {
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Action Log" count={0}>
-        <EmptyHint>Aucune action enregistrée</EmptyHint>
+      <Section label="Action Log">
+        <EmptyHint>Phase B.8 — Stagehand events à brancher</EmptyHint>
       </Section>
-      <Section label="Sources" count={0}>
-        <EmptyHint>Pas encore de sources collectées</EmptyHint>
+      <Section label="Sources">
+        <EmptyHint>Phase B.8 — extraction post-task</EmptyHint>
       </Section>
       <Section label="Co-pilote">
         <p className="t-13 font-light text-[var(--text-muted)]">
-          L{"'"}agent navigue. <span className="text-[var(--cykan)]">Take Over</span> à tout moment.
+          L{"'"}agent navigue dans la session live. Take Over arrivera avec Stagehand.
         </p>
       </Section>
     </div>
@@ -140,13 +155,29 @@ function ContextRailForBrowser() {
 }
 
 function ContextRailForMeeting() {
+  const { actionItems, status } = useStageData((s) => s.meeting);
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Action Items" count={0}>
-        <EmptyHint>Aucun action item détecté</EmptyHint>
+      <Section label="Action Items" count={actionItems.length}>
+        {actionItems.length === 0 ? (
+          <EmptyHint>{status ? "Analyse en cours…" : "En attente du transcript"}</EmptyHint>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {actionItems.map((item, i) => (
+              <li key={i} className="border-l-2 border-[var(--cykan)]/30 pl-3 py-1">
+                <p className="t-13 text-[var(--text)] truncate">{item.action}</p>
+                {(item.owner || item.deadline) && (
+                  <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                    {[item.owner, item.deadline].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
-      <Section label="Speakers" count={0}>
-        <EmptyHint>Aucun speaker identifié</EmptyHint>
+      <Section label="Speakers">
+        <EmptyHint>Phase B — diarisation Deepgram à brancher</EmptyHint>
       </Section>
       <Section label="Templates Mission">
         <p className="t-13 font-light text-[var(--text-muted)]">
@@ -158,31 +189,79 @@ function ContextRailForMeeting() {
 }
 
 function ContextRailForKnowledge() {
+  const { graph, selectedNode } = useStageData((s) => s.kg);
   return (
     <div className="h-full overflow-y-auto">
       <Section label="Entité focus">
-        <EmptyHint>Sélectionne une entité dans le graphe</EmptyHint>
+        {selectedNode ? (
+          <div className="flex flex-col gap-2">
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+              {selectedNode.type}
+            </span>
+            <p className="t-13 text-[var(--text)]">{selectedNode.label}</p>
+            {Object.keys(selectedNode.properties ?? {}).length > 0 && (
+              <ul className="flex flex-col gap-1 mt-2">
+                {Object.entries(selectedNode.properties as Record<string, unknown>)
+                  .slice(0, 6)
+                  .map(([k, v]) => (
+                    <li key={k} className="flex items-baseline gap-2">
+                      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] truncate">
+                        {k}
+                      </span>
+                      <span className="t-11 text-[var(--text-muted)] truncate">{String(v)}</span>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <EmptyHint>Click un nœud du graphe</EmptyHint>
+        )}
       </Section>
-      <Section label="Requêtes récentes" count={0}>
-        <EmptyHint>Aucune requête mémorisée</EmptyHint>
-      </Section>
-      <Section label="Suggested explorations">
-        <p className="t-13 font-light text-[var(--text-muted)]">
-          {"L'agent peut suggérer des chemins d'exploration depuis ton historique."}
+      <Section label="Graphe" count={graph.nodes.length}>
+        <p className="t-11 font-mono tracking-display text-[var(--text-faint)]">
+          {graph.nodes.length} entités · {graph.edges.length} relations
         </p>
+      </Section>
+      <Section label="Requêtes récentes">
+        <EmptyHint>Phase B — historique queries</EmptyHint>
       </Section>
     </div>
   );
 }
 
 function ContextRailForVoice() {
+  const transcript = useVoiceStore((s) => s.transcript);
+  const phase = useVoiceStore((s) => s.phase);
+  const last10 = transcript.slice(-10);
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Transcript live">
-        <EmptyHint>Active le mode voix pour démarrer</EmptyHint>
+      <Section label="Transcript live" count={transcript.length}>
+        {transcript.length === 0 ? (
+          <EmptyHint>
+            {phase === "idle" ? "Active le mode voix pour démarrer" : "En attente du premier échange"}
+          </EmptyHint>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {last10.map((entry) => (
+              <li key={entry.id} className="flex flex-col gap-1">
+                <span
+                  className={`t-9 font-mono uppercase tracking-marquee ${
+                    entry.role === "user" ? "text-[var(--cykan)]" : "text-[var(--text-faint)]"
+                  }`}
+                >
+                  {entry.role === "user" ? "USER" : "AGENT"}
+                </span>
+                <p className="t-11 text-[var(--text-muted)] line-clamp-2">{entry.text}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
-      <Section label="Tools disponibles" count={0}>
-        <EmptyHint>Composio · KG · Missions</EmptyHint>
+      <Section label="Tools disponibles" count={3}>
+        <p className="t-11 font-mono uppercase tracking-display text-[var(--text-faint)]">
+          Composio · KG · Missions
+        </p>
       </Section>
       <Section label="Voice settings">
         <p className="t-13 font-light text-[var(--text-muted)]">
@@ -194,17 +273,45 @@ function ContextRailForVoice() {
 }
 
 function ContextRailForSimulation() {
+  const { variables, scenarios, phase } = useStageData((s) => s.simulation);
+  const cleanVars = variables.filter((v) => v.key.trim());
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Variables">
-        <EmptyHint>Définis les inputs dans le formulaire</EmptyHint>
+      <Section label="Variables" count={cleanVars.length}>
+        {cleanVars.length === 0 ? (
+          <EmptyHint>Définis les inputs dans le formulaire</EmptyHint>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {cleanVars.map((v, i) => (
+              <li key={i} className="flex items-baseline gap-2">
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] truncate">
+                  {v.key}
+                </span>
+                <span className="t-13 text-[var(--text)] truncate">{v.value || "—"}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
-      <Section label="Sources" count={0}>
-        <EmptyHint>Phase B suivante : Exa + Perplexity benchmarks</EmptyHint>
+      <Section label="Scénarios générés" count={scenarios.length}>
+        {scenarios.length === 0 ? (
+          <EmptyHint>{phase === "running" ? "DeepSeek raisonne…" : "Aucun scénario"}</EmptyHint>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {scenarios.map((s, i) => (
+              <li key={i} className="border-l-2 border-[var(--cykan)]/30 pl-3 py-1">
+                <p className="t-13 text-[var(--text)] truncate">{s.name}</p>
+                <p className="t-9 font-mono tracking-marquee text-[var(--text-faint)]">
+                  PROB · {(s.probability * 100).toFixed(0)}%
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
       <Section label="Validation">
         <p className="t-13 font-light text-[var(--text-muted)]">
-          Phase B suivante : E2B vérifiera les calculs.
+          Phase B — E2B vérifiera les calculs.
         </p>
       </Section>
     </div>
