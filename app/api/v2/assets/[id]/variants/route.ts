@@ -20,9 +20,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireScope } from "@/lib/platform/auth/scope";
 import { loadAssetById } from "@/lib/assets/types";
-import { createVariant, getVariantsForAsset } from "@/lib/assets/variants";
+import { createVariant, getVariantsForAsset, updateVariant } from "@/lib/assets/variants";
 import { estimateSpeechCost } from "@/lib/capabilities/providers/elevenlabs";
 import { requireCreditsForJob, formatInsufficientCreditsMessage } from "@/lib/credits/middleware";
+import { settleCredits } from "@/lib/credits/client";
 import { enqueueJob } from "@/lib/jobs/queue";
 import type { AudioGenInput } from "@/lib/jobs/types";
 
@@ -128,11 +129,41 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       estimatedCostUsd,
     });
   } catch (err) {
-    // Si l'enqueue throw (Redis indispo), on doit refund la réservation.
-    // Phase B.1+ : settle_credits(reserved=estimated, actual=0) ici.
+    // Enqueue échoué (Redis down, queue saturée…) : on doit cleanup les
+    // deux réservations laissées derrière par les étapes précédentes,
+    // sinon double fuite : (1) crédits réservés bloqués, (2) variant
+    // pending fantôme dans la liste utilisateur.
     console.error("[Variants] enqueue failed:", err);
+
+    const errorMessage = err instanceof Error ? err.message : String(err);
+
+    // 1. Refund total : reserved restent, actual=0 → balance reste intacte
+    //    et reserved repasse à 0 (cf. settle_credits dans 0029).
+    await settleCredits({
+      userId: scope.userId,
+      tenantId: scope.tenantId,
+      reservedUsd: estimatedCostUsd,
+      actualUsd: 0,
+      jobId: placeholderJobId,
+      jobKind: "audio-gen",
+      description: `enqueue_failed: ${errorMessage.slice(0, 200)}`,
+    }).catch((settleErr) => {
+      // Si le refund lui-même échoue, on log mais on continue à répondre.
+      console.error("[Variants] settle_credits refund failed:", settleErr);
+    });
+
+    // 2. Marquer le variant comme failed pour que le polling client
+    //    sorte de l'état pending et que la liste reflète la réalité.
+    await updateVariant(variantId, {
+      status: "failed",
+      error: `enqueue_failed: ${errorMessage.slice(0, 500)}`,
+      metadata: { reason: "enqueue_failed", message: errorMessage },
+    }).catch((updateErr) => {
+      console.error("[Variants] updateVariant failed→failed status update failed:", updateErr);
+    });
+
     return NextResponse.json(
-      { error: "enqueue_failed", message: err instanceof Error ? err.message : String(err) },
+      { error: "enqueue_failed", message: errorMessage },
       { status: 503 },
     );
   }
