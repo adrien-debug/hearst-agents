@@ -53,7 +53,7 @@ describe("Composio client (v0.6 SDK)", () => {
       expect(execute).not.toHaveBeenCalled();
     });
 
-    it("forwards (slug, { userId, arguments }) to the SDK and wraps the result", async () => {
+    it("forwards (slug, { userId, arguments, dangerouslySkipVersionCheck }) to the SDK and wraps the result", async () => {
       process.env.COMPOSIO_API_KEY = "ak_test";
       execute.mockResolvedValueOnce({ id: "msg-123" });
 
@@ -63,9 +63,12 @@ describe("Composio client (v0.6 SDK)", () => {
         params: { recipient_email: "x@y.z", subject: "hi", body: "ok" },
       });
 
+      // dangerouslySkipVersionCheck est ajouté par le wrapper pour préserver
+      // le comportement legacy "latest" — Composio 0.6+ throw sinon.
       expect(execute).toHaveBeenCalledWith("GMAIL_SEND_EMAIL", {
         userId: "user-42",
         arguments: { recipient_email: "x@y.z", subject: "hi", body: "ok" },
+        dangerouslySkipVersionCheck: true,
       });
       expect(result.ok).toBe(true);
       expect(result.data).toEqual({ id: "msg-123" });

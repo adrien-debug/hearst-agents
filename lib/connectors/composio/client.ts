@@ -23,7 +23,15 @@ interface ComposioClient {
   tools: {
     execute(
       slug: string,
-      body: { userId: string; arguments?: Record<string, unknown> },
+      body: {
+        userId: string;
+        arguments?: Record<string, unknown>;
+        /** Composio 0.6+ exige une version explicite pour `tools.execute()`,
+         *  sinon throw `ComposioToolVersionRequiredError`. On laisse la
+         *  résolution "latest" passer en mettant ce flag — comportement
+         *  identique aux versions antérieures du SDK. */
+        dangerouslySkipVersionCheck?: boolean;
+      },
     ): Promise<unknown>;
     get(
       userId: string,
@@ -139,6 +147,12 @@ export async function executeComposioAction(
     const data = await client.tools.execute(call.action, {
       userId: call.entityId,
       arguments: call.params,
+      // SDK 0.6+ throw ComposioToolVersionRequiredError si on n'a pas pinné
+      // de version par toolkit. On garde le comportement "latest" implicite
+      // d'avant en bypassant le check. À durcir en pinning par toolkit
+      // dans un sprint dédié si on veut éviter les régressions silencieuses
+      // côté Composio.
+      dangerouslySkipVersionCheck: true,
     });
     return { ok: true, data };
   } catch (err) {
