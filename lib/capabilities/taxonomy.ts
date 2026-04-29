@@ -260,10 +260,12 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
         "exécute", "exécuter", "sandbox", "script python",
         "code python", "lance ce code", "analyse données",
         "calcul numérique", "run python",
+        "calcule", "python", "javascript", "graphique", "simulation",
       ],
       en: [
         "execute code", "run code", "python script",
         "sandbox", "analyze data", "code execution", "run python",
+        "javascript", "graph", "simulation",
       ],
     },
   },
@@ -280,6 +282,7 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
         "pdf", "parse", "lis ce fichier", "extraire texte",
         "convertir pdf", "fichier pdf", "document pdf",
         "analyse ce document", "extraction",
+        "extrait du document", "analyse ce pdf", "contenu du fichier",
       ],
       en: [
         "pdf", "parse", "read this file", "extract text",
