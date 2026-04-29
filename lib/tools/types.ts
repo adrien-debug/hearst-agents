@@ -23,6 +23,13 @@ export type ToolContext =
   | "research"
   | "general";
 
+export interface ToolParameterDef {
+  type: "string" | "number" | "boolean";
+  required?: boolean;
+  description?: string;
+  enum?: string[];
+}
+
 export interface ToolDefinition {
   id: string;
   name: string;
@@ -31,6 +38,7 @@ export interface ToolDefinition {
   surfaceLabel: string;
   handler: string;
   contexts: ToolContext[];
+  parameters?: Record<string, ToolParameterDef>;
 }
 
 export interface ToolSurfaceItem {

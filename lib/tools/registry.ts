@@ -119,6 +119,11 @@ registerTool({
   surfaceLabel: "Image",
   handler: "generateImage",
   contexts: ["general", "research", "files"],
+  parameters: {
+    prompt:    { type: "string", required: true,  description: "Texte décrivant l'image à générer" },
+    style:     { type: "string", required: false, description: "Style artistique (ex: photorealistic, watercolor)" },
+    imageSize: { type: "string", required: false, description: "Dimensions : square_hd | landscape_16_9 | portrait_4_3", enum: ["square_hd", "landscape_16_9", "portrait_4_3"] },
+  },
 });
 
 registerTool({
@@ -129,6 +134,10 @@ registerTool({
   surfaceLabel: "Parser",
   handler: "parseDocument",
   contexts: ["files", "research", "general"],
+  parameters: {
+    fileUrl:  { type: "string", required: true,  description: "URL du fichier à parser" },
+    mimeType: { type: "string", required: false, description: "MIME type du fichier (défaut: application/pdf)" },
+  },
 });
 
 registerTool({
@@ -139,6 +148,10 @@ registerTool({
   surfaceLabel: "Exécuter",
   handler: "executeCode",
   contexts: ["general", "finance", "research"],
+  parameters: {
+    code:     { type: "string", required: true,  description: "Code source à exécuter" },
+    language: { type: "string", required: false, description: "Langage : python | javascript (défaut: python)", enum: ["python", "javascript"] },
+  },
 });
 
 registerTool({
@@ -149,4 +162,9 @@ registerTool({
   surfaceLabel: "Vidéo",
   handler: "generateVideo",
   contexts: ["general", "research"],
+  parameters: {
+    prompt:   { type: "string", required: true,  description: "Texte décrivant ou narrant la vidéo" },
+    provider: { type: "string", required: false, description: "Fournisseur : heygen | runway (défaut: runway)", enum: ["heygen", "runway"] },
+    avatarId: { type: "string", required: false, description: "ID avatar HeyGen (heygen uniquement)" },
+  },
 });

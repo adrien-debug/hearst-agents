@@ -27,7 +27,7 @@ const handler: WorkerHandler<CodeExecInput> = {
 
     const execResult = await executeCode({
       code: payload.code,
-      language: payload.runtime === "node" ? "javascript" : "python",
+      language: payload.runtime === "node" ? "javascript" : "python", // e2b uses "javascript", not "node"
       timeoutMs: payload.timeoutMs,
     });
 

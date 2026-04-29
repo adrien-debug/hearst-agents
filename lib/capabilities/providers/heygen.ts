@@ -30,25 +30,33 @@ export async function heygenGenerateVideo(params: {
     dimension,
   };
 
-  const res = await fetch(`${HEYGEN_API_BASE}/video/generate`, {
-    method: "POST",
-    headers: {
-      "X-Api-Key": apiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
 
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => "");
-    throw new Error(`[HeyGen] generate failed ${res.status}: ${errBody.slice(0, 200)}`);
+  try {
+    const res = await fetch(`${HEYGEN_API_BASE}/video/generate`, {
+      method: "POST",
+      headers: {
+        "X-Api-Key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      throw new Error(`[HeyGen] generate failed ${res.status}: ${errBody.slice(0, 200)}`);
+    }
+
+    const data = (await res.json()) as { data?: { video_id?: string } };
+    const videoId = data?.data?.video_id;
+    if (!videoId) throw new Error("[HeyGen] No video_id in response");
+
+    return { videoId, status: "processing" };
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = (await res.json()) as { data?: { video_id?: string } };
-  const videoId = data?.data?.video_id;
-  if (!videoId) throw new Error("[HeyGen] No video_id in response");
-
-  return { videoId, status: "processing" };
 }
 
 export async function heygenGetStatus(videoId: string): Promise<{
@@ -58,21 +66,29 @@ export async function heygenGetStatus(videoId: string): Promise<{
   const apiKey = process.env.HEYGEN_API_KEY;
   if (!apiKey) throw new Error("HeyGen non configuré");
 
-  const res = await fetch(`${HEYGEN_API_BASE}/video/status/${videoId}`, {
-    headers: { "X-Api-Key": apiKey },
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
 
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => "");
-    throw new Error(`[HeyGen] status failed ${res.status}: ${errBody.slice(0, 200)}`);
+  try {
+    const res = await fetch(`${HEYGEN_API_BASE}/video/status/${videoId}`, {
+      headers: { "X-Api-Key": apiKey },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      throw new Error(`[HeyGen] status failed ${res.status}: ${errBody.slice(0, 200)}`);
+    }
+
+    const data = (await res.json()) as {
+      data?: { status?: string; video_url?: string };
+    };
+
+    return {
+      status: data?.data?.status ?? "unknown",
+      videoUrl: data?.data?.video_url,
+    };
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = (await res.json()) as {
-    data?: { status?: string; video_url?: string };
-  };
-
-  return {
-    status: data?.data?.status ?? "unknown",
-    videoUrl: data?.data?.video_url,
-  };
 }

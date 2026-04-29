@@ -46,7 +46,10 @@ export async function parseDocument(params: {
       headers: authHeaders,
     });
 
-    if (!pollRes.ok) continue;
+    if (!pollRes.ok) {
+      console.warn(`[LlamaParse] Poll ${attempt + 1}/${MAX_ATTEMPTS} — HTTP ${pollRes.status}`);
+      continue;
+    }
 
     const result = await pollRes.json() as {
       status: string;
