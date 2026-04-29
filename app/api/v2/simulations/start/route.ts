@@ -10,8 +10,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { requireScope } from "@/lib/platform/auth/scope";
 import { deepseekChat } from "@/lib/capabilities/providers/deepseek";
+import { storeAsset } from "@/lib/assets/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -112,9 +114,35 @@ Retourne UNIQUEMENT un JSON valide, sans texte autour, au format :
       );
     }
 
+    // Persist asset markdown — sans ça, fermer la stage perdait tout.
+    // Pattern repris de generate_image (lib/tools/native/hearst-actions.ts).
+    const assetId = randomUUID();
+    const markdown = formatScenariosToMarkdown(
+      scenario,
+      variables,
+      parsed.scenarios,
+      result.reasoningContent ?? null,
+    );
+    storeAsset({
+      id: assetId,
+      threadId: scope.workspaceId,
+      kind: "report",
+      title: scenario.slice(0, 80),
+      summary: parsed.scenarios[0]?.narrative?.slice(0, 200) ?? scenario.slice(0, 200),
+      contentRef: markdown,
+      createdAt: Date.now(),
+      provenance: {
+        providerId: "system",
+        userId: scope.userId,
+        tenantId: scope.tenantId,
+        workspaceId: scope.workspaceId,
+      },
+    });
+
     return NextResponse.json({
       scenarios: parsed.scenarios,
       reasoning: result.reasoningContent ?? null,
+      assetId,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -124,4 +152,68 @@ Retourne UNIQUEMENT un JSON valide, sans texte autour, au format :
       { status: 500 },
     );
   }
+}
+
+/**
+ * Sérialise les scénarios en markdown pour le `contentRef` de l'asset.
+ * Format proche de ce que rend `ScenarioCard` côté UI : titre, variables,
+ * scénarios (narrative + metrics + risques), puis raisonnement DeepSeek.
+ */
+function formatScenariosToMarkdown(
+  scenario: string,
+  variables: SimulationVariable[],
+  scenarios: SimulationScenario[],
+  reasoning: string | null,
+): string {
+  const lines: string[] = [];
+  lines.push(`# ${scenario}`);
+  lines.push("");
+
+  if (variables.length > 0) {
+    lines.push("## Variables");
+    lines.push("");
+    for (const v of variables) {
+      lines.push(`- **${v.key}** : ${v.value}`);
+    }
+    lines.push("");
+  }
+
+  lines.push("## Scénarios");
+  lines.push("");
+  for (const s of scenarios) {
+    const probPct = Math.max(0, Math.min(100, Math.round((s.probability ?? 0) * 100)));
+    lines.push(`### ${s.name} — ${probPct}%`);
+    lines.push("");
+    if (s.narrative) {
+      lines.push(s.narrative);
+      lines.push("");
+    }
+    const metricsEntries = Object.entries(s.metrics ?? {});
+    if (metricsEntries.length > 0) {
+      lines.push("**Metrics**");
+      lines.push("");
+      for (const [key, value] of metricsEntries) {
+        lines.push(`- ${key.replace(/_/g, " ")} : ${value}`);
+      }
+      lines.push("");
+    }
+    const risks = Array.isArray(s.risks) ? s.risks : [];
+    if (risks.length > 0) {
+      lines.push("**Risques**");
+      lines.push("");
+      for (const r of risks) {
+        lines.push(`- ${r}`);
+      }
+      lines.push("");
+    }
+  }
+
+  if (reasoning) {
+    lines.push("## Raisonnement");
+    lines.push("");
+    lines.push(reasoning);
+    lines.push("");
+  }
+
+  return lines.join("\n");
 }

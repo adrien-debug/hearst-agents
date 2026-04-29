@@ -32,6 +32,7 @@ type Phase = "idle" | "running" | "done";
 interface SimulationResponse {
   scenarios?: Scenario[];
   reasoning?: string | null;
+  assetId?: string;
   error?: string;
   message?: string;
 }
@@ -44,6 +45,7 @@ export function SimulationStage() {
   const [variables, setVariables] = useState<Variable[]>([{ key: "", value: "" }]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [reasoning, setReasoning] = useState<string | null>(null);
+  const [assetId, setAssetId] = useState<string | null>(null);
 
   // Sync vers stage-data pour ContextRailForSimulation.
   const setSimulationSlice = useStageData((s) => s.setSimulation);
@@ -67,6 +69,7 @@ export function SimulationStage() {
     setPhase("idle");
     setScenarios([]);
     setReasoning(null);
+    setAssetId(null);
   }, []);
 
   // `scenarioOverride` permet à l'auto-run au mount (depuis le payload du
@@ -85,6 +88,7 @@ export function SimulationStage() {
     setPhase("running");
     setScenarios([]);
     setReasoning(null);
+    setAssetId(null);
     try {
       const res = await fetch("/api/v2/simulations/start", {
         method: "POST",
@@ -100,6 +104,7 @@ export function SimulationStage() {
       }
       setScenarios(data.scenarios);
       setReasoning(data.reasoning ?? null);
+      setAssetId(data.assetId ?? null);
       setPhase("done");
     } catch (err) {
       toast.error("Erreur réseau", err instanceof Error ? err.message : String(err));
@@ -182,6 +187,7 @@ export function SimulationStage() {
             <SimulationResults
               scenarios={scenarios}
               reasoning={reasoning}
+              assetId={assetId}
               onReset={reset}
             />
           )}
@@ -316,10 +322,13 @@ function SimulationRunning() {
 interface SimulationResultsProps {
   scenarios: Scenario[];
   reasoning: string | null;
+  assetId: string | null;
   onReset: () => void;
 }
 
-function SimulationResults({ scenarios, reasoning, onReset }: SimulationResultsProps) {
+function SimulationResults({ scenarios, reasoning, assetId, onReset }: SimulationResultsProps) {
+  const setStageMode = useStageStore((s) => s.setMode);
+
   return (
     <div className="flex flex-col gap-6">
       {reasoning && <ThinkingDisclosure thinking={reasoning} />}
@@ -332,13 +341,24 @@ function SimulationResults({ scenarios, reasoning, onReset }: SimulationResultsP
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={onReset}
-        className="self-start halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
-      >
-        Nouvelle simulation
-      </button>
+      <div className="flex items-center gap-3">
+        {assetId !== null && (
+          <button
+            type="button"
+            onClick={() => setStageMode({ mode: "asset", assetId })}
+            className="halo-on-hover px-4 py-2 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow"
+          >
+            Voir dans l&apos;asset
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onReset}
+          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
+        >
+          Nouvelle simulation
+        </button>
+      </div>
     </div>
   );
 }
