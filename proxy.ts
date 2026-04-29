@@ -77,6 +77,7 @@ export function proxy(req: NextRequest): NextResponse {
   }
 
   if (!hasSession(req)) {
+    if (isDevBypass()) return NextResponse.next();
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", path);
     console.log(`[Proxy] Redirecting unauthenticated user to login — ${path}`);
