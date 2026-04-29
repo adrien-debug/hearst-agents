@@ -26,8 +26,6 @@ interface ChatStageProps {
  * hauteur fixe (320px). Sinon, ChatMessages prend toute la place.
  *
  * Le ChatInput est rendu en bas dans tous les cas — règle UX inchangée.
- * Le ChatInput flottant (Cmd+L) ne sera invoqué que quand le Stage actif
- * n'est PAS chat (cockpit / asset / browser / meeting / kg / voice).
  */
 export function ChatStage({ messages, hasMessages, onSubmit, connectedServices }: ChatStageProps) {
   const focal = useFocalStore((s) => s.focal);

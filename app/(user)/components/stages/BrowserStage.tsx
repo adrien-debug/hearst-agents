@@ -234,9 +234,6 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
                 </p>
               )}
             </div>
-            <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] mt-2">
-              CMD+L pour ouvrir le chat
-            </p>
           </div>
         </div>
       </div>

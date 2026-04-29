@@ -55,8 +55,6 @@ interface StageState {
   lastAssetId: string | null;
   /** True quand le Commandeur (Cmd+K) est ouvert. */
   commandeurOpen: boolean;
-  /** True quand le ChatInput flottant (Cmd+L) est visible au-dessus du Stage. */
-  floatingChatOpen: boolean;
 
   /** Switch vers un nouveau mode (push dans l'history). Persiste l'assetId
    * dans `lastAssetId` quand mode === "asset". */
@@ -67,9 +65,7 @@ interface StageState {
   reset: () => void;
 
   setCommandeurOpen: (open: boolean) => void;
-  setFloatingChatOpen: (open: boolean) => void;
   toggleCommandeur: () => void;
-  toggleFloatingChat: () => void;
 }
 
 export const useStageStore = create<StageState>((set, get) => ({
@@ -77,7 +73,6 @@ export const useStageStore = create<StageState>((set, get) => ({
   history: [],
   lastAssetId: null,
   commandeurOpen: false,
-  floatingChatOpen: false,
 
   setMode: (payload) => {
     const prev = get().current;
@@ -100,16 +95,13 @@ export const useStageStore = create<StageState>((set, get) => ({
   reset: () => set({ current: { mode: "cockpit" }, history: [] }),
 
   setCommandeurOpen: (open) => set({ commandeurOpen: open }),
-  setFloatingChatOpen: (open) => set({ floatingChatOpen: open }),
   toggleCommandeur: () => set({ commandeurOpen: !get().commandeurOpen }),
-  toggleFloatingChat: () => set({ floatingChatOpen: !get().floatingChatOpen }),
 }));
 
 /**
  * Mapping hotkey → stage. Cmd+1..8 = switch direct vers un Stage
  * (cockpit/chat/asset/browser/meeting/kg/voice/simulation — grille
- * systématique). Cmd+K = ouvrir Commandeur. Cmd+L = toggle floating chat.
- * Cmd+Backspace = back.
+ * systématique). Cmd+K = ouvrir Commandeur. Cmd+Backspace = back.
  */
 export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [
   { key: "1", mode: "cockpit" },

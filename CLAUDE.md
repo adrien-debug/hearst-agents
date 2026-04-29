@@ -31,9 +31,7 @@ Pas les trois en même temps. Le mélange est la cause #1 du déséquilibre visu
 
 Avant de coder une nouvelle page ou de retoucher une page existante, **ouvre et lis** :
 
-- [HEARST-OS-DESIGN-SYSTEM.html](HEARST-OS-DESIGN-SYSTEM.html) — le langage visuel canonique
-- [HEARST-UI-VISION.html](hearst-ui-vision.html) — la vision cible
-- [mock-chat-central.html](mock-chat-central.html) — le mock de la surface principale
+- [HEARST-OS-DESIGN-SYSTEM.html](HEARST-OS-DESIGN-SYSTEM.html) — le langage visuel canonique (tokens, typo, motion)
 
 Calque-toi dessus. Cite les sections que tu réutilises dans ta réponse.
 

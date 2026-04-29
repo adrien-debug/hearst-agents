@@ -59,7 +59,7 @@ function VoiceMount() {
  *   └──────────┴───────────────────────────────────┴──────────┘
  *   Commandeur (overlay Cmd+K, monté toujours, hidden if !isOpen)
  *
- * useGlobalHotkeys branche les raccourcis : Cmd+K, Cmd+L, Cmd+1..7
+ * useGlobalHotkeys branche les raccourcis : Cmd+K, Cmd+1..7
  * (cockpit/chat/asset/browser/meeting/kg/voice), Cmd+Backspace.
  */
 export default function UserLayout({ children }: { children: React.ReactNode }) {

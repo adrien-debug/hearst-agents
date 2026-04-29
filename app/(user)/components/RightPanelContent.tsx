@@ -17,7 +17,6 @@ import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
-import { OAuthStatusCard } from "./OAuthStatusCard";
 import { PulseStrip } from "./right-panel/PulseStrip";
 import { FocalCard } from "./right-panel/FocalCard";
 import { RightPanelNav, type PanelView } from "./right-panel/RightPanelNav";
@@ -256,8 +255,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           </button>
         </div>
       )}
-
-      <OAuthStatusCard />
 
       {/* Strate 1 — PULSE */}
       <PulseStrip />

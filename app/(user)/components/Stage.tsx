@@ -27,9 +27,6 @@ interface StageProps {
  * Stage — Router polymorphe central.
  *
  * Rend le sub-Stage approprié selon `useStageStore.current.mode`.
- * Tous les Stages partagent les mêmes props de chat (onSubmit, messages,
- * connectedServices) — le ChatInput est toujours invocable, même quand
- * le Stage actif n'est pas `chat` (mode flottant via Cmd+L).
  */
 export function Stage(props: StageProps) {
   const current = useStageStore((s) => s.current);

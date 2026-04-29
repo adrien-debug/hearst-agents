@@ -40,8 +40,7 @@ const initialServices = (() => {
  *
  * La logique de soumission (handleSubmit), de chargement des services
  * et de hydration RightPanel reste ici car elle est partagée entre tous
- * les Stages (le ChatInput flottant Cmd+L peut soumettre depuis n'importe
- * quel Stage). Les ChatMessages et la FocalStage embedded sont rendus
+ * les Stages. Les ChatMessages et la FocalStage embedded sont rendus
  * par ChatStage spécifiquement.
  */
 export default function HomePage() {

@@ -4,7 +4,6 @@
  * useGlobalHotkeys — Hooks raccourcis globaux pour Hearst OS.
  *
  * - ⌘K        : toggle Commandeur (palette)
- * - ⌘L        : toggle floating chat
  * - ⌘1..⌘8    : switch direct vers un Stage (cockpit/chat/asset/browser/
  *               meeting/kg/voice/simulation — grille systématique,
  *               voir STAGE_HOTKEYS)
@@ -22,7 +21,6 @@ import { useVoiceStore } from "@/stores/voice";
 
 export function useGlobalHotkeys() {
   const toggleCommandeur = useStageStore((s) => s.toggleCommandeur);
-  const toggleFloatingChat = useStageStore((s) => s.toggleFloatingChat);
   const setMode = useStageStore((s) => s.setMode);
   const back = useStageStore((s) => s.back);
 
@@ -34,7 +32,7 @@ export function useGlobalHotkeys() {
     };
 
     const onKey = (e: KeyboardEvent) => {
-      // ⌘K et ⌘L : autorisés même en input (palette / chat flottant)
+      // ⌘K : autorisé même en input (palette globale)
       const meta = e.metaKey || e.ctrlKey;
 
       // ⌘⇧V → mode voix ambient (toggle). Doit être checké AVANT le early
@@ -59,12 +57,6 @@ export function useGlobalHotkeys() {
       if (e.key === "k" || e.key === "K") {
         e.preventDefault();
         toggleCommandeur();
-        return;
-      }
-
-      if (e.key === "l" || e.key === "L") {
-        e.preventDefault();
-        toggleFloatingChat();
         return;
       }
 
@@ -125,5 +117,5 @@ export function useGlobalHotkeys() {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [toggleCommandeur, toggleFloatingChat, setMode, back]);
+  }, [toggleCommandeur, setMode, back]);
 }

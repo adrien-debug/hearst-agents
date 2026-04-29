@@ -214,9 +214,6 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
                 {starting ? "Lancement…" : "Lancer le bot"}
               </button>
             </form>
-            <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] mt-4">
-              CMD+L pour ouvrir le chat
-            </p>
           </div>
         </div>
       ) : (
