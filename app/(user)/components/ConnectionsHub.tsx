@@ -735,8 +735,7 @@ export function ConnectionsHub() {
         >
           {/* CONNECTÉS */}
           <div
-            className="rounded-sm overflow-hidden"
-            style={{ background: "var(--bg-elev)", border: "1px solid var(--border-shell)" }}
+            className=""
           >
             <SectionLabel label="Connectés" count={stats.connectedCount} />
             {connectedApps.length > 0 ? (
@@ -753,8 +752,7 @@ export function ConnectionsHub() {
           {/* POUR ALLER PLUS LOIN */}
           {suggestions.length > 0 && (
             <div
-              className="rounded-sm overflow-hidden"
-              style={{ background: "var(--bg-elev)", border: "1px solid var(--border-shell)" }}
+              className=""
             >
               <SectionLabel label="Pour aller plus loin" count={suggestions.length} />
               <SuggestionsGrid suggestions={suggestions} onSelect={openDrawer} />
@@ -763,8 +761,7 @@ export function ConnectionsHub() {
 
           {/* CATALOGUE */}
           <div
-            className="rounded-sm overflow-hidden"
-            style={{ background: "var(--bg-elev)", border: "1px solid var(--border-shell)" }}
+            className=""
           >
             <SectionLabel
               label={attentionFilter ? "À vérifier" : "Catalogue"}
@@ -883,10 +880,12 @@ function Header({
       </span>
 
       <label
-        className="flex-1 flex items-center gap-3 px-4 py-2 rounded-pill border transition-colors"
+        className="flex-1 flex items-center gap-3 px-0 py-3 border-b rounded-none transition-colors"
         style={{
-          background: "var(--surface)",
-          borderColor: searchQuery ? "var(--cykan-border)" : "var(--border-shell)",
+          background: "transparent",
+          borderColor: searchQuery ? "var(--cykan)" : "var(--border-shell)",
+          borderBottomWidth: "1px",
+          borderBottomStyle: "solid",
         }}
       >
         <span className="t-13 leading-none text-[var(--text-faint)]">⌕</span>
@@ -898,9 +897,9 @@ function Header({
           className="flex-1 bg-transparent outline-none border-none t-13 text-[var(--text)] placeholder:text-[var(--text-faint)]"
         />
         <kbd
-          className="t-9 font-mono px-1.5 py-px rounded-xs border"
+          className="t-9 font-mono px-1.5 py-px border"
           style={{
-            background: "var(--bg-elev)",
+            background: "transparent",
             borderColor: "var(--border-shell)",
             color: "var(--text-faint)",
           }}
@@ -1114,10 +1113,9 @@ function OnboardingStage({
         </div>
       ) : (
         <div
-          className="px-6 py-8 text-center rounded-sm"
+          className="px-6 py-8 text-center rounded-none border-b border-[var(--border-shell)]"
           style={{
-            background: "var(--bg-elev)",
-            border: "1px dashed var(--border-default)",
+            background: "transparent",
           }}
         >
           <p className="t-13 text-[var(--text-soft)]">
@@ -1414,7 +1412,7 @@ function WallpaperTile({
       onClick={onClick}
       title={isConnectable ? app.name : `${app.name} — config Composio requise`}
       aria-label={app.name}
-      className="group relative aspect-square flex items-center justify-center rounded-xs border transition-all"
+      className="group relative aspect-square flex items-center justify-center rounded-none border transition-all"
       style={{
         borderColor: connected ? "var(--cykan-border)" : "var(--border-soft)",
         filter,
@@ -1492,16 +1490,16 @@ function SearchResultsSection({
           {results.length} sur {totalCount}
         </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+      <div className="flex flex-col divide-y">
         {results.map((app) => (
           <button
             key={app.key}
             type="button"
             onClick={() => onSelect(app)}
-            className="group flex items-center gap-3 px-3 py-3 text-left border transition-colors rounded-sm"
+            className="group flex items-center gap-3 px-8 py-3 text-left transition-colors rounded-none"
             style={{
-              background: connectedSlugs.has(app.key) ? "var(--cykan-surface)" : "var(--surface)",
-              borderColor: connectedSlugs.has(app.key) ? "var(--cykan-border)" : "var(--border-shell)",
+              background: "transparent",
+              borderBottom: "1px solid var(--border-soft)",
             }}
           >
             <AppLogo app={app} size={32} />
@@ -1526,13 +1524,11 @@ function SearchResultsSection({
   );
 }
 
+
 // ─── Logo (couleur native marque, frame neutre) ───────────────
 
 function AppLogo({ app, size = 16 }: { app: ComposioApp; size?: number }) {
-  const wrapperClass =
-    size >= 32
-      ? "shrink-0 inline-flex items-center justify-center overflow-hidden rounded-sm"
-      : "shrink-0 inline-flex items-center justify-center overflow-hidden rounded-xs";
+  const wrapperClass = "shrink-0 inline-flex items-center justify-center overflow-hidden rounded-none";
   const inner = size >= 32 ? Math.round(size * 0.78) : size;
 
   if (app.logo && app.logo.startsWith("http")) {
@@ -1575,6 +1571,7 @@ function AppLogo({ app, size = 16 }: { app: ComposioApp; size?: number }) {
         fontSize: inner * 0.6,
         background: "var(--surface-2)",
         color: "var(--text-faint)",
+        borderRadius: "0",
       }}
     >
       {app.name?.[0]?.toUpperCase() ?? "·"}
@@ -1827,7 +1824,7 @@ function ActionsSection({
           {[0, 1, 2, 3].map((i) => (
             <li
               key={i}
-              className="rounded-xs"
+              className="rounded-none"
               style={{
                 background: "var(--surface-2)",
                 height: "var(--space-8)",

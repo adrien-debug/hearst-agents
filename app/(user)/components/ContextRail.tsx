@@ -92,7 +92,7 @@ function ContextRailShell({
   return (
     <aside
       className="h-full flex flex-col z-20 relative border-l border-[var(--border-shell)]"
-      style={{ width: "var(--width-context)", background: "var(--mat-050)" }}
+      style={{ width: "var(--width-context)", background: "var(--bg-soft)" }}
     >
       {onClose && (
         <div
@@ -196,7 +196,6 @@ function CockpitChatBody() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <KPIRow kpis={kpis} />
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
         <GeneralDashboard
           assets={assets}

@@ -136,21 +136,20 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
   return (
     <div
       onClick={onSelect}
-      className={`group cursor-pointer py-2 -mx-2 px-2 transition-colors flex items-center gap-3 ${
-        isActive ? "bg-[var(--cykan-bg-active)]" : "hover:bg-[var(--surface-2)]"
-      }`}
-      style={isActive ? { boxShadow: "var(--shadow-thread-active)" } : undefined}
+      className="group cursor-pointer py-2 -mx-2 px-2 transition-colors flex items-center gap-3"
       title={thread.name}
     >
       <span
-        className={`rounded-pill shrink-0 ${
-          isActive ? "bg-[var(--cykan)] halo-cyan-sm" : "bg-[var(--text-ghost)]"
+        className={`rounded-pill shrink-0 transition-all ${
+          isActive ? "bg-[var(--cykan)] halo-cyan-sm" : "border border-[var(--text-muted)]"
         }`}
         style={{ width: "var(--space-1)", height: "var(--space-1)" }}
       />
       <p
         className={`flex-1 t-13 font-light truncate min-w-0 transition-colors ${
-          isActive ? "text-[var(--text)]" : "text-[var(--text-muted)] group-hover:text-[var(--text)]"
+          isActive
+            ? "text-[var(--cykan)] halo-cyan-sm"
+            : "text-[var(--text-muted)] group-hover:text-[var(--text)] group-hover:halo-cyan-sm"
         }`}
         style={{ lineHeight: "var(--leading-base)" }}
       >
@@ -238,7 +237,7 @@ export function TimelineRail() {
   const firstName = session?.user?.name?.split(" ")[0] || "Utilisateur";
   const userInitial = firstName.charAt(0).toUpperCase();
 
-  const sectionPadX = leftCollapsed ? "pl-6 pr-2" : "px-6";
+  const sectionPadX = leftCollapsed ? "pl-6 pr-2" : "px-8";
 
   const groups = useMemo(() => groupThreadsByDate(threads), [threads]);
 
@@ -267,8 +266,7 @@ export function TimelineRail() {
     >
       {/* Logo */}
       <div
-        className="shrink-0 border-b border-[var(--border-shell)] flex items-center justify-center"
-        style={{ paddingTop: "var(--space-5)", paddingBottom: "var(--space-5)", paddingLeft: "var(--space-2)", paddingRight: "var(--space-2)" }}
+        className="shrink-0 border-b border-[var(--border-shell)] flex items-center justify-center pt-8 pb-8 px-8"
       >
         <button
           onClick={() => {
@@ -281,13 +279,13 @@ export function TimelineRail() {
           {leftCollapsed ? (
             <span className="t-15 font-medium tracking-tight text-[var(--cykan)] halo-cyan-sm leading-none">H</span>
           ) : (
-            <HearstLogo className="h-7 w-auto object-contain transition-all duration-slow" />
+            <HearstLogo className="h-10 w-auto transition-all duration-slow" />
           )}
         </button>
       </div>
 
       {/* Timeline — 4 sections always rendered */}
-      <div className={`flex-1 flex flex-col min-h-0 pt-7 pb-6 ${sectionPadX}`}>
+      <div className={`flex-1 flex flex-col min-h-0 pt-8 pb-8 ${sectionPadX}`}>
         {leftCollapsed && (
           <button
             onClick={handleNewThread}
@@ -312,7 +310,7 @@ export function TimelineRail() {
         ) : (
           <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col" style={{ gap: "var(--space-3)" }}>
             {/* Today */}
-            <section className="rail-section-card">
+            <section>
               <SectionHeader
                 label="Today"
                 count={groups.today.length}
@@ -349,7 +347,7 @@ export function TimelineRail() {
             </section>
 
             {groups.thisWeek.length > 0 && (
-              <section className="rail-section-card">
+              <section>
                 <SectionHeader label="7 derniers jours" count={groups.thisWeek.length} />
                 <div className="space-y-px">
                   {groups.thisWeek.map((t) => (
@@ -367,7 +365,7 @@ export function TimelineRail() {
             )}
 
             {groups.archive.length > 0 && (
-              <section className="rail-section-card">
+              <section>
                 <SectionHeader label="Archive" count={groups.archive.length} />
                 <div className="space-y-px">
                   {groups.archive.map((t) => (
@@ -386,6 +384,37 @@ export function TimelineRail() {
           </div>
         )}
       </div>
+
+      {/* Tools & Apps Menu — ChatGPT style */}
+      {!leftCollapsed && (
+        <div className={`shrink-0 flex flex-col gap-4 border-t border-[var(--border-shell)] py-6 ${sectionPadX}`}>
+          {/* Tools */}
+          <div className="flex flex-col gap-2">
+            <span className="rail-section-label t-10 uppercase">Tools</span>
+            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
+              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">⚡</span>
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Hearst Tool</span>
+            </button>
+            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
+              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">🔧</span>
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Custom Tool</span>
+            </button>
+          </div>
+
+          {/* Apps */}
+          <div className="flex flex-col gap-2">
+            <span className="rail-section-label t-10 uppercase">Apps</span>
+            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
+              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">📱</span>
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Hearst App</span>
+            </button>
+            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
+              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">🎯</span>
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Analytics</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Footer — identité discrète + actions secondaires */}
       <div

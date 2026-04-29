@@ -53,7 +53,7 @@ export function WelcomePanel() {
           Welcome back,
         </p>
         <div className="flex items-baseline justify-between">
-          <h1 className="t-48 font-bold tracking-tight text-[var(--text)]">
+          <h1 className="t-34 font-semibold tracking-[-0.025em] text-[var(--text)]">
             {userName}
           </h1>
           <span className="t-9 font-mono text-[var(--text-faint)]">
@@ -65,27 +65,21 @@ export function WelcomePanel() {
       {/* Divider */}
       <div className="w-full h-px bg-[var(--border-default)] mb-8" />
 
-      {/* Section 1 — Last Customers */}
+      {/* Section 1 — Last Customers (Halo: pure text, no boxes) */}
       {topCustomers.length > 0 && (
         <div className="w-full mb-10">
           <p className="rail-section-label mb-3">Recent customers</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="flex flex-col gap-3">
             {topCustomers.map((customer) => (
               <button
                 key={customer}
                 onClick={() => {
                   // TODO: navigate to customer thread
                 }}
-                className="group h-20 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-md p-3 flex flex-col items-start justify-between cursor-pointer transition-all duration-base hover:border-[var(--cykan)] hover:bg-[var(--surface-2)]"
-                style={{
-                  boxShadow: "var(--shadow-tile-inset), var(--shadow-tile-base)",
-                }}
+                className="group text-left cursor-pointer transition-colors duration-base"
               >
-                <span className="t-11 font-medium text-[var(--text-soft)] group-hover:text-[var(--cykan)] transition-colors truncate w-full">
+                <span className="t-11 font-medium text-[var(--text-soft)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors">
                   {customer}
-                </span>
-                <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)] group-hover:text-[var(--text-ghost)] text-right w-full">
-                  → Ouvrir
                 </span>
               </button>
             ))}
@@ -93,22 +87,22 @@ export function WelcomePanel() {
         </div>
       )}
 
-      {/* Section 2 — Quick Actions */}
+      {/* Section 2 — Quick Actions (Halo: bare buttons, no box) */}
       <div className="w-full mb-10">
         <p className="rail-section-label mb-3">Quick actions</p>
-        <div className="flex flex-col gap-px border border-[var(--border-shell)] rounded-md overflow-hidden bg-[var(--surface-1)]">
+        <div className="flex flex-col">
           {quickActions.map((action, idx) => (
             <button
               key={action.label}
               onClick={() => {
                 if (action.label === "View assets") router.push("/assets");
               }}
-              className="halo-action-row"
+              className="group flex items-center justify-between py-3 px-0 border-b border-[var(--border-shell)] cursor-pointer transition-colors duration-base hover:text-[var(--cykan)]"
             >
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1 text-left">
+              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1 text-left transition-colors">
                 {action.icon} {action.label}
               </span>
-              <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+              <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)] group-hover:text-[var(--text-ghost)]">
                 {idx === 0 ? "⌘B" : idx === 1 ? "⌘Q" : "⌘A"}
               </span>
             </button>

@@ -293,10 +293,10 @@ function MissionsPageContent() {
         <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Missions" }] as Crumb[]} className="mb-4" />
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="ghost-title-impact mb-1">Missions</h1>
+            <h1 className="t-34 font-semibold tracking-[-0.025em] mb-1">Missions</h1>
             <p className="t-11 font-mono uppercase tracking-display text-[var(--text-muted)]">Automatisations planifiées</p>
           </div>
-          <button type="button" onClick={openNewMission} className="ghost-btn-solid ghost-btn-cykan rounded-sm px-5">
+          <button type="button" onClick={openNewMission} className="font-mono t-10 uppercase tracking-[0.16em] text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
             Nouvelle mission
           </button>
         </div>
@@ -327,17 +327,17 @@ function MissionsPageContent() {
         {missions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
             <p className="ghost-meta-label">Registre vide</p>
-            <h2 className="ghost-title-impact t-13">Aucune mission</h2>
+            <h2 className="t-34 font-semibold tracking-[-0.025em]">Aucune mission</h2>
             <p className="t-13 font-light leading-relaxed text-[var(--text-muted)] max-w-md">
               Les missions sont des tâches récurrentes planifiées. Exécution automatique selon calendrier.
             </p>
-            <button type="button" onClick={openNewMission} className="ghost-btn-solid ghost-btn-ghost rounded-sm px-6">
+            <button type="button" onClick={openNewMission} className="font-mono t-10 uppercase tracking-[0.16em] text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
               Créer la première
             </button>
           </div>
         ) : (
           <div className="border-t border-[var(--line)]">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-9 font-mono uppercase tracking-display text-[var(--text-faint)] border-b border-[var(--line)]">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-9 font-mono uppercase tracking-display text-[var(--text-faint)] border-b border-[var(--border-soft)]">
               <span>ID_REF / Descriptor</span>
               <span className="text-right">STATUS_OPS</span>
               <span className="text-right">CMD</span>
@@ -369,7 +369,7 @@ function MissionsPageContent() {
               return (
                 <div
                   key={mission.id}
-                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 items-start py-6 border-b border-[var(--line)] hover:bg-[var(--bg-soft)] transition-colors px-2"
+                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 items-start py-6 border-b border-[var(--border-soft)] px-2 group transition-colors"
                 >
                   <div className="min-w-0 flex gap-4">
                     <button

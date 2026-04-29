@@ -100,12 +100,12 @@ export default function RunsPage() {
         <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Runs" }] as Crumb[]} className="mb-4" />
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="ghost-title-impact mb-1">Runs</h1>
+            <h1 className="t-34 font-semibold tracking-[-0.025em] mb-1">Runs</h1>
             <p className="t-11 font-mono uppercase tracking-display text-[var(--text-muted)]">
               {runs.length} {runs.length === 1 ? "exécution" : "exécutions"} récente{runs.length === 1 ? "" : "s"}
             </p>
           </div>
-          <button type="button" onClick={handleNewReport} className="ghost-btn-solid ghost-btn-cykan rounded-sm px-5">
+          <button type="button" onClick={handleNewReport} className="font-mono t-10 uppercase tracking-[0.16em] text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
             Nouveau report
           </button>
         </div>
@@ -122,8 +122,8 @@ export default function RunsPage() {
               </p>
             </div>
           ) : (
-            <div className="border-y border-[var(--surface-2)]">
-              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] border-b border-[var(--surface-2)]">
+            <div>
+              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] border-b border-[var(--border-soft)]">
                 <span className="w-2" />
                 <span>Input / Source</span>
                 <span className="text-right">Status</span>
@@ -140,7 +140,7 @@ export default function RunsPage() {
                   <div
                     key={run.id}
                     onClick={() => router.push(`/runs/${run.id}`)}
-                    className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto] gap-x-6 items-center px-2 py-4 hover:bg-[var(--surface-1)] transition-colors border-b border-[var(--surface-2)] group cursor-pointer"
+                    className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto] gap-x-6 items-center px-2 py-4 border-b border-[var(--border-soft)] group cursor-pointer transition-colors"
                     title={`Open run ${run.id.slice(0, 8)}`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-pill shrink-0 ${dotClass}`} />
