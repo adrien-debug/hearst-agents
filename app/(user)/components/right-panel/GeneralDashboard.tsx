@@ -34,8 +34,7 @@ function SectionTitle({
   return (
     <div className="flex items-center justify-between mb-2">
       <span
-        className="t-9 font-mono uppercase text-[var(--text-faint)] inline-flex items-baseline gap-2"
-        style={{ letterSpacing: "var(--tracking-section)" }}
+        className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)] inline-flex items-baseline gap-2"
       >
         <span>{children}</span>
         {typeof count === "number" && (
@@ -112,10 +111,9 @@ function SuggestionRow({
         <p className="t-9 text-[var(--text-faint)] truncate mt-0.5">{suggestion.description}</p>
       </div>
       <span
-        className="t-9 font-mono uppercase ml-3 shrink-0"
+        className="t-9 font-mono uppercase tracking-section ml-3 shrink-0"
         style={{
           color: suggestion.status === "ready" ? "var(--cykan)" : "var(--text-faint)",
-          letterSpacing: "var(--tracking-section)",
         }}
       >
         {isRunning
@@ -211,10 +209,9 @@ export function GeneralDashboard({
               >
                 <span className="t-11 text-[var(--text-soft)] truncate">{m.name}</span>
                 <span
-                  className="t-9 font-mono uppercase"
+                  className="t-9 font-mono uppercase tracking-section"
                   style={{
                     color: m.opsStatus === "running" ? "var(--cykan)" : "var(--text-faint)",
-                    letterSpacing: "var(--tracking-section)",
                   }}
                 >
                   {m.opsStatus === "running" ? "running" : "armé"}
@@ -253,8 +250,7 @@ export function GeneralDashboard({
                 </span>
                 <span className="t-11 text-[var(--text-soft)] truncate flex-1">{a.name}</span>
                 <span
-                  className="t-9 font-mono uppercase text-[var(--text-faint)]"
-                  style={{ letterSpacing: "var(--tracking-section)" }}
+                  className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)]"
                 >
                   {a.type}
                 </span>

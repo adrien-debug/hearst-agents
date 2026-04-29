@@ -25,7 +25,7 @@ import { estimateSpeechCost } from "@/lib/capabilities/providers/elevenlabs";
 import { requireCreditsForJob, formatInsufficientCreditsMessage } from "@/lib/credits/middleware";
 import { settleCredits } from "@/lib/credits/client";
 import { enqueueJob } from "@/lib/jobs/queue";
-import type { AudioGenInput } from "@/lib/jobs/types";
+import type { AudioGenInput, VideoGenInput, JobKind } from "@/lib/jobs/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

@@ -31,18 +31,43 @@ export function ContextRail({ onClose }: ContextRailProps) {
       // configurable via useCockpitStore.
       return <RightPanelContent onClose={onClose} />;
     case "asset":
-      return <ContextRailForAsset />;
+      return <ContextRailShell onClose={onClose}><ContextRailForAsset /></ContextRailShell>;
     case "browser":
-      return <ContextRailForBrowser />;
+      return <ContextRailShell onClose={onClose}><ContextRailForBrowser /></ContextRailShell>;
     case "meeting":
-      return <ContextRailForMeeting />;
+      return <ContextRailShell onClose={onClose}><ContextRailForMeeting /></ContextRailShell>;
     case "kg":
-      return <ContextRailForKnowledge />;
+      return <ContextRailShell onClose={onClose}><ContextRailForKnowledge /></ContextRailShell>;
     case "voice":
-      return <ContextRailForVoice />;
+      return <ContextRailShell onClose={onClose}><ContextRailForVoice /></ContextRailShell>;
     default:
       return null;
   }
+}
+
+function ContextRailShell({ children, onClose }: { children: React.ReactNode; onClose?: () => void }) {
+  return (
+    <aside
+      className="h-full flex flex-col z-20 relative border-l border-[var(--border-shell)]"
+      style={{ width: "var(--width-context)", background: "var(--bg-rail)" }}
+    >
+      {onClose && (
+        <div
+          className="flex items-center justify-between border-b border-[var(--border-shell)]"
+          style={{ padding: "var(--space-4)" }}
+        >
+          <p className="t-13 font-medium">Contexte</p>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)]"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+      {children}
+    </aside>
+  );
 }
 
 // ── Section primitive (stable structure across sub-rails) ─
