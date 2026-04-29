@@ -27,10 +27,11 @@ export function ContextRail({ onClose }: ContextRailProps) {
 
   switch (mode) {
     case "cockpit":
+      // Refonte 2026-04-29 : Stage cockpit prend tout l'espace, pas de
+      // right panel. Le cockpit est inbox-first et n'a pas besoin d'un
+      // duplicat des suggestions/missions/assets dans un panel séparé.
+      return null;
     case "chat":
-      // V1 — cockpit et chat partagent le même context rail (focal +
-      // missions + assets + pulse). En V2, cockpit aura son propre layout
-      // configurable via useCockpitStore.
       return <RightPanelContent onClose={onClose} />;
     case "asset":
       return <ContextRailShell onClose={onClose}><ContextRailForAsset /></ContextRailShell>;
