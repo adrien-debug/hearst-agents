@@ -62,7 +62,7 @@ export async function getBotStatus(botId: string): Promise<{
   };
 }
 
-export async function deleteBo(botId: string): Promise<void> {
+export async function deleteBot(botId: string): Promise<void> {
   const res = await fetch(`${RECALL_API_BASE}/bot/${botId}`, {
     method: "DELETE",
     headers: { "Authorization": `Token ${getApiKey()}` },

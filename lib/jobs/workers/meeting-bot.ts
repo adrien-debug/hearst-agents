@@ -1,5 +1,5 @@
 import { startWorker, type WorkerHandler } from "@/lib/jobs/worker-base";
-import { createMeetingBot, getBotStatus } from "@/lib/capabilities/providers/recall-ai";
+import { createMeetingBot, getBotStatus, deleteBot } from "@/lib/capabilities/providers/recall-ai";
 import { transcribeAudio, extractActionItems } from "@/lib/capabilities/providers/deepgram";
 import { updateVariant } from "@/lib/assets/variants";
 import type { MeetingBotInput, JobResult } from "@/lib/jobs/types";
@@ -90,6 +90,8 @@ const handler: WorkerHandler<MeetingBotInput> = {
     }
 
     await reportProgress(100, "Réunion traitée");
+
+    void deleteBot(botId).catch(() => {});
 
     return {
       assetId: payload.assetId,

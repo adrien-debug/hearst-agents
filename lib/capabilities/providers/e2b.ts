@@ -1,4 +1,4 @@
-import { Sandbox } from "@e2b/code-interpreter";
+import { Sandbox, type Result } from "@e2b/code-interpreter";
 
 export async function executeCode(params: {
   code: string;
@@ -27,7 +27,7 @@ export async function executeCode(params: {
     const stdout = execution.logs.stdout.join("\n");
     const stderr = execution.logs.stderr.join("\n");
 
-    const results = execution.results.map((r) => {
+    const results = execution.results.map((r: Result) => {
       if (r.json !== undefined) {
         let parsed: unknown = r.json;
         try { parsed = JSON.parse(r.json); } catch { /* keep raw string */ }
