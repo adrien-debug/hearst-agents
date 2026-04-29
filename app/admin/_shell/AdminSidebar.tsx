@@ -29,9 +29,14 @@ function NavIcon({ d }: { d: string }) {
   );
 }
 
+function normalizePath(pathname: string): string {
+  return pathname.replace(/\/$/, "") || "/";
+}
+
 function isActive(pathname: string, item: NavItem): boolean {
-  if (item.href === "/admin") return pathname === "/admin";
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const n = normalizePath(pathname ?? "");
+  if (item.href === "/admin") return n === "/admin";
+  return n === item.href || n.startsWith(`${item.href}/`);
 }
 
 export default function AdminSidebar({

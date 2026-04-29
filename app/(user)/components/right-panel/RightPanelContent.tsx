@@ -17,13 +17,13 @@ import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
-import { OAuthStatusCard } from "./OAuthStatusCard";
-import { PulseStrip } from "./right-panel/PulseStrip";
-import { FocalCard } from "./right-panel/FocalCard";
-import { RightPanelNav, type PanelView } from "./right-panel/RightPanelNav";
-import { GeneralDashboard } from "./right-panel/GeneralDashboard";
-import { AssetsGrid } from "./right-panel/AssetsGrid";
-import { MissionsList } from "./right-panel/MissionsList";
+import { OAuthStatusCard } from "../OAuthStatusCard";
+import { PulseStrip } from "./PulseStrip";
+import { FocalCard } from "./FocalCard";
+import { RightPanelNav, type PanelView } from "./RightPanelNav";
+import { GeneralDashboard } from "./GeneralDashboard";
+import { AssetsGrid } from "./AssetsGrid";
+import { MissionsList } from "./MissionsList";
 
 interface RightPanelContentProps {
   onClose?: () => void;

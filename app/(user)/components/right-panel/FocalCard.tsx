@@ -1,19 +1,14 @@
 "use client";
 
 /**
- * FocalCard — strate FOCAL du RightPanel.
+ * FocalCard — Zone de notifications communication (emails, messages, alerts).
  *
- * Quand un focal est actif : grosse carte cliquable (glyph 64, type, titre 2
- * lignes, status pill). Click → `useFocalStore.show()` qui ouvre la surface
- * focal centrale.
- *
- * Quand pas de focal : empty state graphique (glyph silhouette opacité 0.3
- * + label discret).
- *
- * Sous la carte : 3 chips secondary objects (28×28) avec mini-glyph + tooltip.
+ * Affiche les dernières communications importantes du thread actif.
+ * Click sur une notification → ouvre le focal central avec le détail.
  */
 
 import { useFocalStore } from "@/stores/focal";
+import { useRuntimeStore } from "@/stores/runtime";
 import { AssetGlyphSVG } from "../right-panel-helpers";
 
 interface FocalCardProps {
@@ -22,28 +17,103 @@ interface FocalCardProps {
   activeThreadId: string | null;
 }
 
-const STATUS_PILL: Record<string, { label: string; color: string; bg: string }> = {
-  composing:          { label: "composing",   color: "var(--cykan)",        bg: "var(--cykan-bg-active)" },
-  ready:              { label: "ready",       color: "var(--cykan)",        bg: "var(--cykan-bg-active)" },
-  awaiting_approval:  { label: "à valider",   color: "var(--warn)",         bg: "rgba(245,158,11,0.10)" },
-  delivering:         { label: "delivering",  color: "var(--cykan)",        bg: "var(--cykan-bg-active)" },
-  delivered:          { label: "delivered",   color: "var(--text-soft)",    bg: "var(--surface-2)" },
-  active:             { label: "active",      color: "var(--cykan)",        bg: "var(--cykan-bg-active)" },
-  paused:             { label: "paused",      color: "var(--warn)",         bg: "rgba(245,158,11,0.10)" },
-  failed:             { label: "échec",       color: "var(--danger)",       bg: "rgba(239,68,68,0.10)" },
-};
+interface CommNotification {
+  id: string;
+  type: "email" | "message" | "slack" | "alert" | "approval";
+  title: string;
+  subtitle?: string;
+  timestamp: number;
+  priority: "normal" | "high" | "urgent";
+}
 
-const getProp = (obj: unknown, key: string): string | undefined => {
-  if (typeof obj !== "object" || obj === null) return undefined;
-  const v = (obj as Record<string, unknown>)[key];
-  return typeof v === "string" ? v : undefined;
-};
+function formatTimeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 1) return "à l'instant";
+  if (minutes < 60) return `il y a ${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `il y a ${hours}h`;
+  return `il y a ${Math.floor(hours / 24)}j`;
+}
 
-export function FocalCard({ focalObject, secondaryObjects }: FocalCardProps) {
+function useNotifications(): CommNotification[] {
+  const events = useRuntimeStore((s) => s.events);
+
+  // Transforme certains events en notifications de communication
+  const notifications: CommNotification[] = [];
+
+  for (const event of events.slice(0, 10)) {
+    if (event.type === "email_received" || event.type === "message_received") {
+      notifications.push({
+        id: `${event.timestamp}-${event.type}`,
+        type: event.type === "email_received" ? "email" : "message",
+        title: (event.title as string) || (event.subject as string) || "Nouveau message",
+        subtitle: (event.sender as string) || (event.from as string),
+        timestamp: event.timestamp,
+        priority: "normal",
+      });
+    } else if (event.type === "approval_requested") {
+      notifications.push({
+        id: `${event.timestamp}-approval`,
+        type: "approval",
+        title: "Validation requise",
+        subtitle: (event.title as string) || "Action nécessaire",
+        timestamp: event.timestamp,
+        priority: "urgent",
+      });
+    } else if (event.type === "tool_call_completed" && event.tool?.toString().includes("slack")) {
+      notifications.push({
+        id: `${event.timestamp}-slack`,
+        type: "slack",
+        title: "Message Slack envoyé",
+        subtitle: (event.channel as string) || "Slack",
+        timestamp: event.timestamp,
+        priority: "normal",
+      });
+    }
+  }
+
+  return notifications.slice(0, 3);
+}
+
+function NotificationGlyph({ type }: { type: CommNotification["type"] }) {
+  const glyphs: Record<typeof type, string> = {
+    email: "message",
+    message: "message",
+    slack: "message",
+    alert: "brief",
+    approval: "brief",
+  };
+  return (
+    <span className="w-8 h-8 text-[var(--cykan)]" aria-hidden>
+      <AssetGlyphSVG type={glyphs[type]} />
+    </span>
+  );
+}
+
+function NotificationPill({ priority }: { priority: CommNotification["priority"] }) {
+  const config = {
+    normal: { color: "var(--text-faint)", bg: "var(--surface-1)", label: "info" },
+    high: { color: "var(--warn)", bg: "rgba(245,158,11,0.10)", label: "important" },
+    urgent: { color: "var(--danger)", bg: "rgba(239,68,68,0.10)", label: "urgent" },
+  };
+  const c = config[priority];
+  return (
+    <span
+      className="t-9 font-mono tracking-[0.18em] uppercase px-2 py-0.5 rounded-sm"
+      style={{ color: c.color, background: c.bg }}
+    >
+      {c.label}
+    </span>
+  );
+}
+
+export function FocalCard({ activeThreadId }: FocalCardProps) {
   const show = useFocalStore((s) => s.show);
-  const setFocalFromSecondary = useFocalStore((s) => s.setFocal);
+  const notifications = useNotifications();
 
-  if (!focalObject) {
+  // Empty state — pas de communications récentes
+  if (notifications.length === 0) {
     return (
       <div
         className="border-b border-[var(--border-shell)] flex items-center gap-4 px-4"
@@ -54,98 +124,96 @@ export function FocalCard({ focalObject, secondaryObjects }: FocalCardProps) {
           style={{ opacity: 0.3 }}
           aria-hidden
         >
-          <AssetGlyphSVG type="brief" />
+          <AssetGlyphSVG type="message" />
         </span>
         <div className="flex-1 min-w-0">
           <p className="t-9 font-mono tracking-[0.22em] uppercase text-[var(--text-ghost)] mb-2">
-            FOCAL
+            COMMUNICATION
           </p>
           <p className="t-13 text-[var(--text-faint)] leading-snug">
-            Aucun focal sélectionné.
+            Aucune notification récente.
           </p>
           <p className="t-11 text-[var(--text-ghost)] mt-1">
-            Choisis un asset ci-dessous.
+            Les emails et messages apparaîtront ici.
           </p>
         </div>
       </div>
     );
   }
 
-  const objectType = getProp(focalObject, "objectType") || "unknown";
-  const title = getProp(focalObject, "title") || "Untitled";
-  const status = getProp(focalObject, "status") || "";
-  const pill = STATUS_PILL[status];
+  // Affiche la dernière notification en grand + les suivantes compactes
+  const [latest, ...rest] = notifications;
 
   return (
     <div
-      className="border-b border-[var(--border-shell)] flex flex-col gap-2 px-4 py-4"
+      className="border-b border-[var(--border-shell)] flex flex-col px-4 py-4"
       style={{ height: "var(--space-32)" }}
     >
+      {/* Header section */}
+      <div className="flex items-center justify-between mb-2">
+        <p className="t-9 font-mono tracking-[0.22em] uppercase text-[var(--text-ghost)]">
+          NOTIFICATIONS
+        </p>
+        {notifications.length > 1 && (
+          <span className="t-9 font-mono text-[var(--text-faint)]">
+            +{notifications.length - 1}
+          </span>
+        )}
+      </div>
+
+      {/* Latest notification — cliquable */}
       <button
         type="button"
         onClick={show}
-        className="flex-1 min-h-0 flex items-center gap-4 cursor-pointer text-left rounded-sm overflow-hidden hover:bg-[var(--cykan-bg-active)] transition-colors"
-        style={{ background: "var(--cykan-bg-hover)", borderLeft: "3px solid var(--cykan)", padding: "var(--space-3)" }}
-        title="Ouvrir le focal"
+        className="flex-1 min-h-0 flex items-center gap-3 cursor-pointer text-left rounded-sm overflow-hidden hover:bg-[var(--cykan-bg-hover)] transition-colors"
+        style={{ background: "var(--surface-1)", padding: "var(--space-3)" }}
       >
-        <span
-          className="shrink-0 w-16 h-16 text-[var(--cykan)]"
-          aria-hidden
-        >
-          <AssetGlyphSVG type={objectType} />
-        </span>
-        <span className="flex-1 min-w-0 flex flex-col gap-1.5">
-          <span
-            className="t-9 font-mono tracking-[0.22em] uppercase font-semibold"
-            style={{ color: "var(--cykan)" }}
-          >
-            {objectType}
-          </span>
-          <span
-            className="t-13 font-medium text-[var(--text)] leading-snug"
-            style={{
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {title}
-          </span>
-          {pill && (
+        <NotificationGlyph type={latest.type} />
+        <span className="flex-1 min-w-0 flex flex-col gap-1">
+          <span className="flex items-center gap-2">
             <span
-              className="self-start inline-flex items-center t-9 font-mono tracking-[0.18em] uppercase px-2 py-0.5 rounded-sm"
-              style={{ color: pill.color, background: pill.bg }}
+              className="t-13 font-medium text-[var(--text)] leading-snug truncate"
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 1,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
             >
-              {pill.label}
+              {latest.title}
+            </span>
+            <NotificationPill priority={latest.priority} />
+          </span>
+          {latest.subtitle && (
+            <span className="t-9 text-[var(--text-muted)] truncate">
+              {latest.subtitle}
             </span>
           )}
+          <span className="t-9 font-mono text-[var(--text-faint)]">
+            {formatTimeAgo(latest.timestamp)}
+          </span>
         </span>
       </button>
 
-      {secondaryObjects && secondaryObjects.length > 0 && (
-        <div className="flex items-center gap-2 shrink-0">
-          {secondaryObjects.slice(0, 3).map((obj, idx) => {
-            const sType = getProp(obj, "objectType") || "doc";
-            const sTitle = getProp(obj, "title") || "Untitled";
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  // Promote secondary as new focal — store handles it.
-                  if (typeof obj === "object" && obj !== null) {
-                    setFocalFromSecondary(obj as Parameters<typeof setFocalFromSecondary>[0]);
-                  }
-                }}
-                title={sTitle}
-                className="w-7 h-7 p-1 rounded-sm text-[var(--text-faint)] hover:text-[var(--cykan)] hover:bg-[var(--surface-2)] transition-colors"
-                aria-label={sTitle}
-              >
-                <AssetGlyphSVG type={sType} />
-              </button>
-            );
-          })}
+      {/* Mini chips pour les autres notifications */}
+      {rest.length > 0 && (
+        <div className="flex items-center gap-2 mt-2 shrink-0">
+          {rest.slice(0, 2).map((notif) => (
+            <button
+              key={notif.id}
+              type="button"
+              onClick={show}
+              className="flex items-center gap-2 px-2 py-1 rounded-sm bg-[var(--surface-1)] hover:bg-[var(--cykan-bg-hover)] transition-colors"
+              title={notif.title}
+            >
+              <span className="w-4 h-4 text-[var(--text-muted)]">
+                <AssetGlyphSVG type={notif.type === "email" ? "message" : "brief"} />
+              </span>
+              <span className="t-9 text-[var(--text-faint)] truncate max-w-[120px]">
+                {notif.title}
+              </span>
+            </button>
+          ))}
         </div>
       )}
     </div>

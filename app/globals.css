@@ -107,6 +107,8 @@
   --width-admin-sidebar-collapsed: 56px;
   /** Snippets mono (URL, clés) dans les listes admin — évite max-w arbitraires répétés. */
   --width-admin-code-clip: 200px;
+  /** Bloc prompt / code en page détail admin (scroll). */
+  --height-admin-prompt-max: min(60dvh, var(--width-center-max));
   --height-topbar: 48px;
 
   /* ─── Hearst Connect — Halo core (idle home centerpiece) ────── */

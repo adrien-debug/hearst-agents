@@ -1,145 +1,182 @@
 "use client";
 
 /**
- * PulseStrip — bandeau d'activité live en tête du RightPanel.
+ * PulseStrip — Status minimal du système en tête du RightPanel.
  *
- * Une seule animation : `.halo-core-mini` (anneau rotatif + dot pulse central),
- * couleur pilotée par `data-state` (running/awaiting/error/idle). Pas de
- * progression par phase, pas de step count exposé : juste un signal vivant.
- *
- * Layout : halo (40×40) à gauche · label état + flowLabel au centre (truncate)
- * · 3 compteurs empilés à droite (assets / steps / events).
+ * Affiche l'état courant de façon claire et concise :
+ * - Halo visuel (statique ou animé selon l'état)
+ * - Label d'état (En veille / En cours / Validation / Erreur)
+ * - Contexte optionnel (nom du flow, erreur, etc.)
  */
 
 import { useRuntimeStore } from "@/stores/runtime";
-import { HaloLogo3D } from "./HaloLogo3D";
 
-type HaloState = "idle" | "running" | "awaiting" | "error";
+type SystemState = "idle" | "running" | "awaiting" | "error";
 
-export function PulseStrip() {
-  const events = useRuntimeStore((s) => s.events);
-  const coreState = useRuntimeStore((s) => s.coreState);
-  const flowLabel = useRuntimeStore((s) => s.flowLabel);
+interface StatusConfig {
+  label: string;
+  color: string;
+  animate: boolean;
+  dotPulse: boolean;
+}
 
-  const isIdle = coreState === "idle";
-  const isError = coreState === "error";
-  const isAwaiting =
-    coreState === "awaiting_approval" || coreState === "awaiting_clarification";
-  const isRunning = !isIdle && !isError && !isAwaiting;
+const STATUS_CONFIG: Record<SystemState, StatusConfig> = {
+  idle: {
+    label: "En veille",
+    color: "var(--text-faint)",
+    animate: false,
+    dotPulse: false,
+  },
+  running: {
+    label: "En cours",
+    color: "var(--cykan)",
+    animate: true,
+    dotPulse: true,
+  },
+  awaiting: {
+    label: "En attente",
+    color: "var(--warn)",
+    animate: false,
+    dotPulse: true,
+  },
+  error: {
+    label: "Erreur",
+    color: "var(--danger)",
+    animate: false,
+    dotPulse: false,
+  },
+};
 
-  const haloState: HaloState = isError
-    ? "error"
-    : isAwaiting
-      ? "awaiting"
-      : isRunning
-        ? "running"
-        : "idle";
-
-  const stateColor =
-    haloState === "error"
-      ? "var(--danger)"
-      : haloState === "awaiting"
-        ? "var(--warn)"
-        : haloState === "running"
-          ? "var(--cykan)"
-          : "var(--text-faint)";
-
-  const stateLabel =
-    haloState === "error"
-      ? "erreur"
-      : haloState === "awaiting"
-        ? "validation"
-        : haloState === "running"
-          ? "en cours"
-          : "veille";
-
-  const generatedAssets = events.filter((e) => e.type === "asset_generated").length;
-  const stepCount = events.filter((e) => e.type === "step_started").length;
-
+function StatusHalo({ state, config }: { state: SystemState; config: StatusConfig }) {
   return (
     <div
-      className="border-b border-[var(--border-shell)] flex items-center gap-4 px-4 relative overflow-hidden group"
-      style={{ height: "96px", background: "var(--bg-rail)" }}
-      role="status"
-      aria-label={`Agents en ${stateLabel}`}
+      className="relative flex items-center justify-center"
+      style={{ width: "48px", height: "48px" }}
     >
-      {/* Background decorative elements */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-30 transition-opacity duration-slow group-hover:opacity-50"
-        style={{ 
-          background: `radial-gradient(circle at 20% 50%, ${stateColor}15 0%, transparent 70%)` 
-        }} 
+      {/* Cercle extérieur */}
+      <div
+        className="absolute inset-0 rounded-full border"
+        style={{
+          borderColor: config.color,
+          opacity: 0.3,
+        }}
       />
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] dot-grid" />
-      
-      {/* Top highlight line */}
-      <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-[var(--line-strong)] to-transparent" />
 
-      {/* Left: Status Aperture — contient l'élément 3D dans un cadre technique */}
-      <div className="relative shrink-0 w-16 h-16 rounded-full border border-[var(--line-strong)] bg-[var(--surface-1)] flex items-center justify-center shadow-lg">
-        <div className="absolute inset-0 rounded-full border border-[var(--cykan)] opacity-10 animate-pulse" />
-        <HaloLogo3D size={48} state={haloState} />
-      </div>
+      {/* Anneau animé si running */}
+      {config.animate && (
+        <div
+          className="absolute inset-1 rounded-full border-2 border-t-transparent"
+          style={{
+            borderColor: config.color,
+            animation: "spin 2s linear infinite",
+          }}
+        />
+      )}
 
-      {/* Centre: Labels — hiérarchie typo renforcée */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span 
-            className="w-1.5 h-1.5 rounded-full" 
-            style={{ 
-              backgroundColor: stateColor,
-              boxShadow: isRunning ? `0 0 8px ${stateColor}` : "none"
-            }} 
-          />
-          <span
-            className="t-9 font-mono uppercase tracking-[0.3em]"
-            style={{ color: stateColor }}
-          >
-            {stateLabel}
-          </span>
-        </div>
-        <span className="t-15 font-medium text-[var(--text)] truncate leading-tight">
-          {flowLabel || (isIdle ? "Système en veille" : "Initialisation...")}
-        </span>
-      </div>
-
-      {/* Droite: Runtime HUD — badge agrandi et plus graphique */}
-      <div className="flex flex-col gap-1.5 p-2.5 bg-[var(--surface-2)] rounded-[var(--radius-xs)] border border-[var(--line-strong)] min-w-[90px] shadow-inner">
-        <div className="flex justify-between items-center gap-4 border-b border-[var(--line)] pb-1 mb-0.5">
-          <span className="t-8 font-mono text-[var(--text-ghost)] uppercase tracking-wider">Runtime</span>
-          <span className={`t-8 font-mono ${isRunning ? "text-[var(--cykan)]" : "text-[var(--text-ghost)]"}`}>
-            {isRunning ? "LIVE" : "IDLE"}
-          </span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <HUDCounter value={generatedAssets} label="AST" tone={isRunning ? "live" : "idle"} />
-          <HUDCounter value={stepCount} label="STP" tone={isRunning ? "live" : "idle"} />
-          <HUDCounter value={events.length} label="EVT" tone={isRunning ? "live" : "idle"} />
-        </div>
-      </div>
+      {/* Cœur central */}
+      <div
+        className="w-3 h-3 rounded-full"
+        style={{
+          backgroundColor: config.color,
+          boxShadow: config.dotPulse ? `0 0 12px ${config.color}` : "none",
+          animation: config.dotPulse ? "pulse 2s ease-in-out infinite" : "none",
+        }}
+      />
     </div>
   );
 }
 
-function HUDCounter({
-  value,
-  label,
-  tone,
-}: {
-  value: number;
-  label: string;
-  tone: "live" | "idle";
-}) {
+export function PulseStrip() {
+  const coreState = useRuntimeStore((s) => s.coreState);
+  const flowLabel = useRuntimeStore((s) => s.flowLabel);
+  const events = useRuntimeStore((s) => s.events);
+
+  // Détermine l'état système
+  const getSystemState = (): SystemState => {
+    if (coreState === "error") return "error";
+    if (coreState === "awaiting_approval" || coreState === "awaiting_clarification") {
+      return "awaiting";
+    }
+    if (coreState === "idle") return "idle";
+    return "running";
+  };
+
+  const systemState = getSystemState();
+  const config = STATUS_CONFIG[systemState];
+
+  // Contexte à afficher
+  const contextText = flowLabel || (systemState === "idle" ? "Prêt à démarrer" : "Traitement...");
+
+  // Compteur d'assets générés dans cette session
+  const assetsCount = events.filter((e) => e.type === "asset_generated").length;
+
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="t-8 font-mono text-[var(--text-ghost)] uppercase">{label}</span>
-      <span
-        className={`t-10 font-mono tabular-nums font-bold ${
-          tone === "live" ? "text-[var(--cykan)]" : "text-[var(--text-faint)]"
-        }`}
-      >
-        {value.toString().padStart(2, "0")}
-      </span>
+    <div
+      className="border-b border-[var(--border-shell)] flex items-center gap-4 px-4"
+      style={{
+        height: "72px",
+        background: "var(--bg-rail)",
+      }}
+      role="status"
+    >
+      {/* Halo de status */}
+      <StatusHalo state={systemState} config={config} />
+
+      {/* Info centrale */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        {/* État */}
+        <div className="flex items-center gap-2">
+          <span
+            className="t-9 font-mono uppercase tracking-[0.2em]"
+            style={{ color: config.color }}
+          >
+            {config.label}
+          </span>
+          {assetsCount > 0 && systemState !== "idle" && (
+            <span
+              className="t-9 font-mono"
+              style={{ color: "var(--text-ghost)" }}
+            >
+              · {assetsCount} asset{assetsCount > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
+        {/* Contexte / Flow */}
+        <span
+          className="t-13 text-[var(--text-soft)] truncate leading-snug"
+          title={contextText}
+        >
+          {contextText}
+        </span>
+      </div>
+
+      {/* Compteur events (subtil) */}
+      {events.length > 0 && (
+        <div
+          className="flex flex-col items-end"
+          style={{ minWidth: "48px" }}
+        >
+          <span className="t-15 font-bold font-mono" style={{ color: config.color }}>
+            {events.length.toString().padStart(2, "0")}
+          </span>
+          <span className="t-8 font-mono uppercase text-[var(--text-ghost)]">
+            evt
+          </span>
+        </div>
+      )}
+
+      {/* Animation keyframes inline */}
+      <style jsx>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.2); }
+        }
+      `}</style>
     </div>
   );
 }

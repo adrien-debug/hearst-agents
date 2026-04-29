@@ -1,18 +1,18 @@
 "use client";
 
 /**
- * LibraryTabs — orchestre 3 onglets (Assets / Missions / Activité).
+ * LibraryTabs — orchestre 3 onglets (Général / Assets / Missions).
  * Tab actif persisté dans localStorage (`hearst.rightpanel.activeTab`).
+ * "Général" est le premier onglet par défaut — récapitulatif d'ensemble.
  */
 
 import { useEffect, useState } from "react";
 import type { RightPanelData } from "@/lib/core/types";
-import { useRuntimeStore } from "@/stores/runtime";
 import { AssetsGrid } from "./AssetsGrid";
 import { MissionsList } from "./MissionsList";
-import { ActivityTimeline } from "./ActivityTimeline";
+import { GeneralRecap } from "./GeneralRecap";
 
-type TabKey = "assets" | "missions" | "activity";
+type TabKey = "general" | "assets" | "missions";
 
 const STORAGE_KEY = "hearst.rightpanel.activeTab";
 
@@ -25,25 +25,25 @@ interface LibraryTabsProps {
 }
 
 export function LibraryTabs({ assets, missions, reportSuggestions, activeThreadId, loading }: LibraryTabsProps) {
-  const eventsCount = useRuntimeStore((s) => s.events.length);
-
-  // Init SSR-stable à "assets" pour que le HTML rendu côté serveur matche
+  // Init SSR-stable à "general" pour que le HTML rendu côté serveur matche
   // le 1er render client. Hydrate depuis localStorage dans useEffect (post-
   // mount, donc plus dans la phase d'hydration). Évite le mismatch sur
-  // aria-selected, className et l'underline sibling. Le "flash" assets →
-  // valeur stockée est imperceptible (un seul re-render).
-  const [activeTab, setActiveTab] = useState<TabKey>("assets");
+  // aria-selected, className et l'underline sibling.
+  const [activeTab, setActiveTab] = useState<TabKey>("general");
 
   useEffect(() => {
     try {
       const v = window.localStorage.getItem(STORAGE_KEY);
-      if (v === "missions" || v === "activity" || v === "assets") {
-        // Hydratation post-mount : nécessaire pour matcher le HTML SSR.
+      // Migration: "activity" n'existe plus, on fallback vers "general"
+      if (v === "missions" || v === "assets") {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveTab(v);
+      } else if (v === "activity") {
+        // Migration silencieuse vers le nouvel onglet par défaut
+        localStorage.setItem(STORAGE_KEY, "general");
       }
     } catch {
-      /* localStorage indisponible — on garde "assets" */
+      /* localStorage indisponible — on garde "general" */
     }
   }, []);
 
@@ -58,9 +58,9 @@ export function LibraryTabs({ assets, missions, reportSuggestions, activeThreadI
 
   const suggestionsCount = reportSuggestions?.length ?? 0;
   const tabs: Array<{ key: TabKey; label: string; count: number }> = [
+    { key: "general", label: "Général", count: assets.length + missions.length },
     { key: "assets", label: "Assets", count: assets.length + suggestionsCount },
     { key: "missions", label: "Missions", count: missions.length },
-    { key: "activity", label: "Activité", count: eventsCount },
   ];
 
   return (
@@ -102,6 +102,14 @@ export function LibraryTabs({ assets, missions, reportSuggestions, activeThreadI
 
       {/* Tab panel */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+        {activeTab === "general" && (
+          <GeneralRecap
+            assets={assets}
+            missions={missions}
+            reportSuggestions={reportSuggestions}
+            loading={loading}
+          />
+        )}
         {activeTab === "assets" && (
           <AssetsGrid
             assets={assets}
@@ -113,7 +121,6 @@ export function LibraryTabs({ assets, missions, reportSuggestions, activeThreadI
         {activeTab === "missions" && (
           <MissionsList missions={missions} activeThreadId={activeThreadId} loading={loading} />
         )}
-        {activeTab === "activity" && <ActivityTimeline />}
       </div>
     </div>
   );

@@ -1,14 +1,15 @@
 "use client";
 
 /**
- * RightPanelContent — orchestrateur du panel droit (architecture v2).
+ * RightPanelContent — orchestrateur des 3 strates :
+ *   1. PulseStrip     — bandeau d'activité live (top)
+ *   2. FocalCard      — carte focal contextuelle
+ *   3. LibraryTabs    — onglets Assets / Missions / Activité
+ * + footer pill SSE (live/offline/standby)
  *
- * Structure :
- *   1. PulseStrip     — status système (top)
- *   2. FocalCard      — notifications communication
- *   3. RightPanelNav  — navigation tuiles (Général / Rapports / Missions / Livrables)
- *   4. ContentView    — vue dynamique selon navigation
- *   5. Status footer  — SSE live/offline
+ * Ce composant garde la responsabilité unique du fetch (SSE EventSource pour
+ * un thread actif, REST pour la "library home" sans thread) et passe les
+ * données aux sous-composants en props. Aucun sous-composant ne re-fetch.
  */
 
 import { useEffect, useState, useRef } from "react";
@@ -20,16 +21,11 @@ import { useRuntimeStore } from "@/stores/runtime";
 import { OAuthStatusCard } from "./OAuthStatusCard";
 import { PulseStrip } from "./right-panel/PulseStrip";
 import { FocalCard } from "./right-panel/FocalCard";
-import { RightPanelNav, type PanelView } from "./right-panel/RightPanelNav";
-import { GeneralDashboard } from "./right-panel/GeneralDashboard";
-import { AssetsGrid } from "./right-panel/AssetsGrid";
-import { MissionsList } from "./right-panel/MissionsList";
+import { LibraryTabs } from "./right-panel/LibraryTabs";
 
 interface RightPanelContentProps {
   onClose?: () => void;
 }
-
-const STORAGE_KEY = "hearst.rightpanel.view";
 
 export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
@@ -37,50 +33,42 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const [data, setData] = useState<RightPanelData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<PanelView>("general");
 
-  // Restore saved view on mount
+  // Reset `data` quand le thread change. Pattern "Adjusting state on prop
+  // change" — au render, pas en useEffect (évite cascade de renders).
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [trackedThreadId, setTrackedThreadId] = useState<string | null>(activeThreadId ?? null);
+  if (trackedThreadId !== (activeThreadId ?? null)) {
+    setTrackedThreadId(activeThreadId ?? null);
+    setData(null);
+  }
+
+  // Migration douce : la version précédente persistait l'état des sections
+  // collapsibles. La nouvelle archi en strates supprime ce concept.
+  // One-shot cleanup au mount.
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY) as PanelView | null;
-      if (saved && ["general", "reports", "missions", "assets"].includes(saved)) {
-        setActiveView(saved);
-      }
+      localStorage.removeItem("hearst.rightpanel.openSections");
     } catch {
       /* ignore */
     }
   }, []);
 
-  // Save view when changed
-  const handleViewChange = (view: PanelView) => {
-    setActiveView(view);
-    try {
-      localStorage.setItem(STORAGE_KEY, view);
-    } catch {
-      /* ignore */
-    }
-  };
-
-  // Reset data when thread changes
-  const [trackedThreadId, setTrackedThreadId] = useState<string | null>(activeThreadId ?? null);
-  if (trackedThreadId !== (activeThreadId ?? null)) {
-    setTrackedThreadId(activeThreadId ?? null);
-    setData(null);
-    setActiveView("general"); // Reset to general on thread change
-  }
-
-  // SSE data fetching (same as before)
   const activeThreadIdRef = useRef(activeThreadId);
   useEffect(() => {
     activeThreadIdRef.current = activeThreadId;
   }, [activeThreadId]);
 
+  // Re-fetch panel quand un asset_generated event arrive — garantit que la
+  // grille assets reflète la production live sans attendre le prochain SSE
+  // tick. On subscribe au store events.
   const runtimeEvents = useRuntimeStore((s) => s.events);
   const lastAssetEventTsRef = useRef<number>(0);
   useEffect(() => {
     if (!activeThreadId) return;
     const assetEvent = runtimeEvents.find((e) => e.type === "asset_generated");
-    if (!assetEvent || assetEvent.timestamp <= lastAssetEventTsRef.current) return;
+    if (!assetEvent) return;
+    if (assetEvent.timestamp <= lastAssetEventTsRef.current) return;
     lastAssetEventTsRef.current = assetEvent.timestamp;
     fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`)
       .then((r) => (r.ok ? r.json() : null))
@@ -91,6 +79,8 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   }, [runtimeEvents, activeThreadId]);
 
   useEffect(() => {
+    // No active thread → render the panel as a "library home" by pulling
+    // missions + assets from the global APIs (not the per-thread SSE stream).
     if (!activeThreadId) {
       let cancelled = false;
       Promise.resolve().then(() => {
@@ -113,15 +103,23 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           type: String(a.type ?? a.kind ?? "doc"),
           runId: String(a.run_id ?? a.runId ?? ""),
         }));
-        setData({ assets, missions, focalObject: undefined, secondaryObjects: undefined } as RightPanelData);
+        setData({
+          assets,
+          missions,
+          focalObject: undefined,
+          secondaryObjects: undefined,
+        } as RightPanelData);
         setIsConnected(false);
         setLoading(false);
       });
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+      };
     }
 
     const streamThreadId = activeThreadId;
     let cancelled = false;
+
     Promise.resolve().then(() => {
       if (!cancelled) setLoading(true);
     });
@@ -167,62 +165,13 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     };
   }, [activeThreadId]);
 
+  const hasActiveThread = Boolean(activeThreadId);
   const panelData = data;
   const focalObject = panelData?.focalObject;
   const secondaryObjects = panelData?.secondaryObjects;
   const assets = panelData?.assets ?? [];
   const missions = panelData?.missions ?? [];
   const reportSuggestions = panelData?.reportSuggestions;
-
-  // Render content based on active view
-  const renderContent = () => {
-    switch (activeView) {
-      case "general":
-        return (
-          <GeneralDashboard
-            assets={assets}
-            missions={missions}
-            reportSuggestions={reportSuggestions}
-            onViewChange={handleViewChange}
-            activeThreadId={activeThreadId}
-            loading={loading}
-          />
-        );
-      case "reports":
-        return (
-          <AssetsGrid
-            assets={assets}
-            reportSuggestions={reportSuggestions}
-            activeThreadId={activeThreadId}
-            loading={loading}
-          />
-        );
-      case "missions":
-        return (
-          <MissionsList missions={missions} activeThreadId={activeThreadId} loading={loading} />
-        );
-      case "assets":
-        return (
-          <div className="flex flex-col h-full">
-            <div style={{ padding: "var(--space-3)", borderBottom: "1px solid var(--border-shell)" }}>
-              <span className="t-9 font-mono uppercase text-[var(--text-faint)]" style={{ letterSpacing: "0.22em" }}>
-                Tous les livrables ({assets.length})
-              </span>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <AssetsGrid
-                assets={assets}
-                reportSuggestions={undefined}
-                activeThreadId={activeThreadId}
-                loading={loading}
-              />
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
 
   return (
     <aside
@@ -239,47 +188,47 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         </div>
       )}
 
+      {/* Carte de statut OAuth — visible uniquement pendant qu'une popup
+          de connexion est ouverte. Affichée en haut du panel pour rester
+          visible même quand on scrolle dans les sections en dessous. */}
       <OAuthStatusCard />
 
       {/* Strate 1 — PULSE */}
       <PulseStrip />
 
-      {/* Strate 2 — FOCAL (notifications) */}
-      <FocalCard focalObject={focalObject} secondaryObjects={secondaryObjects} activeThreadId={activeThreadId} />
-
-      {/* Strate 3 — NAVIGATION */}
-      <RightPanelNav
-        activeView={activeView}
-        onChangeView={handleViewChange}
-        assetsCount={assets.length}
-        missionsCount={missions.length}
-        suggestionsCount={reportSuggestions?.length ?? 0}
-        eventsCount={runtimeEvents.length}
+      {/* Strate 2 — FOCAL */}
+      <FocalCard
+        focalObject={focalObject}
+        secondaryObjects={secondaryObjects}
+        activeThreadId={activeThreadId}
       />
 
-      {/* Strate 4 — CONTENT */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
-        {renderContent()}
-      </div>
+      {/* Strate 3 — LIBRARY (tabs Assets / Missions / Activité) */}
+      <LibraryTabs
+        assets={assets}
+        missions={missions}
+        reportSuggestions={reportSuggestions}
+        activeThreadId={activeThreadId}
+        loading={loading}
+      />
 
-      {/* STATUS footer */}
+      {/* STATUS — footer compact. Reflète uniquement l'état SSE du panneau. */}
       <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2 flex items-center gap-2">
         <span
           style={{ letterSpacing: "var(--tracking-section)" }}
           className={`inline-flex items-center gap-2 t-9 font-mono uppercase px-2 py-1 rounded-sm shrink-0 ${
-            !activeThreadId
+            !hasActiveThread
               ? "text-[var(--text-faint)]"
               : isConnected
                 ? "bg-[var(--cykan-bg-active)] text-[var(--cykan)]"
                 : "text-[var(--text-faint)]"
           }`}
         >
-          <span
-            className={`w-2 h-2 rounded-pill shrink-0 ${
-              !activeThreadId ? "bg-[var(--text-ghost)]" : isConnected ? "bg-[var(--cykan)]" : "bg-[var(--text-ghost)]"
-            }`}
-          />
-          {!activeThreadId ? "standby" : isConnected ? "live" : "offline"}
+          <span className={`w-2 h-2 rounded-pill shrink-0 ${
+            !hasActiveThread ? "bg-[var(--text-ghost)]" :
+            isConnected ? "bg-[var(--cykan)]" : "bg-[var(--text-ghost)]"
+          }`} />
+          {!hasActiveThread ? "standby" : isConnected ? "live" : "offline"}
         </span>
       </div>
     </aside>
