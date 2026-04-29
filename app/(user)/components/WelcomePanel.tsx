@@ -9,7 +9,7 @@ export function WelcomePanel() {
   const { data: session } = useSession();
   const router = useRouter();
   const { missions } = useRightPanelData();
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
   const userName = session?.user?.name?.split(" ")[0] ?? "Adrien";
 
   useEffect(() => {
