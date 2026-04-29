@@ -25,8 +25,10 @@ interface AssetVariantTabsProps {
   sourceText?: string;
 }
 
+// Pas d'onglet "Texte" : le contenu de l'asset EST le variant texte par
+// essence (rendu directement par AssetStage / FocalStage). Les onglets
+// listent uniquement les formats alternatifs générables à la demande.
 const TABS: ReadonlyArray<{ kind: AssetVariantKind; label: string; available: boolean }> = [
-  { kind: "text", label: "Texte", available: true },
   { kind: "audio", label: "Audio", available: true },
   { kind: "video", label: "Vidéo", available: false },
   { kind: "slides", label: "Slides", available: false },
@@ -36,7 +38,7 @@ const TABS: ReadonlyArray<{ kind: AssetVariantKind; label: string; available: bo
 const POLL_INTERVAL_MS = 4_000;
 
 export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps) {
-  const [activeTab, setActiveTab] = useState<AssetVariantKind>("text");
+  const [activeTab, setActiveTab] = useState<AssetVariantKind>("audio");
   const [variants, setVariants] = useState<AssetVariant[]>([]);
   const [generating, setGenerating] = useState<AssetVariantKind | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +106,7 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
   return (
     <div className="border-t border-[var(--surface-2)] pt-8">
       <header className="flex items-center justify-between mb-6">
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">VARIANTS</span>
+        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">FORMATS ALTERNATIFS</span>
         <div className="flex items-center gap-2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.kind;
@@ -141,12 +143,6 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
           })}
         </div>
       </header>
-
-      {activeTab === "text" && (
-        <p className="t-11 font-mono tracking-display uppercase text-[var(--text-ghost)]">
-          Variant texte = contenu principal de l'asset (déjà affiché ci-dessus).
-        </p>
-      )}
 
       {activeTab === "audio" && (
         <div>
