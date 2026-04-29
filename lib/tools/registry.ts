@@ -155,6 +155,20 @@ registerTool({
 });
 
 registerTool({
+  id: "browse_web",
+  name: "browse_web",
+  description: "Navigue de façon autonome sur le web — clique, remplit des formulaires, collecte des données. Retourne une session Browserbase live que l'user peut voir dans le Browser Stage.",
+  capability: "research",
+  surfaceLabel: "Naviguer",
+  handler: "browseWeb",
+  contexts: ["general", "research"],
+  parameters: {
+    task:     { type: "string", required: true,  description: "Description en langage naturel de la tâche de navigation" },
+    startUrl: { type: "string", required: false, description: "URL de départ optionnelle" },
+  },
+});
+
+registerTool({
   id: "generate_video",
   name: "Generate Video",
   description: "Génère une vidéo courte depuis un prompt texte via HeyGen ou Runway",
