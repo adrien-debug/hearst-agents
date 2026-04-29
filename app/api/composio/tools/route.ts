@@ -39,6 +39,14 @@ export async function GET(req: NextRequest) {
   const appsParam = req.nextUrl.searchParams.get("apps");
   const apps = appsParam ? appsParam.split(",").map((a) => a.trim()).filter(Boolean) : undefined;
 
-  const tools = await getToolsForUser(userId, { apps });
+  let tools;
+  try {
+    tools = await getToolsForUser(userId, { apps });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "service_unavailable", detail: err instanceof Error ? err.message : "unknown" },
+      { status: 503 },
+    );
+  }
   return NextResponse.json({ ok: true, tools });
 }

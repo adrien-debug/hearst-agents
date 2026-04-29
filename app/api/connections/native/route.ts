@@ -38,37 +38,44 @@ export async function GET() {
     source: "native";
   }> = [];
 
-  // Google : si on a un refresh ou access token non révoqué, le SSO est valide.
-  const googleMeta = await getTokenMeta(userId, "google");
-  if (
-    !googleMeta.revoked &&
-    (googleMeta.tokens.refreshToken || googleMeta.tokens.accessToken)
-  ) {
-    for (const slug of NATIVE_GOOGLE_SLUGS) {
-      connections.push({
-        id: `native::google::${slug}`,
-        appName: slug,
-        status: "ACTIVE",
-        source: "native",
-      });
+  try {
+    // Google : si on a un refresh ou access token non révoqué, le SSO est valide.
+    const googleMeta = await getTokenMeta(userId, "google");
+    if (
+      !googleMeta.revoked &&
+      (googleMeta.tokens.refreshToken || googleMeta.tokens.accessToken)
+    ) {
+      for (const slug of NATIVE_GOOGLE_SLUGS) {
+        connections.push({
+          id: `native::google::${slug}`,
+          appName: slug,
+          status: "ACTIVE",
+          source: "native",
+        });
+      }
     }
-  }
 
-  // Microsoft : idem (Azure AD provider). Si le user s'est loggé Outlook
-  // SSO, on flag ces toolkits.
-  const msMeta = await getTokenMeta(userId, "microsoft");
-  if (
-    !msMeta.revoked &&
-    (msMeta.tokens.refreshToken || msMeta.tokens.accessToken)
-  ) {
-    for (const slug of NATIVE_MICROSOFT_SLUGS) {
-      connections.push({
-        id: `native::microsoft::${slug}`,
-        appName: slug,
-        status: "ACTIVE",
-        source: "native",
-      });
+    // Microsoft : idem (Azure AD provider). Si le user s'est loggé Outlook
+    // SSO, on flag ces toolkits.
+    const msMeta = await getTokenMeta(userId, "microsoft");
+    if (
+      !msMeta.revoked &&
+      (msMeta.tokens.refreshToken || msMeta.tokens.accessToken)
+    ) {
+      for (const slug of NATIVE_MICROSOFT_SLUGS) {
+        connections.push({
+          id: `native::microsoft::${slug}`,
+          appName: slug,
+          status: "ACTIVE",
+          source: "native",
+        });
+      }
     }
+  } catch (err) {
+    return NextResponse.json(
+      { error: "service_unavailable", detail: err instanceof Error ? err.message : "unknown" },
+      { status: 503 },
+    );
   }
 
   return NextResponse.json({ connections });

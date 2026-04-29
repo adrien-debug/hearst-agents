@@ -34,6 +34,14 @@ export async function GET() {
       { status: 503 },
     );
   }
-  const apps = await listAvailableApps();
+  let apps;
+  try {
+    apps = await listAvailableApps();
+  } catch (err) {
+    return NextResponse.json(
+      { error: "service_unavailable", detail: err instanceof Error ? err.message : "unknown" },
+      { status: 503 },
+    );
+  }
   return NextResponse.json({ ok: true, apps });
 }
