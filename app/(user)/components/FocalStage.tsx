@@ -8,6 +8,7 @@ import type { FocalObject, FocalStatus } from "@/lib/core/types";
 import { mapFocalObject } from "@/lib/core/types/focal";
 import { FocalRetryButton } from "./FocalRetryButton";
 import { ReportLayout, isReportPayload } from "./ReportLayout";
+import { AssetVariantTabs } from "./AssetVariantTabs";
 
 /**
  * Detects whether an asset content string is a renderable HTML document.
@@ -235,6 +236,15 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               {previewContent}
             </pre>
           ) : null}
+        </div>
+      )}
+
+      {sourceAssetId && (
+        <div className="mt-12">
+          <AssetVariantTabs
+            assetId={sourceAssetId}
+            sourceText={focal.body ?? focal.summary ?? focal.title}
+          />
         </div>
       )}
 

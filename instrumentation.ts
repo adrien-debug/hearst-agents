@@ -4,6 +4,7 @@
  * Primary bootstrap point for:
  * 1. Mission scheduler (orchestration engine)
  * 2. Asset cleanup scheduler (garbage collection)
+ * 3. BullMQ workers Phase B (audio-gen, image-gen, video-gen, etc.)
  *
  * The /api/orchestrate module-scope call remains as a secondary guard.
  */
@@ -19,5 +20,9 @@ export async function register() {
       "@/lib/engine/runtime/assets/cleanup/boot"
     );
     await ensureCleanupSchedulerStarted();
+
+    // Phase B workers — audio-gen et suivants. Sans REDIS_URL, no-op.
+    const { startAllWorkers } = await import("@/lib/jobs/workers");
+    startAllWorkers();
   }
 }
