@@ -23,6 +23,9 @@ interface CommandAction {
   label: string;
   hint: string;
   hotkey?: string;
+  /** True quand l'action ne peut pas être exécutée (pas de prérequis).
+   * L'item reste visible pour discoverability mais le button est inactif. */
+  disabled?: boolean;
   perform: () => void;
 }
 
@@ -31,6 +34,7 @@ export function Commandeur() {
   const isOpen = useStageStore((s) => s.commandeurOpen);
   const setOpen = useStageStore((s) => s.setCommandeurOpen);
   const setStageMode = useStageStore((s) => s.setMode);
+  const lastAssetId = useStageStore((s) => s.lastAssetId);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -52,6 +56,20 @@ export function Commandeur() {
       hotkey: "⌘2",
       perform: () => {
         setStageMode({ mode: "chat" } as StagePayload);
+        setOpen(false);
+      },
+    },
+    {
+      id: "go-asset",
+      label: "Ouvrir le dernier asset",
+      hint: lastAssetId
+        ? "Ré-ouvre l'asset cliqué le plus récemment"
+        : "Aucun asset ouvert récemment — clique-en un d'abord",
+      hotkey: "⌘3",
+      disabled: !lastAssetId,
+      perform: () => {
+        if (!lastAssetId) return;
+        setStageMode({ mode: "asset", assetId: lastAssetId } as StagePayload);
         setOpen(false);
       },
     },
@@ -89,7 +107,7 @@ export function Commandeur() {
       id: "go-voice",
       label: "Mode voix ambient",
       hint: "Conversation full-duplex < 500ms",
-      hotkey: "⌘⇧V",
+      hotkey: "⌘7",
       perform: () => {
         setStageMode({ mode: "voice" } as StagePayload);
         setOpen(false);
@@ -113,7 +131,7 @@ export function Commandeur() {
         setOpen(false);
       },
     },
-  ], [setStageMode, setOpen, router]);
+  ], [setStageMode, setOpen, router, lastAssetId]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return actions;
@@ -195,10 +213,15 @@ export function Commandeur() {
               <button
                 key={action.id}
                 type="button"
+                disabled={action.disabled}
                 onClick={action.perform}
-                onMouseEnter={() => setActiveIndex(i)}
+                onMouseEnter={() => !action.disabled && setActiveIndex(i)}
                 className={`w-full px-6 py-3 flex items-center gap-4 text-left transition-colors ${
-                  i === activeIndex ? "bg-[var(--surface-2)]" : "hover:bg-[var(--surface-1)]"
+                  action.disabled
+                    ? "opacity-40 cursor-not-allowed"
+                    : i === activeIndex
+                    ? "bg-[var(--surface-2)]"
+                    : "hover:bg-[var(--surface-1)]"
                 }`}
               >
                 <span className="flex-1 min-w-0 flex flex-col">
