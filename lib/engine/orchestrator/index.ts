@@ -524,6 +524,34 @@ async function runPipeline(
       }
     }
 
+    // ── Reasoning path — DeepSeek R1 ───────────────────────────
+    if (capScope.intent === "reasoning") {
+      eventBus.emit({
+        type: "orchestrator_log",
+        run_id: engine.id,
+        message: "Routing to DeepSeek R1 (reasoning intent detected)",
+      });
+
+      const { deepseekChat } = await import("@/lib/capabilities/providers/deepseek");
+      const messages: Array<{ role: "user" | "assistant" | "system"; content: string }> = [
+        ...(input.conversationHistory ?? []),
+        { role: "user", content: input.message },
+      ];
+
+      const result = await deepseekChat({ messages, maxTokens: 8192 });
+
+      if (result.reasoningContent) {
+        eventBus.emit({
+          type: "text_delta",
+          run_id: engine.id,
+          delta: `<think>${result.reasoningContent}</think>\n\n`,
+        });
+      }
+      eventBus.emit({ type: "text_delta", run_id: engine.id, delta: result.content });
+      await engine.complete();
+      return;
+    }
+
     // ── Deterministic research path ────────────────────────────
     // Research / report intents (« cherche … », « rapport sur … ») use a
     // deterministic web-search pipeline rather than streamText. Everything

@@ -5,6 +5,7 @@ import { useRuntimeStore } from "@/stores/runtime";
 import { ChatToolStream } from "./ChatToolStream";
 import { ChatActionReceipts } from "./ChatActionReceipts";
 import { ChatConnectInline } from "./ChatConnectInline";
+import { ThinkingDisclosure } from "./ThinkingDisclosure";
 
 export interface Message {
   id: string;
@@ -18,6 +19,12 @@ interface ChatMessagesProps {
   compact?: boolean;
   source?: string;
   onQuickReply?: (text: string) => void;
+}
+
+function parseThinkingBlock(content: string): { thinking: string | null; main: string } {
+  const match = content.match(/^<think>([\s\S]*?)<\/think>\n\n([\s\S]*)$/);
+  if (match) return { thinking: match[1], main: match[2] };
+  return { thinking: null, main: content };
 }
 
 // Marker emitted by write-guard / schedule preview tools.
@@ -194,10 +201,20 @@ export function ChatMessages({
                   <StreamShimmer />
                 </>
               ) : (
-                <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text)] font-normal whitespace-pre-wrap`}>
-                  {message.content}
-                  {showCursor && <span className="chat-caret inline-block align-text-bottom" />}
-                </div>
+                <>
+                  {(() => {
+                    const { thinking, main } = parseThinkingBlock(message.content);
+                    return (
+                      <>
+                        {thinking && <ThinkingDisclosure thinking={thinking} />}
+                        <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text)] font-normal whitespace-pre-wrap`}>
+                          {main}
+                          {showCursor && <span className="chat-caret inline-block align-text-bottom" />}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </>
               )}
 
               {isLastAssistant && !showShimmer && (
@@ -213,7 +230,7 @@ export function ChatMessages({
                 />
               )}
               {!showShimmer && message.content.length > 0 && (
-                <AssistantActions content={message.content} />
+                <AssistantActions content={parseThinkingBlock(message.content).main} />
               )}
             </div>
           );
