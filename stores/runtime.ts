@@ -189,5 +189,3 @@ export const useRuntimeStore = create<RuntimeState>()(
   }))
 );
 
-export const selectIsRunning = (state: RuntimeState) => state.coreState !== "idle";
-export const selectIsIdle = (state: RuntimeState) => state.coreState === "idle";

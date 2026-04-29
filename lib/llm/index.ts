@@ -31,3 +31,12 @@ export type { RateLimiterOptions } from "./rate-limiter";
 
 export { defaultCircuitBreaker } from "./circuit-breaker";
 export type { CircuitState } from "./circuit-breaker";
+
+export { defaultMetrics, getMetrics, LLMMetricsAggregator } from "./metrics";
+export type {
+  MetricsSnapshot,
+  ProviderMetrics,
+  CounterKind,
+  RecordCallInput,
+  RecordErrorInput,
+} from "./metrics";

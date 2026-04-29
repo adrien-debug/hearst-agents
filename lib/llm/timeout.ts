@@ -27,7 +27,7 @@ export function makeAbortSignal(
   }
 
   const origAbort = controller.abort.bind(controller);
-  controller.abort = function (reason?: any) {
+  controller.abort = function (reason?: unknown) {
     clearTimeout(timeoutId);
     return origAbort(reason);
   };

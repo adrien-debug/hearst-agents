@@ -144,6 +144,8 @@
   /* ─── Shadows composants ────────────────────────────────────── */
   --shadow-glow-cykan-soft: 0 0 24px rgba(45,212,191,0.40);   /* ChatInput focus cykan */
   --shadow-thread-active: inset 2px 0 0 var(--cykan);           /* LeftPanel thread actif */
+  --shadow-neon-cykan: 0 0 8px rgba(45, 212, 191, 0.6);         /* TimelineRail thread actif drop-shadow */
+  --shadow-input-focus: 0 0 15px rgba(45, 212, 191, 0.15);      /* ChatInput focus halo doux */
   --shadow-tile-inset: inset 0 0.5px 0 rgba(255, 255, 255, 0.03);
   --shadow-tile-base: 0 1px 2px rgba(0, 0, 0, 0.20);
   --shadow-tile-hover: 0 2px 4px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(45, 212, 191, 0.06);
@@ -962,11 +964,11 @@ body {
  * Hearst Connect dashboard : border-left cyan + mono uppercase 700). */
 .rail-section-label {
   font-family: var(--font-satoshi);
-  font-size: clamp(11px, 0.286vw + 9.167px, 16.5px);
-  font-weight: 700;
-  letter-spacing: 0.18em;
+  font-size: clamp(10px, 0.26vw + 8.333px, 15px);
+  font-weight: 500;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.4);
   border-left: 2px solid var(--cykan);
   padding-left: var(--space-3);
   line-height: 1.2;

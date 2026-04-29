@@ -7,9 +7,10 @@ import { AnthropicProvider } from "./anthropic";
 import { ComposerProvider } from "./composer";
 import { GeminiProvider } from "./gemini";
 import { scoreModels, selectModel, type ModelGoal, type ModelScore, type ModelSelection } from "../decisions/model-selector";
-import { CostLimitExceededError } from "./errors";
+import { CostLimitExceededError, RateLimitExceededError } from "./errors";
 import { defaultRateLimiter } from "./rate-limiter";
 import { defaultCircuitBreaker } from "./circuit-breaker";
+import { defaultMetrics } from "./metrics";
 
 const providers: Record<string, LLMProvider> = {};
 
@@ -123,7 +124,14 @@ export async function chatWithProfile(
   }
 
   if (userId) {
-    await defaultRateLimiter.checkLimit(userId);
+    try {
+      await defaultRateLimiter.checkLimit(userId);
+    } catch (e) {
+      if (e instanceof RateLimitExceededError) {
+        defaultMetrics.incrementCounter("rate_limit_hit");
+      }
+      throw e;
+    }
   }
 
   let lastError: Error | null = null;
@@ -167,12 +175,28 @@ export async function chatWithProfile(
         defaultRateLimiter.recordCall(userId, response.tokens_in + response.tokens_out);
       }
       defaultCircuitBreaker.recordSuccess(profile.provider);
+      defaultMetrics.recordCall({
+        provider: profile.provider,
+        model: profile.model,
+        latencyMs: response.latency_ms,
+        tokensIn: response.tokens_in,
+        tokensOut: response.tokens_out,
+        cacheReadTokens: response.cache_read_tokens,
+        cacheCreationTokens: response.cache_creation_tokens,
+        costUsd: response.cost_usd,
+      });
       return { ...response, profile_used: `${profile.provider}/${profile.model}` };
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       if (!(e instanceof CostLimitExceededError)) {
+        const wasClosedBefore = defaultCircuitBreaker.getState(profile.provider) === "CLOSED";
         defaultCircuitBreaker.recordFailure(profile.provider);
+        if (wasClosedBefore && defaultCircuitBreaker.getState(profile.provider) === "OPEN") {
+          defaultMetrics.incrementCounter("circuit_breaker_trip");
+        }
       }
+      const errCode = (lastError as Error & { code?: string }).code ?? "UNKNOWN";
+      defaultMetrics.recordError({ provider: profile.provider, errorCode: errCode });
       console.error(
         `Provider ${profile.provider}/${profile.model} failed, trying fallback:`,
         lastError.message,
@@ -197,7 +221,14 @@ export async function* streamChatWithProfile(
   }
 
   if (userId) {
-    await defaultRateLimiter.checkLimit(userId);
+    try {
+      await defaultRateLimiter.checkLimit(userId);
+    } catch (e) {
+      if (e instanceof RateLimitExceededError) {
+        defaultMetrics.incrementCounter("rate_limit_hit");
+      }
+      throw e;
+    }
   }
 
   let lastError: Error | null = null;
@@ -238,7 +269,13 @@ export async function* streamChatWithProfile(
       return;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
+      const wasClosedBefore = defaultCircuitBreaker.getState(profile.provider) === "CLOSED";
       defaultCircuitBreaker.recordFailure(profile.provider);
+      if (wasClosedBefore && defaultCircuitBreaker.getState(profile.provider) === "OPEN") {
+        defaultMetrics.incrementCounter("circuit_breaker_trip");
+      }
+      const errCode = (lastError as Error & { code?: string }).code ?? "UNKNOWN";
+      defaultMetrics.recordError({ provider: profile.provider, errorCode: errCode });
       console.error(
         `Stream ${profile.provider}/${profile.model} failed, trying fallback:`,
         lastError.message,
@@ -298,7 +335,14 @@ export async function smartChat(
   }
 
   if (opts.userId) {
-    await defaultRateLimiter.checkLimit(opts.userId);
+    try {
+      await defaultRateLimiter.checkLimit(opts.userId);
+    } catch (e) {
+      if (e instanceof RateLimitExceededError) {
+        defaultMetrics.incrementCounter("rate_limit_hit");
+      }
+      throw e;
+    }
   }
 
   const chain = buildSmartChain(decision);
@@ -339,6 +383,16 @@ export async function smartChat(
         defaultRateLimiter.recordCall(opts.userId, response.tokens_in + response.tokens_out);
       }
       defaultCircuitBreaker.recordSuccess(attempt.provider);
+      defaultMetrics.recordCall({
+        provider: attempt.provider,
+        model: attempt.model,
+        latencyMs: response.latency_ms,
+        tokensIn: response.tokens_in,
+        tokensOut: response.tokens_out,
+        cacheReadTokens: response.cache_read_tokens,
+        cacheCreationTokens: response.cache_creation_tokens,
+        costUsd: response.cost_usd,
+      });
 
       if (attemptIndex > 0 && opts.tracer) {
         await traceFallback(opts.tracer, attempt, attemptIndex, chain[0], lastError?.message);
@@ -348,8 +402,14 @@ export async function smartChat(
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       if (!(e instanceof CostLimitExceededError)) {
+        const wasClosedBefore = defaultCircuitBreaker.getState(attempt.provider) === "CLOSED";
         defaultCircuitBreaker.recordFailure(attempt.provider);
+        if (wasClosedBefore && defaultCircuitBreaker.getState(attempt.provider) === "OPEN") {
+          defaultMetrics.incrementCounter("circuit_breaker_trip");
+        }
       }
+      const errCode = (lastError as Error & { code?: string }).code ?? "UNKNOWN";
+      defaultMetrics.recordError({ provider: attempt.provider, errorCode: errCode });
       console.error(
         `smart-chat: ${attempt.provider}/${attempt.model} failed (attempt ${attemptIndex + 1}):`,
         lastError.message,
@@ -376,7 +436,14 @@ export async function* smartStreamChat(
   }
 
   if (opts.userId) {
-    await defaultRateLimiter.checkLimit(opts.userId);
+    try {
+      await defaultRateLimiter.checkLimit(opts.userId);
+    } catch (e) {
+      if (e instanceof RateLimitExceededError) {
+        defaultMetrics.incrementCounter("rate_limit_hit");
+      }
+      throw e;
+    }
   }
 
   const chain = buildSmartChain(decision);
@@ -425,7 +492,13 @@ export async function* smartStreamChat(
       return;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
+      const wasClosedBefore = defaultCircuitBreaker.getState(attempt.provider) === "CLOSED";
       defaultCircuitBreaker.recordFailure(attempt.provider);
+      if (wasClosedBefore && defaultCircuitBreaker.getState(attempt.provider) === "OPEN") {
+        defaultMetrics.incrementCounter("circuit_breaker_trip");
+      }
+      const errCode = (lastError as Error & { code?: string }).code ?? "UNKNOWN";
+      defaultMetrics.recordError({ provider: attempt.provider, errorCode: errCode });
       console.error(
         `smart-stream: ${attempt.provider}/${attempt.model} failed (attempt ${attemptIndex + 1}):`,
         lastError.message,

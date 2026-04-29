@@ -24,6 +24,36 @@ import {
   DEAL_TO_CASH_ID,
   DEAL_TO_CASH_REQUIRED_APPS,
 } from "./deal-to-cash";
+import {
+  buildFinancialPnL,
+  FINANCIAL_PNL_ID,
+  FINANCIAL_PNL_REQUIRED_APPS,
+} from "./financial-pnl";
+import {
+  buildProductAnalytics,
+  PRODUCT_ANALYTICS_ID,
+  PRODUCT_ANALYTICS_REQUIRED_APPS,
+} from "./product-analytics";
+import {
+  buildSupportHealth,
+  SUPPORT_HEALTH_ID,
+  SUPPORT_HEALTH_REQUIRED_APPS,
+} from "./support-health";
+import {
+  buildEngineeringVelocity,
+  ENGINEERING_VELOCITY_ID,
+  ENGINEERING_VELOCITY_REQUIRED_APPS,
+} from "./engineering-velocity";
+import {
+  buildMarketingAarrr,
+  MARKETING_AARRR_ID,
+  MARKETING_AARRR_REQUIRED_APPS,
+} from "./marketing-aarrr";
+import {
+  buildHrPeople,
+  HR_PEOPLE_ID,
+  HR_PEOPLE_REQUIRED_APPS,
+} from "./hr-people";
 import type { ReportSpec } from "@/lib/reports/spec/schema";
 
 export interface CatalogEntry {
@@ -72,6 +102,66 @@ export const CATALOG: ReadonlyArray<CatalogEntry> = [
     persona: "ops",
     requiredApps: DEAL_TO_CASH_REQUIRED_APPS,
     build: (scope) => buildDealToCash(scope),
+  },
+  {
+    id: FINANCIAL_PNL_ID,
+    title: "Financial P&L",
+    description:
+      "P&L mensuel, cash flow, runway et top expenses sur 12 mois.",
+    domain: "finance",
+    persona: "founder",
+    requiredApps: FINANCIAL_PNL_REQUIRED_APPS,
+    build: (scope) => buildFinancialPnL(scope),
+  },
+  {
+    id: PRODUCT_ANALYTICS_ID,
+    title: "Product Analytics",
+    description:
+      "Funnel AARRR, cohortes de rétention, NPS et features les plus utilisées.",
+    domain: "growth",
+    persona: "founder",
+    requiredApps: PRODUCT_ANALYTICS_REQUIRED_APPS,
+    build: (scope) => buildProductAnalytics(scope),
+  },
+  {
+    id: SUPPORT_HEALTH_ID,
+    title: "Support Health",
+    description:
+      "CSAT, SLA, volume tickets et top issues sur les 7 derniers jours.",
+    domain: "support",
+    persona: "csm",
+    requiredApps: SUPPORT_HEALTH_REQUIRED_APPS,
+    build: (scope) => buildSupportHealth(scope),
+  },
+  {
+    id: ENGINEERING_VELOCITY_ID,
+    title: "Engineering Velocity",
+    description:
+      "DORA metrics (Deploy Freq, Lead Time, CFR, MTTR), cycle time et top long-running PRs.",
+    domain: "ops-eng",
+    persona: "eng",
+    requiredApps: ENGINEERING_VELOCITY_REQUIRED_APPS,
+    build: (scope) => buildEngineeringVelocity(scope),
+  },
+  {
+    id: MARKETING_AARRR_ID,
+    title: "Marketing AARRR",
+    description:
+      "Funnel AARRR, CAC / LTV / payback par cohorte et canal sur 12 semaines.",
+    domain: "growth",
+    persona: "ops",
+    requiredApps: MARKETING_AARRR_REQUIRED_APPS,
+    build: (scope) => buildMarketingAarrr(scope),
+  },
+  {
+    id: HR_PEOPLE_ID,
+    title: "HR / People",
+    description:
+      "Hiring funnel, signaux burnout (heures tardives) et headcount plan sur 90 jours.",
+    domain: "ops",
+    persona: "ops",
+    requiredApps: HR_PEOPLE_REQUIRED_APPS,
+    build: (scope) => buildHrPeople(scope),
   },
 ];
 
@@ -141,3 +231,33 @@ export {
   DEAL_TO_CASH_ID,
   DEAL_TO_CASH_REQUIRED_APPS,
 } from "./deal-to-cash";
+export {
+  buildFinancialPnL,
+  FINANCIAL_PNL_ID,
+  FINANCIAL_PNL_REQUIRED_APPS,
+} from "./financial-pnl";
+export {
+  buildProductAnalytics,
+  PRODUCT_ANALYTICS_ID,
+  PRODUCT_ANALYTICS_REQUIRED_APPS,
+} from "./product-analytics";
+export {
+  buildSupportHealth,
+  SUPPORT_HEALTH_ID,
+  SUPPORT_HEALTH_REQUIRED_APPS,
+} from "./support-health";
+export {
+  buildEngineeringVelocity,
+  ENGINEERING_VELOCITY_ID,
+  ENGINEERING_VELOCITY_REQUIRED_APPS,
+} from "./engineering-velocity";
+export {
+  buildMarketingAarrr,
+  MARKETING_AARRR_ID,
+  MARKETING_AARRR_REQUIRED_APPS,
+} from "./marketing-aarrr";
+export {
+  buildHrPeople,
+  HR_PEOPLE_ID,
+  HR_PEOPLE_REQUIRED_APPS,
+} from "./hr-people";

@@ -141,6 +141,12 @@ function shapeData(block: BlockSpec, data: Tabular): unknown {
  * Extrait les scalaires des blocks `kpi` (et la première valeur des autres si
  * applicable) pour les fournir à la narration. Volume cible : <50 scalaires
  * total. Garde uniquement les types JSON-natifs primitifs.
+ *
+ * Sous-scalaires (V2) : un block KPI peut déclarer `props.subScalars` =
+ * Record<scalarName, sourceField> pour exposer des champs additionnels comme
+ * `baseline`, `baseline_3m`, `previous`, `mau`. Ces clés sont publiées sous
+ * le nom `{blockId}.{scalarName}` et consommées par les rules signals
+ * composites (extract.ts).
  */
 function extractScalars(
   block: BlockSpec,
@@ -157,9 +163,25 @@ function extractScalars(
     if (deltaField && isPrimitive(first[deltaField])) {
       scalars[`${block.id}.delta`] = first[deltaField];
     }
+
+    // Sous-scalaires arbitraires déclarés par le catalogue.
+    const subScalars = block.props?.subScalars;
+    if (isStringRecord(subScalars)) {
+      for (const [name, sourceField] of Object.entries(subScalars)) {
+        if (typeof sourceField !== "string") continue;
+        const v = first[sourceField];
+        if (isPrimitive(v)) {
+          scalars[`${block.id}.${name}`] = v;
+        }
+      }
+    }
   }
   // Pour les blocs non-kpi, on prend la longueur (utile à la narration).
   scalars[`${block.id}.count`] = data.length;
+}
+
+function isStringRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
 function isPrimitive(v: unknown): boolean {

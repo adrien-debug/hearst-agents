@@ -334,23 +334,430 @@ const blockLayoutSchema = z.object({
   row: z.number().int().min(0).max(50).default(0),
 });
 
-export const blockSpecSchema = z.object({
+// ── Schémas de props par primitive (V2) ─────────────────────
+//
+// Ces schémas valident le contenu de `block.props` quand un block utilise une
+// primitive V2 dont la donnée n'est pas une Tabular linéaire mais une
+// structure spécifique (waterfall barres, cohort triangle, heatmap matrice).
+// Ils sont exposés pour permettre à la UI/runtime de valider les props avant
+// rendu, et à de futurs catalogues de produire des Specs typés.
+//
+// Le `block.dataRef` reste la source de vérité quand le runtime calcule la
+// donnée via les transforms ; `block.props.<champ>` est le fallback quand la
+// donnée est livrée inline (cas LLM-only sans transform).
+
+export const waterfallDatumSchema = z.object({
+  label: z.string().min(1).max(80),
+  value: z.number().finite(),
+  type: z.enum(["start", "delta", "total"]),
+});
+export type WaterfallDatum = z.infer<typeof waterfallDatumSchema>;
+
+export const waterfallPropsSchema = z.object({
+  data: z.array(waterfallDatumSchema).min(2).max(20),
+  format: z.enum(["number", "currency"]).default("currency"),
+  currency: z.string().min(1).max(8).default("EUR"),
+  height: z.number().int().min(80).max(800).optional(),
+});
+export type WaterfallPropsSpec = z.infer<typeof waterfallPropsSchema>;
+
+export const cohortRowSchema = z.object({
+  label: z.string().min(1).max(40),
+  values: z.array(z.number().finite()).min(1).max(60),
+});
+export type CohortRowSpec = z.infer<typeof cohortRowSchema>;
+
+export const cohortTrianglePropsSchema = z.object({
+  cohorts: z.array(cohortRowSchema).min(1).max(60),
+  periodPrefix: z.string().min(1).max(8).default("M"),
+  asPercent: z.boolean().default(true),
+});
+export type CohortTrianglePropsSpec = z.infer<typeof cohortTrianglePropsSchema>;
+
+export const heatmapPropsSchema = z
+  .object({
+    xLabels: z.array(z.string().min(1)).min(1).max(60),
+    yLabels: z.array(z.string().min(1)).min(1).max(60),
+    values: z.array(z.array(z.number().finite())).min(1).max(60),
+    cellHeight: z.number().int().min(8).max(80).optional(),
+    showValues: z.boolean().default(false),
+  })
+  .superRefine((val, ctx) => {
+    // values doit avoir une row par yLabel et chaque row une cellule par xLabel.
+    if (val.values.length !== val.yLabels.length) {
+      ctx.addIssue({
+        code: "custom",
+        message: `heatmap.values.length (${val.values.length}) doit égaler yLabels.length (${val.yLabels.length})`,
+        path: ["values"],
+      });
+    }
+    val.values.forEach((row, i) => {
+      if (row.length !== val.xLabels.length) {
+        ctx.addIssue({
+          code: "custom",
+          message: `heatmap.values[${i}].length (${row.length}) doit égaler xLabels.length (${val.xLabels.length})`,
+          path: ["values", i],
+        });
+      }
+    });
+  });
+export type HeatmapPropsSpec = z.infer<typeof heatmapPropsSchema>;
+
+// ── Sankey ──────────────────────────────────────────────────
+
+export const sankeyNodeSchema = z.object({
   id: z
     .string()
     .min(1)
-    .regex(/^[a-z][a-z0-9_]*$/),
-  type: z.enum(PRIMITIVE_KINDS),
-  label: z.string().max(80).optional(),
-  /** Référence le dataset à afficher : id de transform ou de source. */
-  dataRef: datasetRefSchema,
-  layout: blockLayoutSchema,
-  /**
-   * Props passés à la primitive. Validés par primitive.propsSchema côté
-   * render-blocks.ts. On laisse souple ici pour ne pas dupliquer la spec
-   * de chaque primitive dans le pivot.
-   */
-  props: z.record(z.string(), z.unknown()).default({}),
+    .max(80)
+    .regex(/^[a-z][a-z0-9_]*$/, "id node : minuscules, chiffres, underscore"),
+  label: z.string().min(1).max(80),
 });
+export type SankeyNodeSpec = z.infer<typeof sankeyNodeSchema>;
+
+export const sankeyLinkSchema = z.object({
+  source: z.string().min(1).max(80),
+  target: z.string().min(1).max(80),
+  value: z.number().finite().min(0),
+});
+export type SankeyLinkSpec = z.infer<typeof sankeyLinkSchema>;
+
+export const sankeyPropsSchema = z
+  .object({
+    nodes: z.array(sankeyNodeSchema).min(2).max(60),
+    links: z.array(sankeyLinkSchema).min(1).max(200),
+    height: z.number().int().min(80).max(800).optional(),
+  })
+  .superRefine((val, ctx) => {
+    // Unicité des ids node + chaque link.source/target doit référencer un node.
+    const ids = new Set<string>();
+    for (const n of val.nodes) {
+      if (ids.has(n.id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `sankey.nodes : id dupliqué '${n.id}'`,
+          path: ["nodes"],
+        });
+      }
+      ids.add(n.id);
+    }
+    val.links.forEach((l, i) => {
+      if (!ids.has(l.source)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `sankey.links[${i}].source '${l.source}' ne référence aucun node`,
+          path: ["links", i, "source"],
+        });
+      }
+      if (!ids.has(l.target)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `sankey.links[${i}].target '${l.target}' ne référence aucun node`,
+          path: ["links", i, "target"],
+        });
+      }
+      if (l.source === l.target) {
+        ctx.addIssue({
+          code: "custom",
+          message: `sankey.links[${i}] : source et target identiques ('${l.source}')`,
+          path: ["links", i],
+        });
+      }
+    });
+  });
+export type SankeyPropsSpec = z.infer<typeof sankeyPropsSchema>;
+
+// ── Bullet ──────────────────────────────────────────────────
+
+export const bulletRangeSchema = z.object({
+  bad: z.number().finite(),
+  ok: z.number().finite(),
+  good: z.number().finite(),
+});
+export type BulletRangeSpec = z.infer<typeof bulletRangeSchema>;
+
+export const bulletItemSchema = z.object({
+  label: z.string().min(1).max(80),
+  actual: z.number().finite(),
+  target: z.number().finite(),
+  ranges: bulletRangeSchema,
+});
+export type BulletItemSpec = z.infer<typeof bulletItemSchema>;
+
+export const bulletPropsSchema = z.object({
+  items: z.array(bulletItemSchema).min(1).max(20),
+  format: z.enum(["number", "currency"]).default("number"),
+  currency: z.string().min(1).max(8).default("EUR"),
+});
+export type BulletPropsSpec = z.infer<typeof bulletPropsSchema>;
+
+// ── Radar ───────────────────────────────────────────────────
+
+export const radarSeriesSchema = z.object({
+  label: z.string().min(1).max(80),
+  values: z.array(z.number().finite()).min(1).max(20),
+});
+export type RadarSeriesSpec = z.infer<typeof radarSeriesSchema>;
+
+export const radarPropsSchema = z
+  .object({
+    axes: z.array(z.string().min(1).max(40)).min(3).max(20),
+    series: z.array(radarSeriesSchema).min(1).max(8),
+    height: z.number().int().min(120).max(800).optional(),
+    rings: z.number().int().min(1).max(10).optional(),
+  })
+  .superRefine((val, ctx) => {
+    // Chaque série doit avoir autant de values que d'axes.
+    val.series.forEach((s, i) => {
+      if (s.values.length !== val.axes.length) {
+        ctx.addIssue({
+          code: "custom",
+          message: `radar.series[${i}].values.length (${s.values.length}) doit égaler axes.length (${val.axes.length})`,
+          path: ["series", i, "values"],
+        });
+      }
+    });
+  });
+export type RadarPropsSpec = z.infer<typeof radarPropsSchema>;
+
+// ── Gantt ───────────────────────────────────────────────────
+
+const isoDateSchema = z
+  .string()
+  .min(1)
+  .refine((s) => Number.isFinite(Date.parse(s)), {
+    message: "ISODate invalide (attendu YYYY-MM-DD ou ISO complet)",
+  });
+
+export const ganttRangeSchema = z.object({
+  start: isoDateSchema,
+  end: isoDateSchema,
+});
+export type GanttRangeSpec = z.infer<typeof ganttRangeSchema>;
+
+export const ganttTaskSchema = z.object({
+  id: z
+    .string()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z][a-z0-9_]*$/, "id task : minuscules, chiffres, underscore"),
+  label: z.string().min(1).max(120),
+  start: isoDateSchema,
+  end: isoDateSchema,
+  progress: z.number().finite().min(0).max(1),
+  dependsOn: z.array(z.string().min(1).max(80)).optional(),
+});
+export type GanttTaskSpec = z.infer<typeof ganttTaskSchema>;
+
+export const ganttPropsSchema = z
+  .object({
+    range: ganttRangeSchema,
+    tasks: z.array(ganttTaskSchema).min(0).max(60),
+    height: z.number().int().min(80).max(1200).optional(),
+  })
+  .superRefine((val, ctx) => {
+    const rangeStart = Date.parse(val.range.start);
+    const rangeEnd = Date.parse(val.range.end);
+    if (Number.isFinite(rangeStart) && Number.isFinite(rangeEnd) && rangeEnd <= rangeStart) {
+      ctx.addIssue({
+        code: "custom",
+        message: `gantt.range.end (${val.range.end}) doit être strictement après range.start (${val.range.start})`,
+        path: ["range"],
+      });
+    }
+    const ids = new Set<string>();
+    val.tasks.forEach((t, i) => {
+      if (ids.has(t.id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `gantt.tasks : id dupliqué '${t.id}'`,
+          path: ["tasks", i, "id"],
+        });
+      }
+      ids.add(t.id);
+    });
+    val.tasks.forEach((t, i) => {
+      const ts = Date.parse(t.start);
+      const te = Date.parse(t.end);
+      if (Number.isFinite(ts) && Number.isFinite(te) && te <= ts) {
+        ctx.addIssue({
+          code: "custom",
+          message: `gantt.tasks[${i}] : end doit être strictement après start`,
+          path: ["tasks", i, "end"],
+        });
+      }
+      if (
+        Number.isFinite(rangeStart) &&
+        Number.isFinite(ts) &&
+        ts < rangeStart
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `gantt.tasks[${i}].start (${t.start}) hors range.start (${val.range.start})`,
+          path: ["tasks", i, "start"],
+        });
+      }
+      if (
+        Number.isFinite(rangeEnd) &&
+        Number.isFinite(te) &&
+        te > rangeEnd
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `gantt.tasks[${i}].end (${t.end}) hors range.end (${val.range.end})`,
+          path: ["tasks", i, "end"],
+        });
+      }
+      for (const dep of t.dependsOn ?? []) {
+        if (!ids.has(dep) && !val.tasks.some((other) => other.id === dep)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `gantt.tasks[${i}].dependsOn : id inconnu '${dep}'`,
+            path: ["tasks", i, "dependsOn"],
+          });
+        }
+      }
+    });
+  });
+export type GanttPropsSpec = z.infer<typeof ganttPropsSchema>;
+
+/**
+ * Validation des sous-scalaires d'un block KPI.
+ *
+ * `subScalars` (optionnel) déclare des champs additionnels du dataset à
+ * exposer dans `payload.scalars` sous la clé `{blockId}.{name}`. Consommé par
+ * les rules signals composites (cf. `lib/reports/signals/extract.ts` —
+ * `expense_spike` lit `kpi_expenses.baseline_3m`, `retention_drop` lit
+ * `kpi_retention_c2.baseline`, `incident_spike` lit `kpi_incidents.baseline_4w`,
+ * etc.).
+ *
+ * Format : `{ scalarName: sourceField }` — les deux strings non vides,
+ * scalarName en snake_case minuscule, sourceField libre (le nom du champ du
+ * dataset). Validé en superRefine sur block KPI uniquement.
+ */
+const kpiSubScalarsSchema = z
+  .record(
+    z
+      .string()
+      .min(1)
+      .regex(/^[a-z][a-z0-9_]*$/, "subScalars name : minuscules, chiffres, underscore"),
+    z.string().min(1),
+  )
+  .refine((v) => Object.keys(v).length <= 8, {
+    message: "subScalars : maximum 8 sous-scalaires par bloc KPI",
+  });
+
+export const blockSpecSchema = z
+  .object({
+    id: z
+      .string()
+      .min(1)
+      .regex(/^[a-z][a-z0-9_]*$/),
+    type: z.enum(PRIMITIVE_KINDS),
+    label: z.string().max(80).optional(),
+    /** Référence le dataset à afficher : id de transform ou de source. */
+    dataRef: datasetRefSchema,
+    layout: blockLayoutSchema,
+    /**
+     * Props passés à la primitive. Validés par primitive.propsSchema côté
+     * render-blocks.ts. On laisse souple ici pour ne pas dupliquer la spec
+     * de chaque primitive dans le pivot.
+     *
+     * Pour les primitives V2 (waterfall, cohort_triangle, heatmap) dont la
+     * donnée structurelle est portée par les props, le `superRefine` plus
+     * bas valide que `block.props` matche leur schéma typé.
+     *
+     * Pour les blocs KPI, `props.subScalars` (optionnel) est validé via
+     * `kpiSubScalarsSchema` (voir superRefine plus bas).
+     */
+    props: z.record(z.string(), z.unknown()).default({}),
+    /**
+     * Visibilité du block dans le rendu UI. `true` = block masqué (skip render).
+     * Utilisé par l'éditeur (ReportEditor.tsx) pour permettre à l'utilisateur
+     * de masquer un block sans le supprimer du spec — les transforms et données
+     * amont restent calculés, c'est purement UI. Par défaut visible.
+     */
+    hidden: z.boolean().optional(),
+  })
+  .superRefine((val, ctx) => {
+    // Validation des sous-scalaires (KPI uniquement).
+    if (val.type === "kpi" && val.props && "subScalars" in val.props) {
+      const r = kpiSubScalarsSchema.safeParse(val.props.subScalars);
+      if (!r.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: `block '${val.id}' (kpi) : props.subScalars invalide — ${r.error.issues[0]?.message ?? "format inattendu"}`,
+          path: ["props", "subScalars"],
+        });
+      }
+    }
+  })
+  .superRefine((val, ctx) => {
+    if (val.type === "waterfall") {
+      const r = waterfallPropsSchema.safeParse(val.props);
+      if (!r.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: `block '${val.id}' (waterfall) : props invalide — ${r.error.issues[0]?.message ?? "format inattendu"}`,
+          path: ["props"],
+        });
+      }
+    } else if (val.type === "cohort_triangle") {
+      const r = cohortTrianglePropsSchema.safeParse(val.props);
+      if (!r.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: `block '${val.id}' (cohort_triangle) : props invalide — ${r.error.issues[0]?.message ?? "format inattendu"}`,
+          path: ["props"],
+        });
+      }
+    } else if (val.type === "heatmap") {
+      const r = heatmapPropsSchema.safeParse(val.props);
+      if (!r.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: `block '${val.id}' (heatmap) : props invalide — ${r.error.issues[0]?.message ?? "format inattendu"}`,
+          path: ["props"],
+        });
+      }
+    } else if (val.type === "sankey") {
+      const r = sankeyPropsSchema.safeParse(val.props);
+      if (!r.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: `block '${val.id}' (sankey) : props invalide — ${r.error.issues[0]?.message ?? "format inattendu"}`,
+          path: ["props"],
+        });
+      }
+    } else if (val.type === "bullet") {
+      const r = bulletPropsSchema.safeParse(val.props);
+      if (!r.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: `block '${val.id}' (bullet) : props invalide — ${r.error.issues[0]?.message ?? "format inattendu"}`,
+          path: ["props"],
+        });
+      }
+    } else if (val.type === "radar") {
+      const r = radarPropsSchema.safeParse(val.props);
+      if (!r.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: `block '${val.id}' (radar) : props invalide — ${r.error.issues[0]?.message ?? "format inattendu"}`,
+          path: ["props"],
+        });
+      }
+    } else if (val.type === "gantt") {
+      const r = ganttPropsSchema.safeParse(val.props);
+      if (!r.success) {
+        ctx.addIssue({
+          code: "custom",
+          message: `block '${val.id}' (gantt) : props invalide — ${r.error.issues[0]?.message ?? "format inattendu"}`,
+          path: ["props"],
+        });
+      }
+    }
+  });
 export type BlockSpec = z.infer<typeof blockSpecSchema>;
 
 // ── Narration LLM (one-shot, prompt-cached) ─────────────────

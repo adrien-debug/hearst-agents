@@ -57,6 +57,32 @@ const AdminIcon = () => (
     <path d="M3 12h4l2-7 4 14 2-7h6" />
   </svg>
 );
+const BoltIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
+
+const WrenchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+  </svg>
+);
+
+const PhoneIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="2" width="14" height="20" rx="2.18" ry="2.18" />
+    <line x1="12" y1="19" x2="12.01" y2="19" />
+  </svg>
+);
+
+const ChartIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
 
 // ── Section helpers ────────────────────────────────────────
 
@@ -94,22 +120,16 @@ function groupThreadsByDate(threads: Thread[]): {
 
 function SectionHeader({
   label,
-  count,
   action,
 }: {
   label: string;
-  count: number;
-  accent?: boolean;
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between first:mt-0 mt-6 mb-3">
-      <span className="rail-section-label">{label}</span>
+    <div className="flex items-center justify-between first:mt-0 mt-6 mb-2 px-3">
+      <span className="t-12 font-semibold text-[rgba(255,255,255,0.9)]">{label}</span>
       <span className="flex items-center gap-2">
         {action}
-        <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
-          {count.toString().padStart(2, "0")}
-        </span>
       </span>
     </div>
   );
@@ -117,7 +137,7 @@ function SectionHeader({
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-11 font-mono tracking-display text-[var(--text-faint)] uppercase pl-3 py-1">
+    <p className="t-12 text-[rgba(255,255,255,0.4)] pl-3 py-2 font-light">
       {children}
     </p>
   );
@@ -136,28 +156,23 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
   return (
     <div
       onClick={onSelect}
-      className="group cursor-pointer py-2 -mx-2 px-2 transition-colors flex items-center gap-3"
+      className={`group cursor-pointer py-2 px-3 transition-all duration-300 flex items-center gap-3 rounded-md ${
+        isActive ? "bg-[rgba(255,255,255,0.08)]" : "hover:bg-[rgba(255,255,255,0.04)]"
+      }`}
       title={thread.name}
     >
-      <span
-        className={`rounded-pill shrink-0 transition-all ${
-          isActive ? "bg-[var(--cykan)] halo-cyan-sm" : "border border-[var(--text-muted)]"
-        }`}
-        style={{ width: "var(--space-1)", height: "var(--space-1)" }}
-      />
       <p
-        className={`flex-1 t-13 font-light truncate min-w-0 transition-colors ${
+        className={`flex-1 t-14 truncate min-w-0 transition-colors duration-300 ${
           isActive
-            ? "text-[var(--cykan)] halo-cyan-sm"
-            : "text-[var(--text-muted)] group-hover:text-[var(--text)] group-hover:halo-cyan-sm"
+            ? "text-[rgba(255,255,255,1)] font-medium"
+            : "text-[rgba(255,255,255,0.7)] font-light group-hover:text-[rgba(255,255,255,0.9)]"
         }`}
         style={{ lineHeight: "var(--leading-base)" }}
       >
         {thread.name}
       </p>
       <div
-        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 flex items-center"
-        style={{ gap: "var(--space-1)" }}
+        className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 shrink-0 flex items-center gap-1"
       >
         <button
           type="button"
@@ -165,11 +180,11 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
             e.stopPropagation();
             onArchive();
           }}
-          className="text-[var(--text-ghost)] hover:text-[var(--cykan)] p-1"
+          className="text-[rgba(255,255,255,0.4)] hover:text-[rgba(255,255,255,0.9)] p-1 transition-colors"
           title={isArchived ? "Désarchiver" : "Archiver"}
           aria-label={isArchived ? "Désarchiver le thread" : "Archiver le thread"}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="4" width="18" height="4" rx="1" />
             <path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8" />
             <path d="M10 12h4" />
@@ -181,11 +196,11 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
             e.stopPropagation();
             if (window.confirm(`Supprimer "${thread.name}" ?`)) onDelete();
           }}
-          className="text-[var(--text-ghost)] hover:text-[var(--danger)] p-1"
+          className="text-[rgba(255,255,255,0.4)] hover:text-[var(--danger)] p-1 transition-colors"
           title="Supprimer"
           aria-label="Supprimer le thread"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
           </svg>
@@ -207,10 +222,10 @@ function CollapsedTile({ thread, isActive, onSelect }: CollapsedTileProps) {
     <button
       onClick={onSelect}
       title={thread.name}
-      className={`relative w-8 h-8 flex items-center justify-center rounded-sm t-13 font-medium transition-all shrink-0 ${
+      className={`relative w-8 h-8 flex items-center justify-center rounded-md t-13 font-light transition-all duration-300 shrink-0 ${
         isActive
-          ? "bg-[var(--cykan)] text-[var(--bg)] halo-cyan-sm"
-          : "bg-[var(--surface-1)] text-[var(--text-muted)] hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
+          ? "bg-[rgba(45,212,191,0.1)] text-[var(--cykan)] border border-[rgba(45,212,191,0.3)] shadow-[0_0_15px_rgba(45,212,191,0.15)]"
+          : "bg-[rgba(255,255,255,0.02)] text-[rgba(255,255,255,0.4)] border border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[rgba(255,255,255,0.9)] hover:border-[rgba(255,255,255,0.1)]"
       }`}
     >
       {initial}
@@ -253,52 +268,20 @@ export function TimelineRail() {
 
   const handleNewThread = () => {
     const id = addThread("New", "home");
-      {/* Tools & Apps Menu — ChatGPT style */}
-      {!leftCollapsed && (
-        <div className={`shrink-0 flex flex-col gap-4 border-t border-[var(--border-shell)] py-6 ${sectionPadX}`}>
-          {/* Tools */}
-          <div className="flex flex-col gap-2">
-            <span className="rail-section-label t-10 uppercase">Tools</span>
-            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
-              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">⚡</span>
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Hearst Tool</span>
-            </button>
-            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
-              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">🔧</span>
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Custom Tool</span>
-            </button>
-          </div>
-
-          {/* Apps */}
-          <div className="flex flex-col gap-2">
-            <span className="rail-section-label t-10 uppercase">Apps</span>
-            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
-              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">📱</span>
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Hearst App</span>
-            </button>
-            <button className="group flex items-center gap-3 px-3 py-2 rounded-sm text-left border-b border-[var(--border-soft)] bg-transparent transition-colors hover:text-[var(--cykan)]">
-              <span className="text-[var(--text-faint)] group-hover:text-[var(--cykan)]">🎯</span>
-              <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] flex-1">Analytics</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-
     setStageMode({ mode: "chat", threadId: id });
   };
 
   return (
     <aside
-      className="h-full flex flex-col z-20 relative border-r border-[var(--border-shell)] transition-[width] duration-slow ease-out-soft"
+      className="h-full flex flex-col z-20 relative border-r border-[rgba(255,255,255,0.06)] transition-[width] duration-slow ease-out-soft"
       style={{
         width: leftCollapsed ? "var(--width-threads-collapsed)" : "var(--width-threads)",
-        background: "var(--bg-rail)",
+        background: "rgba(255,255,255,0.01)",
       }}
     >
       {/* Logo */}
       <div
-        className="shrink-0 border-b border-[var(--border-shell)] flex items-center justify-center pt-8 pb-8 px-8"
+        className="shrink-0 border-b border-[rgba(255,255,255,0.06)] flex items-center justify-center pt-8 pb-8 px-8"
       >
         <button
           onClick={() => {
@@ -321,7 +304,7 @@ export function TimelineRail() {
         {leftCollapsed && (
           <button
             onClick={handleNewThread}
-            className="halo-on-hover mb-4 w-8 h-8 flex items-center justify-center rounded-sm border border-dashed border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--line-active)] transition-all shrink-0"
+            className="mb-6 w-8 h-8 flex items-center justify-center rounded-md border border-[rgba(255,255,255,0.1)] text-[rgba(255,255,255,0.4)] hover:text-[var(--cykan)] hover:border-[rgba(45,212,191,0.3)] hover:bg-[rgba(45,212,191,0.05)] transition-all duration-300 shrink-0 shadow-sm"
             title="Nouvelle conversation"
           >
             <PlusIcon />
@@ -329,7 +312,7 @@ export function TimelineRail() {
         )}
 
         {leftCollapsed ? (
-          <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col items-center gap-2">
+          <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col items-center gap-3">
             {threads.slice(0, 12).map((t) => (
               <CollapsedTile
                 key={t.id}
@@ -340,31 +323,60 @@ export function TimelineRail() {
             ))}
           </div>
         ) : (
-          <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col" style={{ gap: "var(--space-3)" }}>
-            {/* Today */}
+          <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col" style={{ gap: "var(--space-2)" }}>
+            
+            {/* Top Menu */}
+            <div className="flex flex-col gap-1 mb-4">
+              <button onClick={handleNewThread} className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </span>
+                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Nouvelle conversation</span>
+              </button>
+              <button className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
+                    <path d="M12 12L2.1 7.1" />
+                    <path d="M12 12l9.9 4.9" />
+                  </svg>
+                </span>
+                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">Hearst</span>
+              </button>
+              <button className="group flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[rgba(255,255,255,0.04)]">
+                <span className="text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.9)] transition-colors">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <path d="M9 3v18" />
+                    <path d="M15 3v18" />
+                    <path d="M3 9h18" />
+                    <path d="M3 15h18" />
+                  </svg>
+                </span>
+                <span className="t-14 font-medium text-[rgba(255,255,255,0.9)] flex-1 transition-colors">App</span>
+              </button>
+            </div>
+
+            {/* Récents */}
             <section>
-              <SectionHeader
-                label="Today"
-                count={groups.today.length}
-                action={
-                  <button
-                    type="button"
-                    onClick={handleNewThread}
-                    title="Nouvelle conversation"
-                    aria-label="Nouvelle conversation"
-                    className="halo-on-hover w-4 h-4 flex items-center justify-center rounded-pill border border-[var(--border-default)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-colors"
-                  >
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </button>
-                }
-              />
-              {groups.today.length === 0 ? (
-                <EmptyHint>{"Aucune activité aujourd'hui"}</EmptyHint>
+              <SectionHeader label="Récents" />
+              {groups.today.length === 0 && groups.thisWeek.length === 0 ? (
+                <EmptyHint>Aucune activité récente</EmptyHint>
               ) : (
                 <div className="space-y-px">
                   {groups.today.map((t) => (
+                    <ThreadRow
+                      key={t.id}
+                      thread={t}
+                      isActive={t.id === activeThreadId}
+                      onSelect={() => handleThreadSelect(t.id)}
+                      onDelete={() => handleThreadDelete(t.id)}
+                      onArchive={() => toggleArchived(t.id)}
+                    />
+                  ))}
+                  {groups.thisWeek.map((t) => (
                     <ThreadRow
                       key={t.id}
                       thread={t}
@@ -378,27 +390,10 @@ export function TimelineRail() {
               )}
             </section>
 
-            {groups.thisWeek.length > 0 && (
-              <section>
-                <SectionHeader label="7 derniers jours" count={groups.thisWeek.length} />
-                <div className="space-y-px">
-                  {groups.thisWeek.map((t) => (
-                    <ThreadRow
-                      key={t.id}
-                      thread={t}
-                      isActive={t.id === activeThreadId}
-                      onSelect={() => handleThreadSelect(t.id)}
-                      onDelete={() => handleThreadDelete(t.id)}
-                      onArchive={() => toggleArchived(t.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
+            {/* Archive */}
             {groups.archive.length > 0 && (
-              <section>
-                <SectionHeader label="Archive" count={groups.archive.length} />
+              <section className="mt-4">
+                <SectionHeader label="Archive" />
                 <div className="space-y-px">
                   {groups.archive.map((t) => (
                     <ThreadRow
@@ -419,13 +414,13 @@ export function TimelineRail() {
 
       {/* Footer — identité discrète + actions secondaires */}
       <div
-        className={`shrink-0 border-t border-[var(--border-shell)] flex flex-col items-center ${sectionPadX}`}
-        style={{ paddingTop: "var(--space-3)", paddingBottom: "var(--space-3)", gap: "var(--space-2)" }}
+        className={`shrink-0 border-t border-[rgba(255,255,255,0.06)] flex flex-col items-center ${sectionPadX}`}
+        style={{ paddingTop: "var(--space-4)", paddingBottom: "var(--space-4)", gap: "var(--space-3)", background: "rgba(255,255,255,0.01)" }}
       >
         {leftCollapsed ? (
           <>
             <span
-              className="rounded-pill flex items-center justify-center bg-[var(--surface-1)] text-[var(--text-muted)] t-11 font-medium"
+              className="rounded-full flex items-center justify-center bg-[rgba(255,255,255,0.03)] text-[rgba(255,255,255,0.6)] t-11 font-light border border-[rgba(255,255,255,0.06)]"
               style={{ width: "var(--space-6)", height: "var(--space-6)" }}
               title={firstName}
               aria-label={firstName}
@@ -435,7 +430,7 @@ export function TimelineRail() {
             <Link
               href="/admin"
               title="Console admin"
-              className="w-6 h-6 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
+              className="w-6 h-6 flex items-center justify-center text-[rgba(255,255,255,0.3)] hover:text-[var(--cykan)] transition-colors"
             >
               <AdminIcon />
             </Link>
@@ -444,7 +439,7 @@ export function TimelineRail() {
               onClick={() => signOut({ callbackUrl: "/login" })}
               title="Se déconnecter"
               aria-label="Se déconnecter"
-              className="w-6 h-6 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-colors"
+              className="w-6 h-6 flex items-center justify-center text-[rgba(255,255,255,0.3)] hover:text-[var(--danger)] transition-colors"
             >
               <LogoutIcon />
             </button>
@@ -452,7 +447,7 @@ export function TimelineRail() {
               onClick={toggleLeftCollapsed}
               title="Étendre"
               aria-label="Étendre"
-              className="w-6 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
+              className="w-6 h-5 flex items-center justify-center text-[rgba(255,255,255,0.3)] hover:text-[var(--cykan)] transition-colors"
             >
               <ChevronRightIcon />
             </button>
@@ -460,13 +455,13 @@ export function TimelineRail() {
         ) : (
           <>
             <span
-              className="rounded-pill flex items-center justify-center bg-[var(--surface-1)] text-[var(--text-muted)] t-11 font-medium"
+              className="rounded-full flex items-center justify-center bg-[rgba(255,255,255,0.03)] text-[rgba(255,255,255,0.6)] t-11 font-light border border-[rgba(255,255,255,0.06)]"
               style={{ width: "var(--space-6)", height: "var(--space-6)" }}
               aria-hidden
             >
               {userInitial}
             </span>
-            <span className="t-13 font-light text-[var(--text-muted)] truncate max-w-full">
+            <span className="t-13 font-light text-[rgba(255,255,255,0.9)] truncate max-w-full">
               {firstName}
             </span>
             <div
@@ -476,18 +471,18 @@ export function TimelineRail() {
               <Link
                 href="/admin"
                 title="Console admin"
-                className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+                className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.4)] hover:text-[var(--cykan)] transition-colors"
               >
                 Admin
               </Link>
-              <span className="t-9 font-mono text-[var(--text-ghost)]" aria-hidden>
+              <span className="t-9 text-[rgba(255,255,255,0.2)]" aria-hidden>
                 ·
               </span>
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/login" })}
                 title="Se déconnecter"
-                className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
+                className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.4)] hover:text-[var(--danger)] transition-colors"
               >
                 Exit
               </button>
@@ -496,7 +491,7 @@ export function TimelineRail() {
               onClick={toggleLeftCollapsed}
               title="Réduire"
               aria-label="Réduire le rail"
-              className="w-5 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
+              className="w-5 h-5 flex items-center justify-center text-[rgba(255,255,255,0.3)] hover:text-[var(--cykan)] transition-colors mt-2"
             >
               <ChevronLeftIcon />
             </button>

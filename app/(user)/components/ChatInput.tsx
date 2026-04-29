@@ -108,7 +108,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="px-6 py-4">
+    <div className="px-6 py-6">
       <div
         className="mx-auto relative"
         style={{ maxWidth: "var(--input-max-width)" }}
@@ -117,10 +117,10 @@ export function ChatInput({
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="absolute bottom-full mb-4 w-full rounded-none border-t border-[var(--border-soft)] overflow-hidden z-50 bg-transparent"
+            className="absolute bottom-full mb-4 w-full rounded-2xl border border-[rgba(255,255,255,0.06)] overflow-hidden z-50 bg-[#0A0A0A] shadow-2xl"
           >
             {matchingServices.length === 0 ? (
-              <div className="p-4 t-11 font-mono tracking-display text-[var(--text-faint)]">
+              <div className="p-4 t-11 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
                 {typeaheadQuery ? (
                   <>Aucune source trouvée&nbsp;: {typeaheadQuery}</>
                 ) : (
@@ -133,22 +133,19 @@ export function ChatInput({
                   <button
                     key={service.id}
                     onClick={() => selectService(service)}
-                    className="w-full flex items-center gap-4 px-4 py-3 text-left border-b border-[var(--border-soft)] transition-all duration-base group hover:text-[var(--cykan)]"
+                    className="w-full flex items-center gap-4 px-4 py-3 text-left border-b border-[rgba(255,255,255,0.03)] transition-all duration-300 group hover:bg-[rgba(255,255,255,0.02)]"
                   >
-                    <span className="t-18 grayscale group-hover:grayscale-0 transition-all">
+                    <span className="t-18 text-[rgba(255,255,255,0.4)] group-hover:text-[var(--cykan)] transition-colors">
                       {service.icon}
                     </span>
                     <div className="flex-1">
-                      <p className="t-13 font-medium tracking-tight text-[var(--text)]">
+                      <p className="t-13 font-medium tracking-wide text-[rgba(255,255,255,0.9)] group-hover:text-white transition-colors">
                         @{service.id}
                       </p>
-                      <p className="t-10 font-mono tracking-display text-[var(--text-faint)]">
+                      <p className="t-10 tracking-[0.1em] uppercase text-[rgba(255,255,255,0.3)] mt-0.5">
                         {service.name}
                       </p>
                     </div>
-                    <span className="t-10 font-mono text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity">
-                      Link
-                    </span>
                   </button>
                 ))}
               </div>
@@ -156,29 +153,29 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Pill — capsule avec focus cykan */}
+        {/* Input Pill — High-end minimal design */}
         <div
-          className="rounded-full group border border-[var(--border-subtle)] transition-all duration-base px-6 py-4 focus-within:shadow-[0_0_30px_rgba(45,212,191,0.1)] focus-within:border-[var(--cykan-border)]"
+          className="rounded-[32px] group border border-[rgba(255,255,255,0.06)] transition-all duration-500 px-6 py-5 focus-within:border-[rgba(45,212,191,0.3)] focus-within:shadow-[0_0_30px_rgba(45,212,191,0.05)]"
           style={{
-            background: "var(--card-flat-bg)",
+            background: "rgba(255,255,255,0.015)",
             color: "var(--text)",
           }}
         >
           {attachment && (
-            <div className="flex items-center gap-2 px-1 pb-2">
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <div className="flex items-center gap-3 px-1 pb-3 mb-2 border-b border-[rgba(255,255,255,0.04)]">
+              <span className="t-9 tracking-[0.2em] uppercase text-[var(--cykan)]">
                 PDF
               </span>
-              <span className="t-11 text-[var(--text-muted)] truncate max-w-xs">
+              <span className="t-13 text-[rgba(255,255,255,0.7)] truncate max-w-xs font-light">
                 {attachment.fileName}
               </span>
-              <span className="t-9 font-mono text-[var(--text-faint)]">
+              <span className="t-10 tracking-widest text-[rgba(255,255,255,0.3)]">
                 {attachment.pageCount}p
               </span>
               <button
                 type="button"
                 onClick={() => setAttachment(null)}
-                className="ml-auto t-9 font-mono text-[var(--text-ghost)] hover:text-[var(--danger)] transition-colors"
+                className="ml-auto t-13 text-[rgba(255,255,255,0.3)] hover:text-[var(--danger)] transition-colors"
                 aria-label="Retirer le document"
               >
                 ×
@@ -186,10 +183,11 @@ export function ChatInput({
             </div>
           )}
           {uploadError && (
-            <p className="t-9 font-mono text-[var(--danger)] px-1 pb-2">
+            <p className="t-10 tracking-wide text-[var(--danger)] px-1 pb-3">
               {uploadError}
             </p>
           )}
+          
           <textarea
             ref={inputRef}
             value={input}
@@ -217,17 +215,18 @@ export function ChatInput({
               "Poser une question"
             }
             rows={1}
-            className="block w-full bg-transparent t-15 font-normal text-[var(--text)] placeholder:text-[var(--text-placeholder)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-2"
+            className="block w-full bg-transparent t-15 font-light text-[rgba(255,255,255,0.9)] placeholder:text-[rgba(255,255,255,0.25)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
             style={{
               minHeight: "var(--height-input-min)",
               maxHeight: "var(--height-input-max)",
             }}
           />
-          <div className="flex items-center justify-between pt-2">
-            <span className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] px-1">
+          
+          <div className="flex items-center justify-between pt-4 mt-1">
+            <span className="t-9 tracking-[0.25em] uppercase text-[rgba(255,255,255,0.3)] px-1">
               Auto
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -273,21 +272,21 @@ export function ChatInput({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading || isRunning}
                 title={uploading ? "Analyse en cours…" : "Joindre un PDF"}
-                className={`w-8 h-8 flex items-center justify-center transition-all duration-base ${
+                className={`w-8 h-8 flex items-center justify-center transition-all duration-300 ${
                   uploading
                     ? "text-[var(--warn)] animate-pulse"
                     : attachment
                       ? "text-[var(--cykan)]"
-                      : "text-[var(--text-faint)] hover:text-[var(--text-muted)]"
+                      : "text-[rgba(255,255,255,0.3)] hover:text-[rgba(255,255,255,0.7)]"
                 }`}
               >
                 <svg
-                  width="14"
-                  height="14"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -295,17 +294,17 @@ export function ChatInput({
                 </svg>
               </button>
               {isRunning ? (
-                <div className="w-9 h-9 flex items-center justify-center shrink-0">
-                  <div className="w-4 h-4 border-2 border-[var(--surface-2)] border-t-[var(--cykan)] rounded-pill animate-spin" />
+                <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                  <div className="w-4 h-4 border-2 border-[rgba(255,255,255,0.1)] border-t-[var(--cykan)] rounded-full animate-spin" />
                 </div>
               ) : (
                 <button
                   onClick={handleSubmit}
                   disabled={!input.trim()}
-                  className={`w-8 h-8 flex items-center justify-center shrink-0 ${
+                  className={`w-8 h-8 flex items-center justify-center shrink-0 rounded-md transition-all duration-300 ${
                     input.trim()
-                      ? "bg-[var(--cykan)] text-[var(--bg)] border border-[var(--cykan)]"
-                      : "bg-transparent text-[var(--text-faint)] border border-[var(--border-default)] cursor-not-allowed"
+                      ? "border border-[rgba(45,212,191,0.3)] text-[var(--cykan)] bg-[rgba(45,212,191,0.05)] hover:bg-[rgba(45,212,191,0.1)] hover:shadow-[0_0_15px_rgba(45,212,191,0.15)]"
+                      : "border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.2)] bg-transparent cursor-not-allowed"
                   }`}
                   title="Envoyer"
                 >
@@ -315,7 +314,7 @@ export function ChatInput({
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2.5"
+                    strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
@@ -326,8 +325,8 @@ export function ChatInput({
             </div>
           </div>
         </div>
-        <div className="absolute left-0 right-0 -bottom-5 flex justify-center opacity-30 hover:opacity-100 transition-opacity">
-          <p className="t-9 text-[var(--text-soft)] font-mono tracking-display">
+        <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
+          <p className="t-9 text-[rgba(255,255,255,0.3)] tracking-[0.15em] uppercase">
             Entrée pour envoyer · Maj+Entrée nouvelle ligne · @ pour mentionner
           </p>
         </div>
