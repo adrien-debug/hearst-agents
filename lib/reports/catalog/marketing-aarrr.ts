@@ -43,7 +43,7 @@ export function buildMarketingAarrr(scope: ReportSpec["scope"]): ReportSpec {
       summary:
         "Funnel AARRR, CAC / LTV / payback par cohorte et canal sur 12 semaines.",
       domain: "growth",
-      persona: "ops",
+      persona: "marketing",
       cadence: "weekly",
       confidentiality: "internal",
     },

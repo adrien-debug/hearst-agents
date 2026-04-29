@@ -33,11 +33,17 @@ export const REPORT_DOMAINS = [
   "ops-eng",
   "support",
   "mixed",
+  // Kuala — nouveaux domaines métier
+  "people",
+  "marketing",
 ] as const;
 export type ReportDomain = (typeof REPORT_DOMAINS)[number];
 
 /**
  * Profil d'utilisateur ciblé. Influence la narration et le ton.
+ *
+ * Backward-compatible : "eng" est maintenu pour les specs existants.
+ * "engineering" est l'alias canonique pour les nouveaux catalogues.
  */
 export const REPORT_PERSONAS = [
   "founder",
@@ -45,6 +51,13 @@ export const REPORT_PERSONAS = [
   "ops",
   "sales",
   "eng",
+  // Kuala — nouveaux personas métier
+  "engineering",
+  "marketing",
+  "people",
+  "finance",
+  "product",
+  "support",
 ] as const;
 export type ReportPersona = (typeof REPORT_PERSONAS)[number];
 

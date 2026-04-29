@@ -40,16 +40,11 @@ function SectionLabel({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex items-center justify-between mb-5">
+    <div className="flex items-center justify-between mb-4">
       <span className="inline-flex items-baseline gap-3">
-        <span className="border-l-2 border-[var(--cykan)] pl-3 t-11 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.4)] font-medium">
+        <span className="t-12 font-semibold text-[rgba(255,255,255,0.9)]">
           {children}
         </span>
-        {typeof count === "number" && (
-          <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
-            {count.toString().padStart(2, "0")}
-          </span>
-        )}
       </span>
       {action && (
         <button
@@ -66,7 +61,7 @@ function SectionLabel({
 
 function DashboardCard({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col p-6 bg-[rgba(255,255,255,0.015)] border border-[rgba(255,255,255,0.04)] rounded-xl shadow-sm hover:border-[rgba(255,255,255,0.08)] transition-colors duration-300">
+    <div className="flex flex-col py-4 px-2">
       {children}
     </div>
   );
@@ -89,10 +84,10 @@ export function GeneralDashboard({
   const activeMissions = Array.isArray(_missions) ? _missions : [];
 
   return (
-    <div className="flex flex-col" style={{ padding: "var(--space-6)", gap: "var(--space-4)" }}>
+    <div className="flex flex-col" style={{ padding: "var(--space-6) var(--space-4)", gap: "0" }}>
       {/* KPIs */}
       <DashboardCard>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2">
           <div className="flex flex-col items-center text-center gap-3">
             <span className="t-28 font-light text-[rgba(255,255,255,0.9)] tabular-nums leading-none">
               {assetsCount.toString().padStart(2, "0")}
@@ -129,7 +124,7 @@ export function GeneralDashboard({
           Missions actives
         </SectionLabel>
         {activeMissions.length === 0 ? (
-          <p className="t-10 tracking-[0.15em] uppercase text-[rgba(255,255,255,0.3)] py-3 font-light text-center">
+          <p className="t-10 text-[rgba(255,255,255,0.4)] py-2 font-light">
             Aucune mission armée.
           </p>
         ) : (
@@ -137,12 +132,12 @@ export function GeneralDashboard({
             {activeMissions.map((m: any, i: number) => (
               <div
                 key={m.id}
-                className="flex items-center justify-between py-3 px-3 group cursor-pointer rounded-md hover:bg-[rgba(255,255,255,0.02)] transition-colors duration-300"
+                className="flex items-center justify-between py-2.5 px-3 -mx-3 group cursor-pointer rounded-md hover:bg-[rgba(255,255,255,0.04)] transition-colors duration-300"
               >
                 <span className="t-13 font-light text-[rgba(255,255,255,0.7)] group-hover:text-[rgba(255,255,255,0.9)] truncate transition-colors">
                   {m.name}
                 </span>
-                <span className="t-9 tracking-[0.2em] uppercase text-[var(--cykan)]">
+                <span className="t-9 tracking-[0.2em] uppercase text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   armé
                 </span>
               </div>
@@ -160,11 +155,11 @@ export function GeneralDashboard({
           Derniers livrables
         </SectionLabel>
         {recentReports.length === 0 ? (
-          <p className="t-10 tracking-[0.15em] uppercase text-[rgba(255,255,255,0.3)] py-3 font-light text-center">
+          <p className="t-10 text-[rgba(255,255,255,0.4)] py-2 font-light">
             Aucun livrable récent.
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 mt-2">
             {recentReports.map((report: any, i: number) => {
               const isPdf = report.name?.toLowerCase().endsWith('.pdf');
               return (
@@ -197,7 +192,7 @@ export function GeneralDashboard({
       {/* Alertes */}
       <DashboardCard>
         <SectionLabel count={0}>Alertes</SectionLabel>
-        <p className="t-10 tracking-[0.15em] uppercase text-[rgba(255,255,255,0.3)] py-3 font-light text-center">
+        <p className="t-10 text-[rgba(255,255,255,0.4)] py-2 font-light">
           Aucune alerte récente.
         </p>
       </DashboardCard>

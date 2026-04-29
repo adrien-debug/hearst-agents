@@ -190,11 +190,6 @@ function CockpitChatBody() {
           loading={loading}
         />
       </div>
-      <SuggestionsFooter
-        suggestions={reportSuggestions ?? []}
-        runningSpecs={runningSpecs}
-        onRun={runSuggestion}
-      />
     </div>
   );
 }

@@ -40,7 +40,7 @@ export function buildEngineeringVelocity(scope: ReportSpec["scope"]): ReportSpec
       summary:
         "DORA metrics (Deploy Freq, Lead Time, CFR, MTTR), cycle time et top long-running PRs sur 28 jours.",
       domain: "ops-eng",
-      persona: "eng",
+      persona: "engineering",
       cadence: "weekly",
       confidentiality: "internal",
     },

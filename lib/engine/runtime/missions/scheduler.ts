@@ -21,6 +21,7 @@ import { tryAcquireMissionLease, releaseMissionLease } from "./distributed-lease
 import { setMissionRunning as opsRunning, setMissionResult as opsResult } from "./ops-store";
 import { normalizeMissionResult } from "./normalize-result";
 import { INSTANCE_ID } from "../instance-id";
+import { buildExportJobPayload, runExportScheduledReportJob } from "./export-job";
 
 const POLL_INTERVAL_MS = 60_000;
 const triggeredThisMinute = new Set<string>();

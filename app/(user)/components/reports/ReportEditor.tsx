@@ -29,8 +29,9 @@
  *   - `report-editor-json-toggle`   (bouton expand/collapse JSON)
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReportSpec, BlockSpec } from "@/lib/reports/spec/schema";
+import type { TemplateSummary } from "@/lib/reports/templates/schema";
 
 export interface ReportEditorProps {
   /** Spec courant édité — source de vérité, contrôlé par le parent. */
@@ -41,11 +42,26 @@ export interface ReportEditorProps {
   onClose?: () => void;
 }
 
+// ── Statuts de feedback pour save/load template ─────────────
+
+type SaveStatus = "idle" | "form" | "saving" | "saved" | "error";
+type LoadStatus = "idle" | "loading_list" | "list" | "loading_spec" | "error";
+
 export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
   // Mémorise une copie initiale du spec au mount pour permettre Reset.
   // On utilise un useState lazy initializer pour ne capturer le spec qu'une fois.
   const [initialSpec] = useState<ReportSpec>(() => structuredClone(spec));
   const [jsonOpen, setJsonOpen] = useState(false);
+
+  // ── Template save state ─────────────────────────────────────
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [saveName, setSaveName] = useState("");
+  const [saveDesc, setSaveDesc] = useState("");
+  const saveNameRef = useRef<HTMLInputElement>(null);
+
+  // ── Template load state ─────────────────────────────────────
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>("idle");
+  const [templateList, setTemplateList] = useState<TemplateSummary[]>([]);
 
   // ESC ferme le panneau si onClose fourni.
   useEffect(() => {
@@ -82,6 +98,85 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
   const reset = useCallback(() => {
     onChange(structuredClone(initialSpec));
   }, [initialSpec, onChange]);
+
+  // ── Handlers save template ──────────────────────────────────
+
+  const openSaveForm = useCallback(() => {
+    setSaveName(spec.meta.title);
+    setSaveDesc("");
+    setSaveStatus("form");
+    setTimeout(() => saveNameRef.current?.focus(), 50);
+  }, [spec.meta.title]);
+
+  const cancelSave = useCallback(() => {
+    setSaveStatus("idle");
+    setSaveName("");
+    setSaveDesc("");
+  }, []);
+
+  const confirmSave = useCallback(async () => {
+    if (!saveName.trim()) return;
+    setSaveStatus("saving");
+    try {
+      const res = await fetch("/api/reports/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: saveName.trim(),
+          description: saveDesc.trim() || undefined,
+          spec,
+          isPublic: false,
+        }),
+      });
+      if (!res.ok) throw new Error("save_failed");
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2500);
+      setSaveName("");
+      setSaveDesc("");
+    } catch {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
+  }, [saveName, saveDesc, spec]);
+
+  // ── Handlers load template ──────────────────────────────────
+
+  const openLoadList = useCallback(async () => {
+    setLoadStatus("loading_list");
+    try {
+      const res = await fetch("/api/reports/templates");
+      if (!res.ok) throw new Error("list_failed");
+      const data = (await res.json()) as { templates: TemplateSummary[] };
+      setTemplateList(data.templates ?? []);
+      setLoadStatus("list");
+    } catch {
+      setLoadStatus("error");
+      setTimeout(() => setLoadStatus("idle"), 3000);
+    }
+  }, []);
+
+  const cancelLoad = useCallback(() => {
+    setLoadStatus("idle");
+    setTemplateList([]);
+  }, []);
+
+  const loadTemplateSpec = useCallback(
+    async (templateId: string) => {
+      setLoadStatus("loading_spec");
+      try {
+        const res = await fetch(`/api/reports/templates/${templateId}`);
+        if (!res.ok) throw new Error("load_failed");
+        const data = (await res.json()) as { spec: ReportSpec };
+        onChange(data.spec);
+        setLoadStatus("idle");
+        setTemplateList([]);
+      } catch {
+        setLoadStatus("error");
+        setTimeout(() => setLoadStatus("idle"), 3000);
+      }
+    },
+    [onChange],
+  );
 
   const visibleCount = spec.blocks.filter((b) => !b.hidden).length;
   const totalCount = spec.blocks.length;

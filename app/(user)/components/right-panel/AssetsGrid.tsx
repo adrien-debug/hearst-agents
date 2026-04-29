@@ -252,60 +252,6 @@ export function AssetsGrid({
 
   return (
     <div className="flex flex-col">
-      {visibleSuggestions.length > 0 && (
-        <div className="flex flex-col" style={{ paddingLeft: "var(--space-4)", paddingRight: "var(--space-4)", paddingTop: "var(--space-4)", gap: "var(--space-3)" }}>
-          <div
-            className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.4)]"
-            style={{ paddingBottom: "var(--space-1)" }}
-          >
-            Reports suggérés
-          </div>
-          {visibleSuggestions.map((s) => {
-            const isRunning = runningSpecs.has(s.specId);
-            return (
-              <button
-                key={s.specId}
-                type="button"
-                onClick={() => !isRunning && onRunSuggestion(s.specId, s.title)}
-                disabled={isRunning}
-                className={`w-full text-left flex flex-col rounded-md border border-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.02)] focus-visible:outline-none focus-visible:border-[rgba(45,212,191,0.3)] transition-all duration-300 ${isRunning ? "opacity-70" : ""}`}
-                data-testid={`report-suggestion-${s.specId}`}
-                data-suggestion-status={isRunning ? "running" : s.status}
-                style={{
-                  padding: "var(--space-3) var(--space-4)",
-                  gap: "var(--space-2)",
-                  background: "rgba(255,255,255,0.015)",
-                }}
-                title={s.description}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="t-13 font-light text-[rgba(255,255,255,0.9)]">{s.title}</span>
-                  <span
-                    className="t-9 tracking-[0.2em] uppercase inline-flex items-center gap-2"
-                    style={{
-                      color: isRunning ? "var(--cykan)" : s.status === "ready" ? "var(--cykan)" : "rgba(255,255,255,0.3)",
-                    }}
-                  >
-                    {isRunning ? (
-                      <>
-                        <Spinner size={12} />
-                        <span>GÉNÉRATION…</span>
-                      </>
-                    ) : s.status === "ready" ? (
-                      "LANCER"
-                    ) : (
-                      `${s.requiredApps.length - s.missingApps.length}/${s.requiredApps.length}`
-                    )}
-                  </span>
-                </div>
-                <span className="t-10 text-[rgba(255,255,255,0.4)] tracking-wide" style={{ lineHeight: 1.4 }}>
-                  {s.description}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
       <div className="grid grid-cols-2 gap-3" style={{ padding: "var(--space-4)" }}>
         {visibleAssets.map((asset) => {
         const accent = assetAccent(asset.type);

@@ -55,6 +55,7 @@ import {
   HR_PEOPLE_REQUIRED_APPS,
 } from "./hr-people";
 import type { ReportSpec } from "@/lib/reports/spec/schema";
+import type { TemplateSummary } from "@/lib/reports/templates/schema";
 
 export interface CatalogEntry {
   id: string;
@@ -184,6 +185,8 @@ export interface ApplicableReport {
   requiredApps: ReadonlyArray<string>;
   missingApps: ReadonlyArray<string>;
   status: "ready" | "partial" | "blocked";
+  /** "catalog" = rapport prédéfini, "custom" = template sauvegardé par l'utilisateur */
+  source: "catalog" | "custom";
 }
 
 export function getApplicableReports(
@@ -209,10 +212,43 @@ export function getApplicableReports(
         requiredApps: entry.requiredApps,
         missingApps: missing,
         status,
+        source: "catalog",
       });
     }
   }
   return out;
+}
+
+/**
+ * Merge les rapports prédéfinis du catalogue avec les templates personnalisés
+ * du tenant. Les templates custom apparaissent toujours avec status="ready"
+ * (l'utilisateur a déjà configuré le spec — pas de requiredApps).
+ *
+ * `customTemplates` est fourni par l'appelant (API route ayant déjà chargé
+ * les templates depuis Supabase) pour éviter une dépendance circulaire avec
+ * lib/reports/templates/store.ts dans ce module côté client.
+ */
+export function getApplicableReportsWithTemplates(
+  connectedApps: ReadonlyArray<string>,
+  customTemplates: ReadonlyArray<TemplateSummary>,
+): ApplicableReport[] {
+  const base = getApplicableReports(connectedApps);
+
+  const custom: ApplicableReport[] = customTemplates.map((t) => ({
+    id: t.id,
+    title: t.name,
+    description: t.description ?? "",
+    // Le domaine des templates est text libre — caster vers le type attendu
+    // avec fallback "mixed" si la valeur n'est pas dans l'enum.
+    domain: (t.domain as ReportSpec["meta"]["domain"]) ?? "mixed",
+    persona: "founder" as ReportSpec["meta"]["persona"],
+    requiredApps: [],
+    missingApps: [],
+    status: "ready",
+    source: "custom",
+  }));
+
+  return [...base, ...custom];
 }
 
 // Re-exports

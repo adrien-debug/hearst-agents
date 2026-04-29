@@ -76,6 +76,17 @@ export interface RunReportOptions {
    * côté dispatcher via `severityFloor`).
    */
   alertDispatcher?: AlertDispatcher;
+  /**
+   * Versioning opt-in. Si `enabled: true` et `assetId` fourni, une version est
+   * créée automatiquement après un run réussi.
+   * Activé par défaut quand `assetId` est fourni.
+   */
+  versioning?: {
+    enabled: boolean;
+    assetId?: string;
+    tenantId?: string;
+    triggeredBy?: "manual" | "scheduled" | "api";
+  };
 }
 
 export interface RunReportResult {
@@ -184,7 +195,7 @@ export async function runReport(
     );
   }
 
-  return {
+  const result: RunReportResult = {
     payload,
     narration: narrationResult?.text ?? null,
     signals,
@@ -198,4 +209,29 @@ export async function runReport(
     },
     durationMs: Date.now() - t0,
   };
+
+  // ── 8. Versioning (fire-and-forget, best-effort) ─────────────
+  const vOpts = options.versioning;
+  if (vOpts?.enabled !== false && vOpts?.assetId && vOpts?.tenantId) {
+    void (async () => {
+      try {
+        const { createVersion } = await import("@/lib/reports/versions/store");
+        await createVersion({
+          assetId: vOpts.assetId!,
+          tenantId: vOpts.tenantId!,
+          spec: spec as unknown as Record<string, unknown>,
+          renderPayload: payload as unknown as Record<string, unknown>,
+          signals: signals,
+          narration: result.narration,
+          triggeredBy: vOpts.triggeredBy ?? "manual",
+        });
+      } catch (err) {
+        console.warn(
+          `[runReport] versioning a throw — ignoré : ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    })();
+  }
+
+  return result;
 }

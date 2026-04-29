@@ -46,8 +46,8 @@ export function buildHrPeople(scope: ReportSpec["scope"]): ReportSpec {
       title: "HR / People",
       summary:
         "Hiring funnel, signaux burnout (heures tardives) et headcount plan sur 90 jours.",
-      domain: "ops",
-      persona: "ops",
+      domain: "people",
+      persona: "people",
       cadence: "weekly",
       confidentiality: "internal",
     },
