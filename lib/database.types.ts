@@ -477,6 +477,7 @@ export type Database = {
       agent_skills: {
         Row: {
           agent_id: string
+          config: Json
           created_at: string
           description: string
           id: string
@@ -485,12 +486,14 @@ export type Database = {
           metadata: Json | null
           name: string
           output_schema: Json
+          priority: number
           risk_level: string
           skill_id: string
-          version: string
+          version: number
         }
         Insert: {
           agent_id: string
+          config?: Json
           created_at?: string
           description?: string
           id?: string
@@ -499,12 +502,14 @@ export type Database = {
           metadata?: Json | null
           name: string
           output_schema?: Json
+          priority?: number
           risk_level?: string
           skill_id: string
-          version: string
+          version: number
         }
         Update: {
           agent_id?: string
+          config?: Json
           created_at?: string
           description?: string
           id?: string
@@ -513,9 +518,10 @@ export type Database = {
           metadata?: Json | null
           name?: string
           output_schema?: Json
+          priority?: number
           risk_level?: string
           skill_id?: string
-          version?: string
+          version?: number
         }
         Relationships: [
           {
@@ -637,6 +643,7 @@ export type Database = {
           agent_id: string
           changelog: string | null
           config_schema: Json | null
+          config_snapshot: Json
           created_at: string
           id: string
           image_ref: string | null
@@ -644,12 +651,14 @@ export type Database = {
           is_stable: boolean
           model_profile_id: string | null
           published_at: string
-          version: string
+          system_prompt: string
+          version: number
         }
         Insert: {
           agent_id: string
           changelog?: string | null
           config_schema?: Json | null
+          config_snapshot?: Json
           created_at?: string
           id?: string
           image_ref?: string | null
@@ -657,12 +666,14 @@ export type Database = {
           is_stable?: boolean
           model_profile_id?: string | null
           published_at?: string
-          version: string
+          system_prompt?: string
+          version: number
         }
         Update: {
           agent_id?: string
           changelog?: string | null
           config_schema?: Json | null
+          config_snapshot?: Json
           created_at?: string
           id?: string
           image_ref?: string | null
@@ -670,7 +681,8 @@ export type Database = {
           is_stable?: boolean
           model_profile_id?: string | null
           published_at?: string
-          version?: string
+          system_prompt?: string
+          version?: number
         }
         Relationships: [
           {
