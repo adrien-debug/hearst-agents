@@ -7,10 +7,9 @@
  * FocalStage embedded. Avant : AssetStage rendait son propre header +
  * mappait l'asset vers un FocalObject minimal + écrivait dans
  * useFocalStore + déléguait à <FocalStage /> qui re-fetchait l'asset
- * via useEffect. Triple rendu (header AssetStage + h1 FocalContent +
- * AgentActivityStrip orphelin du chat précédent), double fetch
- * concurrent, contenu réel jamais affiché à cause du mapping FocalObject
- * incomplet (pas de body/summary/sections hydratés).
+ * via useEffect. Triple rendu (header AssetStage + h1 FocalContent),
+ * double fetch concurrent, contenu réel jamais affiché à cause du
+ * mapping FocalObject incomplet (pas de body/summary/sections hydratés).
  *
  * Désormais : un fetch /api/v2/assets/[id], parse via les helpers
  * lib/assets/content-parser (ReportLayout JSON / HTML iframe / plain

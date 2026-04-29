@@ -17,7 +17,6 @@ import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
-import { PulseStrip } from "./right-panel/PulseStrip";
 import { FocalCard } from "./right-panel/FocalCard";
 import { RightPanelNav, type PanelView } from "./right-panel/RightPanelNav";
 import { GeneralDashboard } from "./right-panel/GeneralDashboard";
@@ -35,7 +34,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
 
   const [data, setData] = useState<RightPanelData | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<PanelView>("general");
 
@@ -117,7 +115,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
           runId: String(a.run_id ?? a.runId ?? ""),
         }));
         setData({ assets, missions, focalObject: undefined, secondaryObjects: undefined } as RightPanelData);
-        setIsConnected(false);
         setLoading(false);
       });
       return () => { cancelled = true; };
@@ -135,7 +132,6 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     const applyPanel = (panelData: RightPanelData) => {
       if (cancelled || activeThreadIdRef.current !== streamThreadId) return;
       setData(panelData);
-      setIsConnected(true);
       const hydrateThreadState = useFocalStore.getState().hydrateThreadState;
       const tid = activeThreadIdRef.current;
       const mappedFocal = panelData.focalObject ? mapFocalObject(panelData.focalObject, tid) : null;
@@ -156,12 +152,12 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
     });
 
     es.addEventListener("stream_error", () => {
-      if (!cancelled) setIsConnected(false);
+      // Stream errors silently — l'UI ne montre plus le statut SSE depuis
+      // le retrait du footer "live/offline" (asymétrie chat-only).
     });
 
     es.onerror = () => {
-      if (cancelled) return;
-      setIsConnected(false);
+      // Idem
     };
 
     return () => {
@@ -256,13 +252,10 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         </div>
       )}
 
-      {/* Strate 1 — PULSE */}
-      <PulseStrip />
-
-      {/* Strate 2 — FOCAL (notifications) */}
+      {/* Strate 1 — FOCAL (notifications) */}
       <FocalCard focalObject={focalObject} secondaryObjects={secondaryObjects} activeThreadId={activeThreadId} />
 
-      {/* Strate 3 — NAVIGATION */}
+      {/* Strate 2 — NAVIGATION */}
       <RightPanelNav
         activeView={activeView}
         onChangeView={handleViewChange}
@@ -273,29 +266,9 @@ export function RightPanelContent({ onClose }: RightPanelContentProps) {
         eventsCount={runtimeEvents.length}
       />
 
-      {/* Strate 4 — CONTENT */}
+      {/* Strate 3 — CONTENT */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
         {renderContent()}
-      </div>
-
-      {/* STATUS footer */}
-      <div className="shrink-0 border-t border-[var(--border-shell)] px-4 py-2 flex items-center gap-2">
-        <span
-          className={`inline-flex items-center gap-2 t-9 font-mono uppercase tracking-section px-2 py-1 rounded-sm shrink-0 ${
-            !activeThreadId
-              ? "text-[var(--text-faint)]"
-              : isConnected
-                ? "bg-[var(--cykan-bg-active)] text-[var(--cykan)]"
-                : "text-[var(--text-faint)]"
-          }`}
-        >
-          <span
-            className={`w-2 h-2 rounded-pill shrink-0 ${
-              !activeThreadId ? "bg-[var(--text-ghost)]" : isConnected ? "bg-[var(--cykan)]" : "bg-[var(--text-ghost)]"
-            }`}
-          />
-          {!activeThreadId ? "standby" : isConnected ? "live" : "offline"}
-        </span>
       </div>
     </aside>
   );

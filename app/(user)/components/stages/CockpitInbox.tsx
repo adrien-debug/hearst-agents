@@ -217,7 +217,7 @@ function SuggestionRow({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left flex items-center justify-between border-l-2 border-l-[var(--cykan)] hover:bg-[var(--surface-1)] transition-colors"
+      className="w-full text-left flex items-center justify-between border-l-2 border-l-[var(--cykan)] hover:bg-[var(--surface-1)] focus-visible:outline-none focus-visible:bg-[var(--surface-1)] focus-visible:ring-1 focus-visible:ring-[var(--cykan)] transition-colors"
       style={{ padding: "var(--space-3)" }}
     >
       <div className="flex-1 min-w-0">
@@ -249,7 +249,7 @@ function ThreadRow({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left flex items-center justify-between hover:bg-[var(--surface-1)] transition-colors"
+      className="w-full text-left flex items-center justify-between hover:bg-[var(--surface-1)] focus-visible:outline-none focus-visible:bg-[var(--surface-1)] focus-visible:ring-1 focus-visible:ring-[var(--cykan)] transition-colors"
       style={{ padding: "var(--space-3)" }}
     >
       <div className="flex items-center min-w-0" style={{ gap: "var(--space-3)" }}>
@@ -272,7 +272,7 @@ function AssetRow({ asset, onClick }: { asset: RightPanelAsset; onClick: () => v
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left flex items-center hover:bg-[var(--surface-1)] transition-colors"
+      className="w-full text-left flex items-center hover:bg-[var(--surface-1)] focus-visible:outline-none focus-visible:bg-[var(--surface-1)] focus-visible:ring-1 focus-visible:ring-[var(--cykan)] transition-colors"
       style={{ padding: "var(--space-3)", gap: "var(--space-3)" }}
     >
       <span className="w-5 h-5 text-[var(--text-muted)] shrink-0">

@@ -9,14 +9,15 @@
  * Trois zones :
  *   gauche  — hamburger mobile + logo H (clic → cockpit)
  *   centre  — Cmd+K trigger (placeholder rotatif, ouvre Commandeur)
- *   droite  — RUN_ACTIVE/VOICE_ON (conditionnels) + CREDITS si bas + profile
+ *   droite  — RUN_ACTIVE/VOICE_ON (conditionnels)
  *
  * Drop vs version précédente :
  *   - SYSTEM_OK (status nul, "présence de contenu = OK")
  *   - Home/route title (redondant avec Stage actif)
  *   - IDLE (anti-pattern marché 2025)
  *   - CONNECTORS NN/NN (info déplacée dans /apps via Cmd+K)
- *   - $1.00 permanent (ne s'affiche que si < $5)
+ *   - CREDITS (faux signal tant que le système de crédits live n'est
+ *     pas branché côté serveur — un `$1.00` constant trompe l'œil).
  */
 
 import { useRouter } from "next/navigation";
@@ -24,11 +25,6 @@ import { useRuntimeStore } from "@/stores/runtime";
 import { useStageStore } from "@/stores/stage";
 import { useNavigationStore } from "@/stores/navigation";
 import { GhostIconMenu } from "./ghost-icons";
-
-const CREDITS_LOW_THRESHOLD = 5;
-// V1 : crédits hardcodés. À brancher sur un store/API quand le système de
-// crédits live sera persisté côté serveur.
-const CURRENT_CREDITS_USD = 1.0;
 
 export function PulseBar() {
   const router = useRouter();
@@ -47,8 +43,6 @@ export function PulseBar() {
     coreState === "processing" ||
     coreState === "awaiting_approval" ||
     coreState === "awaiting_clarification";
-
-  const showCredits = CURRENT_CREDITS_USD < CREDITS_LOW_THRESHOLD;
 
   const goCockpit = () => {
     router.push("/");
@@ -113,15 +107,6 @@ export function PulseBar() {
               aria-hidden
             />
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">VOICE_ON</span>
-          </div>
-        )}
-
-        {showCredits && (
-          <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">LOW</span>
-            <span className="t-9 font-mono tracking-display text-[var(--warn)]">
-              ${CURRENT_CREDITS_USD.toFixed(2)}
-            </span>
           </div>
         )}
       </div>

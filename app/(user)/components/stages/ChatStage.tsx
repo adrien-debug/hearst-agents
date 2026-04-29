@@ -5,7 +5,6 @@ import { useNavigationStore } from "@/stores/navigation";
 import { ChatInput } from "../ChatInput";
 import { ChatMessages } from "../ChatMessages";
 import { Breadcrumb, type Crumb } from "../Breadcrumb";
-import { AgentActivityStrip } from "../AgentActivityStrip";
 import { RunProgressBanner } from "../RunProgressBanner";
 import { FocalStage } from "../FocalStage";
 import type { Message } from "@/lib/core/types";
@@ -41,8 +40,6 @@ export function ChatStage({ messages, hasMessages, onSubmit, connectedServices }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative" style={{ background: "var(--bg-center)" }}>
-      <AgentActivityStrip />
-
       {focalVisible && focal && (() => {
         const threadLabel = activeThread?.name?.trim() ?? "";
         const titleLabel = focal.title?.trim() ?? "";
