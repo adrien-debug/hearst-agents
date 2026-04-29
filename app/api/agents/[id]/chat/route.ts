@@ -4,6 +4,7 @@ import { getProvider, smartStreamChat } from "@/lib/llm";
 import type { ModelDecision } from "@/lib/llm";
 import { RunTracer } from "@/lib/engine/runtime";
 import { chatRequestSchema, parseBody, err } from "@/lib/domain";
+import { requireScope } from "@/lib/platform/auth/scope";
 import type { ChatMessage } from "@/lib/llm";
 import type { Json } from "@/lib/database.types";
 import type { AgentGuardPolicy } from "@/lib/engine/runtime/prompt-guard";
@@ -17,6 +18,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  // Auth gate : exécute des appels LLM côté agent — public = abus tokens.
+  const { scope, error: scopeError } = await requireScope({
+    context: `POST /api/agents/${id}/chat`,
+  });
+  if (scopeError || !scope) {
+    return err(scopeError?.message ?? "not_authenticated", scopeError?.status ?? 401);
+  }
 
   let body: unknown;
   try {

@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { ok, err } from "@/lib/domain";
 import { executeWorkflow } from "@/lib/engine/runtime/workflow-engine";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  // Auth gate : exécute un workflow arbitraire — public = abus immédiat
+  // (LLM tokens, intégrations side-effects).
+  const { scope, error: scopeError } = await requireScope({
+    context: `POST /api/workflows/${id}/run`,
+  });
+  if (scopeError || !scope) {
+    return err(scopeError?.message ?? "not_authenticated", scopeError?.status ?? 401);
+  }
 
   let body: { input?: Record<string, unknown>; cost_budget_usd?: number } = {};
   try {

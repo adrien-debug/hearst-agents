@@ -4,6 +4,7 @@ import { ok, err, parseBody } from "@/lib/domain/api-helpers";
 import { RunTracer } from "@/lib/engine/runtime";
 import { executeIntegration } from "@/lib/integrations";
 import { RuntimeError } from "@/lib/engine/runtime/lifecycle";
+import { requireScope } from "@/lib/platform/auth/scope";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  // Auth gate : exécute des actions intégrations (Composio, custom)
+  // pour le compte de l'user connecté — public = abus immédiat.
+  const { scope, error: scopeError } = await requireScope({
+    context: `POST /api/integrations/${id}/execute`,
+  });
+  if (scopeError || !scope) {
+    return err(scopeError?.message ?? "not_authenticated", scopeError?.status ?? 401);
+  }
 
   let body: unknown;
   try { body = await req.json(); } catch { return err("Invalid JSON", 400); }

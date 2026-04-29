@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import { getProvider } from "@/lib/llm";
 import { evaluateSchema, ok, err, parseBody, dbErr } from "@/lib/domain";
+import { requireScope } from "@/lib/platform/auth/scope";
 import type { ChatMessage } from "@/lib/llm";
 import type { Json } from "@/lib/database.types";
 
@@ -12,6 +13,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  // Auth gate : exécute des appels LLM eval — public = abus tokens.
+  const { scope, error: scopeError } = await requireScope({
+    context: `POST /api/agents/${id}/evaluate`,
+  });
+  if (scopeError || !scope) {
+    return err(scopeError?.message ?? "not_authenticated", scopeError?.status ?? 401);
+  }
+
   try {
     const body = await req.json();
     const parsed = parseBody(evaluateSchema, body);

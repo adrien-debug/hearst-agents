@@ -1,8 +1,21 @@
 import { parseDocumentBuffer } from "@/lib/capabilities/providers/llamaparse";
+import { requireScope } from "@/lib/platform/auth/scope";
 
 export const maxDuration = 60;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request): Promise<Response> {
+  // Auth gate : sans ça l'endpoint est public et brûle des tokens
+  // LlamaParse pour n'importe quel client.
+  const { scope, error } = await requireScope({ context: "POST /api/v2/documents/upload" });
+  if (error || !scope) {
+    return Response.json(
+      { error: error?.message ?? "not_authenticated" },
+      { status: error?.status ?? 401 },
+    );
+  }
+
   const formData = await request.formData();
   const file = formData.get("file");
 
