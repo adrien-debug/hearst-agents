@@ -17,6 +17,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AudioPlayer } from "./AudioPlayer";
+import { ImageViewer } from "./ImageViewer";
+import { VideoPlayer } from "./VideoPlayer";
+import { CodeRunner } from "./CodeRunner";
 import type { AssetVariant, AssetVariantKind } from "@/lib/assets/variants";
 
 interface AssetVariantTabsProps {
@@ -29,10 +32,12 @@ interface AssetVariantTabsProps {
 // essence (rendu directement par AssetStage / FocalStage). Les onglets
 // listent uniquement les formats alternatifs générables à la demande.
 const TABS: ReadonlyArray<{ kind: AssetVariantKind; label: string; available: boolean }> = [
-  { kind: "audio", label: "Audio", available: true },
-  { kind: "video", label: "Vidéo", available: false },
+  { kind: "audio",  label: "Audio",  available: true },
+  { kind: "video",  label: "Vidéo",  available: true },
+  { kind: "image",  label: "Image",  available: true },
+  { kind: "code",   label: "Code",   available: true },
   { kind: "slides", label: "Slides", available: false },
-  { kind: "site", label: "Site", available: false },
+  { kind: "site",   label: "Site",   available: false },
 ];
 
 const POLL_INTERVAL_MS = 4_000;
@@ -43,7 +48,7 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
   const [generating, setGenerating] = useState<AssetVariantKind | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const audioVariant = variants.find((v) => v.kind === "audio");
+  const variantFor = (kind: AssetVariantKind) => variants.find((v) => v.kind === kind);
 
   const fetchVariants = useCallback(async () => {
     try {
@@ -79,7 +84,6 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
 
   const requestVariant = useCallback(
     async (kind: AssetVariantKind) => {
-      if (kind !== "audio") return;
       setGenerating(kind);
       setError(null);
       try {
@@ -145,30 +149,61 @@ export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps)
         </div>
       </header>
 
-      {activeTab === "audio" && (
-        <div>
-          {audioVariant ? (
-            <AudioPlayer variant={audioVariant} />
-          ) : (
-            <div className="flex flex-col items-start gap-4">
-              <p className="t-13 font-light text-[var(--text-muted)]">
-                Aucun variant audio. Génère un fichier audio narré à partir du texte de cet asset (ElevenLabs TTS).
-              </p>
-              <button
-                type="button"
-                onClick={() => void requestVariant("audio")}
-                disabled={generating === "audio"}
-                className="halo-on-hover px-6 py-3 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow disabled:opacity-60"
-              >
-                {generating === "audio" ? "Création…" : "Générer l'audio"}
-              </button>
-              {error && (
-                <p className="t-11 font-mono uppercase tracking-display text-[var(--danger)]">{error}</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {(() => {
+        const TAB_META: Record<string, { empty: string; cta: string; ctaLoading: string }> = {
+          audio: {
+            empty: "Aucun variant audio. Génère un fichier audio narré à partir du texte de cet asset (ElevenLabs TTS).",
+            cta: "Générer l'audio",
+            ctaLoading: "Création…",
+          },
+          video: {
+            empty: "Aucun variant vidéo. Génère une vidéo animée à partir de cet asset (HeyGen / Runway).",
+            cta: "Générer la vidéo",
+            ctaLoading: "Création…",
+          },
+          image: {
+            empty: "Aucune image générée. Génère une illustration à partir du titre ou du contenu (fal.ai).",
+            cta: "Générer l'image",
+            ctaLoading: "Création…",
+          },
+          code: {
+            empty: "Aucun résultat d'exécution. Lance le code associé à cet asset dans un sandbox sécurisé (E2B).",
+            cta: "Exécuter le code",
+            ctaLoading: "Exécution…",
+          },
+        };
+
+        const meta = TAB_META[activeTab];
+        const variant = variantFor(activeTab);
+
+        const renderer = variant ? (
+          activeTab === "audio" ? <AudioPlayer variant={variant} /> :
+          activeTab === "video" ? <VideoPlayer variant={variant} /> :
+          activeTab === "image" ? <ImageViewer variant={variant} /> :
+          activeTab === "code"  ? <CodeRunner  variant={variant} /> :
+          null
+        ) : null;
+
+        if (renderer) return <div>{renderer}</div>;
+        if (!meta) return null;
+
+        return (
+          <div className="flex flex-col items-start gap-4">
+            <p className="t-13 font-light text-[var(--text-muted)]">{meta.empty}</p>
+            <button
+              type="button"
+              onClick={() => void requestVariant(activeTab)}
+              disabled={generating === activeTab}
+              className="halo-on-hover px-6 py-3 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow disabled:opacity-60"
+            >
+              {generating === activeTab ? meta.ctaLoading : meta.cta}
+            </button>
+            {error && (
+              <p className="t-11 font-mono uppercase tracking-display text-[var(--danger)]">{error}</p>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
