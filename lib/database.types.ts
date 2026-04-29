@@ -1615,6 +1615,87 @@ export type Database = {
         }
         Relationships: []
       }
+      kg_edges: {
+        Row: {
+          created_at: string
+          id: string
+          source_id: string
+          target_id: string
+          tenant_id: string
+          type: string
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source_id: string
+          target_id: string
+          tenant_id: string
+          type: string
+          user_id: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source_id?: string
+          target_id?: string
+          tenant_id?: string
+          type?: string
+          user_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kg_edges_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "kg_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kg_edges_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "kg_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kg_nodes: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          properties: Json
+          tenant_id: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          properties?: Json
+          tenant_id: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          properties?: Json
+          tenant_id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       knowledge_bases: {
         Row: {
           chunk_overlap: number

@@ -70,14 +70,13 @@ function NavTile({ id, icon, label, count, isActive, onClick, accent }: NavTileP
         background: isActive ? "var(--surface-1)" : "transparent",
         border: isActive ? "1px solid var(--cykan)" : "1px solid var(--border-shell)",
         borderRadius: "var(--radius-xs)",
-        minWidth: "var(--width-nav-tile-min)",
       }}
     >
       <span className="text-[var(--text-muted)]">{icon}</span>
       <span className="t-15 font-bold font-mono" style={{ color: accent || "var(--text)" }}>
         {count.toString().padStart(2, "0")}
       </span>
-      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+      <span className="t-9 font-mono uppercase text-[var(--text-faint)] truncate w-full text-center">
         {label}
       </span>
     </button>

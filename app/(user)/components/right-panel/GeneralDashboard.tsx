@@ -64,7 +64,7 @@ function EmptyRow({ children }: { children: React.ReactNode }) {
         border: "1px dashed var(--card-flat-border)",
       }}
     >
-      <span className="t-11 font-mono uppercase tracking-display text-[var(--text-ghost)]">
+      <span className="t-11 font-mono uppercase text-[var(--text-ghost)]">
         {children}
       </span>
     </div>
