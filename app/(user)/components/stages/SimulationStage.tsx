@@ -350,13 +350,13 @@ function ScenarioCard({ scenario }: { scenario: Scenario }) {
 
   return (
     <article
-      className="flex flex-col gap-4 border-l-2 border-[var(--cykan)]/30 bg-[var(--surface-1)]"
+      className="flex flex-col gap-4 border border-[var(--surface-2)] border-l-2 border-l-[var(--cykan)] bg-[var(--bg-elev)] rounded-sm"
       style={{ padding: "var(--space-6)" }}
     >
       <header className="flex items-start justify-between gap-4">
         <h3 className="t-15 font-medium text-[var(--text)]">{scenario.name}</h3>
         <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] shrink-0">
-          PROB · {probabilityPct}%
+          {probabilityPct}%
         </span>
       </header>
 
@@ -367,29 +367,31 @@ function ScenarioCard({ scenario }: { scenario: Scenario }) {
       )}
 
       {metricsEntries.length > 0 && (
-        <div className="grid grid-cols-2 gap-2">
+        <dl className="flex flex-col gap-2 border-t border-[var(--surface-2)] pt-3">
           {metricsEntries.map(([label, value]) => (
-            <div key={label} className="flex flex-col gap-1">
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-                {label}
-              </span>
-              <span className="t-13 text-[var(--text)]">{value}</span>
+            <div key={label} className="flex items-baseline justify-between gap-3 min-w-0">
+              <dt className="t-9 font-mono uppercase text-[var(--text-faint)] truncate flex-1 min-w-0">
+                {label.replace(/_/g, " ")}
+              </dt>
+              <dd className="t-13 text-[var(--text)] shrink-0 font-mono">{String(value)}</dd>
             </div>
           ))}
-        </div>
+        </dl>
       )}
 
       {risks.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <ul className="flex flex-col gap-1.5 border-t border-[var(--surface-2)] pt-3">
           {risks.map((risk, idx) => (
-            <span
+            <li
               key={idx}
-              className="t-9 font-mono uppercase tracking-display border border-[var(--warn)]/40 text-[var(--warn)] px-2 py-1"
+              className="t-11 text-[var(--warn)] flex items-start gap-2"
+              style={{ lineHeight: "var(--leading-base)" }}
             >
-              {risk}
-            </span>
+              <span className="text-[var(--warn)] mt-0.5 shrink-0" aria-hidden>▲</span>
+              <span className="flex-1 min-w-0">{risk}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </article>
   );

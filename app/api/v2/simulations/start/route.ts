@@ -58,7 +58,9 @@ export async function POST(req: NextRequest) {
     ? variables.map((v) => `- ${v.key}: ${v.value}`).join("\n")
     : "(aucune variable spécifiée)";
 
-  const prompt = `Analyse ce scénario business et génère 3-5 scénarios futurs chiffrés.
+  const prompt = `Réponds STRICTEMENT en français pour TOUS les champs (name, narrative, metrics keys, risks). Aucun mot anglais. Si le scénario contient des termes anglais, traduis-les.
+
+Analyse ce scénario business et génère 3-5 scénarios futurs chiffrés.
 
 Scénario : ${scenario}
 
