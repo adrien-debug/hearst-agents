@@ -3,7 +3,7 @@
  *
  * Modèle : balance USD (numeric 18,6) avec reserve/settle pattern.
  * Les fonctions SQL atomiques (reserve_credits, settle_credits) garantissent
- * la concurrence safe — voir migration 0029_credits_ledger.sql.
+ * la concurrence safe — voir migration 0030_credits_ledger.sql.
  */
 
 import type { JobKind } from "@/lib/jobs/types";

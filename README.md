@@ -26,7 +26,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 - Lint visuel renforcé (8 règles) + chaîné dans `npm run lint` + `prebuild` — voir section *Lint visuel* sous Tokens
 
 **Dette restante priorisée** :
-- ⚠️ P0 — Migration `0026_drop_daily_reports.sql` à **appliquer en DB** + regen `lib/database.types.ts` (la table orpheline est marquée pour drop, le SQL est prêt)
+- ⚠️ P0 — Migration `0027_drop_daily_reports.sql` à **appliquer en DB** + regen `lib/database.types.ts` (la table orpheline est marquée pour drop, le SQL est prêt)
 - 🟡 P1 — Triple chemin de persistance assets (`storeAsset` × 2 + `saveAsset`) à consolider
 - 🟡 P1 — Recâbler `runResearchReport` sur le pipeline V2
 - 🟢 P2 — Élargir `STRICT_PATHS` du lint visuel au-delà de `right-panel/`
@@ -1117,7 +1117,7 @@ Coexiste avec le legacy `RunTracer` (`lib/engine/runtime/tracer.ts`). Phase 1 ut
 **Memory** : agent_memory
 **Integrations** : integration_connections
 **Decisions** : improvement_signals, applied_changes
-**Reports** : assets (kind='report', `provenance.reportMeta` porte signaux + sévérité ; pas de table dédiée — l'ancien `daily_reports` est marqué pour drop via [migration 0026](./supabase/migrations/0026_drop_daily_reports.sql))
+**Reports** : assets (kind='report', `provenance.reportMeta` porte signaux + sévérité ; pas de table dédiée — l'ancien `daily_reports` est marqué pour drop via [migration 0027](./supabase/migrations/0027_drop_daily_reports.sql))
 **Missions** : missions, mission_runs (persistance des missions utilisateur + exécutions)
 **Engine v2** : run_steps, run_approvals, run_logs, artifacts, artifact_versions, document_sessions, plans, plan_steps, action_plans, action_plan_steps, action_executions
 **Legacy** : usage_logs, workflow_runs
@@ -1208,7 +1208,7 @@ Extracteur déterministe : [`lib/reports/signals/extract.ts`](./lib/reports/sign
 
 ### Table Supabase obsolète — drop programmé
 
-La table `daily_reports` ([0010_daily_reports.sql](./supabase/migrations/0010_daily_reports.sql)) — registry du legacy cron — n'a plus aucun lecteur/écrivain depuis le commit `32667f1` (29/04/2026). La migration de drop est prête : [0026_drop_daily_reports.sql](./supabase/migrations/0026_drop_daily_reports.sql).
+La table `daily_reports` ([0010_daily_reports.sql](./supabase/migrations/0010_daily_reports.sql)) — registry du legacy cron — n'a plus aucun lecteur/écrivain depuis le commit `32667f1` (29/04/2026). La migration de drop est prête : [0027_drop_daily_reports.sql](./supabase/migrations/0027_drop_daily_reports.sql).
 
 Étapes restantes côté ops :
 1. Appliquer la migration 0026 sur l'environnement Supabase cible
