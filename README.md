@@ -107,8 +107,59 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 
 - **Chat-first shell** (`ChatInput` + `ChatMessages`) — Input fixe en bas, conversation thread-scopée. Chat toujours visible, focal toggleable au-dessus.
 - **Surface centrale principale** (`FocalStage` dans `app/(user)/page.tsx`) — Quand un objet focal existe, il devient la **surface de lecture principale** au centre. Chat contextuel en bas.
-- **Rail droit compact** (`RightPanel`) — Surface de confiance scannable : runtime, focal compact (titre + statut + action), secondaires en liste. Pas de lecture longue.
+- **Rail droit compact** (`RightPanel`) — Surface de confiance scannable. Architecture v2 (avril 2026) : 4 strates empilées + navigation tuiles. Voir section RightPanel Structure ci-dessous.
 - **Navigation gauche** (`LeftPanel`) — Mémoire des threads uniquement. Navigation chat-first.
+
+### RightPanel Structure (v2 — avril 2026)
+
+Le RightPanel est constitué de **4 strates empilées** + **navigation tuiles** :
+
+```
+┌─────────────────────────────────────┐
+│ 1. PULSE STRIP (72px)               │
+│    ◉ En cours · Founder Cockpit     │  ← Status système + contexte
+├─────────────────────────────────────┤
+│ 2. FOCAL CARD (96px)                │
+│    🔔 Email reçu : Facture Q4       │  ← Notifications communication
+├─────────────────────────────────────┤
+│ 3. NAVIGATION TUILES (sticky)       │
+│    ┌────┬────┬────┬────┐          │
+│    │ ⊞  │ ⚡  │ 🎯  │ 📦 │          │
+│    │GÉN │RAP│MIS│LIV│          │
+│    │  5 │ 2  │ 3  │ 12 │          │  ← Click = switch vue
+│    └────┴────┴────┴────┘          │
+├─────────────────────────────────────┤
+│ 4. CONTENT VIEW (scrollable)        │
+│    [Vue Général/Rapports/Missions/  │  ← Dépend de la tuile active
+│     Livrables]                      │
+├─────────────────────────────────────┤
+│ 5. FOOTER SSE status                │
+│    ● LIVE                           │
+└─────────────────────────────────────┘
+```
+
+| Strate | Composant | Fichier | Description |
+|--------|-----------|---------|-------------|
+| **Pulse** | `PulseStrip` | `app/(user)/components/right-panel/PulseStrip.tsx` | Halo status + label état + compteur events. Épuré (72px), pas de "Système en veille" redondant. |
+| **Notifications** | `FocalCard` | `app/(user)/components/right-panel/FocalCard.tsx` | Zone communication (emails, messages, alerts). Remplace l'ancien focal asset redondant. |
+| **Navigation** | `RightPanelNav` | `app/(user)/components/right-panel/RightPanelNav.tsx` | 4 tuiles cliquables : Général/Rapports/Missions/Livrables. Compteurs live. |
+| **Contenu** | `GeneralDashboard` | `app/(user)/components/right-panel/GeneralDashboard.tsx` | Vue par défaut (suggestions + previews). Les autres vues utilisent `AssetsGrid` et `MissionsList`. |
+| **Data** | `RightPanelContent` | `app/(user)/components/RightPanelContent.tsx` | Orchestrateur SSE + fetch. Point d'entrée unique. |
+
+**Navigation** :
+- **Général** (défaut au chargement) — Dashboard résumé avec suggestions prioritaires, missions actives preview, derniers livrables preview, alertes récentes
+- **Rapports** — Suggestions cataloguées prêtes à lancer (liste complète)
+- **Missions** — Toutes les missions avec statut running/armed
+- **Livrables** — Grille complète des assets générés
+
+**État** : La vue active est persistée dans `localStorage` (`hearst.rightpanel.view`). Au changement de thread, on reset vers "general".
+
+**Anti-confusion pour agents** :
+- ❌ **PAS** d'onglets classiques (ASSETS / MISSIONS / ACTIVITÉ) — remplacés par les 4 tuiles
+- ❌ **PAS** de LibraryTabs — composant supprimé
+- ❌ **PAS** de GeneralRecap — remplacé par GeneralDashboard
+- ✅ Les imports sont depuis `app/(user)/components/right-panel/`
+- ✅ Le point d'entrée unique est `RightPanelContent.tsx` (pas de fichier dans `right-panel/` pour l'orchestrateur principal)
 - **Momentum** — *Cible non montée* — rappel discret des activités. `TopContextBar` et `MomentumIndicator` sont des cibles de convergence.
 - **Surfaces** : `/` (home) — entrée chat-first. Routes legacy accessibles mais non exposées.
 - Layout user : `LeftPanel` (threads) + zone centrale (`main` avec chat + FocalStage toggleable) + `RightPanel` (index/confiance)
