@@ -45,12 +45,18 @@ export interface StageEntry {
 interface StageState {
   current: StagePayload;
   history: StageEntry[];
+  /** Dernier asset ouvert (via TimelineRail, AssetsGrid, ou Commandeur).
+   * Sert au hotkey ⌘3 pour ré-ouvrir un asset sans param explicite, et
+   * permet de garder le state cross-mode (ex: revenir d'une session
+   * browser au dernier asset focal). null si aucun asset n'a été ouvert. */
+  lastAssetId: string | null;
   /** True quand le Commandeur (Cmd+K) est ouvert. */
   commandeurOpen: boolean;
   /** True quand le ChatInput flottant (Cmd+L) est visible au-dessus du Stage. */
   floatingChatOpen: boolean;
 
-  /** Switch vers un nouveau mode (push dans l'history). */
+  /** Switch vers un nouveau mode (push dans l'history). Persiste l'assetId
+   * dans `lastAssetId` quand mode === "asset". */
   setMode: (payload: StagePayload) => void;
   /** Retour au Stage précédent. No-op si history vide. */
   back: () => void;
@@ -66,14 +72,18 @@ interface StageState {
 export const useStageStore = create<StageState>((set, get) => ({
   current: { mode: "cockpit" },
   history: [],
+  lastAssetId: null,
   commandeurOpen: false,
   floatingChatOpen: false,
 
   setMode: (payload) => {
     const prev = get().current;
+    const nextLastAssetId =
+      payload.mode === "asset" ? payload.assetId : get().lastAssetId;
     set({
       current: payload,
       history: [...get().history, { payload: prev, ts: Date.now() }].slice(-20),
+      lastAssetId: nextLastAssetId,
     });
   },
 

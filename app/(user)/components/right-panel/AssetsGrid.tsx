@@ -4,14 +4,17 @@
  * AssetsGrid — grille 2 colonnes V05 : chaque asset = mini-card avec
  * micro-chart vectoriel (line/bars/scatter/bands selon type).
  *
- * Click → setFocal(assetToFocal). Suppression au hover → DELETE puis
- * optimistic state update (rollback en cas d'erreur).
+ * Click → useStageStore.setMode({ mode: "asset", assetId }) (post-pivot).
+ * Avant le pivot, c'était setFocal(assetToFocal) — mais en mode Cockpit
+ * le FocalStage n'est plus rendu, donc le setFocal ne s'affichait pas.
+ * Suppression au hover → DELETE puis optimistic state update (rollback
+ * en cas d'erreur).
  */
 
 import { useState } from "react";
 import type { RightPanelData } from "@/lib/core/types";
 import { useFocalStore } from "@/stores/focal";
-import { assetToFocal } from "@/lib/ui/focal-mappers";
+import { useStageStore } from "@/stores/stage";
 import { toast } from "@/app/hooks/use-toast";
 import { AssetGlyphSVG } from "../right-panel-helpers";
 import { AssetMiniChart } from "./AssetMiniChart";
@@ -319,7 +322,7 @@ export function AssetsGrid({
           <div key={asset.id} className="relative group">
             <button
               type="button"
-              onClick={() => useFocalStore.getState().setFocal(assetToFocal(asset, activeThreadId))}
+              onClick={() => useStageStore.getState().setMode({ mode: "asset", assetId: asset.id })}
               className={`halo-asset-card w-full text-left rounded-sm ${isActive ? "halo-asset-card--active" : ""}`}
               title={asset.name}
               data-active={isActive}

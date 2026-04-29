@@ -70,10 +70,17 @@ export function useGlobalHotkeys() {
           case "chat":
             setMode({ mode: "chat" });
             break;
-          case "asset":
-            // No-op si pas d'asset id : on ne push pas un asset stage vide.
-            // Le user passe par TimelineRail / Commandeur pour cibler un asset.
+          case "asset": {
+            // Ré-ouvre le dernier asset cliqué (depuis stage store).
+            // No-op silencieux si aucun asset n'a encore été ouvert —
+            // évite de push un AssetStage avec assetId vide qui afficherait
+            // un placeholder dénué de sens.
+            const lastAssetId = useStageStore.getState().lastAssetId;
+            if (lastAssetId) {
+              setMode({ mode: "asset", assetId: lastAssetId });
+            }
             break;
+          }
           case "browser":
             setMode({ mode: "browser", sessionId: "" });
             break;
