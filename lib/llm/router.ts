@@ -7,6 +7,9 @@ import { AnthropicProvider } from "./anthropic";
 import { ComposerProvider } from "./composer";
 import { GeminiProvider } from "./gemini";
 import { scoreModels, selectModel, type ModelGoal, type ModelScore, type ModelSelection } from "../decisions/model-selector";
+import { CostLimitExceededError } from "./errors";
+import { defaultRateLimiter } from "./rate-limiter";
+import { defaultCircuitBreaker } from "./circuit-breaker";
 
 const providers: Record<string, LLMProvider> = {};
 
@@ -49,6 +52,29 @@ function computeCost(
   return (tokensIn / 1000) * costPer1kIn + (tokensOut / 1000) * costPer1kOut;
 }
 
+function isTransientError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return /\b(429|502|503)\b/.test(err.message);
+}
+
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await fn();
+    } catch (e) {
+      attempt++;
+      if (!isTransientError(e) || attempt > maxRetries) throw e;
+      const base = Math.pow(2, attempt - 1) * 1000;
+      const jitter = base * 0.2 * (Math.random() * 2 - 1);
+      await new Promise((r) => setTimeout(r, base + jitter));
+    }
+  }
+}
+
 export async function resolveModelProfile(
   sb: SupabaseClient<Database>,
   profileId: string,
@@ -88,6 +114,7 @@ export async function chatWithProfile(
   profileId: string,
   messages: ChatRequest["messages"],
   overrides?: Partial<Pick<ChatRequest, "temperature" | "max_tokens" | "top_p">>,
+  userId?: string,
 ): Promise<ChatResponse & { profile_used: string }> {
   const chain = await loadFallbackChain(sb, profileId);
 
@@ -95,18 +122,29 @@ export async function chatWithProfile(
     throw new Error(`No model profile found for id: ${profileId}`);
   }
 
+  if (userId) {
+    await defaultRateLimiter.checkLimit(userId);
+  }
+
   let lastError: Error | null = null;
 
   for (const profile of chain) {
+    if (defaultCircuitBreaker.isOpen(profile.provider)) {
+      console.warn(`Circuit open for ${profile.provider}, skipping`);
+      continue;
+    }
+
     try {
       const provider = getProvider(profile.provider);
-      const response = await provider.chat({
-        model: profile.model,
-        messages,
-        temperature: overrides?.temperature ?? profile.temperature,
-        max_tokens: overrides?.max_tokens ?? profile.max_tokens,
-        top_p: overrides?.top_p ?? profile.top_p,
-      });
+      const response = await retryWithBackoff(() =>
+        provider.chat({
+          model: profile.model,
+          messages,
+          temperature: overrides?.temperature ?? profile.temperature,
+          max_tokens: overrides?.max_tokens ?? profile.max_tokens,
+          top_p: overrides?.top_p ?? profile.top_p,
+        }),
+      );
 
       response.cost_usd = computeCost(
         response.tokens_in,
@@ -116,14 +154,24 @@ export async function chatWithProfile(
       );
 
       if (profile.max_cost_per_run && response.cost_usd > profile.max_cost_per_run) {
-        console.warn(
-          `Cost limit exceeded: $${response.cost_usd.toFixed(4)} > $${profile.max_cost_per_run} for ${profile.provider}/${profile.model}`,
+        throw new CostLimitExceededError(
+          response.cost_usd,
+          profile.max_cost_per_run,
+          profile.provider,
+          profile.model,
         );
       }
 
+      if (userId) {
+        defaultRateLimiter.recordCall(userId, response.tokens_in + response.tokens_out);
+      }
+      defaultCircuitBreaker.recordSuccess(profile.provider);
       return { ...response, profile_used: `${profile.provider}/${profile.model}` };
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
+      if (!(e instanceof CostLimitExceededError)) {
+        defaultCircuitBreaker.recordFailure(profile.provider);
+      }
       console.error(
         `Provider ${profile.provider}/${profile.model} failed, trying fallback:`,
         lastError.message,
@@ -139,6 +187,7 @@ export async function* streamChatWithProfile(
   profileId: string,
   messages: ChatRequest["messages"],
   overrides?: Partial<Pick<ChatRequest, "temperature" | "max_tokens" | "top_p">>,
+  userId?: string,
 ): AsyncGenerator<StreamChunk & { profile_used?: string }> {
   const chain = await loadFallbackChain(sb, profileId);
 
@@ -146,19 +195,32 @@ export async function* streamChatWithProfile(
     throw new Error(`No model profile found for id: ${profileId}`);
   }
 
+  if (userId) {
+    await defaultRateLimiter.checkLimit(userId);
+  }
+
   let lastError: Error | null = null;
 
   for (const profile of chain) {
+    if (defaultCircuitBreaker.isOpen(profile.provider)) {
+      console.warn(`Circuit open for ${profile.provider}, skipping`);
+      continue;
+    }
+
     try {
       const provider = getProvider(profile.provider);
-      const stream = provider.streamChat({
-        model: profile.model,
-        messages,
-        temperature: overrides?.temperature ?? profile.temperature,
-        max_tokens: overrides?.max_tokens ?? profile.max_tokens,
-        top_p: overrides?.top_p ?? profile.top_p,
-        stream: true,
-      });
+      const stream = await retryWithBackoff(() =>
+        Promise.resolve(
+          provider.streamChat({
+            model: profile.model,
+            messages,
+            temperature: overrides?.temperature ?? profile.temperature,
+            max_tokens: overrides?.max_tokens ?? profile.max_tokens,
+            top_p: overrides?.top_p ?? profile.top_p,
+            stream: true,
+          }),
+        ),
+      );
 
       let first = true;
       for await (const chunk of stream) {
@@ -169,9 +231,12 @@ export async function* streamChatWithProfile(
           yield chunk;
         }
       }
+
+      defaultCircuitBreaker.recordSuccess(profile.provider);
       return;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
+      defaultCircuitBreaker.recordFailure(profile.provider);
       console.error(
         `Stream ${profile.provider}/${profile.model} failed, trying fallback:`,
         lastError.message,
@@ -211,6 +276,8 @@ export interface SmartChatOptions {
   top_p?: number;
   tracer?: RunTracer;
   days?: number;
+  userId?: string;
+  max_cost_per_run?: number;
 }
 
 export async function smartChat(
@@ -227,21 +294,47 @@ export async function smartChat(
     await traceDecision(opts.tracer, decision);
   }
 
+  if (opts.userId) {
+    await defaultRateLimiter.checkLimit(opts.userId);
+  }
+
   const chain = buildSmartChain(decision);
 
   let lastError: Error | null = null;
   let attemptIndex = 0;
 
   for (const attempt of chain) {
+    if (defaultCircuitBreaker.isOpen(attempt.provider)) {
+      console.warn(`Circuit open for ${attempt.provider}, skipping`);
+      attemptIndex++;
+      continue;
+    }
+
     try {
       const provider = getProvider(attempt.provider);
-      const response = await provider.chat({
-        model: attempt.model,
-        messages: opts.messages,
-        temperature: opts.temperature,
-        max_tokens: opts.max_tokens,
-        top_p: opts.top_p,
-      });
+      const response = await retryWithBackoff(() =>
+        provider.chat({
+          model: attempt.model,
+          messages: opts.messages,
+          temperature: opts.temperature,
+          max_tokens: opts.max_tokens,
+          top_p: opts.top_p,
+        }),
+      );
+
+      if (opts.max_cost_per_run && response.cost_usd > opts.max_cost_per_run) {
+        throw new CostLimitExceededError(
+          response.cost_usd,
+          opts.max_cost_per_run,
+          attempt.provider,
+          attempt.model,
+        );
+      }
+
+      if (opts.userId) {
+        defaultRateLimiter.recordCall(opts.userId, response.tokens_in + response.tokens_out);
+      }
+      defaultCircuitBreaker.recordSuccess(attempt.provider);
 
       if (attemptIndex > 0 && opts.tracer) {
         await traceFallback(opts.tracer, attempt, attemptIndex, chain[0], lastError?.message);
@@ -250,6 +343,9 @@ export async function smartChat(
       return { ...response, decision };
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
+      if (!(e instanceof CostLimitExceededError)) {
+        defaultCircuitBreaker.recordFailure(attempt.provider);
+      }
       console.error(
         `smart-chat: ${attempt.provider}/${attempt.model} failed (attempt ${attemptIndex + 1}):`,
         lastError.message,
@@ -275,22 +371,36 @@ export async function* smartStreamChat(
     await traceDecision(opts.tracer, decision);
   }
 
+  if (opts.userId) {
+    await defaultRateLimiter.checkLimit(opts.userId);
+  }
+
   const chain = buildSmartChain(decision);
 
   let lastError: Error | null = null;
   let attemptIndex = 0;
 
   for (const attempt of chain) {
+    if (defaultCircuitBreaker.isOpen(attempt.provider)) {
+      console.warn(`Circuit open for ${attempt.provider}, skipping`);
+      attemptIndex++;
+      continue;
+    }
+
     try {
       const provider = getProvider(attempt.provider);
-      const stream = provider.streamChat({
-        model: attempt.model,
-        messages: opts.messages,
-        temperature: opts.temperature,
-        max_tokens: opts.max_tokens,
-        top_p: opts.top_p,
-        stream: true,
-      });
+      const stream = await retryWithBackoff(() =>
+        Promise.resolve(
+          provider.streamChat({
+            model: attempt.model,
+            messages: opts.messages,
+            temperature: opts.temperature,
+            max_tokens: opts.max_tokens,
+            top_p: opts.top_p,
+            stream: true,
+          }),
+        ),
+      );
 
       if (attemptIndex > 0 && opts.tracer) {
         await traceFallback(opts.tracer, attempt, attemptIndex, chain[0], lastError?.message);
@@ -305,9 +415,12 @@ export async function* smartStreamChat(
           yield chunk;
         }
       }
+
+      defaultCircuitBreaker.recordSuccess(attempt.provider);
       return;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
+      defaultCircuitBreaker.recordFailure(attempt.provider);
       console.error(
         `smart-stream: ${attempt.provider}/${attempt.model} failed (attempt ${attemptIndex + 1}):`,
         lastError.message,

@@ -1,4 +1,6 @@
 import type { LLMProvider, ChatRequest, ChatResponse, StreamChunk, ChatMessage } from "./types";
+import { sanitizeProviderError } from "./errors";
+import { makeAbortSignal, CHAT_TIMEOUT_MS, STREAM_TIMEOUT_MS } from "./timeout";
 
 /**
  * Cursor Composer 2 — OpenAI-compatible `POST /v1/chat/completions`.
@@ -54,6 +56,7 @@ export class ComposerProvider implements LLMProvider {
     }
     const base = process.env.COMPOSER_API_BASE_URL ?? "https://api.cursor.com/v1";
     const start = Date.now();
+    const signal = makeAbortSignal(CHAT_TIMEOUT_MS, req.signal);
 
     const res = await fetch(chatCompletionsUrl(base), {
       method: "POST",
@@ -69,12 +72,13 @@ export class ComposerProvider implements LLMProvider {
         top_p: req.top_p,
         stream: false,
       }),
+      signal,
     });
 
     const raw = await res.text();
     if (!res.ok) {
       console.error("composer.chat http_error", { status: res.status, bodyPreview: raw.slice(0, 500) });
-      throw new Error(`Composer API error ${res.status}: ${raw.slice(0, 200)}`);
+      throw new Error(sanitizeProviderError(res.status, raw));
     }
 
     let json: {
@@ -110,6 +114,7 @@ export class ComposerProvider implements LLMProvider {
       throw new Error("COMPOSER_API_KEY is not set — add it to .env.local");
     }
     const base = process.env.COMPOSER_API_BASE_URL ?? "https://api.cursor.com/v1";
+    const signal = makeAbortSignal(STREAM_TIMEOUT_MS, req.signal);
 
     const res = await fetch(chatCompletionsUrl(base), {
       method: "POST",
@@ -125,12 +130,13 @@ export class ComposerProvider implements LLMProvider {
         top_p: req.top_p,
         stream: true,
       }),
+      signal,
     });
 
     if (!res.ok || !res.body) {
       const t = await res.text().catch(() => "");
       console.error("composer.streamChat http_error", { status: res.status, bodyPreview: t.slice(0, 500) });
-      throw new Error(`Composer stream error ${res.status}: ${t.slice(0, 200)}`);
+      throw new Error(sanitizeProviderError(res.status, t));
     }
 
     const reader = res.body.getReader();

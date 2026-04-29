@@ -1,4 +1,6 @@
 import type { LLMProvider, ChatRequest, ChatResponse, StreamChunk } from "./types";
+import { sanitizeProviderError } from "./errors";
+import { makeAbortSignal, CHAT_TIMEOUT_MS, STREAM_TIMEOUT_MS } from "./timeout";
 
 /**
  * Google Gemini (Gemini API) — REST `generateContent` / `streamGenerateContent`.
@@ -67,6 +69,7 @@ export class GeminiProvider implements LLMProvider {
     }
     const start = Date.now();
     const url = this.generateUrl(req.model, false);
+    const signal = makeAbortSignal(CHAT_TIMEOUT_MS, req.signal);
 
     const res = await fetch(url, {
       method: "POST",
@@ -75,12 +78,13 @@ export class GeminiProvider implements LLMProvider {
         "x-goog-api-key": apiKey,
       },
       body: JSON.stringify(buildGeminiPayload(req)),
+      signal,
     });
 
     const raw = await res.text();
     if (!res.ok) {
       console.error("gemini.chat http_error", { status: res.status, bodyPreview: raw.slice(0, 500) });
-      throw new Error(`Gemini API error ${res.status}: ${raw.slice(0, 200)}`);
+      throw new Error(sanitizeProviderError(res.status, raw));
     }
 
     let json: {
@@ -122,6 +126,7 @@ export class GeminiProvider implements LLMProvider {
       throw new Error("GEMINI_API_KEY is not set — add it to .env.local");
     }
     const url = this.generateUrl(req.model, true);
+    const signal = makeAbortSignal(STREAM_TIMEOUT_MS, req.signal);
 
     const res = await fetch(url, {
       method: "POST",
@@ -130,12 +135,13 @@ export class GeminiProvider implements LLMProvider {
         "x-goog-api-key": apiKey,
       },
       body: JSON.stringify(buildGeminiPayload(req)),
+      signal,
     });
 
     if (!res.ok || !res.body) {
       const t = await res.text().catch(() => "");
       console.error("gemini.streamChat http_error", { status: res.status, bodyPreview: t.slice(0, 500) });
-      throw new Error(`Gemini stream error ${res.status}: ${t.slice(0, 200)}`);
+      throw new Error(sanitizeProviderError(res.status, t));
     }
 
     const reader = res.body.getReader();

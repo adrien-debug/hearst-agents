@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { LLMProvider, ChatRequest, ChatMessage, ChatResponse, StreamChunk } from "./types";
+import { makeAbortSignal, CHAT_TIMEOUT_MS, STREAM_TIMEOUT_MS } from "./timeout";
 
 export interface ToolUseRequest {
   id: string;
@@ -52,7 +53,8 @@ export class AnthropicProvider implements LLMProvider {
       params.tools = tools;
     }
 
-    const res = await this.client.messages.create({ ...params, stream: false });
+    const signal = makeAbortSignal(CHAT_TIMEOUT_MS, req.signal);
+    const res = await this.client.messages.create({ ...params, stream: false }, { signal });
 
     const text = res.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
@@ -102,7 +104,8 @@ export class AnthropicProvider implements LLMProvider {
       params.tools = tools;
     }
 
-    const stream = this.client.messages.stream(params as Anthropic.MessageStreamParams);
+    const signal = makeAbortSignal(STREAM_TIMEOUT_MS, req.signal);
+    const stream = this.client.messages.stream(params as Anthropic.MessageStreamParams, { signal });
 
     for await (const event of stream) {
       if (

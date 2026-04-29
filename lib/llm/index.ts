@@ -18,3 +18,16 @@ export {
   smartStreamChat,
 } from "./router";
 export type { ModelDecision, SmartChatOptions } from "./router";
+
+export {
+  CostLimitExceededError,
+  RateLimitExceededError,
+  LLMTimeoutError,
+  CircuitOpenError,
+} from "./errors";
+
+export { defaultRateLimiter } from "./rate-limiter";
+export type { RateLimiterOptions } from "./rate-limiter";
+
+export { defaultCircuitBreaker } from "./circuit-breaker";
+export type { CircuitState } from "./circuit-breaker";

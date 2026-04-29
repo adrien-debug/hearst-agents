@@ -1,16 +1,22 @@
 import OpenAI from "openai";
 import type { LLMProvider, ChatRequest, ChatResponse, StreamChunk } from "./types";
+import { makeAbortSignal, CHAT_TIMEOUT_MS, STREAM_TIMEOUT_MS } from "./timeout";
 
 export class OpenAIProvider implements LLMProvider {
   readonly name = "openai";
   private client: OpenAI;
 
   constructor() {
-    this.client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("OPENAI_API_KEY is not set — add it to .env.local");
+    }
+    this.client = new OpenAI({ apiKey });
   }
 
   async chat(req: ChatRequest): Promise<ChatResponse> {
     const start = Date.now();
+    const signal = makeAbortSignal(CHAT_TIMEOUT_MS, req.signal);
     const res = await this.client.chat.completions.create({
       model: req.model,
       messages: req.messages.map((m) => ({
@@ -20,7 +26,7 @@ export class OpenAIProvider implements LLMProvider {
       temperature: req.temperature,
       max_tokens: req.max_tokens,
       top_p: req.top_p,
-    });
+    }, { signal });
 
     const tokensIn = res.usage?.prompt_tokens ?? 0;
     const tokensOut = res.usage?.completion_tokens ?? 0;
@@ -37,6 +43,7 @@ export class OpenAIProvider implements LLMProvider {
   }
 
   async *streamChat(req: ChatRequest): AsyncGenerator<StreamChunk> {
+    const signal = makeAbortSignal(STREAM_TIMEOUT_MS, req.signal);
     const stream = await this.client.chat.completions.create({
       model: req.model,
       messages: req.messages.map((m) => ({
@@ -47,7 +54,7 @@ export class OpenAIProvider implements LLMProvider {
       max_tokens: req.max_tokens,
       top_p: req.top_p,
       stream: true,
-    });
+    }, { signal });
 
     for await (const chunk of stream) {
       const delta = chunk.choices[0]?.delta?.content ?? "";
