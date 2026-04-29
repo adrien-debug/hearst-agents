@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useStageStore } from "@/stores/stage";
+import { useNavigationStore } from "@/stores/navigation";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { RelativeTime } from "../components/RelativeTime";
 
@@ -53,8 +55,16 @@ function formatDuration(ms?: number): string {
 
 export default function RunsPage() {
   const router = useRouter();
+  const addThread = useNavigationStore((s) => s.addThread);
+  const setStageMode = useStageStore((s) => s.setMode);
   const [runs, setRuns] = useState<RunListItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleNewReport = () => {
+    const id = addThread("Nouveau report", "home");
+    setStageMode({ mode: "chat", threadId: id });
+    router.push("/");
+  };
 
   useEffect(() => {
     async function loadRuns() {
@@ -86,7 +96,7 @@ export default function RunsPage() {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: "var(--bg)" }}>
       {/* Header */}
-      <div className="border-b border-[var(--surface-2)] p-6">
+      <div className="border-b border-[var(--line)] p-6">
         <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Runs" }] as Crumb[]} className="mb-4" />
         <div className="flex items-center justify-between">
           <div>
@@ -95,6 +105,9 @@ export default function RunsPage() {
               {runs.length} {runs.length === 1 ? "exécution" : "exécutions"} récente{runs.length === 1 ? "" : "s"}
             </p>
           </div>
+          <button type="button" onClick={handleNewReport} className="ghost-btn-solid ghost-btn-cykan rounded-sm px-5">
+            Nouveau report
+          </button>
         </div>
       </div>
 

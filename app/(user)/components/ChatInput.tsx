@@ -156,12 +156,11 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Card — capsule anthracite (même teinte que les rails), sans hover/effets */}
+        {/* Input Card — capsule blanche, texte noir, sans hover/effets */}
         <div
-          data-theme="dark"
           className="rounded-lg group"
           style={{
-            background: "var(--bg-rail)",
+            background: "var(--surface)",
             color: "var(--text)",
           }}
         >

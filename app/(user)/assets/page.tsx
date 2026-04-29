@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useStageStore } from "@/stores/stage";
+import { useNavigationStore } from "@/stores/navigation";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { RelativeTime } from "../components/RelativeTime";
 import { toast } from "@/app/hooks/use-toast";
@@ -35,8 +36,16 @@ function glyph(type: string): string {
 
 export default function AssetsPage() {
   const router = useRouter();
+  const addThread = useNavigationStore((s) => s.addThread);
+  const setStageMode = useStageStore((s) => s.setMode);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleNewAsset = () => {
+    const id = addThread("Nouvel asset", "home");
+    setStageMode({ mode: "chat", threadId: id });
+    router.push("/");
+  };
 
   useEffect(() => {
     async function loadAssets() {
@@ -104,7 +113,7 @@ export default function AssetsPage() {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: "var(--bg)" }}>
       {/* Header */}
-      <div className="border-b border-[var(--surface-2)] p-6">
+      <div className="border-b border-[var(--line)] p-6">
         <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Assets" }] as Crumb[]} className="mb-4" />
         <div className="flex items-center justify-between">
           <div>
@@ -113,6 +122,9 @@ export default function AssetsPage() {
               {assets.length} {assets.length === 1 ? "fichier" : "fichiers"} stocké{assets.length === 1 ? "" : "s"}
             </p>
           </div>
+          <button type="button" onClick={handleNewAsset} className="ghost-btn-solid ghost-btn-cykan rounded-sm px-5">
+            Nouvel asset
+          </button>
         </div>
       </div>
 
