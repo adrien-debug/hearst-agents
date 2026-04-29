@@ -110,3 +110,43 @@ registerTool({
   handler: "scheduleTask",
   contexts: ["general", "inbox", "calendar"],
 });
+
+registerTool({
+  id: "generate_image",
+  name: "Generate Image",
+  description: "Generate an image from a text prompt via fal.ai",
+  capability: "documents",
+  surfaceLabel: "Image",
+  handler: "generateImage",
+  contexts: ["general", "research", "files"],
+});
+
+registerTool({
+  id: "parse_document",
+  name: "Parse Document",
+  description: "Extract and convert a document (PDF, DOCX) to structured Markdown",
+  capability: "documents",
+  surfaceLabel: "Parser",
+  handler: "parseDocument",
+  contexts: ["files", "research", "general"],
+});
+
+registerTool({
+  id: "execute_code",
+  name: "Execute Code",
+  description: "Run Python or Node.js code in a secure sandbox and return the output",
+  capability: "automation",
+  surfaceLabel: "Exécuter",
+  handler: "executeCode",
+  contexts: ["general", "finance", "research"],
+});
+
+registerTool({
+  id: "generate_video",
+  name: "Generate Video",
+  description: "Génère une vidéo courte depuis un prompt texte via HeyGen ou Runway",
+  capability: "automation",
+  surfaceLabel: "Vidéo",
+  handler: "generateVideo",
+  contexts: ["general", "research"],
+});
