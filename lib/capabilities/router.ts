@@ -35,7 +35,15 @@ export interface CapabilityScope {
     gmail: boolean;
     drive: boolean;
   };
+  intent?: "reasoning";
 }
+
+// ── Reasoning intent keywords (scope-level, distinct from execution patterns) ──
+
+const SCOPE_REASONING_KEYWORDS = [
+  "analyse", "projette", "compare", "simule", "modélise",
+  "calcule", "démontre", "prouve", "évalue", "optimise",
+];
 
 // ── Domain → ToolContext mapping ────────────────────────────
 
@@ -79,6 +87,10 @@ export function resolveCapabilityScope(
 
   const dataIntent = resolveDataIntent(message);
 
+  const lowerMsg = message.toLowerCase();
+  const isReasoningIntent = !!process.env.DEEPSEEK_API_KEY
+    && SCOPE_REASONING_KEYWORDS.some((kw) => lowerMsg.includes(kw));
+
   return {
     domain,
     capabilities: entry.capabilities,
@@ -92,6 +104,7 @@ export function resolveCapabilityScope(
       gmail: dataIntent.needsGmail,
       drive: dataIntent.needsDrive,
     },
+    ...(isReasoningIntent ? { intent: "reasoning" as const } : {}),
   };
 }
 
@@ -128,6 +141,7 @@ export interface ExecutionDecision {
   reason: string;
   backend?: "hearst_runtime" | "anthropic_managed";
   agentId?: string;
+  requiresReasoning?: boolean;
 }
 
 const AUTONOMOUS_PATTERNS = [
@@ -135,6 +149,10 @@ const AUTONOMOUS_PATTERNS = [
   "surveille", "monitore", "scan",
 ];
 const MEMORY_PATTERNS = ["souviens", "rappelle", "mémorise", "retiens"];
+const REASONING_PATTERNS = [
+  "projette", "compare", "simule", "modélise", "calcule",
+  "raisonne", "déduis", "explique pourquoi", "quelle stratégie",
+];
 
 /**
  * Resolve execution mode from a CapabilityScope.
@@ -148,28 +166,29 @@ export function resolveExecutionMode(
   const lower = message.toLowerCase();
   const needsAutonomy = AUTONOMOUS_PATTERNS.some((p) => lower.includes(p));
   const needsMemory = MEMORY_PATTERNS.some((p) => lower.includes(p));
+  const requiresReasoning = REASONING_PATTERNS.some((p) => lower.includes(p));
   const wordCount = message.split(/\s+/).filter(Boolean).length;
 
   if (needsAutonomy || needsMemory) {
-    return { mode: "custom_agent", reason: "Requires autonomous agent", backend: "hearst_runtime" };
+    return { mode: "custom_agent", reason: "Requires autonomous agent", backend: "hearst_runtime", requiresReasoning };
   }
 
   const hasProviders = scope.providers.length > 0 && scope.domain !== "general" && scope.domain !== "research";
   const isSimple = scope.domain === "general" && !hasProviders && wordCount <= 30 && !focalContext;
 
   if (isSimple) {
-    return { mode: "direct_answer", reason: "Simple response — no providers needed" };
+    return { mode: "direct_answer", reason: "Simple response — no providers needed", requiresReasoning };
   }
 
   if (scope.retrievalMode && !hasProviders) {
-    return { mode: "tool_call", reason: "Single retrieval", backend: "hearst_runtime" };
+    return { mode: "tool_call", reason: "Single retrieval", backend: "hearst_runtime", requiresReasoning };
   }
 
   if (hasProviders) {
-    return { mode: "workflow", reason: "Provider-backed workflow", backend: "hearst_runtime" };
+    return { mode: "workflow", reason: "Provider-backed workflow", backend: "hearst_runtime", requiresReasoning };
   }
 
-  return { mode: "workflow", reason: "Default workflow", backend: "hearst_runtime" };
+  return { mode: "workflow", reason: "Default workflow", backend: "hearst_runtime", requiresReasoning };
 }
 
 // ── Helpers ─────────────────────────────────────────────────
