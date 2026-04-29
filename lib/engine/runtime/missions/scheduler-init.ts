@@ -12,7 +12,7 @@
  * If DB is unavailable (dev), assumes leader automatically.
  */
 
-import { startScheduler, type SchedulerTriggerFn, type IsLeaderFn } from "./scheduler";
+import { startScheduler, stopScheduler, type SchedulerTriggerFn, type IsLeaderFn } from "./scheduler";
 import type { ScheduledMission } from "./types";
 import type { SchedulerMode } from "./ops-types";
 import { requireServerSupabase } from "@/lib/platform/db/supabase";
@@ -177,5 +177,21 @@ export async function ensureSchedulerStarted(): Promise<void> {
 
   if (_dbAvailable) {
     startHeartbeat();
+  }
+
+  // Clean shutdown : à SIGTERM (deploy, rolling restart), on arrête le
+  // setInterval pour ne pas laisser le timer pendre après l'arrêt du
+  // process. Sans ça → memory leak si le process est gardé en vie par
+  // un autre handler (rare en Next, mais arrive en custom server).
+  if (typeof process !== "undefined" && !(process as unknown as { _hearstSigtermRegistered?: boolean })._hearstSigtermRegistered) {
+    (process as unknown as { _hearstSigtermRegistered?: boolean })._hearstSigtermRegistered = true;
+    process.once("SIGTERM", () => {
+      console.log("[Scheduler] SIGTERM received — stopping scheduler");
+      stopScheduler();
+    });
+    process.once("SIGINT", () => {
+      console.log("[Scheduler] SIGINT received — stopping scheduler");
+      stopScheduler();
+    });
   }
 }

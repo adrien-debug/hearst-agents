@@ -1,0 +1,66 @@
+"use client";
+
+import { useStageStore } from "@/stores/stage";
+import { CockpitStage } from "./stages/CockpitStage";
+import { ChatStage } from "./stages/ChatStage";
+import { AssetStage } from "./stages/AssetStage";
+import { BrowserStage } from "./stages/BrowserStage";
+import { MeetingStage } from "./stages/MeetingStage";
+import { KnowledgeStage } from "./stages/KnowledgeStage";
+import { VoiceStage } from "./stages/VoiceStage";
+import type { Message } from "@/lib/core/types";
+import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
+
+interface StageProps {
+  /** Messages du thread actif (utilisé par ChatStage). */
+  messages: Message[];
+  /** Handler de soumission (utilisé par ChatStage et le ChatInput flottant). */
+  onSubmit: (message: string) => Promise<void>;
+  /** Services connectés (Composio) — utilisé par ChatStage et CockpitStage. */
+  connectedServices: ServiceWithConnectionStatus[];
+  /** Onglet courant pour AssetStage variants — null si non applicable. */
+  hasMessages: boolean;
+}
+
+/**
+ * Stage — Router polymorphe central.
+ *
+ * Rend le sub-Stage approprié selon `useStageStore.current.mode`.
+ * Tous les Stages partagent les mêmes props de chat (onSubmit, messages,
+ * connectedServices) — le ChatInput est toujours invocable, même quand
+ * le Stage actif n'est pas `chat` (mode flottant via Cmd+L).
+ */
+export function Stage(props: StageProps) {
+  const current = useStageStore((s) => s.current);
+
+  switch (current.mode) {
+    case "cockpit":
+      return (
+        <CockpitStage
+          onSubmit={props.onSubmit}
+          connectedServices={props.connectedServices}
+        />
+      );
+    case "chat":
+      return (
+        <ChatStage
+          messages={props.messages}
+          hasMessages={props.hasMessages}
+          onSubmit={props.onSubmit}
+          connectedServices={props.connectedServices}
+        />
+      );
+    case "asset":
+      return <AssetStage assetId={current.assetId} variantKind={current.variantKind} />;
+    case "browser":
+      return <BrowserStage sessionId={current.sessionId} />;
+    case "meeting":
+      return <MeetingStage meetingId={current.meetingId} />;
+    case "kg":
+      return <KnowledgeStage entityId={current.entityId} query={current.query} />;
+    case "voice":
+      return <VoiceStage sessionId={current.sessionId} />;
+    default:
+      return null;
+  }
+}

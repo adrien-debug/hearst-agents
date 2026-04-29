@@ -104,6 +104,10 @@ export function orchestrate(
   const stream = new ReadableStream({
     start(controller) {
       sse.pipe(controller);
+      // Keep-alive : envoie un commentaire SSE toutes les 20s pour que les
+      // proxies (Cloudflare, Vercel, nginx) ne ferment pas la connexion sur
+      // les runs longs (research, browser, video gen, meeting bot).
+      sse.startHeartbeat(20_000);
 
       runPipeline(db, eventBus, sse, input)
         .catch((err) => {

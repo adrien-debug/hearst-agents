@@ -1,0 +1,109 @@
+/**
+ * Stage Store — Zustand
+ *
+ * Pivot 2026-04-29 : l'app passe de chat-first à cockpit polymorphe.
+ * Le Stage central peut afficher 7 modes différents :
+ *
+ *   - cockpit  : home configurable (briefing du jour, agenda, missions, KPIs)
+ *   - chat     : conversation classique (chat + ChatMessages)
+ *   - asset    : asset focus avec variants tabs (anciennement FocalStage)
+ *   - browser  : session browser live co-pilotable (Browserbase)
+ *   - meeting  : meeting bot live + transcript + action items extraits
+ *   - kg       : Knowledge Graph explorer (Cytoscape)
+ *   - voice    : overlay voix ambient temps réel (WebRTC)
+ *
+ * Le store gère le mode actif, son payload contextuel, l'historique de
+ * navigation (pour Back), et les hotkeys → mode mapping.
+ */
+
+import { create } from "zustand";
+
+export type StageMode =
+  | "cockpit"
+  | "chat"
+  | "asset"
+  | "browser"
+  | "meeting"
+  | "kg"
+  | "voice";
+
+/** Payload contextuel attaché au mode (selon le Stage actif). */
+export type StagePayload =
+  | { mode: "cockpit" }
+  | { mode: "chat"; threadId?: string }
+  | { mode: "asset"; assetId: string; variantKind?: string }
+  | { mode: "browser"; sessionId: string }
+  | { mode: "meeting"; meetingId: string }
+  | { mode: "kg"; entityId?: string; query?: string }
+  | { mode: "voice"; sessionId?: string };
+
+export interface StageEntry {
+  payload: StagePayload;
+  ts: number;
+}
+
+interface StageState {
+  current: StagePayload;
+  history: StageEntry[];
+  /** True quand le Commandeur (Cmd+K) est ouvert. */
+  commandeurOpen: boolean;
+  /** True quand le ChatInput flottant (Cmd+L) est visible au-dessus du Stage. */
+  floatingChatOpen: boolean;
+
+  /** Switch vers un nouveau mode (push dans l'history). */
+  setMode: (payload: StagePayload) => void;
+  /** Retour au Stage précédent. No-op si history vide. */
+  back: () => void;
+  /** Reset à cockpit. */
+  reset: () => void;
+
+  setCommandeurOpen: (open: boolean) => void;
+  setFloatingChatOpen: (open: boolean) => void;
+  toggleCommandeur: () => void;
+  toggleFloatingChat: () => void;
+}
+
+export const useStageStore = create<StageState>((set, get) => ({
+  current: { mode: "cockpit" },
+  history: [],
+  commandeurOpen: false,
+  floatingChatOpen: false,
+
+  setMode: (payload) => {
+    const prev = get().current;
+    set({
+      current: payload,
+      history: [...get().history, { payload: prev, ts: Date.now() }].slice(-20),
+    });
+  },
+
+  back: () => {
+    const hist = get().history;
+    if (hist.length === 0) return;
+    const last = hist[hist.length - 1];
+    set({ current: last.payload, history: hist.slice(0, -1) });
+  },
+
+  reset: () => set({ current: { mode: "cockpit" }, history: [] }),
+
+  setCommandeurOpen: (open) => set({ commandeurOpen: open }),
+  setFloatingChatOpen: (open) => set({ floatingChatOpen: open }),
+  toggleCommandeur: () => set({ commandeurOpen: !get().commandeurOpen }),
+  toggleFloatingChat: () => set({ floatingChatOpen: !get().floatingChatOpen }),
+}));
+
+/**
+ * Mapping hotkey → stage. Cmd+1..7 = switch direct vers un Stage.
+ * Cmd+K = ouvrir Commandeur. Cmd+L = toggle floating chat.
+ * Cmd+Shift+V = mode voice ambient.
+ * Cmd+Backspace = back.
+ */
+export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [
+  { key: "1", mode: "cockpit" },
+  { key: "2", mode: "chat" },
+  { key: "3", mode: "asset" },
+  { key: "4", mode: "browser" },
+  { key: "5", mode: "meeting" },
+  { key: "6", mode: "kg" },
+  { key: "7", mode: "voice" },
+];

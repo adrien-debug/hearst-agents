@@ -21,6 +21,7 @@ export class SSEAdapter {
   private controller: ReadableStreamDefaultController | null = null;
   private cleanup: (() => void) | null = null;
   private encoder = new TextEncoder();
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(private bus: RunEventBus) {
     this.cleanup = bus.on((event) => this.handleEvent(event));
@@ -30,7 +31,39 @@ export class SSEAdapter {
     this.controller = controller;
   }
 
+  /**
+   * Start sending SSE comments (`: heartbeat`) at a regular interval to keep
+   * the connection alive through proxies / load balancers that close idle
+   * sockets. Lines starting with `:` are SSE comments — they don't trigger
+   * any client-side handler, just keep bytes flowing.
+   *
+   * Default 20s — under the 30s threshold most reverse proxies use.
+   */
+  startHeartbeat(intervalMs = 20_000): void {
+    if (this.heartbeatTimer) return;
+    this.heartbeatTimer = setInterval(() => {
+      if (!this.controller) {
+        this.stopHeartbeat();
+        return;
+      }
+      try {
+        this.controller.enqueue(this.encoder.encode(": heartbeat\n\n"));
+      } catch {
+        // Stream closed — stop the timer to avoid leaking it.
+        this.stopHeartbeat();
+      }
+    }, intervalMs);
+  }
+
+  stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
   close(): void {
+    this.stopHeartbeat();
     this.cleanup?.();
     try {
       this.controller?.close();

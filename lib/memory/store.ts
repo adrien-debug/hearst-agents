@@ -20,9 +20,13 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { ModelMessage } from "ai";
 import type { TenantScope } from "@/lib/multi-tenant/types";
+import { getRedis } from "@/lib/platform/redis/client";
 import type { ChatMessageMemory, ConversationMemory } from "./types";
 
 const MAX_MESSAGES_PER_CONVERSATION = 24;
+const WAL_TTL_SECONDS = 3600; // 1h — fenêtre suffisante pour drainer vers Supabase
+const walKey = (conversationId: string) => `wal:msg:${conversationId}`;
+const walModelKey = (conversationId: string) => `wal:msgmodel:${conversationId}`;
 
 // ── In-memory write-buffer (per process / request) ──────────
 const buffer: Map<string, ConversationMemory> = new Map();
@@ -85,8 +89,29 @@ export function appendMessage(
     conv.messages = conv.messages.slice(-MAX_MESSAGES_PER_CONVERSATION);
   }
 
-  // Async write to Supabase — fire-and-forget, never blocks the caller
-  void persistMessage(conversationId, message, scope);
+  // WAL Redis d'abord (durable, <5ms) puis Supabase async. Si le process
+  // crash entre les deux, le message est récupérable depuis Redis WAL et
+  // peut être drainé par un worker dédié. Sans Redis, on retombe direct
+  // sur le path Supabase fire-and-forget (comportement antérieur).
+  void walAndPersist(conversationId, message, scope);
+}
+
+async function walAndPersist(
+  conversationId: string,
+  message: ChatMessageMemory,
+  scope: TenantScope,
+): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    try {
+      const payload = JSON.stringify({ conversationId, message, scope, ts: Date.now() });
+      await redis.lpush(walKey(conversationId), payload);
+      await redis.expire(walKey(conversationId), WAL_TTL_SECONDS);
+    } catch (err) {
+      console.warn("[Memory] WAL write failed, falling back to direct persist:", err);
+    }
+  }
+  await persistMessage(conversationId, message, scope);
 }
 
 export async function getRecentMessages(
@@ -207,8 +232,28 @@ export function appendModelMessages(
   const next = [...existing, ...modelMessages].slice(-MAX_MESSAGES_PER_CONVERSATION);
   structuredBuffer.set(key, next);
 
-  // Async write to Supabase
-  void persistModelMessages(conversationId, modelMessages, scope);
+  // Même pattern WAL Redis → Supabase pour les structured messages (tool
+  // calls / tool results). La perte de ces rows casse les flows de
+  // confirmation cross-turn — donc même garantie que pour les text-only.
+  void walAndPersistModel(conversationId, modelMessages, scope);
+}
+
+async function walAndPersistModel(
+  conversationId: string,
+  modelMessages: ModelMessage[],
+  scope: TenantScope,
+): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    try {
+      const payload = JSON.stringify({ conversationId, modelMessages, scope, ts: Date.now() });
+      await redis.lpush(walModelKey(conversationId), payload);
+      await redis.expire(walModelKey(conversationId), WAL_TTL_SECONDS);
+    } catch (err) {
+      console.warn("[Memory] WAL model write failed, falling back to direct persist:", err);
+    }
+  }
+  await persistModelMessages(conversationId, modelMessages, scope);
 }
 
 async function persistModelMessages(

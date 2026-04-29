@@ -6,7 +6,10 @@ import { requireScope } from "@/lib/platform/auth/scope";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-export const maxDuration = 120;
+// 300s = couvre les runs longs (research reports, browser tasks, video gen).
+// Heartbeat 20s injecté dans le stream (voir withHeartbeat) pour tenir la
+// connexion ouverte côté proxies et empêcher les timeouts intermédiaires.
+export const maxDuration = 300;
 
 // Start the mission scheduler exactly once (module scope, survives hot-reload).
 // Primary boot is instrumentation.ts; this is a secondary guard.

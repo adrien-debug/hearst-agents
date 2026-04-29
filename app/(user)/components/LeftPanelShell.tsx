@@ -13,7 +13,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigationStore } from "@/stores/navigation";
-import { LeftPanel } from "./LeftPanel";
+import { TimelineRail } from "./TimelineRail";
 
 export function LeftPanelShell() {
   const [isMobile, setIsMobile] = useState(false);
@@ -36,7 +36,7 @@ export function LeftPanelShell() {
   }, [isMobile, leftDrawerOpen, closeLeftDrawer]);
 
   if (!isMobile) {
-    return <LeftPanel />;
+    return <TimelineRail />;
   }
 
   return (
@@ -53,7 +53,7 @@ export function LeftPanelShell() {
           leftDrawerOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <LeftPanel />
+        <TimelineRail />
       </div>
     </>
   );

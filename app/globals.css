@@ -125,6 +125,9 @@
 
   /* ─── FocalStage ─────────────────────────────────────────────── */
   --height-focal-min: 320px;           /* Surface focale : hauteur minimale */
+  --height-chat-collapsed: 320px;      /* Chat reduced quand FocalStage actif */
+  --height-stage-empty-icon: 80px;     /* Empty state Stage : hauteur icône signature */
+  --height-pulsebar: 32px;             /* PulseBar top fixed : hauteur */
 
   /* ─── AgentActivityStrip ─────────────────────────────────────── */
   --width-activity-label: 180px;       /* Libellé d'activité : max-width */
@@ -349,28 +352,22 @@
 
 /* ─── Pipeline admin — surface technique sur thème courant ─────────────
  * Le canvas hérite du thème actif (light dans `AdminShell`). Les accents
- * par famille de stage (data-kind) sont scopés sur `.pipeline-canvas-frame`
- * et restent stables quel que soit le thème. */
+ * par famille de stage (data-kind) sont scopés sur `.pipeline-canvas-frame`. */
 .pipeline-canvas-frame {
   position: absolute;
   inset: 0;
   overflow: hidden;
   background: var(--bg);
-  transform-style: preserve-3d;
 
-  /* Pipeline accents — defaults cykan, override par data-kind plus bas */
   --pipeline-accent: var(--cykan);
   --pipeline-accent-soft: color-mix(in srgb, var(--cykan) 18%, transparent);
   --pipeline-accent-glow: var(--glow-cyan-sm);
   --pipeline-accent-glow-md: var(--glow-cyan-md);
-  --pipeline-ring-idle: color-mix(in srgb, var(--cykan) 18%, transparent);
   --pipeline-ring-active: color-mix(in srgb, var(--cykan) 55%, transparent);
   --pipeline-port-socket: var(--surface);
 }
 
-/* Couche cards — dimensions posées en pixels par `FlowCanvas` via un
- * ResizeObserver (vars `--pl-layer-w` / `--pl-layer-h`) pour matcher
- * exactement la zone de rendu SVG (xMidYMid meet) à tout viewport. */
+/* Couche cards — dimensions posées en pixels par FlowCanvas via ResizeObserver. */
 .pipeline-node-layer {
   position: absolute;
   top: 50%;
@@ -381,10 +378,7 @@
   transform-style: preserve-3d;
 }
 
-/* ── Pipeline node — accent par famille de stage (data-kind) ───────────
- * Le composant React applique data-kind="entry|router|gate|...". Le CSS
- * porte la couleur de famille via --pipeline-accent. Aucune valeur en dur
- * dans le React. */
+/* ── Accents par famille de stage ─────────────────────────────────── */
 .pipeline-canvas-frame [data-kind="entry"],
 .pipeline-canvas-frame [data-kind="router"],
 .pipeline-canvas-frame [data-kind="intent"],
@@ -426,16 +420,9 @@
   --pipeline-ring-active: color-mix(in srgb, var(--color-success) 55%, transparent);
 }
 
-/* ── Pipeline card — surface holographique (verre fumé + halo cykan) ──
- * Composite réutilisé par chaque FlowNode. Tous les états sont portés par
- * data-state (idle | active | success | failed | blocked | disabled).
- * Aucun style inline côté React.
- * Layout : grid 3 rangs (top row · label block · bottom strip), padding
- * --space-3, gap --space-2. Pas de child absolute hors gauge/ports. */
+/* ── Pipeline card — surface blanche, border token, états data-state ─ */
 .pipeline-card {
   position: absolute;
-  /* Position + size lus depuis les vars React (--pl-*) — calculées depuis
-   * le viewBox SVG et passées via le style prop. Aucun magic number. */
   left: var(--pl-left);
   top: var(--pl-top);
   width: var(--pl-width);
@@ -446,28 +433,17 @@
   padding: var(--space-4);
   border-radius: var(--radius-lg);
   background-color: var(--surface);
-  background-image:
-    var(--stage-shoulder),
-    var(--stage-veil),
-    radial-gradient(ellipse 80% 60% at 50% -10%, var(--pipeline-accent-soft) 0%, transparent 60%);
-  border: 1px solid var(--pipeline-ring-idle);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
-    var(--shadow-card);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--shadow-card);
   color: var(--text);
   cursor: pointer;
   outline: none;
   transform: translate(-50%, -50%);
-  transform-style: preserve-3d;
   transition:
     transform var(--duration-base) var(--ease-spring),
     box-shadow var(--duration-base) var(--ease-standard),
-    border-color var(--duration-base) var(--ease-standard),
-    background-color var(--duration-base) var(--ease-standard);
+    border-color var(--duration-base) var(--ease-standard);
 }
-
-/* Rows internes — pas de magic numbers, alignement flex. */
 .pipeline-card-row {
   display: flex;
   align-items: center;
@@ -512,14 +488,10 @@
   flex: 1;
   min-width: 0;
 }
-
-/* Glyph dans le disque icône — taille via token, pas inline. */
 .pipeline-icon-glyph {
   width: var(--space-6);
   height: var(--space-6);
 }
-
-/* Mount du toggle dans le coin bas-droit — positionné via classe DS. */
 .pipeline-toggle-mount {
   position: absolute;
   right: var(--space-3);
@@ -529,47 +501,27 @@
 .pipeline-card:hover {
   transform: translate(-50%, calc(-50% - var(--space-1)));
   border-color: var(--pipeline-ring-active);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
-    var(--shadow-card-hover),
-    var(--pipeline-accent-glow);
+  box-shadow: var(--shadow-card-hover), var(--pipeline-accent-glow);
 }
 .pipeline-card:focus-visible {
   border-color: var(--pipeline-accent);
-  box-shadow:
-    inset 0 0 0 1px var(--pipeline-accent),
-    var(--shadow-card-hover),
-    var(--pipeline-accent-glow);
+  box-shadow: inset 0 0 0 1px var(--pipeline-accent), var(--shadow-card-hover), var(--pipeline-accent-glow);
 }
 .pipeline-card[data-state="active"] {
   border-color: var(--pipeline-ring-active);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
-    var(--shadow-card-hover),
-    var(--pipeline-accent-glow-md);
+  box-shadow: var(--shadow-card-hover), var(--pipeline-accent-glow-md);
 }
 .pipeline-card[data-state="success"] {
-  border-color: rgba(45, 197, 88, 0.45);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    var(--shadow-card),
-    var(--glow-success-sm);
+  border-color: color-mix(in srgb, var(--color-success) 45%, transparent);
+  box-shadow: var(--shadow-card), var(--glow-success-sm);
 }
 .pipeline-card[data-state="failed"] {
-  border-color: rgba(239, 68, 68, 0.55);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    var(--shadow-card),
-    var(--glow-danger-md);
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  box-shadow: var(--shadow-card), var(--glow-danger-md);
 }
 .pipeline-card[data-state="blocked"] {
-  border-color: rgba(245, 158, 11, 0.55);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    var(--shadow-card),
-    var(--glow-warn-md);
+  border-color: color-mix(in srgb, var(--warn) 55%, transparent);
+  box-shadow: var(--shadow-card), var(--glow-warn-md);
 }
 .pipeline-card[data-state="disabled"] {
   opacity: 0.4;
@@ -577,27 +529,10 @@
 }
 .pipeline-card[data-selected="true"] {
   border-color: var(--pipeline-accent);
-  box-shadow:
-    inset 0 0 0 1px var(--pipeline-accent),
-    var(--shadow-card-hover),
-    var(--pipeline-accent-glow-md);
+  box-shadow: inset 0 0 0 1px var(--pipeline-accent), var(--shadow-card-hover), var(--pipeline-accent-glow-md);
 }
 
-/* Top gloss highlight — fine ligne lumineuse simulant la lumière haute. */
-.pipeline-card-gloss {
-  position: absolute;
-  inset: 0 var(--space-3) auto var(--space-3);
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.22) 50%,
-    transparent 100%
-  );
-  pointer-events: none;
-}
-
-/* ── Pipeline port — prise lumineuse, centre exact sur le bord card ── */
+/* ── Pipeline port ─────────────────────────────────────────────────── */
 .pipeline-port {
   position: absolute;
   top: 50%;
@@ -605,10 +540,7 @@
   height: var(--space-3);
   border-radius: var(--radius-pill);
   background: var(--pipeline-accent);
-  box-shadow:
-    0 0 0 2px var(--pipeline-port-socket),
-    0 0 8px var(--pipeline-accent),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 2px var(--pipeline-port-socket), 0 0 8px var(--pipeline-accent);
   pointer-events: none;
   z-index: 2;
 }
@@ -619,51 +551,11 @@
   animation: pipeline-port-pulse var(--duration-slow) var(--ease-out-soft) infinite alternate;
 }
 @keyframes pipeline-port-pulse {
-  from { box-shadow: 0 0 0 2px var(--pipeline-port-socket), 0 0 6px var(--pipeline-accent), inset 0 0 0 2px rgba(255, 255, 255, 0.35); }
-  to   { box-shadow: 0 0 0 2px var(--pipeline-port-socket), 0 0 14px var(--pipeline-accent), inset 0 0 0 2px rgba(255, 255, 255, 0.55); }
+  from { box-shadow: 0 0 0 2px var(--pipeline-port-socket), 0 0 6px var(--pipeline-accent); }
+  to   { box-shadow: 0 0 0 2px var(--pipeline-port-socket), 0 0 14px var(--pipeline-accent); }
 }
 
-/* ── Pipeline icon halo — wrapper 64px : 3 orbitales + disque central ── */
-.pipeline-icon-halo {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--space-16);
-  height: var(--space-16);
-  flex-shrink: 0;
-  filter: drop-shadow(0 0 16px var(--pipeline-accent-soft));
-}
-.pipeline-icon-orbit {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  color: var(--pipeline-accent);
-  pointer-events: none;
-}
-.pipeline-icon-orbit-ring {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 0.05;
-  opacity: 0.55;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-.pipeline-icon-orbit-ring--1 { animation: pipeline-orbit-cw 14s linear infinite; opacity: 0.6; }
-.pipeline-icon-orbit-ring--2 { animation: pipeline-orbit-ccw 11s linear infinite; opacity: 0.45; }
-.pipeline-icon-orbit-ring--3 { animation: pipeline-orbit-cw 18s linear infinite; opacity: 0.45; }
-.pipeline-card[data-state="active"] .pipeline-icon-orbit-ring--1 { animation-duration: 4s; opacity: 0.9; }
-.pipeline-card[data-state="active"] .pipeline-icon-orbit-ring--2 { animation-duration: 3s; opacity: 0.7; }
-.pipeline-card[data-state="active"] .pipeline-icon-orbit-ring--3 { animation-duration: 5s; opacity: 0.7; }
-.pipeline-card[data-state="failed"] .pipeline-icon-orbit-ring,
-.pipeline-card[data-state="blocked"] .pipeline-icon-orbit-ring {
-  animation-play-state: paused;
-}
-@keyframes pipeline-orbit-cw  { to { transform: rotate(360deg); } }
-@keyframes pipeline-orbit-ccw { to { transform: rotate(-360deg); } }
-
-/* ── Pipeline icon disc — disque plein 40px au cœur du halo ── */
+/* ── Pipeline icon disc — disque plein --space-10 ──────────────────── */
 .pipeline-icon-disc {
   position: relative;
   display: inline-flex;
@@ -672,26 +564,12 @@
   width: var(--space-10);
   height: var(--space-10);
   border-radius: var(--radius-pill);
-  background:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.35) 0%, transparent 55%),
-    var(--pipeline-accent);
-  color: #fff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.40),
-    inset 0 -2px 6px rgba(0, 0, 0, 0.40),
-    0 2px 12px rgba(0, 0, 0, 0.55),
-    0 0 18px var(--pipeline-accent-soft);
-  z-index: 1;
-}
-.pipeline-card[data-state="active"] .pipeline-icon-disc {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -2px 6px rgba(0, 0, 0, 0.40),
-    0 2px 12px rgba(0, 0, 0, 0.55),
-    0 0 28px var(--pipeline-accent);
+  background: var(--pipeline-accent);
+  color: white;
+  flex-shrink: 0;
 }
 
-/* ── Pipeline LED — voyant 12px, halo selon état ── */
+/* ── Pipeline LED — voyant d'état ───────────────────────────────────── */
 .pipeline-led {
   width: var(--space-3);
   height: var(--space-3);
@@ -721,10 +599,10 @@
 }
 @keyframes pipeline-led-blink {
   0%, 100% { opacity: 1; }
-  50%      { opacity: 0.55; }
+  50%       { opacity: 0.55; }
 }
 
-/* ── Pipeline kicker — code stage type "01 // ENTRY" ── */
+/* ── Pipeline kicker — code stage type "01 // ENTRY" ────────────────── */
 .pipeline-kicker {
   font-family: var(--font-satoshi);
   font-feature-settings: "tnum", "ss01";
@@ -742,7 +620,7 @@
   color: var(--pipeline-accent);
 }
 
-/* ── Pipeline state pill — overlay mono caps (row 3) ── */
+/* ── Pipeline state pill — pastille d'état (row 3) ──────────────────── */
 .pipeline-state-pill {
   display: inline-flex;
   align-items: center;
@@ -759,22 +637,22 @@
   flex-shrink: 0;
 }
 .pipeline-card[data-state="failed"] .pipeline-state-pill {
-  border-color: rgba(239, 68, 68, 0.55);
-  background: rgba(239, 68, 68, 0.18);
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
   color: var(--danger);
 }
 .pipeline-card[data-state="blocked"] .pipeline-state-pill {
-  border-color: rgba(245, 158, 11, 0.55);
-  background: rgba(245, 158, 11, 0.18);
+  border-color: color-mix(in srgb, var(--warn) 55%, transparent);
+  background: color-mix(in srgb, var(--warn) 18%, transparent);
   color: var(--warn);
 }
 .pipeline-card[data-state="success"] .pipeline-state-pill {
-  border-color: rgba(45, 197, 88, 0.55);
-  background: rgba(45, 197, 88, 0.18);
+  border-color: color-mix(in srgb, var(--color-success) 55%, transparent);
+  background: color-mix(in srgb, var(--color-success) 18%, transparent);
   color: var(--color-success);
 }
 
-/* ── Pipeline progress hairline — rail 1px collé en bas de la card ── */
+/* ── Pipeline progress rail — hairline 1px en bas de la card ─────────── */
 .pipeline-progress-rail {
   position: absolute;
   left: var(--space-3);
@@ -791,12 +669,7 @@
   position: absolute;
   inset: 0;
   width: 0%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--pipeline-accent) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, var(--pipeline-accent) 50%, transparent 100%);
   box-shadow: 0 0 8px var(--pipeline-accent);
   transition: width var(--duration-slow) var(--ease-out-soft);
 }
@@ -808,7 +681,7 @@
   width: 100%;
 }
 .pipeline-card[data-state="failed"] .pipeline-progress-rail {
-  background: rgba(239, 68, 68, 0.35);
+  background: color-mix(in srgb, var(--danger) 35%, transparent);
 }
 .pipeline-card[data-state="failed"] .pipeline-progress-rail::after {
   width: 100%;
@@ -820,9 +693,7 @@
   100% { transform: translateX(100%); }
 }
 
-/* ── Pipeline cable — 4 strokes empilés (halo · body · core · traffic) ──
- * Toutes les classes sont appliquées sur des <path> SVG. Le glow vient de
- * drop-shadow (jamais blur), pour garder la fibre nette. */
+/* ── Pipeline cable — 3 strokes empilés (halo · body · core) ────────── */
 .pipeline-cable {
   --cable-color: var(--cykan);
   --cable-color-bright: color-mix(in srgb, var(--cable-color) 60%, #ffffff);
@@ -878,12 +749,10 @@
 .pipeline-cable[data-failed="true"] .pipeline-cable-halo  { opacity: 0.30; }
 .pipeline-cable[data-failed="true"] .pipeline-cable-core  { opacity: 0; }
 
-/* Connector dots SVG (au bord card, alignés avec .pipeline-port HTML) */
 .pipeline-cable-port-outer { fill: var(--cable-color); opacity: 0.85; filter: drop-shadow(0 0 6px var(--cable-color)); }
-.pipeline-cable-port-inner { fill: rgba(255, 255, 255, 0.95); opacity: 0.9; }
+.pipeline-cable-port-inner { fill: white; opacity: 0.9; }
 .pipeline-cable[data-active="true"] .pipeline-cable-port-outer { opacity: 1; }
 
-/* Trail afterglow (post-run echo) */
 .pipeline-cable-trail {
   fill: none;
   stroke: var(--cable-color);
@@ -891,7 +760,7 @@
   filter: drop-shadow(0 0 12px var(--cable-color));
 }
 
-/* Admin — replay waterfall : tête de lecture (évite box-shadow inline). */
+/* Admin — replay waterfall : tête de lecture */
 .admin-waterfall-playhead {
   box-shadow: var(--shadow-playhead-cykan);
 }

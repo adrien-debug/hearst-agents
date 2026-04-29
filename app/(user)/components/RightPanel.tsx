@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { RightPanelContent } from "./RightPanelContent";
+import { ContextRail } from "./ContextRail";
 import { GhostIconMenu, GhostIconX } from "./ghost-icons";
 
 export function RightPanel() {
@@ -51,13 +51,13 @@ export function RightPanel() {
               isMobileOpen ? "translate-x-0" : "translate-x-full"
             }`}
           >
-            <RightPanelContent onClose={() => setIsMobileOpen(false)} />
+            <ContextRail onClose={() => setIsMobileOpen(false)} />
           </div>
         </>
       )}
 
       {/* Desktop: Inline panel (visibility controlled by layout.tsx) */}
-      {!isMobile && <RightPanelContent />}
+      {!isMobile && <ContextRail />}
     </>
   );
 }
