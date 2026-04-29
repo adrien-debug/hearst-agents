@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
 import { LeftPanelShell } from "./components/LeftPanelShell";
 import { RightPanel } from "./components/RightPanel";
@@ -8,6 +9,16 @@ import { Commandeur } from "./components/Commandeur";
 import { ToastContainer } from "@/app/components/ToastContainer";
 import { useToast } from "@/app/hooks/use-toast";
 import { useGlobalHotkeys } from "@/app/hooks/use-global-hotkeys";
+
+function BriefingAutoTrigger() {
+  useEffect(() => {
+    const h = new Date().getHours();
+    if (h >= 6 && h <= 10) {
+      void fetch("/api/briefing", { method: "POST" }).catch(() => {});
+    }
+  }, []);
+  return null;
+}
 
 function ToastProvider({ children }: { children: React.ReactNode }) {
   const { toasts, dismiss } = useToast();
@@ -38,6 +49,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <SessionProvider>
+      <BriefingAutoTrigger />
       <ToastProvider>
         <div
           data-theme="light"

@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { ChatInput } from "../ChatInput";
+import { AudioPlayer } from "../AudioPlayer";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
+import type { AssetVariant } from "@/lib/assets/variants";
 
 interface CockpitStageProps {
   onSubmit: (message: string) => Promise<void>;
@@ -15,6 +17,82 @@ interface CockpitWidget {
   label: string;
   hint: string;
   trigger: string;
+}
+
+type BriefingStatus = "loading" | "not_generated" | "generating" | "ready" | "failed";
+
+interface BriefingState {
+  status: BriefingStatus;
+  variant?: AssetVariant;
+}
+
+function BriefingSection() {
+  const [state, setState] = useState<BriefingState>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    async function poll() {
+      if (cancelled) return;
+      try {
+        const res = await fetch("/api/briefing");
+        if (cancelled) return;
+        if (!res.ok) {
+          setState({ status: "not_generated" });
+          return;
+        }
+        const data = await res.json() as { status: string; variant?: AssetVariant };
+        if (cancelled) return;
+        const status = (data.status as BriefingStatus) ?? "not_generated";
+        setState({ status, variant: data.variant });
+        if (status === "generating") {
+          timer = setTimeout(poll, 5_000);
+        }
+      } catch {
+        if (!cancelled) setState({ status: "not_generated" });
+      }
+    }
+
+    void poll();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
+  if (state.status === "loading" || state.status === "not_generated" || state.status === "failed") {
+    return null;
+  }
+
+  if (state.status === "generating") {
+    return (
+      <div className="w-full" style={{ maxWidth: "calc(var(--card-width) * 2 + var(--card-gap))" }}>
+        <div
+          className="border border-[var(--surface-2)] rounded-md bg-[var(--surface-1)] flex items-center"
+          style={{ padding: "var(--space-6)", gap: "var(--space-4)" }}
+        >
+          <span
+            className="rounded-pill bg-[var(--warn)] animate-pulse"
+            style={{ width: "var(--space-2)", height: "var(--space-2)", flexShrink: 0 }}
+            aria-hidden
+          />
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
+            Briefing en cours de génération…
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!state.variant) return null;
+
+  return (
+    <div className="w-full" style={{ maxWidth: "calc(var(--card-width) * 2 + var(--card-gap))" }}>
+      <AudioPlayer variant={state.variant} />
+    </div>
+  );
 }
 
 const DEFAULT_WIDGETS: CockpitWidget[] = [
@@ -99,6 +177,8 @@ export function CockpitStage({ onSubmit, connectedServices }: CockpitStageProps)
               </p>
             </div>
           </div>
+
+          <BriefingSection />
 
           {/* Grid 2x2 widgets configurables */}
           <div
