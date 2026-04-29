@@ -12,7 +12,7 @@
 import type { RightPanelData } from "@/lib/core/types";
 import { useFocalStore } from "@/stores/focal";
 import { missionToFocal } from "@/lib/ui/focal-mappers";
-import { formatRelativeTime } from "../right-panel-helpers";
+import { RelativeTime } from "../RelativeTime";
 
 interface MissionRowProps {
   mission: RightPanelData["missions"][number];
@@ -134,9 +134,10 @@ export function MissionRow({ mission, activeThreadId }: MissionRowProps) {
           {stateLabel}
         </span>
         {mission.lastRunAt && (
-          <span className="t-9 font-mono text-[var(--text-faint)]">
-            {formatRelativeTime(mission.lastRunAt)}
-          </span>
+          <RelativeTime
+            ts={mission.lastRunAt}
+            className="t-9 font-mono text-[var(--text-faint)]"
+          />
         )}
       </span>
     </button>

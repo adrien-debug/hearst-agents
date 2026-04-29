@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useStageStore } from "@/stores/stage";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
+import { RelativeTime } from "../components/RelativeTime";
 import { toast } from "@/app/hooks/use-toast";
 
 // Format V2 retourné par GET /api/v2/assets (Asset canonique).
@@ -30,24 +31,6 @@ const TYPE_GLYPH: Record<string, string> = {
 
 function glyph(type: string): string {
   return TYPE_GLYPH[type.toLowerCase()] || "·";
-}
-
-function formatRelative(iso: string): string {
-  const ts = new Date(iso).getTime();
-  if (!Number.isFinite(ts)) return "—";
-  const diff = Date.now() - ts;
-  if (diff < 0) return "à venir";
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "à l'instant";
-  if (mins < 60) return `il y a ${mins}m`;
-  const h = Math.floor(mins / 60);
-  if (h < 24) return `il y a ${h}h`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `il y a ${d}j`;
-  const w = Math.floor(d / 7);
-  if (w < 4) return `il y a ${w}sem`;
-  const mo = Math.floor(d / 30);
-  return `il y a ${mo}mo`;
 }
 
 export default function AssetsPage() {
@@ -176,9 +159,10 @@ export default function AssetsPage() {
                       ? `${(asset.provenance.pdfFile.sizeBytes / 1024).toFixed(1)} KB`
                       : "—"}
                   </span>
-                  <span className="t-9 font-mono tracking-display text-[var(--text-ghost)] uppercase text-right">
-                    {formatRelative(new Date(asset.createdAt).toISOString())}
-                  </span>
+                  <RelativeTime
+                    ts={asset.createdAt}
+                    className="t-9 font-mono tracking-display text-[var(--text-ghost)] uppercase text-right"
+                  />
                   <button
                     type="button"
                     onClick={(e) => handleDownload(asset, e)}

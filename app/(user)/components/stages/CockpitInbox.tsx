@@ -21,7 +21,8 @@ import { useStageStore } from "@/stores/stage";
 import { useFocalStore } from "@/stores/focal";
 import { assetToFocal } from "@/lib/ui/focal-mappers";
 import { toast } from "@/app/hooks/use-toast";
-import { AssetGlyphSVG, formatRelativeTime } from "../right-panel-helpers";
+import { AssetGlyphSVG } from "../right-panel-helpers";
+import { RelativeTime } from "../RelativeTime";
 import type {
   RightPanelData,
   RightPanelAsset,
@@ -258,9 +259,10 @@ function ThreadRow({
         />
         <p className="t-13 text-[var(--text)] truncate">{name}</p>
       </div>
-      <span className="t-9 font-mono tracking-display text-[var(--text-faint)] shrink-0 ml-3">
-        {formatRelativeTime(lastActivity)}
-      </span>
+      <RelativeTime
+        ts={lastActivity}
+        className="t-9 font-mono tracking-display text-[var(--text-faint)] shrink-0 ml-3"
+      />
     </button>
   );
 }

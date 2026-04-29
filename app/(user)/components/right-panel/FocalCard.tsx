@@ -11,6 +11,7 @@
 import { useFocalStore } from "@/stores/focal";
 import { useRuntimeStore } from "@/stores/runtime";
 import { AssetGlyphSVG } from "../right-panel-helpers";
+import { RelativeTime } from "../RelativeTime";
 
 interface FocalCardProps {
   focalObject?: unknown;
@@ -25,16 +26,6 @@ interface CommNotification {
   subtitle?: string;
   timestamp: number;
   priority: "normal" | "high" | "urgent";
-}
-
-function formatTimeAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const minutes = Math.floor(diff / 60_000);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `il y a ${hours}h`;
-  return `il y a ${Math.floor(hours / 24)}j`;
 }
 
 function useNotifications(): CommNotification[] {
@@ -152,9 +143,10 @@ export function FocalCard({ activeThreadId: _activeThreadId }: FocalCardProps) {
             {latest.subtitle && (
               <span className="t-9 text-[var(--text-muted)] truncate">{latest.subtitle}</span>
             )}
-            <span className="t-9 font-mono text-[var(--text-faint)]">
-              {formatTimeAgo(latest.timestamp)}
-            </span>
+            <RelativeTime
+              ts={latest.timestamp}
+              className="t-9 font-mono text-[var(--text-faint)]"
+            />
           </span>
         </button>
       ) : (

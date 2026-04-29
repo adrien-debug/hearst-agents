@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
+import { RelativeTime } from "../components/RelativeTime";
 
 interface RunListItem {
   id: string;
@@ -40,23 +41,6 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "CXL",
   idle: "IDLE",
 };
-
-function formatRelative(ts?: number): string {
-  if (!ts) return "—";
-  const diff = Date.now() - ts;
-  if (diff < 0) return "à venir";
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "à l'instant";
-  if (mins < 60) return `il y a ${mins}m`;
-  const h = Math.floor(mins / 60);
-  if (h < 24) return `il y a ${h}h`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `il y a ${d}j`;
-  const w = Math.floor(d / 7);
-  if (w < 4) return `il y a ${w}sem`;
-  const mo = Math.floor(d / 30);
-  return `il y a ${mo}mo`;
-}
 
 function formatDuration(ms?: number): string {
   if (!ms || ms < 0) return "—";
@@ -171,9 +155,10 @@ export default function RunsPage() {
                     <span className="t-9 font-mono text-[var(--text-faint)] text-right">
                       {formatDuration(run.metrics?.durationMs)}
                     </span>
-                    <span className="t-9 font-mono tracking-display text-[var(--text-ghost)] uppercase text-right">
-                      {formatRelative(run.createdAt)}
-                    </span>
+                    <RelativeTime
+                      ts={run.createdAt}
+                      className="t-9 font-mono tracking-display text-[var(--text-ghost)] uppercase text-right"
+                    />
                   </div>
                 );
               })}
