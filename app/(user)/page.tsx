@@ -7,6 +7,7 @@ import { useNavigationStore } from "@/stores/navigation";
 import { useServicesStore } from "@/stores/services";
 import { useStageStore, type StagePayload } from "@/stores/stage";
 import type { Message, RightPanelData } from "@/lib/core/types";
+import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
 import { Stage } from "./components/Stage";
 import { toast } from "@/app/hooks/use-toast";
