@@ -95,7 +95,6 @@ function groupThreadsByDate(threads: Thread[]): {
 function SectionHeader({
   label,
   count,
-  accent,
   action,
 }: {
   label: string;
@@ -104,19 +103,11 @@ function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div
-      className={`flex items-center justify-between mt-6 mb-3 pb-2 pl-2 border-b border-l-2 first:mt-0 ${
-        accent
-          ? "border-b-[var(--cykan)]/40 border-l-[var(--cykan)]"
-          : "border-b-[var(--border-default)] border-l-transparent"
-      }`}
-    >
-      <span className={`t-9 font-mono tracking-marquee uppercase ${accent ? "text-[var(--cykan)]" : "text-[var(--text-muted)]"}`}>
-        {label}
-      </span>
-      <span className="flex items-center" style={{ gap: "var(--space-2)" }}>
+    <div className="flex items-center justify-between first:mt-0 mt-6 mb-3">
+      <span className="rail-section-label">{label}</span>
+      <span className="flex items-center gap-2">
         {action}
-        <span className={`t-9 font-mono tracking-display ${accent ? "text-[var(--cykan)]" : "text-[var(--text-faint)]"}`}>
+        <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
           {count.toString().padStart(2, "0")}
         </span>
       </span>
@@ -282,10 +273,10 @@ export function TimelineRail() {
         <button
           onClick={() => {
             router.push("/");
-            setStageMode({ mode: "cockpit" });
+            setStageMode({ mode: "chat" });
           }}
           className="flex items-center justify-center hover:opacity-80 transition-opacity"
-          title="Hearst — Cockpit"
+          title="Hearst — Chat"
         >
           {leftCollapsed ? (
             <span className="t-15 font-medium tracking-tight text-[var(--cykan)] halo-cyan-sm leading-none">H</span>
@@ -319,44 +310,46 @@ export function TimelineRail() {
             ))}
           </div>
         ) : (
-          <div className="overflow-y-auto scrollbar-hide flex-1">
+          <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col" style={{ gap: "var(--space-3)" }}>
             {/* Today */}
-            <SectionHeader
-              label="Today"
-              count={groups.today.length}
-              action={
-                <button
-                  type="button"
-                  onClick={handleNewThread}
-                  title="Nouvelle conversation"
-                  aria-label="Nouvelle conversation"
-                  className="halo-on-hover w-4 h-4 flex items-center justify-center rounded-pill border border-[var(--border-default)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-colors"
-                >
-                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </button>
-              }
-            />
-            {groups.today.length === 0 ? (
-              <EmptyHint>{"Aucune activité aujourd'hui"}</EmptyHint>
-            ) : (
-              <div className="space-y-px">
-                {groups.today.map((t) => (
-                  <ThreadRow
-                    key={t.id}
-                    thread={t}
-                    isActive={t.id === activeThreadId}
-                    onSelect={() => handleThreadSelect(t.id)}
-                    onDelete={() => handleThreadDelete(t.id)}
-                    onArchive={() => toggleArchived(t.id)}
-                  />
-                ))}
-              </div>
-            )}
+            <section className="rail-section-card">
+              <SectionHeader
+                label="Today"
+                count={groups.today.length}
+                action={
+                  <button
+                    type="button"
+                    onClick={handleNewThread}
+                    title="Nouvelle conversation"
+                    aria-label="Nouvelle conversation"
+                    className="halo-on-hover w-4 h-4 flex items-center justify-center rounded-pill border border-[var(--border-default)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-colors"
+                  >
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                }
+              />
+              {groups.today.length === 0 ? (
+                <EmptyHint>{"Aucune activité aujourd'hui"}</EmptyHint>
+              ) : (
+                <div className="space-y-px">
+                  {groups.today.map((t) => (
+                    <ThreadRow
+                      key={t.id}
+                      thread={t}
+                      isActive={t.id === activeThreadId}
+                      onSelect={() => handleThreadSelect(t.id)}
+                      onDelete={() => handleThreadDelete(t.id)}
+                      onArchive={() => toggleArchived(t.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
 
             {groups.thisWeek.length > 0 && (
-              <>
+              <section className="rail-section-card">
                 <SectionHeader label="7 derniers jours" count={groups.thisWeek.length} />
                 <div className="space-y-px">
                   {groups.thisWeek.map((t) => (
@@ -366,14 +359,15 @@ export function TimelineRail() {
                       isActive={t.id === activeThreadId}
                       onSelect={() => handleThreadSelect(t.id)}
                       onDelete={() => handleThreadDelete(t.id)}
+                      onArchive={() => toggleArchived(t.id)}
                     />
                   ))}
                 </div>
-              </>
+              </section>
             )}
 
             {groups.archive.length > 0 && (
-              <>
+              <section className="rail-section-card">
                 <SectionHeader label="Archive" count={groups.archive.length} />
                 <div className="space-y-px">
                   {groups.archive.map((t) => (
@@ -387,7 +381,7 @@ export function TimelineRail() {
                     />
                   ))}
                 </div>
-              </>
+              </section>
             )}
           </div>
         )}

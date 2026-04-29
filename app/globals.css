@@ -138,6 +138,10 @@
   /* ─── Shadows composants ────────────────────────────────────── */
   --shadow-glow-cykan-soft: 0 0 24px rgba(45,212,191,0.40);   /* ChatInput focus cykan */
   --shadow-thread-active: inset 2px 0 0 var(--cykan);           /* LeftPanel thread actif */
+  --shadow-tile-inset: inset 0 0.5px 0 rgba(255, 255, 255, 0.03);
+  --shadow-tile-base: 0 1px 2px rgba(0, 0, 0, 0.20);
+  --shadow-tile-hover: 0 2px 4px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(45, 212, 191, 0.06);
+  --shadow-alert-inset: inset 0 0.5px 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.20);
 
   /* ─── Hearst Connect — Cards (suggestion grid) ─────────────── */
   --card-width: 312px;
@@ -152,8 +156,8 @@
   /* ─── Hearst Connect — Surface levels (cockpit dark) ──────────
    * Variante par défaut = dark cockpit. Le user surface bascule en
    * light via [data-theme="light"] plus bas dans ce fichier. */
-  --bg-center: #1F2024;
-  --bg-rail: #26272B;
+  --bg-center: #000000;
+  --bg-rail: #000000;
 
   /* ─── Hearst Connect — Borders alpha (UI overhaul) ──────────── */
   --border-shell: rgba(255, 255, 255, 0.06);
@@ -882,6 +886,7 @@
 *::before,
 *::after {
   box-sizing: border-box;
+  font-family: var(--font-satoshi) !important;
 }
 
 html, body {
@@ -939,6 +944,76 @@ body {
   letter-spacing: 0.4em;
   color: var(--text-faint);
   text-transform: uppercase;
+}
+
+/* Rail section header — pattern partagé panel gauche/droit (signature
+ * Hearst Connect dashboard : border-left cyan + mono uppercase 700). */
+.rail-section-label {
+  font-family: var(--font-satoshi);
+  font-size: clamp(11px, 0.286vw + 9.167px, 16.5px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  border-left: 2px solid var(--cykan);
+  padding-left: var(--space-3);
+  line-height: 1.2;
+}
+
+/* Rail section card — wrapper visuel commun.
+ * 3-layer shadow: inset top (highlight blanc), drop soft, drop deeper.
+ * Profondeur progressive sans blur — purement architecture matière. */
+.rail-section-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.40),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: box-shadow var(--duration-base) var(--ease-standard),
+              border-color var(--duration-base) var(--ease-standard);
+}
+
+.rail-section-card:hover {
+  border-left-color: var(--cykan);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.50),
+    0 12px 32px rgba(45, 212, 191, 0.08);
+}
+
+/* Item dans une rail-section-card — 2ème niveau de profondeur +
+ * top stripe cyan (signature dashboard Hearst Connect). */
+.rail-section-item {
+  position: relative;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  overflow: hidden;
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.03),
+    0 1px 2px rgba(0, 0, 0, 0.20);
+  transition: box-shadow var(--duration-fast) var(--ease-standard),
+              border-color var(--duration-fast) var(--ease-standard);
+}
+.rail-section-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--cykan);
+}
+.rail-section-item:hover {
+  box-shadow:
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.04),
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    0 4px 12px rgba(45, 212, 191, 0.06);
+  border-color: var(--cykan-border);
 }
 
 /* ── Ghost Background ─────────────────── */

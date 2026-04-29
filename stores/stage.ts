@@ -69,7 +69,7 @@ interface StageState {
 }
 
 export const useStageStore = create<StageState>((set, get) => ({
-  current: { mode: "cockpit" },
+  current: { mode: "chat" },
   history: [],
   lastAssetId: null,
   commandeurOpen: false,
@@ -92,7 +92,7 @@ export const useStageStore = create<StageState>((set, get) => ({
     set({ current: last.payload, history: hist.slice(0, -1) });
   },
 
-  reset: () => set({ current: { mode: "cockpit" }, history: [] }),
+  reset: () => set({ current: { mode: "chat" }, history: [] }),
 
   setCommandeurOpen: (open) => set({ commandeurOpen: open }),
   toggleCommandeur: () => set({ commandeurOpen: !get().commandeurOpen }),

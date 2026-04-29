@@ -29,15 +29,15 @@ function SectionTitle({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex items-baseline justify-between" style={{ marginBottom: "var(--space-3)" }}>
-      <h2 className="t-18 font-medium tracking-tight text-[var(--text)] inline-flex items-baseline" style={{ gap: "var(--space-2)" }}>
+    <div className="flex items-center justify-between mb-3">
+      <span className="rail-section-label inline-flex items-baseline gap-2">
         <span>{children}</span>
         {typeof count === "number" && (
-          <span className="t-11 font-mono tracking-display text-[var(--text-faint)]">
+          <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
             {count.toString().padStart(2, "0")}
           </span>
         )}
-      </h2>
+      </span>
       {action && (
         <button
           type="button"
@@ -53,14 +53,7 @@ function SectionTitle({
 
 function EmptyRow({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="flex items-center"
-      style={{
-        padding: "var(--space-3)",
-        background: "var(--card-flat-bg)",
-        border: "1px dashed var(--card-flat-border)",
-      }}
-    >
+    <div className="flex items-center p-3 bg-[var(--card-flat-bg)] border border-dashed border-[var(--card-flat-border)]">
       <span className="t-11 font-mono uppercase text-[var(--text-faint)]">
         {children}
       </span>
@@ -71,13 +64,36 @@ function EmptyRow({ children }: { children: React.ReactNode }) {
 function SkeletonRow({ height = 60 }: { height?: number }) {
   return (
     <div
-      className="animate-pulse"
-      style={{
-        height: `${height}px`,
-        background: "var(--surface-1)",
-        borderRadius: "var(--radius-xs)",
-      }}
+      className="animate-pulse bg-[var(--surface-1)] rounded-xs"
+      style={{ height: `${height}px` }}
     />
+  );
+}
+
+function AssetTile({ asset, onClick }: { asset: RightPanelData["assets"][0]; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group relative h-24 bg-[var(--surface-1)] border border-[var(--border-subtle)] rounded-md p-2 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-base hover:border-[var(--cykan)] hover:bg-[var(--surface-2)]"
+      style={{
+        boxShadow: "var(--shadow-tile-inset), var(--shadow-tile-base)",
+      }}
+      title={asset.name}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-tile-inset), var(--shadow-tile-hover)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-tile-inset), var(--shadow-tile-base)";
+      }}
+    >
+      <span className="t-13 text-[var(--text-muted)] group-hover:text-[var(--cykan)] transition-colors">
+        <AssetGlyphSVG type={asset.type} />
+      </span>
+      <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)] group-hover:text-[var(--text-soft)] text-center leading-tight truncate w-full px-0.5">
+        {asset.type}
+      </span>
+    </button>
   );
 }
 
@@ -99,19 +115,16 @@ export function GeneralDashboard({
     .slice(0, 2);
 
   return (
-    <div
-      className="flex flex-col"
-      style={{ padding: "var(--space-3)", gap: "var(--space-4)" }}
-    >
+    <div className="flex flex-col p-3 gap-4">
       {/* Section 1 — Missions actives */}
-      <section>
+      <section className="rail-section-card">
         <SectionTitle
           count={activeMissions.length}
           action={{ label: "Toutes", onClick: () => onViewChange("missions") }}
         >
           Missions actives
         </SectionTitle>
-        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+        <div className="flex flex-col gap-2">
           {loading && activeMissions.length === 0 ? (
             <SkeletonRow height={40} />
           ) : activeMissions.length === 0 ? (
@@ -120,10 +133,8 @@ export function GeneralDashboard({
             activeMissions.map((m) => (
               <div
                 key={m.id}
-                className="flex items-center justify-between"
+                className="flex items-center justify-between p-2 px-3 bg-[var(--card-flat-bg)]"
                 style={{
-                  padding: "var(--space-2) var(--space-3)",
-                  background: "var(--card-flat-bg)",
                   borderLeft:
                     m.opsStatus === "running"
                       ? "2px solid var(--cykan)"
@@ -146,47 +157,36 @@ export function GeneralDashboard({
       </section>
 
       {/* Section 2 — Derniers livrables */}
-      <section>
+      <section className="rail-section-card">
         <SectionTitle
           count={recentAssets.length}
           action={{ label: "Tous", onClick: () => onViewChange("assets") }}
         >
           Derniers livrables
         </SectionTitle>
-        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-          {loading && recentAssets.length === 0 ? (
-            <SkeletonRow height={40} />
-          ) : recentAssets.length === 0 ? (
-            <EmptyRow>Aucun livrable produit.</EmptyRow>
-          ) : (
-            recentAssets.map((a) => (
-              <div
+        {loading && recentAssets.length === 0 ? (
+          <SkeletonRow height={100} />
+        ) : recentAssets.length === 0 ? (
+          <EmptyRow>Aucun livrable produit.</EmptyRow>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {recentAssets.map((a) => (
+              <AssetTile
                 key={a.id}
-                className="flex items-center gap-3"
-                style={{
-                  padding: "var(--space-2)",
-                  background: "var(--card-flat-bg)",
+                asset={a}
+                onClick={() => {
+                  /* Future: navigate to asset */
                 }}
-              >
-                <span className="w-5 h-5 text-[var(--text-muted)]">
-                  <AssetGlyphSVG type={a.type} />
-                </span>
-                <span className="t-11 text-[var(--text-soft)] truncate flex-1">{a.name}</span>
-                <span
-                  className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)]"
-                >
-                  {a.type}
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Section 3 — Alertes */}
-      <section>
+      <section className="rail-section-card">
         <SectionTitle count={alerts.length}>Alertes</SectionTitle>
-        <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+        <div className="flex flex-col gap-2">
           {alerts.length === 0 ? (
             <EmptyRow>Aucune alerte récente.</EmptyRow>
           ) : (
@@ -200,15 +200,15 @@ export function GeneralDashboard({
               return (
                 <div
                   key={`${alert.timestamp}-${idx}`}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 p-2 px-3 bg-[var(--surface-2)] border border-[var(--border-subtle)] rounded-sm transition-all duration-base"
                   style={{
-                    padding: "var(--space-2) var(--space-3)",
-                    background: "var(--card-flat-bg)",
-                    borderLeft: `2px solid ${accent}`,
+                    borderLeftWidth: "2px",
+                    borderLeftColor: accent,
+                    boxShadow: "var(--shadow-alert-inset)",
                   }}
                 >
                   <span
-                    className="w-1.5 h-1.5 rounded-pill"
+                    className="w-1.5 h-1.5 rounded-pill flex-shrink-0"
                     style={{ background: accent }}
                   />
                   <span className="t-11 text-[var(--text-soft)] truncate flex-1">

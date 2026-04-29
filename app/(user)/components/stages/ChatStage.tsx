@@ -6,6 +6,7 @@ import { ChatMessages } from "../ChatMessages";
 import { Breadcrumb, type Crumb } from "../Breadcrumb";
 import { RunProgressBanner } from "../RunProgressBanner";
 import { FocalStage } from "../FocalStage";
+import { WelcomePanel } from "../WelcomePanel";
 import type { Message } from "@/lib/core/types";
 
 interface ChatStageProps {
@@ -87,36 +88,7 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
         </div>
       )}
 
-      {!hasMessages && !focal && (
-        <div className="flex-1 flex items-center justify-center px-12">
-          <div className="text-center max-w-md flex flex-col gap-4">
-            <span
-              className="block text-[var(--cykan)] opacity-30 halo-cyan-md mx-auto t-34"
-              style={{ height: "var(--height-stage-empty-icon)" }}
-              aria-hidden
-            >
-              ◓
-            </span>
-            <p
-              className="t-15 font-medium tracking-tight text-[var(--text)]"
-              style={{ lineHeight: "var(--leading-snug)" }}
-            >
-              Démarre une conversation
-            </p>
-            <p
-              className="t-13 text-[var(--text-muted)]"
-              style={{ lineHeight: "var(--leading-base)" }}
-            >
-              Pose ta question ci-dessous. L{"'"}agent route vers le bon
-              modèle selon l{"'"}intent : factuel, raisonnement, recherche,
-              ou exécution Composio.
-            </p>
-            <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] mt-4">
-              ⌘1 pour le Cockpit · ⌘K pour le Commandeur
-            </p>
-          </div>
-        </div>
-      )}
+      {!hasMessages && !focal && <WelcomePanel />}
 
       {hasMessages && (
         <div className={focalVisible ? "flex-shrink-0 border-t border-[var(--border-default)] bg-gradient-to-b from-[var(--surface-1)] to-transparent" : "flex-1 min-h-0 bg-gradient-to-b from-[var(--mat-050)] to-[var(--bg-soft)]"} style={focalVisible ? { height: "var(--height-chat-collapsed)" } : undefined}>

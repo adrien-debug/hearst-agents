@@ -92,7 +92,7 @@ function ContextRailShell({
   return (
     <aside
       className="h-full flex flex-col z-20 relative border-l border-[var(--border-shell)]"
-      style={{ width: "var(--width-context)", background: "var(--bg-rail)" }}
+      style={{ width: "var(--width-context)", background: "var(--mat-050)" }}
     >
       {onClose && (
         <div
@@ -137,11 +137,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-b border-[var(--border-default)] py-6 px-6">
-      <header className="flex items-center justify-between mb-4">
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-          {label}
-        </span>
+    <section className="px-6 py-6">
+      <header className="flex items-center justify-between mb-3">
+        <span className="rail-section-label">{label}</span>
         {typeof count === "number" && (
           <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
             {count.toString().padStart(2, "0")}
@@ -237,7 +235,7 @@ function KPIRow({
           }`}
           style={{ padding: "var(--space-3) var(--space-2)", gap: "var(--space-2)" }}
         >
-          <span className="t-15 font-medium tracking-tight text-[var(--text)] tabular-nums leading-none">
+          <span className="t-13 font-medium tracking-tight text-[var(--text)] tabular-nums leading-none">
             {k.value.toString().padStart(2, "0")}
           </span>
           <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] leading-none">
