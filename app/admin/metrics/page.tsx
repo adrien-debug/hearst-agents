@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
-import type { MetricsSnapshot, ProviderMetrics } from "@/lib/llm/metrics";
+import type { MetricsSnapshot, ProviderMetrics, CircuitBreakerEntry } from "@/lib/llm/metrics";
 import type { CustomWebhook } from "@/lib/webhooks/types";
 import type { CircuitState } from "@/lib/llm/circuit-breaker";
 
@@ -20,10 +20,11 @@ interface WebhooksPayload {
   webhooks: CustomWebhook[];
 }
 
-interface CircuitBreakerEntry {
+interface CircuitBreakerDisplayEntry {
   provider: string;
   state: CircuitState;
-  openedAt: number | null;
+  failures: number;
+  nextRetryAt?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -186,22 +187,17 @@ export default function MetricsPage() {
     return () => clearInterval(id);
   }, [fetchAll]);
 
-  // ── Circuit breaker state — dérivé des providers dans le snapshot ──────
-  // Le circuit breaker singleton est côté serveur. On l'expose via les métriques
-  // (totalErrors par provider donne un indicateur de trips). Pour l'état réel,
-  // on dérive depuis les compteurs + providers disponibles.
-  const circuitEntries: CircuitBreakerEntry[] = (snapshot?.providers ?? []).map(
-    (p: ProviderMetrics) => ({
-      provider: p.provider,
-      // Heuristique: si errorRate > 50% → OPEN, entre 20-50% → HALF_OPEN, sinon CLOSED
-      state:
-        p.errorRate > 0.5
-          ? "OPEN"
-          : p.errorRate > 0.2
-            ? "HALF_OPEN"
-            : ("CLOSED" as CircuitState),
-      openedAt: null,
-    }),
+  // ── Circuit breaker state — état réel lu depuis circuitBreakers du snapshot ──
+  const circuitEntries: CircuitBreakerDisplayEntry[] = (snapshot?.providers ?? []).map(
+    (p: ProviderMetrics) => {
+      const cbEntry = snapshot?.circuitBreakers?.[p.provider];
+      return {
+        provider: p.provider,
+        state: (cbEntry?.state ?? "CLOSED") as CircuitState,
+        failures: cbEntry?.failures ?? 0,
+        nextRetryAt: cbEntry?.nextRetryAt,
+      };
+    },
   );
 
   // ── KPIs globaux ────────────────────────────────────────────────────────
@@ -421,9 +417,14 @@ export default function MetricsPage() {
                   >
                     <span className="t-13 text-text-soft font-medium">{entry.provider}</span>
                     <CircuitBadge state={entry.state} />
-                    {entry.openedAt && (
+                    {entry.failures > 0 && (
                       <span className="t-10 text-text-ghost">
-                        ouvert depuis {timeSinceMs(entry.openedAt)}
+                        {entry.failures} échec{entry.failures > 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {entry.state === "OPEN" && entry.nextRetryAt && (
+                      <span className="t-10 text-(--warn)">
+                        retry {relativeTime(entry.nextRetryAt)}
                       </span>
                     )}
                   </div>

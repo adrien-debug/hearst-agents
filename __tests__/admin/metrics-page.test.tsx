@@ -12,6 +12,7 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import MetricsPage from "../../app/admin/metrics/page";
 import type { MetricsSnapshot } from "@/lib/llm/metrics";
 import type { CustomWebhook } from "@/lib/webhooks/types";
+import type { CircuitState } from "@/lib/llm/circuit-breaker";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -58,6 +59,17 @@ const MOCK_SNAPSHOT: MetricsSnapshot = {
     circuitBreakerTrips: 3,
     rateLimitHits: 5,
     toolLoopsDetected: 1,
+  },
+  circuitBreakers: {
+    anthropic: {
+      state: "CLOSED" as CircuitState,
+      failures: 2,
+    },
+    openai: {
+      state: "OPEN" as CircuitState,
+      failures: 5,
+      nextRetryAt: new Date(Date.now() + 30_000).toISOString(),
+    },
   },
 };
 

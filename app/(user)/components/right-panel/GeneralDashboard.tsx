@@ -41,31 +41,27 @@ function SectionLabel({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex items-center justify-between mb-6">
-      <span className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+    <div className="flex items-center justify-between mb-4">
+      <span className="t-9 font-mono uppercase tracking-display text-[var(--text-ghost)]">
         {children}
       </span>
       {action && (
         <button
           type="button"
           onClick={action.onClick}
-          className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-40 hover:opacity-100 hover:text-[var(--cykan)] transition-all"
+          className="t-8 tracking-snug uppercase text-[var(--text-ghost)] opacity-30 hover:opacity-100 hover:text-[var(--text)] transition-all"
         >
-          {action.label} →
+          {action.label}
         </button>
       )}
     </div>
   );
 }
 
-function DashboardCard({ children }: { children: ReactNode }) {
+function DashboardCard({ children, noPadding = false }: { children: ReactNode, noPadding?: boolean }) {
   return (
     <div
-      className="flex flex-col py-8 px-6 my-3 rounded-2xl first:mt-0 transition-all duration-500 border border-[var(--border-soft)] hover:border-[var(--border-subtle)]"
-      style={{
-        background: "linear-gradient(180deg, var(--surface-2) 0%, var(--surface-1) 100%)",
-        boxShadow: "var(--shadow-card)",
-      }}
+      className={`flex flex-col ${noPadding ? '' : 'py-6 px-0'} mb-12 last:mb-0 transition-all duration-500`}
     >
       {children}
     </div>
@@ -89,43 +85,43 @@ export function GeneralDashboard({
   const activeMissions = Array.isArray(_missions) ? _missions : [];
 
   return (
-    <div className="flex flex-col" style={{ padding: "var(--space-6) var(--space-4)", gap: "0" }}>
+    <div className="flex flex-col px-8 py-12 gap-0">
       {/* KPIs */}
-      <DashboardCard>
-        <div className="grid grid-cols-3 gap-4">
+      <DashboardCard noPadding>
+        <div className="grid grid-cols-3 gap-0 border-b border-[var(--border-shell)] pb-10">
           <button
             type="button"
             onClick={() => onViewChange("assets")}
-            className="group flex flex-col items-center text-center gap-2 hover:opacity-100 transition-all cursor-pointer"
+            className="group flex flex-col items-start gap-1 hover:opacity-100 transition-all cursor-pointer"
           >
-            <span className="t-34 font-light text-[var(--text)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-all duration-500">
+            <span className="t-28 font-bold text-[var(--text)] tabular-nums leading-none tracking-tight">
               {assetsCount.toString().padStart(2, "0")}
             </span>
-            <span className="t-8 tracking-brand uppercase text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-colors">
+            <span className="t-8 tracking-display uppercase text-[var(--text-ghost)] group-hover:text-[var(--text)] transition-colors">
               Assets
             </span>
           </button>
           <button
             type="button"
             onClick={() => onViewChange("missions")}
-            className="group flex flex-col items-center text-center gap-2 hover:opacity-100 transition-all cursor-pointer border-x border-[var(--border-soft)]"
+            className="group flex flex-col items-start gap-1 hover:opacity-100 transition-all cursor-pointer"
           >
-            <span className="t-34 font-light text-[var(--text)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-all duration-500">
+            <span className="t-28 font-bold text-[var(--text)] tabular-nums leading-none tracking-tight">
               {missionsCount.toString().padStart(2, "0")}
             </span>
-            <span className="t-8 tracking-brand uppercase text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-colors">
+            <span className="t-8 tracking-display uppercase text-[var(--text-ghost)] group-hover:text-[var(--text)] transition-colors">
               Missions
             </span>
           </button>
           <button
             type="button"
             onClick={() => onViewChange("reports")}
-            className="group flex flex-col items-center text-center gap-2 hover:opacity-100 transition-all cursor-pointer"
+            className="group flex flex-col items-start gap-1 hover:opacity-100 transition-all cursor-pointer"
           >
-            <span className="t-34 font-light text-[var(--text)] tabular-nums leading-none group-hover:text-[var(--cykan)] transition-all duration-500">
+            <span className="t-28 font-bold text-[var(--text)] tabular-nums leading-none tracking-tight">
               {reportsCount.toString().padStart(2, "0")}
             </span>
-            <span className="t-8 tracking-brand uppercase text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-colors">
+            <span className="t-8 tracking-display uppercase text-[var(--text-ghost)] group-hover:text-[var(--text)] transition-colors">
               Reports
             </span>
           </button>
@@ -135,29 +131,26 @@ export function GeneralDashboard({
       {/* Missions actives */}
       <DashboardCard>
         <SectionLabel
-          action={{ label: "Toutes", onClick: () => onViewChange("missions") }}
+          action={{ label: "Voir tout", onClick: () => onViewChange("missions") }}
         >
-          Missions actives
+          Missions
         </SectionLabel>
         {activeMissions.length === 0 ? (
-          <p className="t-10 text-[var(--text-faint)] py-2 font-light">
-            Aucune mission armée.
+          <p className="t-10 text-[var(--text-ghost)] py-2 font-light opacity-50">
+            Aucune mission.
           </p>
         ) : (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-0">
             {activeMissions.map((m: any, i: number) => (
               <div
                 key={m.id}
-                className="flex items-center justify-between py-3 px-4 -mx-4 group cursor-pointer rounded-sm hover:bg-[var(--surface-1)] transition-all duration-500"
+                className="flex items-center justify-between py-3 border-b border-[var(--border-shell)] last:border-0 group cursor-pointer transition-all duration-300"
               >
-                <span className="t-13 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] truncate transition-colors">
+                <span className="t-11 font-medium text-[var(--text-muted)] group-hover:text-[var(--text)] truncate transition-colors">
                   {m.name}
                 </span>
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500">
-                   <div className="w-1 h-1 rounded-full bg-[var(--cykan)] animate-pulse shadow-[var(--shadow-neon-cykan)]" />
-                   <span className="t-8 tracking-marquee uppercase text-[var(--cykan)]">
-                    active
-                  </span>
+                <div className="flex items-center gap-2">
+                   <div className="w-1 h-1 rounded-full bg-[var(--text-ghost)] group-hover:bg-[var(--text)] transition-colors" />
                 </div>
               </div>
             ))}
@@ -168,38 +161,30 @@ export function GeneralDashboard({
       {/* Derniers livrables */}
       <DashboardCard>
         <SectionLabel
-          action={{ label: "Tous", onClick: () => onViewChange("reports") }}
+          action={{ label: "Voir tout", onClick: () => onViewChange("reports") }}
         >
-          Derniers livrables
+          Livrables
         </SectionLabel>
         {recentReports.length === 0 ? (
-          <p className="t-10 text-[var(--text-faint)] py-2 font-light">
-            Aucun livrable récent.
+          <p className="t-10 text-[var(--text-ghost)] py-2 font-light opacity-50">
+            Aucun livrable.
           </p>
         ) : (
-          <div className="grid grid-cols-3 gap-4 mt-2">
+          <div className="grid grid-cols-1 gap-3 mt-2">
             {recentReports.map((report: any, i: number) => {
-              const isPdf = report.name?.toLowerCase().endsWith('.pdf');
-              const shortTitle = report.name ? report.name.split(' ')[0] : "Report";
+              const shortTitle = report.name || "Rapport sans titre";
 
               return (
                 <div
                   key={report.id}
-                  className="group flex flex-col items-center gap-3 cursor-pointer"
+                  className="group flex items-center justify-between py-3 border-b border-[var(--border-shell)] last:border-0 cursor-pointer"
                 >
-                  <div className="w-full aspect-[3/4] flex flex-col items-center justify-center border border-[var(--border-soft)] bg-[var(--surface-1)] rounded-sm transition-all duration-500 group-hover:border-[var(--border-subtle)] group-hover:bg-[var(--surface-2)] relative overflow-hidden">
-                    <span className="text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-all duration-500 group-hover:scale-110">
-                      {isPdf ? <PdfIcon /> : <ReportIcon />}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center w-full gap-1">
-                    <span className="t-11 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] truncate w-full text-center transition-colors duration-500">
-                      {shortTitle}
-                    </span>
-                    <span className="t-8 tracking-snug uppercase text-[var(--text-ghost)] opacity-40">
-                      {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-                    </span>
-                  </div>
+                  <span className="t-11 font-medium text-[var(--text-muted)] group-hover:text-[var(--text)] truncate transition-colors">
+                    {shortTitle}
+                  </span>
+                  <span className="t-8 font-mono uppercase text-[var(--text-ghost)] opacity-30 group-hover:opacity-60 transition-opacity">
+                    {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                  </span>
                 </div>
               );
             })}
@@ -209,9 +194,9 @@ export function GeneralDashboard({
 
       {/* Alertes */}
       <DashboardCard>
-        <SectionLabel count={0}>Alertes</SectionLabel>
-        <p className="t-10 text-[var(--text-faint)] py-2 font-light">
-          Aucune alerte récente.
+        <SectionLabel>Alertes</SectionLabel>
+        <p className="t-10 text-[var(--text-ghost)] py-2 font-light opacity-30 italic">
+          Système nominal.
         </p>
       </DashboardCard>
     </div>

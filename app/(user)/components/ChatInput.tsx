@@ -156,8 +156,9 @@ export function ChatInput({
 
         {/* Input Pill — High-end minimal design */}
         <div
-          className="rounded-[32px] group border border-[var(--border-strong)] transition-all duration-700 px-10 py-8 focus-within:border-[var(--cykan)] focus-within:shadow-[var(--shadow-input-focus)] backdrop-blur-2xl relative"
+          className="group border border-[var(--border-strong)] transition-all duration-700 px-10 py-8 focus-within:border-[var(--cykan)] focus-within:shadow-[var(--shadow-input-focus)] backdrop-blur-2xl relative"
           style={{
+            borderRadius: "var(--radius-2xl)",
             background: "var(--mat-300)",
             color: "var(--text)",
             boxShadow: "var(--shadow-card)",

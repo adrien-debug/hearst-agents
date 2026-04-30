@@ -193,28 +193,25 @@ export function Commandeur() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center transition-all duration-300"
+      className="fixed inset-0 z-50 flex items-start justify-center transition-all duration-500"
       style={{
         background: "var(--overlay-scrim)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-        paddingTop: "20vh"
+        backdropFilter: "blur(40px)",
+        WebkitBackdropFilter: "blur(40px)",
+        paddingTop: "15vh"
       }}
       onClick={() => setOpen(false)}
     >
       <div
-        className="w-full max-w-2xl rounded-2xl overflow-hidden transition-all duration-300"
+        className="w-full max-w-3xl overflow-hidden transition-all duration-500 border-l border-[var(--border-shell)]"
         style={{
-          background: "var(--surface-1)",
-          boxShadow: "var(--shadow-card-hover)",
+          background: "transparent",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="flex items-center gap-4 px-6 py-5"
-          style={{ boxShadow: "var(--shadow-divider-bottom)" }}
+          className="flex items-center gap-8 px-12 py-8"
         >
-          <span className="t-9 tracking-display uppercase text-[var(--cykan)]">CMDK</span>
           <input
             autoFocus
             type="text"
@@ -223,42 +220,40 @@ export function Commandeur() {
               setQuery(e.target.value);
               setActiveIndex(0);
             }}
-            placeholder="Que veux-tu faire ?"
-            className="flex-1 bg-transparent t-18 font-light text-[var(--text-soft)] placeholder-[var(--text-ghost)] outline-none"
+            placeholder="Rechercher..."
+            className="flex-1 bg-transparent t-48 leading-none font-bold tracking-tight text-[var(--text)] placeholder-[var(--text-ghost)] outline-none"
           />
-          <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">ESC</span>
         </div>
 
-        <div className="max-h-[50vh] overflow-y-auto py-2 scrollbar-hide">
+        <div className="max-h-[60vh] overflow-y-auto px-12 pb-16 scrollbar-hide">
           {filtered.length === 0 ? (
-            <p className="t-13 text-[var(--text-ghost)] text-center py-8 font-light">Aucune action ne correspond.</p>
+            <p className="t-13 text-[var(--text-ghost)] font-light">Aucun résultat.</p>
           ) : (
-            filtered.map((action, i) => (
-              <button
-                key={action.id}
-                type="button"
-                disabled={action.disabled}
-                onClick={action.perform}
-                onMouseEnter={() => !action.disabled && setActiveIndex(i)}
-                className={`w-full px-6 py-3 flex items-center gap-4 text-left transition-colors duration-150 ${
-                  action.disabled
-                    ? "opacity-30 cursor-not-allowed"
-                    : i === activeIndex
-                    ? "bg-[var(--surface-2)]"
-                    : "hover:bg-[var(--surface-1)]"
-                }`}
-              >
-                <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-                  <span className={`t-13 truncate transition-colors duration-150 ${i === activeIndex && !action.disabled ? "text-[var(--text-soft)] font-medium" : "text-[var(--text-muted)] font-light"}`}>{action.label}</span>
-                  <span className={`t-11 truncate transition-colors duration-150 ${i === activeIndex && !action.disabled ? "text-[var(--text-muted)]" : "text-[var(--text-ghost)]"}`}>{action.hint}</span>
-                </span>
-                {action.hotkey && (
-                  <span className="t-9 tracking-display uppercase shrink-0" style={{ color: i === activeIndex && !action.disabled ? "var(--cykan)" : "var(--text-ghost)" }}>
-                    {action.hotkey}
+            <div className="flex flex-col gap-1">
+              {filtered.map((action, i) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  disabled={action.disabled}
+                  onClick={action.perform}
+                  onMouseEnter={() => !action.disabled && setActiveIndex(i)}
+                  className={`w-full py-3 flex items-baseline gap-6 text-left transition-all duration-200 ${
+                    action.disabled
+                      ? "opacity-20 cursor-not-allowed"
+                      : i === activeIndex
+                      ? "translate-x-2"
+                      : "hover:translate-x-1"
+                  }`}
+                >
+                  <span className={`t-24 leading-none tracking-tight transition-colors duration-200 ${i === activeIndex && !action.disabled ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
+                    {action.label}
                   </span>
-                )}
-              </button>
-            ))
+                  <span className={`t-9 font-mono uppercase tracking-snug transition-colors duration-200 ${i === activeIndex && !action.disabled ? "text-[var(--text-muted)]" : "text-[var(--text-ghost)]"}`}>
+                    {action.hint}
+                  </span>
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>

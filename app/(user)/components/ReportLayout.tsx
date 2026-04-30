@@ -22,6 +22,8 @@ import { ReportEditor } from "@/app/(user)/components/reports/ReportEditor";
 import { ReportActions } from "@/app/(user)/components/ReportActions";
 import type { VersionSummary } from "@/lib/reports/versions/store";
 import type { VersionDiff } from "@/lib/reports/versions/diff";
+import { useReportsStore } from "@/stores/reports";
+import { useSession } from "next-auth/react";
 // Blocs légers — import statique, rendu immédiat
 import { KpiTile } from "@/lib/reports/blocks/KpiTile";
 import { Sparkline } from "@/lib/reports/blocks/Sparkline";
@@ -96,6 +98,40 @@ export function ReportLayout({
   const [historyOpen, setHistoryOpen] = useState(false);
   const editable = Boolean(spec && onSpecChange);
 
+  // ── Realtime : subscribe à l'asset si assetId fourni ──────────────────────
+  const { data: session } = useSession();
+  const tenantId = (session?.user as { tenantId?: string } | undefined)?.tenantId ?? "";
+  const { subscribeToReport, unsubscribeFromReport, liveReports } = useReportsStore();
+
+  useEffect(() => {
+    if (!assetId || !tenantId) return;
+    subscribeToReport(assetId, tenantId);
+    return () => {
+      unsubscribeFromReport(assetId);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assetId, tenantId]);
+
+  // Payload effectif : live si disponible et plus récent que l'initial
+  const livePayload = assetId ? liveReports.get(assetId) : undefined;
+  const effectivePayload =
+    livePayload && livePayload.generatedAt > payload.generatedAt
+      ? livePayload
+      : payload;
+
+  // Toast "Rapport rafraîchi" pendant 3s quand le live payload change
+  const [showToast, setShowToast] = useState(false);
+  const prevLiveGenAt = useMemo(() => livePayload?.generatedAt, [livePayload]);
+  useEffect(() => {
+    if (!livePayload) return;
+    if (livePayload.generatedAt <= payload.generatedAt) return;
+    setShowToast(true);
+    const t = setTimeout(() => setShowToast(false), 3000);
+    return () => clearTimeout(t);
+  // On surveille uniquement le generatedAt du livePayload
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevLiveGenAt]);
+
   // Set des ids hidden tirée du spec courant (si fourni). Les blocks sans entry
   // dans le spec restent visibles par défaut.
   const hiddenIds = useMemo(() => {
@@ -106,18 +142,18 @@ export function ReportLayout({
   // Ordre potentiellement remanié par l'éditeur : si spec fourni, on suit
   // l'ordre du spec en filtrant les hidden ; sinon on prend tel quel le payload.
   const orderedBlocks = useMemo(() => {
-    if (!spec) return payload.blocks;
-    const byId = new Map(payload.blocks.map((b) => [b.id, b]));
+    if (!spec) return effectivePayload.blocks;
+    const byId = new Map(effectivePayload.blocks.map((b) => [b.id, b]));
     const ordered = spec.blocks
       .filter((b) => !b.hidden)
       .map((b) => byId.get(b.id))
       .filter((b): b is RenderedBlock => Boolean(b));
     return ordered;
-  }, [spec, payload.blocks]);
+  }, [spec, effectivePayload.blocks]);
 
   const visibleBlocks = spec
     ? orderedBlocks
-    : payload.blocks.filter((b) => !hiddenIds.has(b.id));
+    : effectivePayload.blocks.filter((b) => !hiddenIds.has(b.id));
 
   return (
     <div
@@ -126,6 +162,32 @@ export function ReportLayout({
       data-testid="report-layout"
     >
       <div className="flex flex-col flex-1 min-w-0">
+        {/* Toast Realtime ─────────────────────────────────────────────── */}
+        {showToast && (
+          <div
+            role="status"
+            aria-live="polite"
+            data-testid="report-realtime-toast"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--space-2)",
+              marginBottom: "var(--space-3)",
+              padding: "var(--space-2) var(--space-4)",
+              background: "color-mix(in srgb, var(--cykan) 12%, transparent)",
+              border: "1px solid var(--cykan)",
+              borderRadius: "var(--radius-xs)",
+              transition: "opacity var(--duration-fast) var(--ease-standard)",
+            }}
+          >
+            <span
+              className="t-9 font-mono uppercase text-[var(--cykan)]"
+              style={{ letterSpacing: "var(--tracking-display)" }}
+            >
+              Rapport rafraîchi automatiquement
+            </span>
+          </div>
+        )}
         {(editable || (assetId && !readonly)) && (
           <div
             className="flex items-center justify-end"
@@ -217,10 +279,10 @@ export function ReportLayout({
             }}
           >
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-              spec_v{payload.version}
+              spec_v{effectivePayload.version}
             </span>
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-              generated_at: {fmtTimestamp(payload.generatedAt)}
+              generated_at: {fmtTimestamp(effectivePayload.generatedAt)}
             </span>
           </div>
         )}

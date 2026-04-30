@@ -205,7 +205,7 @@ function SharePopover({
       {error && (
         <p
           className="t-9"
-          style={{ color: "var(--text-danger, #ef4444)", marginTop: "var(--space-2)" }}
+          style={{ color: "var(--color-error)", marginTop: "var(--space-2)" }}
         >
           Erreur : {error}
         </p>
@@ -401,7 +401,7 @@ function CommentsDrawer({
           {loading ? "Envoi…" : "Publier"}
         </button>
         {error && (
-          <span className="t-9" style={{ color: "var(--text-danger, #ef4444)" }}>
+          <span className="t-9" style={{ color: "var(--color-error)" }}>
             {error}
           </span>
         )}

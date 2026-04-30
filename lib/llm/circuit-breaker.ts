@@ -94,6 +94,23 @@ export class LLMCircuitBreaker {
     }
     return circuit.state;
   }
+
+  /** Snapshot minimal pour l'observabilité (metrics endpoint). */
+  getProviderSnapshot(provider: string): {
+    state: CircuitState;
+    failures: number;
+    openedAt: number | null;
+    resetWindowMs: number;
+  } {
+    const circuit = this.providers.get(provider);
+    const state = this.getState(provider);
+    return {
+      state,
+      failures: circuit?.failureCount ?? 0,
+      openedAt: circuit?.openedAt ?? null,
+      resetWindowMs: this.resetWindowMs,
+    };
+  }
 }
 
 export const defaultCircuitBreaker = new LLMCircuitBreaker();

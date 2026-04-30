@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { type CircuitState, defaultCircuitBreaker, LLMCircuitBreaker } from "./circuit-breaker";
 
 /**
  * In-memory LLM metrics aggregator.
@@ -143,6 +144,13 @@ export interface ProviderMetrics {
   };
 }
 
+export interface CircuitBreakerEntry {
+  state: CircuitState;
+  failures: number;
+  lastFailureAt?: string;  // ISO — non utilisé dans le snapshot actuel (pas stocké côté CB)
+  nextRetryAt?: string;    // ISO — présent si state === "OPEN"
+}
+
 export interface MetricsSnapshot {
   generatedAt: string;
   uptimeSeconds: number;
@@ -152,6 +160,7 @@ export interface MetricsSnapshot {
     rateLimitHits: number;
     toolLoopsDetected: number;
   };
+  circuitBreakers: Record<string, CircuitBreakerEntry>;
 }
 
 // -----------------------------------------------------------------------------
@@ -166,6 +175,11 @@ export class LLMMetricsAggregator {
     toolLoopsDetected: 0,
   };
   private startedAt = Date.now();
+  private circuitBreaker: LLMCircuitBreaker;
+
+  constructor(circuitBreaker?: LLMCircuitBreaker) {
+    this.circuitBreaker = circuitBreaker ?? defaultCircuitBreaker;
+  }
 
   /** Record a successful (or at least completed) LLM call. */
   recordCall(input: RecordCallInput): void {
@@ -230,11 +244,25 @@ export class LLMMetricsAggregator {
     }
     providers.sort((a, b) => a.provider.localeCompare(b.provider));
 
+    const circuitBreakers: Record<string, CircuitBreakerEntry> = {};
+    for (const [name] of this.providers.entries()) {
+      const snap = this.circuitBreaker.getProviderSnapshot(name);
+      const entry: CircuitBreakerEntry = {
+        state: snap.state,
+        failures: snap.failures,
+      };
+      if (snap.state === "OPEN" && snap.openedAt !== null) {
+        entry.nextRetryAt = new Date(snap.openedAt + snap.resetWindowMs).toISOString();
+      }
+      circuitBreakers[name] = entry;
+    }
+
     return {
       generatedAt: new Date().toISOString(),
       uptimeSeconds: Math.floor((Date.now() - this.startedAt) / 1000),
       providers,
       counters: { ...this.counters },
+      circuitBreakers,
     };
   }
 
