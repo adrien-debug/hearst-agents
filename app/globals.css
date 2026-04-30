@@ -141,7 +141,22 @@
   --tracking-snug: 0.10em;   /* Entre caption (0.08) et wide (0.12) — RunTimeline */
   --tracking-body: 0.15em;   /* Entre label (0.14) et stretch (0.18) — corps de chat */
 
+  /* ─── Ghost Lumineux — 3 couches matière ──────────────────── */
+  --layer-0: #000000;                                            /* fond absolu */
+  --layer-1: rgba(255, 255, 255, 0.012);                         /* surface presque invisible */
+  --layer-2: rgba(255, 255, 255, 0.038);                         /* élément interactif levé */
+  --text-l0: rgba(255, 255, 255, 1.0);                           /* headline blanc pur */
+  --text-l1: rgba(255, 255, 255, 0.70);                          /* contenu principal */
+  --text-l2: rgba(255, 255, 255, 0.40);                          /* labels, meta */
+  --text-l3: rgba(255, 255, 255, 0.20);                          /* séparateurs texte */
+  --sep: rgba(255, 255, 255, 0.05);                              /* séparateur horizontal */
+  --input-glow: 0 0 40px rgba(45, 212, 191, 0.12), 0 0 80px rgba(45, 212, 191, 0.06);
+  --input-glow-focus: 0 0 40px rgba(45, 212, 191, 0.22), 0 0 80px rgba(45, 212, 191, 0.10);
+  --neon-cykan: 0 0 10px rgba(45, 212, 191, 0.7), 0 0 20px rgba(45, 212, 191, 0.3);
+
   /* ─── Shadows composants ────────────────────────────────────── */
+  --shadow-input-glow: var(--input-glow);                        /* CockpitStage input ambient */
+  --bg-cockpit-ambient: radial-gradient(ellipse at 50% 100%, rgba(45,212,191,0.06) 0%, transparent 70%); /* CockpitStage ambient glow */
   --shadow-glow-cykan-soft: 0 0 24px rgba(45,212,191,0.40);   /* ChatInput focus cykan */
   --shadow-thread-active: inset 2px 0 0 var(--cykan);           /* LeftPanel thread actif */
   --shadow-neon-cykan: 0 0 8px rgba(45, 212, 191, 0.6);         /* TimelineRail thread actif drop-shadow */
@@ -1027,6 +1042,188 @@ body {
 
 .bg-panel-gradient {
   background: linear-gradient(180deg, #080808 0%, #0a0a0a 30%, #060606 100%);
+}
+
+/* ── Ghost Lumineux — Cockpit classes ─────────────────────── */
+
+/* Layer 0 background with subtle SVG noise texture */
+.cockpit-bg {
+  background-color: var(--layer-0);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Quick action row — command-line shortcut, no container */
+.cockpit-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 4px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--sep);
+  background: transparent;
+  transition: background 300ms ease, padding 300ms ease;
+  text-align: left;
+  width: 100%;
+}
+.cockpit-action:last-child { border-bottom: none; }
+.cockpit-action:hover {
+  background: var(--layer-1);
+  padding-left: 12px;
+}
+.cockpit-action .ca-label {
+  font-size: clamp(15px, 1.1vw, 18px);
+  font-weight: 300;
+  color: var(--text-l1);
+  transition: color 300ms ease, text-shadow 300ms ease, letter-spacing 300ms ease;
+  letter-spacing: 0;
+}
+.cockpit-action:hover .ca-label {
+  color: var(--cykan);
+  text-shadow: var(--neon-cykan);
+  letter-spacing: 0.005em;
+}
+.cockpit-action .ca-hotkey {
+  font-family: var(--font-satoshi);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-l3);
+  transition: color 300ms ease;
+}
+.cockpit-action:hover .ca-hotkey { color: var(--cykan); opacity: 0.7; }
+
+/* Input focal wrap — ambient glow that intensifies on focus-within */
+.cockpit-input-wrap {
+  position: relative;
+  transition: filter 400ms ease;
+}
+.cockpit-input-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -60px -120px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(45,212,191,0.10) 0%, rgba(45,212,191,0.04) 40%, transparent 75%);
+  pointer-events: none;
+  transition: all 600ms ease;
+  opacity: 1;
+  z-index: 0;
+}
+.cockpit-input-wrap:focus-within::before {
+  background: radial-gradient(ellipse at 50% 100%, rgba(45,212,191,0.20) 0%, rgba(45,212,191,0.08) 40%, transparent 75%);
+  inset: -80px -140px;
+}
+
+/* KPI tile — naked number, click target, hover neon */
+.kpi-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: transform 300ms ease;
+}
+.kpi-tile:hover { transform: translateY(-1px); }
+.kpi-tile .kpi-num {
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-l0);
+  transition: color 300ms ease, text-shadow 300ms ease;
+  letter-spacing: -0.02em;
+}
+.kpi-tile:hover .kpi-num {
+  color: var(--cykan);
+  text-shadow: var(--neon-cykan);
+}
+.kpi-tile .kpi-label {
+  font-family: var(--font-satoshi);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-l3);
+  transition: color 300ms ease;
+}
+.kpi-tile:hover .kpi-label { color: var(--text-l1); }
+
+/* Dashboard row — list item, no card, sep on bottom only */
+.dash-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--sep);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: background 300ms ease, padding 300ms ease;
+}
+.dash-row:last-child { border-bottom: none; }
+.dash-row:hover {
+  background: var(--layer-1);
+  padding-left: 10px;
+}
+.dash-row .dash-row-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-l3);
+  flex-shrink: 0;
+  transition: color 300ms ease;
+}
+.dash-row:hover .dash-row-icon { color: var(--cykan); }
+.dash-row .dash-row-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--text-l1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 300ms ease;
+}
+.dash-row:hover .dash-row-label { color: var(--text-l0); }
+.dash-row .dash-row-meta {
+  font-family: var(--font-satoshi);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-l3);
+  flex-shrink: 0;
+  transition: color 300ms ease;
+}
+.dash-row:hover .dash-row-meta { color: var(--cykan); opacity: 0.7; }
+
+/* Input pill itself — glass premium, soft sep border, focus glow */
+.cockpit-input-pill {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--radius-2xl);
+  background: var(--layer-2);
+  border: 1px solid var(--sep);
+  color: var(--text);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset;
+  transition: border-color 500ms ease, box-shadow 500ms ease, background 500ms ease;
+}
+.cockpit-input-pill:hover {
+  border-color: rgba(255,255,255,0.10);
+}
+.cockpit-input-pill:focus-within {
+  border-color: rgba(45,212,191,0.40);
+  background: rgba(255,255,255,0.05);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 0 0 4px rgba(45,212,191,0.06),
+    0 0 32px rgba(45,212,191,0.12);
 }
 
 .bg-hero-aura {

@@ -154,16 +154,8 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Pill — High-end minimal design */}
-        <div
-          className="group border border-[var(--border-strong)] transition-all duration-700 px-10 py-8 focus-within:border-[var(--cykan)] focus-within:shadow-[var(--shadow-input-focus)] backdrop-blur-2xl relative"
-          style={{
-            borderRadius: "var(--radius-2xl)",
-            background: "var(--mat-300)",
-            color: "var(--text)",
-            boxShadow: "var(--shadow-card)",
-          }}
-        >
+        {/* Input Pill — focal glass premium */}
+        <div className="cockpit-input-pill group px-10 py-7 backdrop-blur-xl relative">
           {attachment && (
             <div className="flex items-center gap-3 px-1 pb-4 mb-4 border-b border-[var(--line)]">
               <span className="t-9 tracking-marquee uppercase text-[var(--cykan)]">

@@ -10,59 +10,102 @@ interface GeneralDashboardProps {
   loading?: boolean;
 }
 
-function ReportIcon({ className }: { className?: string }) {
+function Label({ children }: { children: ReactNode }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-    </svg>
+    <p
+      className="font-mono uppercase font-medium"
+      style={{
+        fontSize: "10px",
+        letterSpacing: "0.22em",
+        color: "var(--text-l3)",
+      }}
+    >
+      {children}
+    </p>
   );
 }
 
-function PdfIcon({ className }: { className?: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <path d="M9 15h3" />
-      <path d="M9 12h6" />
-    </svg>
-  );
-}
-
-function SectionLabel({
-  children,
+function SectionHead({
+  label,
   action,
 }: {
-  children: ReactNode;
-  count?: number;
+  label: ReactNode;
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex items-center justify-between mb-3 px-1">
-      <span className="t-12 font-semibold text-[var(--text-soft)]">
-        {children}
-      </span>
+    <div className="flex items-center justify-between mb-6">
+      <Label>{label}</Label>
       {action && (
         <button
           type="button"
           onClick={action.onClick}
-          className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-40 hover:opacity-100 hover:text-[var(--cykan)] transition-all"
+          className="font-mono uppercase font-medium transition-colors duration-300 hover:text-[var(--cykan)]"
+          style={{
+            fontSize: "10px",
+            letterSpacing: "0.22em",
+            color: "var(--text-l3)",
+            background: "transparent",
+          }}
         >
-          {action.label}
+          {action.label} →
         </button>
       )}
     </div>
   );
 }
 
-function DashboardCard({ children, noPadding = false }: { children: ReactNode, noPadding?: boolean }) {
+const ReportIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const DocIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+  </svg>
+);
+
+function Row({
+  icon,
+  label,
+  meta,
+  onClick,
+}: {
+  icon?: ReactNode;
+  label: string;
+  meta?: string;
+  onClick?: () => void;
+}) {
   return (
-    <div
-      className={`flex flex-col ${noPadding ? '' : 'px-0'} mb-8 last:mb-0`}
+    <button
+      type="button"
+      onClick={onClick}
+      className="dash-row group"
+    >
+      {icon && <span className="dash-row-icon">{icon}</span>}
+      <span className="dash-row-label">{label}</span>
+      {meta && <span className="dash-row-meta">{meta}</span>}
+    </button>
+  );
+}
+
+function EmptyText({ children }: { children: ReactNode }) {
+  return (
+    <p
+      className="font-mono uppercase"
+      style={{
+        fontSize: "10px",
+        letterSpacing: "0.18em",
+        color: "var(--text-l3)",
+        padding: "12px 0",
+      }}
     >
       {children}
-    </div>
+    </p>
   );
 }
 
@@ -74,139 +117,82 @@ export function GeneralDashboard({
   const assetsCount = Array.isArray(_assets) ? _assets.length : 0;
   const missionsCount = Array.isArray(_missions) ? _missions.length : 0;
   const reportsCount = Array.isArray(_assets)
-    ? _assets.filter((a: any) => a.type === "report").length
+    ? (_assets as any[]).filter((a) => a.type === "report").length
     : 0;
-
-  const recentReports = Array.isArray(_assets)
-    ? _assets.filter((a: any) => a.type === "report").slice(0, 4)
-    : [];
-  const activeMissions = Array.isArray(_missions) ? _missions : [];
+  const recentAssets = Array.isArray(_assets) ? (_assets as any[]).slice(0, 4) : [];
+  const activeMissions = Array.isArray(_missions) ? (_missions as any[]) : [];
 
   return (
-    <div className="flex flex-col px-8 py-8 gap-0">
-      {/* KPIs */}
-      <DashboardCard noPadding>
-        <div className="grid grid-cols-3 gap-0 border-b border-[var(--border-shell)] pb-8 mb-8">
+    <div
+      className="flex flex-col"
+      style={{
+        padding: "44px 32px",
+        gap: "56px",
+      }}
+    >
+      {/* KPIs — 3 naked numbers, generous spacing, clickable */}
+      <div className="grid grid-cols-3" style={{ gap: "24px" }}>
+        {[
+          { n: assetsCount,   label: "Assets",   view: "assets" as const },
+          { n: missionsCount, label: "Missions", view: "missions" as const },
+          { n: reportsCount,  label: "Reports",  view: "reports" as const },
+        ].map(({ n, label, view }) => (
           <button
+            key={label}
             type="button"
-            onClick={() => onViewChange("assets")}
-            className="group flex flex-col items-start gap-1 cursor-pointer"
+            onClick={() => onViewChange(view)}
+            className="kpi-tile group"
           >
-            <span className="t-28 font-light text-[var(--text)] tabular-nums leading-none tracking-tight group-hover:text-[var(--cykan)] transition-colors">
-              {assetsCount.toString().padStart(2, "0")}
-            </span>
-            <span className="t-8 tracking-brand uppercase text-[var(--text-ghost)] group-hover:text-[var(--text)] transition-colors">
-              Assets
-            </span>
+            <span className="kpi-num">{n.toString().padStart(2, "0")}</span>
+            <span className="kpi-label">{label}</span>
           </button>
-          <button
-            type="button"
-            onClick={() => onViewChange("missions")}
-            className="group flex flex-col items-start gap-1 cursor-pointer"
-          >
-            <span className="t-28 font-light text-[var(--text)] tabular-nums leading-none tracking-tight group-hover:text-[var(--cykan)] transition-colors">
-              {missionsCount.toString().padStart(2, "0")}
-            </span>
-            <span className="t-8 tracking-brand uppercase text-[var(--text-ghost)] group-hover:text-[var(--text)] transition-colors">
-              Missions
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => onViewChange("reports")}
-            className="group flex flex-col items-start gap-1 cursor-pointer"
-          >
-            <span className="t-28 font-light text-[var(--text)] tabular-nums leading-none tracking-tight group-hover:text-[var(--cykan)] transition-colors">
-              {reportsCount.toString().padStart(2, "0")}
-            </span>
-            <span className="t-8 tracking-brand uppercase text-[var(--text-ghost)] group-hover:text-[var(--text)] transition-colors">
-              Reports
-            </span>
-          </button>
-        </div>
-      </DashboardCard>
+        ))}
+      </div>
 
-      {/* Missions actives */}
-      <DashboardCard>
-        <SectionLabel
-          action={{ label: "Voir tout", onClick: () => onViewChange("missions") }}
-        >
-          Missions
-        </SectionLabel>
+      {/* Active missions */}
+      <div>
+        <SectionHead
+          label="Active missions"
+          action={{ label: "All", onClick: () => onViewChange("missions") }}
+        />
         {activeMissions.length === 0 ? (
-          <p className="t-12 text-[var(--text-faint)] pl-1 py-2 font-light">
-            Aucune mission.
-          </p>
+          <EmptyText>No active missions</EmptyText>
         ) : (
-          <div className="flex flex-col gap-0">
-            {activeMissions.map((m: any, i: number) => (
-              <div
-                key={m.id}
-                className="flex items-center justify-between py-2.5 px-3 -mx-3 group cursor-pointer rounded-md hover:bg-[var(--surface-2)] transition-all duration-300"
-              >
-                <span className="t-14 font-light text-[var(--text-muted)] group-hover:text-[var(--text-soft)] truncate transition-colors">
-                  {m.name}
-                </span>
-                <div className="w-1 h-1 rounded-full bg-[var(--text-ghost)] group-hover:bg-[var(--cykan)] transition-colors" />
-              </div>
+          <div className="flex flex-col">
+            {activeMissions.map((m) => (
+              <Row key={m.id} label={m.name} meta="armed" />
             ))}
           </div>
         )}
-      </DashboardCard>
+      </div>
 
-      {/* Derniers livrables */}
-      <DashboardCard>
-        <SectionLabel
-          action={{ label: "Voir tout", onClick: () => onViewChange("reports") }}
-        >
-          Livrables
-        </SectionLabel>
-        {recentReports.length === 0 ? (
-          <p className="t-12 text-[var(--text-faint)] pl-1 py-2 font-light">
-            Aucun livrable.
-          </p>
+      {/* Recent assets */}
+      <div>
+        <SectionHead
+          label="Recent assets"
+          action={{ label: "All", onClick: () => onViewChange("assets") }}
+        />
+        {recentAssets.length === 0 ? (
+          <EmptyText>No assets yet</EmptyText>
         ) : (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-4 mt-1">
-            {recentReports.map((report: any, i: number) => {
-              const isPdf = report.name?.toLowerCase().endsWith('.pdf');
-              const nameWords = report.name ? report.name.split(/\s+/).slice(0, 2).join(' ') : "Rapport";
-              const extension = isPdf ? "PDF" : "DOC";
-
-              return (
-                <div
-                  key={report.id}
-                  className="group flex flex-col gap-2 cursor-pointer"
-                >
-                  <div className="aspect-square w-full bg-[var(--surface-1)] border border-[var(--border-shell)] rounded-md flex flex-col items-center justify-center relative transition-all duration-300 group-hover:border-[var(--border-subtle)] group-hover:bg-[var(--surface-2)]">
-                    <span className="text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-colors">
-                      {isPdf ? <PdfIcon /> : <ReportIcon />}
-                    </span>
-                    <span className="absolute bottom-1.5 right-1.5 t-8 font-mono text-[var(--text-ghost)] opacity-30 group-hover:opacity-100 group-hover:text-[var(--cykan)] transition-all">
-                      {extension}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-0 px-0.5">
-                    <span className="t-11 font-medium text-[var(--text-muted)] group-hover:text-[var(--text-soft)] line-clamp-1 transition-colors">
-                      {nameWords}
-                    </span>
-                    <span className="t-9 font-mono uppercase text-[var(--text-ghost)] opacity-30">
-                      {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex flex-col">
+            {recentAssets.map((a) => (
+              <Row
+                key={a.id}
+                icon={a.type === "report" ? <ReportIcon /> : <DocIcon />}
+                label={a.name || a.title || "Asset"}
+                meta={(a.type || "file").toUpperCase()}
+              />
+            ))}
           </div>
         )}
-      </DashboardCard>
+      </div>
 
-      {/* Alertes */}
-      <DashboardCard>
-        <SectionLabel>Alertes</SectionLabel>
-        <p className="t-12 text-[var(--text-faint)] pl-1 py-2 font-light italic">
-          Système nominal.
-        </p>
-      </DashboardCard>
+      {/* Alerts */}
+      <div>
+        <SectionHead label="Alerts" />
+        <EmptyText>No recent alerts</EmptyText>
+      </div>
     </div>
   );
 }

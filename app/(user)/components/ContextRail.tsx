@@ -91,12 +91,11 @@ function ContextRailShell({
 }) {
   return (
     <aside
-      className="h-full flex flex-col z-20 relative rounded-2xl overflow-hidden"
+      className="h-full flex flex-col z-20 relative overflow-hidden border-l"
       style={{
         width: "var(--width-context)",
-        background: "var(--surface-1)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "var(--layer-1)",
+        borderColor: "var(--sep)",
         boxShadow: "var(--shadow-rail-shell)",
       }}
     >

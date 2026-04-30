@@ -142,9 +142,9 @@ export function ReportLayout({
   useEffect(() => {
     if (!livePayload) return;
     if (livePayload.generatedAt <= payload.generatedAt) return;
-    setShowToast(true);
-    const t = setTimeout(() => setShowToast(false), 3000);
-    return () => clearTimeout(t);
+    const tShow = setTimeout(() => setShowToast(true), 0);
+    const tHide = setTimeout(() => setShowToast(false), 3000);
+    return () => { clearTimeout(tShow); clearTimeout(tHide); };
   // On surveille uniquement le generatedAt du livePayload
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prevLiveGenAt]);

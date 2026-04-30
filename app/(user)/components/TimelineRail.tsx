@@ -9,7 +9,7 @@
  *   Now              sessions actives (browser, meeting, voice) +
  *                    missions running (Phase B)
  *   Today            threads + briefings + missions du jour
- *   7 derniers jours threads + assets de la semaine
+ *   Last 7 days threads + assets de la semaine
  *   Archive          lien vers /archive plein écran
  *
  * Click sur une entrée → setActiveThread + setStageMode approprié.
@@ -126,8 +126,17 @@ function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between first:mt-0 mt-6 mb-2 px-3">
-      <span className="t-12 font-semibold text-[var(--text-soft)]">{label}</span>
+    <div className="flex items-center justify-between first:mt-0 mt-8 mb-3 px-3">
+      <span
+        className="font-mono uppercase font-medium"
+        style={{
+          fontSize: "10px",
+          letterSpacing: "0.22em",
+          color: "var(--text-l3)",
+        }}
+      >
+        {label}
+      </span>
       <span className="flex items-center gap-2">
         {action}
       </span>
@@ -137,7 +146,14 @@ function SectionHeader({
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-12 text-[var(--text-faint)] pl-3 py-2 font-light">
+    <p
+      className="font-mono uppercase pl-3 py-2"
+      style={{
+        fontSize: "10px",
+        letterSpacing: "0.18em",
+        color: "var(--text-l3)",
+      }}
+    >
       {children}
     </p>
   );
@@ -156,18 +172,22 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
   return (
     <div
       onClick={onSelect}
-      className={`group cursor-pointer py-2 px-3 transition-all duration-300 flex items-center gap-3 rounded-md ${
-        isActive ? "bg-[var(--border-subtle)]" : "hover:bg-[var(--surface-2)]"
-      }`}
+      className="group cursor-pointer py-2 px-3 transition-all duration-300 flex items-center gap-3 rounded-md"
+      style={{
+        background: isActive ? "var(--layer-1)" : "transparent",
+      }}
+      onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "var(--layer-1)"; }}
+      onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
       title={thread.name}
     >
       <p
-        className={`flex-1 t-14 truncate min-w-0 transition-colors duration-300 ${
-          isActive
-            ? "text-[var(--text)] font-medium"
-            : "text-[var(--text-muted)] font-light group-hover:text-[var(--text-soft)]"
-        }`}
-        style={{ lineHeight: "var(--leading-base)" }}
+        className="flex-1 t-14 truncate min-w-0 transition-all duration-300"
+        style={{
+          lineHeight: "var(--leading-base)",
+          color: isActive ? "var(--cykan)" : "var(--text-l1)",
+          fontWeight: isActive ? 500 : 300,
+          textShadow: isActive ? "var(--shadow-neon-cykan)" : "none",
+        }}
       >
         {thread.name}
       </p>
@@ -181,8 +201,8 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
             onArchive();
           }}
           className="text-[var(--text-faint)] hover:text-[var(--text-soft)] p-1 transition-colors"
-          title={isArchived ? "Désarchiver" : "Archiver"}
-          aria-label={isArchived ? "Désarchiver le thread" : "Archiver le thread"}
+          title={isArchived ? "Unarchive" : "Archive"}
+          aria-label={isArchived ? "Unarchive thread" : "Archive thread"}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="4" width="18" height="4" rx="1" />
@@ -194,11 +214,11 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            if (window.confirm(`Supprimer "${thread.name}" ?`)) onDelete();
+            if (window.confirm(`Delete "${thread.name}" ?`)) onDelete();
           }}
           className="text-[var(--text-faint)] hover:text-[var(--danger)] p-1 transition-colors"
-          title="Supprimer"
-          aria-label="Supprimer le thread"
+          title="Delete"
+          aria-label="Delete le thread"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6" />
@@ -225,7 +245,7 @@ function CollapsedTile({ thread, isActive, onSelect }: CollapsedTileProps) {
       className={`relative w-8 h-8 flex items-center justify-center rounded-md t-13 font-light transition-all duration-300 shrink-0 ${
         isActive
           ? "bg-[var(--cykan-bg-active)] text-[var(--cykan)] border border-[var(--cykan-border)] shadow-[var(--shadow-neon-cykan)]"
-          : "bg-[var(--surface-1)] text-[var(--text-faint)] border border-[var(--border-soft)] hover:bg-[var(--surface-2)] hover:text-[var(--text-soft)] hover:border-[var(--border-subtle)]"
+          : "bg-[var(--surface-1)] text-[var(--text-faint)] border border-[var(--border-soft)] hover:bg-[var(--layer-1)] hover:text-[var(--text-soft)] hover:border-[var(--border-subtle)]"
       }`}
     >
       {initial}
@@ -273,12 +293,11 @@ export function TimelineRail() {
 
   return (
     <aside
-      className="h-full flex flex-col z-20 relative transition-[width] duration-slow ease-out-soft rounded-2xl overflow-hidden"
+      className="h-full flex flex-col z-20 relative transition-[width] duration-slow ease-out-soft border-r overflow-hidden"
       style={{
         width: leftCollapsed ? "var(--width-threads-collapsed)" : "var(--width-threads)",
-        background: "var(--surface-1)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "var(--rail)",
+        borderColor: "var(--sep)",
         boxShadow: "var(--shadow-rail-shell)",
       }}
     >
@@ -295,7 +314,7 @@ export function TimelineRail() {
             setStageMode({ mode: "chat" });
           }}
           className="flex items-center justify-center hover:opacity-80 transition-opacity"
-          title="Hearst — Chat"
+          title="Hearst"
         >
           {leftCollapsed ? (
             <span className="t-15 font-medium tracking-tight text-[var(--cykan)] halo-cyan-sm leading-none">H</span>
@@ -311,7 +330,7 @@ export function TimelineRail() {
           <button
             onClick={handleNewThread}
             className="mb-6 w-8 h-8 flex items-center justify-center rounded-md border border-[var(--border-subtle)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border)] hover:bg-[var(--cykan-bg-hover)] transition-all duration-300 shrink-0"
-            title="Nouvelle conversation"
+            title="New conversation"
           >
             <PlusIcon />
           </button>
@@ -333,18 +352,18 @@ export function TimelineRail() {
 
             {/* Top Menu */}
             <div className="flex flex-col gap-1 mb-4">
-              <button onClick={handleNewThread} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--surface-2)]">
+              <button onClick={handleNewThread} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--layer-1)]">
                 <div className="flex items-center gap-3">
                   <span className="text-[var(--text-muted)] group-hover:text-[var(--text-soft)] transition-colors">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 5v14M5 12h14" />
                     </svg>
                   </span>
-                  <span className="t-14 font-medium text-[var(--text-soft)] transition-colors">Nouvelle conversation</span>
+                  <span className="t-14 font-medium text-[var(--text-soft)] transition-colors">New conversation</span>
                 </div>
                 <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">⌘N</span>
               </button>
-              <button className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--surface-2)]">
+              <button className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--layer-1)]">
                 <div className="flex items-center gap-3">
                   <span className="text-[var(--text-muted)] group-hover:text-[var(--text-soft)] transition-colors">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -357,7 +376,7 @@ export function TimelineRail() {
                 </div>
                 <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">⌘1</span>
               </button>
-              <button onClick={() => router.push("/apps")} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--surface-2)]">
+              <button onClick={() => router.push("/apps")} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--layer-1)]">
                 <div className="flex items-center gap-3">
                   <span className="text-[var(--text-muted)] group-hover:text-[var(--text-soft)] transition-colors">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -372,7 +391,7 @@ export function TimelineRail() {
                 </div>
                 <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">⌘2</span>
               </button>
-              <button onClick={() => router.push("/reports")} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--surface-2)]">
+              <button onClick={() => router.push("/reports")} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--layer-1)]">
                 <div className="flex items-center gap-3">
                   <span className="text-[var(--text-muted)] group-hover:text-[var(--text-soft)] transition-colors">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -391,7 +410,7 @@ export function TimelineRail() {
             <section>
               <SectionHeader label="Récents" />
               {groups.today.length === 0 && groups.thisWeek.length === 0 ? (
-                <EmptyHint>Aucune activité récente</EmptyHint>
+                <EmptyHint>No activity récente</EmptyHint>
               ) : (
                 <div className="space-y-px">
                   {groups.today.map((t) => (
@@ -463,7 +482,7 @@ export function TimelineRail() {
             </span>
             <Link
               href="/admin"
-              title="Console admin"
+              title="Admin console"
               className="w-6 h-6 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
             >
               <AdminIcon />
@@ -471,16 +490,16 @@ export function TimelineRail() {
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              title="Se déconnecter"
-              aria-label="Se déconnecter"
+              title="Sign out"
+              aria-label="Sign out"
               className="w-6 h-6 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-colors"
             >
               <LogoutIcon />
             </button>
             <button
               onClick={toggleLeftCollapsed}
-              title="Étendre"
-              aria-label="Étendre"
+              title="Expand"
+              aria-label="Expand"
               className="w-6 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
             >
               <ChevronRightIcon />
@@ -504,7 +523,7 @@ export function TimelineRail() {
             >
               <Link
                 href="/admin"
-                title="Console admin"
+                title="Admin console"
                 className="t-9 tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
               >
                 Admin
@@ -515,7 +534,7 @@ export function TimelineRail() {
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/login" })}
-                title="Se déconnecter"
+                title="Sign out"
                 className="t-9 tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--danger)] transition-colors"
               >
                 Exit
@@ -523,8 +542,8 @@ export function TimelineRail() {
             </div>
             <button
               onClick={toggleLeftCollapsed}
-              title="Réduire"
-              aria-label="Réduire le rail"
+              title="Collapse"
+              aria-label="Collapse"
               className="w-5 h-5 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors mt-2"
             >
               <ChevronLeftIcon />

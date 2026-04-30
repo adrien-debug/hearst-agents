@@ -17,98 +17,85 @@ export function WelcomePanel() {
     return () => clearInterval(timer);
   }, []);
 
-  const nowDate = new Date(now);
-  const hours = String(nowDate.getHours()).padStart(2, "0");
-  const minutes = String(nowDate.getMinutes()).padStart(2, "0");
-  const timeStr = `${hours}:${minutes}`;
+  const h = String(new Date(now).getHours()).padStart(2, "0");
+  const m = String(new Date(now).getMinutes()).padStart(2, "0");
 
-  // Top 3 unique customers from missions (based on name)
-  const customerSet = new Set<string>();
-  const topCustomers: string[] = [];
-  for (const m of missions) {
-    if (customerSet.size >= 3) break;
-    const name = m.name || "Unknown";
-    if (!customerSet.has(name)) {
-      customerSet.add(name);
-      topCustomers.push(name);
-    }
-  }
-
-  // Top 2 active missions
-  const topMissions = missions
-    .filter((m) => m.opsStatus === "running" || m.enabled)
-    .slice(0, 2);
+  const topMissions = missions.filter((m) => m.opsStatus === "running" || m.enabled).slice(0, 2);
 
   const quickActions = [
-    { label: "Nouveau brief", icon: "+" },
-    { label: "Nouvelle requête", icon: "⚡" },
-    { label: "Voir les documents", icon: "📋" },
+    { label: "New brief", hotkey: "⌘B", action: () => {} },
+    { label: "Run query", hotkey: "⌘Q", action: () => {} },
+    { label: "View assets", hotkey: "⌘A", action: () => router.push("/assets") },
   ];
 
   return (
-    <div className="flex-1 flex flex-col items-start justify-start px-16 py-20 max-w-4xl mx-auto w-full">
-      {/* Greeting */}
-      <div className="w-full mb-16">
-        <div className="flex items-baseline justify-between mb-2">
-          <p className="t-9 font-mono uppercase tracking-display text-[var(--text-ghost)]">
-            Système opérationnel
-          </p>
-          <span className="t-9 font-mono text-[var(--text-ghost)]">
-            {timeStr}
-          </span>
+    <div className="flex-1 flex flex-col px-12 py-14 max-w-3xl mx-auto w-full gap-12">
+
+      {/* Hero */}
+      <div>
+        <p className="t-9 font-mono uppercase tracking-marquee mb-3"
+          style={{ color: "var(--text-l3)", letterSpacing: "0.22em" }}>
+          Welcome back
+        </p>
+        <div className="flex items-baseline justify-between">
+          <h1 style={{ fontSize: "clamp(48px, 5vw, 72px)", fontWeight: 600, lineHeight: 1.0, letterSpacing: "-0.03em", color: "var(--text-l0)" }}>
+            {userName}
+          </h1>
+          <span className="t-15 font-mono" style={{ color: "var(--text-l2)" }}>{h}:{m}</span>
         </div>
-        <h1 className="t-60 leading-[0.9] font-bold tracking-tight text-[var(--text)]">
-          {userName}.
-        </h1>
+        <div className="mt-10" style={{ height: "1px", background: "var(--sep)" }} />
       </div>
 
-      {/* Section 1 — Last Customers */}
-      {topCustomers.length > 0 && (
-        <div className="w-full mb-12">
-          <p className="t-9 font-mono uppercase tracking-body text-[var(--text-ghost)] mb-4">Clients récents</p>
-          <div className="flex flex-wrap gap-x-10 gap-y-3">
-            {topCustomers.map((customer) => (
-              <button
-                key={customer}
-                onClick={() => {}}
-                className="group text-left cursor-pointer transition-colors duration-base"
-              >
-                <span className="t-11 font-medium text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors">
-                  {customer}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Section 2 — Quick Actions */}
-      <div className="w-full mb-12">
-        <p className="t-9 font-mono uppercase tracking-body text-[var(--text-ghost)] mb-4">Actions rapides</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10">
-          {quickActions.map((action, idx) => (
-            <button
-              key={action.label}
-              onClick={() => {
-                if (action.label === "Voir les documents") router.push("/assets");
-              }}
-              className="group flex items-center justify-between py-3 border-b border-[var(--border-shell)] cursor-pointer transition-colors duration-base"
-            >
-              <span className="t-11 text-[var(--text-muted)] group-hover:text-[var(--text)] text-left transition-colors">
+      {/* Quick actions */}
+      <div>
+        <p className="t-9 font-mono uppercase tracking-marquee mb-6"
+          style={{ color: "var(--text-l3)", letterSpacing: "0.18em" }}>
+          Quick actions
+        </p>
+        <div className="flex flex-col">
+          {quickActions.map((action) => (
+            <button key={action.label} onClick={action.action}
+              className="group flex items-center justify-between py-4 bg-transparent text-left transition-all duration-300"
+              style={{ borderBottom: "1px solid var(--sep)" }}>
+              <span className="t-15 font-light group-hover:text-[var(--cykan)] transition-colors"
+                style={{ color: "var(--text-l1)" }}>
                 {action.label}
               </span>
-              <span className="t-9 font-mono text-[var(--text-ghost)] group-hover:text-[var(--text-muted)]">
-                {idx === 0 ? "⌘B" : idx === 1 ? "⌘Q" : "⌘A"}
-              </span>
+              <span className="t-9 font-mono" style={{ color: "var(--text-l3)" }}>{action.hotkey}</span>
             </button>
           ))}
         </div>
       </div>
 
+      {/* Active missions */}
+      {topMissions.length > 0 && (
+        <div>
+          <p className="t-9 font-mono uppercase tracking-marquee mb-6"
+            style={{ color: "var(--text-l3)", letterSpacing: "0.18em" }}>
+            Active missions
+          </p>
+          <div className="flex flex-col">
+            {topMissions.map((m) => (
+              <div key={m.id} className="group flex items-center justify-between py-4 cursor-pointer"
+                style={{ borderBottom: "1px solid var(--sep)" }}>
+                <span className="t-13 font-light group-hover:text-[var(--cykan)] transition-colors"
+                  style={{ color: "var(--text-l1)" }}>
+                  {m.name}
+                </span>
+                <span className="t-9 font-mono" style={{ color: m.opsStatus === "running" ? "var(--cykan)" : "var(--text-l3)" }}>
+                  {m.opsStatus === "running" ? "running" : "paused"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Hint */}
-      <div className="w-full mt-auto pt-12 border-t border-[var(--border-default)] opacity-30">
-        <p className="t-9 font-mono uppercase tracking-display text-[var(--text-ghost)]">
-          ⌘1 Cockpit · ⌘K Commandeur
+      <div className="mt-auto pt-8" style={{ borderTop: "1px solid var(--sep)" }}>
+        <p className="t-9 font-mono uppercase tracking-marquee text-center"
+          style={{ color: "var(--text-l3)", letterSpacing: "0.16em" }}>
+          ⌘1 cockpit · ⌘K command
         </p>
       </div>
     </div>

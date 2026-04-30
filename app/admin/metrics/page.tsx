@@ -205,8 +205,9 @@ export default function MetricsPage() {
   }, []);
 
   useEffect(() => {
-    fetchAll();
-    const id = setInterval(fetchAll, REFRESH_INTERVAL_MS);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchAll();
+    const id = setInterval(() => { void fetchAll(); }, REFRESH_INTERVAL_MS);
     return () => clearInterval(id);
   }, [fetchAll]);
 

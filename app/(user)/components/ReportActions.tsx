@@ -300,6 +300,7 @@ function CommentsDrawer({
   }, [reportId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 
@@ -341,7 +342,7 @@ function CommentsDrawer({
       >
         {comments.length === 0 ? (
           <p className="t-9" style={{ color: "var(--text-muted)" }}>
-            Aucun commentaire pour l'instant.
+            Aucun commentaire pour l&apos;instant.
           </p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>

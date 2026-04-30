@@ -5,40 +5,52 @@ import { useSession } from "next-auth/react";
 
 export function CockpitGreeting() {
   const { data: session } = useSession();
-  const [time, setTime] = useState<string>("--:--");
+  const [time, setTime] = useState("--:--");
 
   useEffect(() => {
-    const updateTime = () => {
+    const tick = () => {
       const now = new Date();
-      const hours = String(now.getHours()).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      setTime(`${hours}:${minutes}`);
+      setTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
     };
-
-    updateTime();
-    const interval = setInterval(updateTime, 30000);
-    return () => clearInterval(interval);
+    tick();
+    const id = setInterval(tick, 30000);
+    return () => clearInterval(id);
   }, []);
 
-  const firstName = session?.user?.name?.split(" ")[0] || "Utilisateur";
+  const firstName = session?.user?.name?.split(" ")[0] ?? "Adrien";
 
   return (
-    <div className="flex items-start justify-between pt-32 px-12">
-      <div className="flex flex-col gap-2">
-        <h1 className="t-60 font-medium tracking-tighter text-[var(--text)] bg-gradient-to-b from-[var(--text)] to-[var(--text-muted)] bg-clip-text text-transparent">
-          {firstName}
-        </h1>
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-[1px] bg-[var(--cykan)] opacity-50" />
-          <p className="t-11 font-mono uppercase tracking-brand text-[var(--text-ghost)]">
-            Système en ligne
+    <div className="px-12 pt-14 pb-10">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="t-9 font-mono uppercase tracking-marquee mb-3"
+            style={{ color: "var(--text-l3)", letterSpacing: "0.22em" }}>
+            Welcome back
           </p>
+          <h1 style={{
+            fontSize: "clamp(48px, 5vw, 72px)",
+            fontWeight: 600,
+            lineHeight: 1.0,
+            letterSpacing: "-0.03em",
+            color: "var(--text-l0)",
+          }}>
+            {firstName}
+          </h1>
         </div>
+        <span className="t-15 font-mono font-light mt-2"
+          style={{ color: "var(--text-l2)" }}>
+          {time}
+        </span>
       </div>
-      <div className="flex flex-col items-end gap-1">
-        <span className="t-34 font-light text-[var(--text)] tabular-nums tracking-tighter">{time}</span>
-        <span className="t-9 font-mono uppercase tracking-display text-[var(--text-ghost)] opacity-40">UTC+4</span>
-      </div>
+
+      {/* Soft gradient divider — fades into ambient */}
+      <div
+        className="mt-12"
+        style={{
+          height: "1px",
+          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.06) 70%, transparent 100%)",
+        }}
+      />
     </div>
   );
 }

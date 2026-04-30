@@ -133,7 +133,8 @@ describe("useReportsStore", () => {
     useReportsStore.getState().subscribeToReport(ASSET_ID, TENANT_ID);
 
     // channel() appelé une seule fois
-    expect(createClient().channel).toHaveBeenCalledTimes(1);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((createClient as any)().channel).toHaveBeenCalledTimes(1);
   });
 
   it("met à jour liveReports à la réception d'un UPDATE event (content_ref JSON string)", () => {
