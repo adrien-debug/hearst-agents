@@ -99,12 +99,12 @@ export function ChatInput({
   }
 
   const surfacePlaceholders: Record<string, string> = {
-    home: "Poser une question",
-    inbox: "Chercher dans les messages…",
-    calendar: "Une question sur votre agenda ?",
-    files: "Trouver un document…",
-    tasks: "Créer une mission…",
-    apps: "Configurer les connecteurs…",
+    home: "Ask anything",
+    inbox: "Search messages…",
+    calendar: "Ask about your schedule",
+    files: "Find a document…",
+    tasks: "Create a mission…",
+    apps: "Configure connectors…",
   };
 
   return (
@@ -310,7 +310,7 @@ export function ChatInput({
         </div>
         <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
           <p className="t-9 text-[var(--text-ghost)] tracking-body uppercase">
-            Entrée pour envoyer · Maj+Entrée nouvelle ligne · @ pour mentionner
+            Enter to send · Shift+Enter for new line · @ to mention
           </p>
         </div>
       </div>

@@ -13,10 +13,11 @@ interface GeneralDashboardProps {
 function Label({ children }: { children: ReactNode }) {
   return (
     <p
-      className="font-mono uppercase font-medium"
+      className="font-mono uppercase"
       style={{
         fontSize: "10px",
-        letterSpacing: "0.22em",
+        fontWeight: 500,
+        letterSpacing: "var(--tracking-label)",
         color: "var(--text-l3)",
       }}
     >
@@ -33,16 +34,20 @@ function SectionHead({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div
+      className="flex items-center justify-between"
+      style={{ marginBottom: "var(--space-6)" }}
+    >
       <Label>{label}</Label>
       {action && (
         <button
           type="button"
           onClick={action.onClick}
-          className="font-mono uppercase font-medium transition-colors duration-300 hover:text-[var(--cykan)]"
+          className="font-mono uppercase transition-colors duration-300 hover:text-[var(--cykan)]"
           style={{
             fontSize: "10px",
-            letterSpacing: "0.22em",
+            fontWeight: 500,
+            letterSpacing: "var(--tracking-label)",
             color: "var(--text-l3)",
             background: "transparent",
           }}
@@ -99,9 +104,9 @@ function EmptyText({ children }: { children: ReactNode }) {
       className="font-mono uppercase"
       style={{
         fontSize: "10px",
-        letterSpacing: "0.18em",
+        letterSpacing: "var(--tracking-label)",
         color: "var(--text-l3)",
-        padding: "12px 0",
+        padding: "var(--space-3) 0",
       }}
     >
       {children}
@@ -126,12 +131,15 @@ export function GeneralDashboard({
     <div
       className="flex flex-col"
       style={{
-        padding: "44px 32px",
-        gap: "56px",
+        padding: "var(--space-14) var(--space-12) var(--space-12)",
+        gap: "var(--space-12)",
       }}
     >
-      {/* KPIs — 3 naked numbers, generous spacing, clickable */}
-      <div className="grid grid-cols-3" style={{ gap: "24px" }}>
+      {/* KPIs — 3 naked numbers, baseline-aligned */}
+      <div
+        className="grid grid-cols-3"
+        style={{ gap: "var(--space-6)", alignItems: "baseline" }}
+      >
         {[
           { n: assetsCount,   label: "Assets",   view: "assets" as const },
           { n: missionsCount, label: "Missions", view: "missions" as const },

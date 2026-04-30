@@ -6,7 +6,7 @@ import { useNavigationStore } from "@/stores/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useRuntimeStore } from "@/stores/runtime";
 import { ChatInput } from "../ChatInput";
-import { CockpitGreeting } from "./CockpitGreeting";
+import { CockpitHero } from "./CockpitHero";
 import type { Message } from "@/lib/core/types";
 
 export function CockpitStage() {
@@ -85,12 +85,21 @@ export function CockpitStage() {
   return (
     <div className="cockpit-bg flex-1 flex flex-col min-h-0 relative overflow-hidden panel-enter">
 
-      {/* Hero */}
-      <CockpitGreeting />
+      {/* Hero — shared component */}
+      <CockpitHero />
 
-      {/* Quick actions — bare command lines */}
-      <div style={{ padding: "0 48px 40px" }}>
-        <p style={{ fontSize: "10px", fontFamily: "var(--font-satoshi)", letterSpacing: "0.22em", textTransform: "uppercase", color: "var(--text-l3)", marginBottom: "24px", fontWeight: 500 }}>
+      {/* Quick actions — bare command lines, grid var(--space-12) */}
+      <div style={{ padding: "0 var(--space-12) var(--space-12)" }}>
+        <p
+          className="font-mono uppercase"
+          style={{
+            fontSize: "10px",
+            fontWeight: 500,
+            letterSpacing: "var(--tracking-label)",
+            color: "var(--text-l3)",
+            marginBottom: "var(--space-6)",
+          }}
+        >
           Quick actions
         </p>
         {QUICK_ACTIONS.map((a) => (
@@ -104,7 +113,7 @@ export function CockpitStage() {
       <div className="flex-1 min-h-0" />
 
       {/* Input — primary focal point */}
-      <div className="cockpit-input-wrap" style={{ padding: "0 48px 48px" }}>
+      <div className="cockpit-input-wrap" style={{ padding: "0 var(--space-12) var(--space-12)" }}>
         <ChatInput onSubmit={handleSubmit} />
       </div>
     </div>

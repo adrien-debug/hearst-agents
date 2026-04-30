@@ -91,12 +91,10 @@ function ContextRailShell({
 }) {
   return (
     <aside
-      className="h-full flex flex-col z-20 relative overflow-hidden border-l"
+      className="h-full flex flex-col z-20 relative overflow-hidden"
       style={{
         width: "var(--width-context)",
         background: "var(--layer-1)",
-        borderColor: "var(--sep)",
-        boxShadow: "var(--shadow-rail-shell)",
       }}
     >
       {onClose && (
@@ -107,7 +105,7 @@ function ContextRailShell({
             boxShadow: "var(--shadow-divider-bottom-subtle)",
           }}
         >
-          <p className="t-13 font-light text-[var(--text-soft)]">Contexte</p>
+          <p className="t-13 font-light text-[var(--text-soft)]">Context</p>
           <button
             onClick={onClose}
             aria-label="Fermer"
@@ -235,7 +233,7 @@ function SuggestionsFooter({
       </div>
       {visible.length === 0 ? (
         <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] px-2 font-light">
-          Aucune suggestion disponible.
+          No suggestions available.
         </p>
       ) : (
         <ul className="flex flex-col" style={{ gap: "var(--space-2)" }}>

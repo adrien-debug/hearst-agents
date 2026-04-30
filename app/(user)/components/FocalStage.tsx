@@ -9,6 +9,7 @@ import { FocalRetryButton } from "./FocalRetryButton";
 import { ReportLayout } from "./ReportLayout";
 import { AssetVariantTabs } from "./AssetVariantTabs";
 import { isHtmlContent, tryParseReportPayload } from "@/lib/assets/content-parser";
+import { ResearchReportArticle } from "./reports/ResearchReportArticle";
 
 const STATUS_LABELS: Record<FocalStatus, string> = {
   composing: "COMPOSING_",
@@ -203,9 +204,7 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               style={{ height: "var(--space-32)", minHeight: "var(--height-focal-min)" }}
             />
           ) : previewContent ? (
-            <pre className="t-13 font-mono leading-[1.5] text-[var(--text-soft)] bg-[var(--surface-1)] rounded-sm p-4 overflow-auto whitespace-pre-wrap" style={{ maxHeight: "var(--space-32)" }}>
-              {previewContent}
-            </pre>
+            <ResearchReportArticle content={previewContent} />
           ) : null}
         </div>
       )}

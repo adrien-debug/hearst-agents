@@ -16,7 +16,7 @@
  * Mode collapsed conservé (toggle bottom rail).
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -126,7 +126,7 @@ function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between first:mt-0 mt-8 mb-3 px-3">
+    <div className="flex items-center justify-between first:mt-0 mt-12 mb-6 px-3">
       <span
         className="font-mono uppercase font-medium"
         style={{
@@ -218,7 +218,7 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
           }}
           className="text-[var(--text-faint)] hover:text-[var(--danger)] p-1 transition-colors"
           title="Delete"
-          aria-label="Delete le thread"
+          aria-label="Delete thread"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="3 6 5 6 21 6" />
@@ -227,6 +227,91 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
         </button>
       </div>
     </div>
+  );
+}
+
+function TopMenuItem({
+  label,
+  hotkey,
+  onClick,
+}: {
+  label: string;
+  hotkey: string;
+  onClick?: () => void;
+}) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="flex items-center justify-between text-left"
+      style={{ padding: "var(--space-2) 0" }}
+    >
+      <span
+        className="t-13 font-light transition-all duration-emphasis ease-out-soft"
+        style={{
+          color: hover ? "var(--cykan)" : "var(--text-l2)",
+          textShadow: hover ? "var(--neon-cykan)" : "none",
+        }}
+      >
+        {label}
+      </span>
+      <span
+        className="t-9 tracking-display uppercase"
+        style={{ color: "var(--text-l3)" }}
+      >
+        {hotkey}
+      </span>
+    </button>
+  );
+}
+
+function GhostFooterLink({
+  href,
+  onClick,
+  title,
+  children,
+}: {
+  href?: string;
+  onClick?: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  const [hover, setHover] = useState(false);
+  const linkStyle = {
+    color: hover ? "var(--cykan)" : "var(--text-l3)",
+    textShadow: hover ? "var(--neon-cykan)" : "none",
+  };
+  const linkClass = "t-9 tracking-display uppercase transition-all duration-emphasis ease-out-soft";
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        title={title}
+        className={linkClass}
+        style={linkStyle}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+      >
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={linkClass}
+      style={linkStyle}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -293,12 +378,10 @@ export function TimelineRail() {
 
   return (
     <aside
-      className="h-full flex flex-col z-20 relative transition-[width] duration-slow ease-out-soft border-r overflow-hidden"
+      className="h-full flex flex-col z-20 relative transition-[width] duration-slow ease-out-soft overflow-hidden"
       style={{
         width: leftCollapsed ? "var(--width-threads-collapsed)" : "var(--width-threads)",
         background: "var(--rail)",
-        borderColor: "var(--sep)",
-        boxShadow: "var(--shadow-rail-shell)",
       }}
     >
       {/* Logo */}
@@ -350,65 +433,23 @@ export function TimelineRail() {
         ) : (
           <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col" style={{ gap: "var(--space-2)" }}>
 
-            {/* Top Menu */}
-            <div className="flex flex-col gap-1 mb-4">
-              <button onClick={handleNewThread} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--layer-1)]">
-                <div className="flex items-center gap-3">
-                  <span className="text-[var(--text-muted)] group-hover:text-[var(--text-soft)] transition-colors">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 5v14M5 12h14" />
-                    </svg>
-                  </span>
-                  <span className="t-14 font-medium text-[var(--text-soft)] transition-colors">New conversation</span>
-                </div>
-                <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">⌘N</span>
-              </button>
-              <button className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--layer-1)]">
-                <div className="flex items-center gap-3">
-                  <span className="text-[var(--text-muted)] group-hover:text-[var(--text-soft)] transition-colors">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
-                      <path d="M12 12L2.1 7.1" />
-                      <path d="M12 12l9.9 4.9" />
-                    </svg>
-                  </span>
-                  <span className="t-14 font-medium text-[var(--text-soft)] transition-colors">Hearst</span>
-                </div>
-                <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">⌘1</span>
-              </button>
-              <button onClick={() => router.push("/apps")} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--layer-1)]">
-                <div className="flex items-center gap-3">
-                  <span className="text-[var(--text-muted)] group-hover:text-[var(--text-soft)] transition-colors">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                      <path d="M9 3v18" />
-                      <path d="M15 3v18" />
-                      <path d="M3 9h18" />
-                      <path d="M3 15h18" />
-                    </svg>
-                  </span>
-                  <span className="t-14 font-medium text-[var(--text-soft)] transition-colors">App</span>
-                </div>
-                <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">⌘2</span>
-              </button>
-              <button onClick={() => router.push("/reports")} className="group flex items-center justify-between px-3 py-2.5 rounded-md text-left transition-all duration-300 hover:bg-[var(--layer-1)]">
-                <div className="flex items-center gap-3">
-                  <span className="text-[var(--text-muted)] group-hover:text-[var(--text-soft)] transition-colors">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="20" x2="18" y2="10" />
-                      <line x1="12" y1="20" x2="12" y2="4" />
-                      <line x1="6" y1="20" x2="6" y2="14" />
-                    </svg>
-                  </span>
-                  <span className="t-14 font-medium text-[var(--text-soft)] transition-colors">Rapports</span>
-                </div>
-                <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity">⌘3</span>
-              </button>
+            {/* Top Menu — mini-liste inline, interaction par la lumière */}
+            <div
+              className="flex flex-col mb-6"
+              style={{
+                borderBottom: "1px solid var(--sep)",
+                paddingBottom: "var(--space-3)",
+              }}
+            >
+              <TopMenuItem label="New conversation" hotkey="⌘N" onClick={handleNewThread} />
+              <TopMenuItem label="Hearst" hotkey="⌘1" />
+              <TopMenuItem label="App" hotkey="⌘2" onClick={() => router.push("/apps")} />
+              <TopMenuItem label="Reports" hotkey="⌘3" onClick={() => router.push("/reports")} />
             </div>
 
-            {/* Récents */}
+            {/* Recent */}
             <section>
-              <SectionHeader label="Récents" />
+              <SectionHeader label="Recent" />
               {groups.today.length === 0 && groups.thisWeek.length === 0 ? (
                 <EmptyHint>No activity récente</EmptyHint>
               ) : (
@@ -439,7 +480,7 @@ export function TimelineRail() {
 
             {/* Archive */}
             {groups.archive.length > 0 && (
-              <section className="mt-4">
+              <section>
                 <SectionHeader label="Archive" />
                 <div className="space-y-px">
                   {groups.archive.map((t) => (
@@ -459,22 +500,20 @@ export function TimelineRail() {
         )}
       </div>
 
-      {/* Footer — identité discrète + actions secondaires */}
+      {/* Footer — fondu dans le rail, identité discrète */}
       <div
         className={`shrink-0 flex flex-col items-center ${sectionPadX}`}
         style={{
           paddingTop: "var(--space-4)",
-          paddingBottom: "var(--space-4)",
+          paddingBottom: "var(--space-6)",
           gap: "var(--space-3)",
-          background: "var(--surface-card)",
-          boxShadow: "var(--shadow-divider-top)",
         }}
       >
         {leftCollapsed ? (
           <>
             <span
-              className="rounded-full flex items-center justify-center bg-[var(--surface-2)] text-[var(--text-muted)] t-11 font-light border border-[var(--border-shell)]"
-              style={{ width: "var(--space-6)", height: "var(--space-6)" }}
+              className="t-11 font-light"
+              style={{ color: "var(--text-l3)" }}
               title={firstName}
               aria-label={firstName}
             >
@@ -508,8 +547,8 @@ export function TimelineRail() {
         ) : (
           <>
             <span
-              className="rounded-full flex items-center justify-center bg-[var(--surface-2)] text-[var(--text-muted)] t-11 font-light border border-[var(--border-shell)]"
-              style={{ width: "var(--space-6)", height: "var(--space-6)" }}
+              className="t-11 font-light"
+              style={{ color: "var(--text-l3)" }}
               aria-hidden
             >
               {userInitial}
@@ -519,26 +558,17 @@ export function TimelineRail() {
             </span>
             <div
               className="flex items-center justify-center"
-              style={{ gap: "var(--space-3)" }}
+              style={{ gap: "var(--space-4)" }}
             >
-              <Link
-                href="/admin"
-                title="Admin console"
-                className="t-9 tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
-              >
+              <GhostFooterLink href="/admin" title="Admin console">
                 Admin
-              </Link>
-              <span className="t-9 text-[var(--text-ghost)]" aria-hidden>
-                ·
-              </span>
-              <button
-                type="button"
+              </GhostFooterLink>
+              <GhostFooterLink
                 onClick={() => signOut({ callbackUrl: "/login" })}
                 title="Sign out"
-                className="t-9 tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--danger)] transition-colors"
               >
                 Exit
-              </button>
+              </GhostFooterLink>
             </div>
             <button
               onClick={toggleLeftCollapsed}

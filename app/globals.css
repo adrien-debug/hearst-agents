@@ -94,6 +94,7 @@
   --space-8: 32px;
   --space-10: 40px;
   --space-12: 48px;
+  --space-14: 56px;
   --space-16: 64px;
   --space-20: 80px;
   --space-24: 120px;
@@ -140,6 +141,7 @@
   /* ─── Tracking — valeurs intermédiaires ────────────────────── */
   --tracking-snug: 0.10em;   /* Entre caption (0.08) et wide (0.12) — RunTimeline */
   --tracking-body: 0.15em;   /* Entre label (0.14) et stretch (0.18) — corps de chat */
+  --tracking-label: 0.22em;  /* Tous les labels uppercase Ghost Lumineux — token unique */
 
   /* ─── Ghost Lumineux — 3 couches matière ──────────────────── */
   --layer-0: #000000;                                            /* fond absolu */
@@ -875,6 +877,7 @@
   --spacing-8:  var(--space-8);
   --spacing-10: var(--space-10);
   --spacing-12: var(--space-12);
+  --spacing-14: var(--space-14);
   --spacing-16: var(--space-16);
   --spacing-20: var(--space-20);
   --spacing-24: var(--space-24);
@@ -986,13 +989,11 @@ body {
  * Hearst Connect dashboard : border-left cyan + mono uppercase 700). */
 .rail-section-label {
   font-family: var(--font-satoshi);
-  font-size: clamp(10px, 0.26vw + 8.333px, 15px);
+  font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.25em;
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
-  border-left: 2px solid var(--cykan);
-  padding-left: var(--space-3);
+  color: var(--text-l3);
   line-height: 1.2;
 }
 
@@ -1169,7 +1170,7 @@ body {
 }
 .dash-row:last-child { border-bottom: none; }
 .dash-row:hover {
-  background: var(--layer-1);
+  background: var(--layer-2);
   padding-left: 10px;
 }
 .dash-row .dash-row-icon {

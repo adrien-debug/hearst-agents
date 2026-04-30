@@ -1,103 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import { useRightPanelData } from "./right-panel/useRightPanelData";
 import { useRouter } from "next/navigation";
+import { useNavigationStore } from "@/stores/navigation";
+import { useStageStore } from "@/stores/stage";
+import { CockpitHero } from "./stages/CockpitHero";
 
+/**
+ * WelcomePanel — Empty state du ChatStage (mode="chat" sans messages).
+ *
+ * Visuellement identique au CockpitStage (greeting + quick actions),
+ * mais SANS l'input (l'input est rendu par ChatStage en bas via ChatDock).
+ *
+ * Pas de section "Active missions" ni de footer hint : duplications retirées.
+ * L'opérationnel vit uniquement dans le panneau droit (GeneralDashboard).
+ */
 export function WelcomePanel() {
-  const { data: session } = useSession();
   const router = useRouter();
-  const { missions } = useRightPanelData();
-  const [now, setNow] = useState(() => Date.now());
-  const userName = session?.user?.name?.split(" ")[0] ?? "Adrien";
+  const addThread = useNavigationStore((s) => s.addThread);
+  const setStageMode = useStageStore((s) => s.setMode);
 
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(timer);
-  }, []);
+  const newBrief = () => {
+    const threadId = addThread("New", "home");
+    setStageMode({ mode: "chat", threadId });
+  };
 
-  const h = String(new Date(now).getHours()).padStart(2, "0");
-  const m = String(new Date(now).getMinutes()).padStart(2, "0");
+  const focusInput = () => {
+    const ta = document.querySelector<HTMLTextAreaElement>("textarea");
+    ta?.focus();
+  };
 
-  const topMissions = missions.filter((m) => m.opsStatus === "running" || m.enabled).slice(0, 2);
-
-  const quickActions = [
-    { label: "New brief", hotkey: "⌘B", action: () => {} },
-    { label: "Run query", hotkey: "⌘Q", action: () => {} },
+  const QUICK_ACTIONS = [
+    { label: "New brief",   hotkey: "⌘B", action: newBrief },
+    { label: "Run query",   hotkey: "⌘Q", action: focusInput },
     { label: "View assets", hotkey: "⌘A", action: () => router.push("/assets") },
   ];
 
   return (
-    <div className="flex-1 flex flex-col px-12 py-14 max-w-3xl mx-auto w-full gap-12">
+    <div className="flex-1 flex flex-col min-h-0">
+      <CockpitHero />
 
-      {/* Hero */}
-      <div>
-        <p className="t-9 font-mono uppercase tracking-marquee mb-3"
-          style={{ color: "var(--text-l3)", letterSpacing: "0.22em" }}>
-          Welcome back
-        </p>
-        <div className="flex items-baseline justify-between">
-          <h1 style={{ fontSize: "clamp(48px, 5vw, 72px)", fontWeight: 600, lineHeight: 1.0, letterSpacing: "-0.03em", color: "var(--text-l0)" }}>
-            {userName}
-          </h1>
-          <span className="t-15 font-mono" style={{ color: "var(--text-l2)" }}>{h}:{m}</span>
-        </div>
-        <div className="mt-10" style={{ height: "1px", background: "var(--sep)" }} />
-      </div>
-
-      {/* Quick actions */}
-      <div>
-        <p className="t-9 font-mono uppercase tracking-marquee mb-6"
-          style={{ color: "var(--text-l3)", letterSpacing: "0.18em" }}>
+      <div style={{ padding: "0 var(--space-12) var(--space-12)" }}>
+        <p
+          className="font-mono uppercase"
+          style={{
+            fontSize: "10px",
+            fontWeight: 500,
+            letterSpacing: "var(--tracking-label)",
+            color: "var(--text-l3)",
+            marginBottom: "var(--space-6)",
+          }}
+        >
           Quick actions
         </p>
-        <div className="flex flex-col">
-          {quickActions.map((action) => (
-            <button key={action.label} onClick={action.action}
-              className="group flex items-center justify-between py-4 bg-transparent text-left transition-all duration-300"
-              style={{ borderBottom: "1px solid var(--sep)" }}>
-              <span className="t-15 font-light group-hover:text-[var(--cykan)] transition-colors"
-                style={{ color: "var(--text-l1)" }}>
-                {action.label}
-              </span>
-              <span className="t-9 font-mono" style={{ color: "var(--text-l3)" }}>{action.hotkey}</span>
-            </button>
-          ))}
-        </div>
+        {QUICK_ACTIONS.map((a) => (
+          <button key={a.label} type="button" onClick={a.action} className="cockpit-action">
+            <span className="ca-label">{a.label}</span>
+            <span className="ca-hotkey">{a.hotkey}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Active missions */}
-      {topMissions.length > 0 && (
-        <div>
-          <p className="t-9 font-mono uppercase tracking-marquee mb-6"
-            style={{ color: "var(--text-l3)", letterSpacing: "0.18em" }}>
-            Active missions
-          </p>
-          <div className="flex flex-col">
-            {topMissions.map((m) => (
-              <div key={m.id} className="group flex items-center justify-between py-4 cursor-pointer"
-                style={{ borderBottom: "1px solid var(--sep)" }}>
-                <span className="t-13 font-light group-hover:text-[var(--cykan)] transition-colors"
-                  style={{ color: "var(--text-l1)" }}>
-                  {m.name}
-                </span>
-                <span className="t-9 font-mono" style={{ color: m.opsStatus === "running" ? "var(--cykan)" : "var(--text-l3)" }}>
-                  {m.opsStatus === "running" ? "running" : "paused"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Hint */}
-      <div className="mt-auto pt-8" style={{ borderTop: "1px solid var(--sep)" }}>
-        <p className="t-9 font-mono uppercase tracking-marquee text-center"
-          style={{ color: "var(--text-l3)", letterSpacing: "0.16em" }}>
-          ⌘1 cockpit · ⌘K command
-        </p>
-      </div>
+      <div className="flex-1 min-h-0" />
     </div>
   );
 }

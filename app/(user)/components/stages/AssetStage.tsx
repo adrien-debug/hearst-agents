@@ -22,6 +22,7 @@ import { useStageData } from "@/stores/stage-data";
 import { ReportLayout } from "../ReportLayout";
 import { AssetVariantTabs } from "../AssetVariantTabs";
 import { isHtmlContent, tryParseReportPayload } from "@/lib/assets/content-parser";
+import { ResearchReportArticle } from "../reports/ResearchReportArticle";
 import type { Asset } from "@/lib/assets/types";
 import { isPlaceholderAssetId } from "@/lib/ui/asset-id";
 
@@ -219,11 +220,5 @@ function AssetBody({ contentRef, title }: { contentRef?: string; title: string }
     );
   }
 
-  return (
-    <div className="prose prose-invert max-w-none">
-      <div className="t-15 leading-[1.7] text-[var(--text-muted)] font-normal whitespace-pre-wrap">
-        {contentRef}
-      </div>
-    </div>
-  );
+  return <ResearchReportArticle content={contentRef} />;
 }
