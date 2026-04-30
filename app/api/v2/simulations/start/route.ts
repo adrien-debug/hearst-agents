@@ -123,7 +123,7 @@ Retourne UNIQUEMENT un JSON valide, sans texte autour, au format :
       parsed.scenarios,
       result.reasoningContent ?? null,
     );
-    storeAsset({
+    await storeAsset({
       id: assetId,
       threadId: scope.workspaceId,
       kind: "report",

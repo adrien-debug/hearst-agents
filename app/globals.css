@@ -105,7 +105,7 @@
    * bornées pour rester lisibles à toute taille. Le centre prend le
    * reste de l'espace via flex-1 → ratio ~20/60/20 cohérent à toutes
    * les tailles, sans zones mortes en grand écran. */
-  --width-threads: clamp(220px, 20vw, 480px);
+  --width-threads: clamp(176px, 16vw, 384px);
   --width-threads-collapsed: 64px;
   --width-context: clamp(322px, 25vw, 553px);
   --width-center-max: 960px;
@@ -163,6 +163,7 @@
   --shadow-thread-active: inset 2px 0 0 var(--cykan);           /* LeftPanel thread actif */
   --shadow-neon-cykan: 0 0 8px rgba(45, 212, 191, 0.6);         /* TimelineRail thread actif drop-shadow */
   --shadow-input-focus: 0 0 15px rgba(45, 212, 191, 0.15);      /* ChatInput focus halo doux */
+  --shadow-status-online: 0 0 6px rgba(45, 197, 88, 0.55), 0 0 14px rgba(45, 197, 88, 0.25); /* TimelineRail badge connexion */
   --shadow-tile-inset: inset 0 0.5px 0 rgba(255, 255, 255, 0.03);
   --shadow-tile-base: 0 1px 2px rgba(0, 0, 0, 0.20);
   --shadow-tile-hover: 0 2px 4px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(45, 212, 191, 0.06);

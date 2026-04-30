@@ -128,7 +128,10 @@ export function buildHearstActionTools(opts: {
       // 1. Asset placeholder — apparaît dans la liste assets immédiatement
       // pendant que le job tourne. Le titre est tronqué pour rester lisible
       // dans les sidebars.
-      storeAsset({
+      // ⚠️ await CRITIQUE : createVariant ci-dessous fait un insert avec
+      // foreign key sur asset_id. Sans await, race condition → variantId null
+      // → updateVariant skipped dans le worker → image jamais visible.
+      await storeAsset({
         id: assetId,
         threadId: scope.workspaceId,
         kind: "report",

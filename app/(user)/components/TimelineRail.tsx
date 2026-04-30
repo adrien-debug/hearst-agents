@@ -508,9 +508,9 @@ export function TimelineRail() {
         )}
       </div>
 
-      {/* Footer — fondu dans le rail, identité discrète */}
+      {/* Footer — stack vertical aligné gauche : badge connexion + actions */}
       <div
-        className={`shrink-0 flex flex-col items-center ${sectionPadX}`}
+        className={`shrink-0 flex flex-col ${leftCollapsed ? "items-center" : "items-start"} ${sectionPadX}`}
         style={{
           paddingTop: "var(--space-4)",
           paddingBottom: "var(--space-6)",
@@ -520,13 +520,16 @@ export function TimelineRail() {
         {leftCollapsed ? (
           <>
             <span
-              className="t-11 font-light"
-              style={{ color: "var(--text-l3)" }}
+              className="rounded-pill"
+              style={{
+                width: "var(--space-2)",
+                height: "var(--space-2)",
+                background: "var(--color-success)",
+                boxShadow: "var(--shadow-status-online)",
+              }}
               title={firstName}
-              aria-label={firstName}
-            >
-              {userInitial}
-            </span>
+              aria-label={`${firstName} en ligne`}
+            />
             <Link
               href="/admin"
               title="Admin console"
@@ -554,19 +557,27 @@ export function TimelineRail() {
           </>
         ) : (
           <>
-            <span
-              className="t-11 font-light"
-              style={{ color: "var(--text-l3)" }}
-              aria-hidden
-            >
-              {userInitial}
-            </span>
-            <span className="t-13 font-light text-[var(--text-soft)] truncate max-w-full">
-              {firstName}
-            </span>
             <div
-              className="flex items-center justify-center"
-              style={{ gap: "var(--space-4)" }}
+              className="flex items-center"
+              style={{ gap: "var(--space-2)" }}
+            >
+              <span
+                className="rounded-pill shrink-0"
+                style={{
+                  width: "var(--space-2)",
+                  height: "var(--space-2)",
+                  background: "var(--color-success)",
+                  boxShadow: "var(--shadow-status-online)",
+                }}
+                aria-hidden
+              />
+              <span className="t-13 font-light text-[var(--text-soft)] truncate max-w-full">
+                {firstName}
+              </span>
+            </div>
+            <div
+              className="flex items-center"
+              style={{ gap: "var(--space-3)" }}
             >
               <GhostFooterLink href="/admin" title="Admin console">
                 Admin
