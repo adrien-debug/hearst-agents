@@ -26,6 +26,7 @@ interface MeetingStatusResponse {
 export function MeetingStage({ meetingId }: MeetingStageProps) {
   const back = useStageStore((s) => s.back);
   const setMode = useStageStore((s) => s.setMode);
+  const setCommandeurOpen = useStageStore((s) => s.setCommandeurOpen);
 
   const [meetingUrl, setMeetingUrl] = useState("");
   const [language, setLanguage] = useState<"fr" | "en">("fr");
@@ -146,11 +147,21 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
     const selected = Array.from(selectedActions)
       .map((idx) => actionItems[idx])
       .filter((a): a is ActionItem => Boolean(a));
-    console.log("[approval] actions:", selected);
-    toast.info(
-      "Composio non branché",
-      "L'exécution réelle des actions arrive en Phase B — pour l'instant les sélections sont loguées en console.",
-    );
+    if (selected.length === 0) return;
+    // POURQUOI : au lieu de log-only (B9), on ouvre le Commandeur avec une
+    // query préremplie pour permettre la création d'une mission depuis les
+    // action items du meeting. Le user voit la query, peut l'éditer, puis
+    // valide pour créer le plan via le pipeline standard.
+    const lines = selected.map((a) => {
+      const meta = [a.owner, a.deadline].filter(Boolean).join(" · ");
+      return meta ? `- ${a.action} (${meta})` : `- ${a.action}`;
+    });
+    const prefill =
+      selected.length === 1
+        ? `Crée une mission pour : ${selected[0].action}`
+        : `Crée une mission pour ces action items :\n${lines.join("\n")}`;
+    setSelectedActions(new Set());
+    setCommandeurOpen(true, { prefilledQuery: prefill });
   };
 
   const headerLabel = meetingId
@@ -163,7 +174,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
     meetingId && selectedActions.size > 0
       ? {
           id: "approve",
-          label: `Approuver (${selectedActions.size})`,
+          label: `Créer mission (${selectedActions.size})`,
           onClick: onApproveSelected,
         }
       : meetingId

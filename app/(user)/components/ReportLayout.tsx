@@ -173,11 +173,12 @@ export function ReportLayout({
     ? orderedBlocks
     : effectivePayload.blocks.filter((b) => !hiddenIds.has(b.id));
 
-  // B4 — citations cliquables. Si le payload porte un champ `sources`
-  // (extension douce, fail-soft), on wrap la grille dans SourceCitation
-  // qui détecte les `<sup data-source-id="..."/>` rendus par les blocks.
+  // B4 — citations cliquables. Le payload porte désormais un champ `sources`
+  // (typé optionnel, dérivé de spec.sources par run-report.ts). On wrap la
+  // grille dans SourceCitation qui détecte les `<sup data-source-id="..."/>`
+  // rendus par les blocks (ex. KpiTile.captionHtml généré via fmtCitation).
   const reportSources: ReadonlyArray<Source> = useMemo(() => {
-    const raw = (effectivePayload as unknown as { sources?: ReadonlyArray<Source> }).sources;
+    const raw = effectivePayload.sources;
     return Array.isArray(raw) ? raw : [];
   }, [effectivePayload]);
 
@@ -363,6 +364,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
           currency={(props.currency as string) ?? "EUR"}
           suffix={props.suffix as string | undefined}
           compact={Boolean(props.compact)}
+          captionHtml={typeof props.captionHtml === "string" ? props.captionHtml : undefined}
         />
       );
 

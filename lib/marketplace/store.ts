@@ -390,7 +390,13 @@ export async function rateTemplate(
     return false;
   }
 
-  // Best-effort recalc côté app si le trigger SQL absent (env de dev).
+  // Source de vérité = trigger SQL `marketplace_ratings_recalc` (cf
+  // supabase/migrations/0054_marketplace_templates.sql) qui recalcule
+  // rating_avg / rating_count après chaque INSERT/UPDATE/DELETE sur
+  // marketplace_ratings. Le fallback applicatif ci-dessous reste en place
+  // uniquement pour les environnements de dev où le trigger n'a pas été
+  // appliqué (ex: setup local sans migration). En prod, le trigger l'emporte
+  // — l'écriture supplémentaire est idempotente.
   await recalcRatingFallback(templateId, sb);
 
   return true;

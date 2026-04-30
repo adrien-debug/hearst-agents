@@ -32,6 +32,14 @@ export interface KpiTileProps {
   suffix?: string;
   /** Mode compact : 1 234 567 → 1,2 M (pour grandes valeurs). */
   compact?: boolean;
+  /**
+   * Caption HTML optionnel, rendu sous la valeur. Sert principalement à injecter
+   * une citation cliquable via `fmtCitation(sourceId, label)` qui produit
+   * `<sup data-source-id="...">[N]</sup>`. SourceCitation (au mount) attache
+   * tooltip + handler clic. Le HTML doit rester court et uniquement de la
+   * provenance issue de fmtCitation (XSS-safe : escape côté fmtCitation).
+   */
+  captionHtml?: string;
 }
 
 export function KpiTile({
@@ -41,6 +49,7 @@ export function KpiTile({
   currency = "EUR",
   suffix,
   compact = false,
+  captionHtml,
 }: KpiTileProps) {
   const value = formatValue(data.value, { format, currency, compact });
   const delta = data.delta !== undefined && data.delta !== null ? fmtDelta(data.delta) : null;
@@ -82,6 +91,13 @@ export function KpiTile({
         >
           {delta.text}
         </span>
+      )}
+      {captionHtml && (
+        <span
+          className="t-9 font-mono text-[var(--text-faint)]"
+          data-testid="kpi-caption"
+          dangerouslySetInnerHTML={{ __html: captionHtml }}
+        />
       )}
       {data.sparkline && data.sparkline.length >= 2 && (
         <div style={{ marginTop: "var(--space-2)" }}>

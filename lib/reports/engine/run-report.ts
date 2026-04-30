@@ -16,7 +16,7 @@
 import type { ReportSpec, SourceRef } from "@/lib/reports/spec/schema";
 import type { Tabular } from "./tabular";
 import { applyTransforms } from "./apply-transforms";
-import { renderBlocks, type RenderPayload } from "./render-blocks";
+import { renderBlocks, type RenderPayload, type RenderedSource } from "./render-blocks";
 import { narrate } from "./narrate";
 import {
   getRenderCache,
@@ -49,6 +49,30 @@ export type SourceLoader = (
  * ne sont pas livrés (P1.4). Retourne des tableaux vides.
  */
 const stubLoader: SourceLoader = async () => new Map();
+
+/**
+ * Dérive la liste de sources citables depuis `spec.sources`. Le label par
+ * défaut combine `kind` et `id` quand pas de label explicite. URL externe
+ * extraite quand kind === "http". Pas d'effet sur les sources de type
+ * composio/native_google/asset (drill-down se fera côté UI selon kind).
+ */
+function deriveSources(sources: ReadonlyArray<SourceRef>, fetchedAt: number): RenderedSource[] {
+  return sources.map((s) => {
+    const out: RenderedSource = {
+      id: s.id,
+      label: s.label ?? `${s.kind}:${s.id}`,
+      fetchedAt,
+    };
+    if (s.kind === "http") {
+      const url = (s.spec as { url?: string }).url;
+      if (typeof url === "string") out.url = url;
+    } else if (s.kind === "asset") {
+      const assetId = (s.spec as { assetId?: string }).assetId;
+      if (typeof assetId === "string") out.assetId = assetId;
+    }
+    return out;
+  });
+}
 
 // ── runReport ──────────────────────────────────────────────
 
@@ -136,6 +160,10 @@ export async function runReport(
 
   // ── 3. Render payload ───────────────────────────────────
   const payload = renderBlocks(spec, datasets, now);
+  // Sources citables — dérivées de spec.sources (id + label fallback). Le
+  // composant ReportLayout/SourceCitation lit `payload.sources` pour wrapper
+  // les `<sup data-source-id="..."/>` produits par `fmtCitation`.
+  payload.sources = deriveSources(spec.sources, now);
   const payloadHash = hashKey(payload.blocks);
 
   // ── 4. Extraction signaux (déterministe, hors cache) ────

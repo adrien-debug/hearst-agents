@@ -32,6 +32,20 @@ export interface RenderedBlock {
   props: Record<string, unknown>;
 }
 
+/**
+ * Source citée par les blocks via `<sup data-source-id="...">[N]</sup>`. Le
+ * runner peuple ce tableau depuis spec.sources (id + label dérivés). Le
+ * composant React `SourceCitation` (côté client) lit cette liste et attache
+ * tooltip + drill-down au clic sur les sup.
+ */
+export interface RenderedSource {
+  id: string;
+  label: string;
+  url?: string;
+  assetId?: string;
+  fetchedAt?: number;
+}
+
 export interface RenderPayload {
   __reportPayload: true;
   specId: string;
@@ -40,6 +54,12 @@ export interface RenderPayload {
   blocks: RenderedBlock[];
   /** Scalaires extraits pour narration LLM (jamais le raw). */
   scalars: Record<string, unknown>;
+  /**
+   * Sources citables. Optionnel pour back-compat (ancien payload sans sources
+   * reste valide). Quand présent, ReportLayout wrap la grille dans
+   * SourceCitation pour activer les citations cliquables.
+   */
+  sources?: RenderedSource[];
 }
 
 /**

@@ -7,6 +7,7 @@
  */
 
 import type { ReportSpec } from "@/lib/reports/spec/schema";
+import { fmtCitation } from "@/lib/reports/blocks/format";
 
 export const FOUNDER_COCKPIT_ID = "00000000-0000-4000-8000-100000000001";
 
@@ -102,7 +103,14 @@ export function buildFounderCockpit(scope: ReportSpec["scope"]): ReportSpec {
         label: "MRR",
         dataRef: "mrr_total",
         layout: { col: 1, row: 0 },
-        props: { field: "mrr", format: "currency", currency: "EUR", compact: true },
+        props: {
+          field: "mrr",
+          format: "currency",
+          currency: "EUR",
+          compact: true,
+          // Citation cliquable → drill-down vers la source Stripe via SourceCitation.
+          captionHtml: `Source ${fmtCitation("stripe_charges", 1)}`,
+        },
       },
       {
         id: "kpi_pipeline",
@@ -110,7 +118,13 @@ export function buildFounderCockpit(scope: ReportSpec["scope"]): ReportSpec {
         label: "Pipeline ouvert",
         dataRef: "pipeline_total",
         layout: { col: 1, row: 0 },
-        props: { field: "pipeline_value", format: "currency", currency: "EUR", compact: true },
+        props: {
+          field: "pipeline_value",
+          format: "currency",
+          currency: "EUR",
+          compact: true,
+          captionHtml: `Source ${fmtCitation("hubspot_deals", 2)}`,
+        },
       },
       {
         id: "kpi_inbox",
@@ -118,7 +132,11 @@ export function buildFounderCockpit(scope: ReportSpec["scope"]): ReportSpec {
         label: "Emails en attente",
         dataRef: "unread_count",
         layout: { col: 1, row: 0 },
-        props: { field: "n_unread", format: "number" },
+        props: {
+          field: "n_unread",
+          format: "number",
+          captionHtml: `Source ${fmtCitation("gmail_recent", 3)}`,
+        },
       },
       {
         id: "kpi_commits",
@@ -126,7 +144,11 @@ export function buildFounderCockpit(scope: ReportSpec["scope"]): ReportSpec {
         label: "Commits 7j",
         dataRef: "commits_by_day",
         layout: { col: 1, row: 0 },
-        props: { field: "n", format: "number" },
+        props: {
+          field: "n",
+          format: "number",
+          captionHtml: `Source ${fmtCitation("github_commits", 4)}`,
+        },
       },
       {
         id: "spark_commits",

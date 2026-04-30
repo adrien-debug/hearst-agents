@@ -65,6 +65,8 @@ interface StageState {
   lastMissionId: string | null;
   /** True quand le Commandeur (Cmd+K) est ouvert. */
   commandeurOpen: boolean;
+  /** Query préremplie au prochain ouvrage du Commandeur. Consommée après lecture. */
+  commandeurPrefilledQuery: string | null;
 
   /** Switch vers un nouveau mode (push dans l'history). Persiste l'assetId
    * dans `lastAssetId` quand mode === "asset". */
@@ -74,8 +76,10 @@ interface StageState {
   /** Reset à cockpit. */
   reset: () => void;
 
-  setCommandeurOpen: (open: boolean) => void;
+  setCommandeurOpen: (open: boolean, options?: { prefilledQuery?: string }) => void;
   toggleCommandeur: () => void;
+  /** Consomme la query préremplie (lecture + reset à null). */
+  consumeCommandeurPrefilledQuery: () => string | null;
 }
 
 export const useStageStore = create<StageState>((set, get) => ({
@@ -84,6 +88,7 @@ export const useStageStore = create<StageState>((set, get) => ({
   lastAssetId: null,
   lastMissionId: null,
   commandeurOpen: false,
+  commandeurPrefilledQuery: null,
 
   setMode: (payload) => {
     const prev = get().current;
@@ -108,8 +113,19 @@ export const useStageStore = create<StageState>((set, get) => ({
 
   reset: () => set({ current: { mode: "chat" }, history: [] }),
 
-  setCommandeurOpen: (open) => set({ commandeurOpen: open }),
+  setCommandeurOpen: (open, options) =>
+    set({
+      commandeurOpen: open,
+      commandeurPrefilledQuery: open
+        ? (options?.prefilledQuery ?? get().commandeurPrefilledQuery)
+        : null,
+    }),
   toggleCommandeur: () => set({ commandeurOpen: !get().commandeurOpen }),
+  consumeCommandeurPrefilledQuery: () => {
+    const q = get().commandeurPrefilledQuery;
+    if (q !== null) set({ commandeurPrefilledQuery: null });
+    return q;
+  },
 }));
 
 /**

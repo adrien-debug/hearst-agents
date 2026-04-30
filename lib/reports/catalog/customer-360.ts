@@ -10,6 +10,7 @@
  */
 
 import type { ReportSpec } from "@/lib/reports/spec/schema";
+import { fmtCitation } from "@/lib/reports/blocks/format";
 
 export const CUSTOMER_360_ID = "00000000-0000-4000-8000-100000000002";
 
@@ -108,7 +109,13 @@ export function buildCustomer360(
         label: "Lifetime Value",
         dataRef: "ltv_total",
         layout: { col: 1, row: 0 },
-        props: { field: "ltv", format: "currency", currency: "EUR", compact: true },
+        props: {
+          field: "ltv",
+          format: "currency",
+          currency: "EUR",
+          compact: true,
+          captionHtml: `Source ${fmtCitation("stripe_charges", 1)}`,
+        },
       },
       {
         id: "kpi_tickets",
@@ -116,7 +123,11 @@ export function buildCustomer360(
         label: "Tickets ouverts",
         dataRef: "open_tickets_count",
         layout: { col: 1, row: 0 },
-        props: { field: "n", format: "number" },
+        props: {
+          field: "n",
+          format: "number",
+          captionHtml: `Source ${fmtCitation("intercom_conversations", 2)}`,
+        },
       },
       {
         id: "kpi_emails",
@@ -124,7 +135,11 @@ export function buildCustomer360(
         label: "Échanges email",
         dataRef: "gmail_threads",
         layout: { col: 1, row: 0 },
-        props: { field: "_count", format: "number" },
+        props: {
+          field: "_count",
+          format: "number",
+          captionHtml: `Source ${fmtCitation("gmail_threads", 3)}`,
+        },
       },
       {
         id: "kpi_charges",
@@ -132,7 +147,11 @@ export function buildCustomer360(
         label: "Paiements",
         dataRef: "stripe_charges",
         layout: { col: 1, row: 0 },
-        props: { field: "_count", format: "number" },
+        props: {
+          field: "_count",
+          format: "number",
+          captionHtml: `Source ${fmtCitation("stripe_charges", 1)}`,
+        },
       },
       {
         id: "table_payments",

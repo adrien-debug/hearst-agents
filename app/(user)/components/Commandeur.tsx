@@ -47,6 +47,7 @@ export function Commandeur() {
   const router = useRouter();
   const isOpen = useStageStore((s) => s.commandeurOpen);
   const setOpen = useStageStore((s) => s.setCommandeurOpen);
+  const consumePrefill = useStageStore((s) => s.consumeCommandeurPrefilledQuery);
   const setStageMode = useStageStore((s) => s.setMode);
   const lastAssetId = useStageStore((s) => s.lastAssetId);
   const threads = useNavigationStore((s) => s.threads);
@@ -442,8 +443,15 @@ export function Commandeur() {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- reset à la fermeture (pas de render-time pattern)
       setQuery("");
       setActiveIndex(0);
+      return;
     }
-  }, [isOpen]);
+    // À l'ouverture, consomme la query préremplie si présente.
+    const prefill = consumePrefill();
+    if (prefill) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- prefill driven par store action explicite
+      setQuery(prefill);
+    }
+  }, [isOpen, consumePrefill]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reset clavier index quand la query change
