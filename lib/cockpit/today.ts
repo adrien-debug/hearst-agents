@@ -28,6 +28,12 @@ import { getAllServiceIds, getProviderIdForService } from "@/lib/integrations/se
 import { getSummary } from "@/lib/memory/conversation-summary";
 import { loadLatestInboxBrief } from "@/lib/inbox/store";
 import type { InboxBrief } from "@/lib/inbox/inbox-brief";
+import { getTenantIndustry, type TenantIndustry } from "@/lib/verticals/hospitality";
+import {
+  getMockKpiSnapshot,
+  getMockArrivals,
+  getMockServiceRequests,
+} from "@/lib/verticals/hospitality/mock-data";
 
 export interface CockpitScope {
   userId: string;
@@ -92,6 +98,37 @@ export interface CockpitInboxSection {
   needsConnection: boolean;
 }
 
+export interface CockpitHospitalityVipArrival {
+  guestName: string;
+  room: string;
+  eta: string;
+  specialRequest: string | null;
+}
+
+export interface CockpitHospitalityServiceRequest {
+  id: string;
+  guestName: string;
+  room: string;
+  type: string;
+  priority: "low" | "normal" | "urgent";
+  text: string;
+}
+
+export interface CockpitHospitalitySection {
+  occupancy: number;
+  occupancyYesterday: number;
+  occupancyForecast: number;
+  adr: number;
+  revpar: number;
+  arrivalsCount: number;
+  vipCount: number;
+  pendingServiceRequests: number;
+  vipArrivals: CockpitHospitalityVipArrival[];
+  urgentRequests: CockpitHospitalityServiceRequest[];
+  /** "demo" tant qu'aucun PMS connecté — UI peut afficher un badge. */
+  source: "demo" | "live";
+}
+
 export interface CockpitTodayPayload {
   briefing: CockpitBriefing;
   agenda: CockpitAgendaItem[];
@@ -100,8 +137,12 @@ export interface CockpitTodayPayload {
   suggestions: CockpitSuggestion[];
   favoriteReports: CockpitFavoriteReport[];
   inbox: CockpitInboxSection;
+  /** Industry du tenant — drive l'affichage de sections verticales. */
+  industry: TenantIndustry;
+  /** Présent uniquement si industry === "hospitality". */
+  hospitality: CockpitHospitalitySection | null;
   /** Sections qui sont en mock (UI peut afficher un badge "demo data"). */
-  mockSections: ReadonlyArray<"watchlist" | "agenda">;
+  mockSections: ReadonlyArray<"watchlist" | "agenda" | "hospitality">;
   generatedAt: number;
 }
 
@@ -387,8 +428,43 @@ async function buildInbox(scope: CockpitScope): Promise<CockpitInboxSection> {
   };
 }
 
+function buildHospitalitySection(): CockpitHospitalitySection {
+  const snap = getMockKpiSnapshot();
+  const arrivals = getMockArrivals();
+  const requests = getMockServiceRequests();
+  return {
+    occupancy: snap.occupancy,
+    occupancyYesterday: snap.occupancyYesterday,
+    occupancyForecast: snap.occupancyForecast,
+    adr: snap.adr,
+    revpar: snap.revpar,
+    arrivalsCount: snap.arrivalsCount,
+    vipCount: snap.vipCount,
+    pendingServiceRequests: snap.pendingServiceRequests,
+    vipArrivals: arrivals
+      .filter((a) => a.vip)
+      .map((a) => ({
+        guestName: a.guestName,
+        room: a.room,
+        eta: a.eta,
+        specialRequest: a.specialRequest,
+      })),
+    urgentRequests: requests
+      .filter((r) => r.priority === "urgent")
+      .map((r) => ({
+        id: r.id,
+        guestName: r.guestName,
+        room: r.room,
+        type: r.type,
+        priority: r.priority,
+        text: r.text,
+      })),
+    source: "demo",
+  };
+}
+
 export async function getCockpitToday(scope: CockpitScope): Promise<CockpitTodayPayload> {
-  const [briefing, missionsRunning, suggestions, inbox] = await Promise.all([
+  const [briefing, missionsRunning, suggestions, inbox, industry] = await Promise.all([
     safe("briefing", () => buildBriefing(scope), {
       headline: "Bienvenue",
       body: null,
@@ -402,11 +478,23 @@ export async function getCockpitToday(scope: CockpitScope): Promise<CockpitToday
       () => buildInbox(scope),
       { brief: null, stale: true, needsConnection: false } satisfies CockpitInboxSection,
     ),
+    safe<TenantIndustry>("industry", () => getTenantIndustry(scope.tenantId), "general"),
   ]);
 
   const favoriteReports = buildFavoriteReports();
   const watchlist = buildMockWatchlist();
   const agenda = buildMockAgenda().slice(0, MAX_AGENDA_ITEMS);
+
+  const isHospitality = industry === "hospitality";
+  const hospitality = isHospitality
+    ? safeSync("hospitality", () => buildHospitalitySection(), null)
+    : null;
+
+  const mockSections: Array<"watchlist" | "agenda" | "hospitality"> = [
+    "watchlist",
+    "agenda",
+  ];
+  if (hospitality) mockSections.push("hospitality");
 
   return {
     briefing,
@@ -416,7 +504,18 @@ export async function getCockpitToday(scope: CockpitScope): Promise<CockpitToday
     suggestions,
     favoriteReports,
     inbox,
-    mockSections: ["watchlist", "agenda"],
+    industry,
+    hospitality,
+    mockSections,
     generatedAt: Date.now(),
   };
+}
+
+function safeSync<T>(label: string, fn: () => T, fallback: T): T {
+  try {
+    return fn();
+  } catch (err) {
+    console.warn(`[cockpit/today] sync source "${label}" en erreur, fallback:`, err);
+    return fallback;
+  }
 }

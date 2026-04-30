@@ -54,6 +54,21 @@ import {
   HR_PEOPLE_ID,
   HR_PEOPLE_REQUIRED_APPS,
 } from "./hr-people";
+import {
+  buildHospitalityDailyBrief,
+  HOSPITALITY_DAILY_BRIEF_ID,
+  HOSPITALITY_DAILY_BRIEF_REQUIRED_APPS,
+} from "./hospitality-daily-brief";
+import {
+  buildHospitalityRevpar,
+  HOSPITALITY_REVPAR_ID,
+  HOSPITALITY_REVPAR_REQUIRED_APPS,
+} from "./hospitality-revpar";
+import {
+  buildHospitalityGuestSatisfaction,
+  HOSPITALITY_GUEST_SATISFACTION_ID,
+  HOSPITALITY_GUEST_SATISFACTION_REQUIRED_APPS,
+} from "./hospitality-guest-satisfaction";
 import type { ReportSpec } from "@/lib/reports/spec/schema";
 import type { TemplateSummary } from "@/lib/reports/templates/schema";
 
@@ -163,6 +178,36 @@ export const CATALOG: ReadonlyArray<CatalogEntry> = [
     persona: "people",
     requiredApps: HR_PEOPLE_REQUIRED_APPS,
     build: (scope) => buildHrPeople(scope),
+  },
+  {
+    id: HOSPITALITY_DAILY_BRIEF_ID,
+    title: "Daily Briefing — Hospitality",
+    description:
+      "Occupancy, ADR/RevPAR, arrivées + départs du jour, VIP guests et service requests pending.",
+    domain: "ops",
+    persona: "ops",
+    requiredApps: HOSPITALITY_DAILY_BRIEF_REQUIRED_APPS,
+    build: (scope) => buildHospitalityDailyBrief(scope),
+  },
+  {
+    id: HOSPITALITY_REVPAR_ID,
+    title: "RevPAR & ADR — Hospitality",
+    description:
+      "RevPAR, ADR, occupancy détaillés sur 30 jours et segmentation revenue par source.",
+    domain: "finance",
+    persona: "ops",
+    requiredApps: HOSPITALITY_REVPAR_REQUIRED_APPS,
+    build: (scope) => buildHospitalityRevpar(scope),
+  },
+  {
+    id: HOSPITALITY_GUEST_SATISFACTION_ID,
+    title: "Guest Satisfaction — Hospitality",
+    description:
+      "NPS par canal, reviews aggregées, complaints et taux de recovery sur 7 jours.",
+    domain: "support",
+    persona: "csm",
+    requiredApps: HOSPITALITY_GUEST_SATISFACTION_REQUIRED_APPS,
+    build: (scope) => buildHospitalityGuestSatisfaction(scope),
   },
 ];
 
@@ -297,3 +342,21 @@ export {
   HR_PEOPLE_ID,
   HR_PEOPLE_REQUIRED_APPS,
 } from "./hr-people";
+export {
+  buildHospitalityDailyBrief,
+  buildHospitalityDailyBriefSampleData,
+  HOSPITALITY_DAILY_BRIEF_ID,
+  HOSPITALITY_DAILY_BRIEF_REQUIRED_APPS,
+} from "./hospitality-daily-brief";
+export {
+  buildHospitalityRevpar,
+  buildHospitalityRevparSampleData,
+  HOSPITALITY_REVPAR_ID,
+  HOSPITALITY_REVPAR_REQUIRED_APPS,
+} from "./hospitality-revpar";
+export {
+  buildHospitalityGuestSatisfaction,
+  buildHospitalityGuestSatisfactionSampleData,
+  HOSPITALITY_GUEST_SATISFACTION_ID,
+  HOSPITALITY_GUEST_SATISFACTION_REQUIRED_APPS,
+} from "./hospitality-guest-satisfaction";

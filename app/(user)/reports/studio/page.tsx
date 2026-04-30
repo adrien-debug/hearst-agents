@@ -30,6 +30,7 @@ import { SpecOutline } from "@/app/(user)/components/reports/studio/SpecOutline"
 import { BlockConfigPanel } from "@/app/(user)/components/reports/studio/BlockConfigPanel";
 import { PreviewPane } from "@/app/(user)/components/reports/studio/PreviewPane";
 import { StudioToolbar } from "@/app/(user)/components/reports/studio/StudioToolbar";
+import { PublishTemplateModal } from "@/app/(user)/components/marketplace/PublishTemplateModal";
 
 // ── Spec helpers ───────────────────────────────────────────
 
@@ -181,6 +182,9 @@ function ReportStudioPageContent() {
   // Save state
   const [isSaving, setIsSaving] = useState(false);
 
+  // Marketplace publish modal
+  const [publishOpen, setPublishOpen] = useState(false);
+
   // Load mode (clone / edit)
   useEffect(() => {
     let cancelled = false;
@@ -278,18 +282,22 @@ function ReportStudioPageContent() {
   // ── Sample run ─────────────────────────────────────────────
 
   const handleSampleRun = useCallback(async () => {
-    if (!savedSpecId) {
-      // Nécessite spec persisté côté serveur pour run. En V1, on demande save d'abord.
-      setSampleError("Sauvegarde le spec avant de lancer un sample run.");
-      return;
-    }
     setIsSampling(true);
     setSampleError(null);
     try {
-      const res = await fetch(`/api/v2/reports/${savedSpecId}/run`, {
+      // Si le spec n'a jamais été sauvegardé, on utilise l'endpoint sample
+      // inline (pas de persistence asset). Sinon on garde le run normal pour
+      // bénéficier du cache render et lier un assetId.
+      const url = savedSpecId
+        ? `/api/v2/reports/${savedSpecId}/run`
+        : `/api/v2/reports/specs/sample`;
+      const body = savedSpecId
+        ? JSON.stringify({ sample: true })
+        : JSON.stringify({ spec });
+      const res = await fetch(url, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ sample: true }),
+        body,
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -303,7 +311,7 @@ function ReportStudioPageContent() {
     } finally {
       setIsSampling(false);
     }
-  }, [savedSpecId]);
+  }, [savedSpecId, spec]);
 
   // ── Save ───────────────────────────────────────────────────
 
@@ -406,9 +414,23 @@ function ReportStudioPageContent() {
           onSampleRun={handleSampleRun}
           onSchedule={handleSchedule}
           onShare={lastAssetId ? handleShare : undefined}
+          onPublishMarketplace={() => setPublishOpen(true)}
           isSaving={isSaving}
           isSampling={isSampling}
         />
+        {publishOpen && (
+          <PublishTemplateModal
+            open={publishOpen}
+            kind="report_spec"
+            defaultTitle={spec.meta.title}
+            defaultDescription={spec.meta.summary}
+            payload={spec}
+            onClose={() => setPublishOpen(false)}
+            onPublished={() => {
+              setPublishOpen(false);
+            }}
+          />
+        )}
       </div>
 
       {/* 3-column layout */}

@@ -8,6 +8,7 @@ import { MissionPulse } from "../cockpit/MissionPulse";
 import { SuggestionRow } from "../cockpit/SuggestionRow";
 import { QuickLaunch } from "../cockpit/QuickLaunch";
 import { InboxSection } from "../cockpit/InboxSection";
+import { HospitalityPulse } from "../cockpit/HospitalityPulse";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
 /**
@@ -66,11 +67,14 @@ export function CockpitStage() {
     };
   }, []);
 
+  const isHospitality = data?.industry === "hospitality";
+
   return (
     <div className="cockpit-bg flex-1 flex flex-col min-h-0 relative overflow-hidden panel-enter">
       <HearstConstellation />
 
       <div className="relative flex-1 flex flex-col min-h-0 overflow-y-auto">
+        {isHospitality && <HospitalityBadge />}
         <CockpitHero
           briefing={data?.briefing}
           emptyAction={
@@ -98,6 +102,32 @@ export function CockpitStage() {
   );
 }
 
+function HospitalityBadge() {
+  return (
+    <div
+      className="flex items-center justify-end"
+      style={{
+        padding: "var(--space-3) var(--space-12) 0",
+      }}
+    >
+      <a
+        href="/hospitality"
+        className="t-9 font-mono uppercase"
+        style={{
+          letterSpacing: "var(--tracking-marquee)",
+          color: "var(--cykan)",
+          padding: "var(--space-1) var(--space-3)",
+          border: "1px solid var(--cykan-border)",
+          borderRadius: "var(--radius-pill)",
+          background: "var(--cykan-surface)",
+        }}
+      >
+        Hospitality mode
+      </a>
+    </div>
+  );
+}
+
 function CockpitContent({
   data,
   onInboxRefreshed,
@@ -110,6 +140,8 @@ function CockpitContent({
   return (
     <>
       <InboxSection inbox={data.inbox} onRefreshed={onInboxRefreshed} />
+
+      {data.hospitality && <HospitalityPulse data={data.hospitality} />}
 
       <Section
         label="Watchlist"

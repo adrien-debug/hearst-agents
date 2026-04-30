@@ -71,10 +71,10 @@ describe("catalogue — Zod validation", () => {
     expect(() => reportSpecSchema.parse(spec)).not.toThrow();
   });
 
-  it("le CATALOG expose les 9 entries avec ids stables", () => {
-    expect(CATALOG).toHaveLength(9);
+  it("le CATALOG expose les 12 entries avec ids stables", () => {
+    expect(CATALOG).toHaveLength(12);
     const ids = CATALOG.map((c) => c.id);
-    expect(new Set(ids).size).toBe(9); // tous distincts
+    expect(new Set(ids).size).toBe(12); // tous distincts
   });
 });
 

@@ -109,6 +109,16 @@ export function Commandeur() {
       },
     },
     {
+      id: "nav-marketplace",
+      kind: "action",
+      label: "Marketplace",
+      hint: "Templates communautaires partagés",
+      perform: () => {
+        router.push("/marketplace");
+        setOpen(false);
+      },
+    },
+    {
       id: "nav-settings-alerting",
       kind: "action",
       label: "Paramètres alerting",
@@ -125,6 +135,16 @@ export function Commandeur() {
       hint: "Threads + assets > 7 jours",
       perform: () => {
         router.push("/archive");
+        setOpen(false);
+      },
+    },
+    {
+      id: "open-hospitality",
+      kind: "action",
+      label: "Hospitality Mode",
+      hint: "Cockpit vertical hôtellerie",
+      perform: () => {
+        router.push("/hospitality");
         setOpen(false);
       },
     },

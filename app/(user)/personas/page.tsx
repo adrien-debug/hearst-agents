@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { PersonaABTestPanel } from "../components/PersonaABTestPanel";
+import { PublishTemplateModal } from "../components/marketplace/PublishTemplateModal";
 import type { Persona, PersonaTone } from "@/lib/personas/types";
 import { PERSONA_TONES } from "@/lib/personas/types";
 
@@ -20,6 +21,7 @@ export default function PersonasPage() {
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState<Persona | null>(null);
 
   async function reload() {
     const res = await fetch("/api/v2/personas", { credentials: "include" });
@@ -210,6 +212,15 @@ export default function PersonasPage() {
                     >
                       Supprimer
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setPublishing(p)}
+                      disabled={busy}
+                      className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)] hover:text-[var(--cykan)]"
+                      style={{ background: "transparent", border: "none", cursor: "pointer" }}
+                    >
+                      Publier
+                    </button>
                   </div>
                 </li>
               ))}
@@ -219,6 +230,30 @@ export default function PersonasPage() {
 
         {personas && personas.length >= 2 && (
           <PersonaABTestPanel personas={personas} />
+        )}
+
+        {publishing && (
+          <PublishTemplateModal
+            open={!!publishing}
+            kind="persona"
+            defaultTitle={publishing.name}
+            defaultDescription={publishing.description ?? ""}
+            payload={{
+              name: publishing.name,
+              description: publishing.description,
+              tone: publishing.tone ?? null,
+              vocabulary: publishing.vocabulary ?? null,
+              styleGuide: publishing.styleGuide ?? null,
+              systemPromptAddon: publishing.systemPromptAddon ?? null,
+              surface: publishing.surface ?? null,
+            }}
+            onClose={() => setPublishing(null)}
+            onPublished={() => {
+              setFlash("Persona publiée au marketplace.");
+              setPublishing(null);
+              setTimeout(() => setFlash(null), 4000);
+            }}
+          />
         )}
       </div>
     </div>

@@ -16,6 +16,7 @@ interface BuilderToolbarProps {
   onValidate: () => void;
   onPreview: () => void;
   onSave: () => void;
+  onPublish?: () => void;
   isBusy?: boolean;
   saveLabel?: string;
   validationCount?: number;
@@ -27,6 +28,7 @@ export function BuilderToolbar({
   onValidate,
   onPreview,
   onSave,
+  onPublish,
   isBusy,
   saveLabel = "Sauvegarder",
   validationCount,
@@ -66,6 +68,11 @@ export function BuilderToolbar({
       )}
 
       <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
+        {onPublish && (
+          <ToolbarButton onClick={onPublish} accent="cykan" disabled={isBusy}>
+            Publier marketplace
+          </ToolbarButton>
+        )}
         <ToolbarButton onClick={onSave} accent="money" disabled={isBusy}>
           {saveLabel}
         </ToolbarButton>

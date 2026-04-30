@@ -29,6 +29,8 @@ export interface StudioToolbarProps {
   onSchedule: (schedule: string) => Promise<boolean>;
   /** Share asset handler (nécessite save ⊕ run ⊕ asset). */
   onShare?: () => Promise<{ url: string } | null>;
+  /** Publish to marketplace handler (ouvre modal de publication). */
+  onPublishMarketplace?: () => void;
   isSaving?: boolean;
   isSampling?: boolean;
 }
@@ -46,6 +48,7 @@ export function StudioToolbar({
   onSampleRun,
   onSchedule,
   onShare,
+  onPublishMarketplace,
   isSaving,
   isSampling,
 }: StudioToolbarProps) {
@@ -171,6 +174,14 @@ export function StudioToolbar({
             testid="toolbar-share"
             onClick={() => void handleShare()}
             disabled={!canShare}
+          />
+        )}
+        {onPublishMarketplace && (
+          <ToolbarButton
+            label="Publier marketplace"
+            testid="toolbar-publish-marketplace"
+            onClick={onPublishMarketplace}
+            disabled={spec.blocks.length === 0}
           />
         )}
       </div>

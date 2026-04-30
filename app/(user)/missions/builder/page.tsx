@@ -22,6 +22,7 @@ import { NodePalette, type PaletteEntry } from "../../components/missions/builde
 import { NodeConfigPanel } from "../../components/missions/builder/NodeConfigPanel";
 import { WorkflowCanvas } from "../../components/missions/builder/WorkflowCanvas";
 import { BuilderToolbar } from "../../components/missions/builder/BuilderToolbar";
+import { PublishTemplateModal } from "../../components/marketplace/PublishTemplateModal";
 import {
   WORKFLOW_TEMPLATES,
   getTemplateById,
@@ -47,6 +48,7 @@ export default function WorkflowBuilderPage() {
   const [validationCount, setValidationCount] = useState<number | undefined>(
     undefined,
   );
+  const [publishOpen, setPublishOpen] = useState(false);
   const [runStatus, setRunStatus] = useState<Map<string, NodeStatus>>(
     new Map(),
   );
@@ -281,11 +283,32 @@ export default function WorkflowBuilderPage() {
         onValidate={handleValidate}
         onPreview={handlePreview}
         onSave={handleSave}
+        onPublish={() => {
+          const validation = validateGraph(graph);
+          if (!validation.valid) {
+            toast.error("Graphe invalide — corrige avant de publier.");
+            return;
+          }
+          setPublishOpen(true);
+        }}
         isBusy={isPreviewing || isSaving}
         saveLabel={isSaving ? "Sauvegarde…" : "Sauvegarder"}
         validationCount={validationCount}
         previewSummary={previewSummary}
       />
+
+      {publishOpen && (
+        <PublishTemplateModal
+          open={publishOpen}
+          kind="workflow"
+          defaultTitle={missionName}
+          payload={graph}
+          onClose={() => setPublishOpen(false)}
+          onPublished={() => {
+            toast.success("Workflow publié au marketplace.");
+          }}
+        />
+      )}
 
       {showTemplates && (
         <div
