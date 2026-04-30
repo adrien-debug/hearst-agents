@@ -552,12 +552,12 @@ export function GeneralDashboard({
         ) : (
           <div className="flex flex-col">
             {recentAssets.map((a) => (
-              <Row
+              <AssetRow
                 key={a.id}
-                icon={a.type === "report" ? <ReportIcon /> : <DocIcon />}
-                label={a.name || a.title || "Asset"}
-                meta={(a.type || "file").toUpperCase()}
-                onClick={() => handleAssetClick(a)}
+                asset={a}
+                onOpen={() => handleAssetClick(a)}
+                onShare={() => void handleAssetShare(a)}
+                onDelete={() => setConfirmDelete(a)}
               />
             ))}
           </div>
@@ -569,6 +569,42 @@ export function GeneralDashboard({
         <SectionHead label="Alerts" />
         <EmptyText>No recent alerts</EmptyText>
       </div>
+
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          data-testid="dashboard-toast"
+          className="flex items-center"
+          style={{
+            position: "fixed",
+            bottom: "var(--space-6)",
+            right: "var(--space-6)",
+            zIndex: 30,
+            padding: "var(--space-2) var(--space-4)",
+            background: "var(--surface-1)",
+            border: "1px solid var(--cykan)",
+            borderRadius: "var(--radius-xs)",
+            color: "var(--cykan)",
+            gap: "var(--space-2)",
+          }}
+        >
+          <span className="t-9 font-mono uppercase tracking-display">{toast}</span>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={confirmDelete !== null}
+        title="Supprimer cet asset ?"
+        description={`L'asset « ${confirmDelete?.name ?? confirmDelete?.title ?? confirmDelete?.id?.slice(0, 8) ?? ""} » sera supprimé définitivement. Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        variant="danger"
+        loading={pendingAssetId !== null}
+        onConfirm={() => {
+          if (confirmDelete) void handleAssetDelete(confirmDelete);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
