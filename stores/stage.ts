@@ -23,6 +23,7 @@ export type StageMode =
   | "cockpit"
   | "chat"
   | "asset"
+  | "mission"
   | "browser"
   | "meeting"
   | "kg"
@@ -34,6 +35,7 @@ export type StagePayload =
   | { mode: "cockpit" }
   | { mode: "chat"; threadId?: string }
   | { mode: "asset"; assetId: string; variantKind?: string }
+  | { mode: "mission"; missionId: string }
   | { mode: "browser"; sessionId: string }
   | { mode: "meeting"; meetingId: string }
   | { mode: "kg"; entityId?: string; query?: string }

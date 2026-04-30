@@ -4,6 +4,7 @@ import { useStageStore } from "@/stores/stage";
 import { CockpitStage } from "./stages/CockpitStage";
 import { ChatStage } from "./stages/ChatStage";
 import { AssetStage } from "./stages/AssetStage";
+import { MissionStage } from "./stages/MissionStage";
 import { BrowserStage } from "./stages/BrowserStage";
 import { MeetingStage } from "./stages/MeetingStage";
 import { KnowledgeStage } from "./stages/KnowledgeStage";
@@ -40,6 +41,8 @@ export function Stage(props: StageProps) {
       );
     case "asset":
       return <AssetStage assetId={current.assetId} variantKind={current.variantKind} />;
+    case "mission":
+      return <MissionStage missionId={current.missionId} />;
     case "browser":
       return <BrowserStage sessionId={current.sessionId} />;
     case "meeting":

@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { useFocalStore } from "@/stores/focal";
 import { useStageStore } from "@/stores/stage";
 import { assetToFocal } from "@/lib/ui/focal-mappers";
@@ -129,7 +128,6 @@ export function GeneralDashboard({
   missions: _missions,
   onViewChange = () => {},
 }: GeneralDashboardProps) {
-  const router = useRouter();
   const setFocal = useFocalStore((s) => s.setFocal);
   const setStageMode = useStageStore((s) => s.setMode);
 
@@ -160,7 +158,7 @@ export function GeneralDashboard({
 
   const handleMissionClick = (mission: { id: string }) => {
     if (!mission.id) return;
-    router.push(`/missions/${mission.id}`);
+    setStageMode({ mode: "mission", missionId: mission.id });
   };
 
   return (
