@@ -5,6 +5,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { useFocalStore, type FocalType, type FocalStatus } from "./focal";
+import { useNavigationStore } from "./navigation";
 
 export type StreamEvent = {
   type: string;
@@ -129,6 +130,21 @@ export const useRuntimeStore = create<RuntimeState>()(
           const currentState = get().coreState;
           if (currentState === "awaiting_approval" || currentState === "awaiting_clarification") {
             set({ coreState: "streaming", flowLabel: event.flow_label as string || "En cours..." });
+          }
+          break;
+        }
+        case "asset_generated": {
+          const ev = event as Record<string, unknown>;
+          const assetId = ev.asset_id as string | undefined;
+          const assetName = (ev.name as string | undefined) ?? "Rapport";
+          const assetType = (ev.asset_type as string | undefined) ?? "report";
+          const threadId = useNavigationStore.getState().activeThreadId;
+          if (assetId && threadId) {
+            useNavigationStore.getState().attachAssetToLastAssistantMessage(threadId, {
+              id: assetId,
+              title: assetName,
+              type: assetType,
+            });
           }
           break;
         }

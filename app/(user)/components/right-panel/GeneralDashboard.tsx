@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { useFocalStore } from "@/stores/focal";
 import { useStageStore } from "@/stores/stage";
 import { assetToFocal } from "@/lib/ui/focal-mappers";
@@ -128,6 +129,7 @@ export function GeneralDashboard({
   missions: _missions,
   onViewChange = () => {},
 }: GeneralDashboardProps) {
+  const router = useRouter();
   const setFocal = useFocalStore((s) => s.setFocal);
   const setStageMode = useStageStore((s) => s.setMode);
 
@@ -137,7 +139,9 @@ export function GeneralDashboard({
     ? (_assets as DashboardAsset[]).filter((a) => a.type === "report").length
     : 0;
   const recentAssets = Array.isArray(_assets) ? (_assets as DashboardAsset[]).slice(0, 4) : [];
-  const activeMissions = Array.isArray(_missions) ? (_missions as Array<{ id: string; name: string }>) : [];
+  const activeMissions = Array.isArray(_missions)
+    ? (_missions as Array<{ id: string; name: string; enabled?: boolean; opsStatus?: "idle" | "running" | "success" | "failed" | "blocked" }>)
+    : [];
 
   const handleAssetClick = (asset: DashboardAsset) => {
     if (!asset.id || isPlaceholderAssetId(asset.id)) return;
@@ -152,6 +156,11 @@ export function GeneralDashboard({
       ),
     );
     setStageMode({ mode: "asset", assetId: asset.id });
+  };
+
+  const handleMissionClick = (mission: { id: string }) => {
+    if (!mission.id) return;
+    router.push(`/missions/${mission.id}`);
   };
 
   return (
@@ -195,7 +204,7 @@ export function GeneralDashboard({
         ) : (
           <div className="flex flex-col">
             {activeMissions.map((m) => (
-              <Row key={m.id} label={m.name} meta="armed" />
+              <Row key={m.id} label={m.name} meta="armed" onClick={() => handleMissionClick(m)} />
             ))}
           </div>
         )}

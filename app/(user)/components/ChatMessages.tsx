@@ -6,11 +6,14 @@ import { ChatToolStream } from "./ChatToolStream";
 import { ChatActionReceipts } from "./ChatActionReceipts";
 import { ChatConnectInline } from "./ChatConnectInline";
 import { ThinkingDisclosure } from "./ThinkingDisclosure";
+import { ChatAssetCard } from "./ChatAssetCard";
+import type { MessageAssetRef } from "@/stores/navigation";
 
 export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  assetRef?: MessageAssetRef;
 }
 
 interface ChatMessagesProps {
@@ -204,6 +207,8 @@ export function ChatMessages({
                   <ChatToolStream />
                   <StreamShimmer />
                 </>
+              ) : message.assetRef ? (
+                <ChatAssetCard assetRef={message.assetRef} />
               ) : (
                 <>
                   {(() => {
@@ -233,7 +238,7 @@ export function ChatMessages({
                   onCancel={() => onQuickReply("annuler")}
                 />
               )}
-              {!showShimmer && message.content.length > 0 && (
+              {!showShimmer && !message.assetRef && message.content.length > 0 && (
                 <AssistantActions content={parseThinkingBlock(message.content).main} />
               )}
             </div>

@@ -10,10 +10,17 @@ import { persist } from "zustand/middleware";
 
 export type Surface = "home" | "inbox" | "calendar" | "files" | "tasks" | "apps" | "settings";
 
+export interface MessageAssetRef {
+  id: string;
+  title: string;
+  type: string;
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  assetRef?: MessageAssetRef;
 }
 
 export interface Thread {
@@ -53,6 +60,7 @@ interface NavigationState {
   messages: Record<string, Message[]>;
   addMessageToThread: (threadId: string, message: Message) => void;
   updateMessageInThread: (threadId: string, messageId: string, content: string) => void;
+  attachAssetToLastAssistantMessage: (threadId: string, assetRef: MessageAssetRef) => void;
   clearThreadMessages: (threadId: string) => void;
   getThreadMessages: (threadId: string) => Message[];
 }
@@ -172,6 +180,22 @@ export const useNavigationStore = create<NavigationState>()(
             ),
           },
         })),
+
+      attachAssetToLastAssistantMessage: (threadId, assetRef) =>
+        set((state) => {
+          const list = state.messages[threadId] || [];
+          let lastAssistantIdx = -1;
+          for (let i = list.length - 1; i >= 0; i--) {
+            if (list[i].role === "assistant") {
+              lastAssistantIdx = i;
+              break;
+            }
+          }
+          if (lastAssistantIdx === -1) return state;
+          const next = [...list];
+          next[lastAssistantIdx] = { ...next[lastAssistantIdx], assetRef };
+          return { messages: { ...state.messages, [threadId]: next } };
+        }),
 
       clearThreadMessages: (threadId) =>
         set((state) => ({
