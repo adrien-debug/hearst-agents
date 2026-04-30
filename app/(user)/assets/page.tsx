@@ -8,6 +8,7 @@ import { RelativeTime } from "../components/RelativeTime";
 import { toast } from "@/app/hooks/use-toast";
 import { PageHeader } from "../components/PageHeader";
 import { ConfirmModal } from "../components/ConfirmModal";
+import { Action } from "../components/ui";
 
 // Format V2 retourné par GET /api/v2/assets (Asset canonique).
 interface AssetListItem {
@@ -124,9 +125,9 @@ export default function AssetsPage() {
         subtitle={`${assets.length} ${assets.length === 1 ? "fichier stocké" : "fichiers stockés"}`}
         breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Assets" }]}
         actions={
-          <button type="button" onClick={handleNewAsset} className="font-mono t-10 uppercase tracking-section text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
+          <Action variant="link" tone="brand" onClick={handleNewAsset}>
             Nouvel asset
-          </button>
+          </Action>
         }
       />
 

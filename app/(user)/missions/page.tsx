@@ -8,6 +8,7 @@ import { GhostIconPencil, GhostIconPlay, GhostIconTrash, GhostIconX } from "../c
 import { useStageStore } from "@/stores/stage";
 import { PageHeader } from "../components/PageHeader";
 import { ConfirmModal } from "../components/ConfirmModal";
+import { Action } from "../components/ui";
 
 type MissionOpsStatus = "idle" | "running" | "success" | "failed" | "blocked";
 
@@ -296,16 +297,12 @@ function MissionsPageContent() {
         breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Missions" }]}
         actions={
           <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
-            <button
-              type="button"
-              onClick={() => router.push("/missions/builder")}
-              className="font-mono t-10 uppercase tracking-section text-[var(--text-muted)] border-b border-[var(--text-muted)] pb-[2px] bg-transparent hover:text-[var(--cykan)] hover:border-[var(--cykan)] transition-colors"
-            >
+            <Action variant="link" tone="neutral" onClick={() => router.push("/missions/builder")}>
               Builder visuel
-            </button>
-            <button type="button" onClick={openNewMission} className="font-mono t-10 uppercase tracking-section text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
+            </Action>
+            <Action variant="link" tone="brand" onClick={openNewMission}>
               Nouvelle mission
-            </button>
+            </Action>
           </div>
         }
       />

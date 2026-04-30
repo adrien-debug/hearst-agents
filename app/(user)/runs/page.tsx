@@ -8,6 +8,7 @@ import { RelativeTime } from "../components/RelativeTime";
 import { RowActions, type RowAction } from "../components/RowActions";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { PageHeader } from "../components/PageHeader";
+import { Action } from "../components/ui";
 
 interface RunListItem {
   id: string;
@@ -200,9 +201,9 @@ export default function RunsPage() {
         subtitle={`${runs.length} ${runs.length === 1 ? "exécution récente" : "exécutions récentes"}`}
         breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Runs" }]}
         actions={
-          <button type="button" onClick={handleNewReport} className="font-mono t-10 uppercase tracking-section text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
+          <Action variant="link" tone="brand" onClick={handleNewReport}>
             Nouveau report
-          </button>
+          </Action>
         }
       />
 

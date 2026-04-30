@@ -21,6 +21,7 @@ import { ImageViewer } from "./ImageViewer";
 import { VideoPlayer } from "./VideoPlayer";
 import { CodeRunner } from "./CodeRunner";
 import { useStageData } from "@/stores/stage-data";
+import { Action } from "./ui";
 import type { AssetVariant, AssetVariantKind } from "@/lib/assets/variants";
 
 interface AssetVariantTabsProps {
@@ -226,14 +227,14 @@ export function AssetVariantTabs({ assetId, sourceText, defaultKind }: AssetVari
                 </select>
               </label>
             )}
-            <button
-              type="button"
+            <Action
+              variant="primary"
+              tone="brand"
               onClick={() => void requestVariant(activeTab)}
-              disabled={generating === activeTab}
-              className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90 disabled:opacity-60"
+              loading={generating === activeTab}
             >
-              {generating === activeTab ? meta.ctaLoading : meta.cta}
-            </button>
+              {meta.cta}
+            </Action>
             {error && (
               <p className="t-13 font-light text-[var(--danger)]">{error}</p>
             )}

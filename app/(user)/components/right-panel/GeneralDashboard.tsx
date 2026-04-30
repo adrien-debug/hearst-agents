@@ -6,6 +6,7 @@ import { useStageStore } from "@/stores/stage";
 import { assetToFocal } from "@/lib/ui/focal-mappers";
 import { isPlaceholderAssetId } from "@/lib/ui/asset-id";
 import { ConfirmModal } from "../ConfirmModal";
+import { SectionHeader, Action } from "../ui";
 
 interface GeneralDashboardProps {
   assets?: unknown;
@@ -22,50 +23,25 @@ interface DashboardAsset {
   type?: string;
 }
 
-function Label({ children }: { children: ReactNode }) {
-  return (
-    <p
-      className="t-13 uppercase"
-      style={{
-        fontWeight: 300,
-        letterSpacing: "var(--tracking-section)",
-        color: "var(--text-l2)",
-      }}
-    >
-      {children}
-    </p>
-  );
-}
-
 function SectionHead({
   label,
   action,
 }: {
-  label: ReactNode;
+  label: string;
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div
-      className="flex items-center justify-between"
-      style={{ marginBottom: "var(--space-8)" }}
-    >
-      <Label>{label}</Label>
-      {action && (
-        <button
-          type="button"
-          onClick={action.onClick}
-          className="t-13 uppercase transition-colors duration-emphasis ease-out-soft hover:text-[var(--cykan)]"
-          style={{
-            fontWeight: 300,
-            letterSpacing: "var(--tracking-section)",
-            color: "var(--text-l2)",
-            background: "transparent",
-          }}
-        >
-          {action.label} →
-        </button>
-      )}
-    </div>
+    <SectionHeader
+      label={label}
+      density="section"
+      action={
+        action && (
+          <Action variant="link" tone="brand" onClick={action.onClick}>
+            {action.label} →
+          </Action>
+        )
+      }
+    />
   );
 }
 
