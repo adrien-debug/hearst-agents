@@ -285,37 +285,194 @@ function SuggestionsFooter({
 // ── Sub-rails par Stage (Phase A skeletons) ────────────────
 
 function ContextRailForAsset() {
-  const { variants, assetTitle } = useStageData((s) => s.asset);
+  const { variants, assetTitle, assetSummary, assetCreatedAt, assetKind } =
+    useStageData((s) => s.asset);
   const readyVariants = variants.filter((v) => v.status === "ready");
+  const imageVariant = readyVariants.find((v) => v.kind === "image");
+  const isImageOnly = !!imageVariant;
+
+  const fmtDate = (ts?: number) => {
+    if (!ts) return null;
+    try {
+      return new Intl.DateTimeFormat("fr-FR", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Paris",
+      }).format(new Date(ts));
+    } catch {
+      return null;
+    }
+  };
+
+  const dispatchAction = (event: string) => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(event));
+    }
+  };
+
+  const variantMeta = (imageVariant?.metadata ?? {}) as {
+    width?: number;
+    height?: number;
+    model?: string;
+  };
+
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Asset focus">
-        <p className="t-13 font-light text-[var(--text-muted)] truncate">
+      <Section label="Titre">
+        <p
+          className="t-13 font-light text-[var(--text)]"
+          style={{ lineHeight: "var(--leading-snug)" }}
+        >
           {assetTitle || "—"}
         </p>
       </Section>
-      <Section label="Variants" count={readyVariants.length}>
-        {readyVariants.length === 0 ? (
-          <EmptyHint>
-            Texte uniquement — génère audio/vidéo/code via les onglets
-          </EmptyHint>
-        ) : (
+
+      {assetSummary && (
+        <Section label="Prompt">
+          <p
+            className="t-11 font-light text-[var(--text-muted)]"
+            style={{ lineHeight: "var(--leading-relaxed)" }}
+          >
+            {assetSummary}
+          </p>
+        </Section>
+      )}
+
+      {assetCreatedAt && (
+        <Section label="Créé le">
+          <p className="t-11 font-mono text-[var(--text-faint)]">
+            {fmtDate(assetCreatedAt)}
+          </p>
+        </Section>
+      )}
+
+      {assetKind && (
+        <Section label="Type">
+          <p className="t-9 font-mono uppercase tracking-display text-[var(--cykan)]">
+            {assetKind}
+          </p>
+        </Section>
+      )}
+
+      {isImageOnly && imageVariant && (
+        <Section label="Détails image">
           <ul className="flex flex-col gap-2">
-            {readyVariants.map((v) => (
-              <li key={v.id} className="flex items-baseline gap-3">
-                <span className="t-9 tracking-display uppercase text-[var(--cykan)]">
-                  {v.kind.toUpperCase()}
+            {variantMeta.width && variantMeta.height && (
+              <li className="flex items-baseline gap-3">
+                <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+                  Dimensions
                 </span>
-                <span className="t-11 text-[var(--text-faint)] tracking-wide">
-                  {v.provider ?? ""}
+                <span className="t-11 font-mono text-[var(--text-muted)]">
+                  {variantMeta.width}×{variantMeta.height}
                 </span>
               </li>
-            ))}
+            )}
+            {variantMeta.model && (
+              <li className="flex items-baseline gap-3">
+                <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+                  Modèle
+                </span>
+                <span className="t-11 font-mono text-[var(--text-muted)] truncate">
+                  {variantMeta.model}
+                </span>
+              </li>
+            )}
+            {imageVariant.provider && (
+              <li className="flex items-baseline gap-3">
+                <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+                  Provider
+                </span>
+                <span className="t-11 font-mono text-[var(--text-muted)] uppercase">
+                  {imageVariant.provider}
+                </span>
+              </li>
+            )}
           </ul>
-        )}
-      </Section>
+        </Section>
+      )}
 
+      {!isImageOnly && (
+        <Section label="Variants" count={readyVariants.length}>
+          {readyVariants.length === 0 ? (
+            <EmptyHint>
+              Texte uniquement — génère audio/vidéo/code via les onglets
+            </EmptyHint>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {readyVariants.map((v) => (
+                <li key={v.id} className="flex items-baseline gap-3">
+                  <span className="t-9 tracking-display uppercase text-[var(--cykan)]">
+                    {v.kind.toUpperCase()}
+                  </span>
+                  <span className="t-11 text-[var(--text-faint)] tracking-wide">
+                    {v.provider ?? ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      )}
+
+      <Section label="Actions">
+        <ul className="flex flex-col gap-1">
+          <RailActionButton onClick={() => dispatchAction("asset:rerun")}>
+            Re-run
+          </RailActionButton>
+          <RailActionButton onClick={() => dispatchAction("asset:edit")}>
+            Éditer
+          </RailActionButton>
+          <RailActionButton onClick={() => dispatchAction("asset:export")}>
+            Exporter PDF
+          </RailActionButton>
+          <RailActionButton onClick={() => dispatchAction("asset:share")}>
+            Partager
+          </RailActionButton>
+          <RailActionButton
+            onClick={() => dispatchAction("asset:delete")}
+            variant="danger"
+          >
+            Supprimer
+          </RailActionButton>
+        </ul>
+      </Section>
     </div>
+  );
+}
+
+function RailActionButton({
+  children,
+  onClick,
+  variant,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  variant?: "danger";
+}) {
+  const color = variant === "danger" ? "var(--danger)" : "var(--text-muted)";
+  const hoverColor = variant === "danger" ? "var(--danger)" : "var(--cykan)";
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left t-11 font-light transition-colors duration-base"
+        style={{
+          padding: "var(--space-2) 0",
+          color,
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = hoverColor)}
+        onMouseLeave={(e) => (e.currentTarget.style.color = color)}
+      >
+        {children} →
+      </button>
+    </li>
   );
 }
 

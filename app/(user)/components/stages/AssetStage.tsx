@@ -104,6 +104,9 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
       setAssetSlice({
         assetId,
         assetTitle: asset.title,
+        assetSummary: asset.summary,
+        assetCreatedAt: asset.createdAt,
+        assetKind: asset.kind,
         variants: useStageData.getState().asset.variants,
       });
     }
@@ -262,33 +265,83 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
     },
   ];
 
+  // Image-only : asset placeholder (contentRef vide) + variant image ready.
+  // Mode épuré : pas de header massif, pas de h1 redondant, pas de tabs.
+  // Tous les détails (titre, prompt, date, dimensions, modèle, actions)
+  // vivent dans le ContextRail droit. Le centre = juste l'image.
+  const isImageOnly = !!primaryImageUrl && (!asset?.contentRef || asset.contentRef.length === 0);
+
+  // Expose les handlers d'actions au ContextRail via window events.
+  // Pattern aligné sur mission:edit. Le rail dispatch, AssetStage écoute.
+  useEffect(() => {
+    const onRerun = () => handleRerun();
+    const onEdit = () => handleEdit();
+    const onExport = () => handleExport();
+    const onShare = () => handleShare();
+    const onDelete = () => setConfirmDelete(true);
+    window.addEventListener("asset:rerun", onRerun);
+    window.addEventListener("asset:edit", onEdit);
+    window.addEventListener("asset:export", onExport);
+    window.addEventListener("asset:share", onShare);
+    window.addEventListener("asset:delete", onDelete);
+    return () => {
+      window.removeEventListener("asset:rerun", onRerun);
+      window.removeEventListener("asset:edit", onEdit);
+      window.removeEventListener("asset:export", onExport);
+      window.removeEventListener("asset:share", onShare);
+      window.removeEventListener("asset:delete", onDelete);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers stables côté logique, dépendent du closure asset/assetId déjà à jour
+  }, [asset, assetId]);
+
   return (
     <div className="flex-1 flex flex-col min-h-0 relative" style={{ background: "var(--bg-center)" }}>
-      <StageActionBar
-        context={
-          <>
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">ASSET</span>
-            <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">{assetId.slice(0, 8)}</span>
-            {asset && (
-              <>
-                <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{asset.kind}</span>
-              </>
-            )}
-            {variantKind && (
-              <>
-                <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{variantKind}</span>
-              </>
-            )}
-          </>
-        }
-        primary={primary}
-        secondary={secondary}
-        overflow={overflow}
-        onBack={back}
-      />
+      {isImageOnly ? (
+        // Mini header : juste back, sans titre ni actions (déportées au rail droit)
+        <div
+          className="flex items-center"
+          style={{
+            padding: "var(--space-4) var(--space-6)",
+            borderBottom: "1px solid var(--border-shell)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={back}
+            className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+            style={{ background: "transparent", border: "none", cursor: "pointer" }}
+            aria-label="Retour"
+          >
+            ← Retour <span className="opacity-60">⌘⌫</span>
+          </button>
+        </div>
+      ) : (
+        <StageActionBar
+          context={
+            <>
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">ASSET</span>
+              <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">{assetId.slice(0, 8)}</span>
+              {asset && (
+                <>
+                  <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{asset.kind}</span>
+                </>
+              )}
+              {variantKind && (
+                <>
+                  <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{variantKind}</span>
+                </>
+              )}
+            </>
+          }
+          primary={primary}
+          secondary={secondary}
+          overflow={overflow}
+          onBack={back}
+        />
+      )}
 
       {actionMsg && (
         <div
@@ -334,24 +387,30 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
 
           {asset && !loading && (
             <>
-              <h1
-                className="t-28 font-medium tracking-tight text-[var(--text)]"
-                style={{ lineHeight: "var(--leading-snug)", marginBottom: "var(--space-3)" }}
-              >
-                {asset.title}
-              </h1>
+              {/* Titre + meta : seulement pour les rapports texte. En mode
+                  image-only, ces infos vivent dans le ContextRail droit. */}
+              {!isImageOnly && (
+                <>
+                  <h1
+                    className="t-28 font-medium tracking-tight text-[var(--text)]"
+                    style={{ lineHeight: "var(--leading-snug)", marginBottom: "var(--space-3)" }}
+                  >
+                    {asset.title}
+                  </h1>
 
-              <div className="flex items-center gap-3 mb-10 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-                <span>{asset.kind}</span>
-                <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-                <span>{FORMATTER.format(new Date(asset.createdAt))}</span>
-                {asset.summary && (
-                  <>
+                  <div className="flex items-center gap-3 mb-10 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                    <span>{asset.kind}</span>
                     <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-                    <span className="normal-case tracking-normal font-sans text-[var(--text-muted)] truncate">{asset.summary}</span>
-                  </>
-                )}
-              </div>
+                    <span>{FORMATTER.format(new Date(asset.createdAt))}</span>
+                    {asset.summary && (
+                      <>
+                        <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+                        <span className="normal-case tracking-normal font-sans text-[var(--text-muted)] truncate">{asset.summary}</span>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
 
               {/* Hero image : si l'asset a un variant image ready, on l'affiche
                   en grand directement (pas dans un tab caché). Cliquable pour

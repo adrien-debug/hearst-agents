@@ -48,6 +48,9 @@ interface SimulationSlice {
 interface AssetSlice {
   assetId: string | null;
   assetTitle: string;
+  assetSummary?: string;
+  assetCreatedAt?: number;
+  assetKind?: string;
   variants: AssetVariant[];
 }
 
