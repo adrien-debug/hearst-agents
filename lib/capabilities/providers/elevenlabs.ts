@@ -17,6 +17,10 @@
  */
 
 import { Buffer } from "node:buffer";
+import {
+  resolveVoiceProfile,
+  type VoiceProfile,
+} from "./elevenlabs-voices";
 
 const ELEVEN_API_BASE = "https://api.elevenlabs.io/v1";
 
@@ -31,6 +35,15 @@ export interface SynthesizeSpeechInput {
   /** Voice settings ElevenLabs (stability 0-1, similarity_boost 0-1). */
   stability?: number;
   similarityBoost?: number;
+  /** Style 0-1 (ElevenLabs v2). */
+  style?: number;
+  /** Renforce la similarité tonale. */
+  useSpeakerBoost?: boolean;
+  /** Tone de la persona active — résout en voiceId + voice_settings via
+   *  `resolveVoiceProfile`. Ignoré si `voiceId` est explicitement passé. */
+  personaTone?: string;
+  /** Profil voix pré-résolu (override total). */
+  voiceProfile?: VoiceProfile;
 }
 
 export interface SynthesizeSpeechResult {
@@ -63,9 +76,17 @@ export async function synthesizeSpeech(
     throw new Error("[ElevenLabs] Empty text");
   }
 
-  const voiceId = input.voiceId ?? ELEVEN_DEFAULT_VOICE_ID;
+  // Résolution voix : priorité explicite (voiceId) > voiceProfile > tone > default
+  const profile = input.voiceProfile ?? resolveVoiceProfile(input.personaTone);
+  const voiceId = input.voiceId ?? profile.voiceId;
   const modelId = input.modelId ?? ELEVEN_DEFAULT_MODEL_ID;
   const charCount = input.text.length;
+
+  // Voice settings : params explicites > profile > defaults sécurisés
+  const stability = input.stability ?? profile.stability;
+  const similarityBoost = input.similarityBoost ?? profile.similarityBoost;
+  const style = input.style ?? profile.style;
+  const useSpeakerBoost = input.useSpeakerBoost ?? profile.useSpeakerBoost ?? true;
 
   const res = await fetch(`${ELEVEN_API_BASE}/text-to-speech/${voiceId}`, {
     method: "POST",
@@ -78,8 +99,10 @@ export async function synthesizeSpeech(
       text: input.text,
       model_id: modelId,
       voice_settings: {
-        stability: input.stability ?? 0.5,
-        similarity_boost: input.similarityBoost ?? 0.75,
+        stability,
+        similarity_boost: similarityBoost,
+        style,
+        use_speaker_boost: useSpeakerBoost,
       },
     }),
   });

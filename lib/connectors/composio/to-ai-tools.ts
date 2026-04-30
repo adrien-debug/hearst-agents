@@ -13,6 +13,7 @@ import type { Tool } from "ai";
 import { executeComposioAction } from "./client";
 import type { DiscoveredTool } from "./discovery";
 import { isWriteAction, formatActionPreview } from "./write-guard";
+import { getFormatterForAction } from "./preview-formatters";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AiToolMap = Record<string, Tool<any, any>>;
@@ -62,6 +63,12 @@ export function toAiTools(tools: DiscoveredTool[], userId: string): AiToolMap {
               const { _preview: _p, ...composioArgs } = args;
 
               if (isPreview) {
+                // Si un formatter custom existe (top 10 actions), on
+                // l'utilise pour un draft plus lisible. Sinon → generic.
+                const customFormatter = getFormatterForAction(t.name);
+                if (customFormatter) {
+                  return customFormatter(composioArgs);
+                }
                 return formatActionPreview(t.name, composioArgs);
               }
 

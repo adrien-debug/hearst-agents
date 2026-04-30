@@ -44,6 +44,9 @@ export interface ImageGenInput extends JobScopeFields {
   size?: "256x256" | "512x512" | "1024x1024" | "1536x1024" | "1024x1536";
   provider?: "fal" | "openai-image";
   modelHint?: string;
+  /** Mode d'enrichissement automatique (suffixes stylistiques + params).
+   *  Default = "editorial". Voir `lib/capabilities/providers/fal-prompt-enricher.ts`. */
+  style?: "editorial" | "cinematic" | "flat-illustration" | "portrait" | "product";
 }
 
 export interface AudioGenInput extends JobScopeFields {
@@ -52,6 +55,11 @@ export interface AudioGenInput extends JobScopeFields {
   voiceId?: string;
   provider?: "elevenlabs";
   modelId?: string;
+  /** Tone de la persona — résout la voix + voice_settings via
+   *  `lib/capabilities/providers/elevenlabs-voices.ts`. */
+  tone?: string;
+  /** ID persona (résolu côté worker pour récupérer le tone si besoin). */
+  personaId?: string;
   /** Variant kind à attacher si assetId est défini. */
   variantKind?: "audio";
 }

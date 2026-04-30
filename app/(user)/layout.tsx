@@ -118,7 +118,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
             <div
               className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden rounded-2xl"
-              style={{ background: "var(--bg)", color: "var(--text)" }}
+              style={{
+                background: "var(--bg)",
+                color: "var(--text)",
+                boxShadow: "0 0 0 1px var(--border-default), var(--shadow-card-hover)",
+              }}
             >
               {/* Banner alerte tokens OAuth expirants — discret, dismissable */}
               <OAuthExpiryBanner />

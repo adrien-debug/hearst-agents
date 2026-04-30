@@ -557,8 +557,8 @@ export function ChatInput({
                     : audioGenStatus === "error"
                       ? "text-[var(--danger)]"
                       : input.trim()
-                        ? "text-[var(--text-ghost)] hover:text-[var(--cykan)]"
-                        : "text-[var(--text-ghost)] cursor-not-allowed"
+                        ? "text-[var(--text-l2)] hover:text-[var(--cykan)]"
+                        : "text-[var(--text-l3)] cursor-not-allowed"
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -582,8 +582,8 @@ export function ChatInput({
                     : codeExecStatus === "error"
                       ? "text-[var(--danger)]"
                       : input.trim()
-                        ? "text-[var(--text-ghost)] hover:text-[var(--cykan)]"
-                        : "text-[var(--text-ghost)] cursor-not-allowed"
+                        ? "text-[var(--text-l2)] hover:text-[var(--cykan)]"
+                        : "text-[var(--text-l3)] cursor-not-allowed"
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -607,8 +607,8 @@ export function ChatInput({
                     : imageGenStatus === "error"
                       ? "text-[var(--danger)]"
                       : input.trim()
-                        ? "text-[var(--text-ghost)] hover:text-[var(--cykan)]"
-                        : "text-[var(--text-ghost)] cursor-not-allowed"
+                        ? "text-[var(--text-l2)] hover:text-[var(--cykan)]"
+                        : "text-[var(--text-l3)] cursor-not-allowed"
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -626,8 +626,8 @@ export function ChatInput({
                 data-testid="chat-input-document-parse"
                 className={`transition-colors duration-base ${
                   isRunning
-                    ? "text-[var(--text-ghost)] cursor-not-allowed"
-                    : "text-[var(--text-ghost)] hover:text-[var(--cykan)]"
+                    ? "text-[var(--text-l3)] cursor-not-allowed"
+                    : "text-[var(--text-l2)] hover:text-[var(--cykan)]"
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -648,7 +648,7 @@ export function ChatInput({
                     ? "text-[var(--warn)] animate-pulse"
                     : attachment
                       ? "text-[var(--cykan)]"
-                      : "text-[var(--text-ghost)] hover:text-[var(--text-muted)]"
+                      : "text-[var(--text-l2)] hover:text-[var(--cykan)]"
                 }`}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -667,7 +667,7 @@ export function ChatInput({
                   className={`transition-colors duration-base ${
                     input.trim()
                       ? "text-[var(--cykan)]"
-                      : "text-[var(--text-ghost)] cursor-not-allowed hover:text-[var(--text-faint)]"
+                      : "text-[var(--text-l3)] cursor-not-allowed hover:text-[var(--text-l2)]"
                   }`}
                   title="Envoyer"
                 >

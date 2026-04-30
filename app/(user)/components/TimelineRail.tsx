@@ -128,12 +128,8 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between first:mt-0 mt-12 mb-6 px-3">
       <span
-        className="font-mono uppercase font-medium"
-        style={{
-          fontSize: "10px",
-          letterSpacing: "0.22em",
-          color: "var(--text-l3)",
-        }}
+        className="t-10 font-mono uppercase font-medium tracking-section"
+        style={{ color: "var(--text-l2)" }}
       >
         {label}
       </span>
@@ -147,12 +143,8 @@ function SectionHeader({
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="font-mono uppercase pl-3 py-2"
-      style={{
-        fontSize: "10px",
-        letterSpacing: "0.18em",
-        color: "var(--text-l3)",
-      }}
+      className="t-10 font-mono uppercase tracking-section pl-3 py-2"
+      style={{ color: "var(--text-l2)" }}
     >
       {children}
     </p>
@@ -266,7 +258,7 @@ function TopMenuItem({
       {hotkey ? (
         <span
           className="t-9 tracking-display uppercase"
-          style={{ color: "var(--text-l3)" }}
+          style={{ color: "var(--text-l2)" }}
         >
           {hotkey}
         </span>
@@ -288,7 +280,7 @@ function GhostFooterLink({
 }) {
   const [hover, setHover] = useState(false);
   const linkStyle = {
-    color: hover ? "var(--cykan)" : "var(--text-l3)",
+    color: hover ? "var(--cykan)" : "var(--text-l2)",
     textShadow: hover ? "var(--neon-cykan)" : "none",
   };
   const linkClass = "t-9 tracking-display uppercase transition-all duration-emphasis ease-out-soft";
@@ -399,7 +391,7 @@ export function TimelineRail() {
       className="h-full flex flex-col z-20 relative transition-[width] duration-slow ease-out-soft overflow-hidden"
       style={{
         width: leftCollapsed ? "var(--width-threads-collapsed)" : "var(--width-threads)",
-        background: "var(--rail)",
+        background: "var(--bg)",
       }}
     >
       {/* Logo */}

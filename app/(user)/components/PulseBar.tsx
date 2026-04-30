@@ -105,7 +105,7 @@ export function PulseBar() {
       className="relative flex items-center border-b border-[var(--border-default)] px-4 shrink-0 z-30"
       style={{ height: "var(--height-pulsebar)", background: "var(--bg-rail)", gap: "var(--space-3)" }}
     >
-      {/* Gauche : hamburger mobile + logo H */}
+      {/* Gauche : hamburger mobile uniquement (branding vit dans la sidebar) */}
       <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
         <button
           type="button"
@@ -114,15 +114,6 @@ export function PulseBar() {
           aria-label="Ouvrir les conversations"
         >
           <GhostIconMenu className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={goCockpit}
-          className="flex items-center justify-center w-7 h-7 t-15 font-bold tracking-tight text-[var(--cykan)] hover:halo-cyan-sm transition-all shrink-0"
-          title="Cockpit"
-          aria-label="Aller au Cockpit"
-        >
-          H
         </button>
       </div>
 

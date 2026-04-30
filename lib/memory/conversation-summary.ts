@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getRedis } from "@/lib/platform/redis/client";
+import { CONV_SUMMARY_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples";
 
 const SUMMARY_TTL = 60 * 60 * 24 * 30; // 30 jours
 const MAX_BUFFER = 20;
@@ -13,6 +14,29 @@ function client(): Anthropic | null {
   return new Anthropic({ apiKey });
 }
 
+/**
+ * Prompt compression conversation — éditeur d'archives.
+ *
+ * Objectif : transformer un échange long en mémoire utile pour la prochaine
+ * session. Décisions, commitments, prochaine action — pas un résumé descriptif.
+ */
+export const CONV_SUMMARY_SYSTEM_PROMPT = [
+  "Tu es un éditeur d'archives. Tu compresses cette conversation en mémoire utile pour la prochaine session.",
+  "",
+  "FORMAT STRICT :",
+  "- 2-3 phrases denses, factuelles, sans listing.",
+  "- Garde uniquement : décisions prises, commitments datés, prochaine action concrète.",
+  "- Nomme les acteurs (qui décide, qui exécute).",
+  "",
+  "BANNIS :",
+  "- « Ils ont parlé de… », « ils ont discuté de… », « la conversation portait sur… ».",
+  "- Toute paraphrase descriptive sans valeur d'action.",
+  "- Les politesses, hésitations, reformulations.",
+  "",
+  "EXEMPLES :",
+  formatFewShotBlock(CONV_SUMMARY_FEWSHOT),
+].join("\n");
+
 async function compress(messages: MessageEntry[]): Promise<string> {
   const anthropic = client();
   const conversationText = messages
@@ -24,11 +48,17 @@ async function compress(messages: MessageEntry[]): Promise<string> {
   try {
     const res = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 200,
+      max_tokens: 250,
+      system: CONV_SUMMARY_SYSTEM_PROMPT,
       messages: [
         {
           role: "user",
-          content: `Résume cette conversation en 2-3 phrases concises, en retenant les points clés et les intentions de l'utilisateur :\n\n${conversationText}`,
+          content: [
+            "Compresse cette conversation maintenant, en respectant le format 2-3 phrases denses.",
+            "",
+            "Conversation :",
+            conversationText,
+          ].join("\n"),
         },
       ],
     });

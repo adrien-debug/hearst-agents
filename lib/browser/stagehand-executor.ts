@@ -16,11 +16,16 @@
  */
 
 import { randomUUID } from "node:crypto";
+import Anthropic from "@anthropic-ai/sdk";
 import { globalRunBus } from "@/lib/events/global-bus";
 import type {
   BrowserAction,
   BrowserActionType,
 } from "@/lib/events/types";
+import {
+  getBrowserContext,
+  type PlaywrightBridge,
+} from "./playwright-bridge";
 
 // ── Types ────────────────────────────────────────────────
 
@@ -226,6 +231,11 @@ class DefaultBrowserExecutor implements BrowserExecutor {
       return emitAction(runId, sessionId, type, target, extra);
     };
 
+    let bridge: PlaywrightBridge | null = null;
+    const TIMEOUT_MS = 5 * 60_000; // 5 min hard cap
+    const startedAt = Date.now();
+    const deadline = startedAt + TIMEOUT_MS;
+
     try {
       // Mode test : replay scripté.
       if (opts.testActions && opts.testActions.length > 0) {
@@ -239,40 +249,122 @@ class DefaultBrowserExecutor implements BrowserExecutor {
         }
         summary = `Replay test : ${opts.testActions.length} actions`;
       } else {
-        // Wrap runMinimalPlan pour incrémenter actionCount via safeEmit.
-        // On override globalRunBus.broadcast localement n'est pas idéal,
-        // donc on duplique la logique avec compteur ici.
+        // Plan minimal réel : connect CDP via playwright-core (si dispo),
+        // navigue sur l'URL extraite, capture screenshot + HTML, observe.
+        // Si playwright indispo → mode "stub-light" (pas d'action navigate
+        // réelle, mais on émet quand même les events pour ne pas casser
+        // les UIs qui les consomment).
         const urlMatch = opts.task.match(URL_RE);
         const target = urlMatch ? urlMatch[0] : "about:blank";
-        const navStart = Date.now();
-        await delay(120, controller.signal).catch(() => {});
-        safeEmit("navigate", target, { durationMs: Date.now() - navStart });
 
-        if (!controller.signal.aborted) {
-          const obsStart = Date.now();
+        try {
+          bridge = await getBrowserContext({ sessionId });
+        } catch (err) {
+          console.warn(
+            "[stagehand-executor] connectOverCDP failed, fallback to stub-light :",
+            err instanceof Error ? err.message : err,
+          );
+        }
+
+        if (bridge && urlMatch && !controller.signal.aborted) {
+          // ── Real navigation
+          const navStart = Date.now();
+          try {
+            await bridge.page.goto(target, {
+              waitUntil: "domcontentloaded",
+              timeout: 30_000,
+            });
+            await bridge.page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
+          } catch (err) {
+            console.warn(
+              "[stagehand-executor] page.goto error :",
+              err instanceof Error ? err.message : err,
+            );
+          }
+          let screenshotUrl: string | undefined;
+          try {
+            const buf = await bridge.page.screenshot({ type: "png" });
+            // base64 inline data URL — le consumer SSE peut l'afficher direct
+            // sans round-trip storage. Cap 1MB pour ne pas saturer le stream.
+            if (buf.length < 1_000_000) {
+              screenshotUrl = `data:image/png;base64,${buf.toString("base64")}`;
+            }
+          } catch {
+            // ignore
+          }
+          safeEmit("navigate", bridge.page.url(), {
+            durationMs: Date.now() - navStart,
+            screenshotUrl,
+          });
+        } else {
+          const navStart = Date.now();
           await delay(80, controller.signal).catch(() => {});
+          safeEmit("navigate", target, { durationMs: Date.now() - navStart });
+        }
+
+        if (!controller.signal.aborted && Date.now() < deadline) {
+          const obsStart = Date.now();
+          let observeValue = opts.task.slice(0, 120);
+          if (bridge) {
+            try {
+              const title = await bridge.page.title();
+              observeValue = `${title} — ${bridge.page.url()}`;
+            } catch {
+              // ignore
+            }
+          } else {
+            await delay(80, controller.signal).catch(() => {});
+          }
           safeEmit("observe", "page", {
             durationMs: Date.now() - obsStart,
-            value: opts.task.slice(0, 120),
+            value: observeValue,
           });
         }
 
-        if (!controller.signal.aborted && opts.extractInstruction) {
+        if (
+          !controller.signal.aborted &&
+          opts.extractInstruction &&
+          Date.now() < deadline
+        ) {
           const extStart = Date.now();
-          await delay(150, controller.signal).catch(() => {});
+          if (bridge) {
+            try {
+              extractData = await extractStructured({
+                page: bridge.page,
+                instruction: opts.extractInstruction,
+                schema: opts.extractSchema,
+              });
+            } catch (err) {
+              console.warn(
+                "[stagehand-executor] extractStructured error :",
+                err instanceof Error ? err.message : err,
+              );
+              extractData = {
+                instruction: opts.extractInstruction,
+                schema: opts.extractSchema ?? null,
+                error: err instanceof Error ? err.message : String(err),
+              };
+            }
+          } else {
+            await delay(80, controller.signal).catch(() => {});
+            extractData = {
+              instruction: opts.extractInstruction,
+              schema: opts.extractSchema ?? null,
+              note: "playwright-core indisponible — extraction non réalisée",
+            };
+          }
           safeEmit("extract", opts.extractInstruction, {
             durationMs: Date.now() - extStart,
           });
-          extractData = {
-            instruction: opts.extractInstruction,
-            schema: opts.extractSchema ?? null,
-            note: "Extraction stubbée — branchement Stagehand requis pour data réelle.",
-          };
         }
 
-        summary = urlMatch
-          ? `Tâche exécutée sur ${target}`
-          : "Tâche exécutée (aucune URL — observation seule)";
+        summary = bridge
+          ? urlMatch
+            ? `Navigation réelle sur ${target}`
+            : "Tâche exécutée (aucune URL — observation seule)"
+          : urlMatch
+            ? `Tâche exécutée sur ${target} (mode dégradé)`
+            : "Tâche exécutée (aucune URL — observation seule)";
       }
 
       aborted = controller.signal.aborted;
@@ -297,8 +389,79 @@ class DefaultBrowserExecutor implements BrowserExecutor {
       emitFailed(runId, sessionId, message, actionCount);
       throw err;
     } finally {
+      if (bridge) {
+        await bridge.close().catch(() => {});
+      }
       clearActiveRun(sessionId);
     }
+  }
+}
+
+// ── Structured extraction ────────────────────────────────
+// Appelle Claude Haiku avec le HTML cleané + le schema cible. On rogne le
+// HTML à 30k chars pour rester sous les limites tokens. Pas de cheerio
+// (deps additionnelle évitée) — strip simple via regex.
+
+function cleanHtml(raw: string): string {
+  return raw
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 30_000);
+}
+
+async function extractStructured(opts: {
+  page: import("./playwright-bridge").PlaywrightPage;
+  instruction: string;
+  schema?: Record<string, unknown>;
+}): Promise<unknown> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return {
+      instruction: opts.instruction,
+      schema: opts.schema ?? null,
+      error: "no_anthropic_key",
+    };
+  }
+  const html = await opts.page.content().catch(() => "");
+  const cleaned = cleanHtml(html);
+
+  const client = new Anthropic();
+  const system = [
+    "Tu es un extracteur de données structurées depuis du HTML.",
+    "Réponds UNIQUEMENT en JSON valide qui matche le schéma fourni.",
+    "Pas de markdown fence, pas de texte autour.",
+    "Si une donnée n'est pas trouvable, mets `null` plutôt que d'inventer.",
+  ].join("\n");
+
+  const user = [
+    "Instruction :",
+    opts.instruction,
+    "",
+    opts.schema
+      ? `Schéma JSON cible :\n${JSON.stringify(opts.schema, null, 2)}`
+      : "Schéma : pas de contrainte stricte, retourne un objet plat raisonnable.",
+    "",
+    "HTML nettoyé de la page :",
+    cleaned,
+  ].join("\n");
+
+  const msg = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 2000,
+    system,
+    messages: [{ role: "user", content: user }],
+  });
+  const text = msg.content[0]?.type === "text" ? msg.content[0].text.trim() : "";
+  const m = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+  if (!m) {
+    return { instruction: opts.instruction, schema: opts.schema ?? null, raw: text };
+  }
+  try {
+    return JSON.parse(m[0]);
+  } catch {
+    return { instruction: opts.instruction, schema: opts.schema ?? null, raw: text };
   }
 }
 

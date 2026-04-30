@@ -53,7 +53,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header
-      className="flex flex-col px-12 py-8 border-b border-[var(--border-shell)]"
+      className="flex flex-col px-12 py-8 border-b border-[var(--border-subtle)]"
       style={{ gap: "var(--space-3)" }}
     >
       {/* Top row : breadcrumb OU back link */}
@@ -75,7 +75,7 @@ export function PageHeader({
         style={{ gap: "var(--space-4)" }}
       >
         <div className="flex flex-col min-w-0" style={{ gap: "var(--space-2)" }}>
-          <h1 className="t-28 font-light tracking-tight text-[var(--text)]">
+          <h1 className="t-28 font-medium tracking-tight text-[var(--text)]">
             {title}
           </h1>
           {subtitle && (

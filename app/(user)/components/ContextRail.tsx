@@ -103,7 +103,7 @@ function ContextRailShell({
       className="h-full flex flex-col z-20 relative overflow-hidden"
       style={{
         width: "var(--width-context)",
-        background: "var(--layer-1)",
+        background: "var(--bg)",
       }}
     >
       {onClose && (
@@ -168,7 +168,7 @@ function Section({
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
+    <p className="t-10 tracking-body uppercase text-[var(--text-faint)] font-light">
       {children}
     </p>
   );
@@ -267,7 +267,7 @@ function SuggestionsFooter({
         </span>
       </div>
       {visible.length === 0 ? (
-        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] px-2 font-light">
+        <p className="t-10 tracking-body uppercase text-[var(--text-faint)] px-2 font-light">
           Aucune suggestion.
         </p>
       ) : (
@@ -531,7 +531,7 @@ function ContextRailForKnowledge() {
         )}
       </Section>
       <Section label="Graph" count={graph.nodes.length}>
-        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
+        <p className="t-10 tracking-body uppercase text-[var(--text-faint)] font-light">
           {graph.nodes.length} entities · {graph.edges.length} relations
         </p>
       </Section>
@@ -646,7 +646,7 @@ function ContextRailForVoice() {
         {toolCallCount === 0 ? (
           <EmptyHint>No tool calls yet</EmptyHint>
         ) : (
-          <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light leading-relaxed">
+          <p className="t-10 tracking-body uppercase text-[var(--text-faint)] font-light leading-relaxed">
             {transcript
               .filter((e) => e.role === "tool_call")
               .slice(-5)
@@ -656,7 +656,7 @@ function ContextRailForVoice() {
         )}
       </Section>
       <Section label="Available tools" count={totalToolsCount}>
-        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light leading-relaxed">
+        <p className="t-10 tracking-body uppercase text-[var(--text-faint)] font-light leading-relaxed">
           {[
             ...voiceToolDefs.map((t) => VOICE_TOOL_LABELS[t.name] ?? t.name),
             ...connectedApps.map((a) => a.name),

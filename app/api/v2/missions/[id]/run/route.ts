@@ -10,6 +10,7 @@ import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runti
 import { updateMissionLastRun, getMission } from "@/lib/engine/runtime/missions/store";
 import { requireScope } from "@/lib/platform/auth/scope";
 import { executeWorkflow } from "@/lib/workflows/executor";
+import { executeWorkflowTool } from "@/lib/workflows/handlers";
 import type { WorkflowGraph } from "@/lib/workflows/types";
 import { randomUUID } from "crypto";
 
@@ -81,10 +82,13 @@ export async function POST(
           outputs: new Map(),
         },
         {
-          executeTool: async (tool, args) => ({
-            success: true,
-            output: { tool, args, executedAt: Date.now() },
-          }),
+          executeTool: async (tool, args) =>
+            executeWorkflowTool(tool, args, {
+              userId: scope.userId,
+              tenantId: scope.tenantId,
+              workspaceId: scope.workspaceId,
+              runId,
+            }),
           emitEvent: (e) => events.push(e),
         },
         { maxNodes: 50 },

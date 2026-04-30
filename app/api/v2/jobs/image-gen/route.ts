@@ -34,6 +34,10 @@ const bodySchema = z.object({
   size: z
     .enum(["256x256", "512x512", "1024x1024", "1536x1024", "1024x1536"])
     .optional(),
+  /** Mode d'enrichissement automatique. Default = editorial. */
+  style: z
+    .enum(["editorial", "cinematic", "flat-illustration", "portrait", "product"])
+    .optional(),
 });
 
 const ESTIMATED_COST_USD_PER_IMAGE = 0.05;
@@ -74,7 +78,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { prompt, threadId, count } = parsed.data;
+  const { prompt, threadId, count, style } = parsed.data;
   const numImages = count ?? 1;
   const estimatedCostUsd = ESTIMATED_COST_USD_PER_IMAGE * numImages;
   const placeholderJobId = `pending-image-${Date.now()}-${randomUUID().slice(0, 8)}`;
@@ -112,7 +116,7 @@ export async function POST(req: NextRequest) {
       userId: scope.userId,
       tenantId: scope.tenantId,
       workspaceId: scope.workspaceId,
-      modelUsed: "fal-ai/flux/schnell",
+      modelUsed: "fal-ai/flux-pro",
       costUsd: estimatedCostUsd,
     },
   });
@@ -133,6 +137,7 @@ export async function POST(req: NextRequest) {
     estimatedCostUsd,
     prompt,
     provider: "fal",
+    style: style ?? "editorial",
     variantId,
     variantKind: "image",
   };

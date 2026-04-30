@@ -27,6 +27,13 @@ vi.mock("@/lib/integrations/service-map", () => ({
 }));
 vi.mock("@/lib/inbox/store", () => ({ loadLatestInboxBrief: mocks.loadLatestInboxBrief }));
 
+vi.mock("@/lib/cockpit/watchlist-live", () => ({
+  getLiveWatchlist: vi.fn().mockResolvedValue([]),
+}));
+vi.mock("@/lib/cockpit/agenda-live", () => ({
+  getLiveAgenda: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock("@/lib/reports/catalog", async (importOriginal) => {
   const actual = (await importOriginal()) as typeof import("@/lib/reports/catalog");
   return { ...actual, getApplicableReports: mocks.getApplicableReports };

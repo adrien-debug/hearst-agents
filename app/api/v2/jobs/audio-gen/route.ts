@@ -31,6 +31,20 @@ const bodySchema = z.object({
   voiceId: z.string().optional(),
   modelId: z.string().optional(),
   threadId: z.string().optional(),
+  /** Tone de la persona pour mapping voix automatique. */
+  tone: z
+    .enum([
+      "formal",
+      "direct",
+      "analytical",
+      "casual",
+      "warm-professional",
+      "creative",
+      "default",
+    ])
+    .optional(),
+  /** ID persona (alternatif à tone — non utilisé pour résolution serveur ici). */
+  personaId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -69,7 +83,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { text, voiceId, modelId, threadId } = parsed.data;
+  const { text, voiceId, modelId, threadId, tone, personaId } = parsed.data;
   const estimatedCostUsd = Math.max(estimateSpeechCost(text, modelId), 0.001);
   const placeholderJobId = `pending-audio-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
@@ -128,6 +142,8 @@ export async function POST(req: NextRequest) {
     text,
     voiceId,
     modelId,
+    tone,
+    personaId,
     provider: "elevenlabs",
     variantId,
     variantKind: "audio",

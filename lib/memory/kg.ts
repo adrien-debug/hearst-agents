@@ -12,6 +12,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import type { Database } from "@/lib/database.types";
+import { KG_EXTRACTION_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples";
 
 type Json = Database["public"]["Tables"]["kg_nodes"]["Row"]["properties"];
 
@@ -79,29 +80,36 @@ const ENTITY_TYPES: ReadonlyArray<KgNodeType> = [
 const EXTRACTION_MODEL = "claude-haiku-4-5-20251001";
 const EXTRACTION_MAX_TOKENS = 2048;
 
-const EXTRACTION_PROMPT = `Tu es un extracteur de Knowledge Graph. Analyse le texte fourni et extrais les entités et relations.
-
-Types d'entités autorisés (uniquement) :
-- person : une personne nommée
-- company : une entreprise / organisation
-- project : un projet, produit ou initiative
-- decision : une décision prise ou à prendre
-- commitment : un engagement / deadline / promesse
-- topic : un sujet ou concept clé
-
-Types de relations courants : works_at, mentioned, owns, depends_on, related_to.
-
-Retourne UNIQUEMENT un JSON valide, sans texte autour, au format :
-{
-  "entities": [
-    { "type": "person|company|project|decision|commitment|topic", "label": "string", "properties": {} }
-  ],
-  "relations": [
-    { "source_label": "string", "target_label": "string", "type": "string", "weight": 1.0 }
-  ]
-}
-
-Si rien à extraire, retourne {"entities": [], "relations": []}.`;
+export const EXTRACTION_PROMPT = [
+  "Tu es un extracteur de Knowledge Graph. Tu analyses le texte fourni et tu produis entités + relations en JSON strict.",
+  "",
+  "TYPES D'ENTITÉS AUTORISÉS (uniquement, jamais d'autre valeur) :",
+  "- person : une personne nommée (prénom + nom si possible).",
+  "- company : une entreprise, fonds, organisation.",
+  "- project : un projet, produit, initiative, levée de fonds.",
+  "- decision : une décision prise ou à prendre (verbe d'action + objet).",
+  "- commitment : un engagement, deadline, promesse datée.",
+  "- topic : un sujet, concept ou thème récurrent.",
+  "",
+  "TYPES DE RELATIONS COURANTS : works_at, mentioned, owns, depends_on, related_to, decides, blocks.",
+  "",
+  "RÈGLES D'EXTRACTION :",
+  "- Ignore les pronoms (« il », « elle », « on ») — n'extrais que les entités nommées.",
+  "- Normalise la casse des noms : « John Smith » pas « john smith » ni « JOHN SMITH ».",
+  "- Si un rôle est mentionné (CFO, CEO, lead investor), mets-le dans `properties.role`.",
+  "- Si une deadline ou un montant est mentionné, mets-le dans `properties` (deadline, amount, currency).",
+  "- N'extrais pas deux fois la même entité.",
+  "- Pour un texte trop court ou sans entité claire (< 10 mots, salutation), retourne {entities:[], relations:[]}.",
+  "",
+  "FORMAT STRICT — JSON uniquement, sans texte autour, sans markdown fence :",
+  "{",
+  '  "entities": [{ "type": "person|company|project|decision|commitment|topic", "label": "string", "properties": {} }],',
+  '  "relations": [{ "source_label": "string", "target_label": "string", "type": "string", "weight": 1.0 }]',
+  "}",
+  "",
+  "EXEMPLES :",
+  formatFewShotBlock(KG_EXTRACTION_FEWSHOT),
+].join("\n");
 
 export async function extractEntities(text: string): Promise<ExtractionResult> {
   const trimmed = text.trim();

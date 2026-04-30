@@ -2,15 +2,24 @@
  * Worker image-gen — Phase B.2 (fal.ai).
  *
  * Consomme la queue `image-gen`. Pour chaque job :
- *  1. Appelle fal.ai (flux/schnell) avec le prompt du payload
- *  2. Télécharge l'image générée et l'upload dans le storage global
- *  3. Update le row asset_variants : status="ready", storage_url, mime, dimensions
- *  4. Settle credits via worker-base
+ *  1. Enrichit le prompt user via `enrichPrompt` (suffixes stylistiques +
+ *     negative prompt + params steps/guidance par mode `style`)
+ *  2. Sélectionne le modèle FAL : flux-pro par défaut, schnell si
+ *     "rapide / fast / draft" détecté
+ *  3. Appelle fal.ai et télécharge l'image générée
+ *  4. Upload dans le storage global
+ *  5. Update le row asset_variants : status="ready", storage_url, mime, dimensions
+ *  6. Settle credits via worker-base
  */
 
 import { Buffer } from "node:buffer";
 import { startWorker, type WorkerHandler } from "@/lib/jobs/worker-base";
-import { falGenerate } from "@/lib/capabilities/providers/fal";
+import { falGenerate, FAL_DEFAULT_MODEL, FAST_MODEL } from "@/lib/capabilities/providers/fal";
+import {
+  enrichPrompt,
+  isFastModeRequested,
+  type EnrichMode,
+} from "@/lib/capabilities/providers/fal-prompt-enricher";
 import { updateVariant } from "@/lib/assets/variants";
 import { getGlobalStorage } from "@/lib/engine/runtime/assets/storage";
 import type { ImageGenInput, JobResult } from "@/lib/jobs/types";
@@ -31,12 +40,29 @@ const handler: WorkerHandler<ImageGenInput> = {
         ? ((payload as { metadata?: { variantId?: string } }).metadata?.variantId)
         : undefined);
 
-    await reportProgress(5, "Génération en cours");
+    await reportProgress(5, "Enrichissement du prompt");
 
-    // 1. fal.ai generation
+    // 1. Enrichissement automatique du prompt
+    const style: EnrichMode = (payload.style as EnrichMode) ?? "editorial";
+    const enriched = enrichPrompt(payload.prompt, style);
+
+    // 2. Sélection modèle : fast (schnell) si user a explicitement demandé
+    //    "rapide / fast / draft", sinon flux-pro (qualité éditoriale).
+    //    `modelHint` overide tout (ex: appel programmatique précis).
+    const fastRequested = isFastModeRequested(payload.prompt);
+    const model =
+      payload.modelHint ?? (fastRequested ? FAST_MODEL : FAL_DEFAULT_MODEL);
+
+    await reportProgress(15, "Génération en cours");
+
+    // 3. fal.ai generation
     const images = await falGenerate({
-      prompt: payload.prompt,
-      model: payload.modelHint,
+      prompt: enriched.prompt,
+      model,
+      negativePrompt: enriched.negative_prompt,
+      numInferenceSteps: enriched.params.num_inference_steps,
+      guidanceScale: enriched.params.guidance_scale,
+      imageSize: enriched.params.image_size,
     });
 
     if (images.length === 0) {
@@ -46,14 +72,15 @@ const handler: WorkerHandler<ImageGenInput> = {
         variantId,
         actualCostUsd: 0,
         providerUsed: "fal",
-        metadata: { error: "no images returned" },
+        modelUsed: model,
+        metadata: { error: "no images returned", style, model },
       };
     }
 
     const image = images[0];
     await reportProgress(50, "Image générée, téléchargement");
 
-    // 2. Download generated image
+    // 4. Download generated image
     const imgRes = await fetch(image.url, { signal: AbortSignal.timeout(30_000) });
     if (!imgRes.ok) {
       throw new Error(`image-gen: failed to fetch image from fal.ai: ${imgRes.status}`);
@@ -62,7 +89,7 @@ const handler: WorkerHandler<ImageGenInput> = {
 
     await reportProgress(70, "Upload en cours");
 
-    // 3. Upload to storage
+    // 5. Upload to storage
     const storage = getGlobalStorage();
     const variantKey = variantId ?? `image-${ctx.job.id}`;
     const storageKey = `images/${payload.assetId ?? "orphan"}/${variantKey}.jpg`;
@@ -75,12 +102,15 @@ const handler: WorkerHandler<ImageGenInput> = {
         width: String(image.width),
         height: String(image.height),
         prompt: payload.prompt.slice(0, 200),
+        enrichedPrompt: enriched.prompt.slice(0, 300),
+        style,
+        model,
       },
     });
 
     await reportProgress(90, "Persistance");
 
-    // 4. Update DB row asset_variants
+    // 6. Update DB row asset_variants
     if (variantId) {
       await updateVariant(variantId, {
         status: "ready",
@@ -92,7 +122,11 @@ const handler: WorkerHandler<ImageGenInput> = {
         metadata: {
           width: image.width,
           height: image.height,
-          model: payload.modelHint ?? "fal-ai/flux/schnell",
+          model,
+          style,
+          enrichedPrompt: enriched.prompt,
+          numInferenceSteps: enriched.params.num_inference_steps,
+          guidanceScale: enriched.params.guidance_scale,
         },
       });
     }
@@ -105,10 +139,12 @@ const handler: WorkerHandler<ImageGenInput> = {
       storageUrl: upload.url,
       actualCostUsd: 0.003,
       providerUsed: "fal",
-      modelUsed: payload.modelHint ?? "fal-ai/flux/schnell",
+      modelUsed: model,
       metadata: {
         width: image.width,
         height: image.height,
+        style,
+        enrichedPrompt: enriched.prompt,
       },
     };
   },

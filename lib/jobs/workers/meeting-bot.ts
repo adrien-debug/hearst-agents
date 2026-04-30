@@ -17,6 +17,7 @@
  * provider managed), extractActionItems retourne [] en silence.
  */
 
+import Anthropic from "@anthropic-ai/sdk";
 import { startWorker, type WorkerHandler } from "@/lib/jobs/worker-base";
 import {
   getBotStatus,
@@ -151,6 +152,23 @@ const handler: WorkerHandler<MeetingBotInput> = {
       }
     }
 
+    await reportProgress(94, "Génération du résumé éditorial");
+
+    let editorialSummary: string | null = null;
+    if (finalTranscript.trim().length > 0) {
+      try {
+        editorialSummary = await summarizeMeeting({
+          transcript: finalTranscript,
+          actionItems: finalActionItems,
+        });
+      } catch (err) {
+        console.warn(
+          "[meeting-bot] summary génération échouée :",
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+
     await reportProgress(96, "Persistance asset meeting");
 
     const existing = await loadAssetById(botId).catch(() => null);
@@ -182,6 +200,7 @@ const handler: WorkerHandler<MeetingBotInput> = {
         status: finalStatus,
         transcript: finalTranscript,
         actionItems: finalActionItems,
+        editorialSummary,
         recordingUrl: finalRecordingUrl,
         startedAt: previousContent?.startedAt ?? startedAt,
         endedAt,
@@ -199,6 +218,7 @@ const handler: WorkerHandler<MeetingBotInput> = {
       metadata: {
         transcript: finalTranscript,
         actionItems: finalActionItems,
+        editorialSummary,
         recordingUrl: finalRecordingUrl,
         status: finalStatus,
       },
@@ -211,6 +231,81 @@ function parseContentRef(asset: Asset | null): Record<string, unknown> | null {
   try {
     return JSON.parse(asset.contentRef) as Record<string, unknown>;
   } catch {
+    return null;
+  }
+}
+
+/**
+ * Génère un résumé éditorial structuré (Contexte / Décisions / Actions /
+ * Open questions) via Claude Sonnet à partir du transcript final + des
+ * action items déjà extraits par Deepgram/Haiku.
+ *
+ * Pas de fallback texte si l'appel échoue → on remonte null (le worker
+ * persiste editorialSummary=null, l'UI affichera le transcript brut).
+ */
+const SUMMARY_SYSTEM_PROMPT = [
+  "Tu es éditeur de comptes-rendus de réunion pour un dirigeant pressé.",
+  "",
+  "Produis un résumé en 4 sections markdown, dans cet ordre exact :",
+  "",
+  "## Contexte",
+  "Une seule phrase qui pose le sujet et les participants identifiables.",
+  "",
+  "## Décisions prises",
+  "Bullets factuels — uniquement les décisions explicites validées en réunion.",
+  "Si aucune décision claire, écris « Aucune décision actée. »",
+  "",
+  "## Actions à entreprendre",
+  "Bullets au format : `- [Owner] action — deadline si nommée, sinon (à planifier).`",
+  "Si plusieurs owners, sépare par /. Aligne-toi sur les action items déjà extraits passés en input.",
+  "",
+  "## Open questions",
+  "Bullets — sujets soulevés sans réponse. Si aucun, écris « Aucune. »",
+  "",
+  "RÈGLES :",
+  "- Pas de blabla introductif/conclusif autour des sections.",
+  "- Reste factuel : pas d'inférence sur les émotions, intentions, sous-textes.",
+  "- Français, ton sobre.",
+  "- Total ≤ 350 mots.",
+].join("\n");
+
+export async function summarizeMeeting(input: {
+  transcript: string;
+  actionItems: Array<{ action: string; owner?: string; deadline?: string }>;
+}): Promise<string | null> {
+  if (!input.transcript.trim()) return null;
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+
+  const client = new Anthropic();
+  const userPrompt = [
+    "## Action items pré-extraits",
+    input.actionItems.length > 0
+      ? input.actionItems
+          .map(
+            (a) =>
+              `- ${a.action}${a.owner ? ` (owner: ${a.owner})` : ""}${a.deadline ? ` [deadline: ${a.deadline}]` : ""}`,
+          )
+          .join("\n")
+      : "(aucun)",
+    "",
+    "## Transcript brut",
+    input.transcript.slice(0, 30_000),
+  ].join("\n");
+
+  try {
+    const msg = await client.messages.create({
+      model: "claude-sonnet-4-5-20250929",
+      max_tokens: 1500,
+      system: SUMMARY_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userPrompt }],
+    });
+    const text = msg.content[0]?.type === "text" ? msg.content[0].text.trim() : "";
+    return text.length > 0 ? text : null;
+  } catch (err) {
+    console.warn(
+      "[meeting-bot] summarizeMeeting Anthropic error :",
+      err instanceof Error ? err.message : err,
+    );
     return null;
   }
 }

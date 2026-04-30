@@ -318,7 +318,7 @@ function IconButton({
       aria-label={label}
       title={label}
       data-testid={testId}
-      className="flex items-center justify-center text-[var(--text-l3)] hover:text-[var(--cykan)] focus-visible:text-[var(--cykan)] focus-visible:outline-none transition-colors"
+      className="flex items-center justify-center text-[var(--text-l2)] hover:text-[var(--cykan)] focus-visible:text-[var(--cykan)] focus-visible:outline-none transition-colors"
       style={{
         width: "var(--space-6)",
         height: "var(--space-6)",
@@ -354,11 +354,9 @@ const EditIcon = () => (
 function EmptyText({ children }: { children: ReactNode }) {
   return (
     <p
-      className="font-mono uppercase"
+      className="t-10 font-mono uppercase tracking-section"
       style={{
-        fontSize: "10px",
-        letterSpacing: "var(--tracking-label)",
-        color: "var(--text-l3)",
+        color: "var(--text-l2)",
         padding: "var(--space-3) 0",
       }}
     >

@@ -12,11 +12,20 @@
  */
 
 import type { VoiceToolDef } from "@/lib/voice/tools";
+import {
+  resolveRealtimeVoice,
+  DEFAULT_REALTIME_VOICE,
+  type RealtimeVoice,
+} from "@/lib/voice/voice-mapping";
 
 const OPENAI_BASE = "https://api.openai.com/v1";
 
 interface MintRealtimeSessionInput {
   tools?: VoiceToolDef[];
+  /** Voix Realtime explicite — overrides `personaTone`. */
+  voice?: RealtimeVoice;
+  /** Tone de la persona active — résolu via `resolveRealtimeVoice`. */
+  personaTone?: string;
 }
 
 export async function mintRealtimeSession(
@@ -25,13 +34,19 @@ export async function mintRealtimeSession(
   sessionId: string;
   ephemeralKey: string;
   expiresAt: number;
+  voice: RealtimeVoice;
 }> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OpenAI non configuré");
 
+  // Voix : explicite > tone résolu > default alloy
+  const voice: RealtimeVoice =
+    input.voice ??
+    (input.personaTone ? resolveRealtimeVoice(input.personaTone) : DEFAULT_REALTIME_VOICE);
+
   const body: Record<string, unknown> = {
     model: "gpt-4o-realtime-preview",
-    voice: "alloy",
+    voice,
     modalities: ["audio", "text"],
     instructions:
       [
@@ -72,5 +87,6 @@ export async function mintRealtimeSession(
     sessionId: data.id,
     ephemeralKey: data.client_secret.value,
     expiresAt: data.client_secret.expires_at,
+    voice,
   };
 }

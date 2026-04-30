@@ -776,7 +776,7 @@ export type BlockSpec = z.infer<typeof blockSpecSchema>;
 // ── Narration LLM (one-shot, prompt-cached) ─────────────────
 
 export const narrationSpecSchema = z.object({
-  mode: z.enum(["bullets", "intro+bullets"]).default("intro+bullets"),
+  mode: z.enum(["bullets", "intro+bullets", "editorial"]).default("intro+bullets"),
   /** Où afficher la narration : focal.body (long) ou meta.summary (court). */
   target: z.enum(["focal_body", "summary"]).default("focal_body"),
   maxTokens: z.number().int().min(60).max(1500).default(600),

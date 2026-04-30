@@ -73,33 +73,42 @@ export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
         </span>
       </div>
 
-      {briefing && !briefing.empty && (
-        <div style={{ marginTop: "var(--space-8)", maxWidth: "var(--width-actions)" }}>
-          <p
-            className="t-15"
-            style={{
-              fontWeight: 400,
-              lineHeight: "var(--leading-tight)",
-              color: "var(--text-l1)",
-            }}
-          >
-            {briefing.headline}
-          </p>
-          {briefing.body && (
-            <p
-              className="t-13"
-              style={{
-                lineHeight: "var(--leading-tight)",
-                color: "var(--text-l2)",
-                marginTop: "var(--space-3)",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {briefing.body}
-            </p>
-          )}
-        </div>
-      )}
+      {briefing && !briefing.empty && (() => {
+        const stripMarker = (s: string) =>
+          s.replace(/\s*\[Résumé précédent\]\s*/g, "").trim();
+        const headline = stripMarker(briefing.headline);
+        const body = briefing.body ? stripMarker(briefing.body) : null;
+        if (!headline && !body) return null;
+        return (
+          <div style={{ marginTop: "var(--space-8)", maxWidth: "var(--width-actions)" }}>
+            {headline && (
+              <p
+                className="t-15"
+                style={{
+                  fontWeight: 400,
+                  lineHeight: "var(--leading-tight)",
+                  color: "var(--text-l1)",
+                }}
+              >
+                {headline}
+              </p>
+            )}
+            {body && (
+              <p
+                className="t-13"
+                style={{
+                  lineHeight: "var(--leading-tight)",
+                  color: "var(--text-l2)",
+                  marginTop: "var(--space-3)",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {body}
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {briefing?.empty && emptyAction && (
         <div style={{ marginTop: "var(--space-8)" }}>

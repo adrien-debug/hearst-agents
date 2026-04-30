@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   getApplicableReports: vi.fn(),
   getAllServiceIds: vi.fn(),
   getProviderIdForService: vi.fn(),
+  getLiveWatchlist: vi.fn(),
+  getLiveAgenda: vi.fn(),
 }));
 
 vi.mock("@/lib/memory/conversation-summary", () => ({
@@ -37,6 +39,14 @@ vi.mock("@/lib/connectors/control-plane/store", () => ({
 vi.mock("@/lib/integrations/service-map", () => ({
   getAllServiceIds: mocks.getAllServiceIds,
   getProviderIdForService: mocks.getProviderIdForService,
+}));
+
+vi.mock("@/lib/cockpit/watchlist-live", () => ({
+  getLiveWatchlist: mocks.getLiveWatchlist,
+}));
+
+vi.mock("@/lib/cockpit/agenda-live", () => ({
+  getLiveAgenda: mocks.getLiveAgenda,
 }));
 
 // Le catalog reste réel — on a besoin de CATALOG.slice() pour favorites,
@@ -68,6 +78,8 @@ describe("getCockpitToday", () => {
     mocks.getApplicableReports.mockReturnValue([]);
     mocks.getAllServiceIds.mockReturnValue([]);
     mocks.getProviderIdForService.mockReturnValue(undefined);
+    mocks.getLiveWatchlist.mockResolvedValue([]); // fallback mock
+    mocks.getLiveAgenda.mockResolvedValue([]);
   });
 
   it("retourne un payload complet avec toutes les sections", async () => {

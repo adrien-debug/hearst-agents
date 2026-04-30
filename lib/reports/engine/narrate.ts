@@ -11,6 +11,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText } from "ai";
 import type { ReportSpec, NarrationSpec } from "@/lib/reports/spec/schema";
 import type { RenderPayload } from "./render-blocks";
+import { NARRATION_FEWSHOT_FR, formatFewShotBlock } from "@/lib/prompts/examples";
 
 const NARRATE_MODEL = "claude-sonnet-4-6";
 
@@ -31,7 +32,19 @@ const MODE_PROMPTS = {
     "Format : 4-6 bullets en français, chaque bullet 1-2 phrases courtes. Aucun titre, aucune introduction.",
   "intro+bullets":
     "Format : 1 phrase d'introduction (1 ligne max) puis 4-6 bullets en français. Pas d'autre texte.",
+  editorial: [
+    "Format ÉDITORIAL premium (style fondateur exigeant) :",
+    "1. **Lead** : 1 phrase punchline mature qui nomme le signal central. Pas « Voici un résumé », pas « Le report montre ».",
+    "2. **Key findings** : 3 bullets cinglants, chacun nomme un fait + sa conséquence.",
+    "3. **Risks** : 2 bullets identifiés, chacun nomme la tension réelle.",
+    "4. **Recommendation** : 1 phrase actionnable au futur ou à l'impératif (« Recentre l'effort commercial sur… »).",
+  ].join("\n"),
 } as const;
+
+const VOCABULARY_GUIDE = [
+  "VOCABULAIRE PRÉFÉRÉ : signal, levier, tension, friction, anticipation, équilibre, vitalité, recentrer, concentrer, arbitrer, nommer, trancher.",
+  "VOCABULAIRE INTERDIT (toujours) : « il faut », « on peut voir que », « les données montrent », « voici », « il est intéressant de noter », « n'hésite pas », « au global », « globalement parlant ».",
+].join("\n");
 
 export interface NarrateInput {
   spec: ReportSpec;
@@ -95,7 +108,7 @@ export async function narrate(input: NarrateInput): Promise<NarrateResult | null
 // ── Prompt builders ─────────────────────────────────────────
 
 function buildSystemPrompt(persona: string, narrationSpec: NarrationSpec): string {
-  return [
+  const lines = [
     "Tu es l'analyste interne d'un OS business chat-first. Tu lis les agrégats",
     "d'un report et tu écris une narration courte en français.",
     "",
@@ -103,13 +116,21 @@ function buildSystemPrompt(persona: string, narrationSpec: NarrationSpec): strin
     `Style : ${STYLE_PROMPTS[narrationSpec.style]}`,
     `${MODE_PROMPTS[narrationSpec.mode]}`,
     "",
+    VOCABULARY_GUIDE,
+    "",
     "RÈGLES STRICTES :",
     "- Ne JAMAIS inventer un chiffre. Utilise uniquement les valeurs du payload.",
     "- Pas d'introduction type 'Voici les résultats'. Va droit au point.",
     "- Pas de markdown autre que `*` pour les bullets et `**` pour le bold.",
     "- Pas d'emojis.",
     "- Si une valeur est null, dis 'donnée indisponible' au lieu de l'inventer.",
-  ].join("\n");
+  ];
+
+  if (narrationSpec.mode === "editorial") {
+    lines.push("", "EXEMPLES (mode éditorial) :", formatFewShotBlock(NARRATION_FEWSHOT_FR));
+  }
+
+  return lines.join("\n");
 }
 
 function buildUserPrompt(spec: ReportSpec, payload: RenderPayload): string {

@@ -37,11 +37,12 @@ const handler: WorkerHandler<AudioGenInput> = {
 
     await reportProgress(5, "Synthèse en cours");
 
-    // 1. ElevenLabs TTS
+    // 1. ElevenLabs TTS — tone résolu en voiceId + voice_settings via mapping
     const result = await synthesizeSpeech({
       text: payload.text,
       voiceId: payload.voiceId,
       modelId: payload.modelId,
+      personaTone: payload.tone,
     });
 
     await reportProgress(60, "Audio généré, upload en cours");

@@ -66,10 +66,11 @@ describe("toAiTools — write-guard integration", () => {
       });
       expect(executeComposioAction).not.toHaveBeenCalled();
       expect(typeof result).toBe("string");
+      // Le custom formatter Slack prend le relais → labels FR (Canal, Aperçu)
       expect(result as string).toContain("SLACK");
       expect((result as string).toLowerCase()).toContain("envoyer");
-      expect(result as string).toContain("channel");
-      expect(result as string).toContain("text");
+      expect(result as string).toContain("#dev");
+      expect(result as string).toContain("hello");
       expect((result as string).toLowerCase()).toContain("confirmer");
     });
 

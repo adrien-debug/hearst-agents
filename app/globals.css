@@ -53,6 +53,11 @@
   --accent-llm: #A78BFA;
   /* Branche « agent custom » pipeline admin (câbles + waterfall) — aligné cartes [data-kind="agent"]. */
   --accent-agent: #fbbf24;
+  /* Editorial gold — accent magazine print (PDF exports premium, covers éditoriales).
+   * Référence visuelle : Art of Life Equine — champagne sobre, pas tape-à-l'œil. */
+  --gold: #C8A961;
+  --gold-soft: color-mix(in srgb, var(--gold) 18%, transparent);
+  --gold-muted: color-mix(in srgb, var(--gold) 60%, #000000 40%);
   --cykan-border: color-mix(in srgb, var(--cykan) 25%, transparent);
   --cykan-surface: color-mix(in srgb, var(--cykan) 6%, transparent);
 
@@ -1234,12 +1239,14 @@ body {
   position: relative;
   z-index: 1;
   border-radius: var(--radius-2xl);
-  background: var(--surface-1);
-  border: 1px solid var(--border-shell);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
   color: var(--text);
+  box-shadow: var(--shadow-card);
   transition:
     border-color var(--duration-base) var(--ease-standard),
-    background var(--duration-base) var(--ease-standard);
+    background var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
 }
 .cockpit-input-pill-flat:hover {
   border-color: var(--border-input);
@@ -1247,6 +1254,7 @@ body {
 .cockpit-input-pill-flat:focus-within {
   border-color: var(--text-soft);
   background: var(--surface-2);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* Sélection texte — calmer, teintée cykan (Thinking Canvas). */

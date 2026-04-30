@@ -34,6 +34,8 @@ import {
   getMockArrivals,
   getMockServiceRequests,
 } from "@/lib/verticals/hospitality/mock-data";
+import { getLiveWatchlist } from "./watchlist-live";
+import { getLiveAgenda } from "./agenda-live";
 
 export interface CockpitScope {
   userId: string;
@@ -378,13 +380,8 @@ function buildMockWatchlist(): CockpitWatchlistItem[] {
   ];
 }
 
-/**
- * Agenda mock — vide pour MVP.
- * Phase B : Composio Calendar → events du jour.
- */
-function buildMockAgenda(): CockpitAgendaItem[] {
-  return [];
-}
+// Agenda mock retiré — l'agenda live (lib/cockpit/agenda-live.ts) gère
+// déjà le fallback vide quand Calendar n'est pas connecté.
 
 const INBOX_STALE_MS = 60 * 60_000; // 1h
 
@@ -482,18 +479,37 @@ export async function getCockpitToday(scope: CockpitScope): Promise<CockpitToday
   ]);
 
   const favoriteReports = buildFavoriteReports();
-  const watchlist = buildMockWatchlist();
-  const agenda = buildMockAgenda().slice(0, MAX_AGENDA_ITEMS);
+
+  // Watchlist live (Stripe + HubSpot via Composio) — fallback mock si throw
+  // global. Les fallback partiels par source sont déjà gérés dans
+  // getLiveWatchlist (CTA "Connecte X pour activer").
+  const liveWatchlist = await safe(
+    "watchlist.live",
+    () => getLiveWatchlist({ userId: scope.userId, tenantId: scope.tenantId }),
+    null as CockpitWatchlistItem[] | null,
+  );
+  const watchlist = liveWatchlist && liveWatchlist.length > 0 ? liveWatchlist : buildMockWatchlist();
+
+  // Agenda live (Google Calendar via Composio) — fallback empty si throw.
+  const liveAgenda = await safe(
+    "agenda.live",
+    () => getLiveAgenda({ userId: scope.userId, tenantId: scope.tenantId }),
+    [] as CockpitAgendaItem[],
+  );
+  const agenda = liveAgenda.slice(0, MAX_AGENDA_ITEMS);
 
   const isHospitality = industry === "hospitality";
   const hospitality = isHospitality
     ? safeSync("hospitality", () => buildHospitalitySection(), null)
     : null;
 
-  const mockSections: Array<"watchlist" | "agenda" | "hospitality"> = [
-    "watchlist",
-    "agenda",
-  ];
+  // Si watchlist live est vide / fallback mock → on garde "watchlist" comme
+  // mock-section pour que l'UI affiche un badge/CTA. Pareil agenda.
+  const watchlistIsLive = !!liveWatchlist && liveWatchlist.length > 0;
+  const agendaIsLive = liveAgenda.length > 0;
+  const mockSections: Array<"watchlist" | "agenda" | "hospitality"> = [];
+  if (!watchlistIsLive) mockSections.push("watchlist");
+  if (!agendaIsLive) mockSections.push("agenda");
   if (hospitality) mockSections.push("hospitality");
 
   return {

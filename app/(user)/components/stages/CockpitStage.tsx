@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { HearstConstellation } from "./HearstConstellation";
 import { CockpitHero } from "./CockpitHero";
 import { WatchlistCard } from "../cockpit/WatchlistCard";
 import { MissionPulse } from "../cockpit/MissionPulse";
@@ -71,8 +70,6 @@ export function CockpitStage() {
 
   return (
     <div className="cockpit-bg flex-1 flex flex-col min-h-0 relative overflow-hidden panel-enter">
-      <HearstConstellation />
-
       <div className="relative flex-1 flex flex-col min-h-0 overflow-y-auto">
         {isHospitality && <HospitalityBadge />}
         <CockpitHero

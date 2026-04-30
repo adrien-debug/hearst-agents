@@ -20,6 +20,33 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getRecentEmails } from "@/lib/connectors/google/gmail";
 import { getTodayEvents } from "@/lib/connectors/google/calendar";
 import { executeComposioAction, isComposioConfigured } from "@/lib/connectors/composio/client";
+import { INBOX_PRIORITY_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples";
+
+/**
+ * Prompt classification inbox — assistant de tri d'un founder pressé.
+ *
+ * Classe chaque item en 3 niveaux selon des critères explicites + produit
+ * un summary 1 ligne (max 80 chars) qui synthétise l'enjeu réel, pas le sujet.
+ */
+export const INBOX_PRIORITY_SYSTEM_PROMPT = [
+  "Tu tries la boîte de réception d'un founder pressé. Pour chaque item, tu produis une priorité et un summary 1 ligne.",
+  "",
+  "CRITÈRES STRICTS :",
+  "- urgent : action requise sous 24h ET bloquant (signature en attente, deadline imminente, demande directe d'un client clé ou exec).",
+  "- important : réponse attendue dans la journée (question d'un partenaire, ticket support, info produit qui demande arbitrage).",
+  "- info : FYI uniquement (newsletter, notification automatique, compte rendu pour archive, digest).",
+  "",
+  "RÈGLES DE SUMMARY :",
+  "- Max 80 caractères.",
+  "- Nomme l'enjeu réel (ce qui doit se passer), pas le sujet de l'email.",
+  "- Pas de paraphrase du title.",
+  "",
+  "FORMAT STRICT — JSON ARRAY uniquement :",
+  '[{ "id": string, "priority": "urgent"|"important"|"info", "summary": string }]',
+  "",
+  "EXEMPLES :",
+  formatFewShotBlock(INBOX_PRIORITY_FEWSHOT),
+].join("\n");
 
 export type InboxItemKind = "email" | "slack" | "calendar";
 export type InboxItemPriority = "urgent" | "important" | "info";
@@ -167,16 +194,16 @@ async function classifyBatch(items: InboxItem[]): Promise<Map<string, Classified
     const res = await anthropic.messages.create({
       model: HAIKU_MODEL,
       max_tokens: 1500,
+      system: INBOX_PRIORITY_SYSTEM_PROMPT,
       messages: [
         {
           role: "user",
-          content:
-            `Tu tries la boîte de réception d'un founder pressé. Pour chaque item, donne :\n` +
-            `- priority: "urgent" (action requise sous 4h, demande directe, deadline imminente), ` +
-            `"important" (réponse attendue dans la journée), ou "info" (FYI).\n` +
-            `- summary: une phrase ultra-courte (max 80 chars) qui synthétise l'enjeu.\n\n` +
-            `Items à classer (JSON) :\n${JSON.stringify(compact)}\n\n` +
-            `Réponds UNIQUEMENT avec un JSON array : [{"id":"...","priority":"...","summary":"..."}].`,
+          content: [
+            "Items à classer (JSON) :",
+            JSON.stringify(compact),
+            "",
+            "Classe maintenant, en respectant strictement le format JSON array.",
+          ].join("\n"),
         },
       ],
     });

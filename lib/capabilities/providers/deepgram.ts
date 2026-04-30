@@ -1,5 +1,30 @@
 import { DeepgramClient, type ListenV1Response, type ListenV1AcceptedResponse } from "@deepgram/sdk";
 import Anthropic from "@anthropic-ai/sdk";
+import { ACTION_ITEMS_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples";
+
+/**
+ * Prompt extraction d'action items — analyste de réunion.
+ *
+ * Transforme un transcript de meeting en plan d'actions JSON exécutable.
+ * Détecte le owner via les speakers tagués, extrait la deadline si nommée.
+ */
+export const ACTION_ITEMS_SYSTEM_PROMPT = [
+  "Tu es l'analyste qui transforme un meeting transcript en plan d'actions exécutable.",
+  "",
+  "FORMAT STRICT — JSON ARRAY uniquement, sans texte autour, sans markdown fence :",
+  '[{ "action": string, "owner": string|null, "deadline": string|null }]',
+  "",
+  "RÈGLES D'EXTRACTION :",
+  "- Une action = un engagement concret (« je m'en occupe », « tu valides », « on prépare pour… »).",
+  "- Le owner est extrait du speaker assigné, ou explicitement nommé dans la phrase d'engagement.",
+  "- La deadline est extraite littéralement (« mercredi », « avant vendredi », « fin du mois »). Pas de date inventée.",
+  "- Si plusieurs speakers et l'owner n'est pas clair, owner = null.",
+  "- Une discussion vague (« on devrait regarder… », « il faudrait peut-être… ») n'est PAS une action.",
+  "- Si rien d'actionnable, retourne un array vide [].",
+  "",
+  "EXEMPLES :",
+  formatFewShotBlock(ACTION_ITEMS_FEWSHOT),
+].join("\n");
 
 function isSyncResponse(
   r: ListenV1Response | ListenV1AcceptedResponse,
@@ -59,13 +84,11 @@ export async function extractActionItems(transcript: string): Promise<
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
+      system: ACTION_ITEMS_SYSTEM_PROMPT,
       messages: [
         {
           role: "user",
-          content: `Extrais les actions concrètes de ce transcript de réunion. Retourne UNIQUEMENT un tableau JSON valide, sans texte autour, avec des objets ayant les clés "action" (string), "owner" (string|null), "deadline" (string|null). Si aucune action, retourne [].
-
-Transcript :
-${transcript}`,
+          content: `Transcript à analyser :\n\n${transcript}\n\nExtrais les action items maintenant, au format JSON strict.`,
         },
       ],
     });
