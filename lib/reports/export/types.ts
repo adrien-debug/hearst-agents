@@ -17,7 +17,8 @@ export interface ExportInput {
 }
 
 export interface ExportResult {
-  buffer: Buffer;
+  // Buffer<ArrayBufferLike> est le type retourné par Buffer.from() sous Node 22
+  buffer: Buffer<ArrayBufferLike>;
   contentType: string;
   fileName: string;
   size: number;

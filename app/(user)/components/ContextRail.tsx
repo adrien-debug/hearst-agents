@@ -94,10 +94,10 @@ function ContextRailShell({
       className="h-full flex flex-col z-20 relative rounded-2xl overflow-hidden"
       style={{
         width: "var(--width-context)",
-        background: "rgba(255,255,255,0.02)",
+        background: "var(--surface-1)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+        boxShadow: "var(--shadow-rail-shell)",
       }}
     >
       {onClose && (
@@ -105,14 +105,14 @@ function ContextRailShell({
           className="flex items-center justify-between"
           style={{
             padding: "var(--space-4)",
-            boxShadow: "inset 0 -1px 0 0 rgba(255,255,255,0.02)",
+            boxShadow: "var(--shadow-divider-bottom-subtle)",
           }}
         >
-          <p className="t-13 font-light text-[rgba(255,255,255,0.9)]">Contexte</p>
+          <p className="t-13 font-light text-[var(--text-soft)]">Contexte</p>
           <button
             onClick={onClose}
             aria-label="Fermer"
-            className="w-8 h-8 flex items-center justify-center text-[rgba(255,255,255,0.4)] hover:text-[var(--cykan)] transition-colors"
+            className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
           >
             <svg
               width="14"
@@ -150,7 +150,7 @@ function Section({
       <header className="flex items-center justify-between mb-4">
         <span className="rail-section-label">{label}</span>
         {typeof count === "number" && (
-          <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
+          <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
             {count.toString().padStart(2, "0")}
           </span>
         )}
@@ -162,7 +162,7 @@ function Section({
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-10 tracking-[0.15em] uppercase text-[rgba(255,255,255,0.3)] font-light">
+    <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
       {children}
     </p>
   );
@@ -233,19 +233,19 @@ function SuggestionsFooter({
   const visible = suggestions.filter((s) => !runningSpecs.has(s.specId)).slice(0, 3);
   return (
     <div
-      className="shrink-0 border-t border-[rgba(255,255,255,0.06)] flex flex-col"
-      style={{ padding: "var(--space-5) var(--space-4)", gap: "var(--space-4)", background: "rgba(255,255,255,0.01)" }}
+      className="shrink-0 border-t border-[var(--border-shell)] flex flex-col"
+      style={{ padding: "var(--space-5) var(--space-4)", gap: "var(--space-4)", background: "var(--surface-card)" }}
     >
       <div className="flex items-center justify-between px-2">
-        <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.4)]">
+        <span className="t-9 tracking-display uppercase text-[var(--text-faint)]">
           Suggestions
         </span>
-        <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
+        <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
           {visible.length.toString().padStart(2, "0")}
         </span>
       </div>
       {visible.length === 0 ? (
-        <p className="t-10 tracking-[0.15em] uppercase text-[rgba(255,255,255,0.3)] px-2 font-light">
+        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] px-2 font-light">
           Aucune suggestion disponible.
         </p>
       ) : (
@@ -261,16 +261,16 @@ function SuggestionsFooter({
                   disabled={isRunning}
                   data-testid={`report-suggestion-${s.specId}`}
                   data-suggestion-status={s.status}
-                  className="w-full text-left flex items-center justify-between rounded-md border border-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.02)] focus-visible:outline-none focus-visible:border-[rgba(45,212,191,0.3)] transition-all duration-300"
-                  style={{ padding: "var(--space-3) var(--space-4)", background: "rgba(255,255,255,0.015)" }}
+                  className="w-full text-left flex items-center justify-between rounded-md border border-[var(--border-soft)] hover:border-[var(--border-subtle)] hover:bg-[var(--surface-1)] focus-visible:outline-none focus-visible:border-[var(--cykan-border)] transition-all duration-300"
+                  style={{ padding: "var(--space-3) var(--space-4)", background: "var(--surface-card)" }}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="t-13 font-light text-[rgba(255,255,255,0.9)] truncate">{s.title}</p>
-                    <p className="t-10 text-[rgba(255,255,255,0.4)] truncate mt-1 tracking-wide">{s.description}</p>
+                    <p className="t-13 font-light text-[var(--text-soft)] truncate">{s.title}</p>
+                    <p className="t-10 text-[var(--text-faint)] truncate mt-1 tracking-wide">{s.description}</p>
                   </div>
                   <span
-                    className="t-9 tracking-[0.2em] uppercase ml-4 shrink-0"
-                    style={{ color: isReady ? "var(--cykan)" : "rgba(255,255,255,0.3)" }}
+                    className="t-9 tracking-display uppercase ml-4 shrink-0"
+                    style={{ color: isReady ? "var(--cykan)" : "var(--text-ghost)" }}
                   >
                     {isRunning
                       ? "..."
@@ -296,7 +296,7 @@ function ContextRailForAsset() {
   return (
     <div className="h-full overflow-y-auto">
       <Section label="Asset focus">
-        <p className="t-13 font-light text-[rgba(255,255,255,0.6)] truncate">
+        <p className="t-13 font-light text-[var(--text-muted)] truncate">
           {assetTitle || "—"}
         </p>
       </Section>
@@ -309,10 +309,10 @@ function ContextRailForAsset() {
           <ul className="flex flex-col gap-2">
             {readyVariants.map((v) => (
               <li key={v.id} className="flex items-baseline gap-3">
-                <span className="t-9 tracking-[0.2em] uppercase text-[var(--cykan)]">
+                <span className="t-9 tracking-display uppercase text-[var(--cykan)]">
                   {v.kind.toUpperCase()}
                 </span>
-                <span className="t-11 text-[rgba(255,255,255,0.4)] tracking-wide">
+                <span className="t-11 text-[var(--text-faint)] tracking-wide">
                   {v.provider ?? ""}
                 </span>
               </li>
@@ -320,7 +320,7 @@ function ContextRailForAsset() {
           </ul>
         )}
       </Section>
-      
+
     </div>
   );
 }
@@ -328,10 +328,10 @@ function ContextRailForAsset() {
 function ContextRailForBrowser() {
   return (
     <div className="h-full overflow-y-auto">
-      
-      
+
+
       <Section label="Co-pilote">
-        <p className="t-13 font-light text-[rgba(255,255,255,0.4)] leading-relaxed">
+        <p className="t-13 font-light text-[var(--text-faint)] leading-relaxed">
           L{"'"}agent navigue dans la session live. Take Over arrivera avec
           Stagehand.
         </p>
@@ -354,13 +354,13 @@ function ContextRailForMeeting() {
             {actionItems.map((item, i) => (
               <li
                 key={i}
-                className="border-l border-[rgba(45,212,191,0.3)] pl-4 py-1"
+                className="border-l border-[var(--cykan-border)] pl-4 py-1"
               >
-                <p className="t-13 font-light text-[rgba(255,255,255,0.9)] truncate mb-1">
+                <p className="t-13 font-light text-[var(--text-soft)] truncate mb-1">
                   {item.action}
                 </p>
                 {(item.owner || item.deadline) && (
-                  <p className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
+                  <p className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
                     {[item.owner, item.deadline].filter(Boolean).join(" · ")}
                   </p>
                 )}
@@ -369,9 +369,9 @@ function ContextRailForMeeting() {
           </ul>
         )}
       </Section>
-      
+
       <Section label="Templates Mission">
-        <p className="t-13 font-light text-[rgba(255,255,255,0.4)] leading-relaxed">
+        <p className="t-13 font-light text-[var(--text-faint)] leading-relaxed">
           Approve all → exécution Composio (Slack, Linear, Notion, Gmail).
         </p>
       </Section>
@@ -386,10 +386,10 @@ function ContextRailForKnowledge() {
       <Section label="Entité focus">
         {selectedNode ? (
           <div className="flex flex-col gap-3">
-            <span className="t-9 tracking-[0.2em] uppercase text-[var(--cykan)]">
+            <span className="t-9 tracking-display uppercase text-[var(--cykan)]">
               {selectedNode.type}
             </span>
-            <p className="t-13 font-light text-[rgba(255,255,255,0.9)]">{selectedNode.label}</p>
+            <p className="t-13 font-light text-[var(--text-soft)]">{selectedNode.label}</p>
             {Object.keys(selectedNode.properties ?? {}).length > 0 && (
               <ul className="flex flex-col gap-2 mt-3">
                 {Object.entries(
@@ -398,10 +398,10 @@ function ContextRailForKnowledge() {
                   .slice(0, 6)
                   .map(([k, v]) => (
                     <li key={k} className="flex items-baseline gap-3">
-                      <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] truncate">
+                      <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] truncate">
                         {k}
                       </span>
-                      <span className="t-11 font-light text-[rgba(255,255,255,0.6)] truncate">
+                      <span className="t-11 font-light text-[var(--text-muted)] truncate">
                         {String(v)}
                       </span>
                     </li>
@@ -414,11 +414,11 @@ function ContextRailForKnowledge() {
         )}
       </Section>
       <Section label="Graphe" count={graph.nodes.length}>
-        <p className="t-10 tracking-[0.15em] uppercase text-[rgba(255,255,255,0.3)] font-light">
+        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
           {graph.nodes.length} entités · {graph.edges.length} relations
         </p>
       </Section>
-      
+
     </div>
   );
 }
@@ -444,15 +444,15 @@ function ContextRailForVoice() {
             {last10.map((entry) => (
               <li key={entry.id} className="flex flex-col gap-1.5">
                 <span
-                  className={`t-9 tracking-[0.2em] uppercase ${
+                  className={`t-9 tracking-display uppercase ${
                     entry.role === "user"
                       ? "text-[var(--cykan)]"
-                      : "text-[rgba(255,255,255,0.3)]"
+                      : "text-[var(--text-ghost)]"
                   }`}
                 >
                   {entry.role === "user" ? "USER" : "AGENT"}
                 </span>
-                <p className="t-11 font-light text-[rgba(255,255,255,0.6)] line-clamp-2 leading-relaxed">
+                <p className="t-11 font-light text-[var(--text-muted)] line-clamp-2 leading-relaxed">
                   {entry.text}
                 </p>
               </li>
@@ -461,7 +461,7 @@ function ContextRailForVoice() {
         )}
       </Section>
       <Section label="Tools disponibles" count={totalToolsCount}>
-        <p className="t-10 tracking-[0.15em] uppercase text-[rgba(255,255,255,0.3)] font-light leading-relaxed">
+        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light leading-relaxed">
           {[
             ...voiceToolDefs.map((t) => VOICE_TOOL_LABELS[t.name] ?? t.name),
             ...connectedApps.map((a) => a.name),
@@ -469,7 +469,7 @@ function ContextRailForVoice() {
         </p>
       </Section>
       <Section label="Voice settings">
-        <p className="t-13 font-light text-[rgba(255,255,255,0.4)] leading-relaxed">
+        <p className="t-13 font-light text-[var(--text-faint)] leading-relaxed">
           Modèle{" "}
           <span className="text-[var(--cykan)]">openai-realtime</span>, latence
           cible &lt; 500&nbsp;ms.
@@ -491,10 +491,10 @@ function ContextRailForSimulation() {
           <ul className="flex flex-col gap-3">
             {cleanVars.map((v, i) => (
               <li key={i} className="flex items-baseline gap-3">
-                <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)] truncate">
+                <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] truncate">
                   {v.key}
                 </span>
-                <span className="t-13 font-light text-[rgba(255,255,255,0.9)] truncate">
+                <span className="t-13 font-light text-[var(--text-soft)] truncate">
                   {v.value || "—"}
                 </span>
               </li>
@@ -512,10 +512,10 @@ function ContextRailForSimulation() {
             {scenarios.map((s, i) => (
               <li
                 key={i}
-                className="border-l border-[rgba(45,212,191,0.3)] pl-4 py-1"
+                className="border-l border-[var(--cykan-border)] pl-4 py-1"
               >
-                <p className="t-13 font-light text-[rgba(255,255,255,0.9)] truncate mb-1">{s.name}</p>
-                <p className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
+                <p className="t-13 font-light text-[var(--text-soft)] truncate mb-1">{s.name}</p>
+                <p className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
                   PROB · {(s.probability * 100).toFixed(0)}%
                 </p>
               </li>
@@ -523,7 +523,7 @@ function ContextRailForSimulation() {
           </ul>
         )}
       </Section>
-      
+
     </div>
   );
 }

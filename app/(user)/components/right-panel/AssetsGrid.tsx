@@ -34,15 +34,10 @@ function AssetSkeleton() {
       className="w-full text-left rounded-xl animate-pulse flex flex-col items-center gap-2"
     >
       <div
-        className="w-full aspect-square rounded-xl"
-        style={{
-          background: "rgba(255,255,255,0.015)",
-          border: "1px solid rgba(255,255,255,0.04)",
-        }}
+        className="w-full aspect-square rounded-xl bg-[var(--surface-1)] border border-[var(--border-soft)]"
       />
       <div
-        className="w-3/4 h-3 rounded-sm"
-        style={{ background: "rgba(255,255,255,0.03)" }}
+        className="w-3/4 h-3 rounded-sm bg-[var(--surface-2)]"
       />
     </div>
   );
@@ -51,34 +46,25 @@ function AssetSkeleton() {
 function SuggestionSkeleton() {
   return (
     <div
-      className="w-full flex flex-col animate-pulse rounded-md"
+      className="w-full flex flex-col animate-pulse rounded-md border border-[var(--border-soft)] bg-[var(--surface-1)]"
       style={{
         padding: "var(--space-3) var(--space-4)",
         gap: "var(--space-2)",
-        border: "1px solid rgba(255,255,255,0.04)",
-        background: "rgba(255,255,255,0.015)",
       }}
     >
       <div className="flex items-center justify-between">
         <div
-          className="h-4 rounded-sm"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            width: "60%",
-          }}
+          className="h-4 rounded-sm bg-[var(--surface-2)]"
+          style={{ width: "60%" }}
         />
         <div
-          className="h-3 rounded-sm"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            width: "20%",
-          }}
+          className="h-3 rounded-sm bg-[var(--surface-2)]"
+          style={{ width: "20%" }}
         />
       </div>
       <div
-        className="h-3 rounded-sm"
+        className="h-3 rounded-sm bg-[var(--surface-2)]"
         style={{
-          background: "rgba(255,255,255,0.03)",
           width: "90%",
           marginTop: "var(--space-1)",
         }}
@@ -168,10 +154,10 @@ export function AssetsGrid({
   if (visibleAssets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-10 gap-4">
-        <span className="w-12 h-12 text-[rgba(255,255,255,0.1)]" aria-hidden>
+        <span className="w-12 h-12 text-[var(--text-ghost)]" aria-hidden>
           <AssetGlyphSVG type="brief" />
         </span>
-        <p className="t-10 tracking-[0.15em] uppercase text-[rgba(255,255,255,0.3)] text-center font-light">
+        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] text-center font-light">
           Aucun asset.
           <br />
           Les livrables apparaîtront ici.
@@ -226,10 +212,10 @@ export function AssetsGrid({
                 </span>
               </div>
               <div className="flex flex-col items-center w-full">
-                <span className={`t-11 font-light truncate w-full text-center transition-colors duration-300 ${isActive ? "text-[rgba(255,255,255,0.95)]" : "text-[rgba(255,255,255,0.6)] group-hover:text-[rgba(255,255,255,0.95)]"}`}>
+                <span className={`t-11 font-light truncate w-full text-center transition-colors duration-300 ${isActive ? "text-[var(--text-soft)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-soft)]"}`}>
                   {shortTitle}
                 </span>
-                <span className="t-9 text-[rgba(255,255,255,0.3)] mt-0.5">
+                <span className="t-9 text-[var(--text-ghost)] tracking-body mt-0.5">
                   {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
                 </span>
               </div>
@@ -240,7 +226,7 @@ export function AssetsGrid({
                 e.stopPropagation();
                 void handleDelete(asset);
               }}
-              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-[rgba(255,255,255,0.3)] hover:text-[var(--danger)] transition-all rounded-md bg-[rgba(255,255,255,0.05)] backdrop-blur-sm border border-[rgba(255,255,255,0.1)]"
+              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all rounded-md bg-[var(--surface-2)] backdrop-blur-sm border border-[var(--border-subtle)]"
               title="Supprimer"
               aria-label={`Supprimer ${asset.name}`}
             >

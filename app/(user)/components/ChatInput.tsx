@@ -156,9 +156,9 @@ export function ChatInput({
 
         {/* Input Pill — High-end minimal design */}
         <div
-          className="rounded-2xl group border border-[var(--border-shell)] transition-all duration-700 px-10 py-8 focus-within:border-[var(--cykan-border)] focus-within:bg-[var(--surface-1)] backdrop-blur-2xl"
+          className="rounded-[32px] group border border-[var(--border-strong)] transition-all duration-700 px-10 py-8 focus-within:border-[var(--cykan)] focus-within:shadow-[var(--shadow-input-focus)] backdrop-blur-2xl relative"
           style={{
-            background: "linear-gradient(180deg, var(--surface-1) 0%, var(--surface-card) 100%)",
+            background: "var(--mat-300)",
             color: "var(--text)",
             boxShadow: "var(--shadow-card)",
           }}
@@ -217,7 +217,7 @@ export function ChatInput({
               "Demande n'importe quoi…"
             }
             rows={1}
-            className="block w-full bg-transparent t-18 font-light text-[var(--text-soft)] placeholder:text-[var(--text-ghost)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
+            className="block w-full bg-transparent t-18 font-light text-[var(--text)] placeholder:text-[var(--text-faint)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
             style={{
               minHeight: "var(--height-input-min)",
               maxHeight: "var(--height-input-max)",
@@ -302,8 +302,8 @@ export function ChatInput({
                   disabled={!input.trim()}
                   className={`transition-all duration-500 ${
                     input.trim()
-                      ? "text-[var(--cykan)] scale-110"
-                      : "text-[var(--text-ghost)] cursor-not-allowed"
+                      ? "text-[var(--cykan)] scale-110 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]"
+                      : "text-[var(--text-ghost)] cursor-not-allowed hover:text-[var(--text-faint)]"
                   }`}
                   title="Envoyer"
                 >

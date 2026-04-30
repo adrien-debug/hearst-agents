@@ -25,19 +25,19 @@ export function CockpitGreeting() {
   return (
     <div className="flex items-start justify-between pt-32 px-12">
       <div className="flex flex-col gap-2">
-        <h1 className="t-60 font-medium tracking-tighter text-[var(--text)] bg-gradient-to-b from-white to-[rgba(255,255,255,0.5)] bg-clip-text text-transparent">
+        <h1 className="t-60 font-medium tracking-tighter text-[var(--text)] bg-gradient-to-b from-[var(--text)] to-[var(--text-muted)] bg-clip-text text-transparent">
           {firstName}
         </h1>
         <div className="flex items-center gap-3">
           <div className="w-8 h-[1px] bg-[var(--cykan)] opacity-50" />
-          <p className="t-11 font-mono uppercase tracking-[0.4em] text-[var(--text-ghost)]">
+          <p className="t-11 font-mono uppercase tracking-brand text-[var(--text-ghost)]">
             Système en ligne
           </p>
         </div>
       </div>
       <div className="flex flex-col items-end gap-1">
         <span className="t-34 font-light text-[var(--text)] tabular-nums tracking-tighter">{time}</span>
-        <span className="t-9 font-mono uppercase tracking-[0.2em] text-[var(--text-ghost)] opacity-40">UTC+4</span>
+        <span className="t-9 font-mono uppercase tracking-display text-[var(--text-ghost)] opacity-40">UTC+4</span>
       </div>
     </div>
   );

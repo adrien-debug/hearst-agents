@@ -139,7 +139,7 @@ export function WelcomePanel() {
                 <p className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)] group-hover:text-[var(--text-ghost)] mt-1">
                   {m.lastRunAt
                     ? `il y a ${Math.floor((now - m.lastRunAt) / 60000)}m`
-                    : "—"}
+                    : "jamais exécutée"}
                 </p>
               </div>
             ))}

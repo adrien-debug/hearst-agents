@@ -194,27 +194,27 @@ export function Commandeur() {
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center transition-all duration-300"
-      style={{ 
-        background: "rgba(0,0,0,0.4)",
+      style={{
+        background: "var(--overlay-scrim)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
-        paddingTop: "20vh" 
+        paddingTop: "20vh"
       }}
       onClick={() => setOpen(false)}
     >
       <div
         className="w-full max-w-2xl rounded-2xl overflow-hidden transition-all duration-300"
-        style={{ 
-          background: "rgba(255,255,255,0.02)",
-          boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06), 0 30px 60px rgba(0,0,0,0.4), 0 0 120px rgba(45,212,191,0.05)",
+        style={{
+          background: "var(--surface-1)",
+          boxShadow: "var(--shadow-card-hover)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div 
+        <div
           className="flex items-center gap-4 px-6 py-5"
-          style={{ boxShadow: "inset 0 -1px 0 0 rgba(255,255,255,0.04)" }}
+          style={{ boxShadow: "var(--shadow-divider-bottom)" }}
         >
-          <span className="t-9 tracking-[0.2em] uppercase text-[var(--cykan)]">CMDK</span>
+          <span className="t-9 tracking-display uppercase text-[var(--cykan)]">CMDK</span>
           <input
             autoFocus
             type="text"
@@ -224,14 +224,14 @@ export function Commandeur() {
               setActiveIndex(0);
             }}
             placeholder="Que veux-tu faire ?"
-            className="flex-1 bg-transparent t-18 font-light text-[rgba(255,255,255,0.95)] placeholder-[rgba(255,255,255,0.3)] outline-none"
+            className="flex-1 bg-transparent t-18 font-light text-[var(--text-soft)] placeholder-[var(--text-ghost)] outline-none"
           />
-          <span className="t-9 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">ESC</span>
+          <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">ESC</span>
         </div>
 
         <div className="max-h-[50vh] overflow-y-auto py-2 scrollbar-hide">
           {filtered.length === 0 ? (
-            <p className="t-13 text-[rgba(255,255,255,0.3)] text-center py-8 font-light">Aucune action ne correspond.</p>
+            <p className="t-13 text-[var(--text-ghost)] text-center py-8 font-light">Aucune action ne correspond.</p>
           ) : (
             filtered.map((action, i) => (
               <button
@@ -244,16 +244,16 @@ export function Commandeur() {
                   action.disabled
                     ? "opacity-30 cursor-not-allowed"
                     : i === activeIndex
-                    ? "bg-[rgba(255,255,255,0.04)]"
-                    : "hover:bg-[rgba(255,255,255,0.02)]"
+                    ? "bg-[var(--surface-2)]"
+                    : "hover:bg-[var(--surface-1)]"
                 }`}
               >
                 <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-                  <span className={`t-13 truncate transition-colors duration-150 ${i === activeIndex && !action.disabled ? "text-[rgba(255,255,255,0.95)] font-medium" : "text-[rgba(255,255,255,0.6)] font-light"}`}>{action.label}</span>
-                  <span className={`t-11 truncate transition-colors duration-150 ${i === activeIndex && !action.disabled ? "text-[rgba(255,255,255,0.6)]" : "text-[rgba(255,255,255,0.3)]"}`}>{action.hint}</span>
+                  <span className={`t-13 truncate transition-colors duration-150 ${i === activeIndex && !action.disabled ? "text-[var(--text-soft)] font-medium" : "text-[var(--text-muted)] font-light"}`}>{action.label}</span>
+                  <span className={`t-11 truncate transition-colors duration-150 ${i === activeIndex && !action.disabled ? "text-[var(--text-muted)]" : "text-[var(--text-ghost)]"}`}>{action.hint}</span>
                 </span>
                 {action.hotkey && (
-                  <span className="t-9 tracking-[0.2em] uppercase shrink-0" style={{ color: i === activeIndex && !action.disabled ? "var(--cykan)" : "rgba(255,255,255,0.3)" }}>
+                  <span className="t-9 tracking-display uppercase shrink-0" style={{ color: i === activeIndex && !action.disabled ? "var(--cykan)" : "var(--text-ghost)" }}>
                     {action.hotkey}
                   </span>
                 )}

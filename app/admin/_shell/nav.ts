@@ -78,6 +78,12 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Système",
     items: [
       {
+        href: "/admin/metrics",
+        label: "Métriques",
+        iconPath:
+          "M3 3v18h18M7 16l4-4 4 4 4-4",
+      },
+      {
         href: "/admin/health",
         label: "Health",
         iconPath:

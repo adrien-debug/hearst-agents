@@ -69,7 +69,8 @@ describe("exportXlsx", () => {
 
     // Re-parse avec exceljs pour vérifier les sheets attendus
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(result.buffer);
+    // @ts-expect-error -- exceljs attend l'ancien Buffer non-générique, Node 22 retourne Buffer<ArrayBuffer>
+    await workbook.xlsx.load(Buffer.from(result.buffer));
     const names = workbook.worksheets.map((s) => s.name);
     expect(names).toContain("Meta");
     expect(names).toContain("Charts");
@@ -85,7 +86,8 @@ describe("exportXlsx", () => {
       narration: "Narration_X",
     });
     const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(result.buffer);
+    // @ts-expect-error -- exceljs attend l'ancien Buffer non-générique, Node 22 retourne Buffer<ArrayBuffer>
+    await wb.xlsx.load(Buffer.from(result.buffer));
     const meta_ = wb.getWorksheet("Meta");
     expect(meta_).toBeTruthy();
     if (!meta_) return;
@@ -103,7 +105,8 @@ describe("exportXlsx", () => {
   it("renseigne la sheet Charts pour un bloc non-tabulaire (radar)", async () => {
     const result = await exportXlsx({ payload, meta, narration: null });
     const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(result.buffer);
+    // @ts-expect-error -- exceljs attend l'ancien Buffer non-générique, Node 22 retourne Buffer<ArrayBuffer>
+    await wb.xlsx.load(Buffer.from(result.buffer));
     const charts = wb.getWorksheet("Charts");
     expect(charts).toBeTruthy();
     if (!charts) return;

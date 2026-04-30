@@ -5,12 +5,13 @@
 
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
+import { authOptions } from "@/lib/platform/auth/options";
 import { listWebhooks, createWebhook, createWebhookSchema } from "@/lib/webhooks/store";
 import { z } from "zod";
 
-function getTenantId(session: { user?: { tenantId?: string } } | null): string | null {
-  return (session?.user as { tenantId?: string } | undefined)?.tenantId ?? null;
+function getTenantId(session: unknown): string | null {
+  const s = session as { user?: { tenantId?: string } } | null;
+  return s?.user?.tenantId ?? null;
 }
 
 export async function GET(): Promise<NextResponse> {

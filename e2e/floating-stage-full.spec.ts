@@ -8,7 +8,7 @@ test('Floating Stage Light full page screenshot', async ({ page }) => {
   await page.waitForTimeout(2500);
   
   // Prendre une capture full page
-  await page.screenshot({ path: '/tmp/floating-stage-full.png', fullPage: true, maxHeight: 1200 });
+  await page.screenshot({ path: '/tmp/floating-stage-full.png', fullPage: true });
   
   console.log('Screenshot pris : /tmp/floating-stage-full.png');
 });

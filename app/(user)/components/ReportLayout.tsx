@@ -22,38 +22,29 @@ import { ReportEditor } from "@/app/(user)/components/reports/ReportEditor";
 import { ReportActions } from "@/app/(user)/components/ReportActions";
 import type { VersionSummary } from "@/lib/reports/versions/store";
 import type { VersionDiff } from "@/lib/reports/versions/diff";
+// Blocs légers — import statique, rendu immédiat
 import { KpiTile } from "@/lib/reports/blocks/KpiTile";
 import { Sparkline } from "@/lib/reports/blocks/Sparkline";
 import { Bar } from "@/lib/reports/blocks/Bar";
 import { Table } from "@/lib/reports/blocks/Table";
 import { Funnel } from "@/lib/reports/blocks/Funnel";
+import { Bullet, type BulletItem } from "@/lib/reports/blocks/Bullet";
+
+// Blocs lourds — dynamic imports (lazy) + skeleton + types
 import {
-  Waterfall,
-  type WaterfallDatum,
-} from "@/lib/reports/blocks/Waterfall";
-import {
-  CohortTriangle,
-  type CohortRow,
-} from "@/lib/reports/blocks/CohortTriangle";
-import { Heatmap } from "@/lib/reports/blocks/Heatmap";
-import {
-  Sankey,
-  type SankeyNode,
-  type SankeyLink,
-} from "@/lib/reports/blocks/Sankey";
-import {
-  Bullet,
-  type BulletItem,
-} from "@/lib/reports/blocks/Bullet";
-import {
-  Radar,
-  type RadarSeries,
-} from "@/lib/reports/blocks/Radar";
-import {
-  Gantt,
-  type GanttRange,
-  type GanttTask,
-} from "@/lib/reports/blocks/Gantt";
+  BlockSkeleton,
+  LazyWaterfall,
+  LazyCohortTriangle,
+  LazyHeatmap,
+  LazySankey,
+  LazyRadar,
+  LazyGantt,
+} from "@/lib/reports/blocks/lazy";
+import type { WaterfallDatum } from "@/lib/reports/blocks/Waterfall";
+import type { CohortRow } from "@/lib/reports/blocks/CohortTriangle";
+import type { SankeyNode, SankeyLink } from "@/lib/reports/blocks/Sankey";
+import type { RadarSeries } from "@/lib/reports/blocks/Radar";
+import type { GanttRange, GanttTask } from "@/lib/reports/blocks/Gantt";
 import { inferNumericField } from "@/lib/reports/blocks/infer";
 import type { RenderPayload, RenderedBlock } from "@/lib/reports/engine/render-blocks";
 
@@ -267,6 +258,11 @@ export function ReportLayout({
 function BlockRenderer({ block }: { block: RenderedBlock }) {
   const props = block.props ?? {};
 
+  // Skeleton inline si le bloc n'a pas encore de données (rendu asynchrone futur).
+  if (block.data === null || block.data === undefined) {
+    return <BlockSkeleton testId={`block-skeleton-${block.id}`} />;
+  }
+
   switch (block.type) {
     case "kpi":
       return (
@@ -335,7 +331,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
 
     case "waterfall":
       return (
-        <Waterfall
+        <LazyWaterfall
           data={(props.data as ReadonlyArray<WaterfallDatum>) ?? []}
           height={(props.height as number) ?? 240}
           format={(props.format as "number" | "currency") ?? "currency"}
@@ -345,7 +341,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
 
     case "cohort_triangle":
       return (
-        <CohortTriangle
+        <LazyCohortTriangle
           cohorts={(props.cohorts as ReadonlyArray<CohortRow>) ?? []}
           periodPrefix={(props.periodPrefix as string) ?? "M"}
           asPercent={props.asPercent !== false}
@@ -354,7 +350,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
 
     case "heatmap":
       return (
-        <Heatmap
+        <LazyHeatmap
           xLabels={(props.xLabels as ReadonlyArray<string>) ?? []}
           yLabels={(props.yLabels as ReadonlyArray<string>) ?? []}
           values={(props.values as ReadonlyArray<ReadonlyArray<number>>) ?? []}
@@ -365,7 +361,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
 
     case "sankey":
       return (
-        <Sankey
+        <LazySankey
           nodes={(props.nodes as ReadonlyArray<SankeyNode>) ?? []}
           links={(props.links as ReadonlyArray<SankeyLink>) ?? []}
           height={(props.height as number) ?? 280}
@@ -383,7 +379,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
 
     case "radar":
       return (
-        <Radar
+        <LazyRadar
           axes={(props.axes as ReadonlyArray<string>) ?? []}
           series={(props.series as ReadonlyArray<RadarSeries>) ?? []}
           height={(props.height as number) ?? 320}
@@ -393,7 +389,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
 
     case "gantt":
       return (
-        <Gantt
+        <LazyGantt
           range={(props.range as GanttRange) ?? { start: "", end: "" }}
           tasks={(props.tasks as ReadonlyArray<GanttTask>) ?? []}
           height={props.height as number | undefined}

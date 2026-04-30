@@ -79,7 +79,7 @@ describe("createVersion", () => {
     };
 
     const result = await createVersion(
-      { assetId: "B", tenantId: "T", spec: SPEC, renderPayload: PAYLOAD },
+      { assetId: "B", tenantId: "T", spec: SPEC, renderPayload: PAYLOAD, triggeredBy: "manual" },
       sb as never,
     );
 
@@ -89,7 +89,7 @@ describe("createVersion", () => {
 
   it("retourne null si Supabase est indisponible", async () => {
     const result = await createVersion(
-      { assetId: "X", tenantId: "T", spec: SPEC, renderPayload: PAYLOAD },
+      { assetId: "X", tenantId: "T", spec: SPEC, renderPayload: PAYLOAD, triggeredBy: "manual" },
       null as never,
     );
     expect(result).toBeNull();
@@ -112,20 +112,20 @@ describe("listVersions", () => {
     ];
     const sb = { from: vi.fn(() => buildChainableFor({ data: rows, error: null })) };
 
-    const result = await listVersions({ assetId: "A", tenantId: "T" }, sb as never);
+    const result = await listVersions({ assetId: "A", tenantId: "T", limit: 50 }, sb as never);
     expect(result).toHaveLength(2);
     expect(result[0].versionNumber).toBe(2);
     expect(result[1].triggeredBy).toBe("manual");
   });
 
   it("retourne [] si Supabase indispo", async () => {
-    const result = await listVersions({ assetId: "A", tenantId: "T" }, null as never);
+    const result = await listVersions({ assetId: "A", tenantId: "T", limit: 50 }, null as never);
     expect(result).toEqual([]);
   });
 
   it("retourne [] sur erreur DB", async () => {
     const sb = { from: vi.fn(() => buildChainableFor({ data: null, error: { message: "fail" } })) };
-    const result = await listVersions({ assetId: "A", tenantId: "T" }, sb as never);
+    const result = await listVersions({ assetId: "A", tenantId: "T", limit: 50 }, sb as never);
     expect(result).toEqual([]);
   });
 });
@@ -215,5 +215,5 @@ function buildChainableFor(finalResult: unknown) {
   (obj as unknown as { catch: (fn: (e: unknown) => unknown) => unknown }).catch = (
     fn: (e: unknown) => unknown,
   ) => Promise.resolve(finalResult).catch(fn);
-  return obj as unknown as ReturnType<ReturnType<typeof createVersion>>;
+  return obj as unknown as Awaited<ReturnType<typeof createVersion>>;
 }
