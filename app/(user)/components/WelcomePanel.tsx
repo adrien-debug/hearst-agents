@@ -40,9 +40,9 @@ export function WelcomePanel() {
     .slice(0, 2);
 
   const quickActions = [
-    { label: "New brief", icon: "+" },
-    { label: "Run query", icon: "⚡" },
-    { label: "View assets", icon: "📋" },
+    { label: "Nouveau brief", icon: "+" },
+    { label: "Nouvelle requête", icon: "⚡" },
+    { label: "Voir les documents", icon: "📋" },
   ];
 
   return (
@@ -50,7 +50,7 @@ export function WelcomePanel() {
       {/* Greeting */}
       <div className="w-full mb-12">
         <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)] mb-2">
-          Welcome back,
+          Bon retour,
         </p>
         <div className="flex items-baseline justify-between">
           <h1 className="t-34 font-semibold tracking-[-0.025em] text-[var(--text)]">
@@ -68,7 +68,7 @@ export function WelcomePanel() {
       {/* Section 1 — Last Customers (Halo: pure text, no boxes) */}
       {topCustomers.length > 0 && (
         <div className="w-full mb-10">
-          <p className="rail-section-label mb-3">Recent customers</p>
+          <p className="rail-section-label mb-3">Clients récents</p>
           <div className="flex flex-col gap-3">
             {topCustomers.map((customer) => (
               <button
@@ -89,13 +89,13 @@ export function WelcomePanel() {
 
       {/* Section 2 — Quick Actions (Halo: bare buttons, no box) */}
       <div className="w-full mb-10">
-        <p className="rail-section-label mb-3">Quick actions</p>
+        <p className="rail-section-label mb-3">Actions rapides</p>
         <div className="flex flex-col">
           {quickActions.map((action, idx) => (
             <button
               key={action.label}
               onClick={() => {
-                if (action.label === "View assets") router.push("/assets");
+                if (action.label === "Voir les documents") router.push("/assets");
               }}
               className="group flex items-center justify-between py-3 px-0 border-b border-[var(--border-shell)] cursor-pointer transition-colors duration-base hover:text-[var(--cykan)]"
             >
@@ -113,7 +113,7 @@ export function WelcomePanel() {
       {/* Section 3 — Latest Missions */}
       {topMissions.length > 0 && (
         <div className="w-full">
-          <p className="rail-section-label mb-3">Latest missions</p>
+          <p className="rail-section-label mb-3">Dernières missions</p>
           <div className="flex flex-col gap-2">
             {topMissions.map((m) => (
               <div
@@ -133,14 +133,13 @@ export function WelcomePanel() {
                           : "var(--text-faint)",
                     }}
                   >
-                    {m.opsStatus === "running" ? "running" : "paused"}
+                    {m.opsStatus === "running" ? "en cours" : "en pause"}
                   </span>
                 </div>
                 <p className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)] group-hover:text-[var(--text-ghost)] mt-1">
                   {m.lastRunAt
-                    ? `${Math.floor((now - m.lastRunAt) / 60000)}m`
-                    : "—"}{" "}
-                  ago
+                    ? `il y a ${Math.floor((now - m.lastRunAt) / 60000)}m`
+                    : "—"}
                 </p>
               </div>
             ))}

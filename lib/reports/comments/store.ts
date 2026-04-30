@@ -99,7 +99,8 @@ export async function addComment(
   const sb = getClient(client);
   if (!sb) return null;
 
-  const { data, error } = await sb
+  const now = new Date().toISOString();
+  const { data: insertedRows, error } = await sb
     .from("report_comments")
     .insert({
       asset_id: input.assetId,
@@ -107,15 +108,27 @@ export async function addComment(
       user_id: input.userId,
       block_ref: input.blockRef,
       body: input.body,
-    })
-    .select("*")
-    .single();
+    });
 
   if (error) {
     console.error("[comments] insert error:", error.message);
     return null;
   }
-  return rowToComment(data as ReportCommentRow);
+
+  // Supabase insert sans .select() retourne null en data — on relit la row via select.
+  const { data: rows, error: fetchErr } = await sb
+    .from("report_comments")
+    .select("id, asset_id, tenant_id, user_id, block_ref, body, created_at, updated_at")
+    .eq("asset_id", input.assetId)
+    .eq("tenant_id", input.tenantId)
+    .eq("user_id", input.userId)
+    .eq("body", input.body)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  void now; // utilisé implicitement via new Date() ci-dessus
+  if (fetchErr || !rows || rows.length === 0) return null;
+  return rowToComment((rows as ReportCommentRow[])[0]);
 }
 
 /**

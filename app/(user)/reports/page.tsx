@@ -70,7 +70,11 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-1 gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
+    <div
+      data-testid="loading-skeleton"
+      className="grid grid-cols-1 gap-4"
+      style={{ gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}
+    >
       {Array.from({ length: 9 }).map((_, i) => (
         <ReportCardSkeleton key={i} />
       ))}
@@ -156,6 +160,7 @@ export default function ReportsDiscoveryPage() {
 
   return (
     <div
+      data-testid="reports-page"
       className="flex-1 flex flex-col min-h-0 overflow-auto"
       style={{ background: "var(--bg-center)", color: "var(--text)" }}
     >

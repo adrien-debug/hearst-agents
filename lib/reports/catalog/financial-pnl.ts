@@ -438,7 +438,7 @@ export function buildFinancialPnL(scope: ReportSpec["scope"]): ReportSpec {
       cron: "0 8 1 * *",
       cooldownHours: 24,
     },
-    cacheTTL: { raw: 1800, transform: 3600, render: 7200 },
+    cacheTTL: { raw: 1800, transform: 3600, render: 86400 },
     createdAt: now,
     updatedAt: now,
   };

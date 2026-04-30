@@ -406,7 +406,7 @@ export function buildHrPeople(scope: ReportSpec["scope"]): ReportSpec {
       cron: "0 8 * * 1",
       cooldownHours: 24,
     },
-    cacheTTL: { raw: 1200, transform: 2400, render: 3600 },
+    cacheTTL: { raw: 1200, transform: 2400, render: 86400 },
     createdAt: now,
     updatedAt: now,
   };

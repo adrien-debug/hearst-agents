@@ -6,11 +6,14 @@
  *   POST /api/notifications/read   → markRead
  *   POST /api/notifications/read-all → markAllRead
  *
- * Polling toutes les 30s (pas de Supabase Realtime pour l'instant).
+ * Transport primaire : Supabase Realtime (postgres_changes INSERT).
+ * Fallback automatique : polling 60s si le channel Realtime passe en
+ * CHANNEL_ERROR (réseau coupé, quota dépassé, etc.).
  */
 
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export interface AppNotification {
   id: string;
@@ -30,16 +33,40 @@ interface NotificationsState {
   unreadCount: number;
   loading: boolean;
   error: string | null;
-  /** Timer ID du polling (pour cleanup). */
+  /** ID du timer de fallback polling (60s). Null si Realtime actif et sain. */
   _pollTimer: ReturnType<typeof setInterval> | null;
+  /** Channel Supabase Realtime actif. Null si non encore souscrit. */
+  _realtimeChannel: ReturnType<SupabaseClient["channel"]> | null;
 
   fetchNotifications: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
-  /** Démarre le polling 30s. Idempotent : n'en démarre pas deux. */
+  /**
+   * Démarre la souscription Realtime.
+   * Si Realtime échoue (CHANNEL_ERROR), bascule sur polling 60s.
+   * Idempotent : n'ouvre pas deux channels simultanés.
+   */
+  startRealtime: (tenantId: string) => void;
+  /** Nettoie channel ET timer. Appelé au unmount. */
+  stopRealtime: () => void;
+  /** @deprecated Conservé pour compat — appelle startRealtime si tenantId dispo. */
   startPolling: () => void;
   stopPolling: () => void;
 }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Crée un client Supabase anon (browser-safe). Retourne null si env manquant. */
+function makeSupabaseBrowserClient(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, {
+    realtime: { params: { eventsPerSecond: 10 } },
+  });
+}
+
+// ── Store ─────────────────────────────────────────────────────────────────────
 
 export const useNotificationsStore = create<NotificationsState>()(
   subscribeWithSelector((set, get) => ({
@@ -48,6 +75,9 @@ export const useNotificationsStore = create<NotificationsState>()(
     loading: false,
     error: null,
     _pollTimer: null,
+    _realtimeChannel: null,
+
+    // ── Fetch depuis l'API REST ──────────────────────────────────────────────
 
     fetchNotifications: async () => {
       set({ loading: true, error: null });
@@ -69,6 +99,8 @@ export const useNotificationsStore = create<NotificationsState>()(
       }
     },
 
+    // ── markRead ─────────────────────────────────────────────────────────────
+
     markRead: async (id: string) => {
       // Optimistic update
       set((state) => {
@@ -89,10 +121,12 @@ export const useNotificationsStore = create<NotificationsState>()(
           body: JSON.stringify({ id }),
         });
       } catch {
-        // On re-fetch pour corriger l'état optimiste si erreur
+        // Correction de l'état optimiste si erreur
         void get().fetchNotifications();
       }
     },
+
+    // ── markAllRead ──────────────────────────────────────────────────────────
 
     markAllRead: async () => {
       const now = new Date().toISOString();
@@ -115,17 +149,84 @@ export const useNotificationsStore = create<NotificationsState>()(
       }
     },
 
-    startPolling: () => {
-      if (get()._pollTimer !== null) return; // déjà actif
+    // ── Realtime ─────────────────────────────────────────────────────────────
 
-      // Fetch immédiat
+    startRealtime: (tenantId: string) => {
+      // Idempotent
+      if (get()._realtimeChannel !== null) return;
+
+      // Fetch initial pour hydrater l'état
       void get().fetchNotifications();
 
-      const timer = setInterval(() => {
-        void get().fetchNotifications();
-      }, 30_000);
+      const sb = makeSupabaseBrowserClient();
+      if (!sb) {
+        // Pas de client dispo (SSR ou env manquant) → fallback polling direct
+        console.warn("[notifications] Supabase client indisponible — fallback polling");
+        _startFallbackPolling(set, get);
+        return;
+      }
 
-      set({ _pollTimer: timer });
+      const channel = sb
+        .channel(`notifications:${tenantId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "in_app_notifications",
+            filter: `tenant_id=eq.${tenantId}`,
+          },
+          (payload) => {
+            const notif = payload.new as AppNotification;
+            set((state) => ({
+              notifications: [notif, ...state.notifications],
+              unreadCount: state.unreadCount + 1,
+            }));
+          },
+        )
+        .subscribe((status) => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            console.warn(
+              `[notifications] Realtime ${status} — fallback polling 60s`,
+            );
+            _startFallbackPolling(set, get);
+          }
+          if (status === "SUBSCRIBED") {
+            // Realtime opérationnel : annule le fallback polling si actif
+            const timer = get()._pollTimer;
+            if (timer !== null) {
+              clearInterval(timer);
+              set({ _pollTimer: null });
+            }
+          }
+        });
+
+      set({ _realtimeChannel: channel });
+    },
+
+    stopRealtime: () => {
+      const channel = get()._realtimeChannel;
+      if (channel !== null) {
+        void channel.unsubscribe();
+        set({ _realtimeChannel: null });
+      }
+      // Nettoie aussi le fallback polling
+      const timer = get()._pollTimer;
+      if (timer !== null) {
+        clearInterval(timer);
+        set({ _pollTimer: null });
+      }
+    },
+
+    // ── Compat legacy ────────────────────────────────────────────────────────
+
+    /** @deprecated Utilise startRealtime(tenantId) à la place. */
+    startPolling: () => {
+      console.warn(
+        "[notifications] startPolling() est déprécié — utilise startRealtime(tenantId)",
+      );
+      void get().fetchNotifications();
+      _startFallbackPolling(set, get);
     },
 
     stopPolling: () => {
@@ -137,3 +238,19 @@ export const useNotificationsStore = create<NotificationsState>()(
     },
   })),
 );
+
+// ── Helpers privés ────────────────────────────────────────────────────────────
+
+/** Démarre le fallback polling 60s (idempotent). */
+function _startFallbackPolling(
+  set: (partial: Partial<NotificationsState>) => void,
+  get: () => NotificationsState,
+) {
+  if (get()._pollTimer !== null) return; // déjà actif
+
+  const timer = setInterval(() => {
+    void get().fetchNotifications();
+  }, 60_000);
+
+  set({ _pollTimer: timer });
+}

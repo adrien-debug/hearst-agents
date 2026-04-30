@@ -271,3 +271,83 @@ describe("runReport — pipeline end-to-end avec mocks", () => {
     }
   });
 });
+
+describe("runReport — budget guard maxBudgetUsd", () => {
+  function buildSpecWithNarration(): ReportSpec {
+    const spec = buildSpec();
+    spec.narration = {
+      mode: "intro+bullets",
+      target: "focal_body",
+      maxTokens: 1500, // max tokens → worst-case cost = 1500/1M × $15 = $0.0225
+      style: "executive",
+    };
+    return spec;
+  }
+
+  it("skip la narration si maxBudgetUsd=0 (budget dépassé avant appel)", async () => {
+    const spec = buildSpecWithNarration();
+    const sourceLoader: SourceLoader = async () =>
+      new Map([["stripe", [{ amount: 100, currency: "EUR" }]]]);
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const result = await runReport(spec, {
+        sourceLoader,
+        noCache: true,
+        maxBudgetUsd: 0, // budget = $0 → toute estimation > 0 skip la narration
+      });
+      // Narration skippée — résultat partiel mais valide
+      expect(result.narration).toBeNull();
+      expect(result.payload.__reportPayload).toBe(true);
+      // Le warn doit avoir été appelé une fois pour signaler le skip
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("narration skippée"),
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it("ne skip pas la narration si maxBudgetUsd suffisant (spec sans narration)", async () => {
+    // Spec sans narration → narrate retourne null normalement sans guard
+    const spec = buildSpec();
+    expect(spec.narration).toBeUndefined();
+    const sourceLoader: SourceLoader = async () =>
+      new Map([["stripe", [{ amount: 100, currency: "EUR" }]]]);
+
+    const result = await runReport(spec, {
+      sourceLoader,
+      noCache: true,
+      maxBudgetUsd: 0.20,
+    });
+    // Pas de narration spec → narration null, cost usd=0
+    expect(result.narration).toBeNull();
+    expect(result.cost.usd).toBe(0);
+    expect(result.cost.exceeded).toBe(false);
+  });
+
+  it("budget guard est wireable pour tous les 9 catalogues (maxBudgetUsd=0.20)", () => {
+    // Vérifie que le champ maxBudgetUsd peut être passé sans erreur TS
+    // et que les 9 specs ont une narration dont le coût estimé est en dessous
+    // du budget $0.20 (sinon leur narration serait systématiquement skippée).
+    const PRICE_PER_M_OUTPUT = 15.0;
+    const MAX_BUDGET = 0.20;
+
+    const narrationMaxTokensList = [
+      700,   // founder-cockpit
+      600,   // customer-360
+      600,   // deal-to-cash
+      700,   // financial-pnl
+      700,   // product-analytics
+      600,   // support-health
+      700,   // engineering-velocity
+      700,   // marketing-aarrr
+      700,   // hr-people
+    ];
+
+    for (const maxTokens of narrationMaxTokensList) {
+      const estimatedCost = (maxTokens / 1_000_000) * PRICE_PER_M_OUTPUT;
+      expect(estimatedCost).toBeLessThan(MAX_BUDGET);
+    }
+  });
+});

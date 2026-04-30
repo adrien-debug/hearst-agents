@@ -372,7 +372,7 @@ export function buildSupportHealth(scope: ReportSpec["scope"]): ReportSpec {
       cron: "0 8 * * *",
       cooldownHours: 6,
     },
-    cacheTTL: { raw: 600, transform: 1200, render: 1800 },
+    cacheTTL: { raw: 600, transform: 1200, render: 3600 },
     createdAt: now,
     updatedAt: now,
   };

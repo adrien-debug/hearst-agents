@@ -424,7 +424,7 @@ export function buildEngineeringVelocity(scope: ReportSpec["scope"]): ReportSpec
       cron: "0 8 * * 1",
       cooldownHours: 12,
     },
-    cacheTTL: { raw: 900, transform: 1800, render: 3600 },
+    cacheTTL: { raw: 900, transform: 1800, render: 86400 },
     createdAt: now,
     updatedAt: now,
   };

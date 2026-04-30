@@ -7,12 +7,12 @@
 :root, [data-theme="dark"] {
   /* Core surfaces — deep dark hierarchy with 'material' */
   --bg: #000000;
-  --bg-elev: #040404;
-  --bg-soft: #080808;
+  --bg-elev: #080808;
+    --bg-soft: #0C0C0C;
   --background: #000000;
   --foreground: #ffffff;
-  --surface: #060606;
-  --rail: #030303;
+  --surface: #111111;
+    --rail: #050505;
   --bg-light-stage: #ffffff;
   --text-dark-strong: #000000;
 
@@ -883,6 +883,8 @@
   --tracking-brand: var(--tracking-brand);
   --tracking-section: var(--tracking-section);
   --tracking-label: var(--tracking-label);
+  --tracking-snug: var(--tracking-snug);
+  --tracking-body: var(--tracking-body);
   --duration-fast: var(--duration-fast);
   --duration-base: var(--duration-base);
   --duration-slow: var(--duration-slow);

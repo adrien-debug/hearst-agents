@@ -123,7 +123,7 @@ export default async function PublicReportPage({ params }: PageProps) {
       >
         <h1 className="halo-title-xl">Lien indisponible</h1>
         <p className="t-13" style={{ color: "var(--text-muted)" }}>
-          Ce lien de partage n'est plus valide ({result.code}).
+          Ce lien de partage n&apos;est plus valide ({result.code}).
         </p>
       </main>
     );
@@ -146,7 +146,7 @@ export default async function PublicReportPage({ params }: PageProps) {
           </p>
         ) : null}
         <p className="t-9" style={{ color: "var(--text-muted)" }}>
-          Lien valide jusqu'au {new Date(result.expiresAt).toLocaleString("fr-FR")}
+          Lien valide jusqu&apos;au {new Date(result.expiresAt).toLocaleString("fr-FR")}
         </p>
       </header>
 

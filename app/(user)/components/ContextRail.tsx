@@ -199,6 +199,13 @@ function CockpitChatBody() {
           loading={loading}
         />
       </div>
+      {reportSuggestions && reportSuggestions.length > 0 && (
+        <SuggestionsFooter
+          suggestions={reportSuggestions}
+          runningSpecs={runningSpecs}
+          onRun={runSuggestion}
+        />
+      )}
     </div>
   );
 }
@@ -252,6 +259,8 @@ function SuggestionsFooter({
                   type="button"
                   onClick={() => onRun(s.specId, s.title)}
                   disabled={isRunning}
+                  data-testid={`report-suggestion-${s.specId}`}
+                  data-suggestion-status={s.status}
                   className="w-full text-left flex items-center justify-between rounded-md border border-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.02)] focus-visible:outline-none focus-visible:border-[rgba(45,212,191,0.3)] transition-all duration-300"
                   style={{ padding: "var(--space-3) var(--space-4)", background: "rgba(255,255,255,0.015)" }}
                 >

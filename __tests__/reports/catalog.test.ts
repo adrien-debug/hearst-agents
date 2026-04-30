@@ -294,3 +294,66 @@ describe("catalogue — sous-scalaires consommés par signals", () => {
     }
   });
 });
+
+describe("catalogue — TTL cache cohérent avec cadence", () => {
+  /**
+   * Règle :
+   *  - monthly  → render TTL = 86400s (max schema, 24h)
+   *  - weekly   → render TTL ≥ 86400s (24h min, 1 run/semaine → cache au moins 1 journée)
+   *  - daily    → render TTL ≥ 3600s  (1h min, au moins 1h de cache sur du daily)
+   *  - ad-hoc   → pas de contrainte forte
+   */
+  it("financial-pnl (monthly) → render TTL = 86400s", () => {
+    const spec = buildFinancialPnL(SCOPE);
+    expect(spec.meta.cadence).toBe("monthly");
+    expect(spec.cacheTTL.render).toBe(86400);
+  });
+
+  it("engineering-velocity (weekly) → render TTL ≥ 86400s", () => {
+    const spec = buildEngineeringVelocity(SCOPE);
+    expect(spec.meta.cadence).toBe("weekly");
+    expect(spec.cacheTTL.render).toBeGreaterThanOrEqual(86400);
+  });
+
+  it("marketing-aarrr (weekly) → render TTL ≥ 86400s", () => {
+    const spec = buildMarketingAarrr(SCOPE);
+    expect(spec.meta.cadence).toBe("weekly");
+    expect(spec.cacheTTL.render).toBeGreaterThanOrEqual(86400);
+  });
+
+  it("product-analytics (weekly) → render TTL ≥ 86400s", () => {
+    const spec = buildProductAnalytics(SCOPE);
+    expect(spec.meta.cadence).toBe("weekly");
+    expect(spec.cacheTTL.render).toBeGreaterThanOrEqual(86400);
+  });
+
+  it("hr-people (weekly) → render TTL ≥ 86400s", () => {
+    const spec = buildHrPeople(SCOPE);
+    expect(spec.meta.cadence).toBe("weekly");
+    expect(spec.cacheTTL.render).toBeGreaterThanOrEqual(86400);
+  });
+
+  it("support-health (daily) → render TTL ≥ 3600s", () => {
+    const spec = buildSupportHealth(SCOPE);
+    expect(spec.meta.cadence).toBe("daily");
+    expect(spec.cacheTTL.render).toBeGreaterThanOrEqual(3600);
+  });
+
+  it("tous les specs cacheTTL passent la validation Zod (max render=86400)", () => {
+    const allSpecs = [
+      buildFounderCockpit(SCOPE),
+      buildCustomer360(SCOPE, "client@example.com"),
+      buildDealToCash(SCOPE),
+      buildFinancialPnL(SCOPE),
+      buildProductAnalytics(SCOPE),
+      buildSupportHealth(SCOPE),
+      buildEngineeringVelocity(SCOPE),
+      buildMarketingAarrr(SCOPE),
+      buildHrPeople(SCOPE),
+    ];
+    for (const spec of allSpecs) {
+      expect(() => reportSpecSchema.parse(spec)).not.toThrow();
+      expect(spec.cacheTTL.render).toBeLessThanOrEqual(86400);
+    }
+  });
+});

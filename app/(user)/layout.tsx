@@ -11,6 +11,7 @@ import { ToastContainer } from "@/app/components/ToastContainer";
 import { useToast } from "@/app/hooks/use-toast";
 import { useGlobalHotkeys } from "@/app/hooks/use-global-hotkeys";
 import { useVoiceStore } from "@/stores/voice";
+import { OAuthExpiryBanner } from "./components/OAuthExpiryBanner";
 
 function BriefingAutoTrigger() {
   useEffect(() => {
@@ -79,6 +80,9 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden rounded-2xl"
             style={{ background: "#000000", color: "var(--text)" }}
           >
+            {/* Banner alerte tokens OAuth expirants — discret, dismissable */}
+            <OAuthExpiryBanner />
+
             <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
               {children}
             </main>

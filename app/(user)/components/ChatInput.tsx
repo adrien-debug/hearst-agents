@@ -155,27 +155,27 @@ export function ChatInput({
 
         {/* Input Pill — High-end minimal design */}
         <div
-          className="rounded-[32px] group border border-[rgba(255,255,255,0.06)] transition-all duration-500 px-6 py-5 focus-within:border-[rgba(45,212,191,0.3)] focus-within:shadow-[0_0_30px_rgba(45,212,191,0.05)]"
+          className="rounded-[32px] group border border-[rgba(255,255,255,0.15)] transition-all duration-700 px-10 py-8 focus-within:border-[rgba(45,212,191,0.4)] focus-within:bg-[rgba(255,255,255,0.03)] shadow-[0_32px_96px_-16px_rgba(0,0,0,0.7)] backdrop-blur-2xl"
           style={{
-            background: "rgba(255,255,255,0.015)",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)",
             color: "var(--text)",
           }}
         >
           {attachment && (
-            <div className="flex items-center gap-3 px-1 pb-3 mb-2 border-b border-[rgba(255,255,255,0.04)]">
-              <span className="t-9 tracking-[0.2em] uppercase text-[var(--cykan)]">
+            <div className="flex items-center gap-3 px-1 pb-4 mb-4 border-b border-[rgba(255,255,255,0.03)]">
+              <span className="t-9 tracking-[0.3em] uppercase text-[var(--cykan)]">
                 PDF
               </span>
-              <span className="t-13 text-[rgba(255,255,255,0.7)] truncate max-w-xs font-light">
+              <span className="t-13 text-[var(--text-muted)] truncate max-w-xs font-light">
                 {attachment.fileName}
               </span>
-              <span className="t-10 tracking-widest text-[rgba(255,255,255,0.3)]">
-                {attachment.pageCount}p
+              <span className="t-10 tracking-[0.2em] text-[var(--text-ghost)]">
+                {attachment.pageCount}P
               </span>
               <button
                 type="button"
                 onClick={() => setAttachment(null)}
-                className="ml-auto t-13 text-[rgba(255,255,255,0.3)] hover:text-[var(--danger)] transition-colors"
+                className="ml-auto t-13 text-[var(--text-ghost)] hover:text-[var(--danger)] transition-colors"
                 aria-label="Retirer le document"
               >
                 ×
@@ -212,21 +212,27 @@ export function ChatInput({
             placeholder={
               placeholder ||
               surfacePlaceholders[surface] ||
-              "Poser une question"
+              "Demande n'importe quoi…"
             }
             rows={1}
-            className="block w-full bg-transparent t-15 font-light text-[rgba(255,255,255,0.9)] placeholder:text-[rgba(255,255,255,0.25)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
+            className="block w-full bg-transparent t-18 font-light text-[rgba(255,255,255,0.95)] placeholder:text-[rgba(255,255,255,0.3)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
             style={{
               minHeight: "var(--height-input-min)",
               maxHeight: "var(--height-input-max)",
             }}
           />
           
-          <div className="flex items-center justify-between pt-4 mt-1">
-            <span className="t-9 tracking-[0.25em] uppercase text-[rgba(255,255,255,0.3)] px-1">
-              Auto
-            </span>
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between pt-6 mt-2 border-t border-[rgba(255,255,255,0.02)]">
+            <div className="flex items-center gap-4 px-1">
+               <span className="t-9 tracking-[0.3em] uppercase text-[var(--text-ghost)]">
+                Auto
+              </span>
+              <div className="w-1 h-1 rounded-full bg-[rgba(255,255,255,0.1)]" />
+              <span className="t-9 tracking-[0.3em] uppercase text-[var(--text-ghost)] opacity-40">
+                GPT-4O
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -272,52 +278,34 @@ export function ChatInput({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading || isRunning}
                 title={uploading ? "Analyse en cours…" : "Joindre un PDF"}
-                className={`w-8 h-8 flex items-center justify-center transition-all duration-300 ${
+                className={`transition-all duration-500 ${
                   uploading
                     ? "text-[var(--warn)] animate-pulse"
                     : attachment
                       ? "text-[var(--cykan)]"
-                      : "text-[rgba(255,255,255,0.3)] hover:text-[rgba(255,255,255,0.7)]"
+                      : "text-[rgba(255,255,255,0.2)] hover:text-[rgba(255,255,255,0.5)]"
                 }`}
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                 </svg>
               </button>
               {isRunning ? (
-                <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                  <div className="w-4 h-4 border-2 border-[rgba(255,255,255,0.1)] border-t-[var(--cykan)] rounded-full animate-spin" />
+                <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                  <div className="w-3 h-3 border border-[rgba(255,255,255,0.1)] border-t-[var(--cykan)] rounded-full animate-spin" />
                 </div>
               ) : (
                 <button
                   onClick={handleSubmit}
                   disabled={!input.trim()}
-                  className={`w-8 h-8 flex items-center justify-center shrink-0 rounded-md transition-all duration-300 ${
+                  className={`transition-all duration-500 ${
                     input.trim()
-                      ? "border border-[rgba(45,212,191,0.3)] text-[var(--cykan)] bg-[rgba(45,212,191,0.05)] hover:bg-[rgba(45,212,191,0.1)] hover:shadow-[0_0_15px_rgba(45,212,191,0.15)]"
-                      : "border border-[rgba(255,255,255,0.06)] text-[rgba(255,255,255,0.2)] bg-transparent cursor-not-allowed"
+                      ? "text-[var(--cykan)] scale-110"
+                      : "text-[rgba(255,255,255,0.1)] cursor-not-allowed"
                   }`}
                   title="Envoyer"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </button>

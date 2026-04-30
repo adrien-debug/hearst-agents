@@ -28,7 +28,10 @@ import {
   type BusinessSignal,
 } from "@/lib/reports/signals/extract";
 import type { Severity } from "@/lib/reports/signals/types";
-import { checkReportBudget } from "./cost-meter";
+import { checkReportBudget, REPORT_BUDGET_USD, SONNET_4_6_PRICING } from "./cost-meter";
+
+/** Prix output Sonnet 4-6 en USD/1M tokens (utilisé pour l'estimation pré-call). */
+const SONNET_OUTPUT_PRICE_PER_M = SONNET_4_6_PRICING.output;
 import type {
   DispatchAlertsInput,
   DispatchAlertsResult,
@@ -87,6 +90,13 @@ export interface RunReportOptions {
     tenantId?: string;
     triggeredBy?: "manual" | "scheduled" | "api";
   };
+  /**
+   * Budget max en USD pour ce run. Si le coût estimé de la narration dépasse
+   * cette valeur, la narration est skippée (rapport partiel retourné).
+   * Défaut : REPORT_BUDGET_USD (0.20).
+   * Mettre à 0 pour désactiver la narration inconditionnellement.
+   */
+  maxBudgetUsd?: number;
 }
 
 export interface RunReportResult {
@@ -172,8 +182,25 @@ export async function runReport(
     }
   }
 
-  // ── 6. Narrate (single LLM call) ─────────────────────────
-  const narrationResult = await narrate({ spec, payload });
+  // ── 6. Narrate (single LLM call) — guard budget ──────────
+  const maxBudgetUsd = options.maxBudgetUsd ?? REPORT_BUDGET_USD;
+  // Estimation worst-case : coût d'une narration = maxTokens output × prix output Anthropic.
+  // Si la spec n'a pas de narration, l'estimation est 0.
+  const narrateMaxTokens = spec.narration?.maxTokens ?? 0;
+  const estimatedNarrateCostUsd =
+    narrateMaxTokens > 0
+      ? (narrateMaxTokens / 1_000_000) * SONNET_OUTPUT_PRICE_PER_M
+      : 0;
+
+  let budgetSkipped = false;
+  if (spec.narration && estimatedNarrateCostUsd > maxBudgetUsd) {
+    console.warn(
+      `[runReport] narration skippée — coût estimé $${estimatedNarrateCostUsd.toFixed(4)} > budget $${maxBudgetUsd.toFixed(2)} (spec=${spec.id})`,
+    );
+    budgetSkipped = true;
+  }
+
+  const narrationResult = budgetSkipped ? null : await narrate({ spec, payload });
 
   // ── 7. L3 render cache write (fire-and-forget) ──────────
   if (!options.noCache) {
