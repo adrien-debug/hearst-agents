@@ -307,11 +307,11 @@ export function ReportLayout({
               borderTop: "1px solid var(--surface-2)",
             }}
           >
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-              spec_v{effectivePayload.version}
+            <span className="t-11 font-light text-[var(--text-faint)]">
+              Version {effectivePayload.version}
             </span>
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-              generated_at: {fmtTimestamp(effectivePayload.generatedAt)}
+            <span className="t-11 font-light text-[var(--text-faint)]">
+              Généré · {fmtTimestamp(effectivePayload.generatedAt)}
             </span>
           </div>
         )}
@@ -500,7 +500,7 @@ function BlockRenderer({ block }: { block: RenderedBlock }) {
             minHeight: "var(--space-12)",
           }}
         >
-          <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             {block.type}_pending
           </span>
         </div>

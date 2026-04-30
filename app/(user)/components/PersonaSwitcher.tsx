@@ -143,7 +143,7 @@ export function PersonaSwitcher({
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
-        <span className="t-9 font-mono uppercase tracking-marquee">{label}</span>
+        <span className="t-11 font-light">{label}</span>
       </button>
 
       {open && personas && (
@@ -172,7 +172,7 @@ export function PersonaSwitcher({
             }}
           >
             <div className="t-11 font-medium text-[var(--text-soft)]">Auto</div>
-            <div className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+            <div className="t-11 font-light text-[var(--text-faint)]">
               persona selon surface
             </div>
           </button>
@@ -202,7 +202,7 @@ export function PersonaSwitcher({
                   {p.name}
                   {p.isDefault ? (
                     <span
-                      className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]"
+                      className="t-11 font-medium text-[var(--cykan)]"
                       style={{ marginLeft: "var(--space-2)" }}
                     >
                       DEFAULT
@@ -215,7 +215,7 @@ export function PersonaSwitcher({
                   </div>
                 ) : null}
                 {(p.tone || p.surface) && (
-                  <div className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+                  <div className="t-11 font-light text-[var(--text-faint)]">
                     {p.tone ?? "—"} {p.surface ? `· ${p.surface}` : ""}
                   </div>
                 )}

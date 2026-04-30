@@ -140,7 +140,9 @@ function ContextRailShell({
   );
 }
 
-// ── Section primitive (stable structure across sub-rails) ─
+// ── Section primitive (stable structure across sub-rails).
+// Pivot UI 2026-05-01 : labels en voix éditoriale (t-15 medium) et compteurs
+// en typo régulière, plus en mono caps tracking-display. Le rail ne crie plus.
 
 function Section({
   label,
@@ -152,11 +154,19 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="px-6 py-6">
-      <header className="flex items-center justify-between mb-4">
-        <span className="rail-section-label">{label}</span>
+    <section className="px-5 py-5">
+      <header className="flex items-baseline justify-between mb-4">
+        <span
+          className="t-13 font-medium"
+          style={{ color: "var(--text-l1)" }}
+        >
+          {label}
+        </span>
         {typeof count === "number" && (
-          <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
+          <span
+            className="t-11 font-mono tabular-nums"
+            style={{ color: "var(--text-faint)" }}
+          >
             {count.toString().padStart(2, "0")}
           </span>
         )}
@@ -168,7 +178,7 @@ function Section({
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
-    <p className="t-10 tracking-body uppercase text-[var(--text-faint)] font-light">
+    <p className="t-11 font-light" style={{ color: "var(--text-faint)" }}>
       {children}
     </p>
   );
@@ -373,7 +383,7 @@ function ContextRailForAsset() {
 
       {assetKind && (
         <Section label="Type">
-          <p className="t-9 font-mono uppercase tracking-display text-[var(--cykan)]">
+          <p className="t-11 font-medium text-[var(--cykan)]">
             {assetKind}
           </p>
         </Section>
@@ -384,7 +394,7 @@ function ContextRailForAsset() {
           <ul className="flex flex-col gap-2">
             {variantMeta.width && variantMeta.height && (
               <li className="flex items-baseline gap-3">
-                <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+                <span className="t-11 font-light text-[var(--text-faint)]">
                   Dimensions
                 </span>
                 <span className="t-11 font-mono text-[var(--text-muted)]">
@@ -394,7 +404,7 @@ function ContextRailForAsset() {
             )}
             {variantMeta.model && (
               <li className="flex items-baseline gap-3">
-                <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+                <span className="t-11 font-light text-[var(--text-faint)]">
                   Model
                 </span>
                 <span className="t-11 font-mono text-[var(--text-muted)] truncate">
@@ -404,7 +414,7 @@ function ContextRailForAsset() {
             )}
             {imageVariant.provider && (
               <li className="flex items-baseline gap-3">
-                <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+                <span className="t-11 font-light text-[var(--text-faint)]">
                   Provider
                 </span>
                 <span className="t-11 font-mono text-[var(--text-muted)] uppercase">

@@ -67,14 +67,14 @@ export function ApprovalInline({
         className="flex items-center"
         style={{ gap: "var(--space-2)", marginBottom: "var(--space-2)" }}
       >
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+        <span className="t-11 font-medium text-[var(--cykan)]">
           Validation requise
         </span>
         <span
           className="rounded-pill bg-[var(--text-ghost)]"
           style={{ width: "var(--space-1)", height: "var(--space-1)" }}
         />
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           {kind}
         </span>
         {providerId && (

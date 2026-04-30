@@ -516,7 +516,7 @@ export function Commandeur() {
             className="flex-1 bg-transparent t-48 leading-none font-bold tracking-tight text-[var(--text)] placeholder-[var(--text-ghost)] outline-none"
           />
           {loading && (
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+            <span className="t-11 font-light text-[var(--text-faint)]">
               Recherche…
             </span>
           )}
@@ -530,7 +530,7 @@ export function Commandeur() {
               {sections.map((section) => (
                 <section key={section.key} className="flex flex-col gap-1">
                   <h2
-                    className="t-9 font-mono uppercase tracking-marquee"
+                    className="t-11 font-light"
                     style={{
                       color: "var(--text-ghost)",
                       marginBottom: "var(--space-2)",

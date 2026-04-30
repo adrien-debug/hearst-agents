@@ -118,7 +118,7 @@ export function PublishTemplateModal({
           <h2 className="t-15 font-medium text-[var(--text)]">
             Publier au marketplace
           </h2>
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             {KIND_LABELS[kind]}
           </span>
         </header>
@@ -205,7 +205,7 @@ export function PublishTemplateModal({
         </label>
 
         {err && (
-          <p className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
+          <p className="t-11 font-medium text-[var(--danger)]">
             {err}
           </p>
         )}
@@ -218,7 +218,7 @@ export function PublishTemplateModal({
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)] hover:text-[var(--text-soft)]"
+            className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--text-soft)]"
             style={{ background: "transparent", border: "none", cursor: "pointer" }}
           >
             Annuler
@@ -256,7 +256,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+      <span className="t-11 font-light text-[var(--text-faint)]">
         {label}
       </span>
       {children}

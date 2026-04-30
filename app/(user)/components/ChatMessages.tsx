@@ -54,12 +54,12 @@ function formatHHMM(ts: number | null): string {
 function MetaLine({ author, ts }: { author: string; ts: string }) {
   return (
     <div
-      className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]"
+      className="t-11 font-light text-[var(--text-faint)]"
       style={{ marginBottom: "var(--space-2)" }}
     >
       <span>{author}</span>
       <span className="text-[var(--text-ghost)]" style={{ marginLeft: "var(--space-2)", marginRight: "var(--space-2)" }}>·</span>
-      <span>{ts}</span>
+      <span className="font-mono tabular-nums">{ts}</span>
     </div>
   );
 }
@@ -83,7 +83,7 @@ function ConfirmActionChips({
     <div className="flex" style={{ gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
       <button
         onClick={onConfirm}
-        className="halo-on-hover inline-flex items-center px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan-bg-active)] hover:bg-[var(--cykan-bg-hover)] transition-colors"
+        className="inline-flex items-center px-3 py-1.5 t-11 font-medium border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan-bg-active)] hover:bg-[var(--cykan-bg-hover)] transition-colors duration-base"
         style={{ gap: "var(--space-2)" }}
       >
         <span>Confirmer</span>
@@ -93,7 +93,7 @@ function ConfirmActionChips({
       </button>
       <button
         onClick={onCancel}
-        className="inline-flex items-center px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--border-default)] transition-colors"
+        className="inline-flex items-center px-3 py-1.5 t-11 font-light border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--border-default)] transition-colors duration-base"
         style={{ gap: "var(--space-2)" }}
       >
         <span>Annuler</span>

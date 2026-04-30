@@ -208,7 +208,7 @@ export function BlockActions({ onAction, editable = true }: BlockActionsProps) {
             data-testid={`block-action-${action.id}`}
             disabled={disabled}
             onClick={() => fire(action.id, action.label)}
-            className="inline-flex items-center t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--cykan)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-transparent"
+            className="inline-flex items-center t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-transparent"
             style={{
               gap: "var(--space-2)",
               transitionDuration: "var(--duration-base)",
@@ -225,7 +225,7 @@ export function BlockActions({ onAction, editable = true }: BlockActionsProps) {
         <span
           role="status"
           aria-live="polite"
-          className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]"
+          className="t-11 font-medium text-[var(--cykan)]"
           style={{ marginLeft: "var(--space-2)" }}
         >
           {feedback}

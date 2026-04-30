@@ -1,14 +1,13 @@
 /**
  * @vitest-environment jsdom
  *
- * Chat Context Store — chips add/remove/clear, mode switch, persistence.
+ * Chat Context Store — chips add/remove/clear, persistence.
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
 import { useChatContext } from "@/stores/chat-context";
 
-const reset = () =>
-  useChatContext.setState({ chips: [], inputMode: "ask" }, false);
+const reset = () => useChatContext.setState({ chips: [] }, false);
 
 describe("useChatContext store", () => {
   beforeEach(() => {
@@ -18,10 +17,9 @@ describe("useChatContext store", () => {
     reset();
   });
 
-  it("initialise avec aucune chip et mode 'ask'", () => {
+  it("initialise avec aucune chip", () => {
     const state = useChatContext.getState();
     expect(state.chips).toEqual([]);
-    expect(state.inputMode).toBe("ask");
   });
 
   it("ajoute une chip", () => {
@@ -59,23 +57,14 @@ describe("useChatContext store", () => {
     expect(useChatContext.getState().chips).toEqual([]);
   });
 
-  it("setInputMode change le mode", () => {
-    useChatContext.getState().setInputMode("analyze");
-    expect(useChatContext.getState().inputMode).toBe("analyze");
-    useChatContext.getState().setInputMode("create");
-    expect(useChatContext.getState().inputMode).toBe("create");
-  });
-
-  it("persiste chips et mode dans localStorage (clé hearst-chat-context)", () => {
-    const { addChip, setInputMode } = useChatContext.getState();
+  it("persiste chips dans localStorage (clé hearst-chat-context)", () => {
+    const { addChip } = useChatContext.getState();
     addChip({ id: "x", label: "X", kind: "report" });
-    setInputMode("create");
 
     const raw = window.localStorage.getItem("hearst-chat-context");
     expect(raw).not.toBeNull();
     const parsed = JSON.parse(raw as string);
     expect(parsed.state.chips).toHaveLength(1);
     expect(parsed.state.chips[0].id).toBe("x");
-    expect(parsed.state.inputMode).toBe("create");
   });
 });

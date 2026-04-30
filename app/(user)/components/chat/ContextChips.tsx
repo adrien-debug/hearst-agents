@@ -41,7 +41,7 @@ export function ContextChips() {
                 }),
               );
             }}
-            className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)] hover:text-[var(--text-soft)] transition-colors"
+            className="t-11 font-light text-[var(--text-muted)] hover:text-[var(--text-soft)] transition-colors"
             data-testid={`context-chip-label-${chip.id}`}
           >
             {chip.label}

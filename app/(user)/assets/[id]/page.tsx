@@ -60,7 +60,7 @@ export default function AssetDetailPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="t-13 text-[var(--text-ghost)]">Chargement...</div>
+        <div className="t-13 text-[var(--text-faint)]">Chargement…</div>
       </div>
     );
   }

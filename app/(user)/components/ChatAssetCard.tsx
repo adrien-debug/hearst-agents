@@ -72,14 +72,14 @@ export function ChatAssetCard({ assetRef }: { assetRef: MessageAssetRef }) {
         <AssetIcon type={assetRef.type} />
       </span>
       <div className="flex flex-col flex-1 min-w-0">
-        <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)] group-hover:text-[var(--cykan)] transition-colors">
+        <span className="t-11 font-light text-[var(--text-faint)] group-hover:text-[var(--cykan)] transition-colors">
           {typeLabel}
         </span>
         <span className="t-13 text-[var(--text)] font-light truncate">
           {assetRef.title}
         </span>
       </div>
-      <span className="t-9 font-mono uppercase tracking-display text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-colors shrink-0">
+      <span className="t-11 font-light text-[var(--text-faint)] group-hover:text-[var(--cykan)] transition-colors shrink-0">
         Ouvrir →
       </span>
     </button>

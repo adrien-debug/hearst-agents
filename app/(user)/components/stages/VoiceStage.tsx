@@ -86,17 +86,17 @@ export function VoiceStage(_props: VoiceStageProps) {
         context={
           <>
             <span
-              className="rounded-pill bg-[var(--cykan)] halo-cyan-sm"
+              className="rounded-pill bg-[var(--cykan)]"
               style={{ width: "var(--space-2)", height: "var(--space-2)" }}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               VOICE
             </span>
             <span
               className="rounded-pill bg-[var(--text-ghost)]"
               style={{ width: "var(--space-1)", height: "var(--space-1)" }}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+            <span className="t-11 font-light text-[var(--text-muted)]">
               {sessionId ? sessionId.slice(0, 8) : "STANDBY"}
             </span>
           </>
@@ -120,13 +120,13 @@ export function VoiceStage(_props: VoiceStageProps) {
 
         <div className="mt-12 flex flex-col items-center gap-3">
           <span
-            className="t-9 font-mono uppercase tracking-marquee"
+            className="t-11 font-light"
             style={{ color: phaseColor }}
           >
             {PHASE_LABEL[phase]}
           </span>
           {error && (
-            <p className="t-11 font-mono uppercase tracking-display text-[var(--danger)]">
+            <p className="t-11 font-medium text-[var(--danger)]">
               {error}
             </p>
           )}

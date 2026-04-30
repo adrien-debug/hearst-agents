@@ -151,7 +151,7 @@ export function CockpitInbox() {
         <p className="t-15 font-medium tracking-tight text-[var(--text)]">
           Hearst attend ton premier signal.
         </p>
-        <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <p className="t-11 font-light text-[var(--text-faint)]">
           ⌘K pour démarrer · demande, ou laisse l{"'"}agent proposer
         </p>
       </div>
@@ -206,7 +206,7 @@ function Section({
   return (
     <section className="flex flex-col" style={{ gap: "var(--space-3)" }}>
       <header className="flex items-center justify-between pb-2 border-b border-[var(--border-default)]">
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           {label}
         </span>
         <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
@@ -242,7 +242,7 @@ function SuggestionRow({
         <p className="t-9 text-[var(--text-faint)] truncate mt-0.5">{suggestion.description}</p>
       </div>
       <span
-        className="t-9 font-mono uppercase tracking-marquee ml-3 shrink-0"
+        className="t-11 font-light ml-3 shrink-0"
         style={{ color: isReady ? "var(--cykan)" : "var(--text-faint)" }}
       >
         {isReady
@@ -296,7 +296,7 @@ function AssetRow({ asset, onClick }: { asset: RightPanelAsset; onClick: () => v
         <AssetGlyphSVG type={asset.type} />
       </span>
       <p className="flex-1 t-13 text-[var(--text)] truncate">{asset.name}</p>
-      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] shrink-0">
+      <span className="t-11 font-light text-[var(--text-faint)] shrink-0">
         {asset.type}
       </span>
     </button>

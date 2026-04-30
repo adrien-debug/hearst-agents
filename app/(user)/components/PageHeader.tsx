@@ -53,14 +53,18 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header
-      className="flex flex-col px-12 py-8 border-b border-[var(--border-subtle)]"
-      style={{ gap: "var(--space-3)" }}
+      className="flex flex-col px-12 py-6"
+      style={{ gap: "var(--space-2)" }}
     >
-      {/* Top row : breadcrumb OU back link */}
+      {/* Top row : breadcrumb OU back link.
+         Pivot UI 2026-05-01 : back link en typo régulière (pas mono caps
+         tracking-marquee) — voix éditoriale, plus calme. PulseBar fournit déjà
+         le contexte global, donc on retire la border-b qui doublait la frontière
+         visuelle juste sous PulseBar 48px. */}
       {back ? (
         <Link
           href={back.href}
-          className="inline-flex items-center gap-2 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors w-fit"
+          className="inline-flex items-center gap-2 t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors w-fit"
         >
           <ChevronLeftIcon />
           <span>{back.label}</span>

@@ -79,7 +79,7 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
           marginBottom: "var(--space-6)",
         }}
       >
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           Provenance incomplète
         </span>
       </div>
@@ -101,14 +101,14 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
       }}
     >
       <header className="flex items-center" style={{ gap: "var(--space-3)" }}>
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+        <span className="t-11 font-medium text-[var(--cykan)]">
           PROVENANCE
         </span>
         <span
           className="rounded-pill bg-[var(--text-ghost)]"
           style={{ width: "var(--space-1)", height: "var(--space-1)" }}
         />
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           {DATE_FORMATTER.format(new Date(asset.createdAt))}
         </span>
       </header>
@@ -144,7 +144,7 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
           className="flex flex-col"
           style={{ gap: "var(--space-2)", paddingTop: "var(--space-2)", borderTop: "1px solid var(--surface-2)" }}
         >
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             Basé sur · {derived.length}
           </span>
           <div className="flex flex-wrap" style={{ gap: "var(--space-2)" }}>
@@ -154,7 +154,7 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
                 type="button"
                 onClick={() => onOpenParent?.(parentId)}
                 disabled={!onOpenParent}
-                className="halo-on-hover t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)] hover:text-[var(--cykan)]"
+                className="t-11 font-light text-[var(--text-muted)] hover:text-[var(--cykan)]"
                 style={{
                   padding: "var(--space-1) var(--space-3)",
                   background: "transparent",
@@ -199,10 +199,10 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
             aria-expanded={showSources}
             data-testid="asset-lineage-sources-toggle"
           >
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+            <span className="t-11 font-light text-[var(--text-faint)]">
               Sources · {sources.length}
             </span>
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               {showSources ? "−" : "+"}
             </span>
           </button>
@@ -228,7 +228,7 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
                 </li>
               ))}
               {sources.length > 12 && (
-                <li className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                <li className="t-11 font-light text-[var(--text-faint)]">
                   + {sources.length - 12} autres
                 </li>
               )}
@@ -243,7 +243,7 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
 function Row({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
-      <dt className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+      <dt className="t-11 font-light text-[var(--text-faint)]">
         {label}
       </dt>
       <dd

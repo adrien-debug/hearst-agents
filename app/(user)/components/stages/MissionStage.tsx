@@ -256,14 +256,14 @@ export function MissionStage({ missionId }: MissionStageProps) {
           <StageActionBar
             context={
               <>
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                <span className="t-11 font-light text-[var(--text-faint)]">
                   MISSION
                 </span>
                 <span
                   className="rounded-pill bg-[var(--text-ghost)]"
                   style={{ width: "var(--space-1)", height: "var(--space-1)" }}
                 />
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                <span className="t-11 font-light text-[var(--text-muted)]">
                   {missionId.slice(0, 8)}
                 </span>
                 {mission && (
@@ -273,7 +273,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
                       style={{ width: "var(--space-1)", height: "var(--space-1)" }}
                     />
                     <span
-                      className="t-9 font-mono uppercase tracking-marquee"
+                      className="t-11 font-medium"
                       style={{ color: statusColor }}
                     >
                       {String(status).toUpperCase()}
@@ -302,7 +302,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
                 style={{ width: "var(--space-2)", height: "var(--space-2)" }}
                 aria-hidden
               />
-              <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+              <p className="t-11 font-light text-[var(--text-faint)]">
                 Chargement de la mission…
               </p>
             </div>
@@ -312,7 +312,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
             <div className="border-l-2 border-[var(--danger)] px-4 py-3"
               style={{ background: "var(--surface-1)" }}
             >
-              <p className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
+              <p className="t-11 font-medium text-[var(--danger)]">
                 ERREUR · {error}
               </p>
             </div>
@@ -337,7 +337,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
                 {mission.name}
               </h1>
 
-              <div className="flex items-center gap-3 mb-10 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+              <div className="flex items-center gap-3 mb-10 t-11 font-light text-[var(--text-faint)]">
                 {mission.schedule && <span>{mission.schedule}</span>}
                 {mission.frequency && !mission.schedule && (
                   <span>{mission.frequency}</span>
@@ -361,7 +361,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
               {(mission.input || mission.description) && (
                 <div className="mb-10">
                   <p
-                    className="t-9 font-mono uppercase tracking-display mb-3"
+                    className="t-11 font-light mb-3"
                     style={{ color: "var(--text-l2)" }}
                   >
                     Prompt
@@ -382,7 +382,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
                     background: "var(--surface-card)",
                   }}
                 >
-                  <label className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)] block mb-3">
+                  <label className="t-11 font-light text-[var(--text-faint)] block mb-3">
                     Cadence (cron)
                   </label>
                   <input
@@ -433,7 +433,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
                   backdrop overlays the entire stage. */}
               <div className="mt-12 pt-8 border-t border-[var(--border-default)]">
                 <p
-                  className="t-9 font-mono uppercase tracking-display mb-4"
+                  className="t-11 font-light mb-4"
                   style={{ color: "var(--text-l2)" }}
                 >
                   Derniers runs · {runs.length.toString().padStart(2, "0")}
@@ -463,7 +463,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
                         >
                           <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
                             <span
-                              className="t-9 font-mono uppercase tracking-marquee"
+                              className="t-11 font-medium"
                               style={{ color: statusCol }}
                             >
                               {statusUp}
@@ -508,7 +508,7 @@ export function MissionStage({ missionId }: MissionStageProps) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+      <span className="t-11 font-light text-[var(--text-faint)]">
         {label}
       </span>
       <span className="t-15 font-light text-[var(--text)]">{value}</span>

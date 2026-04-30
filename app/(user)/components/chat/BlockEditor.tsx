@@ -87,7 +87,7 @@ export function BlockEditor({
           onClick={onCancel}
           aria-label="Annuler l'édition"
           data-testid="block-editor-cancel"
-          className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--text)] transition-colors bg-transparent"
+          className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--text)] transition-colors bg-transparent"
           style={{ transitionDuration: "var(--duration-base)" }}
         >
           Annuler
@@ -97,13 +97,13 @@ export function BlockEditor({
           onClick={() => onSave(value)}
           aria-label="Enregistrer le block"
           data-testid="block-editor-save"
-          className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] hover:text-[var(--cykan)] transition-colors bg-transparent"
+          className="t-11 font-medium text-[var(--cykan)] hover:text-[var(--cykan)] transition-colors bg-transparent"
           style={{ transitionDuration: "var(--duration-base)" }}
         >
           Enregistrer
         </button>
         <span
-          className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]"
+          className="t-11 font-light text-[var(--text-faint)]"
           aria-hidden
         >
           ESC · ⌘+↵

@@ -65,11 +65,11 @@ export function MarketplaceTemplateCard({ template }: MarketplaceTemplateCardPro
           >
             {glyph}
           </span>
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             {kindLabel}
           </span>
           {template.isFeatured && (
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               · Featured
             </span>
           )}
@@ -96,7 +96,7 @@ export function MarketplaceTemplateCard({ template }: MarketplaceTemplateCardPro
           {template.tags.slice(0, 5).map((tag) => (
             <span
               key={tag}
-              className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]"
+              className="t-11 font-light text-[var(--text-faint)]"
               style={{
                 padding: "var(--space-0) var(--space-2)",
                 border: "1px solid var(--line-strong)",
@@ -113,7 +113,7 @@ export function MarketplaceTemplateCard({ template }: MarketplaceTemplateCardPro
         className="flex items-center justify-between"
         style={{ gap: "var(--space-2)", marginTop: "var(--space-1)" }}
       >
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           {escapeHtml(author)}
         </span>
         <span className="t-9 font-mono text-[var(--text-faint)]">

@@ -136,7 +136,7 @@ export function NodePalette({ onAdd }: NodePaletteProps) {
           className="flex flex-col"
           style={{ gap: "var(--space-2)" }}
         >
-          <h3 className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)]">
+          <h3 className="t-11 font-light text-[var(--text-faint)]">
             {section.title}
           </h3>
           <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>

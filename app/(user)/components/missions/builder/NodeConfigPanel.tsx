@@ -102,14 +102,14 @@ function NodeConfigInner({
         <button
           type="button"
           onClick={onDelete}
-          className="t-9 font-mono uppercase tracking-section text-[var(--danger)] hover:text-[var(--text)] transition-colors"
+          className="t-11 font-light text-[var(--danger)] hover:text-[var(--text)] transition-colors"
         >
           Supprimer
         </button>
       </div>
 
       <Field label="Type">
-        <span className="t-11 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+        <span className="t-11 font-light text-[var(--text-muted)]">
           {node.kind}
         </span>
       </Field>
@@ -277,7 +277,7 @@ function Field({
 }) {
   return (
     <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
-      <span className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)]">
+      <span className="t-11 font-light text-[var(--text-faint)]">
         {label}
       </span>
       {children}

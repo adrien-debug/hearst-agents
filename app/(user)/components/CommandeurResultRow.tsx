@@ -94,7 +94,7 @@ export function CommandeurResultRow({
       )}
       {hotkey && (
         <span
-          className="t-9 font-mono uppercase tracking-marquee ml-auto shrink-0"
+          className="t-11 font-light ml-auto shrink-0"
           style={{ color: "var(--text-ghost)" }}
         >
           {hotkey}

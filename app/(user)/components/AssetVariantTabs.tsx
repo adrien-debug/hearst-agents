@@ -134,15 +134,15 @@ export function AssetVariantTabs({ assetId, sourceText, defaultKind }: AssetVari
 
   return (
     <div className="border-t border-[var(--surface-2)] pt-8">
-      <header className="flex items-center justify-between mb-6">
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">FORMATS ALTERNATIFS</span>
+      <header className="flex items-baseline justify-between mb-6">
+        <span className="t-13 font-medium text-[var(--text-l1)]">Formats alternatifs</span>
         <div className="flex items-center gap-2">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.kind;
             const variant = variants.find((v) => v.kind === tab.kind);
             const dotColor =
               variant?.status === "ready"
-                ? "bg-[var(--cykan)] halo-cyan-sm"
+                ? "bg-[var(--cykan)]"
                 : variant?.status === "pending" || variant?.status === "generating"
                 ? "bg-[var(--warn)] animate-pulse"
                 : variant?.status === "failed"
@@ -153,9 +153,9 @@ export function AssetVariantTabs({ assetId, sourceText, defaultKind }: AssetVari
                 key={tab.kind}
                 type="button"
                 onClick={() => setActiveTab(tab.kind)}
-                className={`halo-on-hover px-3 py-1.5 t-9 font-mono uppercase tracking-marquee border transition-all ${
+                className={`px-3 py-1.5 t-11 font-light border transition-colors duration-base ${
                   isActive
-                    ? "border-[var(--cykan)] text-[var(--cykan)] halo-cyan-sm"
+                    ? "border-[var(--cykan)] text-[var(--cykan)]"
                     : "border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--text)]"
                 }`}
               >
@@ -212,14 +212,14 @@ export function AssetVariantTabs({ assetId, sourceText, defaultKind }: AssetVari
             <p className="t-13 font-light text-[var(--text-muted)]">{meta.empty}</p>
             {activeTab === "video" && (
               <label className="flex flex-col gap-2">
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-                  PROVIDER
+                <span className="t-11 font-medium text-[var(--text-l1)]">
+                  Fournisseur
                 </span>
                 <select
                   value={videoProvider}
                   onChange={(e) => setVideoProvider(e.target.value === "heygen" ? "heygen" : "runway")}
                   disabled={generating === "video"}
-                  className="halo-on-hover px-3 py-2 t-11 font-mono text-[var(--text)] bg-[var(--card-flat-bg)] border border-[var(--border-shell)] hover:border-[var(--cykan-border-hover)] transition-colors disabled:opacity-60"
+                  className="px-3 py-2 t-13 font-light text-[var(--text)] bg-[var(--card-flat-bg)] border border-[var(--border-shell)] hover:border-[var(--cykan-border-hover)] transition-colors disabled:opacity-60"
                 >
                   <option value="runway">Runway (text-to-video)</option>
                   <option value="heygen">HeyGen (avatar)</option>
@@ -230,12 +230,12 @@ export function AssetVariantTabs({ assetId, sourceText, defaultKind }: AssetVari
               type="button"
               onClick={() => void requestVariant(activeTab)}
               disabled={generating === activeTab}
-              className="halo-on-hover px-6 py-3 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow disabled:opacity-60"
+              className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90 disabled:opacity-60"
             >
               {generating === activeTab ? meta.ctaLoading : meta.cta}
             </button>
             {error && (
-              <p className="t-11 font-mono uppercase tracking-display text-[var(--danger)]">{error}</p>
+              <p className="t-13 font-light text-[var(--danger)]">{error}</p>
             )}
           </div>
         );

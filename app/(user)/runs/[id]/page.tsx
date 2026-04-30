@@ -62,7 +62,7 @@ export default function RunDetailPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg)" }}>
-        <div className="text-[var(--text-muted)] t-13">Chargement...</div>
+        <div className="text-[var(--text-muted)] t-13">Chargement…</div>
       </div>
     );
   }

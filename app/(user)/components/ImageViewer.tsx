@@ -17,22 +17,22 @@ export function ImageViewer({ variant }: ImageViewerProps) {
         <div className="flex items-center gap-3">
           <span
             className={`rounded-pill ${
-              isReady ? "bg-[var(--cykan)] halo-cyan-sm" : isFailed ? "bg-[var(--danger)]" : "bg-[var(--warn)] animate-pulse"
+              isReady ? "bg-[var(--cykan)]" : isFailed ? "bg-[var(--danger)]" : "bg-[var(--warn)] animate-pulse"
             }`}
             style={{ width: "var(--space-2)", height: "var(--space-2)" }}
             aria-hidden
           />
           <span
-            className={`t-9 font-mono uppercase tracking-marquee ${
+            className={`t-13 font-medium ${
               isReady ? "text-[var(--cykan)]" : isFailed ? "text-[var(--danger)]" : "text-[var(--warn)]"
             }`}
           >
-            {isReady ? "IMAGE_READY" : isFailed ? "IMAGE_FAILED" : "GENERATING"}
+            {isReady ? "Image prête" : isFailed ? "Échec" : "Génération…"}
           </span>
         </div>
-        <div className="flex items-center gap-4 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-          {meta.model && <span>MODEL: {meta.model}</span>}
-          {meta.width && meta.height && <span>{meta.width}×{meta.height}</span>}
+        <div className="flex items-center gap-4 t-11 font-light text-[var(--text-faint)]">
+          {meta.model && <span>Modèle · {meta.model}</span>}
+          {meta.width && meta.height && <span className="font-mono tabular-nums">{meta.width}×{meta.height}</span>}
         </div>
       </header>
 

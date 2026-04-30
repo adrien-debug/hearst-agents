@@ -57,7 +57,7 @@ export default function ArchivePage() {
         actions={
           <button
             onClick={() => router.back()}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
+            className="inline-flex items-center gap-2 px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
           >
             <span>Retour</span>
             <span className="opacity-60">ESC</span>
@@ -98,7 +98,7 @@ export default function ArchivePage() {
                 <span className="flex-1 t-15 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors truncate">
                   {thread.name}
                 </span>
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <span className="t-11 font-light text-[var(--text-faint)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                   OUVRIR →
                 </span>
               </button>

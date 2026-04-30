@@ -33,12 +33,12 @@ const STATUS_GLYPH: Record<PlanStepState["status"], string> = {
 };
 
 const STATUS_LABEL: Record<PlanStepState["status"], string> = {
-  idle: "EN ATTENTE",
-  running: "EN COURS",
-  awaiting_approval: "VALIDATION",
-  done: "TERMINÉ",
-  error: "ÉCHEC",
-  skipped: "SAUTÉ",
+  idle: "En attente",
+  running: "En cours",
+  awaiting_approval: "Validation",
+  done: "Terminé",
+  error: "Échec",
+  skipped: "Sauté",
 };
 
 function statusColor(status: PlanStepState["status"]): string {
@@ -114,8 +114,8 @@ export function StepCard({ step, onApprove, onSkip, onRetry, onEdit }: StepCardP
           {STATUS_GLYPH[step.status]}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="t-13 font-light text-[var(--text)] truncate">{step.label}</p>
-          <p className="t-9 font-mono uppercase tracking-marquee" style={{ color }}>
+          <p className="t-13 font-medium text-[var(--text-l1)] truncate">{step.label}</p>
+          <p className="t-11 font-light" style={{ color }}>
             {STATUS_LABEL[step.status]}
           </p>
         </div>

@@ -356,14 +356,14 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
                 className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
                 style={{ width: "var(--space-2)", height: "var(--space-2)" }}
               />
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+              <span className="t-11 font-medium text-[var(--cykan)]">
                 BROWSER
               </span>
               <span
                 className="rounded-pill bg-[var(--text-ghost)]"
                 style={{ width: "var(--space-1)", height: "var(--space-1)" }}
               />
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+              <span className="t-11 font-light text-[var(--text-muted)]">
                 AWAITING
               </span>
             </>
@@ -408,12 +408,12 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
                 type="button"
                 onClick={() => void startSession()}
                 disabled={starting || !taskInput.trim()}
-                className="halo-on-hover px-6 py-3 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow disabled:opacity-60"
+                className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90 disabled:opacity-60"
               >
                 {starting ? "Création de la session…" : "Lancer la session"}
               </button>
               {error && (
-                <p className="t-11 font-mono uppercase tracking-display text-[var(--danger)]">
+                <p className="t-11 font-medium text-[var(--danger)]">
                   {error}
                 </p>
               )}
@@ -461,23 +461,23 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
               className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
               style={{ width: "var(--space-2)", height: "var(--space-2)" }}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               BROWSER
             </span>
             <span
               className="rounded-pill bg-[var(--text-ghost)]"
               style={{ width: "var(--space-1)", height: "var(--space-1)" }}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+            <span className="t-11 font-light text-[var(--text-muted)]">
               {sessionId.slice(0, 8)}
             </span>
             {executing && (
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+              <span className="t-11 font-medium text-[var(--cykan)]">
                 · RUNNING
               </span>
             )}
             {isControlled && (
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
+              <span className="t-11 font-medium text-[var(--warn)]">
                 · USER
               </span>
             )}
@@ -509,7 +509,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
                   style={{ width: "var(--space-2)", height: "var(--space-2)" }}
                   aria-hidden
                 />
-                <span className="t-11 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                <span className="t-11 font-light text-[var(--text-muted)]">
                   Connexion à la session…
                 </span>
               </div>
@@ -535,7 +535,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
           className="flex-shrink-0 px-12 py-3 border-t border-[var(--border-default)]"
           style={{ background: "var(--bg-soft)" }}
         >
-          <span className="t-11 font-mono uppercase tracking-display text-[var(--danger)]">
+          <span className="t-11 font-medium text-[var(--danger)]">
             {error}
           </span>
         </div>

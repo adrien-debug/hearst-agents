@@ -111,7 +111,7 @@ export default function MarketplacePage() {
                   type="button"
                   onClick={() => setKind(tab.value)}
                   data-testid={`kind-tab-${tab.value}`}
-                  className="t-11 font-mono uppercase tracking-marquee transition-colors"
+                  className="t-11 font-light transition-colors"
                   style={{
                     padding: "var(--space-2) var(--space-3)",
                     color: active ? "var(--text)" : "var(--text-ghost)",
@@ -148,7 +148,7 @@ export default function MarketplacePage() {
 
         {error && (
           <p
-            className="t-11 font-mono uppercase tracking-marquee"
+            className="t-11 font-light"
             style={{ color: "var(--danger)" }}
           >
             Erreur : {error}
@@ -156,7 +156,7 @@ export default function MarketplacePage() {
         )}
 
         {isLoading ? (
-          <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+          <p className="t-11 font-light text-[var(--text-faint)]">
             Chargement…
           </p>
         ) : isEmpty ? (
@@ -181,7 +181,7 @@ export default function MarketplacePage() {
           <>
             {featured.length > 0 && (
               <section className="flex flex-col" style={{ gap: "var(--space-3)" }}>
-                <h2 className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+                <h2 className="t-11 font-medium text-[var(--cykan)]">
                   Featured
                 </h2>
                 <Grid templates={featured} />
@@ -189,7 +189,7 @@ export default function MarketplacePage() {
             )}
             <section className="flex flex-col" style={{ gap: "var(--space-3)" }}>
               {featured.length > 0 && (
-                <h2 className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                <h2 className="t-11 font-light text-[var(--text-faint)]">
                   Tous les templates
                 </h2>
               )}

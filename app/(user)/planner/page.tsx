@@ -98,7 +98,7 @@ export default function PlannerPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[var(--bg)]">
-        <span className="text-[var(--text-muted)] t-13">Chargement des plans...</span>
+        <span className="text-[var(--text-muted)] t-13">Chargement des plans…</span>
       </div>
     );
   }

@@ -84,7 +84,7 @@ export function ActionLog({
                   : "var(--text-ghost)",
             }}
           />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             ACTION_LOG
           </span>
         </div>
@@ -92,7 +92,7 @@ export function ActionLog({
           <button
             type="button"
             onClick={onTakeOver}
-            className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] hover:text-[var(--text)] transition-colors px-2 py-1 border border-[var(--cykan-border)] rounded-pill"
+            className="t-11 font-medium text-[var(--cykan)] hover:text-[var(--text)] transition-colors px-2 py-1 border border-[var(--cykan-border)] rounded-pill"
           >
             Take Over
           </button>
@@ -119,7 +119,7 @@ export function ActionLog({
         {actions.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
             <p
-              className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)] text-center"
+              className="t-11 font-light text-[var(--text-faint)] text-center"
               style={{ lineHeight: "var(--leading-base)" }}
             >
               {isRunning
@@ -144,7 +144,7 @@ export function ActionLog({
                   >
                     {TYPE_GLYPH[a.type]}
                   </span>
-                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)] flex-shrink-0">
+                  <span className="t-11 font-light text-[var(--text-muted)] flex-shrink-0">
                     {TYPE_LABEL[a.type]}
                   </span>
                   <span className="t-11 text-[var(--text)] truncate">

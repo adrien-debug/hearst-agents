@@ -221,7 +221,7 @@ export default function RunsPage() {
               {actionError && (
                 <div
                   data-testid="runs-action-error"
-                  className="t-9 font-mono uppercase tracking-marquee mb-3 px-2 py-2 border"
+                  className="t-11 font-light mb-3 px-2 py-2 border"
                   style={{
                     color: "var(--danger)",
                     background: "var(--surface-1)",
@@ -232,7 +232,7 @@ export default function RunsPage() {
                   {actionError}
                 </div>
               )}
-              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] border-b border-[var(--border-soft)]">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-11 font-medium text-[var(--text-l1)] border-b border-[var(--border-soft)]">
                 <span className="w-2" />
                 <span>Entrée</span>
                 <span className="text-right">Statut</span>
@@ -286,7 +286,7 @@ export default function RunsPage() {
                   >
                     <span className={`w-1.5 h-1.5 rounded-pill shrink-0 ${dotClass}`} />
                     <div className="min-w-0">
-                      <p className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors truncate">
+                      <p className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] transition-colors truncate">
                         {run.input || `Run ${run.id.slice(0, 8)}`}
                       </p>
                       <p className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] mt-1">

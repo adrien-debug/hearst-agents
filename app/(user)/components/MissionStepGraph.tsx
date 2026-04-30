@@ -21,11 +21,11 @@ export interface MissionStepGraphProps {
 }
 
 const STATUS_LABEL: Record<PlanState["status"], string> = {
-  preview: "PREVIEW",
-  running: "EN COURS",
-  awaiting_approval: "VALIDATION",
-  completed: "TERMINÉ",
-  failed: "ÉCHEC",
+  preview: "Aperçu",
+  running: "En cours",
+  awaiting_approval: "Validation",
+  completed: "Terminé",
+  failed: "Échec",
 };
 
 function statusColor(status: PlanState["status"]): string {
@@ -108,10 +108,10 @@ export function MissionStepGraph({ plan, onApprove, onSkip }: MissionStepGraphPr
       >
         <div className="flex-1 min-w-0">
           <p
-            className="t-9 font-mono uppercase tracking-display"
-            style={{ color: "var(--text-l2)", marginBottom: "var(--space-1)" }}
+            className="t-11 font-medium"
+            style={{ color: "var(--text-l1)", marginBottom: "var(--space-1)" }}
           >
-            Plan multi-step
+            Plan multi-étapes
           </p>
           <p className="t-15 font-light text-[var(--text)] whitespace-pre-wrap">
             {plan.intent || "Plan sans intention"}
@@ -119,17 +119,17 @@ export function MissionStepGraph({ plan, onApprove, onSkip }: MissionStepGraphPr
         </div>
         <div className="flex flex-col items-end" style={{ gap: "var(--space-1)" }}>
           <span
-            className="t-9 font-mono uppercase tracking-marquee"
+            className="t-11 font-medium"
             style={{ color }}
           >
             {STATUS_LABEL[plan.status]}
           </span>
-          <span className="t-9 font-mono text-[var(--text-faint)]">
+          <span className="t-11 font-mono tabular-nums text-[var(--text-faint)]">
             {formatCost(plan.totalCostUsd)} / ~{formatCost(plan.estimatedCostUsd)}
           </span>
           {eta !== null && plan.status === "running" && (
-            <span className="t-9 font-mono text-[var(--text-faint)]">
-              ETA ~{eta}s
+            <span className="t-11 font-mono tabular-nums text-[var(--text-faint)]">
+              {eta} s restant
             </span>
           )}
         </div>
@@ -141,13 +141,13 @@ export function MissionStepGraph({ plan, onApprove, onSkip }: MissionStepGraphPr
           className="flex items-center"
           style={{ gap: "var(--space-2)", marginBottom: "var(--space-4)" }}
         >
-          <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+          <span className="t-11 font-medium text-[var(--text-l1)]">
             Apps requises
           </span>
           {plan.requiredApps.map((app) => (
             <span
               key={app}
-              className="t-9 font-mono uppercase border border-[var(--border-shell)] rounded-pill"
+              className="t-11 font-light border border-[var(--border-shell)] rounded-pill"
               style={{
                 padding: "var(--space-1) var(--space-2)",
                 color: "var(--text-muted)",

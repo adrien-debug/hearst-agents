@@ -354,7 +354,7 @@ const EditIcon = () => (
 function EmptyText({ children }: { children: ReactNode }) {
   return (
     <p
-      className="t-10 font-mono uppercase tracking-section"
+      className="t-11 font-light"
       style={{
         color: "var(--text-l2)",
         padding: "var(--space-3) 0",
@@ -587,7 +587,7 @@ export function GeneralDashboard({
             gap: "var(--space-2)",
           }}
         >
-          <span className="t-9 font-mono uppercase tracking-display">{toast}</span>
+          <span className="t-11 font-light">{toast}</span>
         </div>
       )}
 

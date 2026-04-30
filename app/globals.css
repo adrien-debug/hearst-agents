@@ -37,12 +37,17 @@
   --surface-1: rgba(255, 255, 255, 0.025);
   --surface-2: rgba(255, 255, 255, 0.04);
 
-  /* Text opacity scale — Mastered Contrast */
+  /* Text opacity scale — Mastered Contrast.
+   * Pivot UI 2026-05-01 : --text-ghost remonté de 0.25 → 0.42 pour passer WCAG AA
+   * sur les éléments cliquables (Admin/Exit, compteurs, hints, icônes faint).
+   * --text-decor-25 garde l'ancien 0.25 pour usages PUREMENT décoratifs (séparateurs,
+   * filigrane, fond de skeleton) — JAMAIS pour du texte lisible ou interactif. */
   --text: #ffffff;
   --text-soft: rgba(255, 255, 255, 0.88);
   --text-muted: rgba(255, 255, 255, 0.65);
   --text-faint: rgba(255, 255, 255, 0.45);
-  --text-ghost: rgba(255, 255, 255, 0.25);
+  --text-ghost: rgba(255, 255, 255, 0.42);
+  --text-decor-25: rgba(255, 255, 255, 0.25);
 
   /* Accent colors */
   --cyan-accent: #2DD4BF;
@@ -53,11 +58,16 @@
   --accent-llm: #A78BFA;
   /* Branche « agent custom » pipeline admin (câbles + waterfall) — aligné cartes [data-kind="agent"]. */
   --accent-agent: #fbbf24;
-  /* Editorial gold — accent magazine print (PDF exports premium, covers éditoriales).
-   * Référence visuelle : Art of Life Equine — champagne sobre, pas tape-à-l'œil. */
+  /* Editorial gold — accent éditorial pour liens de contenu, highlights, points
+   * d'attention NON-système. Le cykan reste réservé aux états système (focus,
+   * hover, run actif, voice actif, sélection). Cette séparation a été tranchée
+   * dans le pivot UI 2026-05-01 (direction A — Éditoriale Tenue). */
   --gold: #C8A961;
   --gold-soft: color-mix(in srgb, var(--gold) 18%, transparent);
   --gold-muted: color-mix(in srgb, var(--gold) 60%, #000000 40%);
+  --gold-border: color-mix(in srgb, var(--gold) 28%, transparent);
+  --gold-surface: color-mix(in srgb, var(--gold) 6%, transparent);
+  --gold-bg-hover: color-mix(in srgb, var(--gold) 8%, transparent);
   --cykan-border: color-mix(in srgb, var(--cykan) 25%, transparent);
   --cykan-surface: color-mix(in srgb, var(--cykan) 6%, transparent);
 
@@ -112,7 +122,11 @@
    * les tailles, sans zones mortes en grand écran. */
   --width-threads: clamp(176px, 16vw, 384px); /* -20% du token initial 220/20vw/480 */
   --width-threads-collapsed: 64px;
-  --width-context: clamp(322px, 25vw, 553px);
+  /* Pivot UI 2026-05-01 : ContextRail réduit (322→280 min, 553→440 max) pour
+   * rendre la main au centre. La promesse éditoriale demande que le canvas
+   * principal domine ; le rail droit redevient un contexte, pas une seconde page. */
+  --width-context: clamp(280px, 22vw, 440px);
+  --width-context-collapsed: 56px;
   --width-center-max: 960px;
   --width-actions: clamp(440px, 36vw, 720px);
   --width-admin-sidebar: 240px;
@@ -163,7 +177,6 @@
 
   /* ─── Shadows composants ────────────────────────────────────── */
   --shadow-input-glow: var(--input-glow);                        /* CockpitStage input ambient */
-  --bg-cockpit-ambient: radial-gradient(ellipse at 50% 100%, rgba(45,212,191,0.06) 0%, transparent 70%); /* CockpitStage ambient glow */
   --shadow-glow-cykan-soft: 0 0 24px rgba(45,212,191,0.40);   /* ChatInput focus cykan */
   --shadow-thread-active: inset 2px 0 0 var(--cykan);           /* LeftPanel thread actif */
   --shadow-neon-cykan: 0 0 8px rgba(45, 212, 191, 0.6);         /* TimelineRail thread actif drop-shadow */
@@ -314,7 +327,6 @@
   --stage-carbon: radial-gradient(ellipse at 25% 15%, rgba(15, 15, 15, 0.6) 0%, transparent 45%),
                   radial-gradient(ellipse at 75% 85%, rgba(8, 8, 8, 0.5) 0%, transparent 40%),
                   radial-gradient(ellipse at 50% 50%, rgba(5, 5, 5, 0.8) 0%, transparent 70%);
-  --stage-halo-cyan: radial-gradient(ellipse 160% 100% at 50% -30%, rgba(45, 212, 191, 0.06) 0%, transparent 55%);
   --stage-dot-grid: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.025) 1px, transparent 0);
 }
 
@@ -991,16 +1003,17 @@ body {
   text-transform: uppercase;
 }
 
-/* Rail section header — pattern partagé panel gauche/droit (signature
- * Hearst Connect dashboard : border-left cyan + mono uppercase 700). */
+/* Rail section header — pivot UI 2026-05-01 (direction A — Éditoriale Tenue).
+ * Voix éditoriale calme : 13px medium text-l1, plus de mono caps tracking-label.
+ * Le rail droit n'est plus une console à étiquettes ghost — c'est un panneau
+ * de contexte lisible où les sections respirent comme des paragraphes. */
 .rail-section-label {
   font-family: var(--font-satoshi);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--text-l3);
-  line-height: 1.2;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-l1);
+  line-height: var(--leading-tight);
 }
 
 /* Rail section card — wrapper visuel commun.

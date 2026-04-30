@@ -261,11 +261,11 @@ export function ArtifactStage({
         context={
           <>
             <span
-              className="rounded-pill bg-[var(--cykan)] halo-cyan-sm"
+              className="rounded-pill bg-[var(--cykan)]"
               style={{ width: "var(--space-2)", height: "var(--space-2)" }}
               aria-hidden
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               ARTIFACT
             </span>
             <span
@@ -277,7 +277,7 @@ export function ArtifactStage({
               value={language}
               onChange={(e) => setLanguage(e.target.value as "python" | "node")}
               disabled={runState === "running"}
-              className="t-9 font-mono uppercase tracking-marquee bg-transparent border border-[var(--border-default)] rounded-md text-[var(--text-muted)] hover:text-[var(--text)] focus:outline-none"
+              className="t-11 font-light bg-transparent border border-[var(--border-default)] rounded-md text-[var(--text-muted)] hover:text-[var(--text)] focus:outline-none"
               style={{
                 paddingLeft: "var(--space-2)",
                 paddingRight: "var(--space-2)",
@@ -296,7 +296,7 @@ export function ArtifactStage({
                   style={{ width: "var(--space-1)", height: "var(--space-1)" }}
                   aria-hidden
                 />
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                <span className="t-11 font-light text-[var(--text-muted)]">
                   {currentAssetId.slice(0, 8)}
                 </span>
               </>
@@ -311,7 +311,7 @@ export function ArtifactStage({
                     void loadVariantOutput(v);
                   }
                 }}
-                className="t-9 font-mono uppercase tracking-marquee bg-transparent border border-[var(--border-default)] rounded-md text-[var(--text-muted)] hover:text-[var(--text)] focus:outline-none"
+                className="t-11 font-light bg-transparent border border-[var(--border-default)] rounded-md text-[var(--text-muted)] hover:text-[var(--text)] focus:outline-none"
                 style={{
                   paddingLeft: "var(--space-2)",
                   paddingRight: "var(--space-2)",
@@ -376,7 +376,7 @@ export function ArtifactStage({
               latencyMs={latencyMs}
               costUSD={costUsd}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+            <span className="t-11 font-light text-[var(--text-faint)]">
               {runState === "idle"
                 ? "STANDBY"
                 : runState === "running"

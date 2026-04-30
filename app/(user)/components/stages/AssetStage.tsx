@@ -324,7 +324,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
               background: "var(--cykan)",
             }}
           />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+          <span className="t-11 font-medium text-[var(--cykan)]">
             {asset
               ? "Mode hors ligne — affichage cache"
               : "Hors ligne — connecte-toi pour voir cet asset"}
@@ -346,7 +346,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
           <button
             type="button"
             onClick={back}
-            className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
+            className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
             style={{ background: "transparent", border: "none", cursor: "pointer" }}
             aria-label="Retour"
           >
@@ -354,7 +354,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
           </button>
           {asset?.title && (
             <span
-              className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)] truncate"
+              className="t-11 font-light text-[var(--text-muted)] truncate"
               title={asset.title}
             >
               {asset.title}
@@ -365,19 +365,19 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
         <StageActionBar
           context={
             <>
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">ASSET</span>
+              <span className="t-11 font-light text-[var(--text-faint)]">ASSET</span>
               <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">{assetId.slice(0, 8)}</span>
+              <span className="t-11 font-light text-[var(--text-muted)]">{assetId.slice(0, 8)}</span>
               {asset && (
                 <>
                   <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{asset.kind}</span>
+                  <span className="t-11 font-medium text-[var(--cykan)]">{asset.kind}</span>
                 </>
               )}
               {variantKind && (
                 <>
                   <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{variantKind}</span>
+                  <span className="t-11 font-medium text-[var(--cykan)]">{variantKind}</span>
                 </>
               )}
             </>
@@ -408,7 +408,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
             gap: "var(--space-2)",
           }}
         >
-          <span className="t-9 font-mono uppercase tracking-display">{actionMsg}</span>
+          <span className="t-11 font-light">{actionMsg}</span>
         </div>
       )}
 
@@ -417,17 +417,17 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
           {loading && (
             <div className="flex flex-col items-center justify-center py-24" style={{ rowGap: "var(--space-4)" }}>
               <span
-                className="rounded-pill bg-[var(--cykan)] animate-pulse halo-cyan-sm"
+                className="rounded-pill bg-[var(--cykan)] animate-pulse"
                 style={{ width: "var(--space-2)", height: "var(--space-2)" }}
                 aria-hidden
               />
-              <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">{"Chargement de l'asset…"}</p>
+              <p className="t-11 font-light text-[var(--text-faint)]">{"Chargement de l'asset…"}</p>
             </div>
           )}
 
           {error && !loading && (
             <div className="border-l-2 border-[var(--danger)] bg-[var(--danger)]/5 px-4 py-3">
-              <p className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">ERREUR · {error}</p>
+              <p className="t-11 font-medium text-[var(--danger)]">ERREUR · {error}</p>
             </div>
           )}
 
@@ -452,7 +452,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                     {asset.title}
                   </h1>
 
-                  <div className="flex items-center gap-3 mb-10 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                  <div className="flex items-center gap-3 mb-10 t-11 font-light text-[var(--text-faint)]">
                     <span>{asset.kind}</span>
                     <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
                     <span>{FORMATTER.format(new Date(asset.createdAt))}</span>
@@ -514,7 +514,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                     background: "var(--surface-1)",
                   }}
                 >
-                  <p className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
+                  <p className="t-11 font-medium text-[var(--danger)]">
                     Échec de la génération d&apos;image
                   </p>
                   <p className="t-13 font-light text-[var(--text-muted)]">
@@ -524,7 +524,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                   <button
                     type="button"
                     onClick={handleRerun}
-                    className="halo-on-hover inline-flex items-center t-9 font-mono uppercase tracking-section"
+                    className="inline-flex items-center t-11 font-light"
                     style={{
                       gap: "var(--space-2)",
                       paddingLeft: "var(--space-3)",

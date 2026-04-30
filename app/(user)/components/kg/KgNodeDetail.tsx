@@ -93,7 +93,7 @@ export function KgNodeDetail({ node, edges, nodes, onClose, onPickPath }: KgNode
             }}
             aria-hidden
           />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] shrink-0">
+          <span className="t-11 font-light text-[var(--text-faint)] shrink-0">
             {node.type}
           </span>
           <span className="t-15 font-medium text-[var(--text)] truncate">
@@ -112,13 +112,13 @@ export function KgNodeDetail({ node, edges, nodes, onClose, onPickPath }: KgNode
 
       {propEntries.length > 0 && (
         <section className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             Propriétés
           </span>
           <ul className="flex flex-col gap-1">
             {propEntries.map(([k, v]) => (
               <li key={k} className="flex items-baseline gap-3">
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] truncate" style={{ minWidth: "var(--space-12)" }}>
+                <span className="t-11 font-light text-[var(--text-faint)] truncate" style={{ minWidth: "var(--space-12)" }}>
                   {k}
                 </span>
                 <span className="t-11 font-light text-[var(--text-muted)] truncate">
@@ -132,13 +132,13 @@ export function KgNodeDetail({ node, edges, nodes, onClose, onPickPath }: KgNode
 
       <section className="flex items-center gap-6">
         <div className="flex flex-col gap-1">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             Entrants
           </span>
           <span className="t-15 font-mono text-[var(--text-soft)]">{incoming.length}</span>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             Sortants
           </span>
           <span className="t-15 font-mono text-[var(--text-soft)]">{outgoing.length}</span>
@@ -150,7 +150,7 @@ export function KgNodeDetail({ node, edges, nodes, onClose, onPickPath }: KgNode
           <button
             type="button"
             onClick={() => onPickPath("from", node.id)}
-            className="t-9 font-mono uppercase tracking-marquee border border-[var(--border-default)] hover:border-[var(--cykan-border)] hover:text-[var(--cykan)] transition-colors text-[var(--text-muted)]"
+            className="t-11 font-light border border-[var(--border-default)] hover:border-[var(--cykan-border)] hover:text-[var(--cykan)] transition-colors text-[var(--text-muted)]"
             style={{ padding: "var(--space-1) var(--space-3)" }}
           >
             Départ chemin
@@ -158,7 +158,7 @@ export function KgNodeDetail({ node, edges, nodes, onClose, onPickPath }: KgNode
           <button
             type="button"
             onClick={() => onPickPath("to", node.id)}
-            className="t-9 font-mono uppercase tracking-marquee border border-[var(--border-default)] hover:border-[var(--cykan-border)] hover:text-[var(--cykan)] transition-colors text-[var(--text-muted)]"
+            className="t-11 font-light border border-[var(--border-default)] hover:border-[var(--cykan-border)] hover:text-[var(--cykan)] transition-colors text-[var(--text-muted)]"
             style={{ padding: "var(--space-1) var(--space-3)" }}
           >
             Arrivée chemin
@@ -168,7 +168,7 @@ export function KgNodeDetail({ node, edges, nodes, onClose, onPickPath }: KgNode
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             Timeline
           </span>
           {timeline === null && (
@@ -176,7 +176,7 @@ export function KgNodeDetail({ node, edges, nodes, onClose, onPickPath }: KgNode
               type="button"
               onClick={() => void loadTimeline()}
               disabled={loadingTimeline}
-              className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] hover:tracking-[0.4em] disabled:opacity-50"
+              className="t-11 font-medium text-[var(--cykan)] disabled:opacity-50"
               style={{ transitionProperty: "letter-spacing", transitionDuration: "var(--duration-slow)" }}
             >
               {loadingTimeline ? "…" : "CHARGER"}
@@ -193,7 +193,7 @@ export function KgNodeDetail({ node, edges, nodes, onClose, onPickPath }: KgNode
               return (
                 <li key={ev.id} className="flex items-baseline gap-3">
                   <span
-                    className="t-9 font-mono uppercase tracking-marquee shrink-0"
+                    className="t-11 font-light shrink-0"
                     style={{ color: TYPE_COLOR[related?.type ?? ev.type] ?? "var(--text-faint)" }}
                   >
                     {related?.type ?? ev.type}

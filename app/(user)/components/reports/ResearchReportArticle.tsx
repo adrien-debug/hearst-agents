@@ -98,7 +98,7 @@ export function ResearchReportArticle({ content }: { content: string }) {
                     {block.text}
                   </p>
                   {block.meta && (
-                    <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
+                    <span className="t-11 font-light text-[var(--text-faint)]">
                       {block.meta}
                     </span>
                   )}

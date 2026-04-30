@@ -71,7 +71,7 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
                 <Breadcrumb trail={trail} className="min-w-0 truncate" />
                 <button
                   onClick={hideFocalStage}
-                  className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
+                  className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
                   title="Close (Esc)"
                 >
                   <span>Close</span>
@@ -90,7 +90,7 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
             <button onClick={showFocalStage} className="inline-flex items-center gap-6 group">
               <span className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot" style={{ width: "var(--space-2)", height: "var(--space-2)" }} />
               <div className="flex flex-col items-start">
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors">
+                <span className="t-11 font-light text-[var(--text-faint)] group-hover:text-[var(--cykan)]  transition-colors">
                   {focal.type === "brief" ? "Active Brief" : focal.type === "report" ? "Active Report" : "Active Document"}
                 </span>
                 <span className="t-15 font-medium tracking-tight text-[var(--text-muted)] group-hover:translate-x-1 group-hover:text-[var(--text)] transition-all duration-slow">

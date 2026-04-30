@@ -65,7 +65,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
         <p className="t-13 font-light text-[var(--text-faint)]">
           La sortie d&apos;exécution apparaîtra ici.
         </p>
-        <p className="t-9 mt-2 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+        <p className="t-11 mt-2 font-light text-[var(--text-faint)]">
           ⌘Enter pour lancer
         </p>
       </div>
@@ -79,7 +79,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
         style={{ padding: "var(--space-8)" }}
       >
         <span
-          className="rounded-pill bg-[var(--cykan)] halo-cyan-sm"
+          className="rounded-pill bg-[var(--cykan)]"
           style={{
             width: "var(--space-3)",
             height: "var(--space-3)",
@@ -87,7 +87,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
           }}
           aria-hidden
         />
-        <p className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+        <p className="t-11 font-medium text-[var(--cykan)]">
           E2B · EXÉCUTION{progress != null ? ` · ${Math.round(progress)}%` : ""}
         </p>
       </div>
@@ -100,7 +100,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
         className="flex h-full flex-1 flex-col gap-3"
         style={{ padding: "var(--space-6)" }}
       >
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
+        <span className="t-11 font-medium text-[var(--danger)]">
           ÉCHEC
         </span>
         <pre
@@ -127,7 +127,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
     >
       {result.error && (
         <section className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
+          <span className="t-11 font-medium text-[var(--danger)]">
             ERROR
           </span>
           <pre
@@ -145,7 +145,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
 
       {imageResult && (
         <section className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+          <span className="t-11 font-medium text-[var(--cykan)]">
             IMAGE
           </span>
           <img
@@ -158,7 +158,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
 
       {htmlResult && (
         <section className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+          <span className="t-11 font-medium text-[var(--cykan)]">
             HTML
           </span>
           <iframe
@@ -173,7 +173,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
 
       {jsonResult && (
         <section className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             JSON
           </span>
           <pre
@@ -192,7 +192,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
 
       {result.stdout && (
         <section className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             STDOUT
           </span>
           <pre
@@ -211,7 +211,7 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
 
       {result.stderr && (
         <section className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
+          <span className="t-11 font-medium text-[var(--warn)]">
             STDERR
           </span>
           <pre

@@ -117,7 +117,7 @@ export function SourceCitation({ sources, children }: SourceCitationProps) {
             boxShadow: "var(--shadow-card-hover)",
           }}
         >
-          <p className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+          <p className="t-11 font-medium text-[var(--cykan)]">
             SOURCE
           </p>
           <p
@@ -136,7 +136,7 @@ export function SourceCitation({ sources, children }: SourceCitationProps) {
           )}
           {activeSource.fetchedAt && (
             <p
-              className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]"
+              className="t-11 font-light text-[var(--text-faint)]"
               style={{ marginTop: "var(--space-1)" }}
             >
               {FORMATTER.format(new Date(activeSource.fetchedAt))}
@@ -145,7 +145,7 @@ export function SourceCitation({ sources, children }: SourceCitationProps) {
           <button
             type="button"
             onClick={() => openSource(activeSource)}
-            className="halo-on-hover t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]"
+            className="t-11 font-medium text-[var(--cykan)]"
             style={{
               marginTop: "var(--space-2)",
               padding: "var(--space-1) var(--space-2)",

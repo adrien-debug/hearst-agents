@@ -109,17 +109,16 @@ function HospitalityBadge() {
     >
       <a
         href="/hospitality"
-        className="t-9 font-mono uppercase"
+        className="t-11 font-light transition-opacity hover:opacity-80"
         style={{
-          letterSpacing: "var(--tracking-marquee)",
-          color: "var(--cykan)",
+          color: "var(--gold)",
           padding: "var(--space-1) var(--space-3)",
-          border: "1px solid var(--cykan-border)",
+          border: "1px solid var(--gold-border)",
           borderRadius: "var(--radius-pill)",
-          background: "var(--cykan-surface)",
+          background: "var(--gold-surface)",
         }}
       >
-        Hospitality mode
+        Hospitality
       </a>
     </div>
   );
@@ -228,12 +227,12 @@ function Section({
 }) {
   return (
     <section className="flex flex-col" style={{ gap: "var(--space-5)" }}>
-      <header className="flex items-center justify-between">
+      <header className="flex items-baseline justify-between">
         <span
-          className="t-9 font-mono uppercase"
+          className="t-15 font-medium"
           style={{
-            letterSpacing: "var(--tracking-marquee)",
-            color: "var(--text-l2)",
+            color: "var(--text-l1)",
+            letterSpacing: "var(--tracking-tight)",
           }}
         >
           {label}
@@ -243,7 +242,7 @@ function Section({
             className="t-9 font-mono uppercase"
             style={{
               letterSpacing: "var(--tracking-display)",
-              color: "var(--text-ghost)",
+              color: "var(--text-faint)",
             }}
           >
             {meta}
@@ -347,10 +346,11 @@ function EmptyState({
       </p>
       <a
         href={cta.href}
-        className="t-9 font-mono uppercase shrink-0"
+        className="t-13 font-light shrink-0 transition-opacity hover:opacity-80"
         style={{
-          letterSpacing: "var(--tracking-marquee)",
-          color: "var(--cykan)",
+          color: "var(--gold)",
+          borderBottom: "1px solid var(--gold-border)",
+          paddingBottom: "var(--space-1)",
         }}
       >
         {cta.label} →

@@ -33,23 +33,23 @@ export function AudioPlayer({ variant }: AudioPlayerProps) {
         <div className="flex items-center gap-3">
           <span
             className={`rounded-pill ${
-              isReady ? "bg-[var(--cykan)] halo-cyan-sm" : isFailed ? "bg-[var(--danger)]" : "bg-[var(--warn)] animate-pulse"
+              isReady ? "bg-[var(--cykan)]" : isFailed ? "bg-[var(--danger)]" : "bg-[var(--warn)] animate-pulse"
             }`}
             style={{ width: "var(--space-2)", height: "var(--space-2)" }}
             aria-hidden
           />
           <span
-            className={`t-9 font-mono uppercase tracking-marquee ${
+            className={`t-13 font-medium ${
               isReady ? "text-[var(--cykan)]" : isFailed ? "text-[var(--danger)]" : "text-[var(--warn)]"
             }`}
           >
-            {isReady ? "AUDIO_READY" : isFailed ? "AUDIO_FAILED" : "GENERATING"}
+            {isReady ? "Audio prêt" : isFailed ? "Échec" : "Génération…"}
           </span>
         </div>
-        <div className="flex items-center gap-4 t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-          {meta.voice && <span>VOICE: {meta.voice.slice(0, 8)}</span>}
-          {meta.model && <span>MODEL: {meta.model.replace("eleven_", "")}</span>}
-          <span>SIZE: {formatBytes(variant.sizeBytes)}</span>
+        <div className="flex items-center gap-4 t-11 font-light text-[var(--text-faint)]">
+          {meta.voice && <span>Voix · {meta.voice.slice(0, 8)}</span>}
+          {meta.model && <span>Modèle · {meta.model.replace("eleven_", "")}</span>}
+          <span className="font-mono tabular-nums">{formatBytes(variant.sizeBytes)}</span>
         </div>
       </header>
 

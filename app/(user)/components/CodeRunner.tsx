@@ -89,17 +89,17 @@ export function CodeRunner({ variant }: CodeRunnerProps) {
         <div className="flex items-center gap-3">
           <span
             className={`rounded-pill ${
-              isReady ? "bg-[var(--cykan)] halo-cyan-sm" : isFailed ? "bg-[var(--danger)]" : "bg-[var(--warn)] animate-pulse"
+              isReady ? "bg-[var(--cykan)]" : isFailed ? "bg-[var(--danger)]" : "bg-[var(--warn)] animate-pulse"
             }`}
             style={{ width: "var(--space-2)", height: "var(--space-2)" }}
             aria-hidden
           />
           <span
-            className={`t-9 font-mono uppercase tracking-marquee ${
+            className={`t-13 font-medium ${
               isReady ? "text-[var(--cykan)]" : isFailed ? "text-[var(--danger)]" : "text-[var(--warn)]"
             }`}
           >
-            {isReady ? "CODE_READY" : isFailed ? "CODE_FAILED" : "EXECUTING"}
+            {isReady ? "Code prêt" : isFailed ? "Échec" : "Exécution…"}
           </span>
         </div>
       </header>

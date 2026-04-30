@@ -17,12 +17,12 @@ export function Breadcrumb({ trail, className }: BreadcrumbProps) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className={`flex items-center gap-2 t-9 font-mono uppercase tracking-marquee ${className ?? ""}`}
+      className={`flex items-center gap-2 t-11 font-light ${className ?? ""}`}
     >
       {trail.map((crumb, idx) => {
         const isLast = idx === trail.length - 1;
         const baseClass = isLast
-          ? `${crumb.accent ? "text-[var(--cykan)] halo-cyan-sm" : "text-[var(--text)]"}`
+          ? `${crumb.accent ? "text-[var(--cykan)]" : "text-[var(--text)]"}`
           : "text-[var(--text-faint)] hover:text-[var(--text)] transition-colors";
         return (
           <span key={`${crumb.label}-${idx}`} className="flex items-center gap-2">

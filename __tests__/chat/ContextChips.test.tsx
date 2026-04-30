@@ -9,8 +9,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { ContextChips } from "@/app/(user)/components/chat/ContextChips";
 import { useChatContext } from "@/stores/chat-context";
 
-const reset = () =>
-  useChatContext.setState({ chips: [], inputMode: "ask" }, false);
+const reset = () => useChatContext.setState({ chips: [] }, false);
 
 describe("ContextChips", () => {
   beforeEach(() => {

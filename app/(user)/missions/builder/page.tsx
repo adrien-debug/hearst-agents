@@ -360,7 +360,7 @@ export default function WorkflowBuilderPage() {
             background: "var(--surface-1)",
           }}
         >
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+          <span className="t-11 font-medium text-[var(--cykan)]">
             Vue desktop
           </span>
           <h2 className="t-15 text-[var(--text)]">

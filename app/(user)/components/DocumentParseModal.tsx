@@ -177,7 +177,7 @@ export function DocumentParseModal({
         </div>
 
         <label className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-          <span className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             URL du fichier
           </span>
           <input
@@ -207,7 +207,7 @@ export function DocumentParseModal({
           }}
         >
           <label className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-            <span className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)]">
+            <span className="t-11 font-light text-[var(--text-faint)]">
               Type
             </span>
             <select
@@ -232,7 +232,7 @@ export function DocumentParseModal({
             </select>
           </label>
           <label className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-            <span className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)]">
+            <span className="t-11 font-light text-[var(--text-faint)]">
               Nom (optionnel)
             </span>
             <input
@@ -272,7 +272,7 @@ export function DocumentParseModal({
             onClick={handleClose}
             disabled={submitting}
             data-testid="document-parse-modal-cancel"
-            className="t-9 font-mono uppercase tracking-section"
+            className="t-11 font-light"
             style={{
               paddingLeft: "var(--space-3)",
               paddingRight: "var(--space-3)",
@@ -294,7 +294,7 @@ export function DocumentParseModal({
             onClick={handleSubmit}
             disabled={submitting || !fileUrl.trim()}
             data-testid="document-parse-modal-submit"
-            className="t-9 font-mono uppercase tracking-section"
+            className="t-11 font-light"
             style={{
               paddingLeft: "var(--space-3)",
               paddingRight: "var(--space-3)",

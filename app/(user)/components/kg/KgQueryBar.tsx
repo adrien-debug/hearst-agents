@@ -64,7 +64,7 @@ export function KgQueryBar({
         <button
           type="button"
           onClick={handleClear}
-          className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
+          className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
           aria-label="Effacer la recherche"
         >
           ESC
@@ -73,7 +73,7 @@ export function KgQueryBar({
       <button
         type="submit"
         disabled={loading}
-        className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] hover:tracking-[0.4em] disabled:opacity-50"
+        className="t-11 font-medium text-[var(--cykan)] disabled:opacity-50"
         style={{ transitionProperty: "letter-spacing", transitionDuration: "var(--duration-slow)", transitionTimingFunction: "var(--ease-out)" }}
       >
         {loading ? "…" : "GO"}

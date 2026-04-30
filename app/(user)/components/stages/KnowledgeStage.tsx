@@ -351,7 +351,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
       <StageActionBar
         context={
           <>
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               KNOWLEDGE
             </span>
             {entityId && (
@@ -360,7 +360,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
                   className="rounded-pill bg-[var(--text-ghost)]"
                   style={{ width: "var(--space-1)", height: "var(--space-1)" }}
                 />
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                <span className="t-11 font-light text-[var(--text-muted)]">
                   {entityId.slice(0, 16)}
                 </span>
               </>
@@ -382,7 +382,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
                   className="rounded-pill bg-[var(--text-ghost)]"
                   style={{ width: "var(--space-1)", height: "var(--space-1)" }}
                 />
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                <span className="t-11 font-light text-[var(--text-muted)]">
                   {graph.nodes.length} ENT · {graph.edges.length} REL
                 </span>
               </>
@@ -413,7 +413,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
               style={{ width: "var(--space-2)", height: "var(--space-2)" }}
               aria-hidden
             />
-            <span className="t-11 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+            <span className="t-11 font-light text-[var(--text-muted)]">
               Chargement du graphe…
             </span>
           </div>
@@ -447,12 +447,12 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
               type="button"
               onClick={() => void ingestActiveThread()}
               disabled={ingesting || !activeThreadId}
-              className="halo-on-hover px-6 py-3 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {ingesting ? "Extraction…" : "Ingest le thread actif"}
             </button>
             {!activeThreadId && (
-              <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+              <p className="t-11 font-light text-[var(--text-faint)]">
                 Sélectionne un thread d{"'"}abord
               </p>
             )}
@@ -472,7 +472,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
               loading={searchLoading}
             />
             <div className="flex flex-wrap items-center gap-3">
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+              <span className="t-11 font-light text-[var(--text-faint)]">
                 Chemin :
               </span>
               <span
@@ -492,7 +492,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
                 type="button"
                 onClick={() => void handleFindPath()}
                 disabled={!pathFrom || !pathTo || pathLoading}
-                className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] hover:tracking-[0.4em] disabled:opacity-50"
+                className="t-11 font-medium text-[var(--cykan)] disabled:opacity-50"
                 style={{ transitionProperty: "letter-spacing", transitionDuration: "var(--duration-slow)" }}
               >
                 {pathLoading ? "…" : "Trouver chemin"}
@@ -501,13 +501,13 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
                 <button
                   type="button"
                   onClick={handleResetPath}
-                  className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
+                  className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
                 >
                   Reset
                 </button>
               )}
               {pathMessage && (
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
+                <span className="t-11 font-medium text-[var(--warn)]">
                   {pathMessage}
                 </span>
               )}
@@ -538,7 +538,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
             className="flex-shrink-0 border-t border-[var(--border-default)] flex items-center justify-center"
             style={{ padding: "var(--space-3) var(--space-8)" }}
           >
-            <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+            <p className="t-11 font-light text-[var(--text-faint)]">
               Letta + Zep en Phase B — vector search + raisonnement long terme
             </p>
           </footer>

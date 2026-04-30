@@ -125,19 +125,23 @@ export function PulseBar() {
         title="Ouvrir le Commandeur"
       >
         <span className="t-11 truncate">Demande à Hearst…</span>
-        <span className="t-9 font-mono uppercase tracking-marquee shrink-0 ml-3">⌘K</span>
+        <span className="t-9 font-mono shrink-0 ml-3 text-[var(--text-faint)]">⌘K</span>
       </button>
 
-      {/* Droite : run/voice/credits/profile (tout conditionnel) */}
-      <div className="flex items-center shrink-0" style={{ gap: "var(--space-3)" }}>
+      {/* Droite : run/voice/credits/profile (tout conditionnel).
+         Pivot UI 2026-05-01 : on retire les labels mono caps tracking-marquee
+         (RUN_ACTIVE / VOICE_ON / CREDITS) qui criaient comme des états critiques
+         alors qu'ils étaient juste informationnels. Voix éditoriale calme +
+         dot cykan pour l'état système. */}
+      <div className="flex items-center shrink-0" style={{ gap: "var(--space-4)" }}>
         {isRunning && (
           <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
             <span
               className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
-              style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+              style={{ width: "var(--space-2)", height: "var(--space-2)" }}
               aria-hidden
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">RUN_ACTIVE</span>
+            <span className="t-11 font-light text-[var(--cykan)]">En cours</span>
           </div>
         )}
 
@@ -148,24 +152,22 @@ export function PulseBar() {
               style={{ width: "var(--space-2)", height: "var(--space-2)" }}
               aria-hidden
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">VOICE_ON</span>
+            <span className="t-11 font-light text-[var(--cykan)]">Voix</span>
           </div>
         )}
 
         {usage && (
           <div
-            className="hidden md:flex items-center"
+            className="hidden md:flex items-baseline"
             style={{ gap: "var(--space-2)" }}
             title={`${usage.runs} run(s) aujourd'hui — budget ${formatUsd(usage.budgetUSD)}`}
             data-testid="cost-meter"
           >
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-              CREDITS
+            <span className="t-11 font-mono tabular-nums text-[var(--text-soft)]">
+              {formatUsd(usage.usedUSD)}
             </span>
-            <span className="t-9 font-mono text-[var(--text-muted)]">
-              <span className="text-[var(--text)]">{formatUsd(usage.usedUSD)}</span>
-              <span className="text-[var(--text-faint)]"> / </span>
-              <span>{formatUsd(usage.budgetUSD)}</span>
+            <span className="t-11 font-light text-[var(--text-faint)]">
+              / {formatUsd(usage.budgetUSD)}
             </span>
           </div>
         )}

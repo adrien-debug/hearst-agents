@@ -284,7 +284,7 @@ export function WorkflowCanvas({
         }}
       >
         <div
-          className="t-9 font-mono uppercase tracking-section text-[var(--text-faint)] pointer-events-auto rounded-md"
+          className="t-11 font-light text-[var(--text-faint)] pointer-events-auto rounded-md"
           style={{
             padding: "var(--space-2) var(--space-3)",
             background: "var(--bg-rail)",
@@ -302,7 +302,7 @@ export function WorkflowCanvas({
               if (selectedNodeId === pendingSource) setPendingSource(null);
               else setPendingSource(selectedNodeId);
             }}
-            className="t-9 font-mono uppercase tracking-section text-[var(--cykan)] pointer-events-auto rounded-md hover:text-[var(--text)] transition-colors"
+            className="t-11 font-light text-[var(--cykan)] pointer-events-auto rounded-md hover:text-[var(--text)] transition-colors"
             style={{
               padding: "var(--space-2) var(--space-3)",
               background: "var(--bg-rail)",

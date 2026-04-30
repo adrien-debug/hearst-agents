@@ -50,6 +50,7 @@ export function ChatInput({
   const [codeExecMessage, setCodeExecMessage] = useState<string | null>(null);
   const [docParseOpen, setDocParseOpen] = useState(false);
   const [docParseMessage, setDocParseMessage] = useState<string | null>(null);
+  const [inputFocused, setInputFocused] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isRunning = useRuntimeStore((s) => s.coreState !== "idle");
@@ -378,7 +379,7 @@ export function ChatInput({
                     borderRadius: "var(--radius-pill)",
                   }}
                 >
-                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+                  <span className="t-11 font-medium text-[var(--cykan)]">
                     @{a.kind}
                   </span>
                   <span className="t-11 font-light text-[var(--text)] truncate" style={{ maxWidth: "var(--space-32)" }}>
@@ -470,6 +471,8 @@ export function ChatInput({
               e.target.style.height = "auto";
               e.target.style.height = `${e.target.scrollHeight}px`;
             }}
+            onFocus={() => setInputFocused(true)}
+            onBlur={() => setInputFocused(false)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -489,7 +492,7 @@ export function ChatInput({
               "Demande n'importe quoi…"
             }
             rows={1}
-            className="block w-full bg-transparent t-18 font-light text-[var(--text)] placeholder:text-[var(--text-soft)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
+            className="block w-full bg-transparent t-18 font-light text-[var(--text)] placeholder:text-[var(--text-muted)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
             style={{
               minHeight: "var(--space-12)",
               maxHeight: "var(--height-input-max)",
@@ -678,9 +681,24 @@ export function ChatInput({
               )}
           </div>
         </div>
-        {/* Hint zone toujours visible (calme, t-9 mono) */}
-        <div className="mt-3 flex justify-center">
-          <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] flex items-center gap-3 flex-wrap justify-center">
+        {/* Hint zone — pivot UI 2026-05-01 : visible UNIQUEMENT au focus de l'input.
+           Avant : affichée en permanence sous l'input → bruit chrome qui rappelait
+           du clavier basique connu. Maintenant : apparaît au focus, voix calme
+           (font-mono sans tracking-marquee), opacity transition pour éviter
+           le layout shift. Hauteur réservée par min-h pour ne pas pousser. */}
+        <div
+          className="mt-3 flex justify-center transition-opacity duration-base"
+          style={{
+            minHeight: "var(--space-4)",
+            opacity: inputFocused ? 1 : 0,
+            pointerEvents: inputFocused ? "auto" : "none",
+          }}
+          aria-hidden={!inputFocused}
+        >
+          <p
+            className="t-9 font-mono flex items-center gap-3 flex-wrap justify-center"
+            style={{ color: "var(--text-faint)" }}
+          >
             <span>↩ Envoyer</span>
             <span aria-hidden="true">·</span>
             <span>⇧↩ Saut de ligne</span>
@@ -688,23 +706,6 @@ export function ChatInput({
             <span>@ Mention</span>
             <span aria-hidden="true">·</span>
             <span>⌘K Commandeur</span>
-            <span aria-hidden="true">·</span>
-            <span className="inline-flex items-center gap-1">
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-              </svg>
-              Pièce jointe
-            </span>
           </p>
         </div>
       </div>

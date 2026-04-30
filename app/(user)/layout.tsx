@@ -107,21 +107,22 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           <PulseBar />
 
           {/* Row 3 colonnes : TimelineRail / Stage / ContextRail
-             Mobile (< md) : padding réduit, gap réduit, espace bas réservé
-             à MobileBottomNav (pb-16). LeftPanelShell + RightPanel gèrent
-             leur état mobile (drawer) en interne. */}
+             Pivot UI 2026-05-01 : suppression de la coquille rounded-2xl autour
+             du centre + des paddings/gaps extérieurs. Le centre devient un vrai
+             canvas bord-à-bord ; la séparation avec les rails est portée par un
+             simple 1px var(--border-shell), pas par une carte flottante avec
+             shadow halo cykan. Mobile : pb-20 préservé pour MobileBottomNav. */}
           <div
-            className="flex-1 flex min-h-0 w-full overflow-hidden p-2 gap-2 pb-20 md:p-4 md:gap-4 md:pb-4"
+            className="flex-1 flex min-h-0 w-full overflow-hidden pb-20 md:pb-0"
             style={{ background: "var(--bg)", color: "var(--text)" }}
           >
             <LeftPanelShell />
 
             <div
-              className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden rounded-2xl"
+              className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden border-l border-r border-[var(--border-shell)]"
               style={{
                 background: "var(--bg)",
                 color: "var(--text)",
-                boxShadow: "0 0 0 1px var(--border-default), var(--shadow-card-hover)",
               }}
             >
               {/* Banner alerte tokens OAuth expirants — discret, dismissable */}

@@ -105,7 +105,7 @@ function ToolbarButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="t-10 font-mono uppercase tracking-section transition-colors disabled:opacity-40 rounded-md"
+      className="t-11 font-light transition-colors disabled:opacity-40 rounded-md"
       style={{
         padding: "var(--space-2) var(--space-3)",
         color,

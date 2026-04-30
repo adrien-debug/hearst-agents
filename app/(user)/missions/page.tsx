@@ -350,7 +350,7 @@ function MissionsPageContent() {
           </div>
         ) : (
           <div className="border-t border-[var(--line)]">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-9 font-mono uppercase tracking-display text-[var(--text-faint)] border-b border-[var(--border-soft)]">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-11 font-medium text-[var(--text-l1)] border-b border-[var(--border-soft)]">
               <span>Référence</span>
               <span className="text-right">État</span>
               <span className="text-right">Actions</span>
@@ -401,7 +401,7 @@ function MissionsPageContent() {
                       title={`Open ${mission.name}`}
                     >
                       <p className="font-mono t-9 uppercase tracking-display text-[var(--text-faint)] mb-1">Réf {mission.id.slice(0, 8)}</p>
-                      <h3 className="t-13 font-medium text-[var(--text)] tracking-tight group-hover/open:text-[var(--cykan)] group-hover/open:halo-cyan-sm transition-colors">{mission.name}</h3>
+                      <h3 className="t-13 font-medium text-[var(--text)] tracking-tight group-hover/open:text-[var(--cykan)] transition-colors">{mission.name}</h3>
                       <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] mt-1">{mission.description}</p>
                       {mission.lastError && (
                         <p className="t-10 font-mono text-[var(--danger)] truncate mt-2 border-b border-[var(--danger)] pb-0.5 inline-block max-w-full" title={mission.lastError}>

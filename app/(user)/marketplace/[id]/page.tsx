@@ -188,7 +188,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
           title="Marketplace"
           back={{ label: "Retour", href: "/marketplace" }}
         />
-        <p className="px-12 py-8 t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+        <p className="px-12 py-8 t-11 font-light text-[var(--text-faint)]">
           Chargement…
         </p>
       </div>
@@ -228,7 +228,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
               type="button"
               onClick={() => setReportOpen((v) => !v)}
               disabled={busy}
-              className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)] hover:text-[var(--danger)]"
+              className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--danger)]"
               style={{ background: "transparent", border: "none", cursor: "pointer" }}
             >
               Signaler
@@ -243,7 +243,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
       >
         {flash && (
           <p
-            className="t-9 font-mono uppercase tracking-marquee"
+            className="t-11 font-light"
             style={{ color: "var(--cykan)" }}
           >
             {flash}
@@ -318,7 +318,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
               <button
                 type="button"
                 onClick={() => setReportOpen(false)}
-                className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)]"
+                className="t-11 font-light text-[var(--text-faint)]"
                 style={{ background: "transparent", border: "none", cursor: "pointer" }}
               >
                 Annuler
@@ -431,7 +431,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
                     background: "var(--bg-elev)",
                   }}
                 >
-                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+                  <span className="t-11 font-medium text-[var(--cykan)]">
                     {"★".repeat(r.rating)}
                     {"·".repeat(5 - r.rating)}
                   </span>
@@ -453,7 +453,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
 function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]"
+      className="t-11 font-light text-[var(--text-faint)]"
       style={{
         padding: "var(--space-1) var(--space-2)",
         border: "1px solid var(--line-strong)",
@@ -486,7 +486,7 @@ function WorkflowPreview({ graph }: { graph: WorkflowGraph }) {
           <span className="t-9 font-mono text-[var(--text-faint)]">
             {String(i + 1).padStart(2, "0")}
           </span>
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+          <span className="t-11 font-medium text-[var(--cykan)]">
             {n.kind}
           </span>
           <span className="t-11 text-[var(--text)]">{escapeHtml(n.label)}</span>
@@ -520,7 +520,7 @@ function ReportPreview({ spec }: { spec: ReportSpec }) {
             className="flex items-baseline"
             style={{ gap: "var(--space-2)" }}
           >
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               {b.type}
             </span>
             <span className="t-11 text-[var(--text)]">

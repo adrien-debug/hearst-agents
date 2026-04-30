@@ -78,7 +78,7 @@ export function ExtractSchemaModal({
         style={{ background: "var(--bg-elev)" }}
       >
         <div className="flex items-center justify-between">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             EXTRACT
           </span>
           <button
@@ -99,7 +99,7 @@ export function ExtractSchemaModal({
         </p>
 
         <label className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             INSTRUCTION
           </span>
           <textarea
@@ -114,7 +114,7 @@ export function ExtractSchemaModal({
         </label>
 
         <label className="flex flex-col gap-2">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             SCHEMA (JSON)
           </span>
           <textarea
@@ -129,7 +129,7 @@ export function ExtractSchemaModal({
         </label>
 
         {parseError && (
-          <p className="t-11 font-mono uppercase tracking-display text-[var(--danger)]">
+          <p className="t-11 font-medium text-[var(--danger)]">
             {parseError}
           </p>
         )}
@@ -139,7 +139,7 @@ export function ExtractSchemaModal({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-60"
+            className="px-4 py-2 t-11 font-light text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-60"
           >
             Annuler
           </button>
@@ -147,7 +147,7 @@ export function ExtractSchemaModal({
             type="button"
             onClick={submit}
             disabled={loading}
-            className="halo-on-hover px-6 py-2 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] disabled:opacity-60"
+            className="px-6 py-2 t-11 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] disabled:opacity-60"
           >
             {loading ? "Extraction…" : "Extraire"}
           </button>

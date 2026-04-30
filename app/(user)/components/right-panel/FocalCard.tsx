@@ -114,7 +114,7 @@ export function FocalCard({ activeThreadId: _activeThreadId }: FocalCardProps) {
     >
       {/* Header — toujours rendu */}
       <div className="flex items-center justify-between mb-2 shrink-0">
-        <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <p className="t-11 font-light text-[var(--text-faint)]">
           Notifications
         </p>
         <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">

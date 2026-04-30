@@ -197,14 +197,14 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
               className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
               style={{ width: "var(--space-2)", height: "var(--space-2)" }}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               MEETING
             </span>
             <span
               className="rounded-pill bg-[var(--text-ghost)]"
               style={{ width: "var(--space-1)", height: "var(--space-1)" }}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+            <span className="t-11 font-light text-[var(--text-muted)]">
               {headerLabel}
             </span>
           </>
@@ -267,7 +267,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
                     type="button"
                     onClick={() => setLanguage(code)}
                     aria-pressed={language === code}
-                    className={`px-3 py-1 t-9 font-mono uppercase tracking-section border transition-colors ${
+                    className={`px-3 py-1 t-11 font-light border transition-colors ${
                       language === code
                         ? "border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.08]"
                         : "border-[var(--border-shell)] text-[var(--text-muted)] hover:border-[var(--cykan)]/50"
@@ -281,7 +281,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
               <button
                 type="submit"
                 disabled={starting || !meetingUrl.trim()}
-                className="halo-on-hover inline-flex items-center justify-center gap-2 px-4 py-2 t-9 font-mono uppercase tracking-section border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="halo-on-hover inline-flex items-center justify-center gap-2 px-4 py-2 t-11 font-light border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {starting ? "Lancement…" : "Lancer le bot"}
               </button>
@@ -294,12 +294,12 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
             className="basis-3/5 flex flex-col min-h-0 border-r border-[var(--border-default)]"
             style={{ padding: "var(--space-6)", gap: "var(--space-4)" }}
           >
-            <header className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+            <header className="t-11 font-light text-[var(--text-faint)]">
               TRANSCRIPT
             </header>
             <div className="flex-1 min-h-0 overflow-y-auto">
               {transcript.trim().length === 0 ? (
-                <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                <p className="t-11 font-light text-[var(--text-faint)]">
                   En attente du transcript…
                 </p>
               ) : (
@@ -314,7 +314,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
             className="basis-2/5 flex flex-col min-h-0"
             style={{ padding: "var(--space-6)", gap: "var(--space-4)" }}
           >
-            <header className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+            <header className="t-11 font-light text-[var(--text-faint)]">
               ACTION_ITEMS · {actionItems.length}
             </header>
             <div
@@ -322,7 +322,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
               style={{ gap: "var(--space-3)" }}
             >
               {actionItems.length === 0 ? (
-                <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                <p className="t-11 font-light text-[var(--text-faint)]">
                   Aucune action détectée pour le moment
                 </p>
               ) : (
@@ -343,7 +343,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
                       <div className="flex-1 flex flex-col gap-1 min-w-0">
                         <p className="t-13 text-[var(--text)]">{item.action}</p>
                         {(item.owner || item.deadline) && (
-                          <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+                          <p className="t-11 font-light text-[var(--text-faint)]">
                             {[item.owner, item.deadline]
                               .filter(Boolean)
                               .join(" · ")}

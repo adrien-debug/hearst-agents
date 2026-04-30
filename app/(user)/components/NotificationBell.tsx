@@ -156,6 +156,7 @@ export function NotificationBell() {
         {hasUnread && (
           <span
             aria-hidden
+            className="t-9"
             style={{
               position: "absolute",
               top: "var(--space-1)",
@@ -168,10 +169,9 @@ export function NotificationBell() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "0 3px",
+              padding: "0 var(--space-1)",
               lineHeight: 1,
               fontWeight: "var(--weight-bold)" as string,
-              fontSize: "9px",
               letterSpacing: "var(--tracking-hairline)",
             }}
           >

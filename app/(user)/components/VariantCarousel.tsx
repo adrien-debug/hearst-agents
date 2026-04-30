@@ -149,11 +149,11 @@ export function VariantCarousel({
         className="flex items-center justify-between"
         style={{ marginBottom: "var(--space-4)" }}
       >
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           VARIANTS · {variants.length}
         </span>
         {error && (
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
+          <span className="t-11 font-medium text-[var(--danger)]">
             {error}
           </span>
         )}
@@ -177,7 +177,7 @@ export function VariantCarousel({
               onClick={() => setActiveKind(kind)}
               data-testid={`variant-tile-${kind}`}
               data-active={isActive}
-              className="halo-on-hover flex flex-col text-left"
+              className="flex flex-col text-left"
               style={{
                 padding: "var(--space-3)",
                 background: isActive ? "var(--cykan-surface)" : "var(--surface-1)",
@@ -191,7 +191,7 @@ export function VariantCarousel({
               <VariantThumbnail variant={variant} kind={kind} />
               <div className="flex items-center justify-between" style={{ gap: "var(--space-2)" }}>
                 <span
-                  className={`t-9 font-mono uppercase tracking-marquee ${
+                  className={`t-11 font-light ${
                     isActive ? "text-[var(--cykan)]" : "text-[var(--text-muted)]"
                   }`}
                 >
@@ -217,10 +217,8 @@ export function VariantCarousel({
 
 function StatusDot({ status }: { status?: string }) {
   let color = "var(--text-ghost)";
-  let glow = "";
   if (status === "ready") {
     color = "var(--cykan)";
-    glow = "halo-cyan-sm";
   } else if (status === "failed") {
     color = "var(--danger)";
   } else if (status === "pending" || status === "generating") {
@@ -228,7 +226,7 @@ function StatusDot({ status }: { status?: string }) {
   }
   return (
     <span
-      className={`rounded-pill ${glow} ${status === "pending" || status === "generating" ? "animate-pulse" : ""}`}
+      className={`rounded-pill ${status === "pending" || status === "generating" ? "animate-pulse" : ""}`}
       style={{ width: "var(--space-1)", height: "var(--space-1)", background: color }}
       aria-hidden
     />
@@ -257,12 +255,12 @@ function VariantThumbnail({
   if (!variant || variant.status !== "ready" || !variant.storageUrl) {
     return (
       <div style={baseStyle}>
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           {variant?.status === "failed"
-            ? "ERREUR"
+            ? "Échec"
             : variant?.status === "pending" || variant?.status === "generating"
-              ? "GÉNÉRATION…"
-              : kind.toUpperCase()}
+              ? "Génération…"
+              : KIND_LABEL[kind]}
         </span>
       </div>
     );
@@ -307,8 +305,8 @@ function VariantThumbnail({
 
   return (
     <div style={baseStyle}>
-      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-        {kind.toUpperCase()}
+      <span className="t-11 font-light text-[var(--text-faint)]">
+        {KIND_LABEL[kind]}
       </span>
     </div>
   );
@@ -369,19 +367,15 @@ function ActiveVariantPanel({
           type="button"
           onClick={onRegenerate}
           disabled={generating}
-          className="halo-on-hover self-start"
+          className="self-start t-13 font-medium hover:opacity-90 transition-opacity duration-base"
           style={{
             padding: "var(--space-2) var(--space-4)",
             background: "var(--cykan)",
-            color: "var(--bg)",
+            color: "var(--text-on-cykan)",
             border: "none",
             borderRadius: "var(--radius-xs)",
             cursor: generating ? "not-allowed" : "pointer",
             opacity: generating ? 0.6 : 1,
-            fontFamily: "ui-monospace, monospace",
-            fontSize: "10px",
-            textTransform: "uppercase",
-            letterSpacing: "var(--tracking-marquee)",
           }}
         >
           {generating ? "Création…" : `Générer ${KIND_LABEL[kind]}`}
@@ -405,15 +399,15 @@ function ActiveVariantPanel({
       }}
     >
       <header className="flex items-center justify-between" style={{ gap: "var(--space-3)" }}>
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
-          {KIND_LABEL[kind]} · {variant.status.toUpperCase()}
+        <span className="t-13 font-medium text-[var(--text-l1)]">
+          {KIND_LABEL[kind]} · <span className="font-light text-[var(--text-faint)]">{variant.status}</span>
         </span>
         <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
           <button
             type="button"
             onClick={onRegenerate}
             disabled={generating}
-            className="halo-on-hover t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)] hover:text-[var(--cykan)]"
+            className="t-11 font-light text-[var(--text-muted)] hover:text-[var(--cykan)] transition-colors duration-base"
             style={{
               padding: "var(--space-1) var(--space-3)",
               background: "transparent",
@@ -429,7 +423,7 @@ function ActiveVariantPanel({
             type="button"
             onClick={onFork}
             disabled={generating}
-            className="halo-on-hover t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)] hover:text-[var(--cykan)]"
+            className="t-11 font-light text-[var(--text-muted)] hover:text-[var(--cykan)]"
             style={{
               padding: "var(--space-1) var(--space-3)",
               background: "transparent",

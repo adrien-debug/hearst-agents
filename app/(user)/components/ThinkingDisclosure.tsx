@@ -26,7 +26,7 @@ export function ThinkingDisclosure({ thinking }: ThinkingDisclosureProps) {
           style={{ width: "var(--space-2)", height: "var(--space-2)", flexShrink: 0 }}
           aria-hidden
         />
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
+        <span className="t-11 font-medium text-[var(--warn)]">
           RAISONNEMENT · {lines} lignes
         </span>
       </summary>

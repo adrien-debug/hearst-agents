@@ -110,16 +110,16 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
         <button
           type="button"
           onClick={back}
-          className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--cykan)]"
+          className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)]"
           style={{ background: "transparent", border: "none", cursor: "pointer" }}
         >
           ← Retour
         </button>
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+        <span className="t-11 font-medium text-[var(--cykan)]">
           COMPARER ASSETS
         </span>
         <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+        <span className="t-11 font-light text-[var(--text-muted)]">
           {assetIdA.slice(0, 8)} ↔ {assetIdB.slice(0, 8)}
         </span>
         <button
@@ -127,7 +127,7 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
           onClick={() => void handleDiff()}
           disabled={diffLoading || loading || !assetA || !assetB}
           data-testid="asset-compare-diff-btn"
-          className="halo-on-hover t-9 font-mono uppercase tracking-marquee"
+          className="t-11 font-light"
           style={{
             marginLeft: "auto",
             padding: "var(--space-2) var(--space-4)",
@@ -152,13 +152,13 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
             margin: "var(--space-4) var(--space-6)",
           }}
         >
-          <p className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">{error}</p>
+          <p className="t-11 font-medium text-[var(--danger)]">{error}</p>
         </div>
       )}
 
       {loading && (
         <div className="flex items-center justify-center" style={{ padding: "var(--space-12)" }}>
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             Chargement…
           </span>
         </div>
@@ -191,7 +191,7 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
                 marginBottom: "var(--space-6)",
               }}
             >
-              <p className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
+              <p className="t-11 font-medium text-[var(--danger)]">
                 {diffError}
               </p>
             </div>
@@ -210,7 +210,7 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
               }}
             >
               <header className="flex items-center" style={{ gap: "var(--space-3)" }}>
-                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+                <span className="t-11 font-medium text-[var(--cykan)]">
                   DIFF · {diff.differences.length}
                 </span>
               </header>
@@ -230,7 +230,7 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
                       borderRadius: "var(--radius-xs)",
                     }}
                   >
-                    <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] shrink-0">
+                    <span className="t-11 font-medium text-[var(--cykan)] shrink-0">
                       {d.kind}
                     </span>
                     <span className="t-11 font-light text-[var(--text-soft)]">
@@ -268,7 +268,7 @@ function ComparePane({
         gap: "var(--space-3)",
       }}
     >
-      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+      <span className="t-11 font-medium text-[var(--cykan)]">
         ASSET {side}
       </span>
       <h2

@@ -67,7 +67,7 @@ export function StageActionBar({
           <button
             type="button"
             onClick={onBack}
-            className="halo-on-hover inline-flex items-center t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] shrink-0"
+            className="halo-on-hover inline-flex items-center t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] shrink-0"
             style={{
               gap: "var(--space-2)",
               paddingLeft: "var(--space-3)",
@@ -110,7 +110,7 @@ function PrimaryButton({ action }: { action: StageAction }) {
       disabled={action.disabled || action.loading}
       data-testid={`stage-action-${action.id}`}
       aria-label={action.label}
-      className="inline-flex items-center t-9 font-mono uppercase tracking-section shrink-0"
+      className="inline-flex items-center t-11 font-light shrink-0"
       style={{
         gap: "var(--space-2)",
         paddingLeft: "var(--space-3)",
@@ -144,7 +144,7 @@ function SecondaryButton({ action }: { action: StageAction }) {
       disabled={action.disabled || action.loading}
       data-testid={`stage-action-${action.id}`}
       aria-label={action.label}
-      className="halo-on-hover inline-flex items-center t-9 font-mono uppercase tracking-section shrink-0"
+      className="halo-on-hover inline-flex items-center t-11 font-light shrink-0"
       style={{
         gap: "var(--space-2)",
         paddingLeft: "var(--space-3)",
@@ -200,7 +200,7 @@ function OverflowMenu({ actions }: { actions: StageAction[] }) {
         aria-expanded={open}
         aria-label="Plus d'actions"
         data-testid="stage-action-overflow-toggle"
-        className="halo-on-hover inline-flex items-center justify-center t-9 font-mono uppercase tracking-section shrink-0"
+        className="halo-on-hover inline-flex items-center justify-center t-11 font-light shrink-0"
         style={{
           width: "var(--space-8)",
           height: "var(--space-8)",
@@ -240,7 +240,7 @@ function OverflowMenu({ actions }: { actions: StageAction[] }) {
               }}
               disabled={a.disabled}
               data-testid={`stage-action-${a.id}`}
-              className="inline-flex items-center w-full t-9 font-mono uppercase tracking-section text-left hover:text-[var(--cykan)]"
+              className="inline-flex items-center w-full t-11 font-light text-left hover:text-[var(--cykan)]"
               style={{
                 gap: "var(--space-2)",
                 paddingLeft: "var(--space-3)",

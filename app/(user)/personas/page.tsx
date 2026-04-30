@@ -121,7 +121,7 @@ export default function PersonasPage() {
         style={{ gap: "var(--space-6)" }}
       >
         {flash && (
-          <p className="t-10 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+          <p className="t-13 font-light text-[var(--cykan)]">
             {flash}
           </p>
         )}
@@ -141,7 +141,7 @@ export default function PersonasPage() {
         <section className="flex flex-col" style={{ gap: "var(--space-3)" }}>
           <h2 className="t-15 font-medium text-[var(--text)]">Personas</h2>
           {personas === null ? (
-            <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+            <p className="t-11 font-light text-[var(--text-faint)]">
               Chargement…
             </p>
           ) : personas.length === 0 ? (
@@ -171,8 +171,8 @@ export default function PersonasPage() {
                   >
                     <span className="t-13 font-medium text-[var(--text)]">{p.name}</span>
                     {p.isDefault && (
-                      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
-                        DEFAULT
+                      <span className="t-11 font-medium text-[var(--cykan)]">
+                        Par défaut
                       </span>
                     )}
                   </header>
@@ -198,7 +198,7 @@ export default function PersonasPage() {
                         setEditing(p);
                       }}
                       disabled={p.id.startsWith("builtin:") || busy}
-                      className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)] hover:text-[var(--cykan)]"
+                      className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors duration-base"
                       style={{ background: "transparent", border: "none", cursor: "pointer" }}
                     >
                       Éditer
@@ -207,7 +207,7 @@ export default function PersonasPage() {
                       type="button"
                       onClick={() => remove(p)}
                       disabled={p.id.startsWith("builtin:") || busy}
-                      className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)] hover:text-[var(--danger)]"
+                      className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors duration-base"
                       style={{ background: "transparent", border: "none", cursor: "pointer" }}
                     >
                       Supprimer
@@ -216,7 +216,7 @@ export default function PersonasPage() {
                       type="button"
                       onClick={() => setPublishing(p)}
                       disabled={busy}
-                      className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)] hover:text-[var(--cykan)]"
+                      className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors duration-base"
                       style={{ background: "transparent", border: "none", cursor: "pointer" }}
                     >
                       Publier
@@ -263,7 +263,7 @@ export default function PersonasPage() {
 function Chip({ children }: { children: React.ReactNode }) {
   return (
     <span
-      className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]"
+      className="t-11 font-light text-[var(--text-faint)]"
       style={{
         padding: "var(--space-1) var(--space-2)",
         border: "1px solid var(--line-strong)",
@@ -507,7 +507,7 @@ function PersonaForm({
           type="button"
           onClick={onCancel}
           disabled={busy}
-          className="t-11 font-mono uppercase tracking-marquee text-[var(--text-ghost)] hover:text-[var(--text-soft)]"
+          className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--text-soft)] transition-colors duration-base"
           style={{ background: "transparent", border: "none", cursor: "pointer" }}
         >
           Annuler
@@ -534,7 +534,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+      <span className="t-11 font-light text-[var(--text-faint)]">
         {label}
       </span>
       {children}

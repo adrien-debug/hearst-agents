@@ -119,16 +119,16 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
       </div>
 
       <div className="p-6 bg-[var(--bg-soft)]">
-        <p className="ghost-meta-label mb-4">META_ROW</p>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3 t-11 font-mono text-[var(--text-muted)]">
+        <p className="t-11 font-medium text-[var(--text-l1)] mb-4">Métadonnées</p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-3 t-11 font-light text-[var(--text-muted)]">
           <div>
-            <span className="text-[var(--text-faint)]">ID_REF</span>
-            <span className="ml-2">{asset.id.slice(0, 8)}…</span>
+            <span className="text-[var(--text-faint)]">Réf</span>
+            <span className="ml-2 font-mono">{asset.id.slice(0, 8)}…</span>
           </div>
           {asset.runId && (
             <div>
-              <span className="text-[var(--text-faint)]">RUN_REF</span>
-              <span className="ml-2">{asset.runId.slice(0, 8)}…</span>
+              <span className="text-[var(--text-faint)]">Run</span>
+              <span className="ml-2 font-mono">{asset.runId.slice(0, 8)}…</span>
             </div>
           )}
           <div className="col-span-2 sm:col-span-1">

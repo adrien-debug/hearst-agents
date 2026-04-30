@@ -127,7 +127,7 @@ export function MobileBottomNav() {
             <span aria-hidden="true" style={{ fontSize: "var(--space-4)", lineHeight: 1 }}>
               {item.glyph}
             </span>
-            <span className="t-9 font-mono uppercase tracking-marquee">
+            <span className="t-11 font-light">
               {item.label}
             </span>
           </button>

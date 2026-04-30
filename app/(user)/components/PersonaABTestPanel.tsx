@@ -67,7 +67,7 @@ export function PersonaABTestPanel({ personas }: PersonaABTestPanelProps) {
     >
       <header className="flex items-baseline justify-between" style={{ gap: "var(--space-3)" }}>
         <h2 className="t-15 font-medium text-[var(--text)]">A/B test inline</h2>
-        <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <p className="t-11 font-light text-[var(--text-faint)]">
           2 personas · 1 message · 2 réponses
         </p>
       </header>
@@ -95,7 +95,7 @@ export function PersonaABTestPanel({ personas }: PersonaABTestPanelProps) {
       </div>
 
       <div className="flex items-center justify-between" style={{ gap: "var(--space-3)" }}>
-        <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <p className="t-11 font-light text-[var(--text-faint)]">
           {loading ? "Génération en parallèle…" : "Lance la comparaison"}
         </p>
         <button
@@ -113,7 +113,7 @@ export function PersonaABTestPanel({ personas }: PersonaABTestPanelProps) {
       </div>
 
       {error && (
-        <p className="t-10 font-mono uppercase tracking-marquee text-[var(--danger)]">
+        <p className="t-11 font-medium text-[var(--danger)]">
           {error}
         </p>
       )}
@@ -158,7 +158,7 @@ function PersonaSelect({
 }) {
   return (
     <label className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-      <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+      <span className="t-11 font-light text-[var(--text-faint)]">
         {label}
       </span>
       <select
@@ -213,12 +213,12 @@ function ResponseColumn({
     >
       <header className="flex items-baseline justify-between" style={{ gap: "var(--space-3)" }}>
         <div className="flex items-baseline" style={{ gap: "var(--space-2)" }}>
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+          <span className="t-11 font-medium text-[var(--cykan)]">
             {label}
           </span>
           <span className="t-13 font-medium text-[var(--text)]">{persona.name}</span>
         </div>
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           {latencyMs}ms
         </span>
       </header>
@@ -239,7 +239,7 @@ function ResponseColumn({
           background: preferred ? "var(--cykan-surface)" : "transparent",
         }}
       >
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-soft)]">
+        <span className="t-11 font-medium text-[var(--text-soft)]">
           {preferred ? "préférée" : `préférer ${label}`}
         </span>
       </button>

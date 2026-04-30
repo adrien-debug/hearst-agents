@@ -104,7 +104,7 @@ export function WorkingDocument() {
         />
         <button
           onClick={close}
-          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
+          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
           title="Réduire (Cmd+B)"
           type="button"
         >
@@ -142,14 +142,14 @@ export function WorkingDocument() {
       >
         <button
           type="button"
-          className="halo-on-hover inline-flex items-center px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
+          className="halo-on-hover inline-flex items-center px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
           title="Sauvegarder ce document comme asset réutilisable"
         >
           Sauvegarder comme asset
         </button>
         <button
           type="button"
-          className="halo-on-hover inline-flex items-center px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
+          className="halo-on-hover inline-flex items-center px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
           title="Convertir ce document en mission planifiée"
         >
           Convertir en mission

@@ -128,8 +128,11 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between first:mt-0 mt-12 mb-6 px-3">
       <span
-        className="t-10 font-mono uppercase font-medium tracking-section"
-        style={{ color: "var(--text-l2)" }}
+        className="t-11 font-medium"
+        style={{
+          color: "var(--text-faint)",
+          letterSpacing: "var(--tracking-tight)",
+        }}
       >
         {label}
       </span>
@@ -143,8 +146,8 @@ function SectionHeader({
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="t-10 font-mono uppercase tracking-section pl-3 py-2"
-      style={{ color: "var(--text-l2)" }}
+      className="t-11 font-light pl-3 py-2"
+      style={{ color: "var(--text-faint)" }}
     >
       {children}
     </p>
@@ -257,8 +260,8 @@ function TopMenuItem({
       </span>
       {hotkey ? (
         <span
-          className="t-9 tracking-display uppercase"
-          style={{ color: "var(--text-l2)" }}
+          className="t-9 font-mono"
+          style={{ color: "var(--text-faint)" }}
         >
           {hotkey}
         </span>
@@ -280,10 +283,9 @@ function GhostFooterLink({
 }) {
   const [hover, setHover] = useState(false);
   const linkStyle = {
-    color: hover ? "var(--cykan)" : "var(--text-l2)",
-    textShadow: hover ? "var(--neon-cykan)" : "none",
+    color: hover ? "var(--cykan)" : "var(--text-faint)",
   };
-  const linkClass = "t-9 tracking-display uppercase transition-all duration-emphasis ease-out-soft";
+  const linkClass = "t-11 font-light transition-colors duration-emphasis ease-out-soft";
 
   if (href) {
     return (

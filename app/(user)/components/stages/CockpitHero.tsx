@@ -14,29 +14,38 @@ interface CockpitHeroProps {
   emptyAction?: { label: string; href: string };
 }
 
+const DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: "Europe/Paris",
+});
+
 /**
- * CockpitHero — Hero unifié cockpit & welcome.
+ * CockpitHero — Hero éditorial statutaire (pivot UI 2026-05-01, direction A).
  *
- * Utilisé à la fois par CockpitStage (mode="cockpit") avec briefing et par
- * WelcomePanel (chat empty state) sans briefing — l'identité visuelle reste
- * identique au pixel.
+ * Le hero est le premier point d'attention du cockpit : prénom + date complète
+ * + heure, briefing court en sous-texte. Posture éditoriale calme, pas
+ * "panneau de contrôle". Quand le briefing est vide, le fallback est un
+ * statement éditorial assumé (pas une mendiance d'apps connectées).
  *
- * Layout grid :
- *   padding   : --space-12 horizontal, --space-14 top, --space-12 bottom
- *   headline  : .t-48 / --text-l0
- *   label     : .t-9 / --tracking-label / --text-l3
- *   time      : .t-15 / --text-l2
- *   divider   : gradient transparent → --sep → transparent
- *   briefing  : --space-8 top spacing, .t-15 / --text-l1
+ * Voix typo :
+ *   prénom (h1)        — voix éditoriale t-30 / text-l1
+ *   date + heure       — voix système discrète t-13 / text-faint (mono tabular pour l'heure)
+ *   briefing headline  — voix éditoriale t-15 / text-l1
+ *   briefing body      — voix éditoriale t-13 / text-l2
+ *   CTA empty          — voix éditoriale gold (PAS cykan : lien de contenu)
  */
 export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
   const { data: session } = useSession();
   const [time, setTime] = useState("--:--");
+  const [dateLabel, setDateLabel] = useState("");
 
   useEffect(() => {
     const tick = () => {
       const d = new Date();
       setTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+      setDateLabel(DATE_FORMATTER.format(d));
     };
     tick();
     const id = setInterval(tick, 30000);
@@ -51,7 +60,7 @@ export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
         padding: "var(--space-14) var(--space-12) var(--space-12)",
       }}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between" style={{ gap: "var(--space-8)" }}>
         <h1
           className="t-30"
           style={{
@@ -62,15 +71,23 @@ export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
         >
           {firstName}
         </h1>
-        <span
-          className="t-15 font-light"
-          style={{
-            color: "var(--text-l2)",
-            marginTop: "var(--space-2)",
-          }}
+        <div
+          className="flex flex-col items-end shrink-0"
+          style={{ gap: "var(--space-1)", marginTop: "var(--space-2)" }}
         >
-          {time}
-        </span>
+          <span
+            className="t-13 font-light first-letter:uppercase"
+            style={{ color: "var(--text-l2)" }}
+          >
+            {dateLabel}
+          </span>
+          <span
+            className="t-13 font-mono tabular-nums"
+            style={{ color: "var(--text-faint)" }}
+          >
+            {time}
+          </span>
+        </div>
       </div>
 
       {briefing && !briefing.empty && (() => {
@@ -111,23 +128,36 @@ export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
       })()}
 
       {briefing?.empty && emptyAction && (
-        <div style={{ marginTop: "var(--space-8)" }}>
+        <div style={{ marginTop: "var(--space-8)", maxWidth: "var(--width-actions)" }}>
+          <p
+            className="t-15"
+            style={{
+              fontWeight: 400,
+              lineHeight: "var(--leading-tight)",
+              color: "var(--text-l1)",
+            }}
+          >
+            Aucun signal pour aujourd{"'"}hui.
+          </p>
           <p
             className="t-13"
             style={{
+              lineHeight: "var(--leading-tight)",
               color: "var(--text-l2)",
-              marginBottom: "var(--space-3)",
+              marginTop: "var(--space-3)",
+              marginBottom: "var(--space-4)",
             }}
           >
-            Pas encore de signal d{"'"}activité. Connecte tes apps pour que Hearst commence à apprendre.
+            Hearst observe ton quotidien dès que tu lui donnes accès à tes outils.
           </p>
           <a
             href={emptyAction.href}
-            className="t-11 font-mono uppercase inline-flex items-center"
+            className="t-13 inline-flex items-center transition-colors hover:opacity-80"
             style={{
-              letterSpacing: "var(--tracking-marquee)",
-              color: "var(--cykan)",
+              color: "var(--gold)",
               gap: "var(--space-2)",
+              borderBottom: "1px solid var(--gold-border)",
+              paddingBottom: "var(--space-1)",
             }}
           >
             {emptyAction.label} →

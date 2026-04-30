@@ -257,7 +257,7 @@ function InsightView({ text }: { text: string }) {
       style={{ paddingLeft: "var(--space-4)" }}
     >
       <div
-        className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]"
+        className="t-11 font-medium text-[var(--cykan)]"
         style={{ marginBottom: "var(--space-2)" }}
       >
         {label}

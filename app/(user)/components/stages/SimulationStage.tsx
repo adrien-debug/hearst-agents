@@ -146,14 +146,14 @@ export function SimulationStage() {
               className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
               style={{ width: "var(--space-2)", height: "var(--space-2)" }}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            <span className="t-11 font-medium text-[var(--cykan)]">
               SIMULATION
             </span>
             <span
               className="rounded-pill bg-[var(--text-ghost)]"
               style={{ width: "var(--space-1)", height: "var(--space-1)" }}
             />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+            <span className="t-11 font-light text-[var(--text-muted)]">
               {headerLabel}
             </span>
           </>
@@ -218,7 +218,7 @@ function SimulationForm({
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+        <span className="t-11 font-light text-[var(--text-faint)]">
           SCÉNARIO
         </span>
         <textarea
@@ -233,13 +233,13 @@ function SimulationForm({
 
       <div className="flex flex-col gap-4">
         <header className="flex items-center justify-between">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+          <span className="t-11 font-light text-[var(--text-faint)]">
             VARIABLES CLÉS
           </span>
           <button
             type="button"
             onClick={onVariableAdd}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
+            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
           >
             + Ajouter
           </button>
@@ -283,7 +283,7 @@ function SimulationForm({
         type="button"
         onClick={onLaunch}
         disabled={!scenarioInput.trim()}
-        className="halo-on-hover px-6 py-3 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow disabled:opacity-60"
+        className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90 disabled:opacity-60"
       >
         Lancer la simulation
       </button>
@@ -307,7 +307,7 @@ function SimulationRunning() {
       >
         Génération de scénarios… DeepSeek R1 raisonne.
       </p>
-      <p className="t-11 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+      <p className="t-11 font-light text-[var(--text-faint)]">
         30-50 secondes habituellement
       </p>
     </div>
@@ -343,7 +343,7 @@ function SimulationResults({ scenarios, reasoning, assetId, onReset }: Simulatio
           <button
             type="button"
             onClick={() => setStageMode({ mode: "asset", assetId })}
-            className="halo-on-hover px-4 py-2 t-9 font-mono uppercase tracking-marquee bg-[var(--cykan)] text-[var(--bg)] hover:tracking-[0.4em] transition-all duration-slow"
+            className="px-4 py-2 t-11 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90"
           >
             Voir dans l&apos;asset
           </button>
@@ -351,7 +351,7 @@ function SimulationResults({ scenarios, reasoning, assetId, onReset }: Simulatio
         <button
           type="button"
           onClick={onReset}
-          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
+          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all"
         >
           Nouvelle simulation
         </button>
@@ -372,7 +372,7 @@ function ScenarioCard({ scenario }: { scenario: Scenario }) {
     >
       <header className="flex items-start justify-between gap-4">
         <h3 className="t-15 font-medium text-[var(--text)]">{scenario.name}</h3>
-        <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] shrink-0">
+        <span className="t-11 font-medium text-[var(--cykan)] shrink-0">
           {probabilityPct}%
         </span>
       </header>
