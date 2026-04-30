@@ -9,6 +9,7 @@
  *               voir STAGE_HOTKEYS)
  * - ⌘⇧V       : toggle direct mode voix ambient (raccourci alternatif
  *               à ⌘7, accessible même quand un autre Stage est actif)
+ * - ⌘B        : toggle WorkingDocument (Thinking Canvas — Lot C)
  * - ⌘⌫        : back stage
  *
  * Ignore les inputs / textarea / contenteditable pour ne pas voler les
@@ -18,6 +19,7 @@
 import { useEffect } from "react";
 import { useStageStore, STAGE_HOTKEYS } from "@/stores/stage";
 import { useVoiceStore } from "@/stores/voice";
+import { useWorkingDocumentStore } from "@/stores/working-document";
 
 export function useGlobalHotkeys() {
   const toggleCommandeur = useStageStore((s) => s.toggleCommandeur);
@@ -57,6 +59,15 @@ export function useGlobalHotkeys() {
       if (e.key === "k" || e.key === "K") {
         e.preventDefault();
         toggleCommandeur();
+        return;
+      }
+
+      // ⌘B → toggle WorkingDocument (Thinking Canvas — Lot C).
+      // No-op silencieux si aucun document n'a encore été ouvert
+      // (le store toggle gère ce cas).
+      if (e.key === "b" || e.key === "B") {
+        e.preventDefault();
+        useWorkingDocumentStore.getState().toggle();
         return;
       }
 

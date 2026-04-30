@@ -1228,6 +1228,33 @@ body {
     0 0 32px rgba(45,212,191,0.12);
 }
 
+/* Thinking Canvas — input flat, sans halo cykan en focus.
+   Focus = simple shift de la bordure vers --text-soft. */
+.cockpit-input-pill-flat {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--radius-2xl);
+  background: var(--surface-1);
+  border: 1px solid var(--border-shell);
+  color: var(--text);
+  transition:
+    border-color var(--duration-base) var(--ease-standard),
+    background var(--duration-base) var(--ease-standard);
+}
+.cockpit-input-pill-flat:hover {
+  border-color: var(--border-input);
+}
+.cockpit-input-pill-flat:focus-within {
+  border-color: var(--text-soft);
+  background: var(--surface-2);
+}
+
+/* Sélection texte — calmer, teintée cykan (Thinking Canvas). */
+::selection {
+  background: color-mix(in srgb, var(--cykan) 22%, transparent);
+  color: var(--text);
+}
+
 .bg-hero-aura {
   background:
     radial-gradient(ellipse 60% 50% at 50% 45%, rgba(45, 212, 191, 0.08) 0%, rgba(45, 212, 191, 0.02) 35%, transparent 70%),

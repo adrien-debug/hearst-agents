@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useRuntimeStore } from "@/stores/runtime";
 import { ChatToolStream } from "./ChatToolStream";
 import { ChatActionReceipts } from "./ChatActionReceipts";
 import { ChatConnectInline } from "./ChatConnectInline";
 import { ThinkingDisclosure } from "./ThinkingDisclosure";
 import { ChatAssetCard } from "./ChatAssetCard";
+import { Block, type BlockActionId } from "./chat/Block";
 import type { MessageAssetRef } from "@/stores/navigation";
 
 export interface Message {
@@ -50,44 +51,22 @@ function formatHHMM(ts: number | null): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-function ActionChip({
-  label,
-  onClick,
-  done,
-}: {
-  label: string;
-  onClick?: () => void;
-  done?: boolean;
-}) {
+function MetaLine({ author, ts }: { author: string; ts: string }) {
   return (
-    <button
-      onClick={onClick}
-      className="halo-on-hover t-9 font-mono tracking-display uppercase px-2 py-1 border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan)]/30 transition-all bg-transparent"
+    <div
+      className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]"
+      style={{ marginBottom: "var(--space-2)" }}
     >
-      {done ? "Copié" : label}
-    </button>
-  );
-}
-
-function AssistantActions({ content }: { content: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    if (!navigator?.clipboard) return;
-    navigator.clipboard.writeText(content).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    }).catch(() => {});
-  };
-  return (
-    <div className="flex gap-2 mt-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-base">
-      <ActionChip label="Copier" onClick={handleCopy} done={copied} />
+      <span>{author}</span>
+      <span className="text-[var(--text-ghost)]" style={{ marginLeft: "var(--space-2)", marginRight: "var(--space-2)" }}>·</span>
+      <span>{ts}</span>
     </div>
   );
 }
 
 function StreamShimmer() {
   return (
-    <p className="mt-2 t-13 font-light text-[var(--text-faint)] tracking-tight">
+    <p className="t-13 font-light text-[var(--text-faint)] tracking-tight" style={{ marginTop: "var(--space-2)" }}>
       <span className="chat-typing-dots" aria-hidden>···</span>
     </p>
   );
@@ -101,10 +80,11 @@ function ConfirmActionChips({
   onCancel: () => void;
 }) {
   return (
-    <div className="flex gap-2 mt-3">
+    <div className="flex" style={{ gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
       <button
         onClick={onConfirm}
-        className="halo-on-hover inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors"
+        className="halo-on-hover inline-flex items-center px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan-bg-active)] hover:bg-[var(--cykan-bg-hover)] transition-colors"
+        style={{ gap: "var(--space-2)" }}
       >
         <span>Confirmer</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -113,7 +93,8 @@ function ConfirmActionChips({
       </button>
       <button
         onClick={onCancel}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-colors"
+        className="inline-flex items-center px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--border-default)] transition-colors"
+        style={{ gap: "var(--space-2)" }}
       >
         <span>Annuler</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -134,12 +115,53 @@ export function ChatMessages({
   const scrollRef = useRef<HTMLDivElement>(null);
   const coreState = useRuntimeStore((s) => s.coreState);
   const isRunning = coreState !== "idle";
+  // Map id → contenu édité localement (refond éditoriale, persistance hors scope).
+  const [edits, setEdits] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const handleBlockAction = useCallback(
+    (messageId: string, content: string, action: BlockActionId) => {
+      if (action === "expand") {
+        // WorkingDocument (Lot C) écoute cet event pour ouvrir la split view.
+        // Contrat de payload : { id, title, content } — cf
+        // app/(user)/components/chat/WorkingDocument.tsx::ExpandBlockDetail.
+        if (typeof window !== "undefined") {
+          const title = content.split("\n")[0].replace(/^#+\s*/, "").slice(0, 80) || "Document";
+          window.dispatchEvent(
+            new CustomEvent("chat:expand-block", {
+              detail: { id: messageId, title, content },
+            }),
+          );
+        }
+        return;
+      }
+      if (action === "asset") {
+        // Sauvegarde réelle. Stub propre si endpoint absent.
+        if (typeof fetch !== "undefined") {
+          const title = content.split("\n")[0].slice(0, 80) || "Block";
+          fetch("/api/v2/assets", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              type: "text",
+              name: title,
+              metadata: { content, source: "chat-block" },
+            }),
+          }).catch(() => {
+            // Silencieux : feedback est déjà géré côté BlockActions.
+          });
+        }
+        return;
+      }
+      // mission / refine → toast "Bientôt" géré par BlockActions.
+    },
+    [],
+  );
 
   if (messages.length === 0) {
     return null;
@@ -149,55 +171,38 @@ export function ChatMessages({
     ? "h-full overflow-y-auto px-7 py-4 flex flex-col"
     : "h-full overflow-y-auto px-10 py-8 flex flex-col";
 
-  const turnGap = compact ? "gap-4" : "gap-6";
-  const bodyText = compact ? "t-13" : "t-15";
-
   const lastMessage = messages[messages.length - 1];
   const lastIsUser = lastMessage?.role === "user";
 
   return (
     <div ref={scrollRef} className={className ?? defaultClass}>
       <div className="flex-1 min-h-0" />
-      <div className={`flex flex-col shrink-0 ${turnGap} mt-auto pb-10 w-full max-w-[720px] mx-auto`}>
+      <div
+        className="flex flex-col shrink-0 mt-auto pb-10 w-full mx-auto max-w-[var(--width-center-max)]"
+        style={{ gap: "var(--space-10)" }}
+      >
         {messages.map((message, idx) => {
           const ts = formatHHMM(tsFromId(message.id));
           const isLastAssistant = message.role === "assistant" && idx === messages.length - 1;
-          const showCursor = isRunning && isLastAssistant && message.content.length > 0;
+          const liveContent = edits[message.id] ?? message.content;
+          const showCursor = isRunning && isLastAssistant && liveContent.length > 0;
 
           if (message.role === "user") {
             return (
               <div key={message.id} className="w-full">
-                <div className="flex items-center gap-2 mb-1 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
-                  <span className="opacity-60">[</span>
-                  <span className="font-semibold">You</span>
-                  <span className="text-[var(--text-ghost)]">·</span>
-                  <span>{ts}</span>
-                  <span className="opacity-60">]</span>
-                </div>
-                <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--cykan)] font-medium whitespace-pre-wrap`}>
-                  {message.content}
+                <MetaLine author="Toi" ts={ts} />
+                <div className="t-15 font-light leading-relaxed text-[var(--text-soft)] whitespace-pre-wrap">
+                  {liveContent}
                 </div>
               </div>
             );
           }
 
-          const showShimmer = isLastAssistant && message.content.length === 0 && isRunning;
+          const showShimmer = isLastAssistant && liveContent.length === 0 && isRunning;
 
           return (
-            <div key={message.id} className="relative pl-5 group">
-              <div className="absolute left-0 top-2 bottom-2 w-px bg-[var(--border-shell)]" />
-              <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-pill bg-[var(--cykan)]" />
-              <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
-                <span className="opacity-60">[</span>
-                {source && (
-                  <>
-                    <span>{source}</span>
-                    <span className="text-[var(--text-ghost)]">·</span>
-                  </>
-                )}
-                <span>{ts}</span>
-                <span className="opacity-60">]</span>
-              </div>
+            <div key={message.id} className="relative">
+              <MetaLine author={source ?? "Hearst"} ts={ts} />
 
               {showShimmer ? (
                 <>
@@ -209,14 +214,26 @@ export function ChatMessages({
               ) : (
                 <>
                   {(() => {
-                    const { thinking, main } = parseThinkingBlock(message.content);
+                    const { thinking, main } = parseThinkingBlock(liveContent);
                     return (
                       <>
                         {thinking && <ThinkingDisclosure thinking={thinking} />}
-                        <div className={`${bodyText} leading-[1.55] tracking-tight text-[var(--text)] font-normal whitespace-pre-wrap`}>
-                          {main}
-                          {showCursor && <span className="chat-caret inline-block align-text-bottom" />}
-                        </div>
+                        <Block
+                          content={main}
+                          editable
+                          onSave={(updated) =>
+                            setEdits((prev) => ({ ...prev, [message.id]: updated }))
+                          }
+                          onAction={(action) =>
+                            handleBlockAction(message.id, main, action)
+                          }
+                        />
+                        {showCursor && (
+                          <span
+                            className="chat-caret inline-block align-text-bottom"
+                            aria-hidden
+                          />
+                        )}
                       </>
                     );
                   })()}
@@ -229,33 +246,23 @@ export function ChatMessages({
                   <ChatActionReceipts />
                 </>
               )}
-              {isLastAssistant && !showShimmer && hasPendingConfirmation(message.content) && onQuickReply && (
+              {isLastAssistant && !showShimmer && hasPendingConfirmation(liveContent) && onQuickReply && (
                 <ConfirmActionChips
                   onConfirm={() => onQuickReply("confirmer")}
                   onCancel={() => onQuickReply("annuler")}
                 />
-              )}
-              {!showShimmer && !message.assetRef && message.content.length > 0 && (
-                <AssistantActions content={parseThinkingBlock(message.content).main} />
               )}
             </div>
           );
         })}
 
         {isRunning && lastIsUser && (
-          <div className="relative pl-5">
-            <div className="absolute left-0 top-2 bottom-2 w-px bg-[var(--border-shell)]" />
-            <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-pill bg-[var(--cykan)]" />
-            <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
-              <span className="opacity-60">[</span>
-              <span>running…</span>
-              <span className="opacity-60">]</span>
-            </div>
+          <div className="relative">
+            <MetaLine author="Hearst" ts="…" />
             <ChatToolStream />
             <StreamShimmer />
           </div>
         )}
-
       </div>
     </div>
   );

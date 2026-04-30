@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
 import type { ServiceDefinition } from "@/lib/integrations/types";
+import { ContextChips } from "./chat/ContextChips";
+import { InputModeSelector } from "./chat/InputModeSelector";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -154,8 +156,14 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Input Pill — focal glass premium */}
-        <div className="cockpit-input-pill peer group px-10 py-7 backdrop-blur-xl relative">
+        {/* Context chips + mode selector empilés au-dessus de l'input */}
+        <div className="px-2">
+          <ContextChips />
+          <InputModeSelector />
+        </div>
+
+        {/* Input Pill — flat, sans halo cykan en focus */}
+        <div className="cockpit-input-pill-flat peer group px-10 py-6 backdrop-blur-xl relative">
           {attachment && (
             <div className="flex items-center gap-3 px-1 pb-4 mb-4 border-b border-[var(--line)]">
               <span className="t-9 tracking-marquee uppercase text-[var(--cykan)]">
@@ -212,12 +220,12 @@ export function ChatInput({
             rows={1}
             className="block w-full bg-transparent t-18 font-light text-[var(--text)] placeholder:text-[var(--text-faint)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
             style={{
-              minHeight: "var(--height-input-min)",
+              minHeight: "var(--space-12)",
               maxHeight: "var(--height-input-max)",
             }}
           />
 
-          <div className="flex items-center justify-end gap-4 pt-6">
+          <div className="flex items-center justify-end gap-4 pt-4">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -263,7 +271,8 @@ export function ChatInput({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading || isRunning}
                 title={uploading ? "Analyse en cours…" : "Joindre un PDF"}
-                className={`transition-all duration-500 ${
+                aria-label="Joindre un PDF"
+                className={`transition-colors duration-base ${
                   uploading
                     ? "text-[var(--warn)] animate-pulse"
                     : attachment
@@ -271,7 +280,7 @@ export function ChatInput({
                       : "text-[var(--text-ghost)] hover:text-[var(--text-muted)]"
                 }`}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                 </svg>
               </button>
@@ -283,9 +292,10 @@ export function ChatInput({
                 <button
                   onClick={handleSubmit}
                   disabled={!input.trim()}
-                  className={`transition-all duration-500 ${
+                  aria-label="Envoyer"
+                  className={`transition-colors duration-base ${
                     input.trim()
-                      ? "text-[var(--cykan)] scale-110 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)]"
+                      ? "text-[var(--cykan)]"
                       : "text-[var(--text-ghost)] cursor-not-allowed hover:text-[var(--text-faint)]"
                   }`}
                   title="Envoyer"
@@ -297,9 +307,33 @@ export function ChatInput({
               )}
           </div>
         </div>
-        <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-0 peer-focus-within:opacity-100 transition-opacity duration-emphasis ease-out-soft">
-          <p className="t-9 text-[var(--text-ghost)] tracking-body uppercase">
-            Entrée pour envoyer · Maj+Entrée pour saut de ligne · @ pour mentionner
+        {/* Hint zone toujours visible (calme, t-9 mono) */}
+        <div className="mt-3 flex justify-center">
+          <p className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] flex items-center gap-3 flex-wrap justify-center">
+            <span>↩ Envoyer</span>
+            <span aria-hidden="true">·</span>
+            <span>⇧↩ Saut de ligne</span>
+            <span aria-hidden="true">·</span>
+            <span>@ Mention</span>
+            <span aria-hidden="true">·</span>
+            <span>⌘K Commandeur</span>
+            <span aria-hidden="true">·</span>
+            <span className="inline-flex items-center gap-1">
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+              </svg>
+              Pièce jointe
+            </span>
           </p>
         </div>
       </div>
