@@ -1,8 +1,20 @@
 "use client";
 
+/**
+ * /notifications — Centre de notifications complet.
+ *
+ * Liste filtrable par sévérité (critical/warning/info) et par type
+ * (signal/report_ready/export_done/share_viewed). Mark-read individuel
+ * + mark-all-read.
+ *
+ * Tokens uniquement (CLAUDE.md §1) — refactor depuis 100% inline styles
+ * vers Tailwind + tokens CSS via classes.
+ */
+
 import { useEffect, useState } from "react";
 import { useNotificationsStore } from "@/stores/notifications";
 import type { AppNotification } from "@/stores/notifications";
+import { PageHeader } from "../components/PageHeader";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -36,6 +48,33 @@ const KIND_LABELS: Record<AppNotification["kind"], string> = {
   share_viewed: "Partage consulté",
 };
 
+const SEVERITY_LABELS: Record<AppNotification["severity"], string> = {
+  critical: "Critique",
+  warning: "Avertissement",
+  info: "Info",
+};
+
+// ── Icônes ─────────────────────────────────────────────────────────────────
+
+function BellIcon() {
+  return (
+    <svg
+      width="36"
+      height="36"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
 // ── Composant ──────────────────────────────────────────────────────────────
 
 export default function NotificationsPage() {
@@ -59,150 +98,140 @@ export default function NotificationsPage() {
     return true;
   });
 
+  const subtitle = unreadCount > 0
+    ? `${unreadCount} non lue${unreadCount > 1 ? "s" : ""}`
+    : "Aucune notification non lue";
+
   return (
     <div
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        padding: "var(--space-6)",
-        gap: "var(--space-4)",
-        overflowY: "auto",
-        color: "var(--text)",
-      }}
+      className="flex-1 flex flex-col min-h-0 overflow-y-auto text-[var(--text)]"
+      style={{ background: "var(--bg)" }}
     >
-      {/* En-tête */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <h1 className="t-18" style={{ fontWeight: "var(--weight-semibold)" as string, margin: 0 }}>
-            Notifications
-          </h1>
-          {unreadCount > 0 && (
-            <p className="t-11" style={{ color: "var(--text-muted)", margin: 0, marginTop: "var(--space-1)" }}>
-              {unreadCount} non lue{unreadCount > 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={() => void markAllRead()}
-            className="t-11"
-            style={{
-              background: "var(--surface-1)",
-              border: "1px solid var(--border-default)",
-              borderRadius: "var(--radius-sm)",
-              color: "var(--cykan)",
-              padding: "var(--space-2) var(--space-3)",
-              cursor: "pointer",
-              fontWeight: "var(--weight-medium)" as string,
-              transition: `opacity var(--duration-fast) var(--ease-standard)`,
-            }}
+      <PageHeader
+        title="Notifications"
+        subtitle={subtitle}
+        actions={
+          unreadCount > 0 ? (
+            <button
+              type="button"
+              onClick={() => void markAllRead()}
+              className="t-11 font-medium px-3 py-2 rounded-md transition-colors text-[var(--cykan)] bg-[var(--surface-1)] border border-[var(--border-default)] hover:text-[var(--text)] hover:border-[var(--cykan-border-hover)]"
+              style={{
+                transitionDuration: "var(--duration-fast)",
+                transitionTimingFunction: "var(--ease-standard)",
+              }}
+            >
+              Tout marquer lu
+            </button>
+          ) : null
+        }
+      />
+
+      <div
+        className="flex flex-col px-12 py-6"
+        style={{ gap: "var(--space-4)" }}
+      >
+        {/* Filtres */}
+        <div className="flex flex-wrap items-center" style={{ gap: "var(--space-2)" }}>
+          {/* Sévérité */}
+          {(["all", "critical", "warning", "info"] as const).map((s) => {
+            const isActive = severityFilter === s;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSeverityFilter(s)}
+                className="t-10 px-3 py-1 rounded-pill border transition-colors"
+                style={{
+                  borderColor: isActive ? "var(--border-strong)" : "var(--border-subtle)",
+                  background: isActive ? "var(--surface-2)" : "transparent",
+                  color: s === "all"
+                    ? (isActive ? "var(--text-soft)" : "var(--text-faint)")
+                    : (isActive ? SEVERITY_COLORS[s] : "var(--text-faint)"),
+                  letterSpacing: "var(--tracking-hairline)",
+                  transitionDuration: "var(--duration-fast)",
+                  transitionTimingFunction: "var(--ease-standard)",
+                }}
+              >
+                {s === "all" ? "Tous" : SEVERITY_LABELS[s]}
+              </button>
+            );
+          })}
+
+          <span
+            aria-hidden
+            className="self-center text-[var(--border-default)]"
           >
-            Tout marquer lu
-          </button>
+            |
+          </span>
+
+          {/* Kind */}
+          {(["all", "signal", "report_ready", "export_done", "share_viewed"] as const).map((k) => {
+            const isActive = kindFilter === k;
+            return (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setKindFilter(k)}
+                className="t-10 px-3 py-1 rounded-pill border transition-colors"
+                style={{
+                  borderColor: isActive ? "var(--border-strong)" : "var(--border-subtle)",
+                  background: isActive ? "var(--surface-2)" : "transparent",
+                  color: isActive ? "var(--text-soft)" : "var(--text-faint)",
+                  letterSpacing: "var(--tracking-hairline)",
+                  transitionDuration: "var(--duration-fast)",
+                  transitionTimingFunction: "var(--ease-standard)",
+                }}
+              >
+                {k === "all" ? "Tout type" : KIND_LABELS[k]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* État chargement */}
+        {loading && filtered.length === 0 && (
+          <div className="flex items-center justify-center py-8">
+            <p className="t-11 text-[var(--text-faint)]">Chargement…</p>
+          </div>
+        )}
+
+        {/* État vide */}
+        {!loading && filtered.length === 0 && (
+          <div
+            className="flex flex-col items-center text-center py-16"
+            style={{ gap: "var(--space-3)" }}
+          >
+            <span className="text-[var(--text-ghost)]" aria-hidden>
+              <BellIcon />
+            </span>
+            <p className="t-13 text-[var(--text-faint)]">
+              Aucune notification
+            </p>
+            {(severityFilter !== "all" || kindFilter !== "all") && (
+              <p className="t-11 text-[var(--text-ghost)]">
+                Modifie les filtres pour élargir la sélection.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Liste */}
+        {filtered.length > 0 && (
+          <div
+            className="flex flex-col overflow-hidden rounded-md border border-[var(--border-subtle)]"
+            style={{ gap: "1px" }}
+          >
+            {filtered.map((notif) => (
+              <NotifCard
+                key={notif.id}
+                notif={notif}
+                onRead={() => void markRead(notif.id)}
+              />
+            ))}
+          </div>
         )}
       </div>
-
-      {/* Filtres */}
-      <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-        {/* Sévérité */}
-        {(["all", "critical", "warning", "info"] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => setSeverityFilter(s)}
-            className="t-10"
-            style={{
-              padding: "var(--space-1) var(--space-3)",
-              borderRadius: "var(--radius-pill)",
-              border: `1px solid ${severityFilter === s ? "var(--border-strong)" : "var(--border-subtle)"}`,
-              background: severityFilter === s ? "var(--surface-2)" : "transparent",
-              color: s === "all"
-                ? (severityFilter === "all" ? "var(--text-soft)" : "var(--text-faint)")
-                : (severityFilter === s ? SEVERITY_COLORS[s] : "var(--text-faint)"),
-              cursor: "pointer",
-              letterSpacing: "var(--tracking-hairline)",
-              transition: `all var(--duration-fast) var(--ease-standard)`,
-            }}
-          >
-            {s === "all" ? "Tous" : s.charAt(0).toUpperCase() + s.slice(1)}
-          </button>
-        ))}
-
-        <span style={{ color: "var(--border-default)", alignSelf: "center" }}>|</span>
-
-        {/* Kind */}
-        {(["all", "signal", "report_ready", "export_done", "share_viewed"] as const).map((k) => (
-          <button
-            key={k}
-            onClick={() => setKindFilter(k)}
-            className="t-10"
-            style={{
-              padding: "var(--space-1) var(--space-3)",
-              borderRadius: "var(--radius-pill)",
-              border: `1px solid ${kindFilter === k ? "var(--border-strong)" : "var(--border-subtle)"}`,
-              background: kindFilter === k ? "var(--surface-2)" : "transparent",
-              color: kindFilter === k ? "var(--text-soft)" : "var(--text-faint)",
-              cursor: "pointer",
-              letterSpacing: "var(--tracking-hairline)",
-              transition: `all var(--duration-fast) var(--ease-standard)`,
-            }}
-          >
-            {k === "all" ? "Tout type" : KIND_LABELS[k]}
-          </button>
-        ))}
-      </div>
-
-      {/* État chargement */}
-      {loading && filtered.length === 0 && (
-        <div style={{ padding: "var(--space-8)", textAlign: "center" }}>
-          <p className="t-11" style={{ color: "var(--text-faint)" }}>Chargement…</p>
-        </div>
-      )}
-
-      {/* État vide */}
-      {!loading && filtered.length === 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: "var(--space-16)",
-            gap: "var(--space-3)",
-          }}
-        >
-          <span style={{ fontSize: "48px" }}>🔔</span>
-          <p className="t-13" style={{ color: "var(--text-faint)", margin: 0 }}>
-            Aucune notification
-          </p>
-          {(severityFilter !== "all" || kindFilter !== "all") && (
-            <p className="t-11" style={{ color: "var(--text-ghost)", margin: 0 }}>
-              Essaie de modifier les filtres.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Liste */}
-      {filtered.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "var(--space-1)",
-            borderRadius: "var(--radius-md)",
-            overflow: "hidden",
-            border: "1px solid var(--border-subtle)",
-          }}
-        >
-          {filtered.map((notif) => (
-            <NotifCard
-              key={notif.id}
-              notif={notif}
-              onRead={() => void markRead(notif.id)}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -220,91 +249,63 @@ function NotifCard({
 
   return (
     <div
+      className={`flex border-b border-[var(--border-subtle)] last:border-b-0 transition-colors ${
+        isUnread ? "bg-[var(--surface-1)] cursor-pointer" : "bg-transparent"
+      }`}
       style={{
-        display: "flex",
         gap: "var(--space-3)",
         padding: "var(--space-4)",
-        background: isUnread ? "var(--surface-1)" : "transparent",
-        borderBottom: "1px solid var(--border-subtle)",
-        cursor: isUnread ? "pointer" : "default",
       }}
       onClick={isUnread ? onRead : undefined}
     >
       {/* Indicateur sévérité */}
       <div
+        className="rounded-pill shrink-0 self-stretch"
         style={{
           width: "var(--space-1)",
-          borderRadius: "var(--radius-pill)",
           background: isUnread ? SEVERITY_COLORS[notif.severity] : "var(--border-subtle)",
-          alignSelf: "stretch",
-          flexShrink: 0,
         }}
+        aria-hidden
       />
 
       {/* Contenu */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-2)", flexWrap: "wrap" }}>
+      <div className="flex-1 min-w-0 flex flex-col" style={{ gap: "var(--space-1)" }}>
+        <div className="flex flex-wrap items-baseline justify-between" style={{ gap: "var(--space-2)" }}>
           <span
-            className="t-13"
-            style={{
-              color: isUnread ? "var(--text-soft)" : "var(--text-muted)",
-              fontWeight: isUnread
-                ? ("var(--weight-semibold)" as string)
-                : ("var(--weight-regular)" as string),
-            }}
+            className={`t-13 ${isUnread ? "text-[var(--text-soft)] font-semibold" : "text-[var(--text-muted)] font-normal"}`}
           >
             {notif.title}
           </span>
-          <span className="t-9" style={{ color: "var(--text-ghost)", whiteSpace: "nowrap" }}>
+          <span className="t-9 text-[var(--text-ghost)] whitespace-nowrap">
             {relativeTime(notif.created_at)}
           </span>
         </div>
 
         {notif.body && (
-          <p
-            className="t-11"
-            style={{
-              color: "var(--text-faint)",
-              margin: 0,
-              marginTop: "var(--space-1)",
-            }}
-          >
+          <p className="t-11 text-[var(--text-faint)] m-0">
             {notif.body}
           </p>
         )}
 
         <div
-          style={{
-            display: "flex",
-            gap: "var(--space-2)",
-            marginTop: "var(--space-2)",
-            flexWrap: "wrap",
-          }}
+          className="flex flex-wrap items-center"
+          style={{ gap: "var(--space-2)", marginTop: "var(--space-1)" }}
         >
           <span
-            className="t-9"
+            className="t-9 inline-flex items-center uppercase rounded-xs"
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "var(--space-1)",
               padding: "1px var(--space-2)",
-              borderRadius: "var(--radius-xs)",
               background: SEVERITY_BG[notif.severity],
               color: SEVERITY_COLORS[notif.severity],
               letterSpacing: "var(--tracking-caption)",
-              textTransform: "uppercase" as const,
+              borderRadius: "var(--radius-xs)",
             }}
           >
-            {notif.severity}
+            {SEVERITY_LABELS[notif.severity]}
           </span>
           <span
-            className="t-9"
-            style={{
-              color: "var(--text-ghost)",
-              letterSpacing: "var(--tracking-caption)",
-              textTransform: "uppercase" as const,
-              alignSelf: "center",
-            }}
+            className="t-9 uppercase text-[var(--text-ghost)]"
+            style={{ letterSpacing: "var(--tracking-caption)" }}
           >
             {KIND_LABELS[notif.kind]}
           </span>
@@ -314,25 +315,17 @@ function NotifCard({
       {/* Bouton marquer lu */}
       {isUnread && (
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onRead();
           }}
-          className="t-9"
+          className="t-9 self-start whitespace-nowrap shrink-0 px-2 py-1 rounded-xs border border-[var(--border-subtle)] bg-transparent text-[var(--text-ghost)] hover:text-[var(--cykan)] transition-colors"
           style={{
-            alignSelf: "flex-start",
-            background: "none",
-            border: "1px solid var(--border-subtle)",
             borderRadius: "var(--radius-xs)",
-            color: "var(--text-ghost)",
-            padding: "var(--space-1) var(--space-2)",
-            cursor: "pointer",
-            flexShrink: 0,
-            whiteSpace: "nowrap",
-            transition: `color var(--duration-fast) var(--ease-standard)`,
+            transitionDuration: "var(--duration-fast)",
+            transitionTimingFunction: "var(--ease-standard)",
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--cykan)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text-ghost)"; }}
         >
           Marquer lu
         </button>

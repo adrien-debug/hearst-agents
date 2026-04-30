@@ -6,6 +6,7 @@ import { useStageStore } from "@/stores/stage";
 import { useNavigationStore } from "@/stores/navigation";
 import { useStageData } from "@/stores/stage-data";
 import { toast } from "@/app/hooks/use-toast";
+import { StageActionBar, type StageAction } from "./StageActionBar";
 import type { KgEdge, KgNode } from "@/lib/memory/kg";
 
 interface KnowledgeStageProps {
@@ -225,65 +226,62 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
-        <div className="flex items-center gap-4">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
-            KNOWLEDGE_GRAPH
-          </span>
-          {entityId && (
-            <>
-              <span
-                className="rounded-pill bg-[var(--text-ghost)]"
-                style={{ width: "var(--space-1)", height: "var(--space-1)" }}
-              />
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
-                {entityId.slice(0, 16)}
-              </span>
-            </>
-          )}
-          {query && (
-            <>
-              <span
-                className="rounded-pill bg-[var(--text-ghost)]"
-                style={{ width: "var(--space-1)", height: "var(--space-1)" }}
-              />
-              <span className="t-9 font-mono italic text-[var(--text-muted)]">
-                « {query.slice(0, 40)}... »
-              </span>
-            </>
-          )}
-          {phase === "ready" && (
-            <>
-              <span
-                className="rounded-pill bg-[var(--text-ghost)]"
-                style={{ width: "var(--space-1)", height: "var(--space-1)" }}
-              />
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
-                {graph.nodes.length} ENT · {graph.edges.length} REL
-              </span>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {phase === "ready" && (
-            <button
-              type="button"
-              onClick={() => void ingestActiveThread()}
-              disabled={ingesting || !activeThreadId}
-              className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {ingesting ? "Extraction…" : "Ingest thread"}
-            </button>
-          )}
-          <button
-            onClick={back}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
-          >
-            <span>Retour</span>
-            <span className="opacity-60">⌘⌫</span>
-          </button>
-        </div>
-      </header>
+      <StageActionBar
+        context={
+          <>
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+              KNOWLEDGE
+            </span>
+            {entityId && (
+              <>
+                <span
+                  className="rounded-pill bg-[var(--text-ghost)]"
+                  style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+                />
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                  {entityId.slice(0, 16)}
+                </span>
+              </>
+            )}
+            {query && (
+              <>
+                <span
+                  className="rounded-pill bg-[var(--text-ghost)]"
+                  style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+                />
+                <span className="t-9 font-mono italic text-[var(--text-muted)]">
+                  « {query.slice(0, 40)}... »
+                </span>
+              </>
+            )}
+            {phase === "ready" && (
+              <>
+                <span
+                  className="rounded-pill bg-[var(--text-ghost)]"
+                  style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+                />
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                  {graph.nodes.length} ENT · {graph.edges.length} REL
+                </span>
+              </>
+            )}
+          </>
+        }
+        secondary={
+          phase === "ready"
+            ? [
+                {
+                  id: "ingest",
+                  label: ingesting ? "Extraction…" : "Ingest thread",
+                  onClick: () => void ingestActiveThread(),
+                  disabled: ingesting || !activeThreadId,
+                  loading: ingesting,
+                } satisfies StageAction,
+              ]
+            : []
+        }
+        onBack={back}
+      />
 
       {phase === "loading" && (
         <div className="flex-1 flex items-center justify-center">

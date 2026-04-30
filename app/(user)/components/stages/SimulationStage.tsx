@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { ThinkingDisclosure } from "../ThinkingDisclosure";
+import { StageActionBar } from "./StageActionBar";
 import { toast } from "@/app/hooks/use-toast";
 
 interface Variable {
@@ -138,31 +139,27 @@ export function SimulationStage() {
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
-        <div className="flex items-center gap-4">
-          <span
-            className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
-            style={{ width: "var(--space-2)", height: "var(--space-2)" }}
-          />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
-            SIMULATION
-          </span>
-          <span
-            className="rounded-pill bg-[var(--text-ghost)]"
-            style={{ width: "var(--space-1)", height: "var(--space-1)" }}
-          />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
-            {headerLabel}
-          </span>
-        </div>
-        <button
-          onClick={back}
-          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
-        >
-          <span>Retour</span>
-          <span className="opacity-60">⌘⌫</span>
-        </button>
-      </header>
+      <StageActionBar
+        context={
+          <>
+            <span
+              className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
+              style={{ width: "var(--space-2)", height: "var(--space-2)" }}
+            />
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+              SIMULATION
+            </span>
+            <span
+              className="rounded-pill bg-[var(--text-ghost)]"
+              style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+            />
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+              {headerLabel}
+            </span>
+          </>
+        }
+        onBack={back}
+      />
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div

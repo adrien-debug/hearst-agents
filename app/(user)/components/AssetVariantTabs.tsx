@@ -36,13 +36,14 @@ interface AssetVariantTabsProps {
 // Pas d'onglet "Texte" : le contenu de l'asset EST le variant texte par
 // essence (rendu directement par AssetStage / FocalStage). Les onglets
 // listent uniquement les formats alternatifs générables à la demande.
-const TABS: ReadonlyArray<{ kind: AssetVariantKind; label: string; available: boolean }> = [
-  { kind: "audio",  label: "Audio",  available: true },
-  { kind: "video",  label: "Vidéo",  available: true },
-  { kind: "image",  label: "Image",  available: true },
-  { kind: "code",   label: "Code",   available: true },
-  { kind: "slides", label: "Slides", available: false },
-  { kind: "site",   label: "Site",   available: false },
+//
+// Refonte 2026-04-30 (Phase 4 — Lot 2) : on ne liste plus les onglets non
+// implémentés (slides, site). Si non disponible, ne pas exposer dans l'UI.
+const TABS: ReadonlyArray<{ kind: AssetVariantKind; label: string }> = [
+  { kind: "audio",  label: "Audio"  },
+  { kind: "video",  label: "Vidéo"  },
+  { kind: "image",  label: "Image"  },
+  { kind: "code",   label: "Code"   },
 ];
 
 const POLL_INTERVAL_MS = 4_000;
@@ -151,20 +152,16 @@ export function AssetVariantTabs({ assetId, sourceText, defaultKind }: AssetVari
               <button
                 key={tab.kind}
                 type="button"
-                onClick={() => tab.available && setActiveTab(tab.kind)}
-                disabled={!tab.available}
+                onClick={() => setActiveTab(tab.kind)}
                 className={`halo-on-hover px-3 py-1.5 t-9 font-mono uppercase tracking-marquee border transition-all ${
                   isActive
                     ? "border-[var(--cykan)] text-[var(--cykan)] halo-cyan-sm"
-                    : tab.available
-                    ? "border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--text)]"
-                    : "border-[var(--surface-2)] text-[var(--text-ghost)] cursor-not-allowed"
+                    : "border-[var(--border-shell)] text-[var(--text-muted)] hover:text-[var(--text)]"
                 }`}
               >
                 <span className="flex items-center gap-2">
                   <span className={`rounded-pill shrink-0 ${dotColor}`} style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
                   <span>{tab.label}</span>
-                  {!tab.available && <span className="opacity-50">SOON</span>}
                 </span>
               </button>
             );

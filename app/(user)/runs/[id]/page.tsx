@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RunTimeline } from "../../components/RunTimeline";
-import { GhostIconChevronLeft, GhostIconChevronRight, ServiceIdGlyph } from "../../components/ghost-icons";
+import { GhostIconChevronRight, ServiceIdGlyph } from "../../components/ghost-icons";
+import { PageHeader } from "../../components/PageHeader";
 import type { RunRecord } from "@/lib/engine/runtime/runs/types";
 import type { TimelineItem } from "@/lib/engine/runtime/timeline/types";
 
@@ -98,28 +99,16 @@ export default function RunDetailPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
-      {/* Header */}
-      <div className="border-b border-[var(--line)] p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-2 t-10 font-mono uppercase tracking-label text-[var(--text-muted)] hover:text-[var(--text)]"
-          >
-            <GhostIconChevronLeft className="w-4 h-4" />
-            Back
-          </button>
-        </div>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="t-18 font-medium text-[var(--text)] mb-1">Run {run.id.slice(0, 8)}...</h1>
-            <p className="t-13 text-[var(--text-muted)]">{run.input}</p>
-          </div>
+      <PageHeader
+        title={`Run ${run.id.slice(0, 8)}…`}
+        subtitle={run.input}
+        back={{ label: "Retour aux runs", href: "/runs" }}
+        actions={
           <span className={`t-13 font-medium ${statusColors[run.status] || "text-[var(--text-muted)]"}`}>
             {statusLabels[run.status] || run.status}
           </span>
-        </div>
-      </div>
+        }
+      />
 
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -228,17 +217,6 @@ export default function RunDetailPage() {
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              {run.status === "failed" && (
-                <button className="flex-1 py-2 bg-[var(--cykan)]/15 hover:bg-[var(--cykan)]/25 text-[var(--cykan)] rounded-sm t-13 font-medium transition-colors">
-                  Relancer
-                </button>
-              )}
-              <button className="flex-1 py-2 bg-[var(--surface-1)] hover:bg-[var(--surface-2)] text-[var(--text-muted)] rounded-sm t-13 transition-colors border border-[var(--border-subtle)]">
-                Sauvegarder comme mission
-              </button>
-            </div>
           </div>
         </div>
       </div>

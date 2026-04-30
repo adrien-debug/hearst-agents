@@ -12,6 +12,7 @@
 import { useMemo } from "react";
 import { useStageStore } from "@/stores/stage";
 import { useVoiceStore, type VoicePhase } from "@/stores/voice";
+import { StageActionBar, type StageAction } from "./StageActionBar";
 
 interface VoiceStageProps {
   sessionId?: string;
@@ -69,45 +70,40 @@ export function VoiceStage(_props: VoiceStageProps) {
 
   const phaseColor = PHASE_COLOR[phase];
 
+  const cutAction: StageAction = {
+    id: "cut",
+    label: "Couper",
+    variant: "danger",
+    onClick: handleCut,
+  };
+
   return (
     <div
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
-        <div className="flex items-center gap-4">
-          <span
-            className="rounded-pill bg-[var(--cykan)] halo-cyan-sm"
-            style={{ width: "var(--space-2)", height: "var(--space-2)" }}
-          />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
-            VOICE_AMBIENT
-          </span>
-          <span
-            className="rounded-pill bg-[var(--text-ghost)]"
-            style={{ width: "var(--space-1)", height: "var(--space-1)" }}
-          />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
-            {sessionId ? sessionId.slice(0, 8) : "STANDBY"}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleCut}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--danger)] hover:border-[var(--danger)] transition-all shrink-0"
-          >
-            Couper
-          </button>
-          <button
-            onClick={back}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
-          >
-            <span>Retour</span>
-            <span className="opacity-60">⌘⌫</span>
-          </button>
-        </div>
-      </header>
+      <StageActionBar
+        context={
+          <>
+            <span
+              className="rounded-pill bg-[var(--cykan)] halo-cyan-sm"
+              style={{ width: "var(--space-2)", height: "var(--space-2)" }}
+            />
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+              VOICE
+            </span>
+            <span
+              className="rounded-pill bg-[var(--text-ghost)]"
+              style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+            />
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+              {sessionId ? sessionId.slice(0, 8) : "STANDBY"}
+            </span>
+          </>
+        }
+        secondary={[cutAction]}
+        onBack={back}
+      />
 
       <div className="flex-1 flex flex-col items-center justify-center min-h-0 relative">
         <div

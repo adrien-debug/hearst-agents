@@ -429,7 +429,8 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
 
               {/* Hero image : si l'asset a un variant image ready, on l'affiche
                   en grand directement (pas dans un tab caché). Cliquable pour
-                  ouvrir l'original en plein écran. */}
+                  ouvrir l'original en plein écran. Sinon, skeleton pendant la
+                  génération ou message d'erreur si elle a échoué. */}
               {primaryImageUrl ? (
                 <a
                   href={primaryImageUrl}
@@ -450,6 +451,57 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                     className="w-full h-auto block"
                   />
                 </a>
+              ) : showImageSkeleton ? (
+                <div
+                  data-testid="asset-image-skeleton"
+                  className="block w-full mb-10 aspect-square animate-pulse"
+                  style={{
+                    border: "1px solid var(--border-shell)",
+                    borderRadius: "var(--radius-md)",
+                    background:
+                      "linear-gradient(135deg, var(--surface-1), var(--cykan-soft, var(--surface-2)))",
+                  }}
+                  aria-label="Génération de l'image en cours"
+                />
+              ) : showImageFailed ? (
+                <div
+                  data-testid="asset-image-failed"
+                  className="flex flex-col items-start mb-10"
+                  style={{
+                    gap: "var(--space-4)",
+                    padding: "var(--space-6)",
+                    border: "1px solid var(--danger)",
+                    borderRadius: "var(--radius-md)",
+                    background: "var(--surface-1)",
+                  }}
+                >
+                  <p className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
+                    Échec de la génération d&apos;image
+                  </p>
+                  <p className="t-13 font-light text-[var(--text-muted)]">
+                    La génération a échoué. Tu peux relancer une nouvelle
+                    tentative.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleRerun}
+                    className="halo-on-hover inline-flex items-center t-9 font-mono uppercase tracking-section"
+                    style={{
+                      gap: "var(--space-2)",
+                      paddingLeft: "var(--space-3)",
+                      paddingRight: "var(--space-3)",
+                      paddingTop: "var(--space-1)",
+                      paddingBottom: "var(--space-1)",
+                      background: "var(--cykan)",
+                      color: "var(--bg-center)",
+                      border: "1px solid var(--cykan)",
+                      borderRadius: "var(--radius-xs)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Re-générer
+                  </button>
+                </div>
               ) : null}
 
               {/* Body texte : seulement si contentRef non vide. Les assets

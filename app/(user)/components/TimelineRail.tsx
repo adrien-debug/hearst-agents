@@ -428,7 +428,7 @@ export function TimelineRail() {
           <button
             onClick={handleNewThread}
             className="mb-6 w-8 h-8 flex items-center justify-center rounded-md border border-[var(--border-subtle)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border)] hover:bg-[var(--cykan-bg-hover)] transition-all duration-300 shrink-0"
-            title="New conversation"
+            title="Nouvelle conversation"
           >
             <PlusIcon />
           </button>
@@ -470,15 +470,15 @@ export function TimelineRail() {
                 />
               </div>
               <div className="flex flex-col" style={{ marginTop: "var(--space-6)" }}>
-                <TopMenuItem label="New conversation" hotkey="⌘N" onClick={handleNewThread} />
+                <TopMenuItem label="Nouvelle conversation" hotkey="⌘N" onClick={handleNewThread} />
               </div>
             </div>
 
             {/* Recent */}
             <section>
-              <SectionHeader label="Recent" />
+              <SectionHeader label="Récents" />
               {groups.today.length === 0 && groups.thisWeek.length === 0 ? (
-                <EmptyHint>No recent activity</EmptyHint>
+                <EmptyHint>Aucune activité récente</EmptyHint>
               ) : (
                 <div className="space-y-px">
                   {groups.today.map((t) => (

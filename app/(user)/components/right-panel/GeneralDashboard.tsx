@@ -521,11 +521,11 @@ export function GeneralDashboard({
       {/* Active missions */}
       <div>
         <SectionHead
-          label="Active missions"
-          action={{ label: "All", onClick: () => onViewChange("missions") }}
+          label="Missions actives"
+          action={{ label: "Voir tout", onClick: () => onViewChange("missions") }}
         />
         {activeMissions.length === 0 ? (
-          <EmptyText>No active missions</EmptyText>
+          <EmptyText>Aucune mission active</EmptyText>
         ) : (
           <div className="flex flex-col">
             {activeMissions.map((m) => (
@@ -544,11 +544,11 @@ export function GeneralDashboard({
       {/* Recent assets */}
       <div>
         <SectionHead
-          label="Recent assets"
-          action={{ label: "All", onClick: () => onViewChange("assets") }}
+          label="Assets récents"
+          action={{ label: "Voir tout", onClick: () => onViewChange("assets") }}
         />
         {recentAssets.length === 0 ? (
-          <EmptyText>No assets yet</EmptyText>
+          <EmptyText>Aucun asset</EmptyText>
         ) : (
           <div className="flex flex-col">
             {recentAssets.map((a) => (
@@ -566,8 +566,8 @@ export function GeneralDashboard({
 
       {/* Alerts */}
       <div>
-        <SectionHead label="Alerts" />
-        <EmptyText>No recent alerts</EmptyText>
+        <SectionHead label="Alertes" />
+        <EmptyText>Aucune alerte</EmptyText>
       </div>
 
       {toast && (

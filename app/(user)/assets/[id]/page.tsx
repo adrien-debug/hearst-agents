@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { AssetPreview } from "../../components/AssetPreview";
 import type { Asset } from "@/lib/assets/types";
 import { toast } from "@/app/hooks/use-toast";
-import { GhostIconChevronLeft } from "../../components/ghost-icons";
+import { PageHeader } from "../../components/PageHeader";
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -81,20 +81,11 @@ export default function AssetDetailPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
-      <div className="border-b border-[var(--line)] p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-2 t-10 font-mono uppercase tracking-label text-[var(--text-muted)] hover:text-[var(--text)]"
-          >
-            <GhostIconChevronLeft className="w-4 h-4" />
-            Back
-          </button>
-        </div>
-        <p className="ghost-meta-label mb-1">ASSET_VIEW</p>
-        <h1 className="ghost-title-impact">Asset</h1>
-      </div>
+      <PageHeader
+        title={asset.title || "Asset"}
+        subtitle={asset.kind ? asset.kind.toUpperCase() : undefined}
+        back={{ label: "Retour aux assets", href: "/assets" }}
+      />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">

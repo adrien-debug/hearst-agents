@@ -27,14 +27,14 @@ export default function MissionDeepLinkPage() {
         if (cancelled) return;
         const mission = (data.missions as MissionLike[] | undefined)?.find((m) => m.id === missionId);
         if (!mission) {
-          setError("Mission not found");
+          setError("Mission introuvable");
           return;
         }
         setFocal(missionToFocal(mission, activeThreadId));
         router.replace("/");
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load mission");
+        setError(err instanceof Error ? err.message : "Échec du chargement de la mission");
       }
     }
 
@@ -49,18 +49,18 @@ export default function MissionDeepLinkPage() {
       <div className="text-center space-y-4">
         {error ? (
           <>
-            <p className="t-9 font-mono tracking-marquee uppercase text-[var(--danger)]">Error</p>
+            <p className="t-9 font-mono tracking-marquee uppercase text-[var(--danger)]">Erreur</p>
             <p className="t-13 text-[var(--text-muted)] max-w-sm">{error}</p>
             <button
               onClick={() => router.push("/missions")}
               className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
             >
-              ← Back to missions
+              ← Retour aux missions
             </button>
           </>
         ) : (
           <p className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)] animate-pulse halo-cyan-sm">
-            Loading mission…
+            Chargement de la mission…
           </p>
         )}
       </div>

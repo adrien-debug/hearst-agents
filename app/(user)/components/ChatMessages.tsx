@@ -64,7 +64,7 @@ function ActionChip({
       onClick={onClick}
       className="halo-on-hover t-9 font-mono tracking-display uppercase px-2 py-1 border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan)]/30 transition-all bg-transparent"
     >
-      {done ? "Copied" : label}
+      {done ? "Copié" : label}
     </button>
   );
 }
@@ -80,10 +80,7 @@ function AssistantActions({ content }: { content: string }) {
   };
   return (
     <div className="flex gap-2 mt-3 opacity-0 -translate-y-0.5 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-base">
-      <ActionChip label="Cite" />
-      <ActionChip label="Pin to focal" />
-      <ActionChip label="Re-run" />
-      <ActionChip label="Copy" onClick={handleCopy} done={copied} />
+      <ActionChip label="Copier" onClick={handleCopy} done={copied} />
     </div>
   );
 }
@@ -109,7 +106,7 @@ function ConfirmActionChips({
         onClick={onConfirm}
         className="halo-on-hover inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors"
       >
-        <span>Confirm</span>
+        <span>Confirmer</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <polyline points="20 6 9 17 4 12" />
         </svg>
@@ -118,7 +115,7 @@ function ConfirmActionChips({
         onClick={onCancel}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-colors"
       >
-        <span>Cancel</span>
+        <span>Annuler</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>

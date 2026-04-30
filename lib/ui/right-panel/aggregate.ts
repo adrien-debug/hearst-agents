@@ -115,12 +115,13 @@ export async function buildRightPanelData(
     limit: MAX_ASSETS,
   });
 
-  const assets: { id: string; name: string; type: string; runId: string }[] =
+  const assets: { id: string; name: string; type: string; runId: string; createdAt?: number }[] =
     persistedAssets.map((a) => ({
       id: a.id,
       name: a.name,
       type: a.type,
       runId: a.run_id,
+      createdAt: a.created_at,
     }));
 
   // ── Missions ─────────────────────────────────────────────

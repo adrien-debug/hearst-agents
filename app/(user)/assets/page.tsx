@@ -187,7 +187,10 @@ export default function AssetsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={(e) => handleDelete(asset, e)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDelete(asset);
+                    }}
                     className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-all"
                     title={`Supprimer ${asset.title}`}
                     aria-label={`Supprimer ${asset.title}`}
@@ -200,6 +203,17 @@ export default function AssetsPage() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmDelete !== null}
+        title="Supprimer cet asset ?"
+        description={confirmDelete ? `« ${confirmDelete.title} » sera supprimé définitivement. Cette action est irréversible.` : undefined}
+        confirmLabel="Supprimer"
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

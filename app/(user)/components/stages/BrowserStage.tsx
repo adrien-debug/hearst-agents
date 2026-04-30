@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStageStore } from "@/stores/stage";
+import { StageActionBar, type StageAction } from "./StageActionBar";
 
 interface BrowserStageProps {
   sessionId: string;
@@ -161,31 +162,27 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
         className="flex-1 flex flex-col min-h-0 relative"
         style={{ background: "var(--bg-center)" }}
       >
-        <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
-          <div className="flex items-center gap-4">
-            <span
-              className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
-              style={{ width: "var(--space-2)", height: "var(--space-2)" }}
-            />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
-              BROWSER_SESSION
-            </span>
-            <span
-              className="rounded-pill bg-[var(--text-ghost)]"
-              style={{ width: "var(--space-1)", height: "var(--space-1)" }}
-            />
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
-              AWAITING
-            </span>
-          </div>
-          <button
-            onClick={back}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
-          >
-            <span>Retour</span>
-            <span className="opacity-60">⌘⌫</span>
-          </button>
-        </header>
+        <StageActionBar
+          context={
+            <>
+              <span
+                className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
+                style={{ width: "var(--space-2)", height: "var(--space-2)" }}
+              />
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+                BROWSER
+              </span>
+              <span
+                className="rounded-pill bg-[var(--text-ghost)]"
+                style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+              />
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                AWAITING
+              </span>
+            </>
+          }
+          onBack={back}
+        />
         <div className="flex-1 flex items-center justify-center px-8">
           <div className="text-center max-w-md flex flex-col gap-6 w-full">
             <span
@@ -241,46 +238,42 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
   }
 
   // ── Live session ─────────────────────────────────────────────
+  const stopAction: StageAction = {
+    id: "stop",
+    label: stopping ? "Arrêt…" : "Stop",
+    variant: "danger",
+    onClick: () => void stopCurrentSession(),
+    disabled: stopping,
+    loading: stopping,
+  };
+
   return (
     <div
       className="flex-1 flex flex-col min-h-0 relative"
       style={{ background: "var(--bg-center)" }}
     >
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 border-b border-[var(--border-default)]">
-        <div className="flex items-center gap-4">
-          <span
-            className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
-            style={{ width: "var(--space-2)", height: "var(--space-2)" }}
-          />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
-            BROWSER_SESSION
-          </span>
-          <span
-            className="rounded-pill bg-[var(--text-ghost)]"
-            style={{ width: "var(--space-1)", height: "var(--space-1)" }}
-          />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
-            {sessionId.slice(0, 8)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void stopCurrentSession()}
-            disabled={stopping}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--danger)] hover:border-[var(--danger)] transition-all shrink-0 disabled:opacity-60"
-          >
-            {stopping ? "Arrêt…" : "Stop"}
-          </button>
-          <button
-            onClick={back}
-            className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
-          >
-            <span>Retour</span>
-            <span className="opacity-60">⌘⌫</span>
-          </button>
-        </div>
-      </header>
+      <StageActionBar
+        context={
+          <>
+            <span
+              className="rounded-pill bg-[var(--cykan)] animate-pulse halo-dot"
+              style={{ width: "var(--space-2)", height: "var(--space-2)" }}
+            />
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+              BROWSER
+            </span>
+            <span
+              className="rounded-pill bg-[var(--text-ghost)]"
+              style={{ width: "var(--space-1)", height: "var(--space-1)" }}
+            />
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+              {sessionId.slice(0, 8)}
+            </span>
+          </>
+        }
+        secondary={[stopAction]}
+        onBack={back}
+      />
 
       <div className="flex-1 flex flex-col min-h-0">
         {debugViewerUrl ? (

@@ -112,6 +112,14 @@ export default async function PublicReportPage({ params }: PageProps) {
   const result = await loadPublicReport(token);
 
   if (result.status === "error") {
+    const errorMessages: Record<string, string> = {
+      revoked: "Ce lien a été révoqué.",
+      not_found: "Ce lien n'est plus valide.",
+      storage_unavailable: "Stockage temporairement indisponible.",
+      asset_not_found: "Le rapport associé est introuvable.",
+      expired: "Ce lien a expiré.",
+    };
+    const message = errorMessages[result.code] ?? "Ce lien de partage n'est plus valide.";
     return (
       <main
         style={{
@@ -123,7 +131,7 @@ export default async function PublicReportPage({ params }: PageProps) {
       >
         <h1 className="halo-title-xl">Lien indisponible</h1>
         <p className="t-13" style={{ color: "var(--text-muted)" }}>
-          Ce lien de partage n&apos;est plus valide ({result.code}).
+          {message}
         </p>
       </main>
     );

@@ -18,6 +18,15 @@ import { useStageStore } from "@/stores/stage";
 import { toast } from "@/app/hooks/use-toast";
 import { AssetGlyphSVG } from "../right-panel-helpers";
 import { AssetMiniChart } from "./AssetMiniChart";
+import { ConfirmModal } from "../ConfirmModal";
+
+const ASSET_DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
+  day: "2-digit",
+  month: "short",
+  timeZone: "Europe/Paris",
+});
+
+type AssetItem = RightPanelData["assets"][number];
 
 interface AssetsGridProps {
   assets: RightPanelData["assets"];
@@ -133,6 +142,8 @@ export function AssetsGrid({
   // Optimistic delete : on cache localement les ids supprimés en attendant
   // le refresh SSE. Pas de mutation directe de la prop `assets`.
   const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState<AssetItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Connect to focal store to highlight the active asset
   const focal = useFocalStore((s) => s.focal);
@@ -166,8 +177,10 @@ export function AssetsGrid({
     );
   }
 
-  const handleDelete = async (asset: RightPanelData["assets"][number]) => {
-    if (!window.confirm(`Supprimer "${asset.name}" ?`)) return;
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+    const asset = confirmDelete;
+    setIsDeleting(true);
     setPendingDeletes((prev) => new Set(prev).add(asset.id));
     try {
       const res = await fetch(`/api/v2/assets/${encodeURIComponent(asset.id)}`, {
@@ -178,6 +191,7 @@ export function AssetsGrid({
         throw new Error(body.error ?? `HTTP ${res.status}`);
       }
       toast.success("Asset supprimé", asset.name);
+      setConfirmDelete(null);
     } catch (err) {
       // Rollback
       setPendingDeletes((prev) => {
@@ -186,6 +200,8 @@ export function AssetsGrid({
         return next;
       });
       toast.error("Suppression impossible", err instanceof Error ? err.message : "Erreur inconnue");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -216,7 +232,7 @@ export function AssetsGrid({
                   {shortTitle}
                 </span>
                 <span className="t-9 text-[var(--text-ghost)] tracking-body mt-0.5">
-                  {new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                  {asset.createdAt ? ASSET_DATE_FORMATTER.format(new Date(asset.createdAt)) : "—"}
                 </span>
               </div>
             </button>
@@ -224,7 +240,7 @@ export function AssetsGrid({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                void handleDelete(asset);
+                setConfirmDelete(asset);
               }}
               className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-[var(--text-ghost)] hover:text-[var(--danger)] transition-all rounded-md bg-[var(--surface-2)] backdrop-blur-sm border border-[var(--border-subtle)]"
               title="Supprimer"
@@ -238,6 +254,16 @@ export function AssetsGrid({
         );
       })}
       </div>
+      <ConfirmModal
+        open={confirmDelete !== null}
+        title="Supprimer cet asset ?"
+        description={confirmDelete ? `« ${confirmDelete.name} » sera supprimé définitivement. Cette action est irréversible.` : undefined}
+        confirmLabel="Supprimer"
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
