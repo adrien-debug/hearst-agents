@@ -11,6 +11,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { MetricsSnapshot, ProviderMetrics, CircuitBreakerEntry } from "@/lib/llm/metrics";
 import type { CustomWebhook } from "@/lib/webhooks/types";
 import type { CircuitState } from "@/lib/llm/circuit-breaker";
+import type { VitalsSnapshot, VitalName, VitalRating } from "@/lib/monitoring/web-vitals-store";
 
 // ---------------------------------------------------------------------------
 // Types locaux
@@ -131,6 +132,22 @@ function WebhookStatusBadge({ status }: { status: "success" | "failed" | undefin
   );
 }
 
+function VitalRatingBadge({ rating }: { rating: VitalRating }) {
+  const cls =
+    rating === "good"
+      ? "bg-(--cykan)/15 text-(--cykan)"
+      : rating === "needs-improvement"
+        ? "bg-(--warn)/15 text-(--warn)"
+        : "bg-(--danger)/15 text-(--danger)";
+  const label =
+    rating === "good" ? "BON" : rating === "needs-improvement" ? "À AMÉLIORER" : "MAUVAIS";
+  return (
+    <span className={`t-10 px-(--space-2) py-[2px] rounded-pill font-medium uppercase ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 // Table header row
 function TableHeader({ cols }: { cols: string[] }) {
   return (
@@ -152,6 +169,7 @@ function TableHeader({ cols }: { cols: string[] }) {
 export default function MetricsPage() {
   const [snapshot, setSnapshot] = useState<MetricsSnapshot | null>(null);
   const [webhooks, setWebhooks] = useState<CustomWebhook[]>([]);
+  const [vitals, setVitals] = useState<VitalsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -159,9 +177,10 @@ export default function MetricsPage() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [metricsRes, whRes] = await Promise.all([
+      const [metricsRes, whRes, vitalsRes] = await Promise.all([
         fetch("/api/admin/llm-metrics"),
         fetch("/api/admin/webhooks-status"),
+        fetch("/api/admin/vitals"),
       ]);
 
       if (!metricsRes.ok) throw new Error(`LLM metrics: ${metricsRes.status}`);
@@ -172,6 +191,10 @@ export default function MetricsPage() {
 
       setSnapshot(metricsData);
       setWebhooks(whData.webhooks ?? []);
+      if (vitalsRes.ok) {
+        const vitalsData: VitalsSnapshot = await vitalsRes.json();
+        setVitals(vitalsData);
+      }
       setLastUpdated(new Date());
       setError(null);
     } catch (e) {
@@ -486,6 +509,43 @@ export default function MetricsPage() {
                     </span>
                   </div>
                 ))}
+              </div>
+            )}
+          </section>
+
+          {/* ── Section 7 : Web Vitals ───────────────────────── */}
+          <section>
+            <h2 className="t-13 text-text-muted uppercase tracking-(--tracking-stretch) mb-(--space-4)">
+              Web Vitals — Core Web Vitals (p75)
+            </h2>
+            {!vitals ? (
+              <p className="t-13 text-text-ghost">Aucune mesure collectée — en attente de navigation client</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-(--space-4)">
+                {(["LCP", "FCP", "INP", "CLS", "TTFB"] as VitalName[]).map((name) => {
+                  const metric = vitals[name];
+                  const formattedValue =
+                    name === "CLS"
+                      ? metric.p75.toFixed(3)
+                      : metric.count === 0
+                        ? "—"
+                        : `${Math.round(metric.p75)} ms`;
+                  return (
+                    <div
+                      key={name}
+                      className="rounded-(--radius-md) bg-surface-1 border border-(--border-shell) p-(--space-4) flex flex-col gap-(--space-2)"
+                    >
+                      <span className="t-10 text-text-ghost uppercase tracking-(--tracking-stretch)">{name}</span>
+                      <span className="t-24 font-light text-text">
+                        {metric.count === 0 ? "—" : formattedValue}
+                      </span>
+                      <div className="flex items-center gap-(--space-2)">
+                        {metric.count > 0 && <VitalRatingBadge rating={metric.rating} />}
+                        <span className="t-10 text-text-faint">{metric.count} mesure{metric.count > 1 ? "s" : ""}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>

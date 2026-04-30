@@ -23,7 +23,22 @@ import { ReportActions } from "@/app/(user)/components/ReportActions";
 import type { VersionSummary } from "@/lib/reports/versions/store";
 import type { VersionDiff } from "@/lib/reports/versions/diff";
 import { useReportsStore } from "@/stores/reports";
-import { useSession } from "next-auth/react";
+import { useSession, type SessionContextValue } from "next-auth/react";
+
+/**
+ * Wrapper sûr autour de useSession.
+ * Si le composant est rendu hors d'un SessionProvider (preview, tests unitaires),
+ * useSession throw. On l'attrape et on retourne null.
+ */
+function useSafeSession(): SessionContextValue["data"] {
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { data } = useSession();
+    return data;
+  } catch {
+    return null;
+  }
+}
 // Blocs légers — import statique, rendu immédiat
 import { KpiTile } from "@/lib/reports/blocks/KpiTile";
 import { Sparkline } from "@/lib/reports/blocks/Sparkline";
@@ -99,8 +114,10 @@ export function ReportLayout({
   const editable = Boolean(spec && onSpecChange);
 
   // ── Realtime : subscribe à l'asset si assetId fourni ──────────────────────
-  const { data: session } = useSession();
-  const tenantId = (session?.user as { tenantId?: string } | undefined)?.tenantId ?? "";
+  // useSession peut throw si pas de SessionProvider (preview, tests unitaires).
+  // On l'attrape via un hook wrapper sûr pour ne pas casser ces contextes.
+  const sessionData = useSafeSession();
+  const tenantId = (sessionData?.user as { tenantId?: string } | undefined)?.tenantId ?? "";
   const { subscribeToReport, unsubscribeFromReport, liveReports } = useReportsStore();
 
   useEffect(() => {

@@ -175,11 +175,8 @@ function CockpitChatBody() {
   const {
     assets,
     missions,
-    reportSuggestions,
     activeThreadId,
     loading,
-    runningSpecs,
-    runSuggestion,
   } = useRightPanelData();
 
   const handleViewChange = (view: "reports" | "missions" | "assets") => {
@@ -199,13 +196,6 @@ function CockpitChatBody() {
           loading={loading}
         />
       </div>
-      {reportSuggestions && reportSuggestions.length > 0 && (
-        <SuggestionsFooter
-          suggestions={reportSuggestions}
-          runningSpecs={runningSpecs}
-          onRun={runSuggestion}
-        />
-      )}
     </div>
   );
 }

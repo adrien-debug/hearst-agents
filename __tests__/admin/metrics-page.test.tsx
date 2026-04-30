@@ -187,7 +187,7 @@ describe("MetricsPage — KPIs LLM", () => {
 });
 
 describe("MetricsPage — badges circuit breaker", () => {
-  it("affiche CLOSED pour anthropic (errorRate 4.5 %)", async () => {
+  it("affiche CLOSED pour anthropic (état réel depuis circuitBreakers)", async () => {
     mockFetch(MOCK_SNAPSHOT, MOCK_WEBHOOKS);
 
     await act(async () => {
@@ -200,7 +200,7 @@ describe("MetricsPage — badges circuit breaker", () => {
     });
   });
 
-  it("affiche OPEN pour openai (errorRate 60 %)", async () => {
+  it("affiche OPEN pour openai (état réel depuis circuitBreakers)", async () => {
     mockFetch(MOCK_SNAPSHOT, MOCK_WEBHOOKS);
 
     await act(async () => {
@@ -209,6 +209,40 @@ describe("MetricsPage — badges circuit breaker", () => {
 
     await waitFor(() => {
       expect(screen.getByText("OPEN")).toBeTruthy();
+    });
+  });
+
+  it("affiche le nombre d'échecs dans le badge CB", async () => {
+    mockFetch(MOCK_SNAPSHOT, MOCK_WEBHOOKS);
+
+    await act(async () => {
+      render(<MetricsPage />);
+    });
+
+    await waitFor(() => {
+      // openai a failures: 5 dans le mock
+      expect(screen.getByText("5 échecs")).toBeTruthy();
+    });
+  });
+
+  it("n'affiche pas OPEN pour un provider avec errorRate élevé mais CB CLOSED", async () => {
+    // Provider openai : errorRate 60 % mais CB force à CLOSED
+    const snapshotCBClosed: MetricsSnapshot = {
+      ...MOCK_SNAPSHOT,
+      circuitBreakers: {
+        anthropic: { state: "CLOSED" as CircuitState, failures: 0 },
+        openai: { state: "CLOSED" as CircuitState, failures: 0 },
+      },
+    };
+    mockFetch(snapshotCBClosed, MOCK_WEBHOOKS);
+
+    await act(async () => {
+      render(<MetricsPage />);
+    });
+
+    await waitFor(() => {
+      // Aucun badge OPEN — preuve que l'état réel prime sur l'heuristique
+      expect(screen.queryByText("OPEN")).toBeNull();
     });
   });
 });

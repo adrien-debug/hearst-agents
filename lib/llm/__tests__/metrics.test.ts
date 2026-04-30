@@ -7,6 +7,7 @@ import {
   LATENCY_WINDOW_SIZE,
   DEFAULT_PRICING,
 } from "../metrics";
+import { LLMCircuitBreaker } from "../circuit-breaker";
 
 describe("percentile()", () => {
   it("returns null for empty array", () => {
@@ -383,5 +384,64 @@ describe("module-level helpers", () => {
     const snap = getMetrics();
     expect(snap.providers).toHaveLength(1);
     expect(snap.providers[0].latency.p50).toBe(42);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Circuit breaker state dans le snapshot
+// ---------------------------------------------------------------------------
+
+describe("LLMMetricsAggregator — circuitBreakers dans le snapshot", () => {
+  it("inclut l'état CLOSED par défaut pour un provider sans trips", () => {
+    const cb = new LLMCircuitBreaker();
+    const agg = new LLMMetricsAggregator(cb);
+
+    agg.recordCall({
+      provider: "anthropic",
+      model: "claude-sonnet-4",
+      latencyMs: 100,
+      tokensIn: 100,
+      tokensOut: 50,
+    });
+
+    const snap = agg.getMetrics();
+    expect(snap.circuitBreakers).toBeDefined();
+    expect(snap.circuitBreakers["anthropic"]).toBeDefined();
+    expect(snap.circuitBreakers["anthropic"].state).toBe("CLOSED");
+    expect(snap.circuitBreakers["anthropic"].failures).toBe(0);
+    expect(snap.circuitBreakers["anthropic"].nextRetryAt).toBeUndefined();
+  });
+
+  it("inclut l'état OPEN avec nextRetryAt après dépassement du seuil", () => {
+    const cb = new LLMCircuitBreaker();
+    const agg = new LLMMetricsAggregator(cb);
+
+    agg.recordCall({
+      provider: "openai",
+      model: "gpt-4o",
+      latencyMs: 100,
+      tokensIn: 100,
+      tokensOut: 50,
+    });
+
+    // 5 échecs consécutifs → OPEN (seuil = 5)
+    for (let i = 0; i < 5; i++) {
+      cb.recordFailure("openai");
+    }
+
+    const snap = agg.getMetrics();
+    const entry = snap.circuitBreakers["openai"];
+    expect(entry).toBeDefined();
+    expect(entry.state).toBe("OPEN");
+    expect(entry.failures).toBe(5);
+    expect(entry.nextRetryAt).toBeDefined();
+    // nextRetryAt doit être dans le futur (environ 60s)
+    expect(new Date(entry.nextRetryAt!).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("snapshot sans providers → circuitBreakers vide", () => {
+    const agg = new LLMMetricsAggregator(new LLMCircuitBreaker());
+    const snap = agg.getMetrics();
+    expect(snap.circuitBreakers).toEqual({});
   });
 });
