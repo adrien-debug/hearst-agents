@@ -4,8 +4,8 @@
  * useGlobalHotkeys — Hooks raccourcis globaux pour Hearst OS.
  *
  * - ⌘K        : toggle Commandeur (palette)
- * - ⌘1..⌘8    : switch direct vers un Stage (cockpit/chat/asset/browser/
- *               meeting/kg/voice/simulation — grille systématique,
+ * - ⌘1..⌘9    : switch direct vers un Stage (cockpit/chat/asset/browser/
+ *               meeting/kg/voice/simulation/mission — grille systématique,
  *               voir STAGE_HOTKEYS)
  * - ⌘⇧V       : toggle direct mode voix ambient (raccourci alternatif
  *               à ⌘7, accessible même quand un autre Stage est actif)
@@ -85,6 +85,16 @@ export function useGlobalHotkeys() {
             const lastAssetId = useStageStore.getState().lastAssetId;
             if (lastAssetId) {
               setMode({ mode: "asset", assetId: lastAssetId });
+            }
+            break;
+          }
+          case "mission": {
+            // Même logique que "asset" : ré-ouvre la dernière mission
+            // ouverte. No-op si aucune mission n'a encore été ouverte —
+            // l'user passe alors par /missions ou le Commandeur.
+            const lastMissionId = useStageStore.getState().lastMissionId;
+            if (lastMissionId) {
+              setMode({ mode: "mission", missionId: lastMissionId });
             }
             break;
           }

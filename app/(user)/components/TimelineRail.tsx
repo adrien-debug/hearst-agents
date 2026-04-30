@@ -376,6 +376,11 @@ export function TimelineRail() {
     setStageMode({ mode: "chat", threadId: id });
   };
 
+  const handleHearstHome = () => {
+    setActiveThread(null);
+    setStageMode({ mode: "cockpit" });
+  };
+
   return (
     <aside
       className="h-full flex flex-col z-20 relative transition-[width] duration-slow ease-out-soft overflow-hidden"
@@ -442,7 +447,7 @@ export function TimelineRail() {
               }}
             >
               <TopMenuItem label="New conversation" hotkey="⌘N" onClick={handleNewThread} />
-              <TopMenuItem label="Hearst" hotkey="⌘1" />
+              <TopMenuItem label="Hearst" hotkey="⌘1" onClick={handleHearstHome} />
               <TopMenuItem label="App" hotkey="⌘2" onClick={() => router.push("/apps")} />
               <TopMenuItem label="Reports" hotkey="⌘3" onClick={() => router.push("/reports")} />
             </div>

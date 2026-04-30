@@ -55,6 +55,10 @@ interface StageState {
    * permet de garder le state cross-mode (ex: revenir d'une session
    * browser au dernier asset focal). null si aucun asset n'a été ouvert. */
   lastAssetId: string | null;
+  /** Dernière mission ouverte (via /missions, GeneralDashboard, ou
+   * Commandeur). Sert au hotkey ⌘9 pour ré-ouvrir le dernier MissionStage
+   * sans param explicite. null si aucune mission n'a été ouverte. */
+  lastMissionId: string | null;
   /** True quand le Commandeur (Cmd+K) est ouvert. */
   commandeurOpen: boolean;
 
@@ -74,16 +78,20 @@ export const useStageStore = create<StageState>((set, get) => ({
   current: { mode: "chat" },
   history: [],
   lastAssetId: null,
+  lastMissionId: null,
   commandeurOpen: false,
 
   setMode: (payload) => {
     const prev = get().current;
     const nextLastAssetId =
       payload.mode === "asset" ? payload.assetId : get().lastAssetId;
+    const nextLastMissionId =
+      payload.mode === "mission" ? payload.missionId : get().lastMissionId;
     set({
       current: payload,
       history: [...get().history, { payload: prev, ts: Date.now() }].slice(-20),
       lastAssetId: nextLastAssetId,
+      lastMissionId: nextLastMissionId,
     });
   },
 
@@ -101,9 +109,9 @@ export const useStageStore = create<StageState>((set, get) => ({
 }));
 
 /**
- * Mapping hotkey → stage. Cmd+1..8 = switch direct vers un Stage
- * (cockpit/chat/asset/browser/meeting/kg/voice/simulation — grille
- * systématique). Cmd+K = ouvrir Commandeur. Cmd+Backspace = back.
+ * Mapping hotkey → stage. Cmd+1..9 = switch direct vers un Stage
+ * (cockpit/chat/asset/browser/meeting/kg/voice/simulation/mission —
+ * grille systématique). Cmd+K = ouvrir Commandeur. Cmd+Backspace = back.
  */
 export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [
   { key: "1", mode: "cockpit" },
@@ -114,4 +122,5 @@ export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [
   { key: "6", mode: "kg" },
   { key: "7", mode: "voice" },
   { key: "8", mode: "simulation" },
+  { key: "9", mode: "mission" },
 ];

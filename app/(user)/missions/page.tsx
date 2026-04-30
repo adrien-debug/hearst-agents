@@ -42,16 +42,10 @@ function MissionsPageContent() {
   }, [searchParams, router]);
 
   const handleRowOpen = (mission: Mission) => {
-    // Cohérence post-pivot : pas de "mode mission" dédié dans le Stage
-    // polymorphe — une mission s'observe depuis son thread chat. Si la
-    // mission n'a pas de threadId associé (mission ad hoc / sans run),
-    // fallback sur cockpit où les missions du jour sont visibles.
-    const threadId = (mission as { threadId?: string }).threadId;
-    if (threadId) {
-      useStageStore.getState().setMode({ mode: "chat", threadId });
-    } else {
-      useStageStore.getState().setMode({ mode: "cockpit" });
-    }
+    // Stage polymorphe : ouvrir le MissionStage dédié (rendu par
+    // Stage.tsx quand mode === "mission"). Pattern aligné sur
+    // GeneralDashboard.handleMissionClick.
+    useStageStore.getState().setMode({ mode: "mission", missionId: mission.id });
     router.push("/");
   };
 
