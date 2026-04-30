@@ -384,18 +384,26 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                 <AssetBody contentRef={asset.contentRef} title={asset.title} />
               ) : null}
 
-              <AssetVariantTabs
-                assetId={asset.id}
-                sourceText={asset.contentRef ?? asset.summary ?? asset.title}
-                defaultKind={
-                  (variantKind === "audio" ||
-                  variantKind === "video" ||
-                  variantKind === "image" ||
-                  variantKind === "code"
-                    ? variantKind
-                    : undefined) as "audio" | "video" | "image" | "code" | undefined
-                }
-              />
+              {/* AssetVariantTabs : seulement pour les assets texte/rapport
+                  (contentRef rempli). Une image pure (générée par
+                  generate_image) n'a pas de sens à proposer "audio narration"
+                  ou "code" — il n'y a pas de texte source à transformer.
+                  Pour les rapports texte, les tabs permettent de générer
+                  l'audio (TTS) ou la vidéo à partir du contenu. */}
+              {asset.contentRef && asset.contentRef.length > 0 ? (
+                <AssetVariantTabs
+                  assetId={asset.id}
+                  sourceText={asset.contentRef ?? asset.summary ?? asset.title}
+                  defaultKind={
+                    (variantKind === "audio" ||
+                    variantKind === "video" ||
+                    variantKind === "image" ||
+                    variantKind === "code"
+                      ? variantKind
+                      : undefined) as "audio" | "video" | "image" | "code" | undefined
+                  }
+                />
+              ) : null}
             </>
           )}
         </div>
