@@ -87,7 +87,9 @@ export function MissionStage({ missionId }: MissionStageProps) {
   }, [missionId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loaders async qui setState après await réseau, pas en cascade synchrone
     loadMission();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- idem
     loadRuns();
   }, [loadMission, loadRuns]);
 

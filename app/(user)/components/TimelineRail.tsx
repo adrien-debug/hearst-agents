@@ -374,6 +374,7 @@ export function TimelineRail() {
   const handleThreadSelect = (threadId: string) => {
     setActiveThread(threadId);
     setStageMode({ mode: "chat", threadId });
+    if (pathname !== "/") router.push("/");
   };
 
   const handleThreadDelete = (threadId: string) => {
@@ -384,11 +385,13 @@ export function TimelineRail() {
   const handleNewThread = () => {
     const id = addThread("New", "home");
     setStageMode({ mode: "chat", threadId: id });
+    if (pathname !== "/") router.push("/");
   };
 
   const handleHearstHome = () => {
     setActiveThread(null);
     setStageMode({ mode: "cockpit" });
+    if (pathname !== "/") router.push("/");
   };
 
   return (
