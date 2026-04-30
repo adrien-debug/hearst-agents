@@ -306,7 +306,7 @@ export async function getTenantUsage(
   const userAgg = new Map<string, { runs: number; costUsd: number }>();
 
   for (const r of runs) {
-    if (tenantOf(r.user_id, userMap) !== tenantId) continue;
+    if (tenantOfRun(r, userMap) !== tenantId) continue;
     usage.totalRuns += 1;
     usage.totalCostUsd += Number(r.cost_usd ?? 0);
     usage.totalTokensIn += Number(r.tokens_in ?? 0);
