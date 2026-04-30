@@ -265,7 +265,12 @@ export function NotificationBell() {
                   gap: "var(--space-2)",
                 }}
               >
-                <span style={{ color: "var(--text-ghost)", fontSize: "24px" }}>🔔</span>
+                <span
+                  style={{ color: "var(--text-ghost)", display: "inline-flex" }}
+                  aria-hidden
+                >
+                  <BellIcon hasUnread={false} />
+                </span>
                 <span className="t-11" style={{ color: "var(--text-faint)" }}>
                   Aucune notification
                 </span>

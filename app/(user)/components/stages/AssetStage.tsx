@@ -15,9 +15,16 @@
  * lib/assets/content-parser (ReportLayout JSON / HTML iframe / plain
  * text), rend directement. Pas de bridge useFocalStore.
  *
- * Refonte 2026-04-30 : header unifié via <StageActionBar /> — actions
- * cohérentes (Re-run, Éditer, Exporter, Partager, overflow). Delete
- * passe par <ConfirmModal /> et redirige back après succès.
+ * Refonte 2026-04-30 (Phase 4 — Lot 2) : nettoyage actions.
+ *  - Re-run en primary, Exporter PDF + Partager en secondary, Supprimer
+ *    en overflow danger. Plus de bouton "Éditer" au niveau Stage —
+ *    l'édition vit dans <ReportLayout /> via spec/onSpecChange. Plus
+ *    de stubs Duplicate/Versions.
+ *  - Polling variants : tracke un imageStatus pour afficher un skeleton
+ *    pendant la génération et un message d'erreur + bouton re-générer
+ *    en cas d'échec.
+ *  - Mode image-only : mini-header ajoute le titre tronqué à droite du
+ *    bouton retour (avant : back seul, page anonyme).
  */
 
 import { useEffect, useState } from "react";
@@ -47,6 +54,8 @@ const FORMATTER = new Intl.DateTimeFormat("fr-FR", {
   timeZone: "Europe/Paris",
 });
 
+type ImageStatus = "idle" | "pending" | "ready" | "failed";
+
 export function AssetStage({ assetId, variantKind }: AssetStageProps) {
   const back = useStageStore((s) => s.back);
   const [asset, setAsset] = useState<Asset | null>(null);
@@ -56,10 +65,14 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
   const [deleting, setDeleting] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [primaryImageUrl, setPrimaryImageUrl] = useState<string | null>(null);
+  const [imageStatus, setImageStatus] = useState<ImageStatus>("idle");
 
-  // Poll les variants pour détecter qu'un variant image est ready et l'afficher
-  // en hero directement (pas planqué dans un tab). Polling 4s tant que pending,
-  // arrête au premier ready.
+  // Poll les variants image. Tracke quatre états :
+  //   - idle    : aucun variant image attendu (asset texte pur, ou pas encore décidé)
+  //   - pending : un variant image existe en pending/generating → skeleton
+  //   - ready   : variant image disponible → hero affiché
+  //   - failed  : tentative échouée → message d'erreur + bouton re-générer
+  // Stop le polling dès qu'on est ready ou failed.
   useEffect(() => {
     if (!assetId || isPlaceholderAssetId(assetId)) return;
     let cancelled = false;
@@ -75,12 +88,26 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
         const data = (await res.json()) as {
           variants?: Array<{ kind: string; status: string; storageUrl?: string | null }>;
         };
-        const imageReady = data.variants?.find(
-          (v) => v.kind === "image" && v.status === "ready" && v.storageUrl,
+        const imageVariants = (data.variants ?? []).filter((v) => v.kind === "image");
+        const imageReady = imageVariants.find(
+          (v) => v.status === "ready" && v.storageUrl,
         );
-        if (imageReady?.storageUrl && !cancelled) {
+        const imagePending = imageVariants.find(
+          (v) => v.status === "pending" || v.status === "generating",
+        );
+        const imageFailed = imageVariants.find((v) => v.status === "failed");
+
+        if (cancelled) return;
+
+        if (imageReady?.storageUrl) {
           setPrimaryImageUrl(imageReady.storageUrl);
+          setImageStatus("ready");
           if (interval) clearInterval(interval);
+        } else if (imageFailed) {
+          setImageStatus("failed");
+          if (interval) clearInterval(interval);
+        } else if (imagePending) {
+          setImageStatus("pending");
         }
       } catch {
         // Silent — l'absence de variant ready ne casse rien.
@@ -215,16 +242,6 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
       .catch(() => flash("Partage injoignable"));
   };
 
-  const handleEdit = () => {
-    // L'édition fine vit dans <ReportLayout /> via spec/onSpecChange.
-    // Sans spec à ce niveau, on pousse un toast pour signaler que
-    // l'édition se fait dans le panneau du report.
-    flash("Utilise le bouton Éditer du rapport pour modifier les blocs");
-  };
-
-  const handleDuplicate = () => flash("Dupliquer · pas encore implémenté");
-  const handleVersions = () => flash("Versions disponibles dans le rapport");
-
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -250,13 +267,10 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
     disabled: !asset || loading,
   };
   const secondary: StageAction[] = [
-    { id: "edit", label: "Éditer", onClick: handleEdit, disabled: !asset || loading },
     { id: "export", label: "Exporter PDF", onClick: handleExport, disabled: !asset || loading },
     { id: "share", label: "Partager", onClick: handleShare, disabled: !asset || loading },
   ];
   const overflow: StageAction[] = [
-    { id: "duplicate", label: "Dupliquer", onClick: handleDuplicate },
-    { id: "versions", label: "Versions", onClick: handleVersions },
     {
       id: "delete",
       label: "Supprimer",
@@ -271,49 +285,50 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
   // vivent dans le ContextRail droit. Le centre = juste l'image.
   const isImageOnly = !!primaryImageUrl && (!asset?.contentRef || asset.contentRef.length === 0);
 
-  // Expose les handlers d'actions au ContextRail via window events.
-  // Pattern aligné sur mission:edit. Le rail dispatch, AssetStage écoute.
-  useEffect(() => {
-    const onRerun = () => handleRerun();
-    const onEdit = () => handleEdit();
-    const onExport = () => handleExport();
-    const onShare = () => handleShare();
-    const onDelete = () => setConfirmDelete(true);
-    window.addEventListener("asset:rerun", onRerun);
-    window.addEventListener("asset:edit", onEdit);
-    window.addEventListener("asset:export", onExport);
-    window.addEventListener("asset:share", onShare);
-    window.addEventListener("asset:delete", onDelete);
-    return () => {
-      window.removeEventListener("asset:rerun", onRerun);
-      window.removeEventListener("asset:edit", onEdit);
-      window.removeEventListener("asset:export", onExport);
-      window.removeEventListener("asset:share", onShare);
-      window.removeEventListener("asset:delete", onDelete);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers stables côté logique, dépendent du closure asset/assetId déjà à jour
-  }, [asset, assetId]);
+  // Indique si on attend un variant image (skeleton à afficher dans le hero).
+  // Vrai dès qu'on a un asset placeholder (contentRef vide) et qu'aucune image
+  // n'est encore ready/failed — pour éviter de laisser un blanc.
+  const showImageSkeleton =
+    imageStatus === "pending" &&
+    !primaryImageUrl &&
+    (!asset?.contentRef || asset.contentRef.length === 0);
+
+  const showImageFailed =
+    imageStatus === "failed" &&
+    !primaryImageUrl &&
+    (!asset?.contentRef || asset.contentRef.length === 0);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative" style={{ background: "var(--bg-center)" }}>
       {isImageOnly ? (
-        // Mini header : juste back, sans titre ni actions (déportées au rail droit)
+        // Mini header : back + titre tronqué (actions déportées au rail droit
+        // pour les images, mais le titre reste visible pour ne pas se sentir
+        // perdu sur un Stage anonyme).
         <div
           className="flex items-center"
           style={{
             padding: "var(--space-4) var(--space-6)",
             borderBottom: "1px solid var(--border-shell)",
+            gap: "var(--space-4)",
           }}
         >
           <button
             type="button"
             onClick={back}
-            className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
+            className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
             style={{ background: "transparent", border: "none", cursor: "pointer" }}
             aria-label="Retour"
           >
             ← Retour <span className="opacity-60">⌘⌫</span>
           </button>
+          {asset?.title && (
+            <span
+              className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)] truncate"
+              title={asset.title}
+            >
+              {asset.title}
+            </span>
+          )}
         </div>
       ) : (
         <StageActionBar

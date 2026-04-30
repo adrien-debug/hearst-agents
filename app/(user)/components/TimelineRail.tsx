@@ -18,7 +18,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useNavigationStore, type Thread } from "@/stores/navigation";
 import { useStageStore } from "@/stores/stage";
@@ -233,37 +233,44 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
 function TopMenuItem({
   label,
   hotkey,
+  isActive = false,
   onClick,
 }: {
   label: string;
-  hotkey: string;
+  hotkey?: string;
+  isActive?: boolean;
   onClick?: () => void;
 }) {
   const [hover, setHover] = useState(false);
+  const highlight = isActive || hover;
   return (
     <button
       type="button"
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
+      aria-current={isActive ? "page" : undefined}
       className="flex items-center justify-between text-left"
       style={{ padding: "var(--space-2) 0" }}
     >
       <span
-        className="t-13 font-light transition-all duration-emphasis ease-out-soft"
+        className="t-13 transition-all duration-emphasis ease-out-soft"
         style={{
-          color: hover ? "var(--cykan)" : "var(--text-l2)",
-          textShadow: hover ? "var(--neon-cykan)" : "none",
+          color: highlight ? "var(--cykan)" : "var(--text-l2)",
+          fontWeight: isActive ? 500 : 300,
+          textShadow: highlight ? "var(--neon-cykan)" : "none",
         }}
       >
         {label}
       </span>
-      <span
-        className="t-9 tracking-display uppercase"
-        style={{ color: "var(--text-l3)" }}
-      >
-        {hotkey}
-      </span>
+      {hotkey ? (
+        <span
+          className="t-9 tracking-display uppercase"
+          style={{ color: "var(--text-l3)" }}
+        >
+          {hotkey}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -343,6 +350,7 @@ function CollapsedTile({ thread, isActive, onSelect }: CollapsedTileProps) {
 export function TimelineRail() {
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const {
     threads,
     activeThreadId,
@@ -356,6 +364,8 @@ export function TimelineRail() {
   const setStageMode = useStageStore((s) => s.setMode);
   const firstName = session?.user?.name?.split(" ")[0] || "Utilisateur";
   const userInitial = firstName.charAt(0).toUpperCase();
+  const isHearstActive = pathname === "/";
+  const isAppsActive = pathname === "/apps" || pathname?.startsWith("/apps/") === true;
 
   const sectionPadX = leftCollapsed ? "pl-6 pr-2" : "px-8";
 
@@ -447,8 +457,17 @@ export function TimelineRail() {
               }}
             >
               <div className="flex flex-col">
-                <TopMenuItem label="Hearst" hotkey="⌘1" onClick={handleHearstHome} />
-                <TopMenuItem label="App" hotkey="⌘2" onClick={() => router.push("/apps")} />
+                <TopMenuItem
+                  label="Hearst"
+                  hotkey="⌘1"
+                  isActive={isHearstActive}
+                  onClick={handleHearstHome}
+                />
+                <TopMenuItem
+                  label="App"
+                  isActive={isAppsActive}
+                  onClick={() => router.push("/apps")}
+                />
               </div>
               <div className="flex flex-col" style={{ marginTop: "var(--space-6)" }}>
                 <TopMenuItem label="New conversation" hotkey="⌘N" onClick={handleNewThread} />
@@ -459,7 +478,7 @@ export function TimelineRail() {
             <section>
               <SectionHeader label="Recent" />
               {groups.today.length === 0 && groups.thisWeek.length === 0 ? (
-                <EmptyHint>No activity récente</EmptyHint>
+                <EmptyHint>No recent activity</EmptyHint>
               ) : (
                 <div className="space-y-px">
                   {groups.today.map((t) => (

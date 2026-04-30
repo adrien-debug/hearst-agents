@@ -136,7 +136,7 @@ export function OAuthExpiryBanner() {
 
       {/* CTA Reconnecter */}
       <a
-        href="/connections"
+        href="/apps"
         className="t-9 font-mono shrink-0 underline decoration-dotted"
         style={{ color: bannerColor }}
       >

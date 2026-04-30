@@ -15,6 +15,7 @@
 import { useState, useEffect, useMemo } from "react";
 import type { ApplicableReport } from "@/lib/reports/catalog";
 import { ReportCard, ReportCardSkeleton } from "@/app/(user)/components/reports/ReportCard";
+import { PageHeader } from "@/app/(user)/components/PageHeader";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -177,17 +178,8 @@ export default function ReportsDiscoveryPage() {
       className="flex-1 flex flex-col min-h-0 overflow-auto"
       style={{ background: "var(--bg-center)", color: "var(--text)" }}
     >
-      <div className="flex flex-col gap-8 px-12 py-12 w-full" style={{ maxWidth: "var(--width-center-max)", margin: "0 auto" }}>
-
-        {/* ── Header ─────────────────────────────────────────── */}
-        <div className="flex flex-col gap-2">
-          <h1 className="t-28 font-semibold" style={{ color: "var(--text-soft)" }}>
-            Rapports
-          </h1>
-          <p className="t-13 font-light" style={{ color: "var(--text-faint)" }}>
-            {subtitle}
-          </p>
-        </div>
+      <PageHeader title="Rapports" subtitle={subtitle} />
+      <div className="flex flex-col gap-8 px-12 py-8 w-full" style={{ maxWidth: "var(--width-center-max)", margin: "0 auto" }}>
 
         {/* ── Filters ────────────────────────────────────────── */}
         <div className="flex flex-col gap-4">

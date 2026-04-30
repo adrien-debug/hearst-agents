@@ -109,7 +109,7 @@ function ConfirmActionChips({
         onClick={onConfirm}
         className="halo-on-hover inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors"
       >
-        <span>Confirmer</span>
+        <span>Confirm</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <polyline points="20 6 9 17 4 12" />
         </svg>
@@ -118,7 +118,7 @@ function ConfirmActionChips({
         onClick={onCancel}
         className="inline-flex items-center gap-1.5 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--danger)]/40 transition-colors"
       >
-        <span>Annuler</span>
+        <span>Cancel</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>
@@ -251,7 +251,7 @@ export function ChatMessages({
             <div className="absolute left-[-2px] top-1.5 w-1.5 h-1.5 rounded-pill bg-[var(--cykan)]" />
             <div className="flex items-center gap-2 mb-1.5 t-9 font-mono tracking-display uppercase text-[var(--text-faint)]">
               <span className="opacity-60">[</span>
-              <span>en cours…</span>
+              <span>running…</span>
               <span className="opacity-60">]</span>
             </div>
             <ChatToolStream />

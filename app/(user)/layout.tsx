@@ -6,11 +6,13 @@ import { LeftPanelShell } from "./components/LeftPanelShell";
 import { RightPanel } from "./components/RightPanel";
 import { Commandeur } from "./components/Commandeur";
 import { ChatDock } from "./components/ChatDock";
+import { PulseBar } from "./components/PulseBar";
 import { VoicePulse } from "./components/voice/VoicePulse";
 import { ToastContainer } from "@/app/components/ToastContainer";
 import { useToast } from "@/app/hooks/use-toast";
 import { useGlobalHotkeys } from "@/app/hooks/use-global-hotkeys";
 import { useVoiceStore } from "@/stores/voice";
+import { useNotificationsStore } from "@/stores/notifications";
 import { OAuthExpiryBanner } from "./components/OAuthExpiryBanner";
 import { initWebVitals } from "@/app/web-vitals";
 
@@ -58,6 +60,20 @@ function VoiceMount() {
 }
 
 /**
+ * NotificationsHydrate — Hydrate le store notifications dès le mount du
+ * layout pour que le badge NotificationBell affiche le compte initial sans
+ * attendre l'ouverture du dropdown. Le polling/realtime continuera ensuite
+ * via NotificationBell lui-même.
+ */
+function NotificationsHydrate() {
+  const fetchNotifications = useNotificationsStore((s) => s.fetchNotifications);
+  useEffect(() => {
+    void fetchNotifications();
+  }, [fetchNotifications]);
+  return null;
+}
+
+/**
  * UserLayout — Post-pivot 2026-04-29.
  *
  * Layout cockpit :
@@ -78,27 +94,37 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     <SessionProvider>
       <BriefingAutoTrigger />
       <WebVitalsInit />
+      <NotificationsHydrate />
       <ToastProvider>
         <div
-          className="h-screen w-full flex overflow-hidden p-4 gap-4"
+          className="h-screen w-full flex flex-col overflow-hidden"
           style={{ background: "var(--bg)", color: "var(--text)" }}
         >
-          <LeftPanelShell />
+          {/* PulseBar — top fixed, état système + Cmd+K + voice + notifications */}
+          <PulseBar />
 
+          {/* Row 3 colonnes : TimelineRail / Stage / ContextRail */}
           <div
-            className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden rounded-2xl"
+            className="flex-1 flex min-h-0 w-full overflow-hidden p-4 gap-4"
             style={{ background: "var(--bg)", color: "var(--text)" }}
           >
-            {/* Banner alerte tokens OAuth expirants — discret, dismissable */}
-            <OAuthExpiryBanner />
+            <LeftPanelShell />
 
-            <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
-              {children}
-            </main>
-            <ChatDock />
+            <div
+              className="flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden rounded-2xl"
+              style={{ background: "var(--bg)", color: "var(--text)" }}
+            >
+              {/* Banner alerte tokens OAuth expirants — discret, dismissable */}
+              <OAuthExpiryBanner />
+
+              <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
+                {children}
+              </main>
+              <ChatDock />
+            </div>
+
+            <RightPanel />
           </div>
-
-          <RightPanel />
 
           {/* Overlay global — toujours monté, contrôlé par useStageStore.commandeurOpen */}
           <Commandeur />

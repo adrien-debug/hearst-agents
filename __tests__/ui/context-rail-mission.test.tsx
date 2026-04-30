@@ -3,15 +3,18 @@
  *
  * Tests — ContextRailForMission.
  *
+ * Refonte 2026-04-30 (Phase 4 — Lot 2) : single source of truth pour les
+ * actions = StageActionBar dans le header. Le rail ne montre plus que du
+ * contexte (titre, statut, prompt, cadence, derniers runs, threads liés).
+ *
  * Vérifie :
  *  - rendu du nom + statut
- *  - bouton Run now → POST /api/v2/missions/[id]/run
- *  - bouton Activer/Désactiver → PATCH /api/v2/missions/[id]
- *  - confirmation Supprimer → DELETE /api/v2/missions/[id]
+ *  - rendu du prompt + cadence
+ *  - rendu des derniers runs
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { ContextRailForMission } from "@/app/(user)/components/ContextRailForMission";
 import { useStageStore } from "@/stores/stage";
@@ -24,28 +27,9 @@ const FAKE_MISSION = {
   input: "Génère le rapport ventes hebdo",
 };
 
-function mockFetch(opts: {
-  onPatch?: (body: unknown) => void;
-  onDelete?: () => void;
-  onRun?: () => void;
-}) {
+function mockFetch() {
   return vi.fn(async (url: string, init?: RequestInit) => {
     const method = init?.method ?? "GET";
-
-    if (url.includes("/api/v2/missions") && url.includes("/run") && method === "POST") {
-      opts.onRun?.();
-      return { ok: true, json: async () => ({ ok: true, runId: "run-1" }), text: async () => "" } as Response;
-    }
-
-    if (url.match(/\/api\/v2\/missions\/[^/]+$/) && method === "PATCH") {
-      opts.onPatch?.(JSON.parse(init!.body as string));
-      return { ok: true, json: async () => ({ ok: true }), text: async () => "" } as Response;
-    }
-
-    if (url.match(/\/api\/v2\/missions\/[^/]+$/) && method === "DELETE") {
-      opts.onDelete?.();
-      return { ok: true, json: async () => ({ ok: true, deleted: true }), text: async () => "" } as Response;
-    }
 
     if (url.includes("/api/v2/missions") && method === "GET") {
       return {
@@ -83,7 +67,7 @@ describe("ContextRailForMission", () => {
   });
 
   it("affiche le nom et le statut de la mission", async () => {
-    vi.stubGlobal("fetch", mockFetch({}));
+    vi.stubGlobal("fetch", mockFetch());
     render(<ContextRailForMission />);
     await waitFor(() => {
       expect(screen.getByText(FAKE_MISSION.name)).toBeTruthy();
@@ -91,55 +75,24 @@ describe("ContextRailForMission", () => {
     expect(screen.getByTestId("mission-rail-status").textContent).toBe("ACTIVE");
   });
 
-  it("Run now appelle POST /api/v2/missions/[id]/run", async () => {
-    let runCalled = false;
-    vi.stubGlobal("fetch", mockFetch({ onRun: () => { runCalled = true; } }));
+  it("affiche le prompt et la cadence en lecture seule", async () => {
+    vi.stubGlobal("fetch", mockFetch());
     render(<ContextRailForMission />);
     await waitFor(() => {
-      expect(screen.getByText(FAKE_MISSION.name)).toBeTruthy();
+      expect(screen.getByText(FAKE_MISSION.input)).toBeTruthy();
     });
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("mission-rail-action-run"));
-    });
-    await waitFor(() => expect(runCalled).toBe(true));
+    expect(screen.getByText(FAKE_MISSION.schedule)).toBeTruthy();
   });
 
-  it("toggle envoie PATCH avec enabled inversé", async () => {
-    let patchedBody: unknown = null;
-    vi.stubGlobal(
-      "fetch",
-      mockFetch({ onPatch: (body) => { patchedBody = body; } }),
-    );
+  it("ne rend aucun bouton d'action (single source of truth = StageActionBar)", async () => {
+    vi.stubGlobal("fetch", mockFetch());
     render(<ContextRailForMission />);
     await waitFor(() => {
       expect(screen.getByText(FAKE_MISSION.name)).toBeTruthy();
     });
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("mission-rail-action-toggle"));
-    });
-    await waitFor(() => {
-      expect(patchedBody).toEqual({ enabled: false });
-    });
-  });
-
-  it("supprimer demande confirmation puis envoie DELETE", async () => {
-    let deleteCalled = false;
-    vi.stubGlobal(
-      "fetch",
-      mockFetch({ onDelete: () => { deleteCalled = true; } }),
-    );
-    render(<ContextRailForMission />);
-    await waitFor(() => {
-      expect(screen.getByText(FAKE_MISSION.name)).toBeTruthy();
-    });
-    await act(async () => {
-      fireEvent.click(screen.getByTestId("mission-rail-action-delete"));
-    });
-    // Le bouton de confirmation apparaît
-    const confirmBtn = await screen.findByTestId("mission-rail-action-delete-confirm");
-    await act(async () => {
-      fireEvent.click(confirmBtn);
-    });
-    await waitFor(() => expect(deleteCalled).toBe(true));
+    expect(screen.queryByTestId("mission-rail-action-run")).toBeNull();
+    expect(screen.queryByTestId("mission-rail-action-edit")).toBeNull();
+    expect(screen.queryByTestId("mission-rail-action-toggle")).toBeNull();
+    expect(screen.queryByTestId("mission-rail-action-delete")).toBeNull();
   });
 });

@@ -59,9 +59,9 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
               <button
                 onClick={hideFocalStage}
                 className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
-                title="Fermer (Esc)"
+                title="Close (Esc)"
               >
-                <span>Fermer</span>
+                <span>Close</span>
                 <span className="opacity-60">ESC</span>
               </button>
             </div>

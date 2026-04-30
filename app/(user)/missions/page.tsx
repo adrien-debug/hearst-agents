@@ -6,7 +6,8 @@ import { MissionEditor } from "../components/MissionEditor";
 import { toast } from "@/app/hooks/use-toast";
 import { GhostIconPencil, GhostIconPlay, GhostIconTrash, GhostIconX } from "../components/ghost-icons";
 import { useStageStore } from "@/stores/stage";
-import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
+import { PageHeader } from "../components/PageHeader";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 type MissionOpsStatus = "idle" | "running" | "success" | "failed" | "blocked";
 
@@ -34,6 +35,8 @@ function MissionsPageContent() {
   const [editingMission, setEditingMission] = useState<Mission | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const [confirmDelete, setConfirmDelete] = useState<Mission | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("new") === "1") {
@@ -192,8 +195,10 @@ function MissionsPageContent() {
     }
   };
 
-  const handleDelete = async (missionId: string) => {
-    if (!confirm("Supprimer cette mission ?")) return;
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+    const missionId = confirmDelete.id;
+    setIsDeleting(true);
     try {
       const res = await fetch(`/api/v2/missions/${missionId}`, {
         method: "DELETE",
@@ -201,6 +206,7 @@ function MissionsPageContent() {
       if (res.ok) {
         setMissions((prev) => prev.filter((m) => m.id !== missionId));
         toast.success("Mission supprimée", "La mission a été retirée");
+        setConfirmDelete(null);
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -211,6 +217,8 @@ function MissionsPageContent() {
         "Erreur de suppression",
         error instanceof Error ? error.message : "Erreur réseau",
       );
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -282,37 +290,34 @@ function MissionsPageContent() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
-      {/* Header */}
-      <div className="border-b border-[var(--line)] p-6">
-        <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Missions" }] as Crumb[]} className="mb-4" />
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="t-34 font-semibold tracking-[-0.025em] mb-1">Missions</h1>
-            <p className="t-11 font-mono uppercase tracking-display text-[var(--text-muted)]">Automatisations planifiées</p>
-          </div>
-          <button type="button" onClick={openNewMission} className="font-mono t-10 uppercase tracking-[0.16em] text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
+      <PageHeader
+        title="Missions"
+        subtitle="Automatisations planifiées"
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Missions" }]}
+        actions={
+          <button type="button" onClick={openNewMission} className="font-mono t-10 uppercase tracking-section text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
             Nouvelle mission
           </button>
-        </div>
+        }
+      />
 
-        {/* Stats */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 t-9">
-            <span className="w-2 h-2 rounded-pill bg-[var(--money)]" />
-            <span className="text-[var(--text-muted)]">{missions.filter((m) => m.enabled).length} activées</span>
-          </div>
-          <div className="flex items-center gap-2 t-9">
-            <span className="w-2 h-2 rounded-pill bg-[var(--cykan)] animate-pulse" />
-            <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "running").length} en cours</span>
-          </div>
-          <div className="flex items-center gap-2 t-9">
-            <span className="w-2 h-2 rounded-pill bg-[var(--danger)]" />
-            <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "failed").length} échecs</span>
-          </div>
-          <div className="flex items-center gap-2 t-9">
-            <span className="w-2 h-2 rounded-pill bg-[var(--warn)]" />
-            <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "blocked").length} bloqués</span>
-          </div>
+      {/* Stats */}
+      <div className="flex items-center gap-4 px-12 py-4 border-b border-[var(--border-shell)]">
+        <div className="flex items-center gap-2 t-9">
+          <span className="w-2 h-2 rounded-pill bg-[var(--money)]" />
+          <span className="text-[var(--text-muted)]">{missions.filter((m) => m.enabled).length} activées</span>
+        </div>
+        <div className="flex items-center gap-2 t-9">
+          <span className="w-2 h-2 rounded-pill bg-[var(--cykan)] animate-pulse" />
+          <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "running").length} en cours</span>
+        </div>
+        <div className="flex items-center gap-2 t-9">
+          <span className="w-2 h-2 rounded-pill bg-[var(--danger)]" />
+          <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "failed").length} échecs</span>
+        </div>
+        <div className="flex items-center gap-2 t-9">
+          <span className="w-2 h-2 rounded-pill bg-[var(--warn)]" />
+          <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "blocked").length} bloqués</span>
         </div>
       </div>
 
@@ -423,7 +428,7 @@ function MissionsPageContent() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleDelete(mission.id)}
+                      onClick={() => setConfirmDelete(mission)}
                       className="p-2 text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
                       title="Supprimer"
                     >
@@ -436,6 +441,17 @@ function MissionsPageContent() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={confirmDelete !== null}
+        title="Supprimer cette mission ?"
+        description={confirmDelete ? `« ${confirmDelete.name} » sera supprimée définitivement. Cette action est irréversible.` : undefined}
+        confirmLabel="Supprimer"
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
 
       {/* Editor — drawer depuis la droite */}
       {showEditor && (

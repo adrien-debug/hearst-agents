@@ -115,7 +115,7 @@ function ContextRailShell({
           <p className="t-13 font-light text-[var(--text-soft)]">Context</p>
           <button
             onClick={onClose}
-            aria-label="Fermer"
+            aria-label="Close"
             className="w-8 h-8 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors"
           >
             <svg
@@ -307,12 +307,6 @@ function ContextRailForAsset() {
     }
   };
 
-  const dispatchAction = (event: string) => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent(event));
-    }
-  };
-
   const variantMeta = (imageVariant?.metadata ?? {}) as {
     width?: number;
     height?: number;
@@ -321,7 +315,7 @@ function ContextRailForAsset() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Titre">
+      <Section label="Title">
         <p
           className="t-13 font-light text-[var(--text)]"
           style={{ lineHeight: "var(--leading-snug)" }}
@@ -342,7 +336,7 @@ function ContextRailForAsset() {
       )}
 
       {assetCreatedAt && (
-        <Section label="Créé le">
+        <Section label="Created">
           <p className="t-11 font-mono text-[var(--text-faint)]">
             {fmtDate(assetCreatedAt)}
           </p>
@@ -358,7 +352,7 @@ function ContextRailForAsset() {
       )}
 
       {isImageOnly && imageVariant && (
-        <Section label="Détails image">
+        <Section label="Image details">
           <ul className="flex flex-col gap-2">
             {variantMeta.width && variantMeta.height && (
               <li className="flex items-baseline gap-3">
@@ -373,7 +367,7 @@ function ContextRailForAsset() {
             {variantMeta.model && (
               <li className="flex items-baseline gap-3">
                 <span className="t-9 font-mono uppercase tracking-display text-[var(--text-faint)]">
-                  Modèle
+                  Model
                 </span>
                 <span className="t-11 font-mono text-[var(--text-muted)] truncate">
                   {variantMeta.model}
@@ -398,7 +392,7 @@ function ContextRailForAsset() {
         <Section label="Variants" count={readyVariants.length}>
           {readyVariants.length === 0 ? (
             <EmptyHint>
-              Texte uniquement — génère audio/vidéo/code via les onglets
+              Text only — generate audio/video/code via the tabs
             </EmptyHint>
           ) : (
             <ul className="flex flex-col gap-2">
@@ -416,63 +410,7 @@ function ContextRailForAsset() {
           )}
         </Section>
       )}
-
-      <Section label="Actions">
-        <ul className="flex flex-col gap-1">
-          <RailActionButton onClick={() => dispatchAction("asset:rerun")}>
-            Re-run
-          </RailActionButton>
-          <RailActionButton onClick={() => dispatchAction("asset:edit")}>
-            Éditer
-          </RailActionButton>
-          <RailActionButton onClick={() => dispatchAction("asset:export")}>
-            Exporter PDF
-          </RailActionButton>
-          <RailActionButton onClick={() => dispatchAction("asset:share")}>
-            Partager
-          </RailActionButton>
-          <RailActionButton
-            onClick={() => dispatchAction("asset:delete")}
-            variant="danger"
-          >
-            Supprimer
-          </RailActionButton>
-        </ul>
-      </Section>
     </div>
-  );
-}
-
-function RailActionButton({
-  children,
-  onClick,
-  variant,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  variant?: "danger";
-}) {
-  const color = variant === "danger" ? "var(--danger)" : "var(--text-muted)";
-  const hoverColor = variant === "danger" ? "var(--danger)" : "var(--cykan)";
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={onClick}
-        className="w-full text-left t-11 font-light transition-colors duration-base"
-        style={{
-          padding: "var(--space-2) 0",
-          color,
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = hoverColor)}
-        onMouseLeave={(e) => (e.currentTarget.style.color = color)}
-      >
-        {children} →
-      </button>
-    </li>
   );
 }
 
@@ -481,9 +419,9 @@ function ContextRailForBrowser() {
     <div className="h-full overflow-y-auto">
 
 
-      <Section label="Co-pilote">
+      <Section label="Co-pilot">
         <p className="t-13 font-light text-[var(--text-faint)] leading-relaxed">
-          L{"'"}agent navigue dans la session live. Take Over arrivera avec
+          Agent navigating in the live session. Take Over coming with
           Stagehand.
         </p>
       </Section>
@@ -498,7 +436,7 @@ function ContextRailForMeeting() {
       <Section label="Action Items" count={actionItems.length}>
         {actionItems.length === 0 ? (
           <EmptyHint>
-            {status ? "Analyse en cours…" : "En attente du transcript"}
+            {status ? "Analysis running…" : "Waiting for transcript"}
           </EmptyHint>
         ) : (
           <ul className="flex flex-col gap-3">
@@ -521,9 +459,9 @@ function ContextRailForMeeting() {
         )}
       </Section>
 
-      <Section label="Templates Mission">
+      <Section label="Mission templates">
         <p className="t-13 font-light text-[var(--text-faint)] leading-relaxed">
-          Approve all → exécution Composio (Slack, Linear, Notion, Gmail).
+          Approve all → Composio execution (Slack, Linear, Notion, Gmail).
         </p>
       </Section>
     </div>
@@ -534,7 +472,7 @@ function ContextRailForKnowledge() {
   const { graph, selectedNode } = useStageData((s) => s.kg);
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Entité focus">
+      <Section label="Focus entity">
         {selectedNode ? (
           <div className="flex flex-col gap-3">
             <span className="t-9 tracking-display uppercase text-[var(--cykan)]">
@@ -561,12 +499,12 @@ function ContextRailForKnowledge() {
             )}
           </div>
         ) : (
-          <EmptyHint>Click un nœud du graphe</EmptyHint>
+          <EmptyHint>Click a graph node</EmptyHint>
         )}
       </Section>
-      <Section label="Graphe" count={graph.nodes.length}>
+      <Section label="Graph" count={graph.nodes.length}>
         <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
-          {graph.nodes.length} entités · {graph.edges.length} relations
+          {graph.nodes.length} entities · {graph.edges.length} relations
         </p>
       </Section>
 
@@ -583,12 +521,12 @@ function ContextRailForVoice() {
   const totalToolsCount = voiceToolDefs.length + connectedApps.length;
   return (
     <div className="h-full overflow-y-auto">
-      <Section label="Transcript live" count={transcript.length}>
+      <Section label="Live transcript" count={transcript.length}>
         {transcript.length === 0 ? (
           <EmptyHint>
             {phase === "idle"
-              ? "Active le mode voix pour démarrer"
-              : "En attente du premier échange"}
+              ? "Activate voice mode to start"
+              : "Waiting for first exchange"}
           </EmptyHint>
         ) : (
           <ul className="flex flex-col gap-4">
@@ -611,7 +549,7 @@ function ContextRailForVoice() {
           </ul>
         )}
       </Section>
-      <Section label="Tools disponibles" count={totalToolsCount}>
+      <Section label="Available tools" count={totalToolsCount}>
         <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light leading-relaxed">
           {[
             ...voiceToolDefs.map((t) => VOICE_TOOL_LABELS[t.name] ?? t.name),
@@ -621,9 +559,9 @@ function ContextRailForVoice() {
       </Section>
       <Section label="Voice settings">
         <p className="t-13 font-light text-[var(--text-faint)] leading-relaxed">
-          Modèle{" "}
-          <span className="text-[var(--cykan)]">openai-realtime</span>, latence
-          cible &lt; 500&nbsp;ms.
+          Model{" "}
+          <span className="text-[var(--cykan)]">openai-realtime</span>, target
+          latency &lt; 500&nbsp;ms.
         </p>
       </Section>
     </div>
@@ -637,7 +575,7 @@ function ContextRailForSimulation() {
     <div className="h-full overflow-y-auto">
       <Section label="Variables" count={cleanVars.length}>
         {cleanVars.length === 0 ? (
-          <EmptyHint>Définis les inputs dans le formulaire</EmptyHint>
+          <EmptyHint>Define inputs in the form</EmptyHint>
         ) : (
           <ul className="flex flex-col gap-3">
             {cleanVars.map((v, i) => (
@@ -653,10 +591,10 @@ function ContextRailForSimulation() {
           </ul>
         )}
       </Section>
-      <Section label="Scénarios générés" count={scenarios.length}>
+      <Section label="Generated scenarios" count={scenarios.length}>
         {scenarios.length === 0 ? (
           <EmptyHint>
-            {phase === "running" ? "DeepSeek raisonne…" : "Aucun scénario"}
+            {phase === "running" ? "DeepSeek thinking…" : "No scenarios"}
           </EmptyHint>
         ) : (
           <ul className="flex flex-col gap-3">

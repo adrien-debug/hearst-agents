@@ -13,18 +13,18 @@ type Box = {
 };
 
 const SIGNATURES: Box[] = [
-  { key: "chat",       label: "Chat",       pitch: "Pensée libre", threadName: "Chat" },
+  { key: "chat",       label: "Chat",       pitch: "Free thought", threadName: "Chat" },
   { key: "asset",      label: "Asset",      pitch: "Doc · image · code", threadName: "Asset" },
-  { key: "browser",    label: "Browser",    pitch: "Navigation guidée", threadName: "Browser" },
+  { key: "browser",    label: "Browser",    pitch: "Guided browsing", threadName: "Browser" },
   { key: "meeting",    label: "Meeting",    pitch: "Capture & action items", threadName: "Meeting" },
-  { key: "kg",         label: "Knowledge",  pitch: "Graph d'entités", threadName: "Knowledge" },
-  { key: "voice",      label: "Voice",      pitch: "Dictée temps réel", threadName: "Voice" },
-  { key: "simulation", label: "Simulation", pitch: "Scénarios probables", threadName: "Simulation" },
+  { key: "kg",         label: "Knowledge",  pitch: "Entity graph", threadName: "Knowledge" },
+  { key: "voice",      label: "Voice",      pitch: "Realtime dictation", threadName: "Voice" },
+  { key: "simulation", label: "Simulation", pitch: "Probable scenarios", threadName: "Simulation" },
 ];
 
 const SERVICES: Box[] = [
   { key: "gmail",  label: "@gmail",  pitch: "Inbox", threadName: "Hearst · @gmail" },
-  { key: "slack",  label: "@slack",  pitch: "Chans", threadName: "Hearst · @slack" },
+  { key: "slack",  label: "@slack",  pitch: "Channels", threadName: "Hearst · @slack" },
   { key: "notion", label: "@notion", pitch: "Pages", threadName: "Hearst · @notion" },
   { key: "github", label: "@github", pitch: "Repos", threadName: "Hearst · @github" },
   { key: "linear", label: "@linear", pitch: "Issues", threadName: "Hearst · @linear" },

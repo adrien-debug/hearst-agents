@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useNavigationStore } from "@/stores/navigation";
-import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { RelativeTime } from "../components/RelativeTime";
 import { toast } from "@/app/hooks/use-toast";
+import { PageHeader } from "../components/PageHeader";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 // Format V2 retourné par GET /api/v2/assets (Asset canonique).
 interface AssetListItem {
@@ -40,6 +41,8 @@ export default function AssetsPage() {
   const setStageMode = useStageStore((s) => s.setMode);
   const [assets, setAssets] = useState<AssetListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState<AssetListItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleNewAsset = () => {
     const id = addThread("Nouvel asset", "home");
@@ -78,9 +81,10 @@ export default function AssetsPage() {
     window.open(`/api/v2/assets/${encodeURIComponent(asset.id)}/download`, "_blank");
   };
 
-  const handleDelete = async (asset: AssetListItem, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm(`Supprimer "${asset.title}" ? Cette action est irréversible.`)) return;
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+    const asset = confirmDelete;
+    setIsDeleting(true);
     try {
       const res = await fetch(`/api/v2/assets/${encodeURIComponent(asset.id)}`, {
         method: "DELETE",
@@ -88,6 +92,7 @@ export default function AssetsPage() {
       if (res.ok) {
         setAssets((prev) => prev.filter((a) => a.id !== asset.id));
         toast.success("Asset supprimé", asset.title);
+        setConfirmDelete(null);
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -97,6 +102,8 @@ export default function AssetsPage() {
         "Erreur de suppression",
         err instanceof Error ? err.message : "Erreur réseau",
       );
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -112,21 +119,16 @@ export default function AssetsPage() {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: "var(--bg)" }}>
-      {/* Header */}
-      <div className="border-b border-[var(--line)] p-6">
-        <Breadcrumb trail={[{ label: "Hearst", href: "/" }, { label: "Assets" }] as Crumb[]} className="mb-4" />
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="t-34 font-semibold tracking-[-0.025em] mb-1">Assets</h1>
-            <p className="t-11 font-mono uppercase tracking-display text-[var(--text-muted)]">
-              {assets.length} {assets.length === 1 ? "fichier" : "fichiers"} stocké{assets.length === 1 ? "" : "s"}
-            </p>
-          </div>
-          <button type="button" onClick={handleNewAsset} className="font-mono t-10 uppercase tracking-[0.16em] text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
+      <PageHeader
+        title="Assets"
+        subtitle={`${assets.length} ${assets.length === 1 ? "fichier stocké" : "fichiers stockés"}`}
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Assets" }]}
+        actions={
+          <button type="button" onClick={handleNewAsset} className="font-mono t-10 uppercase tracking-section text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
             Nouvel asset
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-6 py-8">

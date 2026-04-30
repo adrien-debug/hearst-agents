@@ -41,9 +41,8 @@ export function CockpitHero() {
       <div className="flex items-start justify-between">
         <div>
           <p
-            className="font-mono uppercase"
+            className="t-9 uppercase"
             style={{
-              fontSize: "10px",
               fontWeight: 500,
               letterSpacing: "var(--tracking-label)",
               color: "var(--text-l3)",
@@ -53,10 +52,10 @@ export function CockpitHero() {
             Welcome back
           </p>
           <h1
+            className="t-48"
             style={{
-              fontSize: "clamp(48px, 5vw, 72px)",
               fontWeight: 600,
-              lineHeight: 1.0,
+              lineHeight: "var(--leading-tight)",
               letterSpacing: "-0.03em",
               color: "var(--text-l0)",
             }}
@@ -65,10 +64,8 @@ export function CockpitHero() {
           </h1>
         </div>
         <span
-          className="font-mono"
+          className="t-15 font-light"
           style={{
-            fontSize: "15px",
-            fontWeight: 300,
             color: "var(--text-l2)",
             marginTop: "var(--space-2)",
           }}

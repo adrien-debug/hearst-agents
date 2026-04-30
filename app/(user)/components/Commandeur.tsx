@@ -19,16 +19,28 @@ import { useRouter } from "next/navigation";
 import { useStageStore, type StagePayload } from "@/stores/stage";
 import { useVoiceStore } from "@/stores/voice";
 
+type CommandSection = "navigate" | "action" | "stage";
+
 interface CommandAction {
   id: string;
   label: string;
   hint: string;
   hotkey?: string;
+  /** Catégorie visuelle dans la palette (Naviguer / Action rapide / Stages). */
+  section: CommandSection;
   /** True quand l'action ne peut pas être exécutée (pas de prérequis).
    * L'item reste visible pour discoverability mais le button est inactif. */
   disabled?: boolean;
   perform: () => void;
 }
+
+const SECTION_LABEL: Record<CommandSection, string> = {
+  navigate: "Naviguer",
+  action: "Action rapide",
+  stage: "Stages",
+};
+
+const SECTION_ORDER: CommandSection[] = ["navigate", "action", "stage"];
 
 export function Commandeur() {
   const router = useRouter();
@@ -40,11 +52,117 @@ export function Commandeur() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const actions = useMemo<CommandAction[]>(() => [
+    // ── Naviguer ────────────────────────────────────────────────────────────
+    {
+      id: "nav-reports",
+      label: "Voir les rapports",
+      hint: "Bibliothèque rapports · catalog + historique",
+      section: "navigate",
+      perform: () => {
+        router.push("/reports");
+        setOpen(false);
+      },
+    },
+    {
+      id: "nav-missions",
+      label: "Voir les missions",
+      hint: "Plans long-running · runs en cours",
+      section: "navigate",
+      perform: () => {
+        router.push("/missions");
+        setOpen(false);
+      },
+    },
+    {
+      id: "nav-runs",
+      label: "Voir les runs",
+      hint: "Historique exécutions · logs et résultats",
+      section: "navigate",
+      perform: () => {
+        router.push("/runs");
+        setOpen(false);
+      },
+    },
+    {
+      id: "nav-notifications",
+      label: "Voir les notifications",
+      hint: "Centre de notifications · signaux et alertes",
+      section: "navigate",
+      perform: () => {
+        router.push("/notifications");
+        setOpen(false);
+      },
+    },
+    {
+      id: "nav-apps",
+      label: "Voir les apps connectées",
+      hint: "Connecteurs OAuth · statut intégrations",
+      section: "navigate",
+      perform: () => {
+        router.push("/apps");
+        setOpen(false);
+      },
+    },
+    {
+      id: "nav-settings-alerting",
+      label: "Voir les paramètres alerting",
+      hint: "Seuils · canaux · règles de notification",
+      section: "navigate",
+      perform: () => {
+        router.push("/settings/alerting");
+        setOpen(false);
+      },
+    },
+    {
+      id: "open-archive",
+      label: "Voir l'archive",
+      hint: "Tous les threads + assets > 7 jours",
+      section: "navigate",
+      perform: () => {
+        router.push("/archive");
+        setOpen(false);
+      },
+    },
+    {
+      id: "open-admin",
+      label: "Console admin",
+      hint: "Pipeline · agents · model profiles",
+      section: "navigate",
+      perform: () => {
+        router.push("/admin");
+        setOpen(false);
+      },
+    },
+
+    // ── Action rapide ───────────────────────────────────────────────────────
+    {
+      id: "action-new-mission",
+      label: "Nouvelle mission",
+      hint: "Crée une mission avec l'éditeur",
+      section: "action",
+      perform: () => {
+        router.push("/missions?new=1");
+        setOpen(false);
+      },
+    },
+    {
+      id: "action-launch-report",
+      label: "Lancer un rapport",
+      hint: "Choisis un report depuis le catalog",
+      section: "action",
+      perform: () => {
+        router.push("/reports");
+        setOpen(false);
+      },
+    },
+
+    // ── Stages ──────────────────────────────────────────────────────────────
     {
       id: "go-cockpit",
       label: "Ouvrir le Cockpit",
       hint: "Home configurable · briefing du jour",
       hotkey: "⌘1",
+      section: "stage",
       perform: () => {
         setStageMode({ mode: "cockpit" } as StagePayload);
         setOpen(false);
@@ -55,6 +173,7 @@ export function Commandeur() {
       label: "Aller au Chat",
       hint: "Conversation active",
       hotkey: "⌘2",
+      section: "stage",
       perform: () => {
         setStageMode({ mode: "chat" } as StagePayload);
         setOpen(false);
@@ -67,6 +186,7 @@ export function Commandeur() {
         ? "Ré-ouvre l'asset cliqué le plus récemment"
         : "Aucun asset ouvert récemment — clique-en un d'abord",
       hotkey: "⌘3",
+      section: "stage",
       disabled: !lastAssetId,
       perform: () => {
         if (!lastAssetId) return;
@@ -79,6 +199,7 @@ export function Commandeur() {
       label: "Ouvrir Browser Stage",
       hint: "Co-pilote navigation web",
       hotkey: "⌘4",
+      section: "stage",
       perform: () => {
         setStageMode({ mode: "browser", sessionId: "" } as StagePayload);
         setOpen(false);
@@ -89,6 +210,7 @@ export function Commandeur() {
       label: "Meeting Stage",
       hint: "Bot meeting + action items",
       hotkey: "⌘5",
+      section: "stage",
       perform: () => {
         setStageMode({ mode: "meeting", meetingId: "" } as StagePayload);
         setOpen(false);
@@ -99,6 +221,7 @@ export function Commandeur() {
       label: "Knowledge Graph",
       hint: "Mémoire personnelle queryable",
       hotkey: "⌘6",
+      section: "stage",
       perform: () => {
         setStageMode({ mode: "kg" } as StagePayload);
         setOpen(false);
@@ -109,6 +232,7 @@ export function Commandeur() {
       label: "Mode voix ambient",
       hint: "Conversation full-duplex < 500ms",
       hotkey: "⌘7",
+      section: "stage",
       perform: () => {
         useVoiceStore.getState().setVoiceActive(true);
         setStageMode({ mode: "voice" } as StagePayload);
@@ -120,26 +244,9 @@ export function Commandeur() {
       label: "Chambre de Simulation",
       hint: "DeepSeek R1 — 3-5 scénarios chiffrés",
       hotkey: "⌘8",
+      section: "stage",
       perform: () => {
         setStageMode({ mode: "simulation" } as StagePayload);
-        setOpen(false);
-      },
-    },
-    {
-      id: "open-archive",
-      label: "Voir l'archive",
-      hint: "Tous les threads + assets > 7 jours",
-      perform: () => {
-        router.push("/archive");
-        setOpen(false);
-      },
-    },
-    {
-      id: "open-admin",
-      label: "Console admin",
-      hint: "Pipeline · agents · model profiles",
-      perform: () => {
-        router.push("/admin");
         setOpen(false);
       },
     },
@@ -229,30 +336,58 @@ export function Commandeur() {
           {filtered.length === 0 ? (
             <p className="t-13 text-[var(--text-ghost)] font-light">Aucun résultat.</p>
           ) : (
-            <div className="flex flex-col gap-1">
-              {filtered.map((action, i) => (
-                <button
-                  key={action.id}
-                  type="button"
-                  disabled={action.disabled}
-                  onClick={action.perform}
-                  onMouseEnter={() => !action.disabled && setActiveIndex(i)}
-                  className={`w-full py-3 flex items-baseline gap-6 text-left transition-all duration-200 ${
-                    action.disabled
-                      ? "opacity-20 cursor-not-allowed"
-                      : i === activeIndex
-                      ? "translate-x-2"
-                      : "hover:translate-x-1"
-                  }`}
-                >
-                  <span className={`t-24 leading-none tracking-tight transition-colors duration-200 ${i === activeIndex && !action.disabled ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
-                    {action.label}
-                  </span>
-                  <span className={`t-9 font-mono uppercase tracking-snug transition-colors duration-200 ${i === activeIndex && !action.disabled ? "text-[var(--text-muted)]" : "text-[var(--text-ghost)]"}`}>
-                    {action.hint}
-                  </span>
-                </button>
-              ))}
+            <div className="flex flex-col" style={{ gap: "var(--space-6)" }}>
+              {SECTION_ORDER.map((section) => {
+                const items = filtered.filter((a) => a.section === section);
+                if (items.length === 0) return null;
+                return (
+                  <section key={section} className="flex flex-col gap-1">
+                    <h2
+                      className="t-9 font-mono uppercase tracking-marquee"
+                      style={{
+                        color: "var(--text-ghost)",
+                        marginBottom: "var(--space-2)",
+                      }}
+                    >
+                      {SECTION_LABEL[section]}
+                    </h2>
+                    {items.map((action) => {
+                      const i = filtered.indexOf(action);
+                      return (
+                        <button
+                          key={action.id}
+                          type="button"
+                          disabled={action.disabled}
+                          onClick={action.perform}
+                          onMouseEnter={() => !action.disabled && setActiveIndex(i)}
+                          className={`w-full py-3 flex items-baseline gap-6 text-left transition-all duration-200 ${
+                            action.disabled
+                              ? "opacity-20 cursor-not-allowed"
+                              : i === activeIndex
+                              ? "translate-x-2"
+                              : "hover:translate-x-1"
+                          }`}
+                        >
+                          <span className={`t-24 leading-none tracking-tight transition-colors duration-200 ${i === activeIndex && !action.disabled ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
+                            {action.label}
+                          </span>
+                          <span className={`t-9 font-mono uppercase tracking-snug transition-colors duration-200 ${i === activeIndex && !action.disabled ? "text-[var(--text-muted)]" : "text-[var(--text-ghost)]"}`}>
+                            {action.hint}
+                          </span>
+                          {action.hotkey && (
+                            <span
+                              className="t-9 font-mono uppercase tracking-marquee ml-auto shrink-0"
+                              style={{ color: "var(--text-ghost)" }}
+                            >
+                              {action.hotkey}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </section>
+                );
+              })}
             </div>
           )}
         </div>
