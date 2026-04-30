@@ -41,13 +41,12 @@ export function WelcomePanel() {
 
       <div style={{ padding: "0 var(--space-12) var(--space-12)" }}>
         <p
-          className="font-mono uppercase"
+          className="t-13 uppercase"
           style={{
-            fontSize: "10px",
-            fontWeight: 500,
-            letterSpacing: "var(--tracking-label)",
-            color: "var(--text-l3)",
-            marginBottom: "var(--space-6)",
+            fontWeight: 300,
+            letterSpacing: "var(--tracking-section)",
+            color: "var(--text-l2)",
+            marginBottom: "var(--space-8)",
           }}
         >
           Quick actions

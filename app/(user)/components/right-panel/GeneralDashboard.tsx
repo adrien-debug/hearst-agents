@@ -1,6 +1,10 @@
 "use client";
 
 import { ReactNode } from "react";
+import { useFocalStore } from "@/stores/focal";
+import { useStageStore } from "@/stores/stage";
+import { assetToFocal } from "@/lib/ui/focal-mappers";
+import { isPlaceholderAssetId } from "@/lib/ui/asset-id";
 
 interface GeneralDashboardProps {
   assets?: unknown;
@@ -10,15 +14,21 @@ interface GeneralDashboardProps {
   loading?: boolean;
 }
 
+interface DashboardAsset {
+  id: string;
+  name?: string;
+  title?: string;
+  type?: string;
+}
+
 function Label({ children }: { children: ReactNode }) {
   return (
     <p
-      className="font-mono uppercase"
+      className="t-13 uppercase"
       style={{
-        fontSize: "10px",
-        fontWeight: 500,
-        letterSpacing: "var(--tracking-label)",
-        color: "var(--text-l3)",
+        fontWeight: 300,
+        letterSpacing: "var(--tracking-section)",
+        color: "var(--text-l2)",
       }}
     >
       {children}
@@ -36,19 +46,18 @@ function SectionHead({
   return (
     <div
       className="flex items-center justify-between"
-      style={{ marginBottom: "var(--space-6)" }}
+      style={{ marginBottom: "var(--space-8)" }}
     >
       <Label>{label}</Label>
       {action && (
         <button
           type="button"
           onClick={action.onClick}
-          className="font-mono uppercase transition-colors duration-300 hover:text-[var(--cykan)]"
+          className="t-13 uppercase transition-colors duration-emphasis ease-out-soft hover:text-[var(--cykan)]"
           style={{
-            fontSize: "10px",
-            fontWeight: 500,
-            letterSpacing: "var(--tracking-label)",
-            color: "var(--text-l3)",
+            fontWeight: 300,
+            letterSpacing: "var(--tracking-section)",
+            color: "var(--text-l2)",
             background: "transparent",
           }}
         >
@@ -119,13 +128,31 @@ export function GeneralDashboard({
   missions: _missions,
   onViewChange = () => {},
 }: GeneralDashboardProps) {
+  const setFocal = useFocalStore((s) => s.setFocal);
+  const setStageMode = useStageStore((s) => s.setMode);
+
   const assetsCount = Array.isArray(_assets) ? _assets.length : 0;
   const missionsCount = Array.isArray(_missions) ? _missions.length : 0;
   const reportsCount = Array.isArray(_assets)
-    ? (_assets as any[]).filter((a) => a.type === "report").length
+    ? (_assets as DashboardAsset[]).filter((a) => a.type === "report").length
     : 0;
-  const recentAssets = Array.isArray(_assets) ? (_assets as any[]).slice(0, 4) : [];
-  const activeMissions = Array.isArray(_missions) ? (_missions as any[]) : [];
+  const recentAssets = Array.isArray(_assets) ? (_assets as DashboardAsset[]).slice(0, 4) : [];
+  const activeMissions = Array.isArray(_missions) ? (_missions as Array<{ id: string; name: string }>) : [];
+
+  const handleAssetClick = (asset: DashboardAsset) => {
+    if (!asset.id || isPlaceholderAssetId(asset.id)) return;
+    setFocal(
+      assetToFocal(
+        {
+          id: asset.id,
+          name: asset.name ?? asset.title ?? "Asset",
+          type: asset.type ?? "doc",
+        },
+        null,
+      ),
+    );
+    setStageMode({ mode: "asset", assetId: asset.id });
+  };
 
   return (
     <div
@@ -190,6 +217,7 @@ export function GeneralDashboard({
                 icon={a.type === "report" ? <ReportIcon /> : <DocIcon />}
                 label={a.name || a.title || "Asset"}
                 meta={(a.type || "file").toUpperCase()}
+                onClick={() => handleAssetClick(a)}
               />
             ))}
           </div>

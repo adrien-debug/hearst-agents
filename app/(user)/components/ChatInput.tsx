@@ -155,7 +155,7 @@ export function ChatInput({
         )}
 
         {/* Input Pill — focal glass premium */}
-        <div className="cockpit-input-pill group px-10 py-7 backdrop-blur-xl relative">
+        <div className="cockpit-input-pill peer group px-10 py-7 backdrop-blur-xl relative">
           {attachment && (
             <div className="flex items-center gap-3 px-1 pb-4 mb-4 border-b border-[var(--line)]">
               <span className="t-9 tracking-marquee uppercase text-[var(--cykan)]">
@@ -217,17 +217,7 @@ export function ChatInput({
             }}
           />
 
-          <div className="flex items-center justify-between pt-6 mt-2 border-t border-[var(--line)]">
-            <div className="flex items-center gap-4 px-1">
-               <span className="t-9 tracking-marquee uppercase text-[var(--text-ghost)]">
-                Auto
-              </span>
-              <div className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
-              <span className="t-9 tracking-marquee uppercase text-[var(--text-ghost)] opacity-40">
-                GPT-4O
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-end gap-4 pt-6">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -305,10 +295,9 @@ export function ChatInput({
                   </svg>
                 </button>
               )}
-            </div>
           </div>
         </div>
-        <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
+        <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-0 peer-focus-within:opacity-100 transition-opacity duration-emphasis ease-out-soft">
           <p className="t-9 text-[var(--text-ghost)] tracking-body uppercase">
             Enter to send · Shift+Enter for new line · @ to mention
           </p>
