@@ -26,11 +26,18 @@ export type RunEvent =
   | RunResumedEvent
   // Plan
   | PlanAttachedEvent
+  | PlanPreviewEvent
   // Steps
   | StepStartedEvent
   | StepCompletedEvent
   | StepFailedEvent
   | StepRetryingEvent
+  // Multi-step plan execution (Mission Control B1)
+  | PlanStepStartedEvent
+  | PlanStepCompletedEvent
+  | PlanStepAwaitingApprovalEvent
+  | PlanStepFailedEvent
+  | PlanRunCompleteEvent
   // Delegate
   | DelegateEnqueuedEvent
   | DelegateCompletedEvent
@@ -75,7 +82,12 @@ export type RunEvent =
   | RuntimeWarningEvent
   | OperatorViolationEvent
   // Stage routing — un tool demande à téléporter l'utilisateur sur un Stage
-  | StageRequestEvent;
+  | StageRequestEvent
+  // Browser co-pilot (B5) — Stagehand actions visibles + take-over
+  | BrowserActionEvent
+  | BrowserTaskCompletedEvent
+  | BrowserTaskFailedEvent
+  | BrowserTakeOverEvent;
 
 // ── Base ─────────────────────────────────────────────────
 
@@ -117,6 +129,73 @@ export interface PlanAttachedEvent extends BaseEvent {
   type: "plan_attached";
   plan_id: string;
   step_count: number;
+}
+
+// ── Mission Control multi-step plan ─────────────────────
+// Émis par run-planner-workflow lorsqu'un plan multi-step est généré et
+// exécuté. Distinct des `step_*` legacy qui modélisent les sous-actes
+// d'un seul streamText (StepActor du run engine). Ici chaque step est un
+// nœud de l'ExecutionPlan (planner).
+
+export interface PlanPreviewEvent extends BaseEvent {
+  type: "plan_preview";
+  plan_id: string;
+  intent: string;
+  steps: Array<{
+    id: string;
+    kind: string;
+    title: string;
+    risk: string;
+    capability?: string;
+  }>;
+  estimatedCostUsd: number;
+  requiredApps: string[];
+}
+
+export interface PlanStepStartedEvent extends BaseEvent {
+  type: "plan_step_started";
+  plan_id: string;
+  step_id: string;
+  kind: string;
+  label: string;
+  plannedAt: number;
+}
+
+export interface PlanStepCompletedEvent extends BaseEvent {
+  type: "plan_step_completed";
+  plan_id: string;
+  step_id: string;
+  /** Output partiel — preview texte ≤ 400 chars pour l'UI. */
+  output?: string;
+  costUSD?: number;
+  latencyMs?: number;
+  providerId?: string;
+}
+
+export interface PlanStepAwaitingApprovalEvent extends BaseEvent {
+  type: "plan_step_awaiting_approval";
+  plan_id: string;
+  step_id: string;
+  /** Preview du write action (dest, payload résumé). */
+  preview: string;
+  kind: string;
+  providerId?: string;
+}
+
+export interface PlanStepFailedEvent extends BaseEvent {
+  type: "plan_step_failed";
+  plan_id: string;
+  step_id: string;
+  error: string;
+}
+
+export interface PlanRunCompleteEvent extends BaseEvent {
+  type: "plan_run_complete";
+  plan_id: string;
+  /** Asset final (id) si produit. */
+  assetId?: string;
+  totalCostUsd: number;
+  totalLatencyMs: number;
 }
 
 // ── Steps ────────────────────────────────────────────────
@@ -171,6 +250,10 @@ export interface ToolCallCompletedEvent extends BaseEvent {
   step_id: string;
   tool: string;
   providerId?: string;
+  /** Wall-clock latence du tool call en ms (mesurée par l'orchestrator). */
+  latencyMs?: number;
+  /** Coût attribué au tool call en USD si trackable (LLM-only sinon). */
+  costUSD?: number;
 }
 
 // ── Inline app connect ───────────────────────────────────
@@ -336,6 +419,61 @@ export interface OperatorViolationEvent extends BaseEvent {
   step_id: string;
   tool: string;
   violation: string;
+}
+
+// ── Browser co-pilot (B5) ────────────────────────────────
+// Streamés par lib/browser/stagehand-executor pendant l'exécution d'une
+// tâche autonome ; consommés par BrowserStage (ACTION_LOG live) et par
+// le mini-rapport de session.
+
+export type BrowserActionType =
+  | "navigate"
+  | "click"
+  | "type"
+  | "scroll"
+  | "extract"
+  | "screenshot"
+  | "observe"
+  | "wait";
+
+export interface BrowserAction {
+  id: string;
+  type: BrowserActionType;
+  target: string;
+  value?: string;
+  screenshotUrl?: string;
+  /** ISO string. */
+  timestamp: string;
+  durationMs?: number;
+}
+
+export interface BrowserActionEvent extends BaseEvent {
+  type: "browser_action";
+  sessionId: string;
+  action: BrowserAction;
+}
+
+export interface BrowserTaskCompletedEvent extends BaseEvent {
+  type: "browser_task_completed";
+  sessionId: string;
+  summary: string;
+  /** Liste d'asset ids créés pendant la session (screenshots/extracts/report). */
+  assetIds: string[];
+  totalActions: number;
+  totalDurationMs: number;
+}
+
+export interface BrowserTaskFailedEvent extends BaseEvent {
+  type: "browser_task_failed";
+  sessionId: string;
+  error: string;
+  /** Actions effectuées avant l'échec — utile au mini-rapport. */
+  totalActions: number;
+}
+
+export interface BrowserTakeOverEvent extends BaseEvent {
+  type: "browser_take_over";
+  sessionId: string;
 }
 
 // ── Stage routing ────────────────────────────────────────

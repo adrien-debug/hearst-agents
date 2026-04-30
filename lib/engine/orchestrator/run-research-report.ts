@@ -33,6 +33,7 @@ export interface ResearchReportInput {
 export async function runResearchReport(input: ResearchReportInput): Promise<void> {
   const { engine, eventBus, scope } = input;
   const query = extractResearchQuery(input.message);
+  const runStartedAt = Date.now();
 
   const stepId = `research-${engine.id}`;
 
@@ -200,6 +201,14 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
         specId: "research",
         runArtifact: true,
         reportMeta: { signals: [], severity: "info" },
+        runId: engine.id,
+        modelUsed: "claude-sonnet-4-6",
+        latencyMs: Date.now() - runStartedAt,
+        sourceUrls: searchResult.results.slice(0, 12).map((r) => ({
+          url: r.url,
+          label: r.title,
+          fetchedAt: Date.now(),
+        })),
         ...(pdfFile ? { pdfFile } : {}),
       },
       createdAt: Date.now(),

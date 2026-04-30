@@ -211,7 +211,7 @@ export default function RunsPage() {
         <div className="max-w-5xl mx-auto">
           {runs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-              <p className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)]">EMPTY_LOG</p>
+              <p className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)]">Aucun run</p>
               <p className="t-13 text-[var(--text-muted)] max-w-md leading-relaxed">
                 Aucun run pour l&apos;instant. Toutes les exécutions de tes prompts et missions apparaîtront ici.
               </p>

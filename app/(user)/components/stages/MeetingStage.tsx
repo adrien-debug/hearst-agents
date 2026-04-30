@@ -28,7 +28,9 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
   const setMode = useStageStore((s) => s.setMode);
 
   const [meetingUrl, setMeetingUrl] = useState("");
+  const [language, setLanguage] = useState<"fr" | "en">("fr");
   const [starting, setStarting] = useState(false);
+  const [stopping, setStopping] = useState(false);
 
   const [status, setStatus] = useState<string>("");
   const [transcript, setTranscript] = useState<string>("");
@@ -89,9 +91,16 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
       const res = await fetch("/api/v2/meetings/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ meetingUrl: url }),
+        body: JSON.stringify({ meetingUrl: url, language }),
       });
       const data = (await res.json()) as { meetingId?: string; error?: string; message?: string };
+      if (res.status === 503) {
+        toast.error(
+          "Recall.ai non configuré",
+          data.message ?? "Ajoute RECALL_API_KEY dans .env pour activer le bot meeting.",
+        );
+        return;
+      }
       if (!res.ok || !data.meetingId) {
         toast.error("Échec lancement bot", data.message ?? data.error ?? "Erreur inconnue");
         return;
@@ -105,7 +114,24 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
     } finally {
       setStarting(false);
     }
-  }, [meetingUrl, starting, setMode]);
+  }, [meetingUrl, language, starting, setMode]);
+
+  const onStop = useCallback(async () => {
+    if (!meetingId || stopping) return;
+    setStopping(true);
+    try {
+      await fetch(`/api/v2/meetings/${meetingId}`, { method: "DELETE" });
+      toast.info("Bot arrêté", "Le bot quitte la réunion.");
+      setMode({ mode: "meeting", meetingId: "" });
+    } catch (err) {
+      toast.error(
+        "Échec arrêt bot",
+        err instanceof Error ? err.message : String(err),
+      );
+    } finally {
+      setStopping(false);
+    }
+  }, [meetingId, stopping, setMode]);
 
   const toggleAction = (idx: number) => {
     setSelectedActions((prev) => {
@@ -140,7 +166,13 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
           label: `Approuver (${selectedActions.size})`,
           onClick: onApproveSelected,
         }
-      : undefined;
+      : meetingId
+        ? {
+            id: "stop",
+            label: stopping ? "Arrêt…" : "Arrêter le bot",
+            onClick: onStop,
+          }
+        : undefined;
 
   return (
     <div
@@ -213,6 +245,28 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
                 }}
                 disabled={starting}
               />
+              <fieldset
+                className="flex items-center justify-center gap-2"
+                disabled={starting}
+              >
+                <legend className="sr-only">Langue de transcription</legend>
+                {(["fr", "en"] as const).map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setLanguage(code)}
+                    aria-pressed={language === code}
+                    className={`px-3 py-1 t-9 font-mono uppercase tracking-section border transition-colors ${
+                      language === code
+                        ? "border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.08]"
+                        : "border-[var(--border-shell)] text-[var(--text-muted)] hover:border-[var(--cykan)]/50"
+                    }`}
+                    style={{ borderRadius: "var(--radius-sm)" }}
+                  >
+                    {code.toUpperCase()}
+                  </button>
+                ))}
+              </fieldset>
               <button
                 type="submit"
                 disabled={starting || !meetingUrl.trim()}

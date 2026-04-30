@@ -129,7 +129,9 @@ export function createPlanFromIntent(input: PlanIntent): ExecutionPlan {
   const type = classifyPlanType(input.intent);
   const inferred = inferSteps(input.intent, type);
 
-  const steps: ExecutionPlanStep[] = inferred.map((s, i) => {
+  // POURQUOI : `dependsOn` est rempli en deuxième passe (boucle ci-dessous)
+  // car les IDs des steps précédents ne sont pas connus pendant le map.
+  const steps: ExecutionPlanStep[] = inferred.map((s) => {
     const id = generateId("step");
     const risk = assessRisk(s.kind, input.intent);
     return {
@@ -139,7 +141,7 @@ export function createPlanFromIntent(input: PlanIntent): ExecutionPlan {
       capability: s.capability as ExecutionPlanStep["capability"],
       tool: s.tool,
       providerId: input.forcedProviderId,
-      dependsOn: i > 0 ? [steps[i - 1]?.id ?? inferred[i - 1]?.title] : [],
+      dependsOn: [],
       risk,
       expectedOutput: s.expectedOutput,
       status: "pending" as const,
@@ -150,7 +152,6 @@ export function createPlanFromIntent(input: PlanIntent): ExecutionPlan {
   for (let i = 1; i < steps.length; i++) {
     steps[i].dependsOn = [steps[i - 1].id];
   }
-  if (steps.length > 0) steps[0].dependsOn = [];
 
   const approval = needsApproval(input.intent, steps);
 

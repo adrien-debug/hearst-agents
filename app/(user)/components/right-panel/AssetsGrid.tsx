@@ -17,8 +17,8 @@ import { useFocalStore } from "@/stores/focal";
 import { useStageStore } from "@/stores/stage";
 import { toast } from "@/app/hooks/use-toast";
 import { AssetGlyphSVG } from "../right-panel-helpers";
-import { AssetMiniChart } from "./AssetMiniChart";
 import { ConfirmModal } from "../ConfirmModal";
+import { useAssetDrag } from "../use-asset-drag";
 
 const ASSET_DATE_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -149,6 +149,9 @@ export function AssetsGrid({
   const focal = useFocalStore((s) => s.focal);
   const activeAssetId = focal?.sourceAssetId ?? null;
 
+  // Drag — permet de glisser un asset vers ChatInput pour l'attacher.
+  const { getDragProps } = useAssetDrag();
+
   const visibleAssets = assets.filter((a) => !pendingDeletes.has(a.id));
   const visibleSuggestions = (reportSuggestions ?? []).filter(
     (s) => !runningSpecs.has(s.specId),
@@ -213,11 +216,14 @@ export function AssetsGrid({
         const isActive = activeAssetId === asset.id;
         const shortTitle = asset.name ? asset.name.split(' ')[0] : "Asset";
 
+        const dragProps = getDragProps({ id: asset.id, kind: asset.type, title: asset.name ?? "Asset" });
         return (
           <div key={asset.id} className="relative group">
             <button
               type="button"
               onClick={() => useStageStore.getState().setMode({ mode: "asset", assetId: asset.id })}
+              {...dragProps}
+              data-testid={`assets-grid-item-${asset.id}`}
               className="group flex flex-col items-center gap-2 cursor-pointer w-full"
               title={asset.name}
               data-active={isActive}

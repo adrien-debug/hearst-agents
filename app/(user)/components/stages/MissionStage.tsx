@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useStageStore } from "@/stores/stage";
 import { StageActionBar, type StageAction } from "./StageActionBar";
 import { ConfirmModal } from "../ConfirmModal";
+import { MissionStepGraph } from "../MissionStepGraph";
+import { useRuntimeStore } from "@/stores/runtime";
 import type { MissionLike } from "@/lib/ui/focal-mappers";
 
 interface MissionStageProps {
@@ -29,6 +31,7 @@ const FORMATTER = new Intl.DateTimeFormat("fr-FR", {
 export function MissionStage({ missionId }: MissionStageProps) {
   const back = useStageStore((s) => s.back);
   const setStageMode = useStageStore((s) => s.setMode);
+  const currentPlan = useRuntimeStore((s) => s.currentPlan);
 
   const [mission, setMission] = useState<MissionLike | null>(null);
   const [loading, setLoading] = useState(true);
@@ -312,6 +315,13 @@ export function MissionStage({ missionId }: MissionStageProps) {
               <p className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
                 ERREUR · {error}
               </p>
+            </div>
+          )}
+
+          {/* Mission Control B1 — StepGraph live au-dessus, ne casse pas l'existant. */}
+          {currentPlan && !loading && (
+            <div style={{ marginBottom: "var(--space-8)" }}>
+              <MissionStepGraph plan={currentPlan} />
             </div>
           )}
 

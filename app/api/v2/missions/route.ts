@@ -12,6 +12,8 @@ import {
   updateScheduledMission,
 } from "@/lib/engine/runtime/state/adapter";
 import { requireScope } from "@/lib/platform/auth/scope";
+import { validateGraph } from "@/lib/workflows/validate";
+import type { WorkflowGraph } from "@/lib/workflows/types";
 
 export const dynamic = "force-dynamic";
 
@@ -49,12 +51,36 @@ export async function POST(req: NextRequest) {
     input?: string;
     schedule?: string;
     enabled?: boolean;
+    workflowGraph?: WorkflowGraph;
   };
 
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+  }
+
+  // Cas Builder C3 : si workflowGraph fourni, input/schedule peuvent être
+  // dérivés du graphe (cron du trigger, name fourni). Sinon comportement
+  // legacy (input + schedule obligatoires).
+  if (body.workflowGraph) {
+    const validation = validateGraph(body.workflowGraph);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: "invalid_workflow_graph", details: validation.errors },
+        { status: 400 },
+      );
+    }
+    if (!body.schedule) {
+      const start = body.workflowGraph.nodes.find(
+        (n) => n.id === body.workflowGraph!.startNodeId,
+      );
+      const cron = (start?.config?.cron as string | undefined) ?? "manual";
+      body.schedule = cron;
+    }
+    if (!body.input) {
+      body.input = body.name ?? "Workflow personnalisé";
+    }
   }
 
   if (!body.input || !body.schedule) {
@@ -94,6 +120,7 @@ export async function POST(req: NextRequest) {
     tenantId: scope.tenantId,
     workspaceId: scope.workspaceId,
     userId: scope.userId,
+    workflowGraph: body.workflowGraph,
   });
 
   if (body.enabled === false) {
@@ -112,6 +139,7 @@ export async function POST(req: NextRequest) {
     schedule: mission.schedule,
     enabled: mission.enabled,
     createdAt: mission.createdAt,
+    workflowGraph: body.workflowGraph,
   });
 
   if (!persisted) {

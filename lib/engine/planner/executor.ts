@@ -57,6 +57,8 @@ export interface ExecutorCallbacks {
   resolveCapability: CapabilityResolver;
   executeTool: ToolExecutorFn;
   onApprovalRequired: ApprovalRequestFn;
+  /** Émis juste avant l'exécution d'un step (status passe à running). */
+  onStepStarted?: (planId: string, step: ExecutionPlanStep) => void;
   onStepCompleted?: (planId: string, step: ExecutionPlanStep) => void;
   onPlanCompleted?: (plan: ExecutionPlan) => void;
   onPlanDegraded?: (plan: ExecutionPlan, failedStep: ExecutionPlanStep) => void;
@@ -133,6 +135,7 @@ async function executeStep(
   plan.updatedAt = Date.now();
   savePlan(plan);
   logPlanEvent("step_started", { planId: plan.id, stepId: step.id, kind: step.kind });
+  callbacks.onStepStarted?.(plan.id, step);
 
   // Steps that don't need tool execution
   if (step.kind === "analyze" || step.kind === "synthesize" || step.kind === "monitor") {

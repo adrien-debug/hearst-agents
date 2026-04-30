@@ -12,6 +12,7 @@ export default function AppsPage() {
       <PageHeader
         title="Apps"
         subtitle="Catalogue des intégrations disponibles. Connectez les sources qui alimentent vos rapports et missions."
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Apps" }]}
       />
       <ConnectionsHub />
     </div>

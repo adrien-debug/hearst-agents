@@ -28,7 +28,9 @@ export type AssetKind =
   | "document"
   | "spreadsheet"
   | "task"
-  | "event";
+  | "event"
+  | "inbox_brief"
+  | "artifact";
 
 export interface AssetProvenance {
   providerId: ProviderId;
@@ -72,6 +74,27 @@ export interface AssetProvenance {
     signals?: Array<{ type: string; severity: string; message: string; blockId?: string }>;
     severity?: "info" | "warning" | "critical";
   };
+  /**
+   * B4 Lineage — Asset OS complet.
+   *
+   * Tous les champs ci-dessous sont optionnels et ascendant-compatibles :
+   * un asset historique sans ces données rendra "Provenance incomplète"
+   * dans `<AssetLineage />` mais ne crash pas.
+   */
+  /** assetIds parents — base pour le mini-graph lineage. */
+  derivedFrom?: string[];
+  /** ID du run orchestrator/job qui a produit cet asset. */
+  runId?: string;
+  /** Mission scheduler ou planner ayant déclenché la création. */
+  missionId?: string;
+  /** URLs externes consultées pendant la synthèse (web search, scraping…). */
+  sourceUrls?: Array<{ url: string; fetchedAt?: number; label?: string }>;
+  /** Coût LLM/job en USD réellement consommé. */
+  costUsd?: number;
+  /** Latence end-to-end (création asset → ready) en millisecondes. */
+  latencyMs?: number;
+  /** Identifiant modèle/provider utilisé (claude-sonnet-4-6, fal-ai/flux/schnell, e2b-python, …). */
+  modelUsed?: string;
 }
 
 export interface Asset {
@@ -439,5 +462,7 @@ export function assetKindToHaloKind(kind: AssetKind): HaloArtifactKind {
     case "spreadsheet": return "file";
     case "task": return "task";
     case "event": return "event";
+    case "inbox_brief": return "report";
+    case "artifact": return "file";
   }
 }

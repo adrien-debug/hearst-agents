@@ -13,6 +13,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { ApplicableReport } from "@/lib/reports/catalog";
 import { ReportCard, ReportCardSkeleton } from "@/app/(user)/components/reports/ReportCard";
 import { PageHeader } from "@/app/(user)/components/PageHeader";
@@ -86,6 +87,7 @@ function SkeletonGrid() {
 // ── Main page ──────────────────────────────────────────────────
 
 export default function ReportsDiscoveryPage() {
+  const router = useRouter();
   const [reports, setReports] = useState<ApplicableReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -164,6 +166,12 @@ export default function ReportsDiscoveryPage() {
     return list;
   }, [reports, domainFilter, statusFilter]);
 
+  // Liste séparée des custom specs (pour la section "Vos rapports").
+  const customReports = useMemo(
+    () => reports.filter((r) => r.source === "custom"),
+    [reports],
+  );
+
   // ── Subtitle text ────────────────────────────────────────────
 
   const subtitle = loading
@@ -180,6 +188,24 @@ export default function ReportsDiscoveryPage() {
     >
       <PageHeader title="Rapports" subtitle={subtitle} />
       <div className="flex flex-col gap-8 px-12 py-8 w-full" style={{ maxWidth: "var(--width-center-max)", margin: "0 auto" }}>
+
+        {/* ── CTA Créer un rapport ────────────────────────── */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => router.push("/reports/studio")}
+            data-testid="reports-create-cta"
+            className="inline-flex items-center gap-2 px-4 py-2 t-12 font-semibold rounded-md transition-all"
+            style={{
+              background: "var(--cykan)",
+              color: "var(--text-on-cykan)",
+              borderRadius: "var(--radius-sm)",
+              transitionDuration: "var(--duration-base)",
+            }}
+          >
+            + Créer un rapport
+          </button>
+        </div>
 
         {/* ── Filters ────────────────────────────────────────── */}
         <div className="flex flex-col gap-4">
@@ -342,6 +368,34 @@ export default function ReportsDiscoveryPage() {
               Réinitialiser les filtres
             </button>
           </div>
+        )}
+
+        {/* Section : Vos rapports (custom specs) */}
+        {!loading && !error && customReports.length > 0 && statusFilter !== "ready" && statusFilter !== "needs-connection" && (
+          <section className="flex flex-col gap-3" data-testid="reports-custom-section">
+            <h2
+              className="t-9 font-mono uppercase"
+              style={{
+                color: "var(--text-muted)",
+                letterSpacing: "var(--tracking-display)",
+              }}
+            >
+              Vos rapports
+            </h2>
+            <div
+              className="grid gap-4"
+              data-testid="reports-custom-grid"
+              style={{ gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}
+            >
+              {customReports.map((report) => (
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  onLaunch={() => router.push(`/reports/studio?edit=${report.id}`)}
+                />
+              ))}
+            </div>
+          </section>
         )}
 
         {/* Grid */}

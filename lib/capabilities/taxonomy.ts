@@ -79,8 +79,18 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
   communication: {
     capabilities: ["email.read", "email.send", "slack.read", "slack.send"],
     connectorCapabilities: ["messaging", "messaging_send"],
-    providers: ["google", "slack", "whatsapp"],
-    tools: ["get_messages", "send_message", "post_message"],
+    // Communication providers — élargi au top des canaux activés via Composio
+    // bulk-enable. WhatsApp/Twilio/Vonage/Discord/Teams sont managed côté
+    // Composio (auth), le router peut les exposer dès qu'une auth est ACTIVE.
+    providers: [
+      "google", "slack", "whatsapp", "twilio", "vonage",
+      "discord", "microsoftteams", "sendgrid", "mailchimp",
+      "convertkit", "activecampaign", "customerio",
+    ],
+    tools: [
+      "get_messages", "send_message", "post_message",
+      "send_sms", "send_whatsapp", "send_campaign",
+    ],
     validAgents: ["KnowledgeRetriever", "Communicator"],
     retrievalMode: "messages",
     keywords: {
@@ -88,10 +98,14 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
         "email", "emails", "mail", "mails", "boîte", "boite", "courrier",
         "inbox", "message", "messages", "slack",
         "écrire", "envoyer", "répondre", "correspondance",
+        "sms", "whatsapp", "twilio", "vonage", "discord", "teams",
+        "campagne", "newsletter", "mailchimp", "sendgrid", "convertkit",
       ],
       en: [
         "email", "emails", "mail", "inbox", "message", "messages", "slack",
         "send", "reply", "compose",
+        "sms", "whatsapp", "twilio", "vonage", "discord", "teams",
+        "campaign", "newsletter", "mailchimp", "sendgrid", "convertkit",
       ],
     },
   },
@@ -99,8 +113,17 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
   productivity: {
     capabilities: ["calendar.read", "calendar.write", "drive.read", "drive.write", "notion.read", "notion.write", "schedule.create"],
     connectorCapabilities: ["calendar", "files", "automation"],
-    providers: ["google", "notion"],
-    tools: ["get_calendar_events", "get_files", "schedule_task", "query_database"],
+    // Project mgmt + docs collab — Linear/Asana/Monday/Trello/Jira/ClickUp.
+    // Airtable est listé ici (workspace data) plutôt qu'analysis pour matcher
+    // l'usage métier dominant (collab + base de données).
+    providers: [
+      "google", "notion", "linear", "asana", "monday",
+      "trello", "jira", "clickup", "airtable",
+    ],
+    tools: [
+      "get_calendar_events", "get_files", "schedule_task", "query_database",
+      "create_task", "create_issue", "list_tasks", "update_task",
+    ],
     validAgents: ["KnowledgeRetriever", "Planner", "ProductivityAgent"],
     retrievalMode: "structured_data",
     keywords: {
@@ -110,12 +133,18 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
         "aujourd'hui", "demain", "cette semaine",
         "fichier", "fichiers", "document", "documents", "drive", "dossier",
         "notion",
+        "tâche", "tache", "tâches", "taches", "ticket projet",
+        "linear", "asana", "monday", "trello", "clickup", "airtable",
+        "sprint", "backlog", "kanban",
       ],
       en: [
         "calendar", "meeting", "event", "schedule", "available", "slot",
         "today", "tomorrow", "this week",
         "file", "files", "document", "documents", "drive", "folder",
         "notion",
+        "task", "tasks", "project ticket",
+        "linear", "asana", "monday", "trello", "clickup", "airtable",
+        "sprint", "backlog", "kanban",
       ],
     },
   },
@@ -123,8 +152,17 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
   finance: {
     capabilities: ["stripe.read", "stripe.write", "data.analyze", "data.export"],
     connectorCapabilities: ["finance", "commerce"],
-    providers: ["stripe"],
-    tools: ["export_excel", "analyze_data", "generate_report"],
+    // Stripe (payments) + comptabilité (QuickBooks, Xero) + e-commerce
+    // (Shopify, WooCommerce, BigCommerce). E-commerce traité comme finance
+    // car les tools pertinents sont commande/revenue/refund.
+    providers: [
+      "stripe", "quickbooks", "xero",
+      "shopify", "woocommerce", "bigcommerce",
+    ],
+    tools: [
+      "export_excel", "analyze_data", "generate_report",
+      "list_invoices", "create_invoice", "list_orders", "refund_order",
+    ],
     validAgents: ["FinanceAgent", "Analyst"],
     retrievalMode: null,
     keywords: {
@@ -132,11 +170,17 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
         "crypto", "bitcoin", "ethereum", "blockchain",
         "revenue", "marché", "marche", "portfolio", "finance",
         "prix", "trading", "stripe", "paiement", "facture",
+        "quickbooks", "xero", "comptabilité", "comptabilite",
+        "shopify", "woocommerce", "bigcommerce", "boutique",
+        "commande", "commandes", "remboursement",
       ],
       en: [
         "crypto", "bitcoin", "ethereum", "blockchain",
         "revenue", "market", "portfolio", "finance",
         "price", "trading", "stripe", "payment", "invoice",
+        "quickbooks", "xero", "accounting", "bookkeeping",
+        "shopify", "woocommerce", "bigcommerce", "store", "shop",
+        "order", "orders", "refund",
       ],
     },
   },
@@ -170,8 +214,14 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
   developer: {
     capabilities: ["github.read", "github.write"],
     connectorCapabilities: ["developer_tools"],
-    providers: ["github", "jira"],
-    tools: [],
+    // Source control: GitHub + GitLab + Bitbucket. Jira reste ici (issue
+    // tracking dev-centric) — déjà partagé avec productivity via le mot
+    // "ticket"/"issue" qui est explicitement dev.
+    providers: ["github", "gitlab", "bitbucket", "jira"],
+    tools: [
+      "list_pull_requests", "list_issues", "create_issue",
+      "list_commits", "create_branch",
+    ],
     validAgents: ["DeveloperAgent"],
     retrievalMode: null,
     keywords: {
@@ -179,11 +229,13 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
         "github", "git", "commit", "pull request", "pr", "merge",
         "code", "repo", "repository", "branche", "deploy",
         "jira", "ticket", "issue",
+        "gitlab", "bitbucket", "merge request", "mr",
       ],
       en: [
         "github", "git", "commit", "pull request", "pr", "merge",
         "code", "repo", "repository", "branch", "deploy",
         "jira", "ticket", "issue",
+        "gitlab", "bitbucket", "merge request", "mr",
       ],
     },
   },
@@ -191,18 +243,20 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
   design: {
     capabilities: ["figma.read", "figma.write"],
     connectorCapabilities: ["design"],
-    providers: ["figma"],
-    tools: [],
+    providers: ["figma", "canva"],
+    tools: ["list_files", "create_design", "export_design"],
     validAgents: ["DesignAgent"],
     retrievalMode: null,
     keywords: {
       fr: [
         "figma", "design", "maquette", "prototype", "wireframe",
         "composant", "ui", "ux", "interface",
+        "canva", "template visuel",
       ],
       en: [
         "figma", "design", "mockup", "prototype", "wireframe",
         "component", "ui", "ux", "interface",
+        "canva", "visual template",
       ],
     },
   },
@@ -210,18 +264,34 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
   crm: {
     capabilities: ["crm.read", "crm.write"],
     connectorCapabilities: ["crm"],
-    providers: ["hubspot"],
-    tools: [],
+    // Sales/Support stack: HubSpot + Salesforce/Pipedrive/Zoho/Close/Copper
+    // (CRM/sales) + Zendesk/Intercom/Freshdesk/HelpScout (support tickets,
+    // customer-facing → conceptuellement crm-adjacent, pas de domain support
+    // distinct pour rester proche du modèle existant).
+    providers: [
+      "hubspot", "salesforce", "pipedrive", "zoho", "close", "copper",
+      "zendesk", "intercom", "freshdesk", "helpscout",
+    ],
+    tools: [
+      "list_contacts", "create_contact", "update_contact",
+      "list_deals", "create_deal", "list_tickets", "create_ticket",
+    ],
     validAgents: ["CRMAgent"],
     retrievalMode: null,
     keywords: {
       fr: [
         "hubspot", "crm", "contact", "contacts", "client", "clients",
         "lead", "leads", "prospect", "pipeline", "deal",
+        "salesforce", "pipedrive", "zoho", "close.io", "copper",
+        "zendesk", "intercom", "freshdesk", "helpscout",
+        "support client", "ticket support",
       ],
       en: [
         "hubspot", "crm", "contact", "contacts", "customer", "customers",
         "lead", "leads", "prospect", "pipeline", "deal",
+        "salesforce", "pipedrive", "zoho", "close.io", "copper",
+        "zendesk", "intercom", "freshdesk", "helpscout",
+        "customer support", "support ticket",
       ],
     },
   },
@@ -251,8 +321,13 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
   analysis: {
     capabilities: ["code.execute", "data.analyze"],
     connectorCapabilities: [],
-    providers: ["e2b"],
-    tools: ["execute_code", "analyze_data"],
+    // Sandbox + product analytics. Amplitude/Mixpanel/Segment exposent
+    // surtout des read events qu'on agrège pour produire des reports.
+    providers: ["e2b", "amplitude", "mixpanel", "segment"],
+    tools: [
+      "execute_code", "analyze_data",
+      "query_events", "list_cohorts", "track_event",
+    ],
     validAgents: ["Analyst", "Operator"],
     retrievalMode: null,
     keywords: {
@@ -261,11 +336,15 @@ export const DOMAIN_TAXONOMY: Record<Domain, DomainEntry> = {
         "code python", "lance ce code", "analyse données",
         "calcul numérique", "run python",
         "calcule", "python", "javascript", "graphique", "simulation",
+        "amplitude", "mixpanel", "segment",
+        "métrique produit", "metrique produit", "cohorte",
       ],
       en: [
         "execute code", "run code", "python script",
         "sandbox", "analyze data", "code execution", "run python",
         "javascript", "graph", "simulation",
+        "amplitude", "mixpanel", "segment",
+        "product metric", "cohort", "funnel",
       ],
     },
   },

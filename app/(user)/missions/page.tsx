@@ -278,7 +278,7 @@ function MissionsPageContent() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8" style={{ background: "var(--bg)" }}>
-        <p className="ghost-meta-label">LOAD_MISSIONS</p>
+        <p className="ghost-meta-label">Chargement</p>
         <div className="w-full max-w-xs space-y-2">
           <div className="ghost-skeleton-bar" />
           <div className="ghost-skeleton-bar" />
@@ -295,31 +295,45 @@ function MissionsPageContent() {
         subtitle="Automatisations planifiées"
         breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Missions" }]}
         actions={
-          <button type="button" onClick={openNewMission} className="font-mono t-10 uppercase tracking-section text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
-            Nouvelle mission
-          </button>
+          <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
+            <button
+              type="button"
+              onClick={() => router.push("/missions/builder")}
+              className="font-mono t-10 uppercase tracking-section text-[var(--text-muted)] border-b border-[var(--text-muted)] pb-[2px] bg-transparent hover:text-[var(--cykan)] hover:border-[var(--cykan)] transition-colors"
+            >
+              Builder visuel
+            </button>
+            <button type="button" onClick={openNewMission} className="font-mono t-10 uppercase tracking-section text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
+              Nouvelle mission
+            </button>
+          </div>
         }
       />
 
-      {/* Stats */}
-      <div className="flex items-center gap-4 px-12 py-4 border-b border-[var(--border-shell)]">
-        <div className="flex items-center gap-2 t-9">
-          <span className="w-2 h-2 rounded-pill bg-[var(--money)]" />
-          <span className="text-[var(--text-muted)]">{missions.filter((m) => m.enabled).length} activées</span>
-        </div>
-        <div className="flex items-center gap-2 t-9">
-          <span className="w-2 h-2 rounded-pill bg-[var(--cykan)] animate-pulse" />
-          <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "running").length} en cours</span>
-        </div>
-        <div className="flex items-center gap-2 t-9">
-          <span className="w-2 h-2 rounded-pill bg-[var(--danger)]" />
-          <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "failed").length} échecs</span>
-        </div>
-        <div className="flex items-center gap-2 t-9">
-          <span className="w-2 h-2 rounded-pill bg-[var(--warn)]" />
-          <span className="text-[var(--text-muted)]">{missions.filter((m) => m.opsStatus === "blocked").length} bloqués</span>
-        </div>
-      </div>
+      {/* Stats — chips visibles uniquement si compteur > 0, pour éviter le bruit
+          des "0 en cours · 0 échecs · 0 bloqués" qui saturait l'écran à vide. */}
+      {(() => {
+        const stats = [
+          { count: missions.filter((m) => m.enabled).length, label: "activées", color: "var(--money)" as const, pulse: false },
+          { count: missions.filter((m) => m.opsStatus === "running").length, label: "en cours", color: "var(--cykan)" as const, pulse: true },
+          { count: missions.filter((m) => m.opsStatus === "failed").length, label: "échecs", color: "var(--danger)" as const, pulse: false },
+          { count: missions.filter((m) => m.opsStatus === "blocked").length, label: "bloqués", color: "var(--warn)" as const, pulse: false },
+        ].filter((s) => s.count > 0);
+        if (stats.length === 0) return null;
+        return (
+          <div className="flex items-center gap-4 px-12 py-4 border-b border-[var(--border-shell)]">
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-center gap-2 t-9">
+                <span
+                  className={`w-2 h-2 rounded-pill ${s.pulse ? "animate-pulse" : ""}`}
+                  style={{ background: s.color }}
+                />
+                <span className="text-[var(--text-muted)]">{s.count} {s.label}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">
@@ -337,9 +351,9 @@ function MissionsPageContent() {
         ) : (
           <div className="border-t border-[var(--line)]">
             <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-9 font-mono uppercase tracking-display text-[var(--text-faint)] border-b border-[var(--border-soft)]">
-              <span>ID_REF / Descriptor</span>
-              <span className="text-right">STATUS_OPS</span>
-              <span className="text-right">CMD</span>
+              <span>Référence</span>
+              <span className="text-right">État</span>
+              <span className="text-right">Actions</span>
             </div>
             {missions.map((mission) => {
               const effectiveOpsStatus = mission.opsStatus || "idle";
@@ -356,14 +370,14 @@ function MissionsPageContent() {
 
               const opsStatusLabel =
                 effectiveOpsStatus === "running"
-                  ? "RUN"
+                  ? "En cours"
                   : effectiveOpsStatus === "success"
-                    ? "OK"
+                    ? "Réussi"
                     : effectiveOpsStatus === "failed"
-                      ? "FAIL"
+                      ? "Échec"
                       : effectiveOpsStatus === "blocked"
-                        ? "BLOCK"
-                        : "IDLE";
+                        ? "Bloqué"
+                        : "En pause";
 
               return (
                 <div
@@ -386,26 +400,26 @@ function MissionsPageContent() {
                       className="min-w-0 text-left group/open cursor-pointer"
                       title={`Open ${mission.name}`}
                     >
-                      <p className="font-mono t-9 uppercase tracking-display text-[var(--text-faint)] mb-1">ID_REF: {mission.id.slice(0, 8)}</p>
+                      <p className="font-mono t-9 uppercase tracking-display text-[var(--text-faint)] mb-1">Réf {mission.id.slice(0, 8)}</p>
                       <h3 className="t-13 font-medium text-[var(--text)] tracking-tight group-hover/open:text-[var(--cykan)] group-hover/open:halo-cyan-sm transition-colors">{mission.name}</h3>
                       <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] mt-1">{mission.description}</p>
                       {mission.lastError && (
                         <p className="t-10 font-mono text-[var(--danger)] truncate mt-2 border-b border-[var(--danger)] pb-0.5 inline-block max-w-full" title={mission.lastError}>
-                          ERR_LOG: {mission.lastError}
+                          Erreur : {mission.lastError}
                         </p>
                       )}
                     </button>
                   </div>
                   <div className="text-right space-y-2">
                     <span className={`inline-block font-mono t-9 uppercase tracking-label border-b pb-0.5 ${statusLine}`}>
-                      STATUS_{opsStatusLabel}
+                      {opsStatusLabel}
                     </span>
                     <div className="t-10 font-mono text-[var(--text-faint)] space-y-1">
                       <div>{mission.frequency}</div>
                       {mission.runningSince && (
-                        <div className="text-[var(--cykan)]">ELAPSED_{Math.floor((currentTime - mission.runningSince) / 1000)}S</div>
+                        <div className="text-[var(--cykan)]">{Math.floor((currentTime - mission.runningSince) / 1000)} s</div>
                       )}
-                      {mission.nextRun && <div>NEXT_{new Date(mission.nextRun).toLocaleDateString()}</div>}
+                      {mission.nextRun && <div>Prochain {new Date(mission.nextRun).toLocaleDateString()}</div>}
                     </div>
                   </div>
                   <div className="flex items-start justify-end gap-1 pt-0.5">

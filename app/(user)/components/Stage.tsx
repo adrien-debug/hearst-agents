@@ -4,12 +4,14 @@ import { useStageStore } from "@/stores/stage";
 import { CockpitStage } from "./stages/CockpitStage";
 import { ChatStage } from "./stages/ChatStage";
 import { AssetStage } from "./stages/AssetStage";
+import { AssetCompareStage } from "./stages/AssetCompareStage";
 import { MissionStage } from "./stages/MissionStage";
 import { BrowserStage } from "./stages/BrowserStage";
 import { MeetingStage } from "./stages/MeetingStage";
 import { KnowledgeStage } from "./stages/KnowledgeStage";
 import { VoiceStage } from "./stages/VoiceStage";
 import { SimulationStage } from "./stages/SimulationStage";
+import { ArtifactStage } from "./stages/ArtifactStage";
 import type { Message } from "@/lib/core/types";
 
 interface StageProps {
@@ -41,6 +43,8 @@ export function Stage(props: StageProps) {
       );
     case "asset":
       return <AssetStage assetId={current.assetId} variantKind={current.variantKind} />;
+    case "asset_compare":
+      return <AssetCompareStage assetIdA={current.assetIdA} assetIdB={current.assetIdB} />;
     case "mission":
       return <MissionStage missionId={current.missionId} />;
     case "browser":
@@ -53,6 +57,14 @@ export function Stage(props: StageProps) {
       return <VoiceStage sessionId={current.sessionId} />;
     case "simulation":
       return <SimulationStage />;
+    case "artifact":
+      return (
+        <ArtifactStage
+          artifactId={current.artifactId}
+          initialCode={current.code}
+          initialLanguage={current.language}
+        />
+      );
     default:
       return null;
   }

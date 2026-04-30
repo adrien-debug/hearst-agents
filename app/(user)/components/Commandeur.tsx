@@ -1,46 +1,47 @@
 "use client";
 
 /**
- * Commandeur — Command palette globale (Cmd+K).
+ * Commandeur — Command palette globale (Cmd+K) sémantique.
  *
- * Entrée universelle indépendante du chat. Permet de :
- *  - Switcher de Stage (Cockpit, Chat, Asset, Browser, Meeting, KG, Voice)
- *  - Lancer une mission (Phase B branchera la création directe)
- *  - Query KG ("qu'est-ce que je sais sur X")
- *  - Ouvrir l'archive
- *  - Activer le mode voix
+ * Sections (collapse-friendly visuellement, rendues si non-vide) :
+ *   - Actions    → hardcoded (navigate, stages, quick actions)
+ *   - Recent     → threads récents (max 5)
+ *   - Assets     → résultats search /api/v2/search?q=
+ *   - Missions   → idem
+ *   - Threads    → idem (chat_messages content)
+ *   - Tools      → placeholder Phase B suivante (apps connectées)
+ *   - KG         → kg_nodes
  *
- * V1 (Phase A) : actions hardcodées + filtre par query. V2 ajoutera les
- * actions dynamiques depuis le tool registry + l'historique récent.
+ * Comportement :
+ *   - Query vide → Actions + Recent uniquement (pas de fetch)
+ *   - Query non-vide → debounced fetch (200ms) + filtre local sur Actions
+ *   - Hotkeys ⌘1-9 / ⌘K / ⌘B / ⌘⇧V intacts (gérés par useGlobalHotkeys)
+ *   - Keyboard nav ↑↓ entre toutes les sections, Enter, Esc
  */
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStageStore, type StagePayload } from "@/stores/stage";
 import { useVoiceStore } from "@/stores/voice";
+import { useNavigationStore } from "@/stores/navigation";
+import { CommandeurResultRow, type CommandeurResultKind } from "./CommandeurResultRow";
+import { useCommandeurData } from "./use-commandeur-data";
 
-type CommandSection = "navigate" | "action" | "stage";
-
-interface CommandAction {
+interface CommandRow {
   id: string;
+  kind: CommandeurResultKind;
   label: string;
-  hint: string;
+  hint?: string;
   hotkey?: string;
-  /** Catégorie visuelle dans la palette (Naviguer / Action rapide / Stages). */
-  section: CommandSection;
-  /** True quand l'action ne peut pas être exécutée (pas de prérequis).
-   * L'item reste visible pour discoverability mais le button est inactif. */
   disabled?: boolean;
   perform: () => void;
 }
 
-const SECTION_LABEL: Record<CommandSection, string> = {
-  navigate: "Naviguer",
-  action: "Action rapide",
-  stage: "Stages",
-};
-
-const SECTION_ORDER: CommandSection[] = ["navigate", "action", "stage"];
+interface CommandSection {
+  key: string;
+  title: string;
+  rows: CommandRow[];
+}
 
 export function Commandeur() {
   const router = useRouter();
@@ -48,16 +49,20 @@ export function Commandeur() {
   const setOpen = useStageStore((s) => s.setCommandeurOpen);
   const setStageMode = useStageStore((s) => s.setMode);
   const lastAssetId = useStageStore((s) => s.lastAssetId);
+  const threads = useNavigationStore((s) => s.threads);
+  const setActiveThread = useNavigationStore((s) => s.setActiveThread);
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const actions = useMemo<CommandAction[]>(() => [
-    // ── Naviguer ────────────────────────────────────────────────────────────
+  const { results, loading } = useCommandeurData(query, isOpen);
+
+  // ── Actions hardcoded (toujours présentes, filtrables localement) ──
+  const allActions = useMemo<CommandRow[]>(() => [
     {
       id: "nav-reports",
+      kind: "action",
       label: "Voir les rapports",
-      hint: "Bibliothèque rapports · catalog + historique",
-      section: "navigate",
+      hint: "Bibliothèque rapports",
       perform: () => {
         router.push("/reports");
         setOpen(false);
@@ -65,9 +70,9 @@ export function Commandeur() {
     },
     {
       id: "nav-missions",
+      kind: "action",
       label: "Voir les missions",
-      hint: "Plans long-running · runs en cours",
-      section: "navigate",
+      hint: "Plans long-running",
       perform: () => {
         router.push("/missions");
         setOpen(false);
@@ -75,9 +80,9 @@ export function Commandeur() {
     },
     {
       id: "nav-runs",
+      kind: "action",
       label: "Voir les runs",
-      hint: "Historique exécutions · logs et résultats",
-      section: "navigate",
+      hint: "Historique exécutions",
       perform: () => {
         router.push("/runs");
         setOpen(false);
@@ -85,9 +90,9 @@ export function Commandeur() {
     },
     {
       id: "nav-notifications",
+      kind: "action",
       label: "Voir les notifications",
-      hint: "Centre de notifications · signaux et alertes",
-      section: "navigate",
+      hint: "Centre signaux et alertes",
       perform: () => {
         router.push("/notifications");
         setOpen(false);
@@ -95,9 +100,9 @@ export function Commandeur() {
     },
     {
       id: "nav-apps",
+      kind: "action",
       label: "Voir les apps connectées",
-      hint: "Connecteurs OAuth · statut intégrations",
-      section: "navigate",
+      hint: "Connecteurs OAuth",
       perform: () => {
         router.push("/apps");
         setOpen(false);
@@ -105,9 +110,9 @@ export function Commandeur() {
     },
     {
       id: "nav-settings-alerting",
-      label: "Voir les paramètres alerting",
-      hint: "Seuils · canaux · règles de notification",
-      section: "navigate",
+      kind: "action",
+      label: "Paramètres alerting",
+      hint: "Seuils · canaux · règles",
       perform: () => {
         router.push("/settings/alerting");
         setOpen(false);
@@ -115,9 +120,9 @@ export function Commandeur() {
     },
     {
       id: "open-archive",
+      kind: "action",
       label: "Voir l'archive",
-      hint: "Tous les threads + assets > 7 jours",
-      section: "navigate",
+      hint: "Threads + assets > 7 jours",
       perform: () => {
         router.push("/archive");
         setOpen(false);
@@ -125,21 +130,19 @@ export function Commandeur() {
     },
     {
       id: "open-admin",
+      kind: "action",
       label: "Console admin",
-      hint: "Pipeline · agents · model profiles",
-      section: "navigate",
+      hint: "Pipeline · agents · profiles",
       perform: () => {
         router.push("/admin");
         setOpen(false);
       },
     },
-
-    // ── Action rapide ───────────────────────────────────────────────────────
     {
       id: "action-new-mission",
+      kind: "action",
       label: "Nouvelle mission",
-      hint: "Crée une mission avec l'éditeur",
-      section: "action",
+      hint: "Crée une mission",
       perform: () => {
         router.push("/missions?new=1");
         setOpen(false);
@@ -147,22 +150,20 @@ export function Commandeur() {
     },
     {
       id: "action-launch-report",
+      kind: "action",
       label: "Lancer un rapport",
-      hint: "Choisis un report depuis le catalog",
-      section: "action",
+      hint: "Choisis depuis le catalog",
       perform: () => {
         router.push("/reports");
         setOpen(false);
       },
     },
-
-    // ── Stages ──────────────────────────────────────────────────────────────
     {
       id: "go-cockpit",
+      kind: "action",
       label: "Ouvrir le Cockpit",
-      hint: "Home configurable · briefing du jour",
+      hint: "Briefing du jour",
       hotkey: "⌘1",
-      section: "stage",
       perform: () => {
         setStageMode({ mode: "cockpit" } as StagePayload);
         setOpen(false);
@@ -170,10 +171,10 @@ export function Commandeur() {
     },
     {
       id: "go-chat",
+      kind: "action",
       label: "Aller au Chat",
       hint: "Conversation active",
       hotkey: "⌘2",
-      section: "stage",
       perform: () => {
         setStageMode({ mode: "chat" } as StagePayload);
         setOpen(false);
@@ -181,12 +182,12 @@ export function Commandeur() {
     },
     {
       id: "go-asset",
+      kind: "action",
       label: "Ouvrir le dernier asset",
       hint: lastAssetId
-        ? "Ré-ouvre l'asset cliqué le plus récemment"
-        : "Aucun asset ouvert récemment — clique-en un d'abord",
+        ? "Ré-ouvre l'asset le plus récent"
+        : "Aucun asset ouvert récemment",
       hotkey: "⌘3",
-      section: "stage",
       disabled: !lastAssetId,
       perform: () => {
         if (!lastAssetId) return;
@@ -196,10 +197,10 @@ export function Commandeur() {
     },
     {
       id: "go-browser",
-      label: "Ouvrir Browser Stage",
+      kind: "action",
+      label: "Browser Stage",
       hint: "Co-pilote navigation web",
       hotkey: "⌘4",
-      section: "stage",
       perform: () => {
         setStageMode({ mode: "browser", sessionId: "" } as StagePayload);
         setOpen(false);
@@ -207,10 +208,10 @@ export function Commandeur() {
     },
     {
       id: "go-meeting",
+      kind: "action",
       label: "Meeting Stage",
       hint: "Bot meeting + action items",
       hotkey: "⌘5",
-      section: "stage",
       perform: () => {
         setStageMode({ mode: "meeting", meetingId: "" } as StagePayload);
         setOpen(false);
@@ -218,10 +219,10 @@ export function Commandeur() {
     },
     {
       id: "go-kg",
+      kind: "action",
       label: "Knowledge Graph",
-      hint: "Mémoire personnelle queryable",
+      hint: "Mémoire personnelle",
       hotkey: "⌘6",
-      section: "stage",
       perform: () => {
         setStageMode({ mode: "kg" } as StagePayload);
         setOpen(false);
@@ -229,10 +230,10 @@ export function Commandeur() {
     },
     {
       id: "go-voice",
+      kind: "action",
       label: "Mode voix ambient",
-      hint: "Conversation full-duplex < 500ms",
+      hint: "Conversation full-duplex",
       hotkey: "⌘7",
-      section: "stage",
       perform: () => {
         useVoiceStore.getState().setVoiceActive(true);
         setStageMode({ mode: "voice" } as StagePayload);
@@ -241,33 +242,194 @@ export function Commandeur() {
     },
     {
       id: "go-simulation",
+      kind: "action",
       label: "Chambre de Simulation",
-      hint: "DeepSeek R1 — 3-5 scénarios chiffrés",
+      hint: "DeepSeek scenarios chiffrés",
       hotkey: "⌘8",
-      section: "stage",
       perform: () => {
         setStageMode({ mode: "simulation" } as StagePayload);
         setOpen(false);
       },
     },
+    {
+      id: "go-artifact",
+      kind: "action",
+      label: "Artifact (code + E2B)",
+      hint: "Éditeur Python/Node, run sandbox",
+      hotkey: "⌘0",
+      perform: () => {
+        setStageMode({ mode: "artifact" } as StagePayload);
+        setOpen(false);
+      },
+    },
+    {
+      id: "action-compare-assets",
+      kind: "action",
+      label: "Comparer 2 assets",
+      hint: "Split view + diff sémantique",
+      perform: () => {
+        const idA = window.prompt("ID du premier asset (A) :")?.trim();
+        if (!idA) return;
+        const idB = window.prompt("ID du deuxième asset (B) :")?.trim();
+        if (!idB) return;
+        setStageMode({
+          mode: "asset_compare",
+          assetIdA: idA,
+          assetIdB: idB,
+        } as StagePayload);
+        setOpen(false);
+      },
+    },
   ], [setStageMode, setOpen, router, lastAssetId]);
 
-  const filtered = useMemo(() => {
-    if (!query.trim()) return actions;
-    const q = query.toLowerCase();
-    return actions.filter((a) => a.label.toLowerCase().includes(q) || a.hint.toLowerCase().includes(q));
-  }, [actions, query]);
+  // ── Recent threads (depuis store nav, max 5) ───────────────────
+  const recentRows = useMemo<CommandRow[]>(() => {
+    return [...threads]
+      .filter((t) => !t.archived)
+      .sort((a, b) => b.lastActivity - a.lastActivity)
+      .slice(0, 5)
+      .map((thread) => ({
+        id: `recent-${thread.id}`,
+        kind: "thread" as const,
+        label: thread.name || "Conversation",
+        hint: new Date(thread.lastActivity).toLocaleDateString("fr-FR", {
+          day: "numeric",
+          month: "short",
+        }),
+        perform: () => {
+          setActiveThread(thread.id);
+          setStageMode({ mode: "chat", threadId: thread.id } as StagePayload);
+          setOpen(false);
+        },
+      }));
+  }, [threads, setActiveThread, setStageMode, setOpen]);
 
-  // Reset query on open/close
+  // ── Sections rendues ───────────────────────────────────────────
+  const sections = useMemo<CommandSection[]>(() => {
+    const trimmed = query.trim().toLowerCase();
+    const filteredActions = !trimmed
+      ? allActions
+      : allActions.filter(
+          (a) =>
+            a.label.toLowerCase().includes(trimmed) ||
+            (a.hint ?? "").toLowerCase().includes(trimmed),
+        );
+
+    const out: CommandSection[] = [];
+    if (filteredActions.length > 0) {
+      out.push({ key: "actions", title: "Actions", rows: filteredActions });
+    }
+
+    if (!trimmed && recentRows.length > 0) {
+      out.push({ key: "recent", title: "Récents", rows: recentRows });
+    }
+
+    if (trimmed) {
+      if (results.assets.length > 0) {
+        out.push({
+          key: "assets",
+          title: "Assets",
+          rows: results.assets.map((a) => ({
+            id: `asset-${a.id}`,
+            kind: "asset",
+            label: a.title,
+            hint: a.kind,
+            perform: () => {
+              setStageMode({ mode: "asset", assetId: a.id } as StagePayload);
+              setOpen(false);
+            },
+          })),
+        });
+      }
+      if (results.missions.length > 0) {
+        out.push({
+          key: "missions",
+          title: "Missions",
+          rows: results.missions.map((m) => ({
+            id: `mission-${m.id}`,
+            kind: "mission",
+            label: m.title,
+            hint: m.status,
+            perform: () => {
+              setStageMode({ mode: "mission", missionId: m.id } as StagePayload);
+              setOpen(false);
+            },
+          })),
+        });
+      }
+      if (results.threads.length > 0) {
+        out.push({
+          key: "threads",
+          title: "Conversations",
+          rows: results.threads.map((t) => ({
+            id: `thread-${t.id}`,
+            kind: "thread",
+            label: t.title,
+            hint: t.preview.slice(0, 60),
+            perform: () => {
+              setActiveThread(t.id);
+              setStageMode({ mode: "chat", threadId: t.id } as StagePayload);
+              setOpen(false);
+            },
+          })),
+        });
+      }
+      if (results.kgNodes.length > 0) {
+        out.push({
+          key: "kg",
+          title: "Knowledge",
+          rows: results.kgNodes.map((n) => ({
+            id: `kg-${n.id}`,
+            kind: "kg",
+            label: n.label,
+            hint: n.type,
+            perform: () => {
+              setStageMode({ mode: "kg", entityId: n.id } as StagePayload);
+              setOpen(false);
+            },
+          })),
+        });
+      }
+      if (results.runs.length > 0) {
+        out.push({
+          key: "runs",
+          title: "Runs",
+          rows: results.runs.map((r) => ({
+            id: `run-${r.id}`,
+            kind: "run",
+            label: r.label,
+            hint: r.createdAt ? new Date(r.createdAt).toLocaleDateString("fr-FR") : "",
+            perform: () => {
+              router.push(`/runs/${r.id}`);
+              setOpen(false);
+            },
+          })),
+        });
+      }
+    }
+
+    return out;
+  }, [allActions, recentRows, query, results, setStageMode, setActiveThread, setOpen, router]);
+
+  // Flatten pour la nav clavier.
+  const flatRows = useMemo<CommandRow[]>(
+    () => sections.flatMap((s) => s.rows),
+    [sections],
+  );
+
   useEffect(() => {
     if (!isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset de l'état interne requis à la fermeture, le render-time pattern déclencherait set-state-in-render
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset à la fermeture (pas de render-time pattern)
       setQuery("");
       setActiveIndex(0);
     }
   }, [isOpen]);
 
-  // Keyboard nav inside palette
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset clavier index quand la query change
+    setActiveIndex(0);
+  }, [query]);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -278,7 +440,7 @@ export function Commandeur() {
       }
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
+        setActiveIndex((i) => Math.min(i + 1, flatRows.length - 1));
         return;
       }
       if (e.key === "ArrowUp") {
@@ -288,15 +450,17 @@ export function Commandeur() {
       }
       if (e.key === "Enter") {
         e.preventDefault();
-        const action = filtered[activeIndex];
-        if (action) action.perform();
+        const row = flatRows[activeIndex];
+        if (row && !row.disabled) row.perform();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, filtered, activeIndex, setOpen]);
+  }, [isOpen, flatRows, activeIndex, setOpen]);
 
   if (!isOpen) return null;
+
+  let runningIndex = 0;
 
   return (
     <div
@@ -305,89 +469,69 @@ export function Commandeur() {
         background: "var(--overlay-scrim)",
         backdropFilter: "blur(40px)",
         WebkitBackdropFilter: "blur(40px)",
-        paddingTop: "15vh"
+        paddingTop: "15vh",
       }}
       onClick={() => setOpen(false)}
     >
       <div
         className="w-full max-w-3xl overflow-hidden transition-all duration-500 border-l border-[var(--border-shell)]"
-        style={{
-          background: "transparent",
-        }}
+        style={{ background: "transparent" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className="flex items-center gap-8 px-12 py-8"
-        >
+        <div className="flex items-center gap-8 px-12 py-8">
           <input
             autoFocus
             type="text"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setActiveIndex(0);
-            }}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher..."
             className="flex-1 bg-transparent t-48 leading-none font-bold tracking-tight text-[var(--text)] placeholder-[var(--text-ghost)] outline-none"
           />
+          {loading && (
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+              Recherche…
+            </span>
+          )}
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto px-12 pb-16 scrollbar-hide">
-          {filtered.length === 0 ? (
+          {sections.length === 0 ? (
             <p className="t-13 text-[var(--text-ghost)] font-light">Aucun résultat.</p>
           ) : (
             <div className="flex flex-col" style={{ gap: "var(--space-6)" }}>
-              {SECTION_ORDER.map((section) => {
-                const items = filtered.filter((a) => a.section === section);
-                if (items.length === 0) return null;
-                return (
-                  <section key={section} className="flex flex-col gap-1">
-                    <h2
-                      className="t-9 font-mono uppercase tracking-marquee"
-                      style={{
-                        color: "var(--text-ghost)",
-                        marginBottom: "var(--space-2)",
-                      }}
-                    >
-                      {SECTION_LABEL[section]}
-                    </h2>
-                    {items.map((action) => {
-                      const i = filtered.indexOf(action);
-                      return (
-                        <button
-                          key={action.id}
-                          type="button"
-                          disabled={action.disabled}
-                          onClick={action.perform}
-                          onMouseEnter={() => !action.disabled && setActiveIndex(i)}
-                          className={`w-full py-3 flex items-baseline gap-6 text-left transition-all duration-200 ${
-                            action.disabled
-                              ? "opacity-20 cursor-not-allowed"
-                              : i === activeIndex
-                              ? "translate-x-2"
-                              : "hover:translate-x-1"
-                          }`}
-                        >
-                          <span className={`t-24 leading-none tracking-tight transition-colors duration-200 ${i === activeIndex && !action.disabled ? "text-[var(--text)]" : "text-[var(--text-muted)]"}`}>
-                            {action.label}
-                          </span>
-                          <span className={`t-9 font-mono uppercase tracking-snug transition-colors duration-200 ${i === activeIndex && !action.disabled ? "text-[var(--text-muted)]" : "text-[var(--text-ghost)]"}`}>
-                            {action.hint}
-                          </span>
-                          {action.hotkey && (
-                            <span
-                              className="t-9 font-mono uppercase tracking-marquee ml-auto shrink-0"
-                              style={{ color: "var(--text-ghost)" }}
-                            >
-                              {action.hotkey}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </section>
-                );
-              })}
+              {sections.map((section) => (
+                <section key={section.key} className="flex flex-col gap-1">
+                  <h2
+                    className="t-9 font-mono uppercase tracking-marquee"
+                    style={{
+                      color: "var(--text-ghost)",
+                      marginBottom: "var(--space-2)",
+                    }}
+                  >
+                    {section.title}
+                  </h2>
+                  {section.rows.map((row) => {
+                    const myIndex = runningIndex++;
+                    return (
+                      <CommandeurResultRow
+                        key={row.id}
+                        kind={row.kind}
+                        label={row.label}
+                        hint={row.hint}
+                        hotkey={row.hotkey}
+                        active={myIndex === activeIndex}
+                        disabled={row.disabled}
+                        onSelect={() => {
+                          if (!row.disabled) row.perform();
+                        }}
+                        onHover={() => {
+                          if (!row.disabled) setActiveIndex(myIndex);
+                        }}
+                      />
+                    );
+                  })}
+                </section>
+              ))}
             </div>
           )}
         </div>

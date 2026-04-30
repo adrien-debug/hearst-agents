@@ -9,6 +9,9 @@ import { orchestrate } from "@/lib/engine/orchestrator";
 import { getScheduledMissions, updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { updateMissionLastRun, getMission } from "@/lib/engine/runtime/missions/store";
 import { requireScope } from "@/lib/platform/auth/scope";
+import { executeWorkflow } from "@/lib/workflows/executor";
+import type { WorkflowGraph } from "@/lib/workflows/types";
+import { randomUUID } from "crypto";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -28,6 +31,7 @@ export async function POST(
   // Find mission — memory first, then persisted
   let missionInput: string | null = null;
   let missionName: string | null = null;
+  let missionGraph: WorkflowGraph | undefined;
 
   const memMission = getMission(id);
   if (memMission) {
@@ -38,6 +42,7 @@ export async function POST(
     }
     missionInput = memMission.input;
     missionName = memMission.name;
+    missionGraph = memMission.workflowGraph as WorkflowGraph | undefined;
   } else {
     // Query persisted missions scoped to current user
     const persisted = await getScheduledMissions({
@@ -49,6 +54,7 @@ export async function POST(
     if (found) {
       missionInput = found.input;
       missionName = found.name;
+      missionGraph = found.workflowGraph;
     }
   }
 
@@ -57,6 +63,70 @@ export async function POST(
   }
 
   console.log(`[MissionRunNow] Triggering "${missionName}" (${id}) for user ${scope.userId.slice(0, 8)}`);
+
+  // Branch C3 : si la mission a un workflowGraph, on exécute via le workflow
+  // executor au lieu de l'orchestrator standard. Run synchrone — les events
+  // sont collectés et retournés tels quels (pas de SSE pour cette MVP route).
+  if (missionGraph) {
+    const runId = randomUUID();
+    const events: Array<unknown> = [];
+    try {
+      const result = await executeWorkflow(
+        missionGraph,
+        {
+          userId: scope.userId,
+          tenantId: scope.tenantId,
+          workspaceId: scope.workspaceId,
+          runId,
+          outputs: new Map(),
+        },
+        {
+          executeTool: async (tool, args) => ({
+            success: true,
+            output: { tool, args, executedAt: Date.now() },
+          }),
+          emitEvent: (e) => events.push(e),
+        },
+        { maxNodes: 50 },
+      );
+
+      updateMissionLastRun(id, runId);
+      void updateScheduledMission(id, {
+        lastRunAt: Date.now(),
+        lastRunId: runId,
+        lastRunStatus: result.status === "completed" ? "success" : "failed",
+        lastError: result.error,
+      });
+
+      return NextResponse.json({
+        ok: result.status === "completed",
+        missionId: id,
+        runId,
+        backend: "workflow",
+        result: {
+          status: result.status,
+          visitedCount: result.visitedCount,
+          outputs: result.outputs,
+          awaitingNodeId: result.awaitingNodeId,
+          error: result.error,
+        },
+        events,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[MissionRunNow] workflow run error for ${id}:`, err);
+      void updateScheduledMission(id, {
+        lastRunAt: Date.now(),
+        lastRunId: runId,
+        lastRunStatus: "failed",
+        lastError: message,
+      });
+      return NextResponse.json(
+        { ok: false, missionId: id, runId, backend: "workflow", error: message },
+        { status: 500 },
+      );
+    }
+  }
 
   const db = requireServerSupabase();
 

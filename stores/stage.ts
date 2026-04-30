@@ -23,24 +23,28 @@ export type StageMode =
   | "cockpit"
   | "chat"
   | "asset"
+  | "asset_compare"
   | "mission"
   | "browser"
   | "meeting"
   | "kg"
   | "voice"
-  | "simulation";
+  | "simulation"
+  | "artifact";
 
 /** Payload contextuel attaché au mode (selon le Stage actif). */
 export type StagePayload =
   | { mode: "cockpit" }
   | { mode: "chat"; threadId?: string }
   | { mode: "asset"; assetId: string; variantKind?: string }
+  | { mode: "asset_compare"; assetIdA: string; assetIdB: string }
   | { mode: "mission"; missionId: string }
   | { mode: "browser"; sessionId: string }
   | { mode: "meeting"; meetingId: string }
   | { mode: "kg"; entityId?: string; query?: string }
   | { mode: "voice"; sessionId?: string }
-  | { mode: "simulation"; scenario?: string };
+  | { mode: "simulation"; scenario?: string }
+  | { mode: "artifact"; artifactId?: string; code?: string; language?: "python" | "node" };
 
 export interface StageEntry {
   payload: StagePayload;
@@ -111,7 +115,8 @@ export const useStageStore = create<StageState>((set, get) => ({
 /**
  * Mapping hotkey → stage. Cmd+1..9 = switch direct vers un Stage
  * (cockpit/chat/asset/browser/meeting/kg/voice/simulation/mission —
- * grille systématique). Cmd+K = ouvrir Commandeur. Cmd+Backspace = back.
+ * grille systématique). Cmd+0 = ArtifactStage (B8 code/E2B).
+ * Cmd+K = ouvrir Commandeur. Cmd+Backspace = back.
  */
 export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [
   { key: "1", mode: "cockpit" },
@@ -123,4 +128,5 @@ export const STAGE_HOTKEYS: ReadonlyArray<{ key: string; mode: StageMode }> = [
   { key: "7", mode: "voice" },
   { key: "8", mode: "simulation" },
   { key: "9", mode: "mission" },
+  { key: "0", mode: "artifact" },
 ];

@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useStageStore } from "@/stores/stage";
 import { StageActionBar, type StageAction } from "./StageActionBar";
+import { ActionLog } from "../ActionLog";
+import { ExtractSchemaModal } from "../browser/ExtractSchemaModal";
+import type { BrowserAction } from "@/lib/events/types";
 
 interface BrowserStageProps {
   sessionId: string;
@@ -25,17 +28,24 @@ interface SessionStatusResponse {
 const STATUS_POLL_INTERVAL_MS = 2_000;
 const STATUS_POLL_MAX_ATTEMPTS = 30;
 
+interface StreamMessage {
+  type: string;
+  sessionId?: string;
+  action?: BrowserAction;
+  summary?: string;
+  totalActions?: number;
+  totalDurationMs?: number;
+  assetIds?: string[];
+  error?: string;
+}
+
 /**
- * BrowserStage — Session browser live co-pilotable.
+ * BrowserStage — Session browser live co-pilotable (B5).
  *
- * Signature 3 — Co-Browsing : empty state offre un input pour décrire la
- * tâche, puis POST /api/v2/browser/start crée la session Browserbase et
- * affiche le debug viewer en iframe plein écran. Le bouton Stop coupe la
- * session ; le pilotage manuel (« Take Over ») arrive en Phase B.8 avec
- * Stagehand.
- *
- * Phase B.8 stub : Stagehand pas encore branché — l'iframe montre la
- * session vide, l'ACTION_LOG reste à venir.
+ * Layout split : iframe Browserbase (~70%) | ActionLog colonne droite (~30%).
+ * L'utilisateur décrit la tâche, l'agent navigue, chaque action s'affiche
+ * en live dans l'ACTION_LOG. Take Over rend la session interactive,
+ * Capture/Extract génèrent des assets.
  */
 export function BrowserStage({ sessionId }: BrowserStageProps) {
   const back = useStageStore((s) => s.back);
@@ -45,10 +55,44 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
   const [debugViewerByid, setDebugViewerByid] = useState<Record<string, string>>({});
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
+  const [executing, setExecuting] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [actions, setActions] = useState<BrowserAction[]>([]);
+  const [isControlled, setIsControlled] = useState(false);
+  const [extractOpen, setExtractOpen] = useState(false);
+  const [extractLoading, setExtractLoading] = useState(false);
   const pollAttemptsRef = useRef(0);
 
   const debugViewerUrl = sessionId ? debugViewerByid[sessionId] : undefined;
+
+  const executeTaskOn = useCallback(async (sid: string, task: string) => {
+    setExecuting(true);
+    setError(null);
+    setIsControlled(false);
+    try {
+      const res = await fetch(
+        `/api/v2/browser/${encodeURIComponent(sid)}/execute`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ task }),
+        },
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      if (!res.ok) {
+        setError(data.message || data.error || "Échec de l'exécution");
+        setExecuting(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur réseau");
+      setExecuting(false);
+    }
+  }, []);
 
   // Lance la session Browserbase à partir de l'empty state.
   const startSession = useCallback(async () => {
@@ -66,21 +110,30 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ task }),
       });
-      const data = (await res.json()) as SessionStartResponse & { error?: string; message?: string };
+      const data = (await res.json()) as SessionStartResponse & {
+        error?: string;
+        message?: string;
+      };
       if (!res.ok) {
         setError(data.message || data.error || "Échec de la création de session");
         return;
       }
       if (data.debugViewerUrl) {
-        setDebugViewerByid((prev) => ({ ...prev, [data.sessionId]: data.debugViewerUrl as string }));
+        setDebugViewerByid((prev) => ({
+          ...prev,
+          [data.sessionId]: data.debugViewerUrl as string,
+        }));
       }
       setMode({ mode: "browser", sessionId: data.sessionId });
+
+      // Lance immédiatement la première tâche autonome.
+      void executeTaskOn(data.sessionId, task);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur réseau");
     } finally {
       setStarting(false);
     }
-  }, [taskInput, setMode]);
+  }, [taskInput, setMode, executeTaskOn]);
 
   // Lookup le debugViewerUrl si on arrive sur la stage avec un sessionId
   // déjà set (cas où la session a été démarrée par un tool ou un autre flow).
@@ -92,14 +145,18 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
 
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`/api/v2/browser/${encodeURIComponent(sessionId)}`, {
-          credentials: "include",
-        });
+        const res = await fetch(
+          `/api/v2/browser/${encodeURIComponent(sessionId)}`,
+          { credentials: "include" },
+        );
         if (!res.ok) return false;
         const data = (await res.json()) as SessionStatusResponse;
         if (cancelled) return true;
         if (data.debugViewerUrl) {
-          setDebugViewerByid((prev) => ({ ...prev, [sessionId]: data.debugViewerUrl as string }));
+          setDebugViewerByid((prev) => ({
+            ...prev,
+            [sessionId]: data.debugViewerUrl as string,
+          }));
           return true;
         }
       } catch {
@@ -127,16 +184,58 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
     };
   }, [sessionId, debugViewerUrl]);
 
+  // SSE — events bus global (browser_action / browser_task_completed / failed / take_over).
+  useEffect(() => {
+    if (!sessionId) return;
+    const es = new EventSource("/api/admin/events-stream", { withCredentials: true });
+    const onMsg = (ev: MessageEvent<string>) => {
+      try {
+        const msg = JSON.parse(ev.data) as StreamMessage;
+        if (msg.sessionId && msg.sessionId !== sessionId) return;
+        switch (msg.type) {
+          case "browser_action":
+            if (msg.action) {
+              setActions((prev) => [...prev, msg.action as BrowserAction]);
+            }
+            break;
+          case "browser_task_completed":
+            setExecuting(false);
+            break;
+          case "browser_task_failed":
+            setExecuting(false);
+            if (msg.error && msg.error !== "task_aborted") {
+              setError(msg.error);
+            }
+            break;
+          case "browser_take_over":
+            setExecuting(false);
+            setIsControlled(true);
+            break;
+        }
+      } catch {
+        // ignore non-JSON heartbeats
+      }
+    };
+    es.addEventListener("message", onMsg);
+    return () => {
+      es.removeEventListener("message", onMsg);
+      es.close();
+    };
+  }, [sessionId]);
+
   const stopCurrentSession = useCallback(async () => {
     if (!sessionId) return;
     setStopping(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v2/browser/${encodeURIComponent(sessionId)}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+      const res = await fetch(
+        `/api/v2/browser/${encodeURIComponent(sessionId)}`,
+        { method: "DELETE", credentials: "include" },
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
       if (!res.ok) {
         setError(data.message || data.error || "Échec de l'arrêt de session");
         return;
@@ -147,6 +246,9 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
         delete next[sessionId];
         return next;
       });
+      setActions([]);
+      setIsControlled(false);
+      setExecuting(false);
       setMode({ mode: "browser", sessionId: "" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur réseau");
@@ -154,6 +256,91 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
       setStopping(false);
     }
   }, [sessionId, setMode]);
+
+  const takeOver = useCallback(async () => {
+    if (!sessionId) return;
+    try {
+      await fetch(
+        `/api/v2/browser/${encodeURIComponent(sessionId)}/take-over`,
+        { method: "POST", credentials: "include" },
+      );
+      setIsControlled(true);
+      setExecuting(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur réseau");
+    }
+  }, [sessionId]);
+
+  const capture = useCallback(async () => {
+    if (!sessionId) return;
+    setCapturing(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/v2/browser/${encodeURIComponent(sessionId)}/capture`,
+        { method: "POST", credentials: "include" },
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        assetId?: string;
+        url?: string;
+        error?: string;
+        message?: string;
+      };
+      if (!res.ok || !data.assetId) {
+        setError(data.message || data.error || "Échec de la capture");
+        return;
+      }
+      // Ajoute manuellement une entrée ACTION_LOG pour traçabilité.
+      setActions((prev) => [
+        ...prev,
+        {
+          id: `cap-${Date.now()}`,
+          type: "screenshot",
+          target: data.url ?? "screenshot",
+          screenshotUrl: data.url,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur réseau");
+    } finally {
+      setCapturing(false);
+    }
+  }, [sessionId]);
+
+  const submitExtract = useCallback(
+    async (payload: { instruction: string; schema?: Record<string, unknown> }) => {
+      if (!sessionId) return;
+      setExtractLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `/api/v2/browser/${encodeURIComponent(sessionId)}/extract`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          },
+        );
+        const data = (await res.json().catch(() => ({}))) as {
+          assetId?: string;
+          error?: string;
+          message?: string;
+        };
+        if (!res.ok || !data.assetId) {
+          setError(data.message || data.error || "Échec de l'extraction");
+          return;
+        }
+        setExtractOpen(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erreur réseau");
+      } finally {
+        setExtractLoading(false);
+      }
+    },
+    [sessionId],
+  );
 
   // ── Empty state ──────────────────────────────────────────────
   if (!sessionId) {
@@ -203,7 +390,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
               style={{ lineHeight: "var(--leading-base)" }}
             >
               Décris la tâche à confier au browser agent — la session live
-              s{"'"}affichera ici. Le pilotage manuel arrive en Phase B.8.
+              s{"'"}affichera ici avec l{"'"}ACTION_LOG en colonne droite.
             </p>
             <div className="flex flex-col gap-4 w-full mt-2">
               <input
@@ -213,7 +400,7 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !starting) void startSession();
                 }}
-                placeholder="ex: compare les prix de livraison sur ces 5 sites"
+                placeholder="ex: va sur example.com et capture la home page"
                 className="ghost-input-line w-full text-left"
                 disabled={starting}
               />
@@ -238,14 +425,29 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
   }
 
   // ── Live session ─────────────────────────────────────────────
-  const stopAction: StageAction = {
-    id: "stop",
-    label: stopping ? "Arrêt…" : "Stop",
-    variant: "danger",
-    onClick: () => void stopCurrentSession(),
-    disabled: stopping,
-    loading: stopping,
-  };
+  const secondaryActions: StageAction[] = [
+    {
+      id: "capture",
+      label: capturing ? "Capture…" : "Capture",
+      onClick: () => void capture(),
+      disabled: capturing,
+      loading: capturing,
+    },
+    {
+      id: "extract",
+      label: "Extract",
+      onClick: () => setExtractOpen(true),
+      disabled: extractLoading,
+    },
+    {
+      id: "stop",
+      label: stopping ? "Arrêt…" : "Stop",
+      variant: "danger",
+      onClick: () => void stopCurrentSession(),
+      disabled: stopping,
+      loading: stopping,
+    },
+  ];
 
   return (
     <div
@@ -269,56 +471,82 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
               {sessionId.slice(0, 8)}
             </span>
+            {executing && (
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+                · RUNNING
+              </span>
+            )}
+            {isControlled && (
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
+                · USER
+              </span>
+            )}
           </>
         }
-        secondary={[stopAction]}
+        secondary={secondaryActions}
         onBack={back}
       />
 
-      <div className="flex-1 flex flex-col min-h-0">
-        {debugViewerUrl ? (
-          <iframe
-            src={debugViewerUrl}
-            title={`Browserbase live viewer ${sessionId}`}
-            className="flex-1 w-full border-0"
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <span
-                className="rounded-pill bg-[var(--warn)] animate-pulse"
-                style={{ width: "var(--space-2)", height: "var(--space-2)" }}
-                aria-hidden
-              />
-              <span className="t-11 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
-                Connexion à la session…
-              </span>
-            </div>
-          </div>
-        )}
-
-        <footer
-          className="flex-shrink-0 border-t border-[var(--border-default)] px-12 py-4 flex flex-col gap-2"
-          style={{ height: "var(--height-action-log)" }}
+      <div className="flex-1 flex min-h-0">
+        <div
+          className="flex-1 flex flex-col min-h-0"
+          style={{ minWidth: 0 }}
         >
-          <div className="flex items-center justify-between">
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-              ACTION_LOG
-            </span>
-            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-              PILOTAGE MANUEL — PHASE B.8 STAGEHAND
-            </span>
-            {error && (
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--danger)]">
-                {error}
-              </span>
-            )}
-          </div>
-          <p className="t-11 font-mono text-[var(--text-muted)]">
-            Aucune action enregistrée — Phase B.8 Stagehand requise.
-          </p>
-        </footer>
+          {debugViewerUrl ? (
+            <iframe
+              src={debugViewerUrl}
+              title={`Browserbase live viewer ${sessionId}`}
+              className="flex-1 w-full border-0"
+              style={{
+                pointerEvents: isControlled ? "auto" : "auto",
+              }}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex items-center gap-3">
+                <span
+                  className="rounded-pill bg-[var(--warn)] animate-pulse"
+                  style={{ width: "var(--space-2)", height: "var(--space-2)" }}
+                  aria-hidden
+                />
+                <span className="t-11 font-mono uppercase tracking-marquee text-[var(--text-muted)]">
+                  Connexion à la session…
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div
+          className="flex-shrink-0"
+          style={{ width: "var(--width-context)" }}
+        >
+          <ActionLog
+            actions={actions}
+            isControlled={isControlled}
+            isRunning={executing}
+            onTakeOver={takeOver}
+          />
+        </div>
       </div>
+
+      {error && (
+        <div
+          className="flex-shrink-0 px-12 py-3 border-t border-[var(--border-default)]"
+          style={{ background: "var(--bg-soft)" }}
+        >
+          <span className="t-11 font-mono uppercase tracking-display text-[var(--danger)]">
+            {error}
+          </span>
+        </div>
+      )}
+
+      <ExtractSchemaModal
+        open={extractOpen}
+        onClose={() => setExtractOpen(false)}
+        onSubmit={submitExtract}
+        loading={extractLoading}
+      />
     </div>
   );
 }

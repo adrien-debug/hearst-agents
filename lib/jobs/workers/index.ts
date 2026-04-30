@@ -11,6 +11,9 @@ import { startDocumentParseWorker } from "./document-parse";
 import { startCodeExecWorker } from "./code-exec";
 import { startVideoGenWorker } from "./video-gen";
 import { startBrowserTaskWorker } from "./browser-task";
+import { startInboxFetchWorker } from "./inbox-fetch";
+import { startMeetingBotWorker } from "./meeting-bot";
+import { startInboxCron } from "../scheduled/inbox-cron";
 
 let _started = false;
 
@@ -24,7 +27,9 @@ export function startAllWorkers(): void {
   startCodeExecWorker();
   startVideoGenWorker();
   startBrowserTaskWorker();
-  // startMeetingBotWorker();    // Phase B.9 (Recall + Deepgram)
+  startInboxFetchWorker();
+  startMeetingBotWorker();
+  void startInboxCron();
   // startMemoryIngestWorker();  // Phase B.10 (Letta + pgvector)
   // startAssetVariantWorker();  // wrapper qui re-dispatch
 }

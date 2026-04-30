@@ -9,6 +9,8 @@
  */
 
 import type { DiscoveredTool } from "@/lib/connectors/composio/discovery";
+import type { Persona } from "@/lib/personas/types";
+import { buildPersonaAddonOrNull } from "@/lib/personas/system-prompt-addon";
 
 export const ORCHESTRATOR_MODEL = "claude-sonnet-4-6";
 
@@ -238,6 +240,34 @@ interface AgentSystemPromptOpts {
    * Injectés dans le system prompt pour guider le LLM vers les templates prédéfinis.
    */
   applicableReports?: ApplicableReportHint[];
+  /**
+   * Briefing utilisateur (résumé glissant + activités récentes) issu de
+   * `lib/memory/briefing.ts`. Injecté en zone stable du prompt pour
+   * bénéficier du prompt cache Anthropic (ephemeral) — change une fois par
+   * session, pas à chaque tour.
+   */
+  briefing?: string;
+  /**
+   * Résumé du Knowledge Graph user-scoped (`lib/memory/kg-context.ts`).
+   * Injecté juste après le briefing, dans la zone cacheable. Donne au
+   * modèle une mémoire ressentie : personnes, entreprises, projets,
+   * décisions et engagements récents.
+   */
+  kgContext?: string;
+  /**
+   * Top-K embeddings pertinents (`lib/memory/retrieval-context.ts`).
+   * Change à chaque tour → injecté hors zone cacheable Anthropic, juste
+   * avant les directives variables. Cap 1500 chars. Empêche d'invalider
+   * le cache du briefing + KG en évitant qu'un contenu volatile s'y
+   * mélange.
+   */
+  retrievedMemory?: string;
+  /**
+   * Persona — variante de voix appliquée à ce run. Injectée juste avant
+   * `<retrieved_memory>` dans la zone cacheable : tant que la persona reste
+   * stable entre deux tours, on garde le cache hit Anthropic.
+   */
+  persona?: Persona | null;
 }
 
 /**
@@ -249,7 +279,7 @@ interface AgentSystemPromptOpts {
  * surface and the model decides what to call.
  */
 export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
-  const { composioTools, surface, scheduleDirective, applicableReports } = opts;
+  const { composioTools, surface, scheduleDirective, applicableReports, briefing, kgContext, retrievedMemory, persona } = opts;
 
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -275,6 +305,36 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
       : "(aucun outil tiers connecté pour ce tour)";
 
   const surfaceNote = surface ? `\nSurface active : ${surface}` : "";
+
+  // Briefing : injecté en zone stable (avant tools, avant directives variables)
+  // pour rester cacheable. Coupé à 2000 chars pour éviter de saturer le prompt
+  // si le résumé glissant a dérivé.
+  const briefingSection =
+    briefing && briefing.trim().length > 0
+      ? `\n<user_briefing>\n${briefing.trim().slice(0, 2000)}\n</user_briefing>\n`
+      : "";
+
+  // Knowledge Graph context : entités/relations récentes, injectées juste
+  // après le briefing. Cap strict à 1500 chars (cf. kg-context.ts).
+  const kgContextSection =
+    kgContext && kgContext.trim().length > 0
+      ? `\n<knowledge_graph>\n${kgContext.trim().slice(0, 1500)}\n</knowledge_graph>\n`
+      : "";
+
+  // Persona : addon de voix (ton, vocabulaire, style guide). Injecté en
+  // zone cacheable (avant retrieved_memory) pour bénéficier du prompt
+  // cache Anthropic tant que la persona reste stable.
+  const personaAddon = buildPersonaAddonOrNull(persona);
+  const personaSection = personaAddon ? `\n${personaAddon}\n` : "";
+
+  // Retrieved memory (LTM) : top-K embeddings sémantiques. Volatil par
+  // tour → on l'injecte plus loin dans le prompt (après les outils, dans
+  // la même chaîne) pour ne pas invalider le cache ephemeral Anthropic
+  // posé sur les sections stables (briefing + KG + tool surface).
+  const retrievedMemorySection =
+    retrievedMemory && retrievedMemory.trim().length > 0
+      ? `\n<retrieved_memory>\n${retrievedMemory.trim().slice(0, 1500)}\n</retrieved_memory>\n`
+      : "";
 
   // Section rapports disponibles (catalogue) — injectée si des rapports sont prêts ou partiels.
   const applicableReportsSection =
@@ -306,7 +366,7 @@ Déduis les paramètres directement depuis le message :
     : "";
 
   return `${scheduleHeader}Tu es Hearst, un assistant exécutif intelligent pour les professionnels des médias.
-Aujourd'hui : ${today}${surfaceNote}${applicableReportsSection}
+Aujourd'hui : ${today}${surfaceNote}${briefingSection}${kgContextSection}${personaSection}${applicableReportsSection}
 
 ⚠️ RÈGLE ZÉRO — GÉNÉRATION DE CONTENU :
 Si l'utilisateur demande un contenu textuel ou du code (HTML, CSS, JS, JSON, code dans n'importe quel langage, prompt, exemple, snippet, mock, structure, démo, page web, document Markdown, template…), tu DOIS le produire — jamais refuser. Tu as deux modes de livraison :
@@ -346,7 +406,7 @@ Exemple artifact (livrable conservable) :
 OUTILS
 ${toolsHeader}
 ${toolListSection}
-
+${retrievedMemorySection}
 CAPACITÉS NATIVES (disponibles sans outil tiers) :
 En plus des outils connectés ci-dessus, tu peux invoquer directement ces capacités intégrées quand la demande le justifie :
 - \`generate_image\` : génère une image à partir d'un prompt texte (via fal.ai). À utiliser quand l'utilisateur demande une image, une illustration ou un visuel.

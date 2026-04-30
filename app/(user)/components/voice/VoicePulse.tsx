@@ -50,6 +50,7 @@ export function VoicePulse() {
   const setSessionId = useVoiceStore((s) => s.setSessionId);
   const appendTranscript = useVoiceStore((s) => s.appendTranscript);
   const updateLastTranscript = useVoiceStore((s) => s.updateLastTranscript);
+  const patchTranscriptEntry = useVoiceStore((s) => s.patchTranscriptEntry);
   const setAudioLevel = useVoiceStore((s) => s.setAudioLevel);
   const setError = useVoiceStore((s) => s.setError);
   const reset = useVoiceStore((s) => s.reset);
@@ -104,30 +105,77 @@ export function VoicePulse() {
         // Args malformés — on continue, le tool retournera un message d'erreur
       }
 
+      // 1. Push tool_call entry pending dans le transcript local (receipt
+      //    immédiat dans le ContextRail).
+      const callEntryId = `tc-${callId}`;
+      appendTranscript({
+        id: callEntryId,
+        role: "tool_call",
+        text: name,
+        timestamp: Date.now(),
+        callId,
+        toolName: name,
+        args,
+        status: "pending",
+      });
+
       let output = "Erreur d'exécution de l'outil.";
       let stageRequest: StagePayload | undefined;
+      let providerId: string | undefined;
+      let latencyMs: number | undefined;
+      let costUsd: number | undefined;
+      let status: "success" | "error" = "error";
+
+      const sessionId = useVoiceStore.getState().sessionId ?? undefined;
 
       try {
         const res = await fetch("/api/v2/voice/tool-call", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ name, args }),
+          body: JSON.stringify({ name, args, callId, sessionId }),
         });
         const data = (await res.json().catch(() => ({}))) as {
           output?: string;
           stageRequest?: StagePayload;
           error?: string;
+          providerId?: string;
+          latencyMs?: number;
+          costUsd?: number;
+          status?: "success" | "error";
         };
         if (res.ok) {
           output = data.output ?? output;
           stageRequest = data.stageRequest;
+          providerId = data.providerId;
+          latencyMs = data.latencyMs;
+          costUsd = data.costUsd;
+          status = data.status ?? "success";
         } else {
           output = data.output ?? data.error ?? `HTTP ${res.status}`;
+          status = "error";
         }
       } catch (err) {
         output = err instanceof Error ? err.message : "Erreur réseau";
+        status = "error";
       }
+
+      // 2. Patch tool_call → status final (pending → success/error). Garde
+      //    le receipt visible mais résolu.
+      patchTranscriptEntry(callEntryId, { status, providerId });
+
+      // 3. Append tool_result entry — ligne distincte qui montre l'output.
+      appendTranscript({
+        id: `tr-${callId}`,
+        role: "tool_result",
+        text: output,
+        timestamp: Date.now(),
+        callId,
+        toolName: name,
+        output,
+        status,
+        providerId,
+      });
 
       const dc = dcRef.current;
       if (dc && dc.readyState === "open") {
@@ -147,8 +195,13 @@ export function VoicePulse() {
       if (stageRequest) {
         useStageStore.getState().setMode(stageRequest);
       }
+
+      // Évite le warning "unused variable" sur latencyMs/costUsd —
+      // potentiellement utiles côté UI plus tard (tooltip).
+      void latencyMs;
+      void costUsd;
     },
-    [setPhase],
+    [setPhase, appendTranscript, patchTranscriptEntry],
   );
 
   const start = useCallback(async () => {
@@ -240,12 +293,32 @@ export function VoicePulse() {
             break;
           case "conversation.item.input_audio_transcription.completed":
             if (msg.transcript) {
+              const userEntryId = `u-${Date.now()}`;
               appendTranscript({
-                id: `u-${Date.now()}`,
+                id: userEntryId,
                 role: "user",
                 text: msg.transcript,
                 timestamp: Date.now(),
               });
+              // Persistance fire-and-forget — le transcript ne casse pas
+              // si la migration 0045 n'est pas encore appliquée.
+              const sid = useVoiceStore.getState().sessionId;
+              if (sid) {
+                void fetch("/api/v2/voice/transcripts/append", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({
+                    sessionId: sid,
+                    entry: {
+                      id: userEntryId,
+                      role: "user",
+                      text: msg.transcript,
+                      timestamp: Date.now(),
+                    },
+                  }),
+                }).catch(() => {});
+              }
             }
             break;
           case "response.audio_transcript.delta":
@@ -265,10 +338,27 @@ export function VoicePulse() {
               }
             }
             break;
-          case "response.done":
+          case "response.done": {
+            // À la fin de la réponse assistant, on persiste l'entry
+            // complète (texte concaténé depuis les deltas).
+            const finishedId = currentAssistantIdRef.current;
+            if (finishedId) {
+              const transcript = useVoiceStore.getState().transcript;
+              const finished = transcript.find((e) => e.id === finishedId);
+              const sid = useVoiceStore.getState().sessionId;
+              if (finished && sid) {
+                void fetch("/api/v2/voice/transcripts/append", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ sessionId: sid, entry: finished }),
+                }).catch(() => {});
+              }
+            }
             currentAssistantIdRef.current = null;
             setPhase("listening");
             break;
+          }
           case "response.function_call_arguments.done":
             // Le modèle a fini de cracher les arguments d'un tool. On exécute
             // côté serveur, on renvoie l'output via DataChannel, et on applique

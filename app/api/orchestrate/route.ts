@@ -86,6 +86,10 @@ export async function POST(req: NextRequest) {
     thread_id?: string;
     focal_context?: { id: string; objectType: string; title: string; status: string };
     history?: Array<{ role: "user" | "assistant"; content: string }>;
+    /** B4 — assets droppés dans ChatInput. Le pipeline IA les injecte dans le contexte. */
+    attached_asset_ids?: string[];
+    /** C4 — persona explicite à appliquer à ce run. */
+    persona_id?: string;
     // Note: mission_id est intentionnellement absent — les runs mission passent par POST /api/v2/missions/[id]/run
   };
 
@@ -115,6 +119,8 @@ export async function POST(req: NextRequest) {
     threadId: body.thread_id,
     focalContext: body.focal_context,
     conversationHistory: body.history,
+    attachedAssetIds: body.attached_asset_ids,
+    personaId: typeof body.persona_id === "string" && body.persona_id.length > 0 ? body.persona_id : undefined,
     // missionId n'est pas accepté depuis le chat public — ownership validé via /api/v2/missions/[id]/run
     tenantId: scope.tenantId,
     workspaceId: scope.workspaceId,

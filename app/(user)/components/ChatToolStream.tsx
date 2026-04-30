@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useRuntimeStore } from "@/stores/runtime";
 import { reduceToolEvents } from "./chat-tool-stream-reducer";
 import { getToolCatalogEntry } from "./tool-catalog";
+import { ProviderChip } from "./ProviderChip";
 
 export function ChatToolStream() {
   const events = useRuntimeStore((s) => s.events);
@@ -33,7 +34,7 @@ export function ChatToolStream() {
         return (
           <li
             key={entry.stepId}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-wrap"
             data-kind={entry.kind}
             data-status={entry.status}
           >
@@ -41,6 +42,17 @@ export function ChatToolStream() {
             <span className={`${isWrite ? "font-semibold" : ""} ${labelTone}`}>
               {catalog.label}
             </span>
+            {entry.providerId && (
+              <ProviderChip
+                providerId={entry.providerId}
+                label={entry.providerLabel}
+                status={
+                  isDone ? "success" : "pending"
+                }
+                latencyMs={entry.latencyMs}
+                costUSD={entry.costUSD}
+              />
+            )}
             <span className="text-[var(--text-ghost)]">{isDone ? "—" : "·"}</span>
             <span className={statusTone}>
               {isDone ? `${catalog.completedVerb}${isWrite ? " ✓" : ""}` : catalog.runningVerb}

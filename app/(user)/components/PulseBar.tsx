@@ -9,23 +9,31 @@
  * Trois zones :
  *   gauche  — hamburger mobile + logo H (clic → cockpit)
  *   centre  — Cmd+K trigger (placeholder rotatif, ouvre Commandeur)
- *   droite  — RUN_ACTIVE/VOICE_ON (conditionnels)
+ *   droite  — RUN_ACTIVE/VOICE_ON + cost meter live (conditionnels)
  *
- * Drop vs version précédente :
- *   - SYSTEM_OK (status nul, "présence de contenu = OK")
- *   - Home/route title (redondant avec Stage actif)
- *   - IDLE (anti-pattern marché 2025)
- *   - CONNECTORS NN/NN (info déplacée dans /apps via Cmd+K)
- *   - CREDITS (faux signal tant que le système de crédits live n'est
- *     pas branché côté serveur — un `$1.00` constant trompe l'œil).
+ * Cost meter : poll /api/v2/usage/today au mount + à chaque run_completed
+ * + toutes les 60s pour rester live sans saturer l'API.
  */
 
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useStageStore } from "@/stores/stage";
 import { useNavigationStore } from "@/stores/navigation";
 import { GhostIconMenu } from "./ghost-icons";
 import { NotificationBell } from "./NotificationBell";
+
+interface UsageToday {
+  usedUSD: number;
+  budgetUSD: number;
+  runs: number;
+}
+
+function formatUsd(n: number): string {
+  if (!Number.isFinite(n)) return "—";
+  if (n < 0.01) return "$0.00";
+  return `$${n.toFixed(2)}`;
+}
 
 export function PulseBar() {
   const router = useRouter();
@@ -44,6 +52,48 @@ export function PulseBar() {
     coreState === "processing" ||
     coreState === "awaiting_approval" ||
     coreState === "awaiting_clarification";
+
+  // ── Cost meter live ────────────────────────────────────
+  const [usage, setUsage] = useState<UsageToday | null>(null);
+  const lastCoreState = useRef<string>(coreState);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function refreshUsage() {
+      try {
+        const r = await fetch("/api/v2/usage/today", { cache: "no-store" });
+        if (!r.ok) return;
+        const data = (await r.json()) as UsageToday;
+        if (!cancelled) setUsage(data);
+      } catch {
+        // Fail-soft : on garde l'ancienne valeur, jamais de crash.
+      }
+    }
+
+    refreshUsage();
+    const interval = setInterval(refreshUsage, 60_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Refresh on run_completed transition (idle ← processing) — le budget
+  // bouge à chaque run terminé, autant l'afficher tout de suite.
+  useEffect(() => {
+    const prev = lastCoreState.current;
+    if (prev !== "idle" && coreState === "idle") {
+      fetch("/api/v2/usage/today", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: UsageToday | null) => {
+          if (data) setUsage(data);
+        })
+        .catch(() => {});
+    }
+    lastCoreState.current = coreState;
+  }, [coreState]);
 
   const goCockpit = () => {
     router.push("/");
@@ -108,6 +158,24 @@ export function PulseBar() {
               aria-hidden
             />
             <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">VOICE_ON</span>
+          </div>
+        )}
+
+        {usage && (
+          <div
+            className="hidden md:flex items-center"
+            style={{ gap: "var(--space-2)" }}
+            title={`${usage.runs} run(s) aujourd'hui — budget ${formatUsd(usage.budgetUSD)}`}
+            data-testid="cost-meter"
+          >
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
+              CREDITS
+            </span>
+            <span className="t-9 font-mono text-[var(--text-muted)]">
+              <span className="text-[var(--text)]">{formatUsd(usage.usedUSD)}</span>
+              <span className="text-[var(--text-faint)]"> / </span>
+              <span>{formatUsd(usage.budgetUSD)}</span>
+            </span>
           </div>
         )}
 

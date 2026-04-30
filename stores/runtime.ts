@@ -15,6 +15,35 @@ export type StreamEvent = {
 
 export type CoreState = "idle" | "connecting" | "streaming" | "processing" | "error" | "awaiting_approval" | "awaiting_clarification";
 
+// ── Mission Control B1 — multi-step plan slice ─────────────────
+
+export type PlanStepStatus = "idle" | "running" | "awaiting_approval" | "done" | "error" | "skipped";
+
+export interface PlanStepState {
+  id: string;
+  kind: string;
+  label: string;
+  status: PlanStepStatus;
+  output?: string;
+  costUSD?: number;
+  latencyMs?: number;
+  providerId?: string;
+  approvalPreview?: string;
+  error?: string;
+  startedAt?: number;
+  completedAt?: number;
+}
+
+export interface PlanState {
+  id: string;
+  intent: string;
+  steps: PlanStepState[];
+  estimatedCostUsd: number;
+  totalCostUsd: number;
+  requiredApps: string[];
+  status: "preview" | "running" | "awaiting_approval" | "completed" | "failed";
+}
+
 interface RuntimeState {
   connected: boolean;
   setConnected: (connected: boolean) => void;
@@ -24,6 +53,10 @@ interface RuntimeState {
   coreState: CoreState;
   flowLabel: string | null;
   currentRunId: string | null;
+  // Mission Control B1
+  currentPlan: PlanState | null;
+  resetPlan: () => void;
+  approveStep: (planId: string, stepId: string) => Promise<void>;
   /**
    * Most recent run id seen, even after the run finished. Drives UI surfaces
    * that need to outlive `currentRunId` (action receipts, last-trace links,
@@ -55,6 +88,7 @@ export const useRuntimeStore = create<RuntimeState>()(
     currentRunId: null,
     lastRunId: null,
     abortController: null,
+    currentPlan: null,
 
     setConnected: (connected) => set({ connected }),
 
@@ -148,6 +182,133 @@ export const useRuntimeStore = create<RuntimeState>()(
           }
           break;
         }
+        // ── Mission Control B1 — plan lifecycle ───────────────
+        case "plan_preview": {
+          const ev = event as Record<string, unknown>;
+          const steps = (ev.steps as Array<{ id: string; kind: string; title: string }> | undefined) ?? [];
+          set({
+            currentPlan: {
+              id: ev.plan_id as string,
+              intent: (ev.intent as string) ?? "",
+              steps: steps.map((s) => ({
+                id: s.id,
+                kind: s.kind,
+                label: s.title,
+                status: "idle" as PlanStepStatus,
+              })),
+              estimatedCostUsd: (ev.estimatedCostUsd as number) ?? 0,
+              totalCostUsd: 0,
+              requiredApps: (ev.requiredApps as string[] | undefined) ?? [],
+              status: "preview",
+            },
+          });
+          break;
+        }
+        case "plan_step_started": {
+          const ev = event as Record<string, unknown>;
+          const planId = ev.plan_id as string;
+          const stepId = ev.step_id as string;
+          const plan = get().currentPlan;
+          if (!plan || plan.id !== planId) break;
+          set({
+            currentPlan: {
+              ...plan,
+              status: "running",
+              steps: plan.steps.map((s) =>
+                s.id === stepId
+                  ? { ...s, status: "running", startedAt: (ev.plannedAt as number) ?? Date.now() }
+                  : s,
+              ),
+            },
+          });
+          break;
+        }
+        case "plan_step_completed": {
+          const ev = event as Record<string, unknown>;
+          const planId = ev.plan_id as string;
+          const stepId = ev.step_id as string;
+          const plan = get().currentPlan;
+          if (!plan || plan.id !== planId) break;
+          const cost = (ev.costUSD as number) ?? 0;
+          set({
+            currentPlan: {
+              ...plan,
+              totalCostUsd: Number((plan.totalCostUsd + cost).toFixed(4)),
+              steps: plan.steps.map((s) =>
+                s.id === stepId
+                  ? {
+                      ...s,
+                      status: "done",
+                      output: ev.output as string | undefined,
+                      costUSD: cost,
+                      latencyMs: ev.latencyMs as number | undefined,
+                      providerId: ev.providerId as string | undefined,
+                      completedAt: Date.now(),
+                    }
+                  : s,
+              ),
+            },
+          });
+          break;
+        }
+        case "plan_step_awaiting_approval": {
+          const ev = event as Record<string, unknown>;
+          const planId = ev.plan_id as string;
+          const stepId = ev.step_id as string;
+          const plan = get().currentPlan;
+          if (!plan || plan.id !== planId) break;
+          set({
+            coreState: "awaiting_approval",
+            flowLabel: "Validation requise",
+            currentPlan: {
+              ...plan,
+              status: "awaiting_approval",
+              steps: plan.steps.map((s) =>
+                s.id === stepId
+                  ? {
+                      ...s,
+                      status: "awaiting_approval",
+                      approvalPreview: ev.preview as string | undefined,
+                      providerId: ev.providerId as string | undefined,
+                    }
+                  : s,
+              ),
+            },
+          });
+          break;
+        }
+        case "plan_step_failed": {
+          const ev = event as Record<string, unknown>;
+          const planId = ev.plan_id as string;
+          const stepId = ev.step_id as string;
+          const plan = get().currentPlan;
+          if (!plan || plan.id !== planId) break;
+          set({
+            currentPlan: {
+              ...plan,
+              status: "failed",
+              steps: plan.steps.map((s) =>
+                s.id === stepId
+                  ? { ...s, status: "error", error: ev.error as string | undefined }
+                  : s,
+              ),
+            },
+          });
+          break;
+        }
+        case "plan_run_complete": {
+          const ev = event as Record<string, unknown>;
+          const plan = get().currentPlan;
+          if (!plan || plan.id !== ev.plan_id) break;
+          set({
+            currentPlan: {
+              ...plan,
+              status: "completed",
+              totalCostUsd: (ev.totalCostUsd as number) ?? plan.totalCostUsd,
+            },
+          });
+          break;
+        }
         case "focal_object_ready":
           const focalData = event.focal_object as Record<string, unknown>;
           if (focalData) {
@@ -186,8 +347,27 @@ export const useRuntimeStore = create<RuntimeState>()(
     setAbortController: (controller) => set({ abortController: controller }),
 
     startRun: (runId) =>
-      set({ coreState: "streaming", currentRunId: runId, lastRunId: runId, connected: true }),
+      set({ coreState: "streaming", currentRunId: runId, lastRunId: runId, connected: true, currentPlan: null }),
     completeRun: () => set({ coreState: "idle", currentRunId: null, flowLabel: null, abortController: null }),
+    resetPlan: () => set({ currentPlan: null }),
+    approveStep: async (planId: string, stepId: string) => {
+      // POURQUOI : POST côté backend pour reprendre l'exécution. Endpoint
+      // dédié `/api/v2/missions/[id]/approve-step`. La réponse stream est
+      // consommée silencieusement — les events SSE arrivent via le run.
+      try {
+        const res = await fetch(`/api/v2/missions/${planId}/approve-step`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stepId }),
+        });
+        if (!res.ok) {
+          console.warn(`[runtime] approveStep failed: ${res.status}`);
+        }
+      } catch (err) {
+        console.error("[runtime] approveStep error:", err);
+      }
+    },
     failRun: (error) => set({ coreState: "error", flowLabel: error, abortController: null }),
     stopRun: () => {
       const controller = get().abortController;

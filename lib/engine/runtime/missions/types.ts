@@ -37,6 +37,12 @@ export interface ScheduledMission {
   lastRunId?: string;
   /** Export automatique optionnel — enqueué après chaque run réussi. */
   autoExport?: AutoExportConfig;
+  /**
+   * Workflow graph optionnel (Mission Control C3 Builder).
+   * Quand présent, le run utilise `executeWorkflow` au lieu de l'orchestrator
+   * standard. La forme correspond à WorkflowGraph (lib/workflows/types).
+   */
+  workflowGraph?: unknown;
 }
 
 export interface ScheduledMissionRun {

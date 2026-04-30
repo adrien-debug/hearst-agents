@@ -17,7 +17,9 @@ import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { useVoiceStore } from "@/stores/voice";
 import { useServicesStore } from "@/stores/services";
+import { useNavigationStore } from "@/stores/navigation";
 import { voiceToolDefs, VOICE_TOOL_LABELS } from "@/lib/voice/tool-defs";
+import { ProviderChip } from "./ProviderChip";
 import { useRightPanelData } from "./right-panel/useRightPanelData";
 import { GeneralDashboard } from "./right-panel/GeneralDashboard";
 import { ContextRailForMission } from "./ContextRailForMission";
@@ -210,7 +212,33 @@ function ContextRailForCockpit() {
 }
 
 function ContextRailForChat() {
-  return <CockpitChatBody />;
+  const router = useRouter();
+  const activeThreadId = useNavigationStore((s) => s.activeThreadId);
+  const {
+    assets,
+    missions,
+    loading,
+  } = useRightPanelData();
+
+  const handleViewChange = (view: "reports" | "missions" | "assets") => {
+    if (view === "missions") router.push("/missions");
+    else if (view === "assets") router.push("/assets");
+    else if (view === "reports") router.push("/runs");
+  };
+
+  return (
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+        <GeneralDashboard
+          assets={assets}
+          missions={missions}
+          onViewChange={handleViewChange}
+          activeThreadId={activeThreadId}
+          loading={loading}
+        />
+      </div>
+    </div>
+  );
 }
 
 function SuggestionsFooter({
@@ -240,7 +268,7 @@ function SuggestionsFooter({
       </div>
       {visible.length === 0 ? (
         <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] px-2 font-light">
-          No suggestions available.
+          Aucune suggestion.
         </p>
       ) : (
         <ul className="flex flex-col" style={{ gap: "var(--space-2)" }}>
@@ -515,10 +543,30 @@ function ContextRailForKnowledge() {
 function ContextRailForVoice() {
   const transcript = useVoiceStore((s) => s.transcript);
   const phase = useVoiceStore((s) => s.phase);
+  const sessionId = useVoiceStore((s) => s.sessionId);
   const services = useServicesStore((s) => s.services);
+  const activeThreadId = useNavigationStore((s) => s.activeThreadId);
   const connectedApps = services.filter((s) => s.connectionStatus === "connected");
   const last10 = transcript.slice(-10);
   const totalToolsCount = voiceToolDefs.length + connectedApps.length;
+  const toolCallCount = transcript.filter(
+    (e) => e.role === "tool_call" || e.role === "tool_result",
+  ).length;
+
+  const handleLinkThread = async () => {
+    if (!sessionId || !activeThreadId) return;
+    try {
+      await fetch(`/api/v2/voice/transcripts/${sessionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ threadId: activeThreadId }),
+      });
+    } catch {
+      // Silent — le link est best-effort
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto">
       <Section label="Live transcript" count={transcript.length}>
@@ -530,23 +578,81 @@ function ContextRailForVoice() {
           </EmptyHint>
         ) : (
           <ul className="flex flex-col gap-4">
-            {last10.map((entry) => (
-              <li key={entry.id} className="flex flex-col gap-1.5">
-                <span
-                  className={`t-9 tracking-display uppercase ${
-                    entry.role === "user"
-                      ? "text-[var(--cykan)]"
-                      : "text-[var(--text-ghost)]"
-                  }`}
-                >
-                  {entry.role === "user" ? "USER" : "AGENT"}
-                </span>
-                <p className="t-11 font-light text-[var(--text-muted)] line-clamp-2 leading-relaxed">
-                  {entry.text}
-                </p>
-              </li>
-            ))}
+            {last10.map((entry) => {
+              if (entry.role === "tool_call") {
+                return (
+                  <li key={entry.id} className="flex flex-col gap-1.5">
+                    <span className="t-9 tracking-display uppercase text-[var(--warn)]">
+                      TOOL CALL
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <ProviderChip
+                        providerId={entry.providerId ?? "composio"}
+                        label={entry.toolName ?? entry.text}
+                        status={entry.status ?? "pending"}
+                      />
+                    </div>
+                  </li>
+                );
+              }
+              if (entry.role === "tool_result") {
+                return (
+                  <li key={entry.id} className="flex flex-col gap-1.5">
+                    <span
+                      className={`t-9 tracking-display uppercase ${
+                        entry.status === "error"
+                          ? "text-[var(--danger)]"
+                          : "text-[var(--cykan)]"
+                      }`}
+                    >
+                      {entry.status === "error" ? "TOOL ERROR" : "TOOL RESULT"}
+                    </span>
+                    <p className="t-11 font-light text-[var(--text-muted)] line-clamp-2 leading-relaxed">
+                      {entry.text}
+                    </p>
+                  </li>
+                );
+              }
+              return (
+                <li key={entry.id} className="flex flex-col gap-1.5">
+                  <span
+                    className={`t-9 tracking-display uppercase ${
+                      entry.role === "user"
+                        ? "text-[var(--cykan)]"
+                        : "text-[var(--text-ghost)]"
+                    }`}
+                  >
+                    {entry.role === "user" ? "USER" : "AGENT"}
+                  </span>
+                  <p className="t-11 font-light text-[var(--text-muted)] line-clamp-2 leading-relaxed">
+                    {entry.text}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
+        )}
+        {sessionId && transcript.length > 0 && activeThreadId && (
+          <button
+            type="button"
+            onClick={handleLinkThread}
+            className="mt-4 t-9 tracking-display uppercase text-[var(--cykan)] hover:text-[var(--text)] transition-colors"
+          >
+            Lier au thread →
+          </button>
+        )}
+      </Section>
+      <Section label="Tool receipts" count={toolCallCount}>
+        {toolCallCount === 0 ? (
+          <EmptyHint>No tool calls yet</EmptyHint>
+        ) : (
+          <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light leading-relaxed">
+            {transcript
+              .filter((e) => e.role === "tool_call")
+              .slice(-5)
+              .map((e) => e.toolName ?? e.text)
+              .join(" · ")}
+          </p>
         )}
       </Section>
       <Section label="Available tools" count={totalToolsCount}>

@@ -17,6 +17,111 @@ function stripEmoji(s: string): string {
   return s.replace(EMOJI_RE, "").replace(/[ \t]{2,}/g, " ");
 }
 
+// ── Provider derivation ─────────────────────────────────
+// Composio tool names sont préfixés par le toolkit slug en MAJUSCULES :
+// GMAIL_SEND_EMAIL, SLACK_POST_MESSAGE, NOTION_CREATE_PAGE, etc. On extrait
+// le préfixe et on map les tools natifs vers leur provider de référence.
+
+const NATIVE_TOOL_TO_PROVIDER: Record<string, { id: string; label: string }> = {
+  generate_image: { id: "fal_ai", label: "fal.ai" },
+  generate_video: { id: "fal_ai", label: "fal.ai" },
+  execute_code: { id: "e2b", label: "E2B" },
+  parse_document: { id: "llama_parse", label: "LlamaParse" },
+  search_web: { id: "anthropic", label: "Web" },
+  generate_report: { id: "anthropic", label: "Anthropic" },
+  schedule_task: { id: "hearst", label: "Hearst" },
+};
+
+const PROVIDER_LABELS: Record<string, string> = {
+  composio: "Composio",
+  gmail: "Gmail",
+  googlecalendar: "Calendar",
+  googledrive: "Drive",
+  googlesheets: "Sheets",
+  googledocs: "Docs",
+  slack: "Slack",
+  notion: "Notion",
+  github: "GitHub",
+  gitlab: "GitLab",
+  bitbucket: "Bitbucket",
+  linear: "Linear",
+  asana: "Asana",
+  trello: "Trello",
+  jira: "Jira",
+  clickup: "ClickUp",
+  monday: "Monday",
+  airtable: "Airtable",
+  hubspot: "HubSpot",
+  salesforce: "Salesforce",
+  pipedrive: "Pipedrive",
+  zoho: "Zoho",
+  zendesk: "Zendesk",
+  intercom: "Intercom",
+  freshdesk: "Freshdesk",
+  helpscout: "HelpScout",
+  stripe: "Stripe",
+  quickbooks: "QuickBooks",
+  xero: "Xero",
+  shopify: "Shopify",
+  woocommerce: "WooCommerce",
+  whatsapp: "WhatsApp",
+  twilio: "Twilio",
+  vonage: "Vonage",
+  discord: "Discord",
+  microsoftteams: "Teams",
+  sendgrid: "SendGrid",
+  mailchimp: "Mailchimp",
+  figma: "Figma",
+  canva: "Canva",
+  amplitude: "Amplitude",
+  mixpanel: "Mixpanel",
+  segment: "Segment",
+  fal_ai: "fal.ai",
+  anthropic: "Anthropic",
+  e2b: "E2B",
+  llama_parse: "LlamaParse",
+  hearst: "Hearst",
+};
+
+function prettyLabel(slug: string): string {
+  return PROVIDER_LABELS[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1);
+}
+
+export function deriveProvider(
+  tool: string,
+  providerId?: string,
+  providerLabel?: string,
+): { providerId: string; providerLabel: string } {
+  // 1. Override explicite si l'orchestrator l'a posé (sauf le générique
+  //    "composio" qui n'est pas assez précis pour la pastille UI).
+  if (providerId && providerId !== "composio") {
+    return {
+      providerId,
+      providerLabel: providerLabel ?? prettyLabel(providerId),
+    };
+  }
+
+  // 2. Tools natifs Hearst (slug en lowercase).
+  const native = NATIVE_TOOL_TO_PROVIDER[tool];
+  if (native) {
+    return { providerId: native.id, providerLabel: native.label };
+  }
+
+  // 3. Composio : préfixe MAJUSCULE avant le premier `_`.
+  const upper = tool.toUpperCase();
+  const prefix = upper.split("_")[0];
+  if (prefix && prefix === upper.slice(0, prefix.length)) {
+    const slug = prefix.toLowerCase();
+    return { providerId: slug, providerLabel: prettyLabel(slug) };
+  }
+
+  // 4. Fallback : on garde ce qu'on a.
+  return {
+    providerId: providerId ?? "composio",
+    providerLabel: providerLabel ?? "Composio",
+  };
+}
+
 export class SSEAdapter {
   private controller: ReadableStreamDefaultController | null = null;
   private cleanup: (() => void) | null = null;
@@ -149,21 +254,39 @@ export class SSEAdapter {
         };
 
       // ── Tool calls (visible — user sees "calling X") ─────
-      case "tool_call_started":
+      // On enrichit `providerId`/`providerLabel` à partir du nom du tool si
+      // l'orchestrator ne les a pas posés. Pattern Composio : `GMAIL_SEND_EMAIL`
+      // → "gmail" / "Gmail". Pour les tools natifs (`generate_image`, …) on
+      // map vers le provider connu (fal_ai, anthropic, e2b, …).
+      case "tool_call_started": {
+        const { providerId, providerLabel } = deriveProvider(
+          event.tool,
+          event.providerId,
+          event.providerLabel,
+        );
         return {
           type: "tool_call_started",
           step_id: event.step_id,
           tool: event.tool,
-          providerId: event.providerId,
-          providerLabel: event.providerLabel,
+          providerId,
+          providerLabel,
         };
-      case "tool_call_completed":
+      }
+      case "tool_call_completed": {
+        const { providerId, providerLabel } = deriveProvider(
+          event.tool,
+          event.providerId,
+        );
         return {
           type: "tool_call_completed",
           step_id: event.step_id,
           tool: event.tool,
-          providerId: event.providerId,
+          providerId,
+          providerLabel,
+          latencyMs: event.latencyMs,
+          costUSD: event.costUSD,
         };
+      }
 
       // ── Inline app connect (visible — renders connect card) ──
       case "app_connect_required":
@@ -300,6 +423,89 @@ export class SSEAdapter {
       // ── Stage routing (visible — téléporte l'utilisateur) ─
       case "stage_request":
         return { type: "stage_request", stage: event.stage };
+
+      // ── Browser co-pilot (B5) — ACTION_LOG live ──────────
+      case "browser_action":
+        return {
+          type: "browser_action",
+          sessionId: event.sessionId,
+          action: event.action,
+        };
+      case "browser_task_completed":
+        return {
+          type: "browser_task_completed",
+          sessionId: event.sessionId,
+          summary: event.summary,
+          assetIds: event.assetIds,
+          totalActions: event.totalActions,
+          totalDurationMs: event.totalDurationMs,
+        };
+      case "browser_task_failed":
+        return {
+          type: "browser_task_failed",
+          sessionId: event.sessionId,
+          error: event.error,
+          totalActions: event.totalActions,
+        };
+      case "browser_take_over":
+        return {
+          type: "browser_take_over",
+          sessionId: event.sessionId,
+        };
+
+      // ── Mission Control multi-step (visible — StepGraph) ─
+      case "plan_preview":
+        return {
+          type: "plan_preview",
+          plan_id: event.plan_id,
+          intent: event.intent,
+          steps: event.steps,
+          estimatedCostUsd: event.estimatedCostUsd,
+          requiredApps: event.requiredApps,
+        };
+      case "plan_step_started":
+        return {
+          type: "plan_step_started",
+          plan_id: event.plan_id,
+          step_id: event.step_id,
+          kind: event.kind,
+          label: event.label,
+          plannedAt: event.plannedAt,
+        };
+      case "plan_step_completed":
+        return {
+          type: "plan_step_completed",
+          plan_id: event.plan_id,
+          step_id: event.step_id,
+          output: event.output,
+          costUSD: event.costUSD,
+          latencyMs: event.latencyMs,
+          providerId: event.providerId,
+        };
+      case "plan_step_awaiting_approval":
+        return {
+          type: "plan_step_awaiting_approval",
+          plan_id: event.plan_id,
+          step_id: event.step_id,
+          preview: event.preview,
+          kind: event.kind,
+          providerId: event.providerId,
+        };
+      case "plan_step_failed":
+        return {
+          type: "plan_step_failed",
+          plan_id: event.plan_id,
+          step_id: event.step_id,
+          error: event.error,
+        };
+      case "plan_run_complete":
+        return {
+          type: "plan_run_complete",
+          plan_id: event.plan_id,
+          assetId: event.assetId,
+          totalCostUsd: event.totalCostUsd,
+          totalLatencyMs: event.totalLatencyMs,
+        };
 
       // ── Internal events NOT exposed to the UI ────────────
       case "run_created":

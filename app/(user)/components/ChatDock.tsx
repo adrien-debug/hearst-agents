@@ -102,7 +102,10 @@ export function ChatDock() {
   const currentAssistantIdRef = useRef<string | null>(null);
 
   const handleSubmit = useCallback(
-    async (message: string) => {
+    async (
+      message: string,
+      opts?: { attachedAssetIds?: string[]; personaId?: string | null },
+    ) => {
       // Si on n'est pas sur la page racine, on y revient pour que l'utilisateur
       // voie le Stage chat se mettre à jour avec ses messages.
       if (pathname !== "/") {
@@ -165,6 +168,12 @@ export function ChatDock() {
             conversation_id: threadId,
             history: recentMessages,
             capability_mode: "general",
+            ...(opts?.attachedAssetIds && opts.attachedAssetIds.length > 0
+              ? { attached_asset_ids: opts.attachedAssetIds }
+              : {}),
+            ...(opts?.personaId
+              ? { persona_id: opts.personaId }
+              : {}),
           }),
           signal: controller.signal,
         });
@@ -255,5 +264,11 @@ export function ChatDock() {
     ],
   );
 
-  return <ChatInput onSubmit={handleSubmit} connectedServices={connectedServices} />;
+  return (
+    <ChatInput
+      onSubmit={handleSubmit}
+      connectedServices={connectedServices}
+      threadId={activeThreadId ?? null}
+    />
+  );
 }

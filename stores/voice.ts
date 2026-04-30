@@ -17,11 +17,26 @@ export type VoicePhase =
   | "speaking"
   | "error";
 
+export type TranscriptRole = "user" | "assistant" | "tool_call" | "tool_result";
+
 export interface TranscriptEntry {
   id: string;
-  role: "user" | "assistant";
+  role: TranscriptRole;
   text: string;
   timestamp: number;
+  /** Function calling : id alloué par OpenAI Realtime, sert à apparier
+   * tool_call ↔ tool_result. */
+  callId?: string;
+  /** Function calling : nom du tool (ex `GMAIL_SEND_EMAIL`). */
+  toolName?: string;
+  /** Function calling : args passés au tool. Tronqués au niveau UI. */
+  args?: Record<string, unknown>;
+  /** Function calling : output renvoyé au modèle, pour le tool_result. */
+  output?: string;
+  /** Function calling : statut visuel utilisé par les receipts. */
+  status?: "pending" | "success" | "error";
+  /** Function calling : provider attribuer (ex `gmail`, `slack`, `composio`). */
+  providerId?: string;
 }
 
 interface VoiceState {
@@ -42,6 +57,9 @@ interface VoiceState {
   appendTranscript: (entry: TranscriptEntry) => void;
   /** Concatène un delta au texte d'une entry existante (assistant streaming). */
   updateLastTranscript: (id: string, deltaOrText: string) => void;
+  /** Patch une entry par id (utilisé pour passer un tool_call de pending →
+   * success/error sans en créer une nouvelle). */
+  patchTranscriptEntry: (id: string, patch: Partial<TranscriptEntry>) => void;
   setAudioLevel: (level: number) => void;
   setError: (err: string | null) => void;
   setVoiceActive: (active: boolean) => void;
@@ -64,6 +82,12 @@ export const useVoiceStore = create<VoiceState>((set) => ({
     set((state) => ({
       transcript: state.transcript.map((entry) =>
         entry.id === id ? { ...entry, text: entry.text + delta } : entry,
+      ),
+    })),
+  patchTranscriptEntry: (id, patch) =>
+    set((state) => ({
+      transcript: state.transcript.map((entry) =>
+        entry.id === id ? { ...entry, ...patch } : entry,
       ),
     })),
   setAudioLevel: (level) => set({ audioLevel: level }),

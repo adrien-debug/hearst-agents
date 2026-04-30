@@ -1,17 +1,48 @@
+/**
+ * Worker meeting-bot — Recall.ai + Deepgram extraction.
+ *
+ * Lifecycle :
+ *  1. Le bot est déjà créé par /api/v2/meetings/start (createMeetingBot
+ *     synchrone). Le worker ne fait que le suivi long.
+ *  2. Polling toutes les POLL_INTERVAL_MS pour récupérer transcript partiel
+ *     + status. À chaque transcript stable (>30s sans changement), on
+ *     appelle extractActionItems (Haiku) en lazy update.
+ *  3. Quand status === "done" ou "call_ended" : transcript final + action
+ *     items finaux + fusion dans l'asset placeholder créé par la route start.
+ *  4. Cleanup : deleteBot au plus tard après TIMEOUT_MS (2h).
+ *
+ * Sans RECALL_API_KEY le worker throw au premier poll — la route /start
+ * a déjà filtré ce cas, donc le worker ne devrait jamais tourner sans clé
+ * en pratique. Sans DEEPGRAM_API_KEY (clé déjà utilisée côté Recall via le
+ * provider managed), extractActionItems retourne [] en silence.
+ */
+
 import { startWorker, type WorkerHandler } from "@/lib/jobs/worker-base";
-import { createMeetingBot, getBotStatus, deleteBot } from "@/lib/capabilities/providers/recall-ai";
-import { transcribeAudio, extractActionItems } from "@/lib/capabilities/providers/deepgram";
-import { updateVariant } from "@/lib/assets/variants";
+import {
+  getBotStatus,
+  getTranscript,
+  deleteBot,
+  RecallAiUnavailableError,
+} from "@/lib/capabilities/providers/recall-ai";
+import { extractActionItems } from "@/lib/capabilities/providers/deepgram";
+import { storeAsset, loadAssetById, type Asset } from "@/lib/assets/types";
 import type { MeetingBotInput, JobResult } from "@/lib/jobs/types";
 
-const POLL_INTERVAL_MS = 10_000;
-const TIMEOUT_MS = 90 * 60 * 1000;
+const POLL_INTERVAL_MS = 30_000;
+const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2h
+const STABLE_TRANSCRIPT_MS = 30_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-type MeetingBotPayload = MeetingBotInput & { botName?: string; variantId?: string };
+const TERMINAL_STATUSES = new Set([
+  "done",
+  "call_ended",
+  "fatal",
+  "ended_early",
+  "failed",
+]);
 
 const handler: WorkerHandler<MeetingBotInput> = {
   kind: "meeting-bot",
@@ -20,88 +51,169 @@ const handler: WorkerHandler<MeetingBotInput> = {
     if (!payload.meetingUrl || payload.meetingUrl.trim().length === 0) {
       throw new Error("meeting-bot: meetingUrl is empty");
     }
+    if (!payload.assetId) {
+      throw new Error("meeting-bot: assetId requis (créé par /api/v2/meetings/start)");
+    }
   },
 
   async process(ctx): Promise<JobResult> {
     const { payload, reportProgress } = ctx;
-    const p = payload as MeetingBotPayload;
-    const variantId = p.variantId;
+    const botId = payload.assetId!;
+    const startedAt = Date.now();
 
-    await reportProgress(5, "Création du bot de réunion");
+    await reportProgress(5, `Bot ${botId} en cours de polling`);
 
-    // 1. Créer le bot
-    const { botId } = await createMeetingBot({
-      meetingUrl: p.meetingUrl,
-      botName: p.botName,
-    });
+    let lastTranscript = "";
+    let lastTranscriptChangeAt = startedAt;
+    let lastActionExtractAt = 0;
+    let cachedActionItems: Array<{ action: string; owner?: string; deadline?: string }> = [];
+    let finalStatus = "joining";
+    let finalRecordingUrl: string | undefined;
 
-    await reportProgress(10, `Bot créé (${botId}), en attente de fin de réunion`);
-
-    // 2. Poll jusqu'à status "done" ou timeout 90 min
-    const deadline = Date.now() + TIMEOUT_MS;
-    let botStatus = "";
-    let videoUrl: string | undefined;
-
-    while (Date.now() < deadline) {
+    while (Date.now() - startedAt < TIMEOUT_MS) {
       await sleep(POLL_INTERVAL_MS);
 
-      const statusResult = await getBotStatus(botId);
-      botStatus = statusResult.status;
-      videoUrl = statusResult.videoUrl;
-
-      if (botStatus === "done") break;
-      if (botStatus === "failed") {
-        throw new Error(`[meeting-bot] Bot ${botId} failed`);
+      let status: Awaited<ReturnType<typeof getBotStatus>>;
+      try {
+        status = await getBotStatus(botId);
+      } catch (err) {
+        if (err instanceof RecallAiUnavailableError) {
+          throw err;
+        }
+        console.warn(
+          `[meeting-bot] poll error pour ${botId} :`,
+          err instanceof Error ? err.message : err,
+        );
+        continue;
       }
 
-      const elapsed = Date.now() - (deadline - TIMEOUT_MS);
-      const pct = Math.min(10 + Math.floor((elapsed / TIMEOUT_MS) * 60), 70);
-      await reportProgress(pct, `Réunion en cours (status: ${botStatus})`);
+      finalStatus = status.status;
+      finalRecordingUrl = status.videoUrl ?? finalRecordingUrl;
+
+      let currentTranscript = status.transcript ?? "";
+      try {
+        const detail = await getTranscript(botId);
+        if (detail.transcript && detail.transcript.length > currentTranscript.length) {
+          currentTranscript = detail.transcript;
+        }
+      } catch {
+        // ignore — fallback sur status.transcript
+      }
+
+      if (currentTranscript !== lastTranscript) {
+        lastTranscript = currentTranscript;
+        lastTranscriptChangeAt = Date.now();
+      }
+
+      const stableMs = Date.now() - lastTranscriptChangeAt;
+      const elapsedSinceLastExtract = Date.now() - lastActionExtractAt;
+      if (
+        currentTranscript.trim().length > 0 &&
+        stableMs > STABLE_TRANSCRIPT_MS &&
+        elapsedSinceLastExtract > STABLE_TRANSCRIPT_MS
+      ) {
+        try {
+          cachedActionItems = await extractActionItems(currentTranscript);
+        } catch {
+          // garde les anciens action items
+        }
+        lastActionExtractAt = Date.now();
+      }
+
+      const elapsed = Date.now() - startedAt;
+      const pct = Math.min(10 + Math.floor((elapsed / TIMEOUT_MS) * 80), 90);
+      await reportProgress(
+        pct,
+        `Réunion en cours (status: ${status.status}, transcript ${lastTranscript.length} chars)`,
+      );
+
+      if (TERMINAL_STATUSES.has(status.status)) {
+        break;
+      }
     }
 
-    if (botStatus !== "done") {
-      throw new Error(`[meeting-bot] Timeout 90 min atteint (bot ${botId})`);
+    await reportProgress(92, "Finalisation du transcript");
+
+    let finalTranscript = lastTranscript;
+    try {
+      const detail = await getTranscript(botId);
+      if (detail.transcript) finalTranscript = detail.transcript;
+    } catch {
+      // ignore
     }
 
-    if (!videoUrl) {
-      throw new Error(`[meeting-bot] Bot terminé sans videoUrl (bot ${botId})`);
+    let finalActionItems = cachedActionItems;
+    if (finalTranscript.trim().length > 0) {
+      try {
+        finalActionItems = await extractActionItems(finalTranscript);
+      } catch {
+        // garde le cache
+      }
     }
 
-    await reportProgress(72, "Transcription en cours");
+    await reportProgress(96, "Persistance asset meeting");
 
-    // 3. Transcrire
-    const { transcript, speakers } = await transcribeAudio({ audioUrl: videoUrl });
+    const existing = await loadAssetById(botId).catch(() => null);
+    const previousContent = parseContentRef(existing);
+    const endedAt = Date.now();
 
-    await reportProgress(88, "Extraction des actions");
-
-    // 4. Extraire les action items
-    const actionItems = await extractActionItems(transcript);
-
-    await reportProgress(95, "Persistance");
-
-    // 5. Persister le résultat
-    if (variantId) {
-      await updateVariant(variantId, {
-        status: "ready",
-        generatedAt: Date.now(),
-        provider: "recall-ai",
-        metadata: { transcript, speakers, actionItems },
-      });
-    }
-
-    await reportProgress(100, "Réunion traitée");
+    await storeAsset({
+      id: botId,
+      threadId: existing?.threadId ?? `meeting:${botId}`,
+      kind: "event",
+      title: existing?.title ?? `Meeting · ${new Date(startedAt).toLocaleString("fr-FR")}`,
+      summary:
+        finalTranscript.trim().length > 0
+          ? `Réunion terminée · ${finalActionItems.length} action items`
+          : "Réunion terminée sans transcript",
+      createdAt: existing?.createdAt ?? startedAt,
+      provenance: existing?.provenance ?? {
+        providerId: "system",
+        userId: payload.userId,
+        tenantId: payload.tenantId,
+        workspaceId: payload.workspaceId,
+        channelRef: payload.meetingUrl,
+      },
+      contentRef: JSON.stringify({
+        ...previousContent,
+        meetingProvider: payload.meetingProvider,
+        botId,
+        joinUrl: payload.meetingUrl,
+        status: finalStatus,
+        transcript: finalTranscript,
+        actionItems: finalActionItems,
+        recordingUrl: finalRecordingUrl,
+        startedAt: previousContent?.startedAt ?? startedAt,
+        endedAt,
+      }),
+    });
 
     void deleteBot(botId).catch(() => {});
 
+    await reportProgress(100, "Réunion traitée");
+
     return {
-      assetId: payload.assetId,
-      variantId,
+      assetId: botId,
       actualCostUsd: 0,
-      providerUsed: "recall-ai",
-      metadata: { transcript, speakers, actionItems },
+      providerUsed: "recall_ai",
+      metadata: {
+        transcript: finalTranscript,
+        actionItems: finalActionItems,
+        recordingUrl: finalRecordingUrl,
+        status: finalStatus,
+      },
     };
   },
 };
+
+function parseContentRef(asset: Asset | null): Record<string, unknown> | null {
+  if (!asset?.contentRef) return null;
+  try {
+    return JSON.parse(asset.contentRef) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
 
 export function startMeetingBotWorker() {
   return startWorker(handler);

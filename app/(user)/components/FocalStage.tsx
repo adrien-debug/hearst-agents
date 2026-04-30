@@ -34,16 +34,16 @@ const STATUS_COLORS: Record<FocalStatus, string> = {
 };
 
 const TYPE_LABELS: Record<FocalObject["type"], string> = {
-  message_draft: "MSG_DRAFT",
-  message_receipt: "MSG_RECEIPT",
-  brief: "BRIEF_DATA",
-  outline: "OUTLINE_REF",
-  report: "REPORT_LOG",
-  doc: "DOC_SPEC",
-  watcher_draft: "WATCHER_DRAFT",
-  watcher_active: "WATCHER_ACTIVE",
-  mission_draft: "MISSION_DRAFT",
-  mission_active: "MISSION_ACTIVE",
+  message_draft: "Brouillon",
+  message_receipt: "Message",
+  brief: "Brief",
+  outline: "Plan",
+  report: "Rapport",
+  doc: "Document",
+  watcher_draft: "Watcher (brouillon)",
+  watcher_active: "Watcher actif",
+  mission_draft: "Mission (brouillon)",
+  mission_active: "Mission active",
 };
 
 function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActionComplete: () => void }) {

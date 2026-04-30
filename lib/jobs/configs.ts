@@ -116,4 +116,19 @@ export const JOB_QUEUE_CONFIGS: Record<JobKind, JobQueueConfig> = {
     removeOnComplete: 100,
     removeOnFail: { age: 7 * 24 * 3600 },
   },
+  "inbox-fetch": {
+    queueName: "inbox-fetch",
+    // Concurrence raisonnable : Gmail rate limit ~1 quota/100ms par user, on
+    // travaille en mode user-scoped donc 5 jobs en // c'est 5 users qui
+    // peuvent rafraîchir simultanément.
+    concurrency: 5,
+    // 60s : Gmail fetch metadata (20 mails) + Calendar today + Slack unread
+    // + 1 appel Haiku pour classify. Laisse une bonne marge.
+    maxDurationMs: 60_000,
+    retryAttempts: 1,
+    retryDelayMs: 5_000,
+    priority: 4,
+    removeOnComplete: 50,
+    removeOnFail: { age: 7 * 24 * 3600 },
+  },
 };

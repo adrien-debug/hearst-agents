@@ -49,6 +49,25 @@ export function fmtPercent(v: unknown, opts?: { decimals?: number; locale?: stri
   return `${formatted} %`;
 }
 
+/**
+ * Rend une citation cliquable HTML pour un block. Le wrapper SourceCitation
+ * (côté React) détecte les `<sup data-source-id="..."/>` au mount et attache
+ * tooltip + handler clic. Si la source n'existe pas, le sup s'affiche quand
+ * même mais reste neutre.
+ */
+export function fmtCitation(sourceId: string, label: string | number): string {
+  return `<sup data-source-id="${escapeHtml(String(sourceId))}">[${escapeHtml(String(label))}]</sup>`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function fmtDelta(v: unknown): { text: string; tone: "up" | "down" | "neutral" } {
   if (v === null || v === undefined) return { text: "—", tone: "neutral" };
   const n = typeof v === "number" ? v : Number(v);

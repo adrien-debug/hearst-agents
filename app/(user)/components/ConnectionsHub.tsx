@@ -1400,8 +1400,11 @@ function WallpaperTile({
       : variant === "error" ? "var(--color-error)"
         : "var(--cykan)";
 
+  // Logos brand : on atténue saturation+luminance pour ne pas casser la palette
+  // monochrome+cyan globale du produit. Connected reste reconnaissable mais ne
+  // crie plus ; non-connectés gardent leur grayscale plus fort déjà existant.
   const filter = connected
-    ? undefined
+    ? "saturate(0.6) brightness(0.92)"
     : isConnectable
       ? "grayscale(0.55) opacity(0.65)"
       : "grayscale(0.95) opacity(0.4)";

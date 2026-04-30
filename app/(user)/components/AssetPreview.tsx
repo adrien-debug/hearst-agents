@@ -17,6 +17,8 @@ const KIND_REF: Record<AssetKind, string> = {
   message: "TYPE_TXT",
   task: "TYPE_TASK",
   event: "TYPE_EVT",
+  inbox_brief: "TYPE_INB",
+  artifact: "TYPE_ART",
 };
 
 const MIME_TYPE_LABELS: Record<string, string> = {

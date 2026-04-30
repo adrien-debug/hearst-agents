@@ -7,6 +7,14 @@ export interface ToolCallEntry {
   status: "running" | "completed";
   startedAt: number;
   kind: ToolKind;
+  /** Provider attribué au tool (ex: "gmail", "slack", "fal_ai"). */
+  providerId?: string;
+  /** Label lisible du provider (ex: "Gmail"). */
+  providerLabel?: string;
+  /** Latence wall-clock en ms si disponible (event tool_call_completed). */
+  latencyMs?: number;
+  /** Coût attribué au tool call en USD si disponible. */
+  costUSD?: number;
 }
 
 /** Selects only the completed write actions — used by the action-receipt UI. */
@@ -48,6 +56,8 @@ export function reduceToolEvents(
           status: "running",
           startedAt: ev.timestamp,
           kind: getToolCatalogEntry(tool).kind,
+          providerId: ev.providerId as string | undefined,
+          providerLabel: ev.providerLabel as string | undefined,
         });
       }
       continue;
@@ -58,6 +68,13 @@ export function reduceToolEvents(
       const existing = byStepId.get(stepId);
       if (existing) {
         existing.status = "completed";
+        // L'event de complétion porte la provider-info enrichie (latence,
+        // coût, providerId si l'orchestrator l'a posé en retard). On
+        // n'écrase qu'avec des valeurs définies pour préserver le started.
+        if (ev.providerId) existing.providerId = ev.providerId as string;
+        if (ev.providerLabel) existing.providerLabel = ev.providerLabel as string;
+        if (ev.latencyMs != null) existing.latencyMs = ev.latencyMs as number;
+        if (ev.costUSD != null) existing.costUSD = ev.costUSD as number;
       }
     }
   }

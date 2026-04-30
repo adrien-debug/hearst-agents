@@ -7,6 +7,8 @@ import { useNavigationStore } from "@/stores/navigation";
 import { useStageData } from "@/stores/stage-data";
 import { toast } from "@/app/hooks/use-toast";
 import { StageActionBar, type StageAction } from "./StageActionBar";
+import { KgQueryBar } from "../kg/KgQueryBar";
+import { KgNodeDetail } from "../kg/KgNodeDetail";
 import type { KgEdge, KgNode } from "@/lib/memory/kg";
 
 interface KnowledgeStageProps {
@@ -38,15 +40,11 @@ type Phase = "loading" | "empty" | "ready";
 const NODE_COLOR_BY_TYPE: Record<string, string> = {
   person: "var(--cykan)",
   company: "var(--warn)",
-  project: "var(--text-muted)",
+  project: "var(--accent-llm)",
   decision: "var(--danger)",
-  commitment: "var(--danger)",
-  topic: "var(--text-faint)",
+  commitment: "var(--color-success)",
+  topic: "var(--text-muted)",
 };
-
-function colorForType(type: string): string {
-  return NODE_COLOR_BY_TYPE[type] ?? NODE_COLOR_BY_TYPE.topic;
-}
 
 export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
   const back = useStageStore((s) => s.back);
@@ -56,7 +54,19 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
   const [phase, setPhase] = useState<Phase>("loading");
   const [graph, setGraph] = useState<{ nodes: KgNode[]; edges: KgEdge[] }>({ nodes: [], edges: [] });
   const [ingesting, setIngesting] = useState(false);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(entityId ?? null);
+
+  // Search state
+  const [searchHits, setSearchHits] = useState<Set<string> | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  // Path finder state
+  const [pathFrom, setPathFrom] = useState<string | null>(null);
+  const [pathTo, setPathTo] = useState<string | null>(null);
+  const [pathNodes, setPathNodes] = useState<Set<string>>(new Set());
+  const [pathEdges, setPathEdges] = useState<Set<string>>(new Set());
+  const [pathLoading, setPathLoading] = useState(false);
+  const [pathMessage, setPathMessage] = useState<string | null>(null);
 
   // Sync vers stage-data pour ContextRailForKnowledge.
   const setKgSlice = useStageData((s) => s.setKg);
@@ -144,17 +154,101 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
     }
   }, [activeThreadId, messagesByThread, fetchGraph]);
 
+  // ── Search ─────────────────────────────────────────────
+  const handleSearch = useCallback(async (q: string) => {
+    setSearchLoading(true);
+    try {
+      const res = await fetch(`/api/v2/kg/search?q=${encodeURIComponent(q)}`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        setSearchHits(new Set());
+        return;
+      }
+      const data = (await res.json()) as { nodes?: Array<{ id: string }> };
+      const ids = new Set((data.nodes ?? []).map((n) => n.id));
+      setSearchHits(ids);
+      if (ids.size === 0) {
+        toast.info("Aucun résultat", `Pas d'entité matching "${q}"`);
+      }
+    } catch {
+      setSearchHits(new Set());
+    } finally {
+      setSearchLoading(false);
+    }
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchHits(null);
+  }, []);
+
+  // ── Path finder ────────────────────────────────────────
+  const handlePickPath = useCallback((role: "from" | "to", nodeId: string) => {
+    if (role === "from") setPathFrom(nodeId);
+    else setPathTo(nodeId);
+    setPathMessage(null);
+  }, []);
+
+  const handleResetPath = useCallback(() => {
+    setPathFrom(null);
+    setPathTo(null);
+    setPathNodes(new Set());
+    setPathEdges(new Set());
+    setPathMessage(null);
+  }, []);
+
+  const handleFindPath = useCallback(async () => {
+    if (!pathFrom || !pathTo) return;
+    setPathLoading(true);
+    setPathMessage(null);
+    try {
+      const url = `/api/v2/kg/path?from=${encodeURIComponent(pathFrom)}&to=${encodeURIComponent(pathTo)}&maxHops=4`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        setPathMessage("Erreur réseau");
+        return;
+      }
+      const data = (await res.json()) as {
+        path?: { nodes: KgNode[]; edges: KgEdge[]; hops: number } | null;
+      };
+      if (!data.path) {
+        setPathNodes(new Set());
+        setPathEdges(new Set());
+        setPathMessage("Aucun chemin trouvé sous 4 sauts");
+        return;
+      }
+      setPathNodes(new Set(data.path.nodes.map((n) => n.id)));
+      setPathEdges(new Set(data.path.edges.map((e) => e.id)));
+      setPathMessage(`Chemin trouvé en ${data.path.hops} saut(s)`);
+    } catch {
+      setPathMessage("Erreur");
+    } finally {
+      setPathLoading(false);
+    }
+  }, [pathFrom, pathTo]);
+
+  // ── Cytoscape elements ─────────────────────────────────
   const elements = useMemo<CytoscapeElement[]>(() => {
-    const nodeEls: CytoscapeElement[] = graph.nodes.map((n) => ({
-      data: { id: n.id, label: n.label, type: n.type },
-      classes: `kg-node kg-node-${n.type}`,
-    }));
-    const edgeEls: CytoscapeElement[] = graph.edges.map((e) => ({
-      data: { id: e.id, source: e.source_id, target: e.target_id, label: e.type },
-      classes: "kg-edge",
-    }));
+    const nodeEls: CytoscapeElement[] = graph.nodes.map((n) => {
+      const classes: string[] = ["kg-node", `kg-node-${n.type}`];
+      if (searchHits && !searchHits.has(n.id)) classes.push("kg-node-dim");
+      if (searchHits && searchHits.has(n.id)) classes.push("kg-node-hit");
+      if (pathNodes.has(n.id)) classes.push("kg-node-path");
+      return {
+        data: { id: n.id, label: n.label, type: n.type },
+        classes: classes.join(" "),
+      };
+    });
+    const edgeEls: CytoscapeElement[] = graph.edges.map((e) => {
+      const classes: string[] = ["kg-edge"];
+      if (pathEdges.has(e.id)) classes.push("kg-edge-path");
+      return {
+        data: { id: e.id, source: e.source_id, target: e.target_id, label: e.type },
+        classes: classes.join(" "),
+      };
+    });
     return [...nodeEls, ...edgeEls];
-  }, [graph]);
+  }, [graph, searchHits, pathNodes, pathEdges]);
 
   const stylesheet = useMemo<CytoscapeStyleEntry[]>(
     () => [
@@ -187,6 +281,25 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
         },
       },
       {
+        selector: "node.kg-node-dim",
+        style: { opacity: 0.25 },
+      },
+      {
+        selector: "node.kg-node-hit",
+        style: {
+          "border-width": 2,
+          "border-color": "var(--cykan)",
+          "border-style": "double",
+        },
+      },
+      {
+        selector: "node.kg-node-path",
+        style: {
+          "border-width": 3,
+          "border-color": "var(--warn)",
+        },
+      },
+      {
         selector: "edge",
         style: {
           "width": 1,
@@ -194,6 +307,14 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
           "target-arrow-color": "var(--surface-2)",
           "target-arrow-shape": "triangle",
           "curve-style": "bezier",
+        },
+      },
+      {
+        selector: "edge.kg-edge-path",
+        style: {
+          "width": 2.5,
+          "line-color": "var(--warn)",
+          "target-arrow-color": "var(--warn)",
         },
       },
     ],
@@ -209,8 +330,6 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
         setSelectedNodeId(evt.target.id());
       });
       core.on("tap", "core", () => {
-        // Désélectionner si on clique sur le fond. La condition « tap sur
-        // core sans node » est gérée par Cytoscape via le selector "core".
         setSelectedNodeId(null);
       });
     },
@@ -220,6 +339,9 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
   const selectedNode = selectedNodeId
     ? graph.nodes.find((n) => n.id === selectedNodeId) ?? null
     : null;
+
+  const fromLabel = pathFrom ? graph.nodes.find((n) => n.id === pathFrom)?.label : null;
+  const toLabel = pathTo ? graph.nodes.find((n) => n.id === pathTo)?.label : null;
 
   return (
     <div
@@ -340,6 +462,58 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
 
       {phase === "ready" && (
         <div className="flex-1 flex flex-col min-h-0 relative">
+          <div
+            className="flex flex-col gap-3 border-b border-[var(--border-default)]"
+            style={{ padding: "var(--space-4) var(--space-12)" }}
+          >
+            <KgQueryBar
+              onSearch={(q) => void handleSearch(q)}
+              onClear={handleClearSearch}
+              loading={searchLoading}
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-ghost)]">
+                Chemin :
+              </span>
+              <span
+                className="t-11 font-light text-[var(--text-soft)] truncate"
+                style={{ maxWidth: "var(--space-32)" }}
+              >
+                {fromLabel ? `↦ ${fromLabel}` : "départ ?"}
+              </span>
+              <span className="t-9 font-mono text-[var(--text-faint)]">→</span>
+              <span
+                className="t-11 font-light text-[var(--text-soft)] truncate"
+                style={{ maxWidth: "var(--space-32)" }}
+              >
+                {toLabel ?? "arrivée ?"}
+              </span>
+              <button
+                type="button"
+                onClick={() => void handleFindPath()}
+                disabled={!pathFrom || !pathTo || pathLoading}
+                className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)] hover:tracking-[0.4em] disabled:opacity-50"
+                style={{ transitionProperty: "letter-spacing", transitionDuration: "var(--duration-slow)" }}
+              >
+                {pathLoading ? "…" : "Trouver chemin"}
+              </button>
+              {(pathFrom || pathTo) && (
+                <button
+                  type="button"
+                  onClick={handleResetPath}
+                  className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+              {pathMessage && (
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--warn)]">
+                  {pathMessage}
+                </span>
+              )}
+            </div>
+          </div>
+
           <div className="flex-1 min-h-0">
             <CytoscapeComponent
               elements={elements}
@@ -351,43 +525,13 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
           </div>
 
           {selectedNode && (
-            <aside
-              className="border-t border-[var(--border-default)] bg-[var(--bg-elev)] flex flex-col gap-3"
-              style={{ padding: "var(--space-6) var(--space-12)" }}
-            >
-              <header className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span
-                    className="rounded-pill"
-                    style={{
-                      width: "var(--space-2)",
-                      height: "var(--space-2)",
-                      background: colorForType(selectedNode.type),
-                    }}
-                    aria-hidden
-                  />
-                  <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">
-                    {selectedNode.type}
-                  </span>
-                  <span className="t-15 font-medium text-[var(--text)]">
-                    {selectedNode.label}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedNodeId(null)}
-                  className="t-13 text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
-                  aria-label="Fermer le panneau"
-                >
-                  ×
-                </button>
-              </header>
-              {Object.keys(selectedNode.properties ?? {}).length > 0 && (
-                <pre className="t-11 font-mono text-[var(--text-muted)] whitespace-pre-wrap">
-                  {JSON.stringify(selectedNode.properties, null, 2)}
-                </pre>
-              )}
-            </aside>
+            <KgNodeDetail
+              node={selectedNode}
+              edges={graph.edges}
+              nodes={graph.nodes}
+              onClose={() => setSelectedNodeId(null)}
+              onPickPath={handlePickPath}
+            />
           )}
 
           <footer

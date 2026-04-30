@@ -13,6 +13,8 @@ export interface CreateScheduledMissionInput {
   tenantId: string;
   workspaceId: string;
   userId: string;
+  /** Workflow graph optionnel (Builder C3). */
+  workflowGraph?: unknown;
 }
 
 export function createScheduledMission(
@@ -28,5 +30,6 @@ export function createScheduledMission(
     userId: input.userId,
     enabled: true,
     createdAt: Date.now(),
+    workflowGraph: input.workflowGraph,
   };
 }

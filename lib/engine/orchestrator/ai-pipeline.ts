@@ -29,6 +29,11 @@ import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mis
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
 import { appendModelMessages, getRecentModelMessages } from "@/lib/memory/store";
+import { generateBriefing } from "@/lib/memory/briefing";
+import { getKgContextForUser } from "@/lib/memory/kg-context";
+import { fireAndForgetIngestTurn } from "@/lib/memory/kg-ingest-pipeline";
+import { getRetrievedMemoryForUser } from "@/lib/memory/retrieval-context";
+import { upsertEmbedding } from "@/lib/embeddings/store";
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import { buildAgentSystemPrompt } from "./system-prompt";
 import { storeAsset, type Asset, type AssetKind } from "@/lib/assets/types";
@@ -36,6 +41,11 @@ import { getApplicableReports } from "@/lib/reports/catalog";
 import { randomUUID } from "crypto";
 import { buildProposeReportSpecTool } from "@/lib/reports/spec/llm-tool";
 import { defaultMetrics as defaultLlmMetrics } from "@/lib/llm/metrics";
+import {
+  getPersonaById,
+  getDefaultPersona,
+  getPersonaForSurface,
+} from "@/lib/personas/store";
 
 // Schema for validating tool results from the AI pipeline
 const ToolResultSchema = z.object({
@@ -61,6 +71,10 @@ export interface AiPipelineInput {
   conversationId?: string;
   /** Thread id — required for the create_artifact tool to scope assets to the right thread. */
   threadId?: string;
+  /** B4 — assetIds droppés dans ChatInput. Leurs résumés/contenus sont injectés dans le user message. */
+  attachedAssetIds?: string[];
+  /** C4 — persona explicite à appliquer pour ce run. Si absent, fallback sur (surface → default). */
+  personaId?: string;
 }
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
@@ -325,6 +339,8 @@ function buildCreateArtifactTool(
           tenantId: ctx.tenantId,
           workspaceId: ctx.workspaceId,
           userId: ctx.userId,
+          runId: engine.id,
+          modelUsed: "claude-sonnet-4-6",
           // Stored as `provenance.type` so adapter.mapKindToType picks it
           // up as the originalType (priorité absolue dans le mapping).
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -370,7 +386,7 @@ export async function runAiPipeline(
   //   provider, no Composio popup required.
   // - Composio tools for everything else (Slack, Notion, GitHub, Airtable,
   //   HubSpot, …).
-  const [nativeGoogleTools, composioToolsRaw] = await Promise.all([
+  const [nativeGoogleTools, composioToolsRaw, briefingResult, kgContext, retrievedMemory] = await Promise.all([
     buildNativeGoogleTools(input.userId).catch((err) => {
       console.error("[AiPipeline] native Google discovery failed:", err);
       return {} as Record<string, unknown>;
@@ -378,6 +394,30 @@ export async function runAiPipeline(
     getToolsForUser(input.userId).catch((err) => {
       console.error("[AiPipeline] Composio discovery failed:", err);
       return [] as Awaited<ReturnType<typeof getToolsForUser>>;
+    }),
+    // Briefing memory : fail-soft, jamais bloquant. Si Redis ou Anthropic
+    // tombent, on continue sans contexte personnalisé.
+    generateBriefing({ userId: input.userId }).catch((err) => {
+      console.warn("[AiPipeline] briefing fetch failed:", err);
+      return null;
+    }),
+    // Knowledge Graph context : fail-soft. Si Supabase tombe ou pas
+    // d'entités, on continue sans (le user n'a peut-être encore rien
+    // ingéré).
+    getKgContextForUser(input.userId, input.tenantId ?? "dev-tenant").catch((err) => {
+      console.warn("[AiPipeline] KG context fetch failed:", err);
+      return null;
+    }),
+    // Retrieved memory (LTM) : top-K embeddings sémantiques sur le
+    // message courant. Fail-soft : sans OPENAI_API_KEY ou sans pgvector
+    // upgradé, on continue avec une chaîne vide.
+    getRetrievedMemoryForUser({
+      userId: input.userId,
+      tenantId: input.tenantId ?? "dev-tenant",
+      currentMessage: input.message,
+    }).catch((err) => {
+      console.warn("[AiPipeline] retrieved memory fetch failed:", err);
+      return "";
     }),
   ]);
 
@@ -475,11 +515,40 @@ export async function runAiPipeline(
       missingApps: r.missingApps,
     }));
 
+  // C4 — Résolution persona :
+  // 1. personaId explicite (override per-thread)
+  // 2. persona builtin/DB associée à la surface (auto-apply heuristique)
+  // 3. persona default user (is_default=true)
+  // Fail-soft : tout fetch qui échoue retombe sur null → prompt sans bloc persona.
+  let persona: Awaited<ReturnType<typeof getPersonaById>> = null;
+  const personaScope = {
+    userId: input.userId,
+    tenantId: input.tenantId ?? "dev-tenant",
+  };
+  try {
+    if (input.personaId) {
+      persona = await getPersonaById(input.personaId, personaScope);
+    }
+    if (!persona && input.surface) {
+      persona = await getPersonaForSurface(input.surface, personaScope);
+    }
+    if (!persona) {
+      persona = await getDefaultPersona(personaScope);
+    }
+  } catch (err) {
+    console.warn("[AiPipeline] persona resolution failed:", err);
+    persona = null;
+  }
+
   const systemPrompt = buildAgentSystemPrompt({
     composioTools: [...nativeForPrompt, ...composioForPrompt],
     surface: input.surface,
     scheduleDirective: input.scheduleDirective ?? false,
     applicableReports: applicableReports.length > 0 ? applicableReports : undefined,
+    briefing: briefingResult?.text,
+    kgContext: kgContext ?? undefined,
+    retrievedMemory: retrievedMemory && retrievedMemory.length > 0 ? retrievedMemory : undefined,
+    persona,
   });
 
   // ── 4. Build message history ────────────────────────────────
@@ -497,7 +566,39 @@ export async function runAiPipeline(
     );
   }
 
-  const userMessage: ModelMessage = { role: "user" as const, content: input.message };
+  // B4 — Si l'utilisateur a droppé des assets dans ChatInput, on injecte
+  // leur résumé + contentRef tronqué (cap 8000 chars total) en préfixe du
+  // message pour que le modèle ait le contenu en contexte.
+  let userMessageContent = input.message;
+  if (input.attachedAssetIds && input.attachedAssetIds.length > 0) {
+    try {
+      const { loadAssetById } = await import("@/lib/assets/types");
+      const fetched = await Promise.all(
+        input.attachedAssetIds.slice(0, 5).map((id) =>
+          loadAssetById(id, {
+            tenantId: input.tenantId,
+            workspaceId: input.workspaceId,
+          }).catch(() => null),
+        ),
+      );
+      const valid = fetched.filter((a): a is NonNullable<typeof a> => Boolean(a));
+      if (valid.length > 0) {
+        const TOTAL_BUDGET = 8000;
+        const perAssetBudget = Math.floor(TOTAL_BUDGET / valid.length);
+        const blocks = valid.map((a) => {
+          const summary = a.summary ? `Résumé: ${a.summary}\n` : "";
+          const content = (a.contentRef ?? "").slice(0, perAssetBudget);
+          return `--- ASSET @${a.title} (id=${a.id}, kind=${a.kind}) ---\n${summary}${content}`;
+        });
+        userMessageContent =
+          `Le user a joint ${valid.length} asset(s) en contexte :\n\n${blocks.join("\n\n")}\n\n--- FIN ASSETS ---\n\n${input.message}`;
+      }
+    } catch (err) {
+      console.warn("[AiPipeline] attached assets injection failed:", err);
+    }
+  }
+
+  const userMessage: ModelMessage = { role: "user" as const, content: userMessageContent };
   const messages: ModelMessage[] = [...priorMessages, userMessage];
 
   // ── 5. Run streamText ───────────────────────────────────────
@@ -761,6 +862,50 @@ export async function runAiPipeline(
         );
       } catch (err) {
         console.error("[AiPipeline] Failed to persist structured messages:", err);
+      }
+    }
+
+    // KG auto-ingest — fire-and-forget après le run. Aucune erreur
+    // d'extraction ne fait échouer le run, et la promise détache
+    // immédiatement (pas de blocage du SSE close).
+    if (assistantTextBuffer.trim().length > 0) {
+      fireAndForgetIngestTurn({
+        userId: input.userId,
+        tenantId: input.tenantId ?? "dev-tenant",
+        userMessage: input.message,
+        assistantReply: assistantTextBuffer,
+      });
+    }
+
+    // LTM auto-ingest — embed le tour (user + assistant) en background.
+    // Fire-and-forget : aucune erreur ne casse le run. Si OPENAI_API_KEY
+    // absent, upsertEmbedding renvoie false silencieusement.
+    {
+      const tenantId = input.tenantId ?? "dev-tenant";
+      const turnId = input.conversationId ?? engine.id;
+      if (input.message.trim().length > 0) {
+        void upsertEmbedding({
+          userId: input.userId,
+          tenantId,
+          sourceKind: "message",
+          sourceId: `${turnId}:${Date.now()}:user`,
+          textExcerpt: input.message,
+          metadata: { role: "user", conversationId: input.conversationId ?? null, runId: engine.id },
+        }).catch((err) => {
+          console.warn("[AiPipeline] LTM upsert (user) failed:", err);
+        });
+      }
+      if (assistantTextBuffer.trim().length > 0) {
+        void upsertEmbedding({
+          userId: input.userId,
+          tenantId,
+          sourceKind: "message",
+          sourceId: `${turnId}:${Date.now() + 1}:assistant`,
+          textExcerpt: assistantTextBuffer,
+          metadata: { role: "assistant", conversationId: input.conversationId ?? null, runId: engine.id },
+        }).catch((err) => {
+          console.warn("[AiPipeline] LTM upsert (assistant) failed:", err);
+        });
       }
     }
 

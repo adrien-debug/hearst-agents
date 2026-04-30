@@ -329,6 +329,7 @@ export async function saveScheduledMission(
         input: mission.input,
         lastRunAt: mission.lastRunAt,
         lastRunId: mission.lastRunId,
+        workflowGraph: mission.workflowGraph,
       },
       services: [],
     });
@@ -488,5 +489,6 @@ function toScheduledMission(row: any): PersistedScheduledMission {
     lastRunId: actions.lastRunId as string | undefined,
     lastRunStatus: actions.lastRunStatus as PersistedScheduledMission["lastRunStatus"],
     lastError: actions.lastError as string | undefined,
+    workflowGraph: actions.workflowGraph as PersistedScheduledMission["workflowGraph"],
   };
 }

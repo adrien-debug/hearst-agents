@@ -21,7 +21,8 @@ export type JobKind =
   | "browser-task"
   | "meeting-bot"
   | "memory-ingest"
-  | "asset-variant";
+  | "asset-variant"
+  | "inbox-fetch";
 
 // ── Payloads par JobKind (discriminated union) ───────────────
 
@@ -113,6 +114,16 @@ export interface AssetVariantInput extends JobScopeFields {
   hint?: string;
 }
 
+export interface InboxFetchInput extends JobScopeFields {
+  jobKind: "inbox-fetch";
+  /** Limit côté Gmail unread (défaut 20). */
+  gmailLimit?: number;
+  /** Limit Calendar today events (défaut 10). */
+  calendarLimit?: number;
+  /** Cron-triggered ou manual ? Influe sur le throttling 5min. */
+  trigger?: "manual" | "cron";
+}
+
 export type JobPayload =
   | ImageGenInput
   | AudioGenInput
@@ -122,7 +133,8 @@ export type JobPayload =
   | BrowserTaskInput
   | MeetingBotInput
   | MemoryIngestInput
-  | AssetVariantInput;
+  | AssetVariantInput
+  | InboxFetchInput;
 
 // ── Result canonique ─────────────────────────────────────────
 

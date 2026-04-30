@@ -49,4 +49,10 @@ export interface PersistedScheduledMission {
   lastRunId?: string;
   lastRunStatus?: PersistedMissionRunStatus;
   lastError?: string;
+  /**
+   * Graphe de workflow optionnel (Mission Control C3). Quand non-null,
+   * `mission/[id]/run` route vers `executeWorkflow` au lieu de l'orchestrator
+   * standard. Stocké dans `actions.workflowGraph` JSONB côté Supabase.
+   */
+  workflowGraph?: import("@/lib/workflows/types").WorkflowGraph;
 }

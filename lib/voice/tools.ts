@@ -30,6 +30,16 @@ export interface VoiceToolResult {
   output: string;
   /** Stage transition à appliquer côté client après réception. */
   stageRequest?: StagePayload;
+  /** Provider attribué (gmail, slack, composio, e2b, fal, recall_ai…). Sert
+   * au receipt visuel via ProviderChip. */
+  providerId?: string;
+  /** Latence d'exécution end-to-end côté serveur (ms). */
+  latencyMs?: number;
+  /** Coût USD imputé à ce tool call. 0 si négligeable. */
+  costUsd?: number;
+  /** Statut technique (success/error). Le pending est implicite côté UI
+   * avant la résolution de la promise tool-call. */
+  status?: "success" | "error";
 }
 
 interface ExecuteVoiceToolInput {
@@ -42,36 +52,43 @@ export async function executeVoiceTool(
   input: ExecuteVoiceToolInput,
 ): Promise<VoiceToolResult> {
   const { name, args, scope } = input;
+  const startedAt = Date.now();
 
   switch (name) {
     case "start_meeting_bot": {
       const meetingUrl = typeof args.meeting_url === "string" ? args.meeting_url : "";
       const botName = typeof args.bot_name === "string" ? args.bot_name : undefined;
       if (!meetingUrl) {
-        return { output: "Meeting URL manquante." };
+        return { output: "Meeting URL manquante.", status: "error" };
       }
       const { botId } = await createMeetingBot({ meetingUrl, botName });
       return {
         output: `Bot Recall.ai lancé sur le meeting. ID: ${botId}.`,
         stageRequest: { mode: "meeting", meetingId: botId },
+        providerId: "recall_ai",
+        latencyMs: Date.now() - startedAt,
+        status: "success",
       };
     }
 
     case "start_simulation": {
       const scenario = typeof args.scenario === "string" ? args.scenario : "";
       if (!scenario) {
-        return { output: "Scénario manquant." };
+        return { output: "Scénario manquant.", status: "error" };
       }
       return {
         output: "Chambre de Simulation ouverte sur le scénario.",
         stageRequest: { mode: "simulation", scenario },
+        providerId: "hearst",
+        latencyMs: Date.now() - startedAt,
+        status: "success",
       };
     }
 
     case "generate_image": {
       const prompt = typeof args.prompt === "string" ? args.prompt : "";
       if (!prompt) {
-        return { output: "Prompt image manquant." };
+        return { output: "Prompt image manquant.", status: "error" };
       }
       const style = typeof args.style === "string" ? args.style : undefined;
       const fullPrompt = style ? `${prompt} — style: ${style}` : prompt;
@@ -123,6 +140,10 @@ export async function executeVoiceTool(
       return {
         output: "Génération d'image lancée, 5-15 secondes.",
         stageRequest: { mode: "asset", assetId, variantKind: "image" },
+        providerId: "fal_ai",
+        latencyMs: Date.now() - startedAt,
+        costUsd: 0.05,
+        status: "success",
       };
     }
 
@@ -137,17 +158,26 @@ export async function executeVoiceTool(
           entityId: scope.userId,
           params: args,
         });
+        // Provider attribution : extrait le préfixe APP du slug (ex:
+        // GMAIL_SEND_EMAIL → gmail). Pour le ProviderChip côté UI.
+        const providerId = name.split("_")[0]?.toLowerCase() || "composio";
         if (!result.ok) {
-          return { output: `Erreur ${name}: ${result.error ?? "exécution échouée"}` };
+          return {
+            output: `Erreur ${name}: ${result.error ?? "exécution échouée"}`,
+            providerId,
+            latencyMs: Date.now() - startedAt,
+            status: "error",
+          };
         }
-        // Composio renvoie un payload data hétérogène par tool. On
-        // sérialise en JSON compact pour que le modèle Realtime puisse le
-        // narrer en français à l'utilisateur. Tronque pour éviter de
-        // saturer le contexte.
         const dataStr = JSON.stringify(result.data ?? {});
         const truncated = dataStr.length > 2000 ? `${dataStr.slice(0, 2000)}…` : dataStr;
-        return { output: truncated };
+        return {
+          output: truncated,
+          providerId,
+          latencyMs: Date.now() - startedAt,
+          status: "success",
+        };
       }
-      return { output: `Outil ${name} inconnu.` };
+      return { output: `Outil ${name} inconnu.`, status: "error" };
   }
 }

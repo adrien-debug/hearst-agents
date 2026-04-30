@@ -7,6 +7,7 @@
  * - ⌘1..⌘9    : switch direct vers un Stage (cockpit/chat/asset/browser/
  *               meeting/kg/voice/simulation/mission — grille systématique,
  *               voir STAGE_HOTKEYS)
+ * - ⌘0        : ArtifactStage (B8 — code editor + E2B run)
  * - ⌘⇧V       : toggle direct mode voix ambient (raccourci alternatif
  *               à ⌘7, accessible même quand un autre Stage est actif)
  * - ⌘B        : toggle WorkingDocument (Thinking Canvas — Lot C)
@@ -124,6 +125,9 @@ export function useGlobalHotkeys() {
             break;
           case "simulation":
             setMode({ mode: "simulation" });
+            break;
+          case "artifact":
+            setMode({ mode: "artifact" });
             break;
         }
         return;

@@ -20,6 +20,7 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import type { ReportSpec } from "@/lib/reports/spec/schema";
 import { ReportEditor } from "@/app/(user)/components/reports/ReportEditor";
 import { ReportActions } from "@/app/(user)/components/ReportActions";
+import { SourceCitation, type Source } from "@/app/(user)/components/SourceCitation";
 import type { VersionSummary } from "@/lib/reports/versions/store";
 import type { VersionDiff } from "@/lib/reports/versions/diff";
 import { useReportsStore } from "@/stores/reports";
@@ -172,6 +173,14 @@ export function ReportLayout({
     ? orderedBlocks
     : effectivePayload.blocks.filter((b) => !hiddenIds.has(b.id));
 
+  // B4 — citations cliquables. Si le payload porte un champ `sources`
+  // (extension douce, fail-soft), on wrap la grille dans SourceCitation
+  // qui détecte les `<sup data-source-id="..."/>` rendus par les blocks.
+  const reportSources: ReadonlyArray<Source> = useMemo(() => {
+    const raw = (effectivePayload as unknown as { sources?: ReadonlyArray<Source> }).sources;
+    return Array.isArray(raw) ? raw : [];
+  }, [effectivePayload]);
+
   return (
     <div
       className="flex w-full"
@@ -254,36 +263,38 @@ export function ReportLayout({
           </div>
         )}
 
-        <div
-          className="grid w-full"
-          style={{
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: "var(--space-4)",
-          }}
-        >
-          {visibleBlocks.map((block) => (
-            <div
-              key={block.id}
-              style={{ gridColumn: `span ${block.layout.col}` }}
-              className="flex flex-col"
-            >
-              {block.label && block.type !== "kpi" && (
-                <div
-                  className="t-9 font-mono uppercase text-[var(--text-muted)]"
-                  style={{
-                    letterSpacing: "var(--tracking-display)",
-                    marginBottom: "var(--space-3)",
-                    paddingBottom: "var(--space-2)",
-                    borderBottom: "1px solid var(--surface-2)",
-                  }}
-                >
-                  {block.label}
-                </div>
-              )}
-              <BlockRenderer block={block} />
-            </div>
-          ))}
-        </div>
+        <SourceCitation sources={reportSources}>
+          <div
+            className="grid w-full"
+            style={{
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: "var(--space-4)",
+            }}
+          >
+            {visibleBlocks.map((block) => (
+              <div
+                key={block.id}
+                style={{ gridColumn: `span ${block.layout.col}` }}
+                className="flex flex-col"
+              >
+                {block.label && block.type !== "kpi" && (
+                  <div
+                    className="t-9 font-mono uppercase text-[var(--text-muted)]"
+                    style={{
+                      letterSpacing: "var(--tracking-display)",
+                      marginBottom: "var(--space-3)",
+                      paddingBottom: "var(--space-2)",
+                      borderBottom: "1px solid var(--surface-2)",
+                    }}
+                  >
+                    {block.label}
+                  </div>
+                )}
+                <BlockRenderer block={block} />
+              </div>
+            ))}
+          </div>
+        </SourceCitation>
 
         {showMeta && (
           <div

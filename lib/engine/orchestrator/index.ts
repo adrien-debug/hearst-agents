@@ -16,6 +16,7 @@ import { SSEAdapter } from "@/lib/events/consumers/sse-adapter";
 import { LogPersister } from "@/lib/events/consumers/log-persister";
 import { globalRunBus } from "@/lib/events/global-bus";
 import { runAiPipeline } from "./ai-pipeline";
+import { runPlannerWorkflow, isComplexIntent, isPlannerEnabled } from "./run-planner-workflow";
 import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, type ExecutionDecision } from "@/lib/capabilities/router";
 
 import { selectToolsForContext } from "@/lib/tools/surface-selector";
@@ -56,6 +57,10 @@ interface OrchestrateInput {
   surface?: string;
   focalContext?: FocalContext;
   conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
+  /** B4 — assets droppés dans ChatInput. Le pipeline IA les injecte dans le user message. */
+  attachedAssetIds?: string[];
+  /** C4 — persona explicite (override per-thread / par message). */
+  personaId?: string;
   /** Set when triggered by the scheduler for a scheduled mission. */
   missionId?: string;
   tenantId?: string;
@@ -157,6 +162,8 @@ async function handleAiPipeline(
     workspaceId: scope.workspaceId,
     conversationId: input.conversationId,
     threadId: input.threadId,
+    attachedAssetIds: input.attachedAssetIds,
+    personaId: input.personaId,
   });
 }
 
@@ -570,6 +577,37 @@ async function runPipeline(
       });
       await runResearchReport({ message: input.message, engine, eventBus, scope, threadId: input.threadId });
       return;
+    }
+
+    // ── Mission Control planner (B1) ─────────────────────────
+    // Si l'intention est complexe ET le feature flag est ON, on route vers
+    // le planner multi-step (preview → execution step-by-step). Fail-soft :
+    // tout crash retombe sur runAiPipeline, jamais bloquant pour le user.
+    if (isPlannerEnabled() && isComplexIntent(input.message)) {
+      eventBus.emit({
+        type: "orchestrator_log",
+        run_id: engine.id,
+        message: "Complex intent detected — routing to planner workflow",
+      });
+      try {
+        await runPlannerWorkflow(engine, eventBus, {
+          userId: input.userId,
+          tenantId: scope.tenantId,
+          workspaceId: scope.workspaceId,
+          threadId: input.threadId ?? input.conversationId ?? engine.id,
+          message: input.message,
+        });
+        await engine.complete();
+        return;
+      } catch (err) {
+        console.error("[Orchestrator] planner crash — fallback to AI pipeline:", err);
+        eventBus.emit({
+          type: "orchestrator_log",
+          run_id: engine.id,
+          message: `Planner failed (${err instanceof Error ? err.message : "unknown"}) — fallback to AI pipeline`,
+        });
+        // Fall through to handleAiPipeline below
+      }
     }
 
     // Every other execution mode flows through the same AI pipeline. The

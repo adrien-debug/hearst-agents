@@ -31,7 +31,8 @@ import { useEffect, useState } from "react";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { ReportLayout } from "../ReportLayout";
-import { AssetVariantTabs } from "../AssetVariantTabs";
+import { VariantCarousel } from "../VariantCarousel";
+import { AssetLineage } from "../AssetLineage";
 import { isHtmlContent, tryParseReportPayload } from "@/lib/assets/content-parser";
 import { ResearchReportArticle } from "../reports/ResearchReportArticle";
 import { StageActionBar, type StageAction } from "./StageActionBar";
@@ -406,6 +407,14 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                   image-only, ces infos vivent dans le ContextRail droit. */}
               {!isImageOnly && (
                 <>
+                  {/* Lineage / provenance — toujours visible en haut pour rappeler
+                      d'où vient l'asset (mission, run, modèle, sources). */}
+                  <AssetLineage
+                    asset={asset}
+                    onOpenParent={(parentId) =>
+                      useStageStore.getState().setMode({ mode: "asset", assetId: parentId })
+                    }
+                  />
                   <h1
                     className="t-28 font-medium tracking-tight text-[var(--text)]"
                     style={{ lineHeight: "var(--leading-snug)", marginBottom: "var(--space-3)" }}
@@ -510,14 +519,13 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                 <AssetBody contentRef={asset.contentRef} title={asset.title} />
               ) : null}
 
-              {/* AssetVariantTabs : seulement pour les assets texte/rapport
-                  (contentRef rempli). Une image pure (générée par
-                  generate_image) n'a pas de sens à proposer "audio narration"
-                  ou "code" — il n'y a pas de texte source à transformer.
-                  Pour les rapports texte, les tabs permettent de générer
-                  l'audio (TTS) ou la vidéo à partir du contenu. */}
+              {/* VariantCarousel : carrousel visuel des variants alternatifs
+                  (audio, vidéo, image, code). Remplace AssetVariantTabs (B4).
+                  Affiché uniquement pour les assets texte/rapport — une image
+                  pure générée par generate_image n'a pas de sens à proposer
+                  "audio narration" ou "code". */}
               {asset.contentRef && asset.contentRef.length > 0 ? (
-                <AssetVariantTabs
+                <VariantCarousel
                   assetId={asset.id}
                   sourceText={asset.contentRef ?? asset.summary ?? asset.title}
                   defaultKind={

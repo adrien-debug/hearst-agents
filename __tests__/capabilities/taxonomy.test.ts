@@ -53,6 +53,52 @@ describe("resolveDomain", () => {
   it("generic prompt → general", () => {
     expect(resolveDomain("Bonjour comment ça va")).toBe("general");
   });
+
+  // ── Top 30 toolkits — nouveaux mappings ──────────────────
+
+  it("whatsapp prompt → communication", () => {
+    expect(resolveDomain("Envoie un message WhatsApp à Adrien")).toBe("communication");
+  });
+
+  it("twilio sms prompt → communication", () => {
+    expect(resolveDomain("Envoie un SMS via Twilio")).toBe("communication");
+  });
+
+  it("mailchimp campaign prompt → communication", () => {
+    expect(resolveDomain("Lance une campagne Mailchimp")).toBe("communication");
+  });
+
+  it("linear ticket prompt → productivity", () => {
+    expect(resolveDomain("Crée une tâche Linear")).toBe("productivity");
+  });
+
+  it("airtable prompt → productivity", () => {
+    expect(resolveDomain("Cherche dans ma base Airtable")).toBe("productivity");
+  });
+
+  it("salesforce prompt → crm", () => {
+    expect(resolveDomain("Crée un deal Salesforce")).toBe("crm");
+  });
+
+  it("zendesk prompt → crm", () => {
+    expect(resolveDomain("Ouvre Zendesk et regarde le support client")).toBe("crm");
+  });
+
+  it("shopify prompt → finance", () => {
+    expect(resolveDomain("Liste mes commandes Shopify")).toBe("finance");
+  });
+
+  it("quickbooks prompt → finance", () => {
+    expect(resolveDomain("Exporte mes factures QuickBooks")).toBe("finance");
+  });
+
+  it("gitlab prompt → developer", () => {
+    expect(resolveDomain("Liste mes merge requests GitLab")).toBe("developer");
+  });
+
+  it("amplitude prompt → analysis", () => {
+    expect(resolveDomain("Analyse la cohorte Amplitude des nouveaux users")).toBe("analysis");
+  });
 });
 
 // ── resolveRetrievalMode — backward compatibility ───────────
@@ -152,5 +198,48 @@ describe("taxonomy integrity", () => {
     expect(getProvidersForDomain("finance")).toContain("stripe");
     expect(getProvidersForDomain("communication")).not.toContain("stripe");
     expect(getProvidersForDomain("productivity")).not.toContain("stripe");
+  });
+
+  it("nouveaux providers Composio rattachés au bon domain", () => {
+    // CRM/Sales/Support
+    expect(getProvidersForDomain("crm")).toEqual(
+      expect.arrayContaining([
+        "salesforce", "pipedrive", "zoho", "close", "copper",
+        "zendesk", "intercom", "freshdesk", "helpscout",
+      ]),
+    );
+    // Project mgmt
+    expect(getProvidersForDomain("productivity")).toEqual(
+      expect.arrayContaining([
+        "linear", "asana", "monday", "trello", "jira",
+        "clickup", "airtable",
+      ]),
+    );
+    // Communication
+    expect(getProvidersForDomain("communication")).toEqual(
+      expect.arrayContaining([
+        "whatsapp", "twilio", "vonage", "discord",
+        "microsoftteams", "sendgrid", "mailchimp",
+      ]),
+    );
+    // Finance / e-commerce / accounting
+    expect(getProvidersForDomain("finance")).toEqual(
+      expect.arrayContaining([
+        "stripe", "quickbooks", "xero",
+        "shopify", "woocommerce", "bigcommerce",
+      ]),
+    );
+    // Dev
+    expect(getProvidersForDomain("developer")).toEqual(
+      expect.arrayContaining(["github", "gitlab", "bitbucket", "jira"]),
+    );
+    // Design
+    expect(getProvidersForDomain("design")).toEqual(
+      expect.arrayContaining(["figma", "canva"]),
+    );
+    // Analytics
+    expect(getProvidersForDomain("analysis")).toEqual(
+      expect.arrayContaining(["amplitude", "mixpanel", "segment"]),
+    );
   });
 });
