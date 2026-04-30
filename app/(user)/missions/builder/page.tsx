@@ -343,8 +343,38 @@ export default function WorkflowBuilderPage() {
         </div>
       )}
 
+      {/* Workflow Builder = canvas Cytoscape, pas adaptable mobile.
+          On affiche un message dédié < lg pour économiser le travail visuel. */}
       <div
-        className="flex-1 grid min-h-0"
+        className="flex-1 lg:hidden flex items-center justify-center"
+        style={{ padding: "var(--space-8)" }}
+      >
+        <div
+          className="flex flex-col items-center text-center"
+          style={{
+            gap: "var(--space-3)",
+            maxWidth: "var(--width-actions)",
+            padding: "var(--space-8)",
+            border: "1px solid var(--border-default)",
+            borderRadius: "var(--radius-md)",
+            background: "var(--surface-1)",
+          }}
+        >
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            Vue desktop
+          </span>
+          <h2 className="t-15 text-[var(--text)]">
+            Builder de workflow optimisé pour ordinateur
+          </h2>
+          <p className="t-13 text-[var(--text-muted)]">
+            Cette vue utilise un canvas graphique pour composer les missions
+            multi-step. Ouvre-la sur ordinateur pour la meilleure expérience.
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="flex-1 hidden lg:grid min-h-0"
         style={{
           gridTemplateColumns: "240px 1fr 320px",
         }}

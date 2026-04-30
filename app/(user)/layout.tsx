@@ -7,6 +7,8 @@ import { RightPanel } from "./components/RightPanel";
 import { Commandeur } from "./components/Commandeur";
 import { ChatDock } from "./components/ChatDock";
 import { PulseBar } from "./components/PulseBar";
+import { MobileBottomNav } from "./components/MobileBottomNav";
+import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { VoicePulse } from "./components/voice/VoicePulse";
 import { ToastContainer } from "@/app/components/ToastContainer";
 import { useToast } from "@/app/hooks/use-toast";
@@ -95,6 +97,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       <BriefingAutoTrigger />
       <WebVitalsInit />
       <NotificationsHydrate />
+      <ServiceWorkerRegister />
       <ToastProvider>
         <div
           className="h-screen w-full flex flex-col overflow-hidden"
@@ -103,9 +106,12 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           {/* PulseBar — top fixed, état système + Cmd+K + voice + notifications */}
           <PulseBar />
 
-          {/* Row 3 colonnes : TimelineRail / Stage / ContextRail */}
+          {/* Row 3 colonnes : TimelineRail / Stage / ContextRail
+             Mobile (< md) : padding réduit, gap réduit, espace bas réservé
+             à MobileBottomNav (pb-16). LeftPanelShell + RightPanel gèrent
+             leur état mobile (drawer) en interne. */}
           <div
-            className="flex-1 flex min-h-0 w-full overflow-hidden p-4 gap-4"
+            className="flex-1 flex min-h-0 w-full overflow-hidden p-2 gap-2 pb-20 md:p-4 md:gap-4 md:pb-4"
             style={{ background: "var(--bg)", color: "var(--text)" }}
           >
             <LeftPanelShell />
@@ -125,6 +131,9 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
             <RightPanel />
           </div>
+
+          {/* Bottom nav mobile — < md uniquement, fixed bottom */}
+          <MobileBottomNav />
 
           {/* Overlay global — toujours monté, contrôlé par useStageStore.commandeurOpen */}
           <Commandeur />

@@ -30,6 +30,7 @@
 import { useEffect, useState } from "react";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
+import { useOfflineStatus } from "../use-offline-status";
 import { ReportLayout } from "../ReportLayout";
 import { VariantCarousel } from "../VariantCarousel";
 import { AssetLineage } from "../AssetLineage";
@@ -67,6 +68,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [primaryImageUrl, setPrimaryImageUrl] = useState<string | null>(null);
   const [imageStatus, setImageStatus] = useState<ImageStatus>("idle");
+  const { isOnline } = useOfflineStatus();
 
   // Poll les variants image. Tracke quatre états :
   //   - idle    : aucun variant image attendu (asset texte pur, ou pas encore décidé)
@@ -301,6 +303,34 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative" style={{ background: "var(--bg-center)" }}>
+      {!isOnline && (
+        <div
+          role="status"
+          aria-live="polite"
+          data-testid="asset-offline-banner"
+          className="flex items-center justify-center"
+          style={{
+            padding: "var(--space-2) var(--space-4)",
+            background: "var(--cykan-surface)",
+            borderBottom: "1px solid var(--cykan-border)",
+            gap: "var(--space-2)",
+          }}
+        >
+          <span
+            className="rounded-pill"
+            style={{
+              width: "var(--space-1)",
+              height: "var(--space-1)",
+              background: "var(--cykan)",
+            }}
+          />
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            {asset
+              ? "Mode hors ligne — affichage cache"
+              : "Hors ligne — connecte-toi pour voir cet asset"}
+          </span>
+        </div>
+      )}
       {isImageOnly ? (
         // Mini header : back + titre tronqué (actions déportées au rail droit
         // pour les images, mais le titre reste visible pour ne pas se sentir

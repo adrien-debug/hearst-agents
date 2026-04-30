@@ -6,6 +6,7 @@ import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
 import { useServicesStore } from "@/stores/services";
 import { useStageStore, type StagePayload } from "@/stores/stage";
+import { useVoiceStore } from "@/stores/voice";
 import type { Message, RightPanelData } from "@/lib/core/types";
 import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 import { mapFocalObject, mapFocalObjects } from "@/lib/core/types/focal";
@@ -51,6 +52,30 @@ export default function HomePage() {
   const updateThreadName = useNavigationStore((s) => s.updateThreadName);
   const setStageMode = useStageStore((s) => s.setMode);
   const stageMode = useStageStore((s) => s.current.mode);
+  const setVoiceActive = useVoiceStore((s) => s.setVoiceActive);
+
+  // C8 Mobile companion : query param ?stage=<mode> permet aux shortcuts PWA
+  // (long-press homescreen → "Voice", "Cockpit", etc.) d'ouvrir un Stage
+  // direct au load. Pour `voice`, on auto-active la session voix.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const stageParam = params.get("stage");
+    if (!stageParam) return;
+    if (stageParam === "voice") {
+      setStageMode({ mode: "voice" });
+      setVoiceActive(true);
+    } else if (stageParam === "cockpit") {
+      setStageMode({ mode: "cockpit" });
+    } else if (stageParam === "chat") {
+      setStageMode({ mode: "chat" });
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.delete("stage");
+    window.history.replaceState({}, "", url.toString());
+    // Run only once au load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!activeThreadId) {

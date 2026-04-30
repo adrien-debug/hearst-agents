@@ -433,9 +433,40 @@ function ReportStudioPageContent() {
         )}
       </div>
 
+      {/* Mobile fallback — 3-col layout pas adaptable < lg.
+          On guide l'utilisateur vers un environnement desktop. */}
+      <div
+        className="flex-1 lg:hidden flex items-center justify-center"
+        style={{ padding: "var(--space-8)" }}
+      >
+        <div
+          className="flex flex-col items-center text-center"
+          style={{
+            gap: "var(--space-3)",
+            maxWidth: "var(--width-actions)",
+            padding: "var(--space-8)",
+            border: "1px solid var(--border-default)",
+            borderRadius: "var(--radius-md)",
+            background: "var(--surface-1)",
+          }}
+        >
+          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">
+            Vue desktop
+          </span>
+          <h2 className="t-15 text-[var(--text)]">
+            Report Studio optimisé pour ordinateur
+          </h2>
+          <p className="t-13 text-[var(--text-muted)]">
+            Le block editor utilise un layout 3 colonnes (palette / preview /
+            config). Ouvre Report Studio sur ordinateur pour la meilleure
+            expérience.
+          </p>
+        </div>
+      </div>
+
       {/* 3-column layout */}
       <div
-        className="flex flex-1 min-h-0"
+        className="hidden lg:flex flex-1 min-h-0"
         style={{ background: "var(--bg)" }}
       >
         {/* Left : palette */}

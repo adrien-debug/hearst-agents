@@ -147,11 +147,7 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="h-full min-h-0 overflow-y-auto bg-bg text-text">
       <div
-        className="mx-auto w-full max-w-[min(100%,var(--width-actions))] flex flex-col"
-        style={{
-          gap: "var(--space-6)",
-          padding: "var(--space-8) var(--space-12)",
-        }}
+        className="mx-auto w-full max-w-[min(100%,var(--width-actions))] flex flex-col gap-4 md:gap-6 p-4 md:p-8 md:px-12"
       >
         <header className="flex flex-col" style={{ gap: "var(--space-2)" }}>
           <p className="t-10 font-mono uppercase tracking-(--tracking-stretch) text-[var(--text-faint)]">
@@ -184,7 +180,7 @@ export default function AdminAnalyticsPage() {
         )}
 
         <section
-          className="grid grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
           style={{ gap: "var(--space-3)" }}
         >
           <AnalyticsKpiCard
