@@ -14,6 +14,10 @@
  * Désormais : un fetch /api/v2/assets/[id], parse via les helpers
  * lib/assets/content-parser (ReportLayout JSON / HTML iframe / plain
  * text), rend directement. Pas de bridge useFocalStore.
+ *
+ * Refonte 2026-04-30 : header unifié via <StageActionBar /> — actions
+ * cohérentes (Re-run, Éditer, Exporter, Partager, overflow). Delete
+ * passe par <ConfirmModal /> et redirige back après succès.
  */
 
 import { useEffect, useState } from "react";
@@ -23,6 +27,8 @@ import { ReportLayout } from "../ReportLayout";
 import { AssetVariantTabs } from "../AssetVariantTabs";
 import { isHtmlContent, tryParseReportPayload } from "@/lib/assets/content-parser";
 import { ResearchReportArticle } from "../reports/ResearchReportArticle";
+import { StageActionBar, type StageAction } from "./StageActionBar";
+import { ConfirmModal } from "../ConfirmModal";
 import type { Asset } from "@/lib/assets/types";
 import { isPlaceholderAssetId } from "@/lib/ui/asset-id";
 
@@ -46,6 +52,9 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [actionMsg, setActionMsg] = useState<string | null>(null);
 
   // Sync vers stage-data pour ContextRailForAsset (titre + assetId).
   // Les variants sont écrits par AssetVariantTabs séparément — on lit la
@@ -106,35 +115,164 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
     };
   }, [assetId]);
 
+  const flash = (msg: string) => {
+    setActionMsg(msg);
+    window.setTimeout(() => setActionMsg(null), 3000);
+  };
+
+  const handleRerun = () => {
+    // POST /api/reports/[id]/rerun (stub) — fallback toast si non
+    // implémenté. La requête réelle reste en best-effort, l'utilisateur
+    // récupère un retour visuel quoi qu'il arrive.
+    void fetch(`/api/reports/${encodeURIComponent(assetId)}/rerun`, {
+      method: "POST",
+      credentials: "include",
+    })
+      .then(async (r) => {
+        if (r.status === 404) {
+          flash("Re-run non disponible pour cet asset");
+          return;
+        }
+        if (!r.ok) {
+          flash(`Erreur Re-run · HTTP ${r.status}`);
+          return;
+        }
+        flash("Re-run lancé");
+      })
+      .catch(() => flash("Re-run injoignable"));
+  };
+
+  const handleExport = () => {
+    const url = `/api/reports/${encodeURIComponent(assetId)}/export?format=pdf`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${asset?.title ?? "report"}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleShare = () => {
+    void fetch(`/api/reports/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ assetId, ttlHours: 168 }),
+    })
+      .then(async (r) => {
+        if (!r.ok) {
+          flash(`Erreur partage · HTTP ${r.status}`);
+          return;
+        }
+        const json = (await r.json()) as { shareUrl?: string };
+        if (json.shareUrl) {
+          await navigator.clipboard?.writeText(json.shareUrl);
+          flash("Lien copié dans le presse-papiers");
+        }
+      })
+      .catch(() => flash("Partage injoignable"));
+  };
+
+  const handleEdit = () => {
+    // L'édition fine vit dans <ReportLayout /> via spec/onSpecChange.
+    // Sans spec à ce niveau, on pousse un toast pour signaler que
+    // l'édition se fait dans le panneau du report.
+    flash("Utilise le bouton Éditer du rapport pour modifier les blocs");
+  };
+
+  const handleDuplicate = () => flash("Dupliquer · pas encore implémenté");
+  const handleVersions = () => flash("Versions disponibles dans le rapport");
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const r = await fetch(`/api/v2/assets/${encodeURIComponent(assetId)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!r.ok) {
+        flash(`Erreur suppression · HTTP ${r.status}`);
+        return;
+      }
+      setConfirmDelete(false);
+      back();
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const primary: StageAction = {
+    id: "rerun",
+    label: "Re-run",
+    onClick: handleRerun,
+    disabled: !asset || loading,
+  };
+  const secondary: StageAction[] = [
+    { id: "edit", label: "Éditer", onClick: handleEdit, disabled: !asset || loading },
+    { id: "export", label: "Exporter PDF", onClick: handleExport, disabled: !asset || loading },
+    { id: "share", label: "Partager", onClick: handleShare, disabled: !asset || loading },
+  ];
+  const overflow: StageAction[] = [
+    { id: "duplicate", label: "Dupliquer", onClick: handleDuplicate },
+    { id: "versions", label: "Versions", onClick: handleVersions },
+    {
+      id: "delete",
+      label: "Supprimer",
+      variant: "danger",
+      onClick: () => setConfirmDelete(true),
+    },
+  ];
+
   return (
     <div className="flex-1 flex flex-col min-h-0 relative" style={{ background: "var(--bg-center)" }}>
-      <header className="flex items-center justify-between px-12 py-6 flex-shrink-0 relative z-10 border-b border-[var(--border-default)]">
-        <div className="flex items-center gap-4">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">ASSET</span>
-          <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">{assetId.slice(0, 8)}</span>
-          {asset && (
-            <>
-              <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{asset.kind}</span>
-            </>
-          )}
-          {variantKind && (
-            <>
-              <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-              <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{variantKind}</span>
-            </>
-          )}
-        </div>
-        <button
-          onClick={back}
-          className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-9 font-mono uppercase tracking-section border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
-          title="Retour"
+      <StageActionBar
+        context={
+          <>
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-faint)]">ASSET</span>
+            <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--text-muted)]">{assetId.slice(0, 8)}</span>
+            {asset && (
+              <>
+                <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{asset.kind}</span>
+              </>
+            )}
+            {variantKind && (
+              <>
+                <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+                <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">{variantKind}</span>
+              </>
+            )}
+          </>
+        }
+        primary={primary}
+        secondary={secondary}
+        overflow={overflow}
+        onBack={back}
+      />
+
+      {actionMsg && (
+        <div
+          role="status"
+          aria-live="polite"
+          data-testid="asset-stage-toast"
+          className="flex items-center"
+          style={{
+            position: "absolute",
+            top: "calc(var(--space-16) + var(--space-2))",
+            right: "var(--space-12)",
+            zIndex: 20,
+            padding: "var(--space-2) var(--space-4)",
+            background: "var(--surface-1)",
+            border: "1px solid var(--cykan)",
+            borderRadius: "var(--radius-xs)",
+            color: "var(--cykan)",
+            gap: "var(--space-2)",
+          }}
         >
-          <span>Retour</span>
-          <span className="opacity-60">⌘⌫</span>
-        </button>
-      </header>
+          <span className="t-9 font-mono uppercase tracking-display">{actionMsg}</span>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-12 py-12 min-h-full">
@@ -183,6 +321,17 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmDelete}
+        title="Supprimer cet asset ?"
+        description={`L'asset « ${asset?.title ?? assetId.slice(0, 8)} » sera supprimé définitivement. Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        variant="danger"
+        loading={deleting}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

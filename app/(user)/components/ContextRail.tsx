@@ -20,6 +20,7 @@ import { useServicesStore } from "@/stores/services";
 import { voiceToolDefs, VOICE_TOOL_LABELS } from "@/lib/voice/tool-defs";
 import { useRightPanelData } from "./right-panel/useRightPanelData";
 import { GeneralDashboard } from "./right-panel/GeneralDashboard";
+import { ContextRailForMission } from "./ContextRailForMission";
 
 interface ContextRailProps {
   onClose?: () => void;
@@ -45,6 +46,12 @@ export function ContextRail({ onClose }: ContextRailProps) {
       return (
         <ContextRailShell onClose={onClose}>
           <ContextRailForAsset />
+        </ContextRailShell>
+      );
+    case "mission":
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForMission />
         </ContextRailShell>
       );
     case "browser":

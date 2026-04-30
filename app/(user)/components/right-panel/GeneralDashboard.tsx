@@ -1,10 +1,11 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { useFocalStore } from "@/stores/focal";
 import { useStageStore } from "@/stores/stage";
 import { assetToFocal } from "@/lib/ui/focal-mappers";
 import { isPlaceholderAssetId } from "@/lib/ui/asset-id";
+import { ConfirmModal } from "../ConfirmModal";
 
 interface GeneralDashboardProps {
   assets?: unknown;
@@ -107,6 +108,249 @@ function Row({
   );
 }
 
+/**
+ * AssetRow — ligne asset avec actions hover (open / share / delete).
+ *
+ * Pattern aligné sur MissionRow : div role=button cliquable + icon-buttons
+ * en sibling, visibles au hover (opacity-0 → 1).
+ */
+function AssetRow({
+  asset,
+  onOpen,
+  onShare,
+  onDelete,
+}: {
+  asset: DashboardAsset;
+  onOpen: () => void;
+  onShare: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div
+      className="dash-row group"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      style={{ position: "relative" }}
+    >
+      <span className="dash-row-icon">
+        {asset.type === "report" ? <ReportIcon /> : <DocIcon />}
+      </span>
+      <span className="dash-row-label">{asset.name || asset.title || "Asset"}</span>
+      <span
+        className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+        style={{ gap: "var(--space-2)" }}
+      >
+        <IconButton
+          label="Open"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen();
+          }}
+          testId={`dashboard-asset-open-${asset.id}`}
+        >
+          <OpenIcon />
+        </IconButton>
+        <IconButton
+          label="Share"
+          onClick={(e) => {
+            e.stopPropagation();
+            onShare();
+          }}
+          testId={`dashboard-asset-share-${asset.id}`}
+        >
+          <ShareIcon />
+        </IconButton>
+        <IconButton
+          label="Delete"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          testId={`dashboard-asset-delete-${asset.id}`}
+        >
+          <TrashIcon />
+        </IconButton>
+      </span>
+      <span className="dash-row-meta">{(asset.type || "file").toUpperCase()}</span>
+    </div>
+  );
+}
+
+const OpenIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M14 3h7v7" />
+    <path d="M21 3l-9 9" />
+    <path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+  </svg>
+);
+
+const ShareIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <path d="M8.59 13.51l6.83 3.98" />
+    <path d="M15.41 6.51l-6.82 3.98" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    <path d="M10 11v6" />
+    <path d="M14 11v6" />
+  </svg>
+);
+
+interface DashboardMission {
+  id: string;
+  name: string;
+  enabled?: boolean;
+  opsStatus?: "idle" | "running" | "success" | "failed" | "blocked";
+}
+
+/**
+ * MissionRow — ligne d'une mission active avec actions hover.
+ *
+ * Pour respecter la sémantique HTML (pas de bouton dans bouton), la ligne
+ * elle-même est un <div role="button"> cliquable, et les icon-buttons sont
+ * de vrais <button> en sibling. Les actions n'apparaissent qu'au hover
+ * (opacity-0 group-hover:opacity-100) ou au focus (focus-within).
+ */
+function MissionRow({
+  mission,
+  onOpen,
+  onAction,
+  pendingId,
+}: {
+  mission: DashboardMission;
+  onOpen: () => void;
+  onAction: (action: "run" | "toggle" | "edit", m: DashboardMission) => void;
+  pendingId: string | null;
+}) {
+  const isPending = pendingId === mission.id;
+  const enabled = mission.enabled !== false;
+  const meta = enabled ? "armed" : "paused";
+  return (
+    <div
+      className="dash-row group"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      style={{ position: "relative" }}
+    >
+      <span className="dash-row-label">{mission.name}</span>
+      <span
+        className="flex items-center opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+        style={{ gap: "var(--space-2)" }}
+      >
+        <IconButton
+          label="Run now"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction("run", mission);
+          }}
+          disabled={isPending}
+          testId={`dashboard-mission-run-${mission.id}`}
+        >
+          <PlayIcon />
+        </IconButton>
+        <IconButton
+          label={enabled ? "Pause" : "Resume"}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction("toggle", mission);
+          }}
+          disabled={isPending}
+          testId={`dashboard-mission-toggle-${mission.id}`}
+        >
+          {enabled ? <PauseIcon /> : <PlayIcon />}
+        </IconButton>
+        <IconButton
+          label="Edit"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction("edit", mission);
+          }}
+          disabled={isPending}
+          testId={`dashboard-mission-edit-${mission.id}`}
+        >
+          <EditIcon />
+        </IconButton>
+      </span>
+      <span className="dash-row-meta">{meta}</span>
+    </div>
+  );
+}
+
+function IconButton({
+  label,
+  onClick,
+  disabled,
+  children,
+  testId,
+}: {
+  label: string;
+  onClick: (e: React.MouseEvent) => void;
+  disabled?: boolean;
+  children: ReactNode;
+  testId?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      data-testid={testId}
+      className="flex items-center justify-center text-[var(--text-l3)] hover:text-[var(--cykan)] focus-visible:text-[var(--cykan)] focus-visible:outline-none transition-colors"
+      style={{
+        width: "var(--space-6)",
+        height: "var(--space-6)",
+        background: "transparent",
+        border: "none",
+        cursor: disabled ? "not-allowed" : "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+const PlayIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M8 5v14l11-7z" />
+  </svg>
+);
+
+const PauseIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M6 4h4v16H6zM14 4h4v16h-4z" />
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+  </svg>
+);
+
 function EmptyText({ children }: { children: ReactNode }) {
   return (
     <p
@@ -130,6 +374,57 @@ export function GeneralDashboard({
 }: GeneralDashboardProps) {
   const setFocal = useFocalStore((s) => s.setFocal);
   const setStageMode = useStageStore((s) => s.setMode);
+  const [pendingMissionId, setPendingMissionId] = useState<string | null>(null);
+  const [pendingAssetId, setPendingAssetId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<DashboardAsset | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const flash = (msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleAssetShare = async (asset: DashboardAsset) => {
+    if (!asset.id || isPlaceholderAssetId(asset.id)) return;
+    try {
+      const r = await fetch(`/api/reports/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ assetId: asset.id, ttlHours: 168 }),
+      });
+      if (!r.ok) {
+        flash(`Erreur partage · HTTP ${r.status}`);
+        return;
+      }
+      const json = (await r.json()) as { shareUrl?: string };
+      if (json.shareUrl) {
+        await navigator.clipboard?.writeText(json.shareUrl);
+        flash("Lien copié");
+      }
+    } catch {
+      flash("Partage injoignable");
+    }
+  };
+
+  const handleAssetDelete = async (asset: DashboardAsset) => {
+    if (!asset.id) return;
+    setPendingAssetId(asset.id);
+    try {
+      const r = await fetch(`/api/v2/assets/${encodeURIComponent(asset.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!r.ok) {
+        flash(`Erreur suppression · HTTP ${r.status}`);
+        return;
+      }
+      flash("Asset supprimé");
+      setConfirmDelete(null);
+    } finally {
+      setPendingAssetId(null);
+    }
+  };
 
   const assetsCount = Array.isArray(_assets) ? _assets.length : 0;
   const missionsCount = Array.isArray(_missions) ? _missions.length : 0;
@@ -138,8 +433,40 @@ export function GeneralDashboard({
     : 0;
   const recentAssets = Array.isArray(_assets) ? (_assets as DashboardAsset[]).slice(0, 4) : [];
   const activeMissions = Array.isArray(_missions)
-    ? (_missions as Array<{ id: string; name: string; enabled?: boolean; opsStatus?: "idle" | "running" | "success" | "failed" | "blocked" }>)
+    ? (_missions as DashboardMission[])
     : [];
+
+  const handleMissionAction = async (
+    action: "run" | "toggle" | "edit",
+    m: DashboardMission,
+  ) => {
+    if (!m.id) return;
+    if (action === "edit") {
+      setStageMode({ mode: "mission", missionId: m.id });
+      return;
+    }
+    setPendingMissionId(m.id);
+    try {
+      if (action === "run") {
+        await fetch(`/api/v2/missions/${m.id}/run`, {
+          method: "POST",
+          credentials: "include",
+        });
+      } else if (action === "toggle") {
+        const next = m.enabled === false;
+        await fetch(`/api/v2/missions/${m.id}`, {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled: next }),
+        });
+      }
+    } catch (err) {
+      console.error("[GeneralDashboard] mission action failed:", err);
+    } finally {
+      setPendingMissionId(null);
+    }
+  };
 
   const handleAssetClick = (asset: DashboardAsset) => {
     if (!asset.id || isPlaceholderAssetId(asset.id)) return;
@@ -202,7 +529,13 @@ export function GeneralDashboard({
         ) : (
           <div className="flex flex-col">
             {activeMissions.map((m) => (
-              <Row key={m.id} label={m.name} meta="armed" onClick={() => handleMissionClick(m)} />
+              <MissionRow
+                key={m.id}
+                mission={m}
+                onOpen={() => handleMissionClick(m)}
+                onAction={handleMissionAction}
+                pendingId={pendingMissionId}
+              />
             ))}
           </div>
         )}
