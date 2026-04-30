@@ -18,7 +18,7 @@ import { ReportCard, ReportCardSkeleton } from "@/app/(user)/components/reports/
 
 // ── Types ──────────────────────────────────────────────────────
 
-type StatusFilter = "all" | "ready" | "partial" | "custom";
+type StatusFilter = "all" | "ready" | "needs-connection" | "custom";
 type DomainFilter = "all" | string;
 
 // ── Icons ──────────────────────────────────────────────────────
@@ -60,10 +60,10 @@ const ALL_DOMAINS = [
 ];
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: "all",     label: "Tous" },
-  { value: "ready",   label: "Prêts" },
-  { value: "partial", label: "À connecter" },
-  { value: "custom",  label: "Personnalisés" },
+  { value: "all",              label: "Tous" },
+  { value: "ready",            label: "Prêts" },
+  { value: "needs-connection", label: "À connecter" },
+  { value: "custom",           label: "Personnalisés" },
 ];
 
 // ── Skeleton grid ──────────────────────────────────────────────
@@ -132,21 +132,34 @@ export default function ReportsDiscoveryPage() {
 
   // ── Computed counts ─────────────────────────────────────────
 
-  const counts = useMemo(() => ({
-    ready:   reports.filter((r) => r.status === "ready").length,
-    partial: reports.filter((r) => r.status === "partial").length,
-    custom:  reports.filter((r) => r.source === "custom").length,
-    total:   reports.length,
-  }), [reports]);
+  const counts = useMemo(() => {
+    const needsConnection = reports.filter(
+      (r) => r.status === "partial" || r.status === "blocked",
+    ).length;
+    return {
+      ready:           reports.filter((r) => r.status === "ready").length,
+      needsConnection,
+      custom:          reports.filter((r) => r.source === "custom").length,
+      connected:       reports.filter((r) => r.status === "ready" && r.source === "catalog").length,
+      total:           reports.length,
+    };
+  }, [reports]);
+
+  // Aucune app connectée si tous les rapports catalogue sont blocked
+  const hasZeroConnectedApps = useMemo(
+    () => reports.length > 0 && reports.filter((r) => r.source === "catalog").every((r) => r.status === "blocked"),
+    [reports],
+  );
 
   // ── Filtered list ───────────────────────────────────────────
 
   const filtered = useMemo(() => {
     let list = reports;
     if (domainFilter !== "all") list = list.filter((r) => r.domain === domainFilter);
-    if (statusFilter === "ready")   list = list.filter((r) => r.status === "ready");
-    if (statusFilter === "partial") list = list.filter((r) => r.status === "partial");
-    if (statusFilter === "custom")  list = list.filter((r) => r.source === "custom");
+    if (statusFilter === "ready") list = list.filter((r) => r.status === "ready");
+    if (statusFilter === "needs-connection")
+      list = list.filter((r) => r.status === "partial" || r.status === "blocked");
+    if (statusFilter === "custom") list = list.filter((r) => r.source === "custom");
     return list;
   }, [reports, domainFilter, statusFilter]);
 
@@ -156,7 +169,7 @@ export default function ReportsDiscoveryPage() {
     ? "Chargement…"
     : error
       ? "Erreur de chargement"
-      : `${counts.total} disponible${counts.total > 1 ? "s" : ""} · ${counts.ready} prêt${counts.ready > 1 ? "s" : ""} · ${counts.partial} à connecter${counts.custom > 0 ? ` · ${counts.custom} personnalisé${counts.custom > 1 ? "s" : ""}` : ""}`;
+      : `${counts.total} disponible${counts.total > 1 ? "s" : ""} · ${counts.ready} prêt${counts.ready > 1 ? "s" : ""} · ${counts.needsConnection} à connecter${counts.custom > 0 ? ` · ${counts.custom} personnalisé${counts.custom > 1 ? "s" : ""}` : ""}`;
 
   return (
     <div
@@ -204,9 +217,9 @@ export default function ReportsDiscoveryPage() {
                       {counts.ready}
                     </span>
                   )}
-                  {value === "partial" && counts.partial > 0 && (
+                  {value === "needs-connection" && counts.needsConnection > 0 && (
                     <span className="ml-1.5 t-9 font-mono" style={{ color: isActive ? "var(--cykan)" : "var(--text-ghost)" }}>
-                      {counts.partial}
+                      {counts.needsConnection}
                     </span>
                   )}
                   {value === "custom" && counts.custom > 0 && (
@@ -277,26 +290,33 @@ export default function ReportsDiscoveryPage() {
           </div>
         )}
 
-        {/* Empty — aucune app connectée */}
-        {!loading && !error && reports.length === 0 && (
+        {/* Sub-banner onboarding non-bloquant — affiché si zéro app connectée
+            mais le catalogue reste visible en dessous (CTA "Connecter" sur
+            chaque carte). */}
+        {!loading && !error && hasZeroConnectedApps && (
           <div
-            className="flex flex-col items-center gap-6 py-20 text-center"
-            data-testid="reports-empty-onboarding"
+            className="flex items-center gap-4 p-4 rounded-md border"
+            data-testid="reports-onboarding-banner"
+            style={{
+              background: "var(--cykan-surface)",
+              borderColor: "var(--cykan-border)",
+              borderRadius: "var(--radius-md)",
+            }}
           >
-            <div style={{ color: "var(--text-ghost)" }}>
+            <div style={{ color: "var(--cykan)" }}>
               <PlugIcon />
             </div>
-            <div className="flex flex-col gap-2">
-              <p className="t-15 font-semibold" style={{ color: "var(--text-muted)" }}>
-                Connectez une première app
+            <div className="flex flex-col gap-1 flex-1 min-w-0">
+              <p className="t-13 font-semibold" style={{ color: "var(--text)" }}>
+                Connectez une première app pour activer ces rapports
               </p>
-              <p className="t-13 font-light" style={{ color: "var(--text-ghost)" }}>
-                Les rapports apparaissent dès qu&apos;une app est connectée.
+              <p className="t-12 font-light" style={{ color: "var(--text-muted)" }}>
+                Les rapports ci-dessous attendent qu&apos;au moins une app soit liée — explorez le catalogue, lisez les pré-requis, puis connectez les sources nécessaires.
               </p>
             </div>
             <a
               href="/apps"
-              className="inline-flex items-center gap-2 px-5 py-2.5 t-13 font-semibold rounded-md transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2 t-12 font-semibold rounded-md transition-all shrink-0"
               style={{
                 background: "var(--cykan)",
                 color: "var(--text-on-cykan)",

@@ -9,11 +9,44 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireScope } from "@/lib/platform/auth/scope";
-import { getApplicableReportsWithTemplates } from "@/lib/reports/catalog";
+import {
+  CATALOG,
+  getApplicableReportsWithTemplates,
+  type ApplicableReport,
+} from "@/lib/reports/catalog";
 import { listTemplates } from "@/lib/reports/templates/store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/**
+ * Construit la liste complète du catalogue (incluant les rapports "blocked"
+ * qui n'ont aucune app connectée) pour la Discovery UI. Les rapports blocked
+ * apparaissent avec un CTA "Connecter" grisé pointant vers /apps — la page
+ * /reports affiche TOUJOURS le catalogue, jamais d'écran de blocage.
+ */
+function buildFullCatalog(connectedApps: ReadonlyArray<string>): ApplicableReport[] {
+  const connected = new Set(connectedApps.map((a) => a.toLowerCase()));
+  return CATALOG.map((entry) => {
+    const missing = entry.requiredApps.filter((a) => !connected.has(a.toLowerCase()));
+    const hits = entry.requiredApps.length - missing.length;
+    let status: ApplicableReport["status"];
+    if (hits === entry.requiredApps.length) status = "ready";
+    else if (hits > 0) status = "partial";
+    else status = "blocked";
+    return {
+      id: entry.id,
+      title: entry.title,
+      description: entry.description,
+      domain: entry.domain,
+      persona: entry.persona,
+      requiredApps: entry.requiredApps,
+      missingApps: missing,
+      status,
+      source: "catalog",
+    };
+  });
+}
 
 export async function GET(_req: NextRequest) {
   const { scope, error } = await requireScope({ context: "reports GET" });
@@ -29,14 +62,14 @@ export async function GET(_req: NextRequest) {
   // Charger les templates personnalisés du tenant
   const templates = await listTemplates({ tenantId: scope.tenantId });
 
-  const reports = getApplicableReportsWithTemplates(connectedApps, templates ?? []);
+  // Catalogue complet (incluant blocked) + templates custom du tenant.
+  // On combine manuellement pour préserver les rapports blocked qui sont
+  // filtrés par `getApplicableReportsWithTemplates`.
+  const fullCatalog = buildFullCatalog(connectedApps);
+  const merged = getApplicableReportsWithTemplates(connectedApps, templates ?? []);
+  const customOnly = merged.filter((r) => r.source === "custom");
 
-  // Mapper "blocked" (non exposé côté UI) comme "needs-connection" pour la discovery
-  const payload = reports.map((r) => ({
-    ...r,
-    // `getApplicableReports` filtre déjà les "blocked" — on garde le statut tel quel
-    // mais on ajoute cadence depuis le catalogue pour l'affichage UI
-  }));
+  const reports: ApplicableReport[] = [...fullCatalog, ...customOnly];
 
-  return NextResponse.json({ reports: payload });
+  return NextResponse.json({ reports });
 }

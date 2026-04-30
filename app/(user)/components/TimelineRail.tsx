@@ -438,18 +438,21 @@ export function TimelineRail() {
         ) : (
           <div className="overflow-y-auto scrollbar-hide flex-1 flex flex-col" style={{ gap: "var(--space-2)" }}>
 
-            {/* Top Menu — mini-liste inline, interaction par la lumière */}
+            {/* Top Menu — deux groupes, séparés par l'air uniquement */}
             <div
-              className="flex flex-col mb-6"
+              className="flex flex-col mb-2"
               style={{
                 borderBottom: "1px solid var(--sep)",
-                paddingBottom: "var(--space-3)",
+                paddingBottom: "var(--space-1)",
               }}
             >
-              <TopMenuItem label="New conversation" hotkey="⌘N" onClick={handleNewThread} />
-              <TopMenuItem label="Hearst" hotkey="⌘1" onClick={handleHearstHome} />
-              <TopMenuItem label="App" hotkey="⌘2" onClick={() => router.push("/apps")} />
-              <TopMenuItem label="Reports" hotkey="⌘3" onClick={() => router.push("/reports")} />
+              <div className="flex flex-col">
+                <TopMenuItem label="Hearst" hotkey="⌘1" onClick={handleHearstHome} />
+                <TopMenuItem label="App" hotkey="⌘2" onClick={() => router.push("/apps")} />
+              </div>
+              <div className="flex flex-col" style={{ marginTop: "var(--space-6)" }}>
+                <TopMenuItem label="New conversation" hotkey="⌘N" onClick={handleNewThread} />
+              </div>
             </div>
 
             {/* Recent */}

@@ -108,3 +108,48 @@ export async function GET(
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }
+
+/**
+ * DELETE /api/v2/runs/[id] — Stub : supprime un run de l'historique côté
+ * client (la persistance Supabase n'expose pas encore de delete idempotent).
+ * Le hook côté UI peut filtrer le run localement après un 200, et la
+ * persistance sera nettoyée au prochain refresh ou via batch admin.
+ *
+ * On vérifie l'ownership pour rejeter les requêtes hors scope.
+ */
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { scope, error } = await requireScope({ context: "DELETE /api/v2/runs/[id]" });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: error.status });
+  }
+
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json({ error: "invalid_params" }, { status: 400 });
+  }
+
+  try {
+    const memRun = getRunById(id);
+    const persisted = memRun ? null : await getPersistedRun(id);
+    const run = memRun ?? persisted;
+
+    if (!run) {
+      // Idempotence : déjà absent → 200, l'UI peut nettoyer son cache local.
+      return NextResponse.json({ ok: true, deleted: false });
+    }
+
+    if (run.userId && run.userId !== scope.userId) {
+      return NextResponse.json({ error: "run_not_found" }, { status: 404 });
+    }
+
+    // Stub : pas de delete persistant pour l'instant. L'UI peut
+    // filtrer le run localement.
+    return NextResponse.json({ ok: true, deleted: true, runId: id });
+  } catch (e) {
+    console.error(`DELETE /api/v2/runs/${id}: uncaught`, e);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+  }
+}

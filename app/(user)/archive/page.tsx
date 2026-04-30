@@ -51,12 +51,17 @@ export default function ArchivePage() {
   return (
     <div className="flex-1 flex flex-col min-h-0 relative" style={{ background: "var(--bg-center)" }}>
       <header className="flex items-center justify-between px-12 py-8 border-b border-[var(--surface-2)] flex-shrink-0">
-        <div className="flex items-center gap-4">
-          <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">ARCHIVE</span>
-          <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-          <span className="t-9 font-mono tracking-display text-[var(--text-muted)]">
-            {filtered.length.toString().padStart(3, "0")} ENTRÉES
-          </span>
+        <div className="flex flex-col gap-2 min-w-0">
+          <h1 className="t-28 font-light tracking-tight text-[var(--text)]">
+            Archive
+          </h1>
+          <div className="flex items-center gap-3">
+            <span className="t-9 font-mono uppercase tracking-marquee text-[var(--cykan)]">ARCHIVE</span>
+            <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
+            <span className="t-9 font-mono tracking-display text-[var(--text-muted)]">
+              {filtered.length.toString().padStart(3, "0")} ENTRÉES
+            </span>
+          </div>
         </div>
         <button
           onClick={() => router.back()}
