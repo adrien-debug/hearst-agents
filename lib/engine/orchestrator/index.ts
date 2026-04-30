@@ -243,6 +243,7 @@ async function runPipeline(
   // ── 2. Create Run ──────────────────────────────────────────
   const createInput: CreateRunInput = {
     user_id: input.userId,
+    tenant_id: scope.tenantId,
     conversation_id: input.conversationId ?? null,
     entrypoint: input.missionId ? "webhook" : "chat",
     request: {

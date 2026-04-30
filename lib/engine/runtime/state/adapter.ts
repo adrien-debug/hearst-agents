@@ -49,6 +49,9 @@ export async function saveRun(run: PersistedRunRecord): Promise<boolean> {
       status: STATUS_MAP[run.status] ?? "running",
       input: { message: run.input, surface: run.surface },
       user_id: run.userId,
+      // Denormalisation analytics (cf. migration 0051) — fallback à
+      // l'heuristique users.tenant_ids[0] côté aggregate si null.
+      tenant_id: run.tenantId ?? null,
       trigger: "orchestrator_v2",
       metadata: {
         v2: true,

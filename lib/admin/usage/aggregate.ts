@@ -2,9 +2,9 @@
  * Cross-tenant usage aggregation (C6).
  *
  * Source de vérité : `runs` (cost_usd, tokens_in, tokens_out, kind, user_id,
- * created_at), `assets` et `missions`. Le tenant_id n'étant pas une colonne
- * de `runs`, on dérive le tenant via `users.tenant_ids[0]` (heuristique
- * simple — plusieurs tenants par user → on attribue au premier).
+ * tenant_id, created_at), `assets` et `missions`. La colonne `tenant_id`
+ * directe (migration 0051) est privilégiée. Pour les runs historiques où
+ * `tenant_id IS NULL`, on retombe sur l'heuristique `users.tenant_ids[0]`.
  *
  * Toutes les fonctions sont fail-soft : si Supabase est indisponible ou
  * qu'une requête échoue, on renvoie un payload vide cohérent.
@@ -81,6 +81,7 @@ function bucketStartIso(iso: string, granularity: Granularity): string {
 
 interface RunRow {
   user_id: string | null;
+  tenant_id?: string | null;
   cost_usd: number | null;
   tokens_in: number | null;
   tokens_out: number | null;
@@ -114,7 +115,7 @@ async function loadRuns(range: DateRange, kindFilter?: string | null): Promise<R
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let q: any = db
     .from("runs")
-    .select("user_id, cost_usd, tokens_in, tokens_out, created_at, kind")
+    .select("user_id, tenant_id, cost_usd, tokens_in, tokens_out, created_at, kind")
     .gte("created_at", range.start)
     .lt("created_at", range.end);
   if (kindFilter && kindFilter.length > 0) {
@@ -165,6 +166,16 @@ function tenantOf(userId: string | null, map: Map<string, string>): string {
   return map.get(userId) ?? "unknown";
 }
 
+/**
+ * Préfère `runs.tenant_id` direct (migration 0051) ; fallback sur
+ * l'heuristique `users.tenant_ids[0]` pour les runs antérieurs au backfill.
+ */
+function tenantOfRun(run: RunRow, map: Map<string, string>): string {
+  const direct = run.tenant_id?.trim();
+  if (direct && direct.length > 0) return direct;
+  return tenantOf(run.user_id, map);
+}
+
 export async function getCrossTenantOverview(
   range: DateRange = defaultDateRange(),
   kindFilter: string | null = null,
@@ -183,7 +194,7 @@ export async function getCrossTenantOverview(
   let totalTokensOut = 0;
 
   for (const r of runs) {
-    const t = tenantOf(r.user_id, userMap);
+    const t = tenantOfRun(r, userMap);
     tenants.add(t);
     if (r.user_id) activeUsers.add(r.user_id);
     totalCost += Number(r.cost_usd ?? 0);
@@ -238,7 +249,7 @@ export async function getTopTenants(
   }
 
   for (const r of runs) {
-    const t = tenantOf(r.user_id, userMap);
+    const t = tenantOfRun(r, userMap);
     const u = ensure(t);
     u.totalRuns += 1;
     u.totalCostUsd += Number(r.cost_usd ?? 0);

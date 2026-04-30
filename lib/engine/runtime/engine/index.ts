@@ -85,6 +85,9 @@ export class RunEngine {
         input: input.request as Record<string, unknown>,
         // v2 columns
         user_id: input.user_id,
+        // Denormalisation analytics (migration 0051) — null toléré, fallback
+        // côté aggregate via users.tenant_ids[0].
+        tenant_id: input.tenant_id ?? null,
         entrypoint: input.entrypoint,
         request: input.request as Record<string, unknown>,
         cost: EMPTY_COST as unknown as Record<string, unknown>,

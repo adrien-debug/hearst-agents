@@ -39,6 +39,14 @@ export interface EngineRun {
 
 export interface CreateRunInput {
   user_id: string;
+  /**
+   * Denormalisation analytics (cf. migration 0051). Optionnel pour rester
+   * backward-compatible mais devrait être renseigné chaque fois que le scope
+   * est connu — sinon l'agrégation cross-tenant retombera sur l'heuristique
+   * `users.tenant_ids[0]` (et tombera en "unknown" si l'utilisateur n'est pas
+   * mappé dans la table users).
+   */
+  tenant_id?: string | null;
   conversation_id?: string | null;
   entrypoint: EngineEntrypoint;
   request: {
