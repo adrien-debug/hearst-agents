@@ -16,28 +16,19 @@
 import { z } from "zod";
 import { listConnections } from "@/lib/connectors/composio/connections";
 import { isComposioConfigured, getComposio } from "@/lib/connectors/composio/client";
+import {
+  AUTH_EXPIRING_DAYS_THRESHOLD,
+  ExpiringConnectionSchema,
+  type ExpiringConnection,
+} from "@/lib/connections/oauth-constants";
 
-// ── Constantes ──────────────────────────────────────────────
-
-/** Nombre de jours avant expiration pour déclencher l'alerte. */
-export const AUTH_EXPIRING_DAYS_THRESHOLD = 7;
-
-/** Nombre de jours sous lequel le token est considéré critique (rouge). */
-export const AUTH_CRITICAL_DAYS_THRESHOLD = 3;
-
-// ── Schémas Zod ─────────────────────────────────────────────
-
-export const ExpiringConnectionSchema = z.object({
-  connectionId: z.string().min(1),
-  appName: z.string().min(1),
-  userId: z.string().min(1),
-  tenantId: z.string().min(1),
-  /** Nombre de jours restants avant expiration. null = inconnu (statut EXPIRED). */
-  daysUntilExpiry: z.number().nullable(),
-  status: z.enum(["expiring_soon", "expired"]),
-});
-
-export type ExpiringConnection = z.infer<typeof ExpiringConnectionSchema>;
+// Ré-export des constantes et types partagés pour les consommateurs de ce module.
+export {
+  AUTH_EXPIRING_DAYS_THRESHOLD,
+  AUTH_CRITICAL_DAYS_THRESHOLD,
+  ExpiringConnectionSchema,
+  type ExpiringConnection,
+} from "@/lib/connections/oauth-constants";
 
 export const RefreshResultSchema = z.object({
   connectionId: z.string(),

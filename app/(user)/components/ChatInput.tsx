@@ -117,10 +117,11 @@ export function ChatInput({
         {showTypeahead && (
           <div
             ref={typeaheadRef}
-            className="absolute bottom-full mb-4 w-full rounded-2xl border border-[rgba(255,255,255,0.06)] overflow-hidden z-50 bg-[#0A0A0A] shadow-2xl"
+            className="absolute bottom-full mb-4 w-full rounded-2xl border border-[var(--border-shell)] overflow-hidden z-50"
+            style={{ background: "var(--mat-300)", boxShadow: "var(--shadow-card-hover)" }}
           >
             {matchingServices.length === 0 ? (
-              <div className="p-4 t-11 tracking-[0.2em] uppercase text-[rgba(255,255,255,0.3)]">
+              <div className="p-4 t-11 tracking-display uppercase text-[var(--text-ghost)]">
                 {typeaheadQuery ? (
                   <>Aucune source trouvée&nbsp;: {typeaheadQuery}</>
                 ) : (
@@ -133,16 +134,16 @@ export function ChatInput({
                   <button
                     key={service.id}
                     onClick={() => selectService(service)}
-                    className="w-full flex items-center gap-4 px-4 py-3 text-left border-b border-[rgba(255,255,255,0.03)] transition-all duration-300 group hover:bg-[rgba(255,255,255,0.02)]"
+                    className="w-full flex items-center gap-4 px-4 py-3 text-left border-b border-[var(--line)] transition-all duration-300 group hover:bg-[var(--surface-1)]"
                   >
-                    <span className="t-18 text-[rgba(255,255,255,0.4)] group-hover:text-[var(--cykan)] transition-colors">
+                    <span className="t-18 text-[var(--text-faint)] group-hover:text-[var(--cykan)] transition-colors">
                       {service.icon}
                     </span>
                     <div className="flex-1">
-                      <p className="t-13 font-medium tracking-wide text-[rgba(255,255,255,0.9)] group-hover:text-white transition-colors">
+                      <p className="t-13 font-medium tracking-wide text-[var(--text-soft)] group-hover:text-white transition-colors">
                         @{service.id}
                       </p>
-                      <p className="t-10 tracking-[0.1em] uppercase text-[rgba(255,255,255,0.3)] mt-0.5">
+                      <p className="t-10 tracking-snug uppercase text-[var(--text-ghost)] mt-0.5">
                         {service.name}
                       </p>
                     </div>
@@ -155,21 +156,22 @@ export function ChatInput({
 
         {/* Input Pill — High-end minimal design */}
         <div
-          className="rounded-[32px] group border border-[rgba(255,255,255,0.15)] transition-all duration-700 px-10 py-8 focus-within:border-[rgba(45,212,191,0.4)] focus-within:bg-[rgba(255,255,255,0.03)] shadow-[0_32px_96px_-16px_rgba(0,0,0,0.7)] backdrop-blur-2xl"
+          className="rounded-2xl group border border-[var(--border-shell)] transition-all duration-700 px-10 py-8 focus-within:border-[var(--cykan-border)] focus-within:bg-[var(--surface-1)] backdrop-blur-2xl"
           style={{
-            background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)",
+            background: "linear-gradient(180deg, var(--surface-1) 0%, var(--surface-card) 100%)",
             color: "var(--text)",
+            boxShadow: "var(--shadow-card)",
           }}
         >
           {attachment && (
-            <div className="flex items-center gap-3 px-1 pb-4 mb-4 border-b border-[rgba(255,255,255,0.03)]">
-              <span className="t-9 tracking-[0.3em] uppercase text-[var(--cykan)]">
+            <div className="flex items-center gap-3 px-1 pb-4 mb-4 border-b border-[var(--line)]">
+              <span className="t-9 tracking-marquee uppercase text-[var(--cykan)]">
                 PDF
               </span>
               <span className="t-13 text-[var(--text-muted)] truncate max-w-xs font-light">
                 {attachment.fileName}
               </span>
-              <span className="t-10 tracking-[0.2em] text-[var(--text-ghost)]">
+              <span className="t-10 tracking-display text-[var(--text-ghost)]">
                 {attachment.pageCount}P
               </span>
               <button
@@ -187,7 +189,7 @@ export function ChatInput({
               {uploadError}
             </p>
           )}
-          
+
           <textarea
             ref={inputRef}
             value={input}
@@ -215,20 +217,20 @@ export function ChatInput({
               "Demande n'importe quoi…"
             }
             rows={1}
-            className="block w-full bg-transparent t-18 font-light text-[rgba(255,255,255,0.95)] placeholder:text-[rgba(255,255,255,0.3)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
+            className="block w-full bg-transparent t-18 font-light text-[var(--text-soft)] placeholder:text-[var(--text-ghost)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
             style={{
               minHeight: "var(--height-input-min)",
               maxHeight: "var(--height-input-max)",
             }}
           />
-          
-          <div className="flex items-center justify-between pt-6 mt-2 border-t border-[rgba(255,255,255,0.02)]">
+
+          <div className="flex items-center justify-between pt-6 mt-2 border-t border-[var(--line)]">
             <div className="flex items-center gap-4 px-1">
-               <span className="t-9 tracking-[0.3em] uppercase text-[var(--text-ghost)]">
+               <span className="t-9 tracking-marquee uppercase text-[var(--text-ghost)]">
                 Auto
               </span>
-              <div className="w-1 h-1 rounded-full bg-[rgba(255,255,255,0.1)]" />
-              <span className="t-9 tracking-[0.3em] uppercase text-[var(--text-ghost)] opacity-40">
+              <div className="w-1 h-1 rounded-full bg-[var(--border-subtle)]" />
+              <span className="t-9 tracking-marquee uppercase text-[var(--text-ghost)] opacity-40">
                 GPT-4O
               </span>
             </div>
@@ -283,7 +285,7 @@ export function ChatInput({
                     ? "text-[var(--warn)] animate-pulse"
                     : attachment
                       ? "text-[var(--cykan)]"
-                      : "text-[rgba(255,255,255,0.2)] hover:text-[rgba(255,255,255,0.5)]"
+                      : "text-[var(--text-ghost)] hover:text-[var(--text-muted)]"
                 }`}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
@@ -292,7 +294,7 @@ export function ChatInput({
               </button>
               {isRunning ? (
                 <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                  <div className="w-3 h-3 border border-[rgba(255,255,255,0.1)] border-t-[var(--cykan)] rounded-full animate-spin" />
+                  <div className="w-3 h-3 border border-[var(--border-subtle)] border-t-[var(--cykan)] rounded-full animate-spin" />
                 </div>
               ) : (
                 <button
@@ -301,7 +303,7 @@ export function ChatInput({
                   className={`transition-all duration-500 ${
                     input.trim()
                       ? "text-[var(--cykan)] scale-110"
-                      : "text-[rgba(255,255,255,0.1)] cursor-not-allowed"
+                      : "text-[var(--text-ghost)] cursor-not-allowed"
                   }`}
                   title="Envoyer"
                 >
@@ -314,7 +316,7 @@ export function ChatInput({
           </div>
         </div>
         <div className="absolute left-0 right-0 -bottom-8 flex justify-center opacity-40 hover:opacity-100 transition-opacity">
-          <p className="t-9 text-[rgba(255,255,255,0.3)] tracking-[0.15em] uppercase">
+          <p className="t-9 text-[var(--text-ghost)] tracking-body uppercase">
             Entrée pour envoyer · Maj+Entrée nouvelle ligne · @ pour mentionner
           </p>
         </div>

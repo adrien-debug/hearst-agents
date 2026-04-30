@@ -96,7 +96,7 @@ export function GeneralDashboard({
               {assetsCount.toString().padStart(2, "0")}
             </span>
             <span className="t-8 tracking-[0.4em] uppercase text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-colors">
-              Assets
+              Documents
             </span>
           </button>
           <button
@@ -120,7 +120,7 @@ export function GeneralDashboard({
               {reportsCount.toString().padStart(2, "0")}
             </span>
             <span className="t-8 tracking-[0.4em] uppercase text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-colors">
-              Reports
+              Rapports
             </span>
           </button>
         </div>
@@ -174,20 +174,20 @@ export function GeneralDashboard({
           <div className="grid grid-cols-3 gap-4 mt-2">
             {recentReports.map((report: any, i: number) => {
               const isPdf = report.name?.toLowerCase().endsWith('.pdf');
-              const shortTitle = report.name ? report.name.split(' ')[0] : "Report";
+              const shortTitle = report.name || "Document";
               
               return (
                 <div
                   key={report.id}
                   className="group flex flex-col items-center gap-3 cursor-pointer"
                 >
-                  <div className="w-full aspect-[3/4] flex flex-col items-center justify-center border border-[rgba(255,255,255,0.03)] bg-[rgba(255,255,255,0.01)] rounded-sm transition-all duration-500 group-hover:border-[rgba(255,255,255,0.1)] group-hover:bg-[rgba(255,255,255,0.03)] relative overflow-hidden">
+                  <div className="w-full aspect-[3/4] flex flex-col items-center justify-center border border-[rgba(255,255,255,0.03)] bg-[rgba(255,255,255,0.01)] rounded-sm transition-all duration-500 group-hover:border-[var(--cykan)] group-hover:bg-[rgba(45,212,191,0.05)] relative overflow-hidden shadow-sm group-hover:shadow-[0_0_15px_rgba(45,212,191,0.15)]">
                     <span className="text-[var(--text-ghost)] group-hover:text-[var(--cykan)] transition-all duration-500 group-hover:scale-110">
                       {isPdf ? <PdfIcon /> : <ReportIcon />}
                     </span>
                   </div>
-                  <div className="flex flex-col items-center w-full gap-1">
-                    <span className="t-11 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] truncate w-full text-center transition-colors duration-500">
+                  <div className="flex flex-col items-center w-full gap-1 px-1">
+                    <span className="t-11 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] truncate w-full text-center transition-colors duration-500" title={shortTitle}>
                       {shortTitle}
                     </span>
                     <span className="t-8 tracking-[0.1em] uppercase text-[var(--text-ghost)] opacity-40">
