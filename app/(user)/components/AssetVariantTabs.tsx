@@ -27,6 +27,10 @@ interface AssetVariantTabsProps {
   assetId: string;
   /** Texte source à synthétiser (par défaut : asset content). */
   sourceText?: string;
+  /** Tab à activer au mount. Permet à un caller (ex: stage_request avec
+   * variantKind="image") de sélectionner directement le bon tab plutôt
+   * que le default audio. */
+  defaultKind?: AssetVariantKind;
 }
 
 // Pas d'onglet "Texte" : le contenu de l'asset EST le variant texte par
@@ -43,8 +47,8 @@ const TABS: ReadonlyArray<{ kind: AssetVariantKind; label: string; available: bo
 
 const POLL_INTERVAL_MS = 4_000;
 
-export function AssetVariantTabs({ assetId, sourceText }: AssetVariantTabsProps) {
-  const [activeTab, setActiveTab] = useState<AssetVariantKind>("audio");
+export function AssetVariantTabs({ assetId, sourceText, defaultKind }: AssetVariantTabsProps) {
+  const [activeTab, setActiveTab] = useState<AssetVariantKind>(defaultKind ?? "audio");
   const [variants, setVariants] = useState<AssetVariant[]>([]);
   const [generating, setGenerating] = useState<AssetVariantKind | null>(null);
   const [error, setError] = useState<string | null>(null);

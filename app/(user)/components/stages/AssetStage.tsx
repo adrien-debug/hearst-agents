@@ -55,6 +55,45 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [primaryImageUrl, setPrimaryImageUrl] = useState<string | null>(null);
+
+  // Poll les variants pour détecter qu'un variant image est ready et l'afficher
+  // en hero directement (pas planqué dans un tab). Polling 4s tant que pending,
+  // arrête au premier ready.
+  useEffect(() => {
+    if (!assetId || isPlaceholderAssetId(assetId)) return;
+    let cancelled = false;
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const fetchVariants = async () => {
+      try {
+        const res = await fetch(
+          `/api/v2/assets/${encodeURIComponent(assetId)}/variants`,
+          { credentials: "include" },
+        );
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          variants?: Array<{ kind: string; status: string; storageUrl?: string | null }>;
+        };
+        const imageReady = data.variants?.find(
+          (v) => v.kind === "image" && v.status === "ready" && v.storageUrl,
+        );
+        if (imageReady?.storageUrl && !cancelled) {
+          setPrimaryImageUrl(imageReady.storageUrl);
+          if (interval) clearInterval(interval);
+        }
+      } catch {
+        // Silent — l'absence de variant ready ne casse rien.
+      }
+    };
+
+    void fetchVariants();
+    interval = setInterval(fetchVariants, 4000);
+    return () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
+  }, [assetId]);
 
   // Sync vers stage-data pour ContextRailForAsset (titre + assetId).
   // Les variants sont écrits par AssetVariantTabs séparément — on lit la
@@ -314,9 +353,49 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                 )}
               </div>
 
-              <AssetBody contentRef={asset.contentRef} title={asset.title} />
+              {/* Hero image : si l'asset a un variant image ready, on l'affiche
+                  en grand directement (pas dans un tab caché). Cliquable pour
+                  ouvrir l'original en plein écran. */}
+              {primaryImageUrl ? (
+                <a
+                  href={primaryImageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full mb-10"
+                  style={{
+                    border: "1px solid var(--border-shell)",
+                    borderRadius: "var(--radius-md)",
+                    overflow: "hidden",
+                    background: "var(--surface-1)",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- image storage URL dynamique, pas optimizable */}
+                  <img
+                    src={primaryImageUrl}
+                    alt={asset.title}
+                    className="w-full h-auto block"
+                  />
+                </a>
+              ) : null}
 
-              <AssetVariantTabs assetId={asset.id} sourceText={asset.contentRef ?? asset.summary ?? asset.title} />
+              {/* Body texte : seulement si contentRef non vide. Les assets
+                  image-only (placeholder vide) sautent ce bloc. */}
+              {asset.contentRef && asset.contentRef.length > 0 ? (
+                <AssetBody contentRef={asset.contentRef} title={asset.title} />
+              ) : null}
+
+              <AssetVariantTabs
+                assetId={asset.id}
+                sourceText={asset.contentRef ?? asset.summary ?? asset.title}
+                defaultKind={
+                  (variantKind === "audio" ||
+                  variantKind === "video" ||
+                  variantKind === "image" ||
+                  variantKind === "code"
+                    ? variantKind
+                    : undefined) as "audio" | "video" | "image" | "code" | undefined
+                }
+              />
             </>
           )}
         </div>
