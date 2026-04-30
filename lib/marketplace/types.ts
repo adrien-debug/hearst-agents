@@ -9,7 +9,6 @@
 import { z } from "zod";
 import { reportSpecSchema, type ReportSpec } from "@/lib/reports/spec/schema";
 import type { WorkflowGraph } from "@/lib/workflows/types";
-import type { Persona } from "@/lib/personas/types";
 
 export const MARKETPLACE_KINDS = ["workflow", "report_spec", "persona"] as const;
 export type MarketplaceKind = (typeof MARKETPLACE_KINDS)[number];

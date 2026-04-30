@@ -35,8 +35,6 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     let cancelled = false;
-    setTemplates(null);
-    setError(null);
 
     const params = new URLSearchParams();
     if (kind !== "all") params.set("kind", kind);
@@ -55,7 +53,10 @@ export default function MarketplacePage() {
           return;
         }
         const body = (await res.json()) as { templates: MarketplaceTemplateSummary[] };
-        if (!cancelled) setTemplates(body.templates ?? []);
+        if (!cancelled) {
+          setTemplates(body.templates ?? []);
+          setError(null);
+        }
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "fetch_failed");
