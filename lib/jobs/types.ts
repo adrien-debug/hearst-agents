@@ -22,7 +22,8 @@ export type JobKind =
   | "meeting-bot"
   | "memory-ingest"
   | "asset-variant"
-  | "inbox-fetch";
+  | "inbox-fetch"
+  | "daily-brief";
 
 // ── Payloads par JobKind (discriminated union) ───────────────
 
@@ -132,6 +133,26 @@ export interface InboxFetchInput extends JobScopeFields {
   trigger?: "manual" | "cron";
 }
 
+/**
+ * Daily Brief (vague 9 — Personal CIA Briefing).
+ *
+ * Worker qui ingère emails 24h + Slack DMs + agenda + GitHub PRs + Linear
+ * issues et assemble un PDF éditorial 2 pages, livré comme asset
+ * `kind: "daily_brief"`.
+ */
+export interface DailyBriefInput extends JobScopeFields {
+  jobKind: "daily-brief";
+  /** Date cible — défaut aujourd'hui. ISO date YYYY-MM-DD. */
+  targetDate?: string;
+  /** Cron-triggered (matin 7h) ou déclenché manuellement depuis le cockpit. */
+  trigger?: "manual" | "cron";
+  /** Caps optionnels par source. */
+  gmailLimit?: number;
+  slackLimit?: number;
+  githubLimit?: number;
+  linearLimit?: number;
+}
+
 export type JobPayload =
   | ImageGenInput
   | AudioGenInput
@@ -142,7 +163,8 @@ export type JobPayload =
   | MeetingBotInput
   | MemoryIngestInput
   | AssetVariantInput
-  | InboxFetchInput;
+  | InboxFetchInput
+  | DailyBriefInput;
 
 // ── Result canonique ─────────────────────────────────────────
 

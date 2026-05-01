@@ -8,6 +8,7 @@ import { SuggestionRow } from "../cockpit/SuggestionRow";
 import { QuickLaunch } from "../cockpit/QuickLaunch";
 import { InboxSection } from "../cockpit/InboxSection";
 import { HospitalityPulse } from "../cockpit/HospitalityPulse";
+import { DailyBriefCard } from "../cockpit/DailyBriefCard";
 import { Action } from "../ui";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
@@ -151,6 +152,10 @@ function CockpitContent({
   return (
     <>
       <InboxSection inbox={data.inbox} onRefreshed={onInboxRefreshed} />
+
+      <Section label="Daily Brief">
+        <DailyBriefCard />
+      </Section>
 
       {data.hospitality && <HospitalityPulse data={data.hospitality} />}
 

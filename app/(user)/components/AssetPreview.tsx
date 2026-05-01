@@ -19,6 +19,7 @@ const KIND_REF: Record<AssetKind, string> = {
   task: "TYPE_TASK",
   event: "TYPE_EVT",
   inbox_brief: "TYPE_INB",
+  daily_brief: "TYPE_DBR",
   artifact: "TYPE_ART",
 };
 

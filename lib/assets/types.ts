@@ -30,6 +30,7 @@ export type AssetKind =
   | "task"
   | "event"
   | "inbox_brief"
+  | "daily_brief"
   | "artifact";
 
 export interface AssetProvenance {
@@ -463,6 +464,7 @@ export function assetKindToHaloKind(kind: AssetKind): HaloArtifactKind {
     case "task": return "task";
     case "event": return "event";
     case "inbox_brief": return "report";
+    case "daily_brief": return "report";
     case "artifact": return "file";
   }
 }

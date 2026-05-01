@@ -229,6 +229,76 @@ export const MISSION_CONTEXT_FEWSHOT_FR: ReadonlyArray<FewShotExample> = [
   },
 ];
 
+// ── Daily Brief (sources brutes → 4 sections éditoriales) ──────
+
+export const DAILY_BRIEF_FEWSHOT_FR: ReadonlyArray<FewShotExample> = [
+  {
+    input: [
+      "Date : vendredi 1 mai 2026",
+      "",
+      "Emails 24h (12) :",
+      "- Sarah Martin (Sequoia) : « Term sheet — 2 points à reclarifier ce matin »",
+      "- Marc Dubois (Acme CFO) : « MSA v3 prêt, signature DocuSign ce midi »",
+      "- Léa : « Bug staging /api/runs revient sur les 3 derniers déploiements »",
+      "- 9 newsletters / FYI",
+      "",
+      "Slack (4h, 6 messages) :",
+      "- #engineering : Pierre signale CI rouge sur main, blocking",
+      "- DM Chloé : demande feedback sur deck pricing",
+      "",
+      "Agenda du jour (3) :",
+      "- 09h00 — Review Series A avec Sarah (45min)",
+      "- 11h30 — Signature Acme avec Marc (30min)",
+      "- 16h00 — 1:1 Léa",
+      "",
+      "GitHub PRs (5 ouvertes) :",
+      "- hearst-os#241 « migrate v2 mission scheduler » — 2j sans review (Pierre)",
+      "- hearst-os#244 « fix race condition stream » — prêt à merger (Léa)",
+      "",
+      "Linear issues (4 actives) :",
+      "- ENG-118 « staging /api/runs 500 » — P1 — Léa (en cours)",
+      "- PROD-42 « Daily Brief MVP » — P2 — Adrien",
+    ].join("\n"),
+    output: JSON.stringify(
+      {
+        lead:
+          "Matinée à fort enjeu : la term sheet Sequoia se reclarifie en parallèle de la signature Acme. Le staging encore instable côté backend pèse sur la confiance opérationnelle.",
+        people:
+          "Sarah attend 2 retours précis sur la term sheet avant 9h00 — pas un email-fleuve, deux décisions chiffrées. Marc envoie le DocuSign à midi, MSA v3 déjà validé. Chloé attend un feedback deck pricing en DM Slack — court, mais à débloquer dans la matinée.",
+        decisions:
+          "Trancher les deux points term sheet avant le call 9h. Confirmer la fenêtre signature Acme (11h30, pas de glissement). Décider si on bloque le merge de #244 (Léa) sur la résolution ENG-118 ou si on fast-tracke pour soulager le staging.",
+        signals:
+          "CI rouge sur main signalée par Pierre — blocking pour toute mise en prod. PR #241 sans review depuis 2 jours, sortir Pierre du focus pour 30 min. Bug staging /api/runs récurrent : ENG-118 reste P1 tant qu'on n'a pas trace claire du root cause.",
+      },
+      null,
+      2,
+    ),
+  },
+  {
+    input: [
+      "Date : samedi 2 mai 2026",
+      "",
+      "Emails 24h (3) : 3 newsletters",
+      "Slack (4h) : aucun message",
+      "Agenda du jour : aucun event",
+      "GitHub PRs : aucun mouvement",
+      "Linear issues : aucune",
+    ].join("\n"),
+    output: JSON.stringify(
+      {
+        lead: "Journée vide de signaux entrants — fenêtre rare pour le travail de fond.",
+        people: "Personne n'attend de retour de toi aujourd'hui. À toi d'imposer ton tempo.",
+        decisions:
+          "Choix unique du jour : protéger le focus block ou rattraper de la dette accumulée. Pas de demande externe à arbitrer.",
+        signals:
+          "Aucune anomalie, aucun PR stuck, aucune issue critique. Profiter — ces journées sont rares.",
+      },
+      null,
+      2,
+    ),
+  },
+];
+
 // ── Inbox priority classification (email batch → classification) ─
 
 export const INBOX_PRIORITY_FEWSHOT: ReadonlyArray<FewShotExample> = [

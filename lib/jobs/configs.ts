@@ -131,4 +131,19 @@ export const JOB_QUEUE_CONFIGS: Record<JobKind, JobQueueConfig> = {
     removeOnComplete: 50,
     removeOnFail: { age: 7 * 24 * 3600 },
   },
+  "daily-brief": {
+    queueName: "daily-brief",
+    // 1 job/user en // suffit (5 users en parallèle max). Le worker fait 5
+    // fetch externes + 1 appel Sonnet + render PDF + upload R2 — pas
+    // souhaitable de saturer un user avec 2 jobs simultanés.
+    concurrency: 3,
+    // 120s : 5 sources fetch (~20s) + Sonnet narration (~15s) + PDF render
+    // (~5s) + upload R2 (~10s) + marge.
+    maxDurationMs: 120_000,
+    retryAttempts: 1,
+    retryDelayMs: 10_000,
+    priority: 4,
+    removeOnComplete: 30,
+    removeOnFail: { age: 7 * 24 * 3600 },
+  },
 };

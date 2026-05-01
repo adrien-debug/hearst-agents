@@ -19,9 +19,11 @@ import {
   INBOX_PRIORITY_FEWSHOT,
   NARRATION_FEWSHOT_FR,
   MISSION_CONTEXT_FEWSHOT_FR,
+  DAILY_BRIEF_FEWSHOT_FR,
   formatFewShotBlock,
 } from "@/lib/prompts/examples";
 import { MISSION_CONTEXT_SYSTEM_PROMPT } from "@/lib/memory/mission-context";
+import { DAILY_BRIEF_SYSTEM_PROMPT } from "@/lib/daily-brief/generate";
 
 const BANNED_FORMULAS_GLOBAL = [
   "n'hésite pas",
@@ -120,6 +122,21 @@ const PROMPT_CHECKS: ReadonlyArray<PromptCheck> = [
       "Décisions actées",
       "Prochaine étape",
       "Max 250 mots",
+      "EXEMPLES",
+    ],
+    minFewShot: 2,
+  },
+  {
+    name: "daily-brief",
+    prompt: DAILY_BRIEF_SYSTEM_PROMPT,
+    mustContain: [
+      "analyste exécutif",
+      "Daily Brief",
+      "FORMAT STRICT",
+      "lead",
+      "people",
+      "decisions",
+      "signals",
       "EXEMPLES",
     ],
     minFewShot: 2,
@@ -243,6 +260,17 @@ describe("Few-shot examples library", () => {
       expect(ex.output).toContain("**État actuel.**");
       expect(ex.output).toContain("**Décisions actées.**");
       expect(ex.output).toContain("**Prochaine étape.**");
+    }
+  });
+
+  it("DAILY_BRIEF_FEWSHOT_FR a 2 exemples avec output JSON 4 sections", () => {
+    expect(DAILY_BRIEF_FEWSHOT_FR).toHaveLength(2);
+    for (const ex of DAILY_BRIEF_FEWSHOT_FR) {
+      const parsed = JSON.parse(ex.output) as Record<string, unknown>;
+      expect(parsed.lead).toBeTruthy();
+      expect(parsed.people).toBeTruthy();
+      expect(parsed.decisions).toBeTruthy();
+      expect(parsed.signals).toBeTruthy();
     }
   });
 
