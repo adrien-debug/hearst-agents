@@ -376,10 +376,7 @@ export function TimelineRail() {
         }}
       >
         <button
-          onClick={() => {
-            router.push("/");
-            setStageMode({ mode: "chat" });
-          }}
+          onClick={handleHearstHome}
           className="flex items-center justify-center hover:opacity-80 transition-opacity"
           title="Hearst"
         >

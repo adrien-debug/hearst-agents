@@ -23,6 +23,7 @@ import { CATALOG, getApplicableReports } from "@/lib/reports/catalog";
 import { getAllMissionOps } from "@/lib/engine/runtime/missions/ops-store";
 import { getScheduledMissions } from "@/lib/engine/runtime/state/adapter";
 import { getAllMissions as getMemoryMissions } from "@/lib/engine/runtime/missions/store";
+import { getAssets } from "@/lib/engine/runtime/assets/adapter";
 import { getConnectionsByScope } from "@/lib/connectors/control-plane/store";
 import { getAllServiceIds, getProviderIdForService } from "@/lib/integrations/service-map";
 import { getSummary } from "@/lib/memory/conversation-summary";
@@ -143,6 +144,15 @@ export interface CockpitHospitalitySection {
   source: "demo" | "live";
 }
 
+export interface CockpitCounts {
+  /** Total assets dans la bibliothèque (tous types confondus). */
+  assets: number;
+  /** Total missions planifiées (enabled ou non). */
+  missions: number;
+  /** Sous-ensemble des assets dont type === "report". */
+  reports: number;
+}
+
 export interface CockpitTodayPayload {
   briefing: CockpitBriefing;
   agenda: CockpitAgendaItem[];
@@ -151,6 +161,8 @@ export interface CockpitTodayPayload {
   suggestions: CockpitSuggestion[];
   favoriteReports: CockpitFavoriteReport[];
   inbox: CockpitInboxSection;
+  /** Compteurs globaux pour la home Cockpit (poster éditorial). */
+  counts: CockpitCounts;
   /** Industry du tenant — drive l'affichage de sections verticales. */
   industry: TenantIndustry;
   /** Présent uniquement si industry === "hospitality". */
@@ -437,7 +449,7 @@ function buildHospitalitySection(): CockpitHospitalitySection {
 }
 
 export async function getCockpitToday(scope: CockpitScope): Promise<CockpitTodayPayload> {
-  const [briefing, missionsRunning, suggestions, inbox, industry] = await Promise.all([
+  const [briefing, missionsRunning, suggestions, inbox, industry, allAssets, allMissions] = await Promise.all([
     safe("briefing", () => buildBriefing(scope), {
       headline: "Bienvenue",
       body: null,
@@ -452,7 +464,28 @@ export async function getCockpitToday(scope: CockpitScope): Promise<CockpitToday
       { brief: null, stale: true, needsConnection: false } satisfies CockpitInboxSection,
     ),
     safe<TenantIndustry>("industry", () => getTenantIndustry(scope.tenantId), "general"),
+    safe(
+      "counts.assets",
+      () => getAssets({ tenantId: scope.tenantId, workspaceId: scope.workspaceId, limit: 500 }),
+      [] as Awaited<ReturnType<typeof getAssets>>,
+    ),
+    safe(
+      "counts.missions",
+      () =>
+        getScheduledMissions({
+          userId: scope.userId,
+          tenantId: scope.tenantId,
+          workspaceId: scope.workspaceId,
+        }),
+      [] as Awaited<ReturnType<typeof getScheduledMissions>>,
+    ),
   ]);
+
+  const counts: CockpitCounts = {
+    assets: allAssets.length,
+    reports: allAssets.filter((a) => a.type === "report").length,
+    missions: allMissions.length,
+  };
 
   const favoriteReports = buildFavoriteReports();
 
@@ -497,6 +530,7 @@ export async function getCockpitToday(scope: CockpitScope): Promise<CockpitToday
     suggestions,
     favoriteReports,
     inbox,
+    counts,
     industry,
     hospitality,
     mockSections,

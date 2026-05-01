@@ -95,7 +95,7 @@ interface StageState {
 const TOOL_OVERRIDE_GUARD_MS = 10_000;
 
 export const useStageStore = create<StageState>((set, get) => ({
-  current: { mode: "chat" },
+  current: { mode: "cockpit" },
   history: [],
   lastAssetId: null,
   lastMissionId: null,
@@ -103,8 +103,9 @@ export const useStageStore = create<StageState>((set, get) => ({
   commandeurOpen: false,
   commandeurPrefilledQuery: null,
   // Note : ce store n'est PAS persisté (Zustand sans persist middleware) —
-  // chaque mount de la SPA repart à mode "chat". Pour l'e2e visual loop
-  // et le debugging, on expose le store sur window en dev (cf. setMode).
+  // chaque mount de la SPA repart à mode "cockpit" (home polymorphe post-pivot
+  // 2026-04-29). Pour l'e2e visual loop et le debugging, on expose le store
+  // sur window en dev (cf. setMode).
 
   setMode: (payload) => {
     const prev = get().current;
@@ -146,7 +147,7 @@ export const useStageStore = create<StageState>((set, get) => ({
     set({ current: last.payload, history: hist.slice(0, -1) });
   },
 
-  reset: () => set({ current: { mode: "chat" }, history: [] }),
+  reset: () => set({ current: { mode: "cockpit" }, history: [] }),
 
   setCommandeurOpen: (open, options) =>
     set({

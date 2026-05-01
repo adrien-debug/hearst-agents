@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1600">
+<title>Hearst OS — Directions Visuelles</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:#0A0A0C;
+  color:rgba(255,255,255,0.88);
+  font-family:"SF Pro Text","Segoe UI",system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.5;
+}
+.site-nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,10,12,0.97);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  padding:0 48px;
+  display:flex;align-items:center;gap:28px;
+  height:50px;
+  backdrop-filter:blur(12px);
+}
+.site-nav .brand{font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#2DD4BF;font-weight:600;margin-right:auto;white-space:nowrap}
+.site-nav a{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.40);text-decoration:none;white-space:nowrap;transition:color 120ms}
+.site-nav a:hover{color:rgba(255,255,255,0.88)}
+.rec-badge{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;background:rgba(45,212,191,0.12);color:#2DD4BF;border:1px solid rgba(45,212,191,0.25);padding:2px 8px;border-radius:3px}
+
+.dir-section{padding:72px 48px 80px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.dir-meta-wrap{max-width:1600px;margin:0 auto 40px}
+.dir-num{font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-bottom:10px}
+.dir-name{font-size:26px;font-weight:600;letter-spacing:-0.03em;color:#fff;margin-bottom:5px}
+.dir-posture{font-size:13px;color:rgba(255,255,255,0.48);font-style:italic;margin-bottom:28px}
+.meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;padding:20px 24px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+.meta-col label{display:block;font-size:9px;letter-spacing:0.20em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:9px}
+.swatches{display:flex;gap:5px;flex-wrap:wrap}
+.sw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.sw-dot{width:26px;height:26px;border-radius:3px;border:1px solid rgba(255,255,255,0.08)}
+.sw-hex{font-size:8px;color:rgba(255,255,255,0.32);font-family:ui-monospace,monospace;letter-spacing:0}
+.weakness{font-size:11px;color:rgba(255,165,40,0.82);line-height:1.55;padding:8px 11px;border-left:2px solid rgba(255,165,40,0.35);background:rgba(255,165,40,0.05)}
+
+.cockpit-wrap{max-width:1600px;margin:0 auto;border:1px solid rgba(255,255,255,0.06);overflow:hidden}
+.cockpit{width:100%;height:740px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* PulseBar */
+.pb{height:48px;flex-shrink:0;display:flex;align-items:center;padding:0 18px 0 20px;gap:12px;z-index:10}
+.pb-logo{font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase}
+.pb-pill{display:flex;align-items:center;gap:8px;padding:5px 14px;border-radius:9999px;font-size:11px;font-weight:500;letter-spacing:0.04em}
+.pb-dot{width:6px;height:6px;border-radius:50%}
+.pb-meta{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:11px;opacity:0.5}
+.pb-bell{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;opacity:0.55}
+
+.cols{flex:1;display:flex;min-height:0}
+
+/* TimelineRail */
+.tr{width:208px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
+.tr-head{padding:14px 16px 12px;display:flex;align-items:center;gap:7px}
+.tr-wm{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase}
+.tr-ai{font-size:9px;letter-spacing:0.18em;opacity:0.35}
+.tr-dot{width:5px;height:5px;border-radius:50%;margin-left:auto}
+.tr-nav{padding:4px 8px 6px;display:flex;flex-direction:column;gap:1px}
+.tr-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;font-size:12px;cursor:pointer}
+.tr-item .ti-ico{font-size:12px;opacity:0.5;width:15px;text-align:center}
+.tr-item .ti-lbl{flex:1;font-weight:450}
+.tr-item .ti-kbd{font-size:9px;font-family:ui-monospace,monospace;opacity:0.32}
+.tr-new{margin:4px 8px 10px;padding:7px 12px;border-radius:5px;font-size:11px;font-weight:500;letter-spacing:0.05em;display:flex;align-items:center;gap:6px;cursor:pointer;border:none;text-align:left}
+.tr-sec{padding:9px 17px 4px;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;opacity:0.32;font-weight:500}
+.tr-thread{padding:7px 10px 7px 17px;display:flex;flex-direction:column;gap:2px;cursor:pointer;border-radius:5px;margin:1px 8px}
+.tr-thread .tt-n{font-size:12px;font-weight:450;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr-thread .tt-m{font-size:10px;font-family:ui-monospace,monospace;letter-spacing:0.04em;opacity:0.35}
+
+/* Stage */
+.stg{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.stg-bar{height:38px;flex-shrink:0;display:flex;align-items:center;padding:0 26px;gap:8px;font-size:11px;letter-spacing:0.05em}
+.stg-bar .bc{opacity:0.30}.stg-bar .sep{opacity:0.18}.stg-bar .cur{font-weight:500;opacity:0.75}
+.stg-bar .clk{margin-left:auto;font-family:ui-monospace,monospace;font-size:10px;opacity:0.25;letter-spacing:0.04em}
+.stg-body{flex:1;overflow:hidden;padding:26px 30px 0;display:flex;flex-direction:column}
+.stg-h1{font-size:24px;font-weight:600;letter-spacing:-0.025em;line-height:1.1;margin-bottom:3px}
+.stg-sub{font-size:12px;opacity:0.42;letter-spacing:0.01em;margin-bottom:18px}
+.stg-acts{display:flex;align-items:center;gap:9px;margin-bottom:16px}
+.btn-p{padding:6px 15px;border-radius:5px;font-size:12px;font-weight:500;border:none;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-g{padding:6px 13px;border-radius:5px;font-size:12px;font-weight:450;cursor:pointer;background:transparent}
+.fchip{padding:4px 11px;border-radius:9999px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px}
+.tbl-head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:6px 13px;gap:10px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;opacity:0.32;border-bottom:1px solid rgba(255,255,255,0.05)}
+.mrow{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:12px 13px;gap:10px;border-bottom:1px solid rgba(255,255,255,0.04);align-items:center;cursor:pointer}
+.mrow:hover{background:rgba(255,255,255,0.02)}
+.mr-n{font-size:13px;font-weight:500}
+.mr-s{font-size:10px;margin-top:2px;opacity:0.40;letter-spacing:0.01em}
+.mr-st{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 8px;border-radius:4px;font-weight:500}
+.mr-std{width:5px;height:5px;border-radius:50%}
+.mr-v{font-size:13px;font-weight:500;font-family:ui-monospace,monospace;letter-spacing:-0.01em}
+.mr-m{font-size:10px;opacity:0.38;font-family:ui-monospace,monospace;letter-spacing:0.04em}
+.chatdock{flex-shrink:0;padding:11px 26px 14px;border-top:1px solid rgba(255,255,255,0.05);margin-top:auto}
+.cinput{width:100%;padding:9px 15px;border-radius:7px;display:flex;align-items:center;gap:9px;font-size:13px}
+.ciph{opacity:0.32;flex:1}
+.ciht{font-size:10px;font-family:ui-monospace,monospace;opacity:0.22;letter-spacing:0.05em}
+
+/* ContextRail */
+.cr{width:262px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
+.cr-sec{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.cr-lbl{font-size:9px;letter-spacing:0.19em;text-transform:uppercase;opacity:0.28;font-weight:500;margin-bottom:9px}
+.cr-item{display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px}
+.ci-l{opacity:0.62}
+.ci-v{font-weight:500;font-size:11px;font-family:ui-monospace,monospace}
+.cr-sc{display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px}
+.cs-l{opacity:0.52}
+.cs-k{font-size:10px;font-family:ui-monospace,monospace;padding:2px 6px;border-radius:3px;border:1px solid rgba(255,255,255,0.09);color:rgba(255,255,255,0.42)}
+
+/* ═══ D1 — ATELIER LITHOGRAPHIE NOCTURNE ═══ */
+.d1 .pb{background:#080809;border-bottom:1px solid rgba(255,255,255,0.05)}
+.d1 .pb-logo{color:rgba(255,255,255,0.90)}
+.d1 .pb-pill{background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.18);color:#2DD4BF}
+.d1 .pb-dot{background:#2DD4BF;box-shadow:0 0 6px rgba(45,212,191,0.55)}
+.d1 .tr{background:#080809;border-right:1px solid rgba(255,255,255,0.05)}
+.d1 .tr-head{border-bottom:1px solid rgba(255,255,255,0.05)}
+.d1 .tr-wm{color:rgba(255,255,255,0.88)}
+.d1 .tr-dot{background:#2DD4BF;box-shadow:0 0 5px rgba(45,212,191,0.6)}
+.d1 .tr-item{color:rgba(255,255,255,0.50)}
+.d1 .tr-item.active{background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.90);box-shadow:inset 2px 0 0 #2DD4BF}
+.d1 .tr-new{background:rgba(45,212,191,0.09);color:#2DD4BF;border:1px solid rgba(45,212,191,0.20)}
+.d1 .tr-thread{color:rgba(255,255,255,0.48)}
+.d1 .tr-thread:hover{background:rgba(255,255,255,0.03)}
+/* Stage = papier cool */
+.d1 .stg{background:#F4F7F8;border-left:1px solid rgba(13,24,32,0.06)}
+.d1 .stg-bar{background:#F4F7F8;border-bottom:1px solid rgba(13,24,32,0.07);color:#0D1820}
+.d1 .stg-h1{color:#0D1820}
+.d1 .stg-sub{color:rgba(13,24,32,0.42)}
+.d1 .btn-p{background:#2DD4BF;color:#042526}
+.d1 .btn-g{border:1px solid rgba(13,24,32,0.12);color:rgba(13,24,32,0.60)}
+.d1 .fchip{background:rgba(45,212,191,0.10);border:1px solid rgba(45,212,191,0.25);color:#0D8A7A}
+.d1 .tbl-head{color:rgba(13,24,32,0.85)}
+.d1 .mrow{color:#0D1820;border-bottom-color:rgba(13,24,32,0.06)}
+.d1 .mrow:hover{background:rgba(13,24,32,0.03)}
+.d1 .mr-s{color:rgba(13,24,32,0.38)}
+.d1 .mr-st.run{background:rgba(45,212,191,0.10);color:#0D8A7A}
+.d1 .mr-st.ok{background:rgba(22,163,74,0.10);color:#16A34A}
+.d1 .mr-std.run{background:#2DD4BF}
+.d1 .mr-std.ok{background:#16A34A}
+.d1 .mr-m{color:rgba(13,24,32,0.36)}
+.d1 .chatdock{background:#F4F7F8;border-top-color:rgba(13,24,32,0.07)}
+.d1 .cinput{background:rgba(13,24,32,0.05);border:1px solid rgba(13,24,32,0.10);color:#0D1820}
+.d1 .cr{background:#090A0B;border-left:1px solid rgba(255,255,255,0.05);color:rgba(255,255,255,0.70)}
+.d1 .cr-sec{border-bottom-color:rgba(255,255,255,0.04)}
+.d1 .cs-k{border-color:rgba(255,255,255,0.09)}
+
+/* ═══ D2 — SALON CUIR LAITON ═══ */
+.d2 .pb{background:#0E0C09;border-bottom:1px solid rgba(200,169,97,0.08)}
+.d2 .pb-logo{color:#C8A961}
+.d2 .pb-pill{background:rgba(200,169,97,0.08);border:1px solid rgba(200,169,97,0.18);color:#C8A961}
+.d2 .pb-dot{background:#2DD4BF;box-shadow:0 0 5px rgba(45,212,191,0.55)}
+.d2 .tr{background:#0E0C09;border-right:1px solid rgba(200,169,97,0.08)}
+.d2 .tr-head{border-bottom:1px solid rgba(200,169,97,0.08)}
+.d2 .tr-wm{color:#C8A961}
+.d2 .tr-dot{background:#2DD4BF}
+.d2 .tr-item{color:rgba(230,210,160,0.44)}
+.d2 .tr-item.active{background:rgba(200,169,97,0.06);color:rgba(230,210,160,0.92);box-shadow:inset 2px 0 0 #C8A961}
+.d2 .tr-new{background:rgba(200,169,97,0.07);color:#C8A961;border:1px solid rgba(200,169,97,0.16)}
+.d2 .tr-thread{color:rgba(230,210,160,0.42)}
+.d2 .tr-thread:hover{background:rgba(200,169,97,0.04)}
+.d2 .stg{background:#1A1610;border-left:1px solid rgba(200,169,97,0.07)}
+.d2 .stg-bar{background:#1A1610;border-bottom:1px solid rgba(200,169,97,0.07);color:rgba(230,210,160,0.85)}
+.d2 .stg-h1{color:rgba(230,210,160,0.96)}
+.d2 .stg-sub{color:rgba(230,210,160,0.36)}
+.d2 .btn-p{background:#C8A961;color:#0E0C09}
+.d2 .btn-g{border:1px solid rgba(200,169,97,0.14);color:rgba(230,210,160,0.55)}
+.d2 .fchip{background:rgba(45,212,191,0.07);border:1px solid rgba(45,212,191,0.18);color:#2DD4BF}
+.d2 .tbl-head{color:rgba(230,210,160,0.75)}
+.d2 .mrow{color:rgba(230,210,160,0.88);border-bottom-color:rgba(200,169,97,0.06)}
+.d2 .mrow:hover{background:rgba(200,169,97,0.03)}
+.d2 .mr-s{color:rgba(230,210,160,0.32)}
+.d2 .mr-st.run{background:rgba(45,212,191,0.08);color:#2DD4BF}
+.d2 .mr-st.ok{background:rgba(45,197,88,0.08);color:#2DC558}
+.d2 .mr-std.run{background:#2DD4BF}
+.d2 .mr-std.ok{background:#2DC558}
+.d2 .mr-m{color:rgba(230,210,160,0.30)}
+.d2 .chatdock{background:#1A1610;border-top-color:rgba(200,169,97,0.07)}
+.d2 .cinput{background:rgba(200,169,97,0.04);border:1px solid rgba(200,169,97,0.11);color:rgba(230,210,160,0.60)}
+.d2 .cr{background:#0E0C09;border-left:1px solid rgba(200,169,97,0.08);color:rgba(230,210,160,0.62)}
+.d2 .cr-sec{border-bottom-color:rgba(200,169,97,0.06)}
+.d2 .cs-k{border-color:rgba(200,169,97,0.12);color:rgba(230,210,160,0.38)}
+
+/* ═══ D3 — JOURNAL 4H DU MATIN ═══ */
+.d3 .pb{background:#EDE8DF;border-bottom:1px solid rgba(50,40,25,0.10)}
+.d3 .pb-logo{color:#2A220F}
+.d3 .pb-pill{background:rgba(45,212,191,0.10);border:1px solid rgba(45,212,191,0.25);color:#1A7A6F}
+.d3 .pb-dot{background:#2DD4BF}
+.d3 .tr{background:#EDE8DF;border-right:1px solid rgba(50,40,25,0.08)}
+.d3 .tr-head{border-bottom:1px solid rgba(50,40,25,0.08)}
+.d3 .tr-wm{color:#2A220F}
+.d3 .tr-dot{background:#2DD4BF}
+.d3 .tr-item{color:rgba(50,40,25,0.48)}
+.d3 .tr-item.active{background:rgba(50,40,25,0.06);color:rgba(50,40,25,0.90);box-shadow:inset 2px 0 0 #2DD4BF}
+.d3 .tr-new{background:rgba(50,40,25,0.07);color:rgba(50,40,25,0.72);border:1px solid rgba(50,40,25,0.12)}
+.d3 .tr-thread{color:rgba(50,40,25,0.48)}
+.d3 .tr-thread:hover{background:rgba(50,40,25,0.04)}
+.d3 .stg{background:#FAF7F2;border-left:1px solid rgba(50,40,25,0.06)}
+.d3 .stg-bar{background:#FAF7F2;border-bottom:1px solid rgba(50,40,25,0.07);color:rgba(50,40,25,0.52)}
+.d3 .stg-h1{color:#1A1408}
+.d3 .stg-sub{color:rgba(50,40,25,0.40)}
+.d3 .btn-p{background:#1A1408;color:#FAF7F2}
+.d3 .btn-g{border:1px solid rgba(50,40,25,0.14);color:rgba(50,40,25,0.58)}
+.d3 .fchip{background:rgba(45,212,191,0.10);border:1px solid rgba(45,212,191,0.28);color:#1A7A6F}
+.d3 .tbl-head{color:rgba(50,40,25,0.70)}
+.d3 .mrow{color:rgba(50,40,25,0.88);border-bottom-color:rgba(50,40,25,0.06)}
+.d3 .mrow:hover{background:rgba(50,40,25,0.03)}
+.d3 .mr-s{color:rgba(50,40,25,0.36)}
+.d3 .mr-st.run{background:rgba(45,212,191,0.10);color:#1A7A6F}
+.d3 .mr-st.ok{background:rgba(22,163,74,0.10);color:#15803D}
+.d3 .mr-std.run{background:#2DD4BF}
+.d3 .mr-std.ok{background:#15803D}
+.d3 .mr-m{color:rgba(50,40,25,0.30)}
+.d3 .chatdock{background:#FAF7F2;border-top-color:rgba(50,40,25,0.07)}
+.d3 .cinput{background:rgba(50,40,25,0.05);border:1px solid rgba(50,40,25,0.11);color:rgba(50,40,25,0.52)}
+.d3 .cr{background:#EDE8DF;border-left:1px solid rgba(50,40,25,0.08);color:rgba(50,40,25,0.62)}
+.d3 .cr-sec{border-bottom-color:rgba(50,40,25,0.06)}
+.d3 .cs-k{border-color:rgba(50,40,25,0.12);color:rgba(50,40,25,0.38);background:rgba(50,40,25,0.04)}
+
+/* ═══ D4 — ARDOISE VERTE OPÉRATEUR ═══ */
+.d4 .pb{background:#090E0C;border-bottom:1px solid rgba(45,212,191,0.07)}
+.d4 .pb-logo{color:rgba(200,230,210,0.90)}
+.d4 .pb-pill{background:rgba(45,212,191,0.10);border:1px solid rgba(45,212,191,0.20);color:#2DD4BF}
+.d4 .pb-dot{background:#2DD4BF;box-shadow:0 0 8px rgba(45,212,191,0.65)}
+.d4 .tr{background:#090E0C;border-right:1px solid rgba(45,212,191,0.07)}
+.d4 .tr-head{border-bottom:1px solid rgba(45,212,191,0.07)}
+.d4 .tr-wm{color:rgba(200,230,210,0.88)}
+.d4 .tr-dot{background:#2DD4BF;box-shadow:0 0 6px rgba(45,212,191,0.70)}
+.d4 .tr-item{color:rgba(160,200,185,0.44)}
+.d4 .tr-item.active{background:rgba(45,212,191,0.06);color:rgba(200,230,210,0.92);box-shadow:inset 2px 0 0 #2DD4BF}
+.d4 .tr-new{background:rgba(45,212,191,0.08);color:#2DD4BF;border:1px solid rgba(45,212,191,0.18)}
+.d4 .tr-thread{color:rgba(160,200,185,0.42)}
+.d4 .tr-thread:hover{background:rgba(45,212,191,0.04)}
+.d4 .stg{background:#142018;border-left:1px solid rgba(45,212,191,0.06)}
+.d4 .stg-bar{background:#142018;border-bottom:1px solid rgba(45,212,191,0.07);color:rgba(160,200,185,0.55)}
+.d4 .stg-h1{color:rgba(215,240,225,0.96)}
+.d4 .stg-sub{color:rgba(160,200,185,0.40)}
+.d4 .btn-p{background:#2DD4BF;color:#042520}
+.d4 .btn-g{border:1px solid rgba(45,212,191,0.14);color:rgba(160,200,185,0.58)}
+.d4 .fchip{background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.20);color:#2DD4BF}
+.d4 .tbl-head{color:rgba(160,200,185,0.80)}
+.d4 .mrow{color:rgba(200,230,210,0.80);border-bottom-color:rgba(45,212,191,0.05)}
+.d4 .mrow:hover{background:rgba(45,212,191,0.03)}
+.d4 .mr-s{color:rgba(160,200,185,0.36)}
+.d4 .mr-st.run{background:rgba(45,212,191,0.10);color:#2DD4BF}
+.d4 .mr-st.ok{background:rgba(45,197,88,0.08);color:#2DC558}
+.d4 .mr-std.run{background:#2DD4BF;box-shadow:0 0 5px rgba(45,212,191,0.6)}
+.d4 .mr-std.ok{background:#2DC558}
+.d4 .mr-m{color:rgba(160,200,185,0.30)}
+.d4 .chatdock{background:#142018;border-top-color:rgba(45,212,191,0.06)}
+.d4 .cinput{background:rgba(45,212,191,0.05);border:1px solid rgba(45,212,191,0.12);color:rgba(160,200,185,0.52)}
+.d4 .cr{background:#090E0C;border-left:1px solid rgba(45,212,191,0.07);color:rgba(160,200,185,0.62)}
+.d4 .cr-sec{border-bottom-color:rgba(45,212,191,0.05)}
+.d4 .cs-k{border-color:rgba(45,212,191,0.14);color:rgba(160,200,185,0.38);background:rgba(45,212,191,0.03)}
+
+/* ═══ D5 — ACIER BLEU NUIT (dual-tone inversé) ═══ */
+.d5 .pb{background:#0C1018;border-bottom:1px solid rgba(100,140,190,0.10)}
+.d5 .pb-logo{color:rgba(180,210,245,0.90)}
+.d5 .pb-pill{background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.18);color:#2DD4BF}
+.d5 .pb-dot{background:#2DD4BF;box-shadow:0 0 6px rgba(45,212,191,0.55)}
+.d5 .tr{background:#15202E;border-right:1px solid rgba(100,140,190,0.10)}
+.d5 .tr-head{border-bottom:1px solid rgba(100,140,190,0.10)}
+.d5 .tr-wm{color:rgba(180,210,245,0.88)}
+.d5 .tr-dot{background:#2DD4BF}
+.d5 .tr-item{color:rgba(130,165,210,0.46)}
+.d5 .tr-item.active{background:rgba(100,140,190,0.08);color:rgba(180,210,245,0.92);box-shadow:inset 2px 0 0 #2DD4BF}
+.d5 .tr-new{background:rgba(100,140,190,0.08);color:rgba(180,210,245,0.70);border:1px solid rgba(100,140,190,0.16)}
+.d5 .tr-thread{color:rgba(130,165,210,0.46)}
+.d5 .tr-thread:hover{background:rgba(100,140,190,0.05)}
+.d5 .stg{background:#08101A;border-left:1px solid rgba(100,140,190,0.08)}
+.d5 .stg-bar{background:#08101A;border-bottom:1px solid rgba(100,140,190,0.08);color:rgba(130,165,210,0.52)}
+.d5 .stg-h1{color:rgba(190,220,255,0.96)}
+.d5 .stg-sub{color:rgba(130,165,210,0.40)}
+.d5 .btn-p{background:#2DD4BF;color:#042526}
+.d5 .btn-g{border:1px solid rgba(100,140,190,0.15);color:rgba(130,165,210,0.58)}
+.d5 .fchip{background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.20);color:#2DD4BF}
+.d5 .tbl-head{color:rgba(130,165,210,0.78)}
+.d5 .mrow{color:rgba(165,200,240,0.82);border-bottom-color:rgba(100,140,190,0.07)}
+.d5 .mrow:hover{background:rgba(100,140,190,0.04)}
+.d5 .mr-s{color:rgba(130,165,210,0.36)}
+.d5 .mr-st.run{background:rgba(45,212,191,0.08);color:#2DD4BF}
+.d5 .mr-st.ok{background:rgba(45,197,88,0.08);color:#2DC558}
+.d5 .mr-std.run{background:#2DD4BF}
+.d5 .mr-std.ok{background:#2DC558}
+.d5 .mr-m{color:rgba(130,165,210,0.30)}
+.d5 .chatdock{background:#08101A;border-top-color:rgba(100,140,190,0.08)}
+.d5 .cinput{background:rgba(100,140,190,0.05);border:1px solid rgba(100,140,190,0.12);color:rgba(130,165,210,0.52)}
+.d5 .cr{background:#15202E;border-left:1px solid rgba(100,140,190,0.10);color:rgba(130,165,210,0.62)}
+.d5 .cr-sec{border-bottom-color:rgba(100,140,190,0.07)}
+.d5 .cs-k{border-color:rgba(100,140,190,0.14);color:rgba(130,165,210,0.38)}
+
+/* Decision strip */
+.decision{padding:72px 48px 96px;background:rgba(45,212,191,0.02);border-top:1px solid rgba(45,212,191,0.12)}
+.decision-inner{max-width:1200px;margin:0 auto}
+.reco-block{padding:26px 30px;border:1px solid rgba(45,212,191,0.24);background:rgba(45,212,191,0.04);margin-bottom:28px}
+.reco-lbl{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:#2DD4BF;margin-bottom:10px}
+.reco-block h3{font-size:17px;font-weight:600;color:#fff;letter-spacing:-0.02em;margin-bottom:8px}
+.reco-block p{font-size:13px;color:rgba(255,255,255,0.62);line-height:1.65;max-width:720px}
+.tok-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+.tok-card{padding:14px 16px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07)}
+.tok-k{font-size:10px;font-family:ui-monospace,monospace;color:#2DD4BF;letter-spacing:0.02em;margin-bottom:5px}
+.tok-v{font-size:12px;font-family:ui-monospace,monospace;color:rgba(255,255,255,0.70)}
+.tok-d{font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px;line-height:1.4}
+.cmp-row{display:flex;align-items:baseline;gap:14px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px}
+.cmp-n{font-weight:500;color:rgba(255,255,255,0.70);min-width:200px}
+.cmp-f{color:rgba(45,197,88,0.82);flex:1}
+.cmp-a{color:rgba(239,68,68,0.68);flex:1;text-align:right}
+
+code{font-family:ui-monospace,monospace;font-size:11px;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:2px}
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <span class="brand">Hearst OS — Directions Visuelles</span>
+  <a href="#d1">01 Atelier Lithographie</a>
+  <a href="#d2">02 Salon Cuir Laiton</a>
+  <a href="#d3">03 Journal 4h du Matin</a>
+  <a href="#d4">04 Ardoise Verte Opérateur</a>
+  <a href="#d5">05 Acier Bleu Nuit</a>
+  <a href="#decision">Recommandation</a>
+  <span class="rec-badge">Reco &rarr; Dir 01</span>
+</nav>
+
+<!-- ════════ D1 ════════ -->
+<section class="dir-section" id="d1">
+  <div class="dir-meta-wrap">
+    <div class="dir-num">Direction 01 / 05</div>
+    <div class="dir-name">Atelier Lithographie Nocturne</div>
+    <div class="dir-posture">« Rails d'encre noire, scène papier vélin cool — le cockpit comme table lumineuse d'imprimeur de nuit. »</div>
+    <div class="meta-grid">
+      <div class="meta-col">
+        <label>Palette</label>
+        <div class="swatches">
+          <div class="sw"><div class="sw-dot" style="background:#080809"></div><div class="sw-hex">#080809</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#F4F7F8;border-color:rgba(0,0,0,0.12)"></div><div class="sw-hex">#F4F7F8</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#0D1820"></div><div class="sw-hex">#0D1820</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#2DD4BF"></div><div class="sw-hex">#2DD4BF</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#16A34A"></div><div class="sw-hex">#16A34A</div></div>
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Axes parti-pris</label>
+        <div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.6">
+          Contraste dual-tone maximal (rails noir absolu / stage blanc cassé)<br>
+          Texture : encre slate teintée cyan (#0D1820 = R13 G24 B32)<br>
+          Typographie encre sur papier — hiérarchie nette, zéro gimmick
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Accent dominant</label>
+        <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(45,212,191,0.10);border:1px solid rgba(45,212,191,0.26);color:#2DD4BF;padding:5px 11px;border-radius:3px;font-size:11px;margin-bottom:8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#2DD4BF"></div>
+          Cykan #2DD4BF — primaire système
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.40)">Fonctionne sur les deux fonds (noir + blanc). Gold reste éditorial secondaire.</div>
+      </div>
+      <div class="meta-col">
+        <label>Faiblesse assumée</label>
+        <div class="weakness">Contraste rail/stage fatiguant en usage prolongé 8h+. Le passage visuel noir→blanc toutes les minutes peut créer de la fatigue oculaire sur moniteurs non-OLED. Le blanc peut paraître vide si le stage n'est pas assez dense.</div>
+      </div>
+    </div>
+  </div>
+  <div class="cockpit-wrap">
+    <div class="cockpit">
+      <!-- PulseBar D1 -->
+      <div class="pb d1">
+        <span class="pb-logo">Hearst</span>
+        <div class="pb-pill"><div class="pb-dot"></div>Commandeur<span style="font-size:9px;font-family:ui-monospace,monospace;opacity:0.55;margin-left:3px">⌘K</span></div>
+        <div class="pb-meta">
+          <span style="display:flex;align-items:center;gap:5px">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.1" opacity="0.55"/><path d="M5.5 3V5.5L7 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity="0.55"/></svg>
+            4 200 crédits
+          </span>
+          <div class="pb-bell">&#9993;</div>
+        </div>
+      </div>
+      <div class="cols">
+        <!-- TimelineRail D1 -->
+        <div class="tr d1">
+          <div class="tr-head d1">
+            <span class="tr-wm">HEARST</span><span class="tr-ai">AI</span>
+            <div class="tr-dot"></div>
+          </div>
+          <div class="tr-nav">
+            <div class="tr-item d1 active"><span class="ti-ico">&#9889;</span><span class="ti-lbl">Hearst</span><span class="ti-kbd">&#8984;1</span></div>
+            <div class="tr-item d1"><span class="ti-ico">&#128241;</span><span class="ti-lbl">App</span></div>
+          </div>
+          <button class="tr-new d1"><span style="font-size:14px;line-height:1">+</span>Nouvelle conv.<span style="font-size:9px;font-family:ui-monospace,monospace;margin-left:auto;opacity:0.45">&#8984;N</span></button>
+          <div class="tr-sec d1">Récents</div>
+          <div class="tr-thread d1"><div class="tt-n">Stratégie BTC Q2</div><div class="tt-m">Il y a 12 min</div></div>
+          <div class="tr-thread d1"><div class="tt-n">Briefing Ritz-Carlton</div><div class="tt-m">Hier, 23:41</div></div>
+        </div>
+        <!-- Stage D1 -->
+        <div class="stg d1">
+          <div class="stg-bar d1">
+            <span class="bc">Hearst OS</span><span class="sep">/</span><span class="cur">Missions</span>
+            <span class="clk">05:12:44</span>
+          </div>
+          <div class="stg-body">
+            <div class="stg-h1 d1">Missions actives</div>
+            <div class="stg-sub d1">2 agents en cours &middot; dernière sync il y a 3 min</div>
+            <div class="stg-acts">
+              <button class="btn-p d1">+ Nouvelle mission</button>
+              <button class="btn-g d1">Filtres</button>
+              <div class="fchip d1"><svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor"><circle cx="4.5" cy="4.5" r="3"/></svg>1 activées</div>
+            </div>
+            <div class="tbl-head d1"><div>Mission</div><div>Statut</div><div>Valeur</div><div>Exécutions</div><div>Dernière act.</div></div>
+            <div class="mrow d1">
+              <div><div class="mr-n">BTC Arbitrage Loop</div><div class="mr-s d1">Agent LLM &middot; Binance &#8596; Kraken</div></div>
+              <div><div class="mr-st run d1"><div class="mr-std run"></div>En cours</div></div>
+              <div class="mr-v">+€1&nbsp;247</div>
+              <div class="mr-m d1">14 / 14</div>
+              <div class="mr-m d1">Il y a 3 min</div>
+            </div>
+            <div class="mrow d1">
+              <div><div class="mr-n">Bitcoin Price Monitor</div><div class="mr-s d1">Agent LLM &middot; CoinGecko API</div></div>
+              <div><div class="mr-st ok d1"><div class="mr-std ok"></div>Réussi</div></div>
+              <div class="mr-v">€98&nbsp;420</div>
+              <div class="mr-m d1">6 / 6</div>
+              <div class="mr-m d1">Il y a 8 min</div>
+            </div>
+          </div>
+          <div class="chatdock d1">
+            <div class="cinput d1"><span class="ciph">Demandez à Hearst&hellip;</span><span class="ciht">&#8984; Entrée</span></div>
+          </div>
+        </div>
+        <!-- ContextRail D1 -->
+        <div class="cr d1">
+          <div class="cr-sec d1"><div class="cr-lbl">Cadences</div>
+            <div class="cr-item"><span class="ci-l">Agents actifs</span><span class="ci-v" style="color:#2DD4BF">2</span></div>
+            <div class="cr-item"><span class="ci-l">Tâches en file</span><span class="ci-v" style="color:#2DD4BF">7</span></div>
+            <div class="cr-item"><span class="ci-l">Crédits restants</span><span class="ci-v">4 200</span></div>
+          </div>
+          <div class="cr-sec d1"><div class="cr-lbl">Raccourcis</div>
+            <div class="cr-sc"><span class="cs-l">Commandeur</span><span class="cs-k d1">&#8984;K</span></div>
+            <div class="cr-sc"><span class="cs-l">Nouvelle conv.</span><span class="cs-k d1">&#8984;N</span></div>
+            <div class="cr-sc"><span class="cs-l">Missions</span><span class="cs-k d1">&#8984;M</span></div>
+          </div>
+          <div class="cr-sec d1"><div class="cr-lbl">Aide</div>
+            <div style="font-size:11px;opacity:0.50;line-height:1.55">Docs, tutoriels et support Hearst OS via le Commandeur.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ D2 ════════ -->
+<section class="dir-section" id="d2">
+  <div class="dir-meta-wrap">
+    <div class="dir-num">Direction 02 / 05</div>
+    <div class="dir-name">Salon Cuir Laiton</div>
+    <div class="dir-posture">« Full dark brou de noix, accents laiton chauds — le cockpit comme bureau d'un directeur hôtelier de 1930. »</div>
+    <div class="meta-grid">
+      <div class="meta-col">
+        <label>Palette</label>
+        <div class="swatches">
+          <div class="sw"><div class="sw-dot" style="background:#0E0C09"></div><div class="sw-hex">#0E0C09</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#1A1610"></div><div class="sw-hex">#1A1610</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#C8A961"></div><div class="sw-hex">#C8A961</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#2DD4BF"></div><div class="sw-hex">#2DD4BF</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#E6D2A0"></div><div class="sw-hex">#E6D2A0</div></div>
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Axes parti-pris</label>
+        <div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.6">
+          Chromaticité réelle : brun-noir warm vs dark neutre<br>
+          Accentuation Gold dominant sur chrome nav (logo, item actif)<br>
+          Cykan cantonné aux états système (run actif, pulse)
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Accent dominant</label>
+        <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(200,169,97,0.10);border:1px solid rgba(200,169,97,0.26);color:#C8A961;padding:5px 11px;border-radius:3px;font-size:11px;margin-bottom:8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#C8A961"></div>
+          Gold #C8A961 — primaire nav/logo
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.40)">Gold sur fond noir = ratio 6.8:1. Cykan réservé aux states système.</div>
+      </div>
+      <div class="meta-col">
+        <label>Faiblesse assumée</label>
+        <div class="weakness">Le gold sur fond très sombre bascule facilement vers l'esthétique "casino" ou "luxury générique" si utilisé trop librement. Contrôle éditorial strict : gold sur logo + item actif uniquement — tout le reste en ivoire warm neutre.</div>
+      </div>
+    </div>
+  </div>
+  <div class="cockpit-wrap">
+    <div class="cockpit">
+      <div class="pb d2">
+        <span class="pb-logo">Hearst</span>
+        <div class="pb-pill"><div class="pb-dot"></div>Commandeur<span style="font-size:9px;font-family:ui-monospace,monospace;opacity:0.55;margin-left:3px">⌘K</span></div>
+        <div class="pb-meta"><span style="display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.1" opacity="0.55"/><path d="M5.5 3V5.5L7 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity="0.55"/></svg>4 200 crédits</span><div class="pb-bell">&#9993;</div></div>
+      </div>
+      <div class="cols">
+        <div class="tr d2">
+          <div class="tr-head d2"><span class="tr-wm">HEARST</span><span class="tr-ai">AI</span><div class="tr-dot"></div></div>
+          <div class="tr-nav">
+            <div class="tr-item d2 active"><span class="ti-ico">&#9889;</span><span class="ti-lbl">Hearst</span><span class="ti-kbd">&#8984;1</span></div>
+            <div class="tr-item d2"><span class="ti-ico">&#128241;</span><span class="ti-lbl">App</span></div>
+          </div>
+          <button class="tr-new d2"><span style="font-size:14px;line-height:1">+</span>Nouvelle conv.<span style="font-size:9px;font-family:ui-monospace,monospace;margin-left:auto;opacity:0.45">&#8984;N</span></button>
+          <div class="tr-sec d2">Récents</div>
+          <div class="tr-thread d2"><div class="tt-n">Stratégie BTC Q2</div><div class="tt-m">Il y a 12 min</div></div>
+          <div class="tr-thread d2"><div class="tt-n">Briefing Ritz-Carlton</div><div class="tt-m">Hier, 23:41</div></div>
+        </div>
+        <div class="stg d2">
+          <div class="stg-bar d2"><span class="bc">Hearst OS</span><span class="sep">/</span><span class="cur">Missions</span><span class="clk">05:12:44</span></div>
+          <div class="stg-body">
+            <div class="stg-h1 d2">Missions actives</div>
+            <div class="stg-sub d2">2 agents en cours &middot; dernière sync il y a 3 min</div>
+            <div class="stg-acts">
+              <button class="btn-p d2">+ Nouvelle mission</button>
+              <button class="btn-g d2">Filtres</button>
+              <div class="fchip d2"><svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor"><circle cx="4.5" cy="4.5" r="3"/></svg>1 activées</div>
+            </div>
+            <div class="tbl-head d2"><div>Mission</div><div>Statut</div><div>Valeur</div><div>Exécutions</div><div>Dernière act.</div></div>
+            <div class="mrow d2"><div><div class="mr-n">BTC Arbitrage Loop</div><div class="mr-s d2">Agent LLM &middot; Binance &#8596; Kraken</div></div><div><div class="mr-st run d2"><div class="mr-std run"></div>En cours</div></div><div class="mr-v">+€1&nbsp;247</div><div class="mr-m d2">14 / 14</div><div class="mr-m d2">Il y a 3 min</div></div>
+            <div class="mrow d2"><div><div class="mr-n">Bitcoin Price Monitor</div><div class="mr-s d2">Agent LLM &middot; CoinGecko API</div></div><div><div class="mr-st ok d2"><div class="mr-std ok"></div>Réussi</div></div><div class="mr-v">€98&nbsp;420</div><div class="mr-m d2">6 / 6</div><div class="mr-m d2">Il y a 8 min</div></div>
+          </div>
+          <div class="chatdock d2"><div class="cinput d2"><span class="ciph">Demandez à Hearst&hellip;</span><span class="ciht">&#8984; Entrée</span></div></div>
+        </div>
+        <div class="cr d2">
+          <div class="cr-sec d2"><div class="cr-lbl">Cadences</div>
+            <div class="cr-item"><span class="ci-l">Agents actifs</span><span class="ci-v" style="color:#C8A961">2</span></div>
+            <div class="cr-item"><span class="ci-l">Tâches en file</span><span class="ci-v" style="color:#C8A961">7</span></div>
+            <div class="cr-item"><span class="ci-l">Crédits restants</span><span class="ci-v" style="color:rgba(230,210,160,0.70)">4 200</span></div>
+          </div>
+          <div class="cr-sec d2"><div class="cr-lbl">Raccourcis</div>
+            <div class="cr-sc"><span class="cs-l">Commandeur</span><span class="cs-k d2">&#8984;K</span></div>
+            <div class="cr-sc"><span class="cs-l">Nouvelle conv.</span><span class="cs-k d2">&#8984;N</span></div>
+            <div class="cr-sc"><span class="cs-l">Missions</span><span class="cs-k d2">&#8984;M</span></div>
+          </div>
+          <div class="cr-sec d2"><div class="cr-lbl">Aide</div><div style="font-size:11px;opacity:0.50;line-height:1.55">Docs et support via le Commandeur.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ D3 ════════ -->
+<section class="dir-section" id="d3">
+  <div class="dir-meta-wrap">
+    <div class="dir-num">Direction 03 / 05</div>
+    <div class="dir-name">Journal 4h du Matin</div>
+    <div class="dir-posture">« Papier kraft ivoire chaud + encre noire pure — le cockpit comme rotative grand luxe à l'aube, tout clair, toute matière. »</div>
+    <div class="meta-grid">
+      <div class="meta-col">
+        <label>Palette</label>
+        <div class="swatches">
+          <div class="sw"><div class="sw-dot" style="background:#EDE8DF;border-color:rgba(0,0,0,0.10)"></div><div class="sw-hex">#EDE8DF</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#FAF7F2;border-color:rgba(0,0,0,0.08)"></div><div class="sw-hex">#FAF7F2</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#1A1408"></div><div class="sw-hex">#1A1408</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#2DD4BF"></div><div class="sw-hex">#2DD4BF</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#1A7A6F"></div><div class="sw-hex">#1A7A6F</div></div>
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Axes parti-pris</label>
+        <div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.6">
+          Chromaticité : kraft warm (rails ivoire sombre) vs blanc cassé (stage)<br>
+          Typographie noire pure sur papier — lecture éditoriale maximale<br>
+          Direction entièrement claire — rupture totale avec les dark themes
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Accent dominant</label>
+        <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(26,122,111,0.10);border:1px solid rgba(26,122,111,0.25);color:#1A7A6F;padding:5px 11px;border-radius:3px;font-size:11px;margin-bottom:8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#2DD4BF"></div>
+          Cykan assombri #1A7A6F sur fond clair
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.40)">Cykan naturellement décalé pour passer sur fond clair. Encre noire #1A1408 comme primaire.</div>
+      </div>
+      <div class="meta-col">
+        <label>Faiblesse assumée</label>
+        <div class="weakness">Direction la plus éloignée de la grammaire dark Hearst. Peut sembler "SaaS générique" sans densité éditoriale très forte. Nécessite une refonte des tokens :root — implémentation plus coûteuse que les autres directions.</div>
+      </div>
+    </div>
+  </div>
+  <div class="cockpit-wrap">
+    <div class="cockpit">
+      <div class="pb d3">
+        <span class="pb-logo">Hearst</span>
+        <div class="pb-pill"><div class="pb-dot"></div>Commandeur<span style="font-size:9px;font-family:ui-monospace,monospace;opacity:0.55;margin-left:3px">⌘K</span></div>
+        <div class="pb-meta" style="color:rgba(50,40,25,0.45)"><span style="display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.1" opacity="0.55"/><path d="M5.5 3V5.5L7 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity="0.55"/></svg>4 200 crédits</span><div class="pb-bell" style="color:rgba(50,40,25,0.55)">&#9993;</div></div>
+      </div>
+      <div class="cols">
+        <div class="tr d3">
+          <div class="tr-head d3"><span class="tr-wm">HEARST</span><span class="tr-ai">AI</span><div class="tr-dot"></div></div>
+          <div class="tr-nav">
+            <div class="tr-item d3 active"><span class="ti-ico">&#9889;</span><span class="ti-lbl">Hearst</span><span class="ti-kbd">&#8984;1</span></div>
+            <div class="tr-item d3"><span class="ti-ico">&#128241;</span><span class="ti-lbl">App</span></div>
+          </div>
+          <button class="tr-new d3"><span style="font-size:14px;line-height:1">+</span>Nouvelle conv.<span style="font-size:9px;font-family:ui-monospace,monospace;margin-left:auto;opacity:0.45">&#8984;N</span></button>
+          <div class="tr-sec d3">Récents</div>
+          <div class="tr-thread d3"><div class="tt-n">Stratégie BTC Q2</div><div class="tt-m">Il y a 12 min</div></div>
+          <div class="tr-thread d3"><div class="tt-n">Briefing Ritz-Carlton</div><div class="tt-m">Hier, 23:41</div></div>
+        </div>
+        <div class="stg d3">
+          <div class="stg-bar d3"><span class="bc">Hearst OS</span><span class="sep">/</span><span class="cur">Missions</span><span class="clk" style="color:rgba(50,40,25,0.28)">05:12:44</span></div>
+          <div class="stg-body">
+            <div class="stg-h1 d3">Missions actives</div>
+            <div class="stg-sub d3">2 agents en cours &middot; dernière sync il y a 3 min</div>
+            <div class="stg-acts">
+              <button class="btn-p d3">+ Nouvelle mission</button>
+              <button class="btn-g d3">Filtres</button>
+              <div class="fchip d3"><svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor"><circle cx="4.5" cy="4.5" r="3"/></svg>1 activées</div>
+            </div>
+            <div class="tbl-head d3"><div>Mission</div><div>Statut</div><div>Valeur</div><div>Exécutions</div><div>Dernière act.</div></div>
+            <div class="mrow d3"><div><div class="mr-n">BTC Arbitrage Loop</div><div class="mr-s d3">Agent LLM &middot; Binance &#8596; Kraken</div></div><div><div class="mr-st run d3"><div class="mr-std run"></div>En cours</div></div><div class="mr-v">+€1&nbsp;247</div><div class="mr-m d3">14 / 14</div><div class="mr-m d3">Il y a 3 min</div></div>
+            <div class="mrow d3"><div><div class="mr-n">Bitcoin Price Monitor</div><div class="mr-s d3">Agent LLM &middot; CoinGecko API</div></div><div><div class="mr-st ok d3"><div class="mr-std ok"></div>Réussi</div></div><div class="mr-v">€98&nbsp;420</div><div class="mr-m d3">6 / 6</div><div class="mr-m d3">Il y a 8 min</div></div>
+          </div>
+          <div class="chatdock d3"><div class="cinput d3"><span class="ciph">Demandez à Hearst&hellip;</span><span class="ciht" style="color:rgba(50,40,25,0.22)">&#8984; Entrée</span></div></div>
+        </div>
+        <div class="cr d3">
+          <div class="cr-sec d3"><div class="cr-lbl">Cadences</div>
+            <div class="cr-item"><span class="ci-l">Agents actifs</span><span class="ci-v" style="color:#1A7A6F">2</span></div>
+            <div class="cr-item"><span class="ci-l">Tâches en file</span><span class="ci-v" style="color:#1A7A6F">7</span></div>
+            <div class="cr-item"><span class="ci-l">Crédits restants</span><span class="ci-v" style="color:rgba(50,40,25,0.62)">4 200</span></div>
+          </div>
+          <div class="cr-sec d3"><div class="cr-lbl">Raccourcis</div>
+            <div class="cr-sc"><span class="cs-l">Commandeur</span><span class="cs-k d3">&#8984;K</span></div>
+            <div class="cr-sc"><span class="cs-l">Nouvelle conv.</span><span class="cs-k d3">&#8984;N</span></div>
+            <div class="cr-sc"><span class="cs-l">Missions</span><span class="cs-k d3">&#8984;M</span></div>
+          </div>
+          <div class="cr-sec d3"><div class="cr-lbl">Aide</div><div style="font-size:11px;line-height:1.55">Docs et support via le Commandeur.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ D4 ════════ -->
+<section class="dir-section" id="d4">
+  <div class="dir-meta-wrap">
+    <div class="dir-num">Direction 04 / 05</div>
+    <div class="dir-name">Ardoise Verte Opérateur</div>
+    <div class="dir-posture">« Fond ardoise vert sombre teinté forêt — le cockpit comme poste de commandement d'hôtel palace, terminal luxe monochrome vert. »</div>
+    <div class="meta-grid">
+      <div class="meta-col">
+        <label>Palette</label>
+        <div class="swatches">
+          <div class="sw"><div class="sw-dot" style="background:#090E0C"></div><div class="sw-hex">#090E0C</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#142018"></div><div class="sw-hex">#142018</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#2DD4BF"></div><div class="sw-hex">#2DD4BF</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#2DC558"></div><div class="sw-hex">#2DC558</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#C8D6C8"></div><div class="sw-hex">#C8D6C8</div></div>
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Axes parti-pris</label>
+        <div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.6">
+          Chromaticité réelle : vert ardoise vs noir pur — même luminance, famille différente<br>
+          Cykan ultra-lisible sur fond vert (complémentarité teal-turquoise maximale)<br>
+          Famille sémantique cohérente : vert ardoise / vert cykan / vert success
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Accent dominant</label>
+        <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(45,212,191,0.10);border:1px solid rgba(45,212,191,0.22);color:#2DD4BF;padding:5px 11px;border-radius:3px;font-size:11px;margin-bottom:8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#2DD4BF;box-shadow:0 0 6px rgba(45,212,191,0.6)"></div>
+          Cykan #2DD4BF — ressort maximum sur vert
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.40)">Sur fond vert ardoise, le cykan brille différemment que sur fond noir — plus chaud, moins froid.</div>
+      </div>
+      <div class="meta-col">
+        <label>Faiblesse assumée</label>
+        <div class="weakness">Direction la plus "niche" — le vert ardoise rappelle des thèmes terminal ou des environnements gaming. Certains clients hospitality luxury associent le vert sombre à la prise de risque / casino plutôt qu'au prestige sobre.</div>
+      </div>
+    </div>
+  </div>
+  <div class="cockpit-wrap">
+    <div class="cockpit">
+      <div class="pb d4">
+        <span class="pb-logo">Hearst</span>
+        <div class="pb-pill"><div class="pb-dot"></div>Commandeur<span style="font-size:9px;font-family:ui-monospace,monospace;opacity:0.55;margin-left:3px">⌘K</span></div>
+        <div class="pb-meta" style="color:rgba(160,200,185,0.40)"><span style="display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.1" opacity="0.55"/><path d="M5.5 3V5.5L7 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity="0.55"/></svg>4 200 crédits</span><div class="pb-bell" style="color:rgba(160,200,185,0.55)">&#9993;</div></div>
+      </div>
+      <div class="cols">
+        <div class="tr d4">
+          <div class="tr-head d4"><span class="tr-wm">HEARST</span><span class="tr-ai">AI</span><div class="tr-dot"></div></div>
+          <div class="tr-nav">
+            <div class="tr-item d4 active"><span class="ti-ico">&#9889;</span><span class="ti-lbl">Hearst</span><span class="ti-kbd">&#8984;1</span></div>
+            <div class="tr-item d4"><span class="ti-ico">&#128241;</span><span class="ti-lbl">App</span></div>
+          </div>
+          <button class="tr-new d4"><span style="font-size:14px;line-height:1">+</span>Nouvelle conv.<span style="font-size:9px;font-family:ui-monospace,monospace;margin-left:auto;opacity:0.45">&#8984;N</span></button>
+          <div class="tr-sec d4">Récents</div>
+          <div class="tr-thread d4"><div class="tt-n">Stratégie BTC Q2</div><div class="tt-m">Il y a 12 min</div></div>
+          <div class="tr-thread d4"><div class="tt-n">Briefing Ritz-Carlton</div><div class="tt-m">Hier, 23:41</div></div>
+        </div>
+        <div class="stg d4">
+          <div class="stg-bar d4"><span class="bc">Hearst OS</span><span class="sep">/</span><span class="cur">Missions</span><span class="clk">05:12:44</span></div>
+          <div class="stg-body">
+            <div class="stg-h1 d4">Missions actives</div>
+            <div class="stg-sub d4">2 agents en cours &middot; dernière sync il y a 3 min</div>
+            <div class="stg-acts">
+              <button class="btn-p d4">+ Nouvelle mission</button>
+              <button class="btn-g d4">Filtres</button>
+              <div class="fchip d4"><svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor"><circle cx="4.5" cy="4.5" r="3"/></svg>1 activées</div>
+            </div>
+            <div class="tbl-head d4"><div>Mission</div><div>Statut</div><div>Valeur</div><div>Exécutions</div><div>Dernière act.</div></div>
+            <div class="mrow d4"><div><div class="mr-n">BTC Arbitrage Loop</div><div class="mr-s d4">Agent LLM &middot; Binance &#8596; Kraken</div></div><div><div class="mr-st run d4"><div class="mr-std run"></div>En cours</div></div><div class="mr-v">+€1&nbsp;247</div><div class="mr-m d4">14 / 14</div><div class="mr-m d4">Il y a 3 min</div></div>
+            <div class="mrow d4"><div><div class="mr-n">Bitcoin Price Monitor</div><div class="mr-s d4">Agent LLM &middot; CoinGecko API</div></div><div><div class="mr-st ok d4"><div class="mr-std ok"></div>Réussi</div></div><div class="mr-v">€98&nbsp;420</div><div class="mr-m d4">6 / 6</div><div class="mr-m d4">Il y a 8 min</div></div>
+          </div>
+          <div class="chatdock d4"><div class="cinput d4"><span class="ciph">Demandez à Hearst&hellip;</span><span class="ciht">&#8984; Entrée</span></div></div>
+        </div>
+        <div class="cr d4">
+          <div class="cr-sec d4"><div class="cr-lbl">Cadences</div>
+            <div class="cr-item"><span class="ci-l">Agents actifs</span><span class="ci-v" style="color:#2DD4BF">2</span></div>
+            <div class="cr-item"><span class="ci-l">Tâches en file</span><span class="ci-v" style="color:#2DD4BF">7</span></div>
+            <div class="cr-item"><span class="ci-l">Crédits restants</span><span class="ci-v" style="color:rgba(160,200,185,0.68)">4 200</span></div>
+          </div>
+          <div class="cr-sec d4"><div class="cr-lbl">Raccourcis</div>
+            <div class="cr-sc"><span class="cs-l">Commandeur</span><span class="cs-k d4">&#8984;K</span></div>
+            <div class="cr-sc"><span class="cs-l">Nouvelle conv.</span><span class="cs-k d4">&#8984;N</span></div>
+            <div class="cr-sc"><span class="cs-l">Missions</span><span class="cs-k d4">&#8984;M</span></div>
+          </div>
+          <div class="cr-sec d4"><div class="cr-lbl">Aide</div><div style="font-size:11px;opacity:0.50;line-height:1.55">Docs et support via le Commandeur.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ D5 ════════ -->
+<section class="dir-section" id="d5">
+  <div class="dir-meta-wrap">
+    <div class="dir-num">Direction 05 / 05</div>
+    <div class="dir-name">Acier Bleu Nuit</div>
+    <div class="dir-posture">« Steel blue dual-tone inversé — rails mid-steel, stage near-black bleuté abyssal — pont de commandement maritime de luxe. »</div>
+    <div class="meta-grid">
+      <div class="meta-col">
+        <label>Palette</label>
+        <div class="swatches">
+          <div class="sw"><div class="sw-dot" style="background:#08101A"></div><div class="sw-hex">#08101A</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#15202E"></div><div class="sw-hex">#15202E</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#2DD4BF"></div><div class="sw-hex">#2DD4BF</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#648CBE"></div><div class="sw-hex">#648CBE</div></div>
+          <div class="sw"><div class="sw-dot" style="background:#B4D2F5"></div><div class="sw-hex">#B4D2F5</div></div>
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Axes parti-pris</label>
+        <div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.6">
+          Dual-tone inversé : rails (#15202E) plus clairs que le stage (#08101A)<br>
+          Chromaticité bleue froide perceptible sur toute la surface<br>
+          Corps texte teinté bleu-blanc glacé — différenciation forte du pur blanc
+        </div>
+      </div>
+      <div class="meta-col">
+        <label>Accent dominant</label>
+        <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(45,212,191,0.10);border:1px solid rgba(45,212,191,0.22);color:#2DD4BF;padding:5px 11px;border-radius:3px;font-size:11px;margin-bottom:8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#2DD4BF"></div>
+          Cykan — contraste maximal sur fond bleu froid
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.40)">Dual-tone inversé crée un effet "scène abyssale / fenêtre de commandement" original.</div>
+      </div>
+      <div class="meta-col">
+        <label>Faiblesse assumée</label>
+        <div class="weakness">Le dual-tone inversé (rails plus clairs que le stage) est contre-intuitif — peut désorienter. Le steel blue froid peut sembler "corporate IT" ou "cold dashboard" pour un client hospitality qui attend chaleur et intimité.</div>
+      </div>
+    </div>
+  </div>
+  <div class="cockpit-wrap">
+    <div class="cockpit">
+      <div class="pb d5">
+        <span class="pb-logo">Hearst</span>
+        <div class="pb-pill"><div class="pb-dot"></div>Commandeur<span style="font-size:9px;font-family:ui-monospace,monospace;opacity:0.55;margin-left:3px">⌘K</span></div>
+        <div class="pb-meta"><span style="display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.1" opacity="0.55"/><path d="M5.5 3V5.5L7 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity="0.55"/></svg>4 200 crédits</span><div class="pb-bell">&#9993;</div></div>
+      </div>
+      <div class="cols">
+        <div class="tr d5">
+          <div class="tr-head d5"><span class="tr-wm">HEARST</span><span class="tr-ai">AI</span><div class="tr-dot"></div></div>
+          <div class="tr-nav">
+            <div class="tr-item d5 active"><span class="ti-ico">&#9889;</span><span class="ti-lbl">Hearst</span><span class="ti-kbd">&#8984;1</span></div>
+            <div class="tr-item d5"><span class="ti-ico">&#128241;</span><span class="ti-lbl">App</span></div>
+          </div>
+          <button class="tr-new d5"><span style="font-size:14px;line-height:1">+</span>Nouvelle conv.<span style="font-size:9px;font-family:ui-monospace,monospace;margin-left:auto;opacity:0.45">&#8984;N</span></button>
+          <div class="tr-sec d5">Récents</div>
+          <div class="tr-thread d5"><div class="tt-n">Stratégie BTC Q2</div><div class="tt-m">Il y a 12 min</div></div>
+          <div class="tr-thread d5"><div class="tt-n">Briefing Ritz-Carlton</div><div class="tt-m">Hier, 23:41</div></div>
+        </div>
+        <div class="stg d5">
+          <div class="stg-bar d5"><span class="bc">Hearst OS</span><span class="sep">/</span><span class="cur">Missions</span><span class="clk">05:12:44</span></div>
+          <div class="stg-body">
+            <div class="stg-h1 d5">Missions actives</div>
+            <div class="stg-sub d5">2 agents en cours &middot; dernière sync il y a 3 min</div>
+            <div class="stg-acts">
+              <button class="btn-p d5">+ Nouvelle mission</button>
+              <button class="btn-g d5">Filtres</button>
+              <div class="fchip d5"><svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor"><circle cx="4.5" cy="4.5" r="3"/></svg>1 activées</div>
+            </div>
+            <div class="tbl-head d5"><div>Mission</div><div>Statut</div><div>Valeur</div><div>Exécutions</div><div>Dernière act.</div></div>
+            <div class="mrow d5"><div><div class="mr-n">BTC Arbitrage Loop</div><div class="mr-s d5">Agent LLM &middot; Binance &#8596; Kraken</div></div><div><div class="mr-st run d5"><div class="mr-std run"></div>En cours</div></div><div class="mr-v">+€1&nbsp;247</div><div class="mr-m d5">14 / 14</div><div class="mr-m d5">Il y a 3 min</div></div>
+            <div class="mrow d5"><div><div class="mr-n">Bitcoin Price Monitor</div><div class="mr-s d5">Agent LLM &middot; CoinGecko API</div></div><div><div class="mr-st ok d5"><div class="mr-std ok"></div>Réussi</div></div><div class="mr-v">€98&nbsp;420</div><div class="mr-m d5">6 / 6</div><div class="mr-m d5">Il y a 8 min</div></div>
+          </div>
+          <div class="chatdock d5"><div class="cinput d5"><span class="ciph">Demandez à Hearst&hellip;</span><span class="ciht">&#8984; Entrée</span></div></div>
+        </div>
+        <div class="cr d5">
+          <div class="cr-sec d5"><div class="cr-lbl">Cadences</div>
+            <div class="cr-item"><span class="ci-l">Agents actifs</span><span class="ci-v" style="color:#2DD4BF">2</span></div>
+            <div class="cr-item"><span class="ci-l">Tâches en file</span><span class="ci-v" style="color:#2DD4BF">7</span></div>
+            <div class="cr-item"><span class="ci-l">Crédits restants</span><span class="ci-v" style="color:rgba(130,165,210,0.70)">4 200</span></div>
+          </div>
+          <div class="cr-sec d5"><div class="cr-lbl">Raccourcis</div>
+            <div class="cr-sc"><span class="cs-l">Commandeur</span><span class="cs-k d5">&#8984;K</span></div>
+            <div class="cr-sc"><span class="cs-l">Nouvelle conv.</span><span class="cs-k d5">&#8984;N</span></div>
+            <div class="cr-sc"><span class="cs-l">Missions</span><span class="cs-k d5">&#8984;M</span></div>
+          </div>
+          <div class="cr-sec d5"><div class="cr-lbl">Aide</div><div style="font-size:11px;opacity:0.50;line-height:1.55">Docs et support via le Commandeur.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ DECISION ════════ -->
+<section class="decision" id="decision">
+  <div class="decision-inner">
+    <div style="font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:#2DD4BF;margin-bottom:10px">Recommandation</div>
+    <div style="font-size:24px;font-weight:600;letter-spacing:-0.03em;color:#fff;margin-bottom:5px">Direction 01 — Atelier Lithographie Nocturne</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.40);margin-bottom:36px">Signal Adrien direct &middot; déjà 80% codé dans globals.css &middot; défendable client luxury</div>
+
+    <div class="reco-block">
+      <div class="reco-lbl">Pourquoi cette direction</div>
+      <h3>Rails encre noire / Scène papier vélin cool — contraste dramatique, lisibilité maximale, cohérence tokens</h3>
+      <p>C'est exactement le signal de <code>.stage-cool-paper</code> : l'opérateur passe de l'environnement (rail noir absolu) à la lecture (page blanche encre slate). Ce passage est mental et physique — c'est de l'UX, pas seulement de l'esthétique. Le cykan ressort sur les deux fonds (noir et blanc) sans ambiguïté. La grammaire typographique encre-papier est défendable dans un pitch hospitality luxury (Hermès digital, Condé Nast internal tools). Déjà 80% implémentée : <code>--bg-elev: #F4F7F8</code>, <code>--text: #0D1820</code> et famille slate sont dans <code>globals.css</code> à partir de la ligne 564.</p>
+    </div>
+
+    <div style="font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:14px;margin-top:28px">3 tokens / actions pour activer en production</div>
+    <div class="tok-grid">
+      <div class="tok-card">
+        <div class="tok-k">.stage-cool-paper → --bg-elev</div>
+        <div class="tok-v">#F4F7F8</div>
+        <div class="tok-d">Déjà défini. Papier vélin légèrement teinté slate-cool. Rien à changer dans le CSS.</div>
+      </div>
+      <div class="tok-card">
+        <div class="tok-k">:root → --rail / --bg</div>
+        <div class="tok-v">#000000 — garder</div>
+        <div class="tok-d">Rail absolu noir. Conserver tel quel — c'est le contraste qui définit la direction.</div>
+      </div>
+      <div class="tok-card">
+        <div class="tok-k">layout.tsx → className stage wrapper</div>
+        <div class="tok-v">className="stage-cool-paper"</div>
+        <div class="tok-d">Confirmer que la classe est bien scoped au stage central uniquement, pas au shell entier.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:36px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:14px">Comparatif 5 directions</div>
+    <div class="cmp-row"><span class="cmp-n">01 Atelier Lithographie &#9733;</span><span class="cmp-f">Signal direct, déjà codé, cykan bivalent, luxury défendable</span><span class="cmp-a">Fatigue oculaire 8h+ rail/stage</span></div>
+    <div class="cmp-row"><span class="cmp-n">02 Salon Cuir Laiton</span><span class="cmp-f">Chromaticité chaude unique, gold cohérent avec DS existant</span><span class="cmp-a">Gold dominant → risque "casino" sans contrôle strict</span></div>
+    <div class="cmp-row"><span class="cmp-n">03 Journal 4h du Matin</span><span class="cmp-f">Lisibilité max, éditorial fort, différenciant sur marché dark</span><span class="cmp-a">Rupture totale dark Hearst, implémentation coûteuse</span></div>
+    <div class="cmp-row"><span class="cmp-n">04 Ardoise Verte Opérateur</span><span class="cmp-f">Identité forte, famille teal cohérente, cykan ultra-lisible</span><span class="cmp-a">Peut sembler gaming/niche pour certains profils luxury</span></div>
+    <div class="cmp-row"><span class="cmp-n">05 Acier Bleu Nuit</span><span class="cmp-f">Dual-tone inversé original, maritime luxe, différenciant</span><span class="cmp-a">Contre-intuitif, risque "corporate IT froid"</span></div>
+
+    <div style="margin-top:28px;padding:18px 22px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.015)">
+      <div style="font-size:9px;letter-spacing:0.20em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:7px">Alternative si full-dark préféré</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.60">Direction 02 (Salon Cuir Laiton) est la plus justifiable en full-dark avec matière. Le token <code>--gold: #C8A961</code> existe déjà. Pivot minimal : <code>--bg → #0E0C09</code>, <code>--bg-elev → #1A1610</code>, nav active en gold. 2 tokens à changer dans <code>:root</code>, pas de classe scoped nécessaire.</p>
+    </div>
+  </div>
+</section>
+
+<footer style="padding:28px 48px;border-top:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center">
+  <span style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.18);font-family:ui-monospace,monospace">Hearst OS — Directions Visuelles &middot; 2026-05-01</span>
+  <span style="font-size:10px;color:rgba(255,255,255,0.18)">5 directions &middot; 1 recommandation &middot; tokens globals.css</span>
+</footer>
+
+</body>
+</html>

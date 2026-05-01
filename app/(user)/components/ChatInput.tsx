@@ -333,7 +333,7 @@ export function ChatInput({
                       {service.icon}
                     </span>
                     <div className="flex-1">
-                      <p className="t-13 font-medium tracking-wide text-[var(--text-soft)] group-hover:text-white transition-colors">
+                      <p className="t-13 font-medium tracking-wide text-[var(--text-soft)] group-hover:text-[var(--text)] transition-colors">
                         @{service.id}
                       </p>
                       <p className="t-10 tracking-snug uppercase text-[var(--text-ghost)] mt-0.5">

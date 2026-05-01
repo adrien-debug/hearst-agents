@@ -1,16 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CockpitHero } from "./CockpitHero";
-import { WatchlistCard } from "../cockpit/WatchlistCard";
-import { MissionPulse } from "../cockpit/MissionPulse";
-import { SuggestionRow } from "../cockpit/SuggestionRow";
-import { QuickLaunch } from "../cockpit/QuickLaunch";
-import { InboxSection } from "../cockpit/InboxSection";
-import { HospitalityPulse } from "../cockpit/HospitalityPulse";
-import { DailyBriefCard } from "../cockpit/DailyBriefCard";
+import { CockpitPoster } from "../cockpit/CockpitPoster";
 import { OnboardingTour } from "../OnboardingTour";
-import { Action } from "../ui";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
 /**
@@ -86,33 +78,14 @@ export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
   const isHospitality = data?.industry === "hospitality";
 
   return (
-    <div className="cockpit-bg flex-1 flex flex-col min-h-0 relative overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
       <OnboardingTour />
-      <div className="relative flex-1 flex flex-col min-h-0 overflow-y-auto">
-        {isHospitality && <HospitalityBadge />}
-        <CockpitHero
-          briefing={data?.briefing}
-          emptyAction={
-            data?.briefing.empty
-              ? { label: "Connecter mes apps", href: "/apps" }
-              : undefined
-          }
-        />
-
-        <div
-          className="flex flex-col"
-          style={{
-            padding: "0 var(--space-12) var(--space-14)",
-            gap: "var(--space-12)",
-          }}
-        >
-          {loading && <CockpitSkeleton />}
-          {!loading && error && <CockpitErrorState message={error} />}
-          {!loading && !error && data && (
-            <CockpitContent data={data} onInboxRefreshed={refetch} />
-          )}
-        </div>
-      </div>
+      {isHospitality && <HospitalityBadge />}
+      {loading && <CockpitSkeleton />}
+      {!loading && error && <CockpitErrorState message={error} />}
+      {!loading && !error && data && (
+        <CockpitPoster data={data} onBriefRefreshed={refetch} />
+      )}
     </div>
   );
 }
@@ -142,189 +115,62 @@ function HospitalityBadge() {
   );
 }
 
-function CockpitContent({
-  data,
-  onInboxRefreshed,
-}: {
-  data: CockpitTodayPayload;
-  onInboxRefreshed: () => void;
-}) {
-  const watchlistEmpty = data.watchlist.length === 0;
-
-  return (
-    <>
-      <InboxSection inbox={data.inbox} onRefreshed={onInboxRefreshed} />
-
-      <Section label="Daily Brief">
-        <DailyBriefCard />
-      </Section>
-
-      {data.hospitality && <HospitalityPulse data={data.hospitality} />}
-
-      <Section label="Watchlist">
-        {watchlistEmpty ? (
-          <WatchlistEmptyState />
-        ) : (
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-            style={{ gap: "var(--space-4)" }}
-          >
-            {data.watchlist.map((kpi) => (
-              <WatchlistCard
-                key={kpi.id}
-                label={kpi.label}
-                value={kpi.value}
-                delta={kpi.delta}
-                trend={kpi.trend}
-                isMock={false}
-                anomaly={kpi.anomaly}
-              />
-            ))}
-          </div>
-        )}
-      </Section>
-
-      <Section label="En cours">
-        {data.missionsRunning.length > 0 ? (
-          <div
-            className="grid grid-cols-1 md:grid-cols-2"
-            style={{ gap: "var(--space-4)" }}
-          >
-            {data.missionsRunning.map((m) => (
-              <MissionPulse
-                key={m.id}
-                id={m.id}
-                name={m.name}
-                status={m.status}
-                runningSince={m.runningSince}
-                lastRunAt={m.lastRunAt}
-                lastError={m.lastError}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            text="Aucune mission active."
-            cta={{ label: "Programmer une mission", href: "/missions" }}
-          />
-        )}
-      </Section>
-
-      <Section label="Suggestions">
-        {data.suggestions.length > 0 ? (
-          <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-            {data.suggestions.map((s) => (
-              <SuggestionRow
-                key={s.id}
-                specId={s.id}
-                title={s.title}
-                description={s.description}
-                status={s.status}
-                missingApps={s.missingApps}
-                requiredCount={s.requiredApps.length}
-              />
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            text="Connecte une app pour débloquer des suggestions."
-            cta={{ label: "Voir les apps", href: "/apps" }}
-          />
-        )}
-      </Section>
-
-      <Section label="Quick launch">
-        <QuickLaunch favoriteReports={data.favoriteReports} />
-      </Section>
-    </>
-  );
-}
-
-function Section({
-  label,
-  meta,
-  children,
-}: {
-  label: string;
-  meta?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="flex flex-col" style={{ gap: "var(--space-5)" }}>
-      <header className="flex items-baseline justify-between">
-        <span
-          className="t-15 font-medium"
-          style={{
-            color: "var(--text-l1)",
-            letterSpacing: "var(--tracking-tight)",
-          }}
-        >
-          {label}
-        </span>
-        {meta && (
-          <span className="t-11 font-light text-[var(--text-faint)]">
-            {meta}
-          </span>
-        )}
-      </header>
-      {children}
-    </section>
-  );
-}
-
-function WatchlistEmptyState() {
-  return (
-    <div
-      className="flex flex-col items-start"
-      style={{ gap: "var(--space-3)", padding: "var(--space-4) 0" }}
-    >
-      <p className="t-15" style={{ color: "var(--text-soft)" }}>
-        Connecte Stripe et HubSpot pour activer ta watchlist.
-      </p>
-      <Action variant="secondary" size="sm" href="/apps">
-        Configurer les connexions
-      </Action>
-    </div>
-  );
-}
-
 function CockpitSkeleton() {
   return (
     <div
-      className="flex flex-col"
-      style={{ gap: "var(--space-12)" }}
+      className="flex-1 flex flex-col"
+      style={{ padding: "var(--space-12) var(--space-14)" }}
       aria-busy="true"
       aria-live="polite"
     >
       <div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-        style={{ gap: "var(--space-4)" }}
+        className="grid"
+        style={{
+          gridTemplateColumns: "minmax(280px, 0.9fr) minmax(0, 1.4fr)",
+          gap: "var(--space-12)",
+          alignItems: "start",
+        }}
       >
-        {Array.from({ length: 4 }).map((_, i) => (
+        <div className="flex flex-col" style={{ gap: "var(--space-4)" }}>
           <div
-            key={i}
-            className="card-depth animate-pulse"
+            className="animate-pulse"
             style={{
               height: "var(--space-24)",
-              padding: "var(--space-5)",
+              width: "70%",
+              background: "var(--surface-1)",
+              borderRadius: "var(--radius-xs)",
             }}
           />
-        ))}
-      </div>
-      <div
-        className="grid grid-cols-1 md:grid-cols-2"
-        style={{ gap: "var(--space-4)" }}
-      >
-        {Array.from({ length: 2 }).map((_, i) => (
           <div
-            key={i}
-            className="card-depth animate-pulse"
+            className="animate-pulse"
             style={{
-              height: "var(--space-20)",
-              padding: "var(--space-5)",
+              height: "var(--space-16)",
+              width: "55%",
+              background: "var(--surface-1)",
+              borderRadius: "var(--radius-xs)",
             }}
           />
-        ))}
+        </div>
+        <div className="flex flex-col" style={{ gap: "var(--space-5)" }}>
+          <div
+            className="animate-pulse"
+            style={{
+              height: "var(--space-10)",
+              width: "var(--space-32)",
+              background: "var(--surface-1)",
+              borderRadius: "var(--radius-xs)",
+            }}
+          />
+          <div
+            className="animate-pulse"
+            style={{
+              height: "var(--space-24)",
+              width: "80%",
+              background: "var(--surface-1)",
+              borderRadius: "var(--radius-xs)",
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -333,56 +179,16 @@ function CockpitSkeleton() {
 function CockpitErrorState({ message }: { message: string }) {
   return (
     <div
-      className="card-depth flex flex-col items-start"
-      style={{
-        padding: "var(--space-6)",
-        gap: "var(--space-3)",
-      }}
+      className="flex-1 flex flex-col items-start justify-center"
+      style={{ padding: "var(--space-12) var(--space-14)", gap: "var(--space-3)" }}
     >
-      <span className="t-11 font-medium text-[var(--text-faint)]">
-        Cockpit · erreur
-      </span>
-      <p className="t-13" style={{ color: "var(--text-l1)" }}>
+      <span className="poster-eyebrow">Cockpit · erreur</span>
+      <p style={{ color: "var(--text)", fontSize: "20px", maxWidth: "var(--width-prose-narrow)", lineHeight: 1.4 }}>
         Impossible de charger ton cockpit pour le moment.
       </p>
-      <p className="t-11 font-mono" style={{ color: "var(--text-faint)" }}>
+      <p style={{ color: "var(--text-faint)", fontFamily: "ui-monospace, monospace", fontSize: "12px" }}>
         {message}
       </p>
-    </div>
-  );
-}
-
-function EmptyState({
-  text,
-  cta,
-}: {
-  text: string;
-  cta: { label: string; href: string };
-}) {
-  return (
-    <div
-      className="flex items-center justify-between"
-      style={{
-        padding: "var(--space-5) var(--space-6)",
-        border: "1px dashed var(--border-subtle)",
-        borderRadius: "var(--radius-md)",
-        gap: "var(--space-4)",
-      }}
-    >
-      <p className="t-13" style={{ color: "var(--text-l2)" }}>
-        {text}
-      </p>
-      <a
-        href={cta.href}
-        className="t-13 font-light shrink-0 transition-opacity hover:opacity-80"
-        style={{
-          color: "var(--gold)",
-          borderBottom: "1px solid var(--gold-border)",
-          paddingBottom: "var(--space-1)",
-        }}
-      >
-        {cta.label} →
-      </a>
     </div>
   );
 }

@@ -12,7 +12,7 @@
      on calibre sur ce qui se voit à l'œil nu : rails #000 > shell #080809
      > stage #3A3A44 (~22% luminance) > cards #48484F (~28% luminance).
      Écart entre couches assez large pour passer sur écran moyen non-OLED. */
-  --bg: #080809;
+  --bg: #050709;
   --bg-elev: #3A3A44;
     --bg-soft: #48484F;
   --background: #000000;
@@ -148,6 +148,13 @@
 
   /* ─── RightPanel — composants spécifiques ──────────────────── */
   --width-mini-chart: 96px;         /* AssetMiniChart : largeur du SVG (hauteur = --space-10) */
+
+  /* ─── Prose — largeurs de lecture éditoriale ───────────────────────
+   * Utilisées par CockpitPoster et plus largement par tout contenu
+   * éditorial qui doit rester lisible (mesure typographique). */
+  --width-prose-narrow: 560px;
+  --width-prose: 640px;
+  --width-prose-wide: 780px;
 
   /* ─── ChatInput ─────────────────────────────────────────────── */
   --height-input-min: var(--space-8);  /* textarea : hauteur min 1 ligne = 32px */
@@ -412,6 +419,248 @@
   --shadow-card: 0 1px 2px rgba(28, 29, 32, 0.04),
                  0 12px 24px rgba(28, 29, 32, 0.06);
   --shadow-input-focus: 4px 4px 0px var(--cyan-accent);
+}
+
+/* ─── Cockpit Poster — Direction « Atelier » 2026-05-01 ───────────────
+ * Typographie éditoriale du dashboard d'accueil (CockpitPoster).
+ * Pas de cards, pas de scroll : tout repose sur la hiérarchie typo.
+ * Satoshi Variable partout — hiérarchie par weight + size uniquement.
+ * Drop-cap cykan sur l'incipit du brief — signature visuelle. */
+.poster-display {
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  line-height: 0.88;
+  font-feature-settings: "kern", "liga";
+}
+.poster-display.is-display-l { font-size: clamp(56px, 7vw, 112px); }
+.poster-display.is-display-m { font-size: clamp(36px, 4.4vw, 64px); }
+
+.poster-greeting {
+  font-weight: 500;
+  font-size: clamp(28px, 3.2vw, 44px);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.poster-prose {
+  font-weight: 400;
+  font-size: clamp(20px, 1.8vw, 26px);
+  line-height: 1.45;
+  letter-spacing: -0.008em;
+}
+.poster-prose .kpi {
+  display: inline-block;
+  font-weight: 700;
+  font-size: 1.85em;
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  vertical-align: -0.10em;
+  margin-right: 0.06em;
+  color: var(--text);
+  font-feature-settings: "tnum", "ss01";
+}
+
+.poster-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-family: var(--font-satoshi);
+  font-weight: 500;
+}
+
+.poster-observation {
+  font-weight: 400;
+  font-size: clamp(14px, 1.05vw, 17px);
+  line-height: 1.55;
+  color: var(--text-muted);
+  padding-left: 16px;
+  border-left: 1px solid var(--cykan);
+}
+
+.poster-rule {
+  border: none;
+  border-top: 1px solid var(--border-shell);
+  margin: 0;
+}
+
+.poster-brief-incipit {
+  font-size: clamp(18px, 1.5vw, 22px);
+  line-height: 1.55;
+  color: var(--text);
+  letter-spacing: -0.008em;
+  font-weight: 400;
+}
+.poster-brief-incipit .dropcap {
+  float: left;
+  font-size: 4.6em;
+  line-height: 0.82;
+  margin-right: 0.12em;
+  margin-top: 0.04em;
+  color: var(--cykan);
+  font-weight: 700;
+}
+
+.poster-cta {
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--cykan);
+  padding: 0 0 4px;
+  cursor: pointer;
+  transition: color 150ms var(--ease-standard), border-color 150ms var(--ease-standard);
+}
+.poster-cta:hover { color: var(--cykan); }
+.poster-cta:disabled { opacity: 0.5; cursor: progress; }
+.poster-cta .arrow {
+  font-style: normal;
+  display: inline-block;
+  margin-left: 12px;
+  transition: transform 200ms var(--ease-spring);
+}
+.poster-cta:hover .arrow { transform: translateX(4px); }
+
+.poster-time-tick {
+  font-family: var(--font-satoshi);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  font-feature-settings: "tnum";
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.poster-pulse {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 999px;
+  background: var(--cykan);
+  box-shadow: 0 0 6px rgba(45, 212, 191, 0.55), 0 0 14px rgba(45, 212, 191, 0.25);
+  animation: poster-pulse 2.6s ease-in-out infinite;
+}
+@keyframes poster-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.18); }
+}
+
+/* ─── Stage cool paper — Direction « Atelier » 2026-05-01 ─────────────
+ * Scope local sur le wrapper du Stage central (app/(user)/layout.tsx).
+ * Inverse la hiérarchie de surfaces : rails restent dark (tokens :root),
+ * le centre passe en off-white slate cool — l'opérateur quitte
+ * l'environnement pour entrer dans la lecture. Cascade CSS propage à
+ * tous les Stages enfants, au ChatDock, et aux composants qui consomment
+ * --bg-elev / --bg-soft / --text*. Famille teal/slate cohérente avec
+ * l'accent --cykan (#2DD4BF) : encre slate near-black légèrement teintée
+ * cyan #0D1820. Les rails et le PulseBar gardent leur grammaire dark.
+ *
+ * Convention couleurs : pas de magic numbers — tout vient de cette table.
+ * - papier            : #F4F7F8 (off-white slate cool)
+ * - card / chatdock   : #FFFFFF
+ * - encre             : #0D1820 (rgba(13,24,32,...))
+ * - success fond clair: #16A34A (vs #2DC558 dark — meilleur contraste)
+ * - texte sur cykan   : #042526 (slate dark teal — famille teal) */
+.stage-cool-paper {
+  /* Surfaces */
+  --bg-elev: #F4F7F8;
+  --bg-soft: #FFFFFF;
+  --surface: #FFFFFF;
+  --background: #F4F7F8;
+  --foreground: #0D1820;
+  --bg-light-stage: #FFFFFF;
+
+  /* Material scale (cards / dashboards posés sur le papier) */
+  --mat-050: #FAFBFC;
+  --mat-100: #F4F7F8;
+  --mat-200: #EFF3F5;
+  --mat-300: #E8EDF0;
+  --mat-400: #DFE5E8;
+  --mat-gray: #D5DBDF;
+
+  /* Encre slate near-black — légère touche cyan via le bleu R13 G24 B32 */
+  --text: #0D1820;
+  --text-soft: rgba(13, 24, 32, 0.88);
+  --text-muted: rgba(13, 24, 32, 0.68);
+  --text-faint: rgba(13, 24, 32, 0.45);
+  --text-ghost: rgba(13, 24, 32, 0.42);
+  --text-decor-25: rgba(13, 24, 32, 0.25);
+  --text-inactive: rgba(13, 24, 32, 0.55);
+  --text-subtitle: rgba(13, 24, 32, 0.55);
+  --text-placeholder: rgba(13, 24, 32, 0.42);
+
+  /* Layered text scale — Ghost Lumineux variant clair */
+  --text-l0: #0D1820;
+  --text-l1: rgba(13, 24, 32, 0.78);
+  --text-l2: rgba(13, 24, 32, 0.50);
+  --text-l3: rgba(13, 24, 32, 0.25);
+  --layer-0: #FFFFFF;
+  --layer-1: rgba(13, 24, 32, 0.025);
+  --layer-2: rgba(13, 24, 32, 0.045);
+  --sep: rgba(13, 24, 32, 0.06);
+
+  /* Lines / borders */
+  --line: rgba(13, 24, 32, 0.06);
+  --line-strong: rgba(13, 24, 32, 0.10);
+  --line-active: rgba(45, 212, 191, 0.30);
+
+  --border-shell: rgba(13, 24, 32, 0.08);
+  --border-soft: rgba(13, 24, 32, 0.05);
+  --border-input: rgba(13, 24, 32, 0.12);
+  --ghost-modal-top: rgba(13, 24, 32, 0.10);
+  --border-subtle: rgba(13, 24, 32, 0.08);
+  --border-default: rgba(13, 24, 32, 0.14);
+  --border-strong: rgba(13, 24, 32, 0.20);
+  --border-focus: rgba(13, 24, 32, 0.40);
+
+  /* Translucent surfaces — élévation subtile sur papier */
+  --surface-1: rgba(13, 24, 32, 0.025);
+  --surface-2: rgba(13, 24, 32, 0.045);
+  --surface-card: rgba(13, 24, 32, 0.035);
+  --card-flat-bg: rgba(13, 24, 32, 0.025);
+  --card-flat-border: rgba(13, 24, 32, 0.08);
+
+  /* Cykan turquoise gardé strict — opacités liftées pour fond clair */
+  --cykan-bg-active: rgba(45, 212, 191, 0.14);
+  --cykan-bg-hover: rgba(45, 212, 191, 0.08);
+  --cykan-border-hover: rgba(45, 212, 191, 0.45);
+  --cykan-surface: rgba(45, 212, 191, 0.06);
+  --cykan-border: rgba(45, 212, 191, 0.35);
+
+  /* Texte sur cykan plein — slate dark teal (famille teal cohérente) */
+  --text-on-cykan: #042526;
+
+  /* Success — vert plus saturé pour porter sur fond clair */
+  --color-success: #16A34A;
+  --color-success-bg: rgba(22, 163, 74, 0.10);
+  --color-success-border: rgba(22, 163, 74, 0.20);
+  --money: #16A34A;
+
+  /* Floating input capsule — devient sombre sur fond clair (inversion) */
+  --input-floating-bg: rgba(13, 24, 32, 0.06);
+
+  /* Shadows — atténuées et teintées slate sur fond clair */
+  --shadow-sm: 0 1px 2px rgba(13, 24, 32, 0.06);
+  --shadow-md: 0 4px 12px rgba(13, 24, 32, 0.08);
+  --shadow-lg: 0 12px 32px rgba(13, 24, 32, 0.10);
+  --shadow-xl: 0 24px 48px rgba(13, 24, 32, 0.14);
+  --shadow-card: 0 1px 2px rgba(13, 24, 32, 0.04),
+                 0 12px 24px rgba(13, 24, 32, 0.06);
+  --shadow-card-hover: 0 4px 8px rgba(13, 24, 32, 0.08),
+                      0 20px 40px rgba(45, 212, 191, 0.10),
+                      0 30px 60px -12px rgba(13, 24, 32, 0.12);
+  --shadow-tile-base: 0 1px 2px rgba(13, 24, 32, 0.06);
+  --shadow-tile-hover: 0 2px 4px rgba(13, 24, 32, 0.08), 0 4px 12px rgba(45, 212, 191, 0.06);
+  --shadow-tile-inset: inset 0 0.5px 0 rgba(255, 255, 255, 0.60);
+  --shadow-alert-inset: inset 0 0.5px 0 rgba(255, 255, 255, 0.60), 0 1px 2px rgba(13, 24, 32, 0.06);
+  /* Shell relief — sur fond clair on inverse : insets darker pour creuser */
+  --shadow-shell-relief:
+    inset 0 1px 0 rgba(13, 24, 32, 0.06),
+    inset 1px 0 0 rgba(13, 24, 32, 0.04),
+    inset -1px 0 0 rgba(13, 24, 32, 0.04);
+  --shadow-divider-bottom: inset 0 -1px 0 0 rgba(13, 24, 32, 0.06);
+  --shadow-divider-bottom-subtle: inset 0 -1px 0 0 rgba(13, 24, 32, 0.04);
+  --shadow-divider-top: inset 0 1px 0 0 rgba(13, 24, 32, 0.04);
 }
 
 /* ─── Pipeline admin — surface technique sur thème courant ─────────────
