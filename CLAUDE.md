@@ -1,63 +1,104 @@
 # Hearst OS — Instructions Claude
 
-## Règles UI (non négociables)
+## Mode autonomie (défaut)
 
-Toute tâche qui touche à un composant, une page ou un style doit suivre ces règles. Si une règle ne peut pas être respectée, **arrête-toi et demande** avant de coder.
+Adrien commande. Les règles ci-dessous sont des **principes de qualité**, pas des barrières bloquantes. Tu prends les décisions cohérentes au système et tu avances. Tu ne t'arrêtes pas pour demander sauf si :
+- Une décision impacte directement l'UX visible et il y a 2 directions opposées valides
+- Une action est destructive et irréversible (suppression branche, force-push prod, drop DB)
+- Tu ne sais pas quoi vouloir Adrien et la question coûte moins cher que l'erreur
 
-### 1. Aucun magic number côté valeurs CSS
+Pour le reste : tu décides, tu codes, tu commits, tu signales en fin.
 
-Tout passe par les tokens définis dans [app/globals.css](app/globals.css). Tailwind v4 + `@theme inline` mappe les utilities Tailwind sur les tokens — donc utiliser `px-12`, `gap-4`, `mb-4`, `w-8` est OK : ces utilities résolvent vers `var(--space-N)` automatiquement (mapping `--spacing-N → var(--space-N)` dans le bloc `@theme inline`).
+## Principes de qualité (non bloquants, mais à viser)
 
-- **Spacing** → utilities Tailwind `p-N`, `gap-N`, `m-N`, `w-N`, `h-N` (résolues vers `var(--space-N)` via `@theme inline`) **OU** `style={{ padding: "var(--space-N)" }}` quand l'utility ne suffit pas. Jamais `style={{ padding: "12px" }}` brut (bloqué par lint:visual sur STRICT_PATHS).
-- **Typo** → classes `.t-9`, `.t-13`, `.t-15`, `.t-28`… ou `.halo-title-xl`, `.halo-mono-label`. Jamais `text-[18px]` arbitraire (bloqué par `no-arbitrary-text-size`), ni `text-5xl` + inline `style={{ fontWeight, letterSpacing }}`.
-- **Radius** → `--radius-xs` à `--radius-pill` ou utilities `rounded-pill`/`rounded-md`. Pas de `rounded-[Npx]` arbitraire (bloqué par `no-arbitrary-non-token` sur STRICT_PATHS).
-- **Couleurs** → `var(--cykan)`, `var(--text-muted)`, `var(--border-default)`. Jamais `#fff` ou `rgba(...)` en dur (bloqués par `no-hex` / `no-rgba`).
-- **Shadows** → `--shadow-card`, `--shadow-card-hover`, `--shadow-input-focus`. Jamais `shadow-xl`/`shadow-2xl` Tailwind brut (bloqué par `no-tailwind-shadow`), ni inline `boxShadow: "0 2px 8px rgba(...)"` (bloqué par `no-inline-shadow`).
-- **Motion** → `--duration-*` + `--ease-*`. Jamais `transition-all duration-300` brut.
+### 1. Tokens > magic numbers (recommandé)
 
-Si un token manque pour ce que tu veux faire : **stop. Demande à Adrien.** Ne crée pas un magic number "temporaire". La source de vérité des règles bloquantes est [scripts/lint-visual.mjs](scripts/lint-visual.mjs) — ce qu'il laisse passer est autorisé, ce qu'il bloque ne l'est pas.
+Tout devrait passer par les tokens [app/globals.css](app/globals.css). Tailwind v4 + `@theme inline` mappe les utilities sur les tokens — `px-12`, `gap-4`, `mb-4`, `w-8` sont OK : ils résolvent vers `var(--space-N)`.
+
+- **Spacing** → utilities Tailwind ou `style={{ padding: "var(--space-N)" }}`
+- **Typo** → `.t-9`, `.t-13`, `.t-15`, `.t-28`…
+- **Radius** → `--radius-xs` à `--radius-pill` ou utilities Tailwind
+- **Couleurs** → `var(--cykan)`, `var(--text-muted)`, etc.
+- **Shadows** → `--shadow-card`, `--shadow-card-hover`, etc.
+- **Motion** → `--duration-*` + `--ease-*`
+
+**Token manquant ?** Si un cas légitime (utilisé 2+ fois, valeur cohérente au système) → ajoute le token dans `globals.css` et continue. Pas besoin de demander à Adrien d'abord.
+
+`scripts/lint-visual.mjs` reste actif sur STRICT_PATHS — si il bloque un changement, soit fix le pattern, soit ajoute un token, soit ajoute le path à l'allowlist du lint.
 
 ### 2. Une seule source de vérité par propriété
 
-Interdit de cumuler Tailwind + classe custom + inline style sur le même élément pour la même propriété. Choisis :
+Évite de cumuler Tailwind + classe custom + inline style pour la même propriété sur un même élément. Choisis :
+- Tailwind (layout, flex, grid) **OU**
+- Classes custom du DS (`.halo-suggestion`, `.card-depth`) **OU**
+- `style={{ ... }}` avec `var(--token)` quand la classe n'existe pas
 
-- Couches utilitaires Tailwind (layout, flex, grid) **OU**
-- Classes custom du design system (`.halo-suggestion`, `.card-depth`, `.section-elevated`) **OU**
-- `style={{ ... }}` avec des `var(--token)` **uniquement** quand la classe n'existe pas
+### 3. Références visuelles (consultables, pas obligatoires)
 
-Pas les trois en même temps. Le mélange est la cause #1 du déséquilibre visuel.
+[HEARST-OS-DESIGN-SYSTEM.html](HEARST-OS-DESIGN-SYSTEM.html) documente le langage visuel canonique. Consulte si tu as un doute sur une convention ; sinon trust le code existant comme référence.
 
-### 3. Références visuelles obligatoires
+### 4. Boucle visuelle (selon contexte)
 
-Avant de coder une nouvelle page ou de retoucher une page existante, **ouvre et lis** :
+Pour les changements UI lourds (refonte d'écran, nouveau Stage), screenshot Playwright avant livraison. Pour les polish ciblés (hotkey markup, padding, mono caps cleanup, etc.) : tsc + lint:visual + lint suffisent ; les screenshots peuvent être faits en fin de session par batch ou laissés à Adrien.
 
-- [HEARST-OS-DESIGN-SYSTEM.html](HEARST-OS-DESIGN-SYSTEM.html) — le langage visuel canonique (tokens, typo, motion)
+### 5. États couverts
 
-Calque-toi dessus. Cite les sections que tu réutilises dans ta réponse.
+Quand tu construis un écran neuf : empty, loading, error, hover/focus/active, disabled, mobile, dark mode (défaut). Pour un polish ciblé sur un écran existant, ne refais pas tous les états — fix ce qui est demandé.
 
-### 4. Boucle visuelle avant de livrer
+## Pratiques codeur
 
-Pour toute modif UI :
+### Primitives DS
 
-1. Lance le dev server (`npm run dev` en background) si pas déjà actif
-2. Prends un screenshot via Playwright de l'écran modifié
-3. Compare au mock de référence (ou décris l'écart honnêtement)
-4. Itère jusqu'à matcher — ou explique précisément pourquoi tu ne peux pas
+Si tu vois 3+ patterns dupliqués qui méritent extraction (`<MissionRow>`, `<EmptyState>`, `<RowSkeleton>`, etc.), crée la primitive dans `app/(user)/components/ui/` ou un sous-dossier métier (`components/missions/`, `components/personas/`), exporte via `index.ts`, propage les usages. Pas de demande préalable.
 
-Ne dis jamais "c'est fait" sans avoir vu le résultat dans le navigateur.
+### Mode batch
 
-### 5. Énumère tous les états
+Plan de N batches validé une fois → enchaîne sans s'arrêter entre chaque. Validations techniques (`tsc + lint + lint:visual`) à la fin uniquement. Commit par batch ou par phase logique avec message descriptif (Conventional Commits, en français).
 
-Pour chaque écran : empty, loading, error, success, hover/focus/active, disabled, mobile, dark mode (déjà par défaut). Pas de golden path tout seul.
+### Décisions sans confirmation
+
+- Choix entre 2 valeurs de token cohérentes
+- Création de primitive si 3+ duplications
+- Suppression de classes CSS mortes (orphelines)
+- Rename variables locales / fonctions internes
+- Refactor de pages massives en sous-composants
+- Standardisation d'un padding sur N pages
+- Renommage / restructuration interne d'un composant
+- Fix d'erreurs lint préexistantes hors scope si elles bloquent le CI
+- Ajout de tokens manquants dans `globals.css`
+
+### Décisions qui méritent confirmation (cas rares)
+
+- Modification de la palette de couleurs primaires (cykan / gold / danger / money)
+- Refonte du shell layout (3 colonnes, PulseBar top, ChatDock bottom)
+- Suppression d'une feature visible
+- Changement de routes ou structure d'URL
+- Modification de schémas DB / API contracts publics
+
+### Git
+
+- Commit par batch avec message clair (préfixes : `feat`, `fix`, `refactor`, `polish`, `chore`, `test`, `docs`)
+- Push direct sur `main` autorisé (workflow solo dev assumé)
+- Pas de force-push sauf si Adrien le demande explicitement par message
+- Pas de `--no-verify` sur hooks sauf demande explicite
 
 ## Stack
 
 - **Next.js 15** (app router) + React 19
-- **Tailwind v4** (`@import "tailwindcss"`) avec `@theme inline` qui mappe les tokens
+- **Tailwind v4** (`@import "tailwindcss"`) avec `@theme inline`
 - **Police** : Satoshi Variable (`--font-satoshi`)
-- **Tests** : Playwright pour e2e, Jest/Vitest pour unit
+- **Tests** : Playwright e2e, Vitest unit
 - **Auth** : NextAuth (SessionProvider dans [app/(user)/layout.tsx](app/(user)/layout.tsx))
+- **Deploy** : Vercel (auto-deploy via webhook GitHub)
 
 ## Langue
 
-Adrien travaille en français. Réponds en français. Les commits, commentaires de code et messages UI sont en français.
+Français pour tout : réponses, commits, commentaires code, microcopy UI.
+
+## Voix éditoriale (pivot 2026-04-29)
+
+- Pas de mono caps `tracking-marquee/display/section/label` en JSX (commentaires JSDoc OK)
+- Pas de `halo-on-hover` sur le chrome (boutons / inputs / liens) — halos cyan uniquement sur états actifs intentionnels (status dots, logo, voice active, input pill focus)
+- Pas de gimmick `hover:tracking-[Xem]`
+- Statuts en voix régulière FR ("Réussi" / "Échec" / "En cours") plutôt que mono caps abrégés ("OK" / "FAIL" / "RUN")
+- `<Action>`, `<SectionHeader>`, `<RailSection>`, `<EmptyState>`, `<RowSkeleton>`, `<CardSkeleton>` sont les primitives canoniques
