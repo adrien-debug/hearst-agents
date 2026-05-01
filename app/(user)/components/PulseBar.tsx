@@ -112,7 +112,7 @@ export function PulseBar() {
       <button
         type="button"
         onClick={() => setCommandeurOpen(true)}
-        className="halo-on-hover flex-1 min-w-0 max-w-xl mx-auto flex items-center justify-between px-3 py-1.5 border border-[var(--border-shell)] rounded-sm text-[var(--text-faint)] hover:border-[var(--cykan-border-hover)] hover:text-[var(--cykan)] transition-colors"
+        className="flex-1 min-w-0 max-w-xl mx-auto flex items-center justify-between px-3 py-1.5 border border-[var(--border-shell)] rounded-sm text-[var(--text-faint)] hover:border-[var(--cykan-border-hover)] hover:text-[var(--cykan)] transition-colors"
         title="Ouvrir le Commandeur"
       >
         <span className="t-11 truncate">Demande à Hearst…</span>

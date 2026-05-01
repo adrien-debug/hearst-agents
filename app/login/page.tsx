@@ -116,15 +116,15 @@ function LoginContent() {
 
       <div className="relative w-full max-w-[480px]">
         {/* Login card */}
-        <div className="rounded-[22px] border border-white/6 bg-white/2 px-6 py-8 sm:px-7 sm:py-9 md:px-8 md:py-10">
+        <div className="rounded-2xl border border-white/6 bg-white/2 px-6 py-8 sm:px-7 sm:py-9 md:px-8 md:py-10">
           {/* Brand */}
           <div className="flex flex-col items-center">
-            <span className="t-13 font-medium uppercase tracking-[0.2em] text-white/70">
+            <span className="t-13 font-medium uppercase tracking-display text-white/70">
               Hearst OS
             </span>
 
             {/* Secure access label */}
-            <span className="mt-3 t-11 font-medium uppercase tracking-[0.15em] text-white/25">
+            <span className="mt-3 t-11 font-medium uppercase tracking-body text-white/25">
               Accès sécurisé
             </span>
 
@@ -151,7 +151,7 @@ function LoginContent() {
                   onClick={() => handleSignIn(provider.id)}
                   disabled={isDisabled}
                   aria-label={provider.label}
-                  className="group relative flex h-[50px] w-full items-center justify-center gap-3 rounded-[13px] border border-white/8 bg-white/3 text-sm font-medium text-white/80 transition-[color,background-color,border-color,transform,opacity] duration-200 hover:border-white/14 hover:bg-white/6 hover:text-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50"
+                  className="group relative flex h-[50px] w-full items-center justify-center gap-3 rounded-md border border-white/8 bg-white/3 text-sm font-medium text-white/80 transition-[color,background-color,border-color,transform,opacity] duration-200 hover:border-white/14 hover:bg-white/6 hover:text-white/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.985] disabled:pointer-events-none disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-white/10 border-t-white/50" />

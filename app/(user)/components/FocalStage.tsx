@@ -296,14 +296,14 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
 
   if (compact) {
 return (
-    <div className="max-w-none px-8 py-6 bg-gradient-to-br from-[var(--mat-300)] via-[var(--bg-soft)] to-[var(--surface)]">
+    <div className="max-w-none px-8 py-6 bg-[var(--bg-soft)]">
       <FocalContent focal={focal} onActionComplete={handleActionComplete} />
     </div>
   );
   }
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-[var(--mat-300)] via-[var(--bg-soft)] to-[var(--surface)]">
+    <div className="h-full w-full bg-[var(--bg-soft)]">
       <div className="max-w-4xl mx-auto px-12 py-12 min-h-full">
         <FocalContent focal={focal} onActionComplete={handleActionComplete} />
       </div>

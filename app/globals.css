@@ -186,6 +186,12 @@
   --shadow-tile-base: 0 1px 2px rgba(0, 0, 0, 0.20);
   --shadow-tile-hover: 0 2px 4px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(45, 212, 191, 0.06);
   --shadow-alert-inset: inset 0 0.5px 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(0, 0, 0, 0.20);
+  /* Stage shell relief — highlight 3 directions (top + sides) pour sculpter
+   * le centre du layout sans chrome supplémentaire. Pivot 2026-05-01 v3. */
+  --shadow-shell-relief:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 1px 0 0 rgba(255, 255, 255, 0.04),
+    inset -1px 0 0 rgba(255, 255, 255, 0.04);
   /* Rail shells — inset borders séparateurs de sections */
   --shadow-rail-shell: inset 0 0 0 1px var(--border-soft);
   --shadow-divider-bottom: inset 0 -1px 0 0 var(--border-soft);
@@ -1230,12 +1236,6 @@ body {
 
 .halo-on-hover:hover {
   text-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
-}
-
-.halo-cyan-md {
-  text-shadow:
-    0 0 16px rgba(45, 212, 191, 0.4),
-    0 0 32px rgba(45, 212, 191, 0.2);
 }
 
 .halo-cyan-lg {
