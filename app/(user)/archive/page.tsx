@@ -60,7 +60,7 @@ export default function ArchivePage() {
             className="inline-flex items-center gap-2 px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
           >
             <span>Retour</span>
-            <span className="opacity-60">ESC</span>
+            <span className="t-9 font-mono tabular-nums opacity-60">ESC</span>
           </button>
         }
       />

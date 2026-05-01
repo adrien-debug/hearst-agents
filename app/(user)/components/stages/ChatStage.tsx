@@ -91,7 +91,7 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
                   title="Close (Esc)"
                 >
                   <span>Close</span>
-                  <span className="opacity-60">ESC</span>
+                  <span className="t-9 font-mono tabular-nums opacity-60">ESC</span>
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto">

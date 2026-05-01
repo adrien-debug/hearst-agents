@@ -351,7 +351,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
             style={{ background: "transparent", border: "none", cursor: "pointer" }}
             aria-label="Retour"
           >
-            ← Retour <span className="opacity-60">⌘⌫</span>
+            ← Retour <span className="t-9 font-mono tabular-nums opacity-60">⌘⌫</span>
           </button>
           {asset?.title && (
             <span

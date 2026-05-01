@@ -1257,6 +1257,37 @@ body {
     0 0 16px rgba(45, 212, 191, 0.35);
 }
 
+/* ── Ghost Protocol legacy classes — utilisées par /missions, MissionEditor,
+   RightPanel, /runs/[id]. Définitions tokens-based pour rendre l'affichage
+   visible (avant ces classes étaient référencées sans définition CSS). */
+
+.ghost-meta-label {
+  font-size: clamp(11px, 0.286vw + 9.167px, 16.5px);
+  line-height: 1.3;
+  font-weight: 500;
+  color: var(--text-l2);
+  letter-spacing: var(--tracking-tight);
+}
+
+.ghost-skeleton-bar {
+  height: var(--space-3);
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  animation: ghost-skeleton-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes ghost-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.5; }
+}
+
+.ghost-overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg-center) 70%, transparent);
+  backdrop-filter: blur(8px);
+}
+
 /* ── Chat transcript utilities ────────── */
 
 /* Caret discret — fin trait, pas de halo, pulsation douce */

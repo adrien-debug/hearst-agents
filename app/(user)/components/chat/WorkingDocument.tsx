@@ -109,7 +109,7 @@ export function WorkingDocument() {
           type="button"
         >
           <span>← Réduire</span>
-          <span className="opacity-60">⌘B</span>
+          <span className="t-9 font-mono tabular-nums opacity-60">⌘B</span>
         </button>
       </header>
 

@@ -475,7 +475,7 @@ function MissionsPageContent() {
         >
             <div className="p-8">
               <div className="flex items-center justify-between mb-8 border-b border-[var(--line)] pb-4">
-                <h2 className="ghost-title-impact">
+                <h2 className="t-15 font-medium tracking-tight text-[var(--text)]">
                   {editingMission ? "Modifier la mission" : "Nouvelle mission"}
                 </h2>
                 <button type="button" onClick={closeEditor} className="text-[var(--text-muted)] hover:text-[var(--text)] p-1" aria-label="Fermer">

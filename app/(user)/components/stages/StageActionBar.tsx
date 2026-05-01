@@ -82,7 +82,7 @@ export function StageActionBar({
           >
             <span aria-hidden>←</span>
             <span>{backLabel}</span>
-            <span style={{ opacity: 0.6 }}>{"⌘⌫"}</span>
+            <span className="t-9 font-mono tabular-nums opacity-60">{"⌘⌫"}</span>
           </button>
         )}
         {context && <div className="flex items-center" style={{ gap: "var(--space-4)" }}>{context}</div>}
@@ -129,7 +129,7 @@ function PrimaryButton({ action }: { action: StageAction }) {
       {action.icon && <span aria-hidden>{action.icon}</span>}
       <span>{action.loading ? "…" : action.label}</span>
       {action.shortcut && !action.loading && (
-        <span style={{ opacity: 0.6 }}>{action.shortcut}</span>
+        <span className="t-9 font-mono tabular-nums opacity-60">{action.shortcut}</span>
       )}
     </button>
   );
@@ -163,7 +163,7 @@ function SecondaryButton({ action }: { action: StageAction }) {
       {action.icon && <span aria-hidden>{action.icon}</span>}
       <span>{action.loading ? "…" : action.label}</span>
       {action.shortcut && !action.loading && (
-        <span style={{ opacity: 0.6 }}>{action.shortcut}</span>
+        <span className="t-9 font-mono tabular-nums opacity-60">{action.shortcut}</span>
       )}
     </button>
   );
@@ -258,7 +258,7 @@ function OverflowMenu({ actions }: { actions: StageAction[] }) {
             >
               {a.icon && <span aria-hidden>{a.icon}</span>}
               <span style={{ flex: 1 }}>{a.label}</span>
-              {a.shortcut && <span style={{ opacity: 0.6 }}>{a.shortcut}</span>}
+              {a.shortcut && <span className="t-9 font-mono tabular-nums opacity-60">{a.shortcut}</span>}
             </button>
           ))}
         </div>

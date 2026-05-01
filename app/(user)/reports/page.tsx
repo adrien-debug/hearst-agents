@@ -215,7 +215,7 @@ export default function ReportsDiscoveryPage() {
                   type="button"
                   onClick={() => setStatusFilter(value)}
                   data-testid={`filter-status-${value}`}
-                  className="px-3 py-1.5 t-12 font-medium rounded-md border transition-all"
+                  className="px-3 py-1.5 t-13 font-medium rounded-md border transition-all"
                   style={{
                     background: isActive ? "var(--cykan-bg-active)" : "var(--surface-1)",
                     color: isActive ? "var(--cykan)" : "var(--text-muted)",
@@ -289,7 +289,7 @@ export default function ReportsDiscoveryPage() {
             <button
               type="button"
               onClick={fetchReports}
-              className="inline-flex items-center gap-2 px-4 py-2 t-12 font-medium rounded-md border transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2 t-13 font-medium rounded-md border transition-all"
               style={{
                 background: "var(--surface-1)",
                 color: "var(--text-muted)",
@@ -324,7 +324,7 @@ export default function ReportsDiscoveryPage() {
               <p className="t-13 font-semibold" style={{ color: "var(--text)" }}>
                 Connectez une première app pour activer ces rapports
               </p>
-              <p className="t-12 font-light" style={{ color: "var(--text-muted)" }}>
+              <p className="t-13 font-light" style={{ color: "var(--text-muted)" }}>
                 Les rapports ci-dessous attendent qu&apos;au moins une app soit liée — explorez le catalogue, lisez les pré-requis, puis connectez les sources nécessaires.
               </p>
             </div>
@@ -352,7 +352,7 @@ export default function ReportsDiscoveryPage() {
             <button
               type="button"
               onClick={() => { setDomainFilter("all"); setStatusFilter("all"); }}
-              className="t-12 font-medium transition-colors"
+              className="t-13 font-medium transition-colors"
               style={{
                 color: "var(--cykan)",
                 transitionDuration: "var(--duration-base)",
