@@ -110,7 +110,7 @@ export function ConfirmModal({
             onClick={onCancel}
             disabled={loading}
             data-testid="confirm-modal-cancel"
-            className="halo-on-hover t-11 font-light"
+            className="t-11 font-light"
             style={{
               paddingLeft: "var(--space-3)",
               paddingRight: "var(--space-3)",

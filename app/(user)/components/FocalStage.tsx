@@ -287,7 +287,7 @@ export function FocalStage({ compact = false }: FocalStageProps = {}) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center relative z-10">
-          <span className="block t-34 text-[var(--cykan)] opacity-30 halo-cyan-md mb-8 animate-pulse">◉</span>
+          <span className="block t-34 text-[var(--cykan)] opacity-30 mb-8 animate-pulse">◉</span>
           <p className="t-11 font-light text-[var(--text-faint)]">Waiting_For_Data</p>
         </div>
       </div>

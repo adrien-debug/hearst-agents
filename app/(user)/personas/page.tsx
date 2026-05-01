@@ -102,6 +102,7 @@ export default function PersonasPage() {
       <PageHeader
         title="Brand Voice — Personas"
         subtitle="Voix éditoriales appliquées au LLM. Une persona = ton + vocabulaire + system prompt addon."
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Personas" }]}
         actions={
           <Action
             variant="primary"
@@ -118,8 +119,8 @@ export default function PersonasPage() {
       />
 
       <div
-        className="px-12 py-8 mx-auto w-full max-w-[min(100%,var(--width-actions))] flex flex-col"
-        style={{ gap: "var(--space-6)" }}
+        className="px-12 py-6 mx-auto w-full flex flex-col"
+        style={{ gap: "var(--space-6)", maxWidth: "var(--width-actions)" }}
       >
         {flash && (
           <p className="t-13 font-light text-[var(--cykan)]">

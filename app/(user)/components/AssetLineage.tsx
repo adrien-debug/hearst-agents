@@ -188,7 +188,7 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
           <button
             type="button"
             onClick={() => setShowSources((v) => !v)}
-            className="flex items-center halo-on-hover"
+            className="flex items-center"
             style={{
               gap: "var(--space-2)",
               background: "transparent",

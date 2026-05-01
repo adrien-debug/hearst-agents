@@ -187,8 +187,12 @@ export default function ReportsDiscoveryPage() {
       className="flex-1 flex flex-col min-h-0 overflow-auto"
       style={{ background: "var(--bg-center)", color: "var(--text)" }}
     >
-      <PageHeader title="Rapports" subtitle={subtitle} />
-      <div className="flex flex-col gap-8 px-12 py-8 w-full" style={{ maxWidth: "var(--width-center-max)", margin: "0 auto" }}>
+      <PageHeader
+        title="Rapports"
+        subtitle={subtitle}
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Rapports" }]}
+      />
+      <div className="flex flex-col gap-8 px-12 py-6 w-full" style={{ maxWidth: "var(--width-center-max)", margin: "0 auto" }}>
 
         {/* ── CTA Créer un rapport ────────────────────────── */}
         <div className="flex justify-end">
@@ -256,7 +260,7 @@ export default function ReportsDiscoveryPage() {
                   type="button"
                   onClick={() => setDomainFilter(value)}
                   data-testid={`filter-domain-${value}`}
-                  className="px-2.5 py-1 t-9 font-medium tracking-wide uppercase rounded-md transition-all"
+                  className="px-2.5 py-1 t-11 font-light rounded-md transition-all"
                   style={{
                     background: isActive ? "var(--cykan-surface)" : "transparent",
                     color: isActive ? "var(--cykan)" : "var(--text-ghost)",
@@ -366,13 +370,7 @@ export default function ReportsDiscoveryPage() {
         {/* Section : Vos rapports (custom specs) */}
         {!loading && !error && customReports.length > 0 && statusFilter !== "ready" && statusFilter !== "needs-connection" && (
           <section className="flex flex-col gap-3" data-testid="reports-custom-section">
-            <h2
-              className="t-9 font-mono uppercase"
-              style={{
-                color: "var(--text-muted)",
-                letterSpacing: "var(--tracking-display)",
-              }}
-            >
+            <h2 className="t-13 font-medium text-[var(--text-l1)]">
               Vos rapports
             </h2>
             <div

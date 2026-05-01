@@ -110,12 +110,12 @@ export default function RunDetailPage() {
         }
       />
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-12 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Timeline */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="t-10 font-medium text-[var(--text-muted)] uppercase tracking-section">
+              <h2 className="t-13 font-medium text-[var(--text-l1)]">
                 Timeline
               </h2>
               {timelineSource !== "empty" && (
@@ -179,7 +179,7 @@ export default function RunDetailPage() {
                       <ServiceIdGlyph id={asset.id} size="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="t-13 text-[var(--text)] truncate">{asset.name}</p>
-                        <p className="t-10 font-mono uppercase text-[var(--text-muted)]">{asset.type}</p>
+                        <p className="t-9 font-light text-[var(--text-muted)]">{asset.type}</p>
                       </div>
                       <GhostIconChevronRight className="w-4 h-4 shrink-0 text-[var(--cykan)]" />
                     </button>

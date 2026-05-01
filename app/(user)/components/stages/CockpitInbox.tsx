@@ -142,7 +142,7 @@ export function CockpitInbox() {
         style={{ gap: "var(--space-6)", padding: "var(--space-12)" }}
       >
         <span
-          className="block text-[var(--cykan)] opacity-30 halo-cyan-md t-34"
+          className="block text-[var(--cykan)] opacity-30 t-34"
           style={{ height: "var(--height-stage-empty-icon)" }}
           aria-hidden
         >

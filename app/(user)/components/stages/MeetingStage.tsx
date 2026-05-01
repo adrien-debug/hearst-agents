@@ -218,7 +218,7 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md flex flex-col gap-6">
             <span
-              className="block text-[var(--cykan)] opacity-30 halo-cyan-md mx-auto t-34"
+              className="block text-[var(--cykan)] opacity-30 mx-auto t-34"
               style={{ height: "var(--height-stage-empty-icon)" }}
               aria-hidden
             >

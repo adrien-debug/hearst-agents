@@ -87,11 +87,12 @@ export default function MarketplacePage() {
       <PageHeader
         title="Marketplace"
         subtitle="Templates communautaires — workflows, rapports, personas. Clone en un clic."
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Marketplace" }]}
       />
 
       <div
-        className="px-12 py-8 mx-auto w-full max-w-[min(100%,var(--width-actions))] flex flex-col"
-        style={{ gap: "var(--space-6)" }}
+        className="px-12 py-6 mx-auto w-full flex flex-col"
+        style={{ gap: "var(--space-6)", maxWidth: "var(--width-actions)" }}
       >
         {/* Filters */}
         <section

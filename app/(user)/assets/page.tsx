@@ -111,7 +111,7 @@ export default function AssetsPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="t-11 font-mono tracking-marquee uppercase text-[var(--text-faint)] animate-pulse">
+        <p className="t-13 font-light text-[var(--text-faint)] animate-pulse">
           Chargement des assets…
         </p>
       </div>
@@ -132,11 +132,11 @@ export default function AssetsPage() {
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-8">
+      <div className="flex-1 overflow-y-auto px-12 py-6">
         <div className="max-w-4xl mx-auto">
           {assets.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-              <p className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)]">Registre vide</p>
+              <p className="t-15 font-light text-[var(--text-soft)]">Aucun asset</p>
               <p className="t-13 text-[var(--text-muted)] max-w-md leading-relaxed">
                 Aucun asset pour l&apos;instant. Les rapports, briefs et documents générés par tes runs apparaîtront ici.
               </p>
@@ -163,26 +163,26 @@ export default function AssetsPage() {
                   <span className="t-15 text-[var(--cykan)] opacity-40 group-hover:opacity-100 transition-opacity leading-none w-4 text-center">
                     {glyph(asset.kind)}
                   </span>
-                  <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] group-hover:halo-cyan-sm transition-colors truncate">
+                  <span className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] transition-colors truncate">
                     {asset.title}
                   </span>
-                  <span className="t-9 font-mono tracking-display text-[var(--text-faint)] uppercase text-right">
+                  <span className="t-9 font-medium text-[var(--text-faint)] text-right">
                     {asset.kind}
                   </span>
-                  <span className="t-9 font-mono text-[var(--text-faint)] text-right">
+                  <span className="t-9 font-mono tabular-nums text-[var(--text-faint)] text-right">
                     {asset.provenance?.pdfFile?.sizeBytes
                       ? `${(asset.provenance.pdfFile.sizeBytes / 1024).toFixed(1)} KB`
                       : "—"}
                   </span>
                   <RelativeTime
                     ts={asset.createdAt}
-                    className="t-9 font-mono tracking-display text-[var(--text-ghost)] uppercase text-right"
+                    className="t-9 font-mono tabular-nums text-[var(--text-ghost)] text-right"
                   />
                   <button
                     type="button"
                     onClick={(e) => handleDownload(asset, e)}
                     disabled={!asset.provenance?.pdfFile}
-                    className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
+                    className="t-9 font-light text-[var(--text-ghost)] hover:text-[var(--cykan)] opacity-0 group-hover:opacity-100 transition-all disabled:opacity-0"
                   >
                     Télécharger
                   </button>
@@ -192,7 +192,7 @@ export default function AssetsPage() {
                       e.stopPropagation();
                       setConfirmDelete(asset);
                     }}
-                    className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-all"
+                    className="t-9 font-light text-[var(--text-ghost)] hover:text-[var(--danger)] opacity-0 group-hover:opacity-100 transition-all"
                     title={`Supprimer ${asset.title}`}
                     aria-label={`Supprimer ${asset.title}`}
                   >

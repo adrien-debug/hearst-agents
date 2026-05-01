@@ -65,7 +65,7 @@ export default function ArchivePage() {
         }
       />
 
-      <div className="px-12 py-8 border-b border-[var(--surface-2)] flex-shrink-0">
+      <div className="px-12 py-6 border-b border-[var(--surface-2)] flex-shrink-0">
         <input
           type="text"
           autoFocus
@@ -79,12 +79,12 @@ export default function ArchivePage() {
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="t-11 font-mono tracking-display uppercase text-[var(--text-ghost)]">
+            <p className="t-15 font-light text-[var(--text-soft)]">
               {query ? "Aucun résultat" : "Archive vide"}
             </p>
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto px-12 py-8 space-y-2">
+          <div className="max-w-3xl mx-auto px-12 py-6 space-y-2">
             {filtered.map((thread) => (
               <button
                 key={thread.id}
@@ -92,7 +92,7 @@ export default function ArchivePage() {
                 onClick={() => handleOpen(thread.id)}
                 className="w-full text-left group flex items-baseline gap-6 py-3 px-4 -mx-4 hover:bg-[var(--surface-1)] transition-colors"
               >
-                <span className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] shrink-0" style={{ width: "var(--space-20)" }}>
+                <span className="t-9 font-mono tabular-nums text-[var(--text-ghost)] shrink-0" style={{ width: "var(--space-20)" }}>
                   {thread.lastActivity ? FORMATTER.format(new Date(thread.lastActivity)) : "—"}
                 </span>
                 <span className="flex-1 t-15 font-light text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors truncate">

@@ -333,15 +333,15 @@ function MissionsPageContent() {
       })()}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-12 py-6">
         {missions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
             <p className="ghost-meta-label">Registre vide</p>
-            <h2 className="t-34 font-semibold tracking-[-0.025em]">Aucune mission</h2>
+            <h2 className="t-28 font-medium tracking-tight">Aucune mission</h2>
             <p className="t-13 font-light leading-relaxed text-[var(--text-muted)] max-w-md">
               Les missions sont des tâches récurrentes planifiées. Exécution automatique selon calendrier.
             </p>
-            <button type="button" onClick={openNewMission} className="font-mono t-10 uppercase tracking-[0.16em] text-[var(--cykan)] border-b border-[var(--cykan)] pb-[2px] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors">
+            <button type="button" onClick={openNewMission} className="t-13 font-light text-[var(--cykan)] border-b border-[var(--cykan)] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors" style={{ paddingBottom: "var(--space-1)" }}>
               Créer la première
             </button>
           </div>
@@ -397,7 +397,7 @@ function MissionsPageContent() {
                       className="min-w-0 text-left group/open cursor-pointer"
                       title={`Open ${mission.name}`}
                     >
-                      <p className="font-mono t-9 uppercase tracking-display text-[var(--text-faint)] mb-1">Réf {mission.id.slice(0, 8)}</p>
+                      <p className="t-9 font-light text-[var(--text-faint)] mb-1">Réf {mission.id.slice(0, 8)}</p>
                       <h3 className="t-13 font-medium text-[var(--text)] tracking-tight group-hover/open:text-[var(--cykan)] transition-colors">{mission.name}</h3>
                       <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] mt-1">{mission.description}</p>
                       {mission.lastError && (
@@ -408,7 +408,7 @@ function MissionsPageContent() {
                     </button>
                   </div>
                   <div className="text-right space-y-2">
-                    <span className={`inline-block font-mono t-9 uppercase tracking-label border-b pb-0.5 ${statusLine}`}>
+                    <span className={`inline-block t-9 font-medium border-b pb-0.5 ${statusLine}`}>
                       {opsStatusLabel}
                     </span>
                     <div className="t-10 font-mono text-[var(--text-faint)] space-y-1">

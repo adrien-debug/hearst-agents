@@ -14,9 +14,10 @@ export default function AlertingSettingsPage() {
       <PageHeader
         title="Alerting"
         subtitle="Canaux de notification pour les signaux critiques de Hearst OS."
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Réglages", href: "/settings/alerting" }, { label: "Alerting" }]}
       />
       <div
-        className="w-full px-12 py-8"
+        className="w-full px-12 py-6"
         style={{ maxWidth: "var(--width-center-max)", margin: "0 auto" }}
       >
         <AlertingSettings />

@@ -154,13 +154,7 @@ export default function HospitalityPage() {
               gap: "var(--space-3)",
             }}
           >
-            <span
-              className="t-9 font-mono uppercase"
-              style={{
-                letterSpacing: "var(--tracking-marquee)",
-                color: "var(--text-faint)",
-              }}
-            >
+            <span className="t-9 font-light text-[var(--text-faint)]">
               PMS · POS · Guest messaging
             </span>
             <p className="t-13" style={{ color: "var(--text-l2)" }}>
@@ -186,24 +180,12 @@ function Section({
 }) {
   return (
     <section className="flex flex-col" style={{ gap: "var(--space-5)" }}>
-      <header className="flex items-center justify-between">
-        <span
-          className="t-9 font-mono uppercase"
-          style={{
-            letterSpacing: "var(--tracking-marquee)",
-            color: "var(--text-l2)",
-          }}
-        >
+      <header className="flex items-baseline justify-between">
+        <span className="t-13 font-medium text-[var(--text-l1)]">
           {label}
         </span>
         {meta && (
-          <span
-            className="t-9 font-mono uppercase"
-            style={{
-              letterSpacing: "var(--tracking-display)",
-              color: "var(--text-ghost)",
-            }}
-          >
+          <span className="t-11 font-light text-[var(--text-faint)]">
             {meta}
           </span>
         )}

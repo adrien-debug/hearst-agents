@@ -37,14 +37,14 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  succeeded: "OK",
-  success: "OK",
-  failed: "FAIL",
-  running: "RUN",
-  awaiting_approval: "WAIT",
-  awaiting_clarification: "WAIT",
-  cancelled: "CXL",
-  idle: "IDLE",
+  succeeded: "Réussi",
+  success: "Réussi",
+  failed: "Échec",
+  running: "En cours",
+  awaiting_approval: "Validation",
+  awaiting_clarification: "Précision",
+  cancelled: "Annulé",
+  idle: "En attente",
 };
 
 // ── Icons (16×16 — tokens only) ─────────────────────────────────────────────
@@ -187,7 +187,7 @@ export default function RunsPage() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="t-11 font-mono tracking-marquee uppercase text-[var(--text-faint)] animate-pulse">
+        <p className="t-13 font-light text-[var(--text-faint)] animate-pulse">
           Chargement des runs…
         </p>
       </div>
@@ -208,11 +208,11 @@ export default function RunsPage() {
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-8">
+      <div className="flex-1 overflow-y-auto px-12 py-6">
         <div className="max-w-5xl mx-auto">
           {runs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-              <p className="t-9 font-mono tracking-marquee uppercase text-[var(--text-faint)]">Aucun run</p>
+              <p className="t-15 font-light text-[var(--text-soft)]">Aucun run</p>
               <p className="t-13 text-[var(--text-muted)] max-w-md leading-relaxed">
                 Aucun run pour l&apos;instant. Toutes les exécutions de tes prompts et missions apparaîtront ici.
               </p>
@@ -290,13 +290,13 @@ export default function RunsPage() {
                       <p className="t-13 text-[var(--text-soft)] group-hover:text-[var(--cykan)] transition-colors truncate">
                         {run.input || `Run ${run.id.slice(0, 8)}`}
                       </p>
-                      <p className="t-9 font-mono tracking-display uppercase text-[var(--text-ghost)] mt-1">
+                      <p className="t-9 font-light text-[var(--text-ghost)] mt-1">
                         {run.surface || "—"}
-                        {run.missionId ? ` · MISSION ${run.missionId.slice(0, 6)}` : ""}
+                        {run.missionId ? ` · Mission ${run.missionId.slice(0, 6)}` : ""}
                         {run.executionMode ? ` · ${run.executionMode}` : ""}
                       </p>
                     </div>
-                    <span className={`t-9 font-mono tracking-display uppercase text-right ${
+                    <span className={`t-9 font-medium text-right ${
                       statusKey === "running" ? "text-[var(--cykan)]" :
                       statusKey === "failed" ? "text-[var(--danger)]" :
                       statusKey === "succeeded" || statusKey === "success" ? "text-[var(--money)]" :
@@ -304,15 +304,15 @@ export default function RunsPage() {
                     }`}>
                       {statusLabel}
                     </span>
-                    <span className="t-9 font-mono tracking-display text-[var(--text-faint)] text-right">
+                    <span className="t-9 font-mono tabular-nums text-[var(--text-faint)] text-right">
                       {run.assetCount > 0 ? `${run.assetCount}×` : "—"}
                     </span>
-                    <span className="t-9 font-mono text-[var(--text-faint)] text-right">
+                    <span className="t-9 font-mono tabular-nums text-[var(--text-faint)] text-right">
                       {formatDuration(run.metrics?.durationMs)}
                     </span>
                     <RelativeTime
                       ts={run.createdAt}
-                      className="t-9 font-mono tracking-display text-[var(--text-ghost)] uppercase text-right"
+                      className="t-9 font-mono tabular-nums text-[var(--text-ghost)] text-right"
                     />
                     <div className="flex justify-end">
                       <RowActions actions={actions} />

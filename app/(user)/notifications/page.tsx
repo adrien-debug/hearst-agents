@@ -110,6 +110,7 @@ export default function NotificationsPage() {
       <PageHeader
         title="Notifications"
         subtitle={subtitle}
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Notifications" }]}
         actions={
           unreadCount > 0 ? (
             <button
@@ -292,21 +293,17 @@ function NotifCard({
           style={{ gap: "var(--space-2)", marginTop: "var(--space-1)" }}
         >
           <span
-            className="t-9 inline-flex items-center uppercase rounded-xs"
+            className="t-9 font-medium inline-flex items-center rounded-xs"
             style={{
               padding: "1px var(--space-2)",
               background: SEVERITY_BG[notif.severity],
               color: SEVERITY_COLORS[notif.severity],
-              letterSpacing: "var(--tracking-caption)",
               borderRadius: "var(--radius-xs)",
             }}
           >
             {SEVERITY_LABELS[notif.severity]}
           </span>
-          <span
-            className="t-9 uppercase text-[var(--text-ghost)]"
-            style={{ letterSpacing: "var(--tracking-caption)" }}
-          >
+          <span className="t-9 font-light text-[var(--text-ghost)]">
             {KIND_LABELS[notif.kind]}
           </span>
         </div>

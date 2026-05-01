@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "@/app/hooks/use-toast";
+import { PageHeader } from "../components/PageHeader";
 
 type PlanStatus = "draft" | "ready" | "awaiting_approval" | "executing" | "completed" | "failed" | "degraded";
 type PlanType = "one_shot" | "mission" | "monitoring";
@@ -105,14 +106,12 @@ export default function PlannerPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-[var(--bg)]">
-      <div className="border-b border-[var(--line)] p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="t-18 font-medium text-[var(--text)] mb-1">Planner</h1>
-            <p className="t-13 text-[var(--text-muted)]">Plans d&apos;exécution et orchestration</p>
-          </div>
-        </div>
-
+      <PageHeader
+        title="Planner"
+        subtitle="Plans d'exécution et orchestration"
+        breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Planner" }]}
+      />
+      <div className="px-12 py-4 border-b border-[var(--line)]">
         <div className="flex items-center gap-2">
           {(["all", "draft", "ready", "awaiting_approval", "executing", "completed", "failed"] as const).map((f) => (
             <button
@@ -131,7 +130,7 @@ export default function PlannerPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto px-12 py-6">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-16 h-16 rounded-sm bg-[var(--card-flat-bg)] border border-[var(--line)] flex items-center justify-center mb-4">

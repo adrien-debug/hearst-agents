@@ -87,7 +87,7 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
                 <Breadcrumb trail={trail} className="min-w-0 truncate" />
                 <button
                   onClick={hideFocalStage}
-                  className="halo-on-hover inline-flex items-center gap-2 px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 t-11 font-light border border-[var(--border-shell)] text-[var(--text-faint)] hover:text-[var(--cykan)] hover:border-[var(--cykan-border-hover)] transition-all shrink-0"
                   title="Close (Esc)"
                 >
                   <span>Close</span>
