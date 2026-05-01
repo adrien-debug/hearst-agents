@@ -365,7 +365,7 @@ export function TimelineRail() {
       className="h-full flex flex-col z-20 relative transition-[width] duration-slow ease-out-soft overflow-hidden"
       style={{
         width: leftCollapsed ? "var(--width-threads-collapsed)" : "var(--width-threads)",
-        background: "var(--bg)",
+        background: "var(--rail)",
       }}
     >
       {/* Logo */}

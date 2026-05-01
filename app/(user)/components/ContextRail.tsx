@@ -143,7 +143,7 @@ function ContextRailShell({
       className="h-full flex flex-col z-20 relative overflow-hidden"
       style={{
         width: "var(--width-context)",
-        background: "var(--bg)",
+        background: "var(--rail)",
       }}
     >
       {onClose && (

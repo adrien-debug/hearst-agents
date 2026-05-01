@@ -5,10 +5,12 @@
  */
 
 :root, [data-theme="dark"] {
-  /* Core surfaces — deep dark hierarchy with 'material' */
+  /* Core surfaces — deep dark hierarchy with 'material'
+     Pivot 2026-05-01 : 3-tier différenciation visible.
+     Rails (--rail #050505) > shell (--bg #000) > stage (--bg-elev #101012). */
   --bg: #000000;
-  --bg-elev: #080808;
-    --bg-soft: #0C0C0C;
+  --bg-elev: #101012;
+    --bg-soft: #141416;
   --background: #000000;
   --foreground: #ffffff;
   --surface: #111111;
@@ -300,7 +302,7 @@
   --shadow-playhead-cykan: 0 0 6px var(--cykan);
 
   /* ─── Hearst Connect — Border strata ────────────────────────── */
-  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.12);
   --border-default: rgba(255, 255, 255, 0.12);
   --border-strong: rgba(255, 255, 255, 0.14);
   --border-focus: rgba(255, 255, 255, 0.40);
