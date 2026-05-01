@@ -432,7 +432,7 @@
   line-height: 0.88;
   font-feature-settings: "kern", "liga";
 }
-.poster-display.is-display-l { font-size: clamp(56px, 7vw, 112px); }
+.poster-display.is-display-l { font-size: clamp(48px, 5.5vw, 80px); }
 .poster-display.is-display-m { font-size: clamp(36px, 4.4vw, 64px); }
 
 .poster-greeting {
@@ -523,6 +523,7 @@
   transition: transform 200ms var(--ease-spring);
 }
 .poster-cta:hover .arrow { transform: translateX(4px); }
+.poster-cta.is-compact { font-size: clamp(18px, 0.469vw + 15px, 27px); }
 
 .poster-time-tick {
   font-family: var(--font-satoshi);

@@ -27,7 +27,6 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const assetsTotal = data.counts.assets;
   const missionsTotal = data.counts.missions;
   const reportsTotal = data.counts.reports;
-  const missionsRunning = data.missionsRunning.length;
 
   const observation = useMemo(() => computeObservation(data), [data]);
   const briefReady = !data.briefing.empty && Boolean(data.briefing.body);
@@ -55,116 +54,112 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   return (
     <div
       className="flex-1 flex flex-col min-h-0"
-      style={{ padding: "var(--space-12) var(--space-14) var(--space-8)" }}
+      style={{ padding: "var(--space-10) var(--space-12) var(--space-6)" }}
     >
-      <header
-        className="grid"
-        style={{
-          gridTemplateColumns: "minmax(420px, 1.2fr) minmax(0, 1fr)",
-          gap: "var(--space-12)",
-          alignItems: "start",
-          marginBottom: "var(--space-10)",
-        }}
-      >
-        <div className="flex flex-col" style={{ gap: "var(--space-4)" }}>
-          <span className="poster-eyebrow">Hearst · Cockpit</span>
-          <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
+      {/* ─── ZONE A : Header ──────────────────────────────────────── */}
+      <header className="flex-none flex flex-col" style={{ gap: "var(--space-4)" }}>
+        <span className="poster-eyebrow">Hearst · Cockpit</span>
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: "auto 1fr",
+            gap: "var(--space-10)",
+            alignItems: "start",
+          }}
+        >
+          {/* Col gauche : date + time-tick */}
+          <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
             <span className="poster-display is-display-l" style={{ color: "var(--text)" }}>
               {dateParts.weekday}
             </span>
             <span className="poster-display is-display-m" style={{ color: "var(--text-muted)" }}>
               {dateParts.dayMonth}
             </span>
+            <div className="poster-time-tick" style={{ marginTop: "var(--space-2)" }}>
+              <span className="poster-pulse" aria-hidden />
+              <span>{dateParts.time ?? "--:--:--"}</span>
+              <span style={{ color: "var(--text-decor-25)" }}>·</span>
+              <span>Système éveillé</span>
+            </div>
           </div>
-          <div className="poster-time-tick" style={{ marginTop: "var(--space-4)" }}>
-            <span className="poster-pulse" aria-hidden />
-            <span>{dateParts.time ?? "--:--:--"}</span>
-            <span style={{ color: "var(--text-decor-25)" }}>·</span>
-            <span>Système éveillé</span>
-          </div>
-        </div>
 
-        <div className="flex flex-col" style={{ gap: "var(--space-6)" }}>
-          <h1 className="poster-greeting" style={{ color: "var(--text)" }}>
-            Bonjour {firstName}.
-          </h1>
-          <p
-            className="poster-prose"
-            style={{ color: "var(--text-muted)", maxWidth: "var(--width-prose)" }}
-          >
-            <span className="kpi">{pad2(assetsTotal)}</span> asset{assetsTotal === 1 ? "" : "s"} dans ta bibliothèque.
-            {" "}
-            <span className="kpi">{pad2(missionsTotal)}</span> mission{missionsTotal === 1 ? "" : "s"} planifiée{missionsTotal === 1 ? "" : "s"}
-            {missionsRunning > 0 ? `, dont ${pad2(missionsRunning)} en cours` : ""}.
-            {" "}
-            <span className="kpi">{pad2(reportsTotal)}</span> report{reportsTotal === 1 ? "" : "s"} archivé{reportsTotal === 1 ? "" : "s"}.
-          </p>
-          {observation && (
-            <aside className="poster-observation" style={{ maxWidth: "var(--width-prose-narrow)" }}>
-              {observation}
-            </aside>
-          )}
-          {data.hospitality && (
-            <aside
-              className="poster-observation"
-              style={{
-                maxWidth: "var(--width-prose)",
-                borderLeftColor: "var(--gold)",
-                color: "var(--text)",
-              }}
-            >
-              <span
-                className="poster-eyebrow"
+          {/* Col droite : greeting + 3 KPI tiles + observation/hospitality */}
+          <div className="flex flex-col" style={{ gap: "var(--space-5)" }}>
+            <h1 className="poster-greeting" style={{ color: "var(--text)" }}>
+              Bonjour {firstName}.
+            </h1>
+            <div className="flex" style={{ gap: "var(--space-8)" }}>
+              <button type="button" className="kpi-tile">
+                <span className="kpi-num">{pad2(assetsTotal)}</span>
+                <span className="kpi-label">assets</span>
+              </button>
+              <button type="button" className="kpi-tile">
+                <span className="kpi-num">{pad2(missionsTotal)}</span>
+                <span className="kpi-label">missions</span>
+              </button>
+              <button type="button" className="kpi-tile">
+                <span className="kpi-num">{pad2(reportsTotal)}</span>
+                <span className="kpi-label">reports</span>
+              </button>
+            </div>
+            {observation && (
+              <aside className="poster-observation" style={{ maxWidth: "var(--width-prose-narrow)" }}>
+                {observation}
+              </aside>
+            )}
+            {data.hospitality && (
+              <aside
+                className="poster-observation"
                 style={{
-                  color: "var(--gold)",
-                  display: "block",
-                  marginBottom: "var(--space-2)",
+                  maxWidth: "var(--width-prose)",
+                  borderLeftColor: "var(--gold)",
+                  color: "var(--text)",
                 }}
               >
-                Hôtel · {data.hospitality.source === "demo" ? "Données de démo" : "Live"}
-              </span>
-              <span>
-                <strong style={{ fontWeight: 600 }}>{data.hospitality.occupancy}%</strong> occupé.
-                {" "}
-                <strong style={{ fontWeight: 600 }}>{pad2(data.hospitality.vipCount)}</strong> VIP{data.hospitality.vipCount === 1 ? "" : "s"} attendu{data.hospitality.vipCount === 1 ? "" : "s"}.
-                {data.hospitality.pendingServiceRequests > 0 && (
-                  <>
-                    {" "}
-                    <strong style={{ fontWeight: 600, fontStyle: "normal" }}>{pad2(data.hospitality.pendingServiceRequests)}</strong> demande{data.hospitality.pendingServiceRequests === 1 ? "" : "s"} en attente.
-                  </>
-                )}
-              </span>
-              {data.hospitality.urgentRequests.length > 0 && (
                 <span
-                  className="t-13"
-                  style={{
-                    display: "block",
-                    marginTop: "var(--space-2)",
-                    fontStyle: "normal",
-                    color: "var(--danger)",
-                  }}
+                  className="poster-eyebrow"
+                  style={{ color: "var(--gold)", display: "block", marginBottom: "var(--space-2)" }}
                 >
-                  Urgent · {data.hospitality.urgentRequests[0].guestName} · {data.hospitality.urgentRequests[0].room} — {data.hospitality.urgentRequests[0].text}
+                  Hôtel · {data.hospitality.source === "demo" ? "Données de démo" : "Live"}
                 </span>
-              )}
-            </aside>
-          )}
+                <span>
+                  <strong style={{ fontWeight: 600 }}>{data.hospitality.occupancy}%</strong> occupé.
+                  {" "}
+                  <strong style={{ fontWeight: 600 }}>{pad2(data.hospitality.vipCount)}</strong> VIP{data.hospitality.vipCount === 1 ? "" : "s"} attendu{data.hospitality.vipCount === 1 ? "" : "s"}.
+                  {data.hospitality.pendingServiceRequests > 0 && (
+                    <>
+                      {" "}
+                      <strong style={{ fontWeight: 600 }}>{pad2(data.hospitality.pendingServiceRequests)}</strong> demande{data.hospitality.pendingServiceRequests === 1 ? "" : "s"} en attente.
+                    </>
+                  )}
+                </span>
+                {data.hospitality.urgentRequests.length > 0 && (
+                  <span
+                    className="t-13"
+                    style={{
+                      display: "block",
+                      marginTop: "var(--space-2)",
+                      fontStyle: "normal",
+                      color: "var(--danger)",
+                    }}
+                  >
+                    Urgent · {data.hospitality.urgentRequests[0].guestName} · {data.hospitality.urgentRequests[0].room} — {data.hospitality.urgentRequests[0].text}
+                  </span>
+                )}
+              </aside>
+            )}
+          </div>
         </div>
       </header>
 
-      <hr className="poster-rule" />
+      <hr className="poster-rule" style={{ margin: "var(--space-6) 0" }} />
 
+      {/* ─── ZONE B : Brief / Suggestions / Watchlist ─────────────── */}
       <section
-        className="flex-1 flex flex-col min-h-0"
-        style={{
-          padding: "var(--space-10) 0 var(--space-6)",
-          gap: "var(--space-6)",
-        }}
+        className="flex-1 min-h-0 overflow-y-auto flex flex-col"
+        style={{ gap: "var(--space-6)", paddingBottom: "var(--space-4)" }}
       >
-        <header
-          className="flex items-baseline justify-between"
-          style={{ gap: "var(--space-6)" }}
-        >
+        <header className="flex items-baseline justify-between" style={{ gap: "var(--space-6)" }}>
           <span className="poster-eyebrow">Brief du jour</span>
           <span className="poster-eyebrow" style={{ color: "var(--text-faint)" }}>
             {dateParts.dayMonthShort}
@@ -193,17 +188,14 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
             </span>
           </article>
         ) : (
-          <div className="flex flex-col" style={{ gap: "var(--space-5)", maxWidth: "var(--width-prose-wide)" }}>
-            <p
-              className="poster-prose"
-              style={{ color: "var(--text-muted)", fontSize: "clamp(16px, 1.2vw, 19px)" }}
-            >
+          <div className="flex flex-col" style={{ gap: "var(--space-4)", maxWidth: "var(--width-prose-wide)" }}>
+            <p className="t-15" style={{ color: "var(--text-muted)" }}>
               Aucun brief pour aujourd'hui. Hearst synthétise tes emails 24h, messages Slack,
               agenda du jour, PRs GitHub et issues Linear en un éditorial de 2 minutes.
             </p>
             <button
               type="button"
-              className="poster-cta"
+              className="poster-cta is-compact"
               onClick={handleGenerate}
               disabled={generating}
             >
@@ -212,7 +204,90 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
             </button>
           </div>
         )}
+
+        {data.suggestions.length > 0 && (
+          <div className="flex flex-col">
+            <span className="poster-eyebrow" style={{ marginBottom: "var(--space-3)" }}>
+              Suggestions
+            </span>
+            {data.suggestions.map((s) => (
+              <button key={s.id} type="button" className="cockpit-action">
+                <span className="ca-label">{s.title}</span>
+                <span className="ca-hotkey">{s.status === "ready" ? "Prêt" : "Partiel"}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {data.watchlist.length > 0 && (
+          <div className="flex flex-col">
+            <span className="poster-eyebrow" style={{ marginBottom: "var(--space-4)" }}>
+              Watchlist
+            </span>
+            <div className="flex flex-wrap" style={{ gap: "var(--space-8)" }}>
+              {data.watchlist.map((w) => (
+                <div key={w.id} className="kpi-tile">
+                  <span className="kpi-num">{w.value}</span>
+                  <span className="kpi-label">{w.label}</span>
+                  {w.delta && (
+                    <span
+                      className="t-11"
+                      style={{
+                        color:
+                          w.anomaly?.direction === "down"
+                            ? "var(--danger)"
+                            : "var(--color-success)",
+                      }}
+                    >
+                      {w.delta}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
+
+      {/* ─── ZONE C : Quick actions bar ───────────────────────────── */}
+      <footer
+        className="flex-none flex items-center"
+        style={{
+          gap: "var(--space-6)",
+          paddingTop: "var(--space-4)",
+          borderTop: "1px solid var(--border-soft)",
+        }}
+      >
+        <a
+          href="/missions"
+          className="poster-eyebrow transition-opacity hover:opacity-80"
+          style={{ color: "var(--text-faint)" }}
+        >
+          Missions →
+        </a>
+        <a
+          href="/assets"
+          className="poster-eyebrow transition-opacity hover:opacity-80"
+          style={{ color: "var(--text-faint)" }}
+        >
+          Assets →
+        </a>
+        <a
+          href="/briefing"
+          className="poster-eyebrow transition-opacity hover:opacity-80"
+          style={{ color: "var(--text-faint)" }}
+        >
+          Briefing →
+        </a>
+        {data.missionsRunning.length > 0 && (
+          <span
+            className="poster-eyebrow"
+            style={{ marginLeft: "auto", color: "var(--cykan)" }}
+          >
+            {pad2(data.missionsRunning.length)} en cours
+          </span>
+        )}
+      </footer>
     </div>
   );
 }
