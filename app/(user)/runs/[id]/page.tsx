@@ -41,8 +41,8 @@ export default function RunDetailPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     void loadRun();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runId]);
 
   // Poll only when run is live (running / awaiting_approval / awaiting_clarification)
