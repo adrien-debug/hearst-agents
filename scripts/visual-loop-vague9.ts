@@ -52,24 +52,18 @@ async function main() {
       /* ignore */
     }
   });
-  // Le default mode est "chat". Pour basculer en cockpit on dispatch
-  // manuellement un keydown sur window avec target overridé pour que la
-  // garde `isInInput` du hook useGlobalHotkeys ne nous filtre pas.
-  await page.evaluate(() => {
-    const event = new KeyboardEvent("keydown", {
-      key: "1",
-      metaKey: true,
-      bubbles: true,
-      cancelable: true,
-    });
-    // Override target pour échapper à isInInput (qui regarde
-    // tagName === INPUT/TEXTAREA + isContentEditable).
-    Object.defineProperty(event, "target", {
-      value: { tagName: "BODY", isContentEditable: false },
-      writable: false,
-    });
-    window.dispatchEvent(event);
+  // Bascule en mode cockpit via le store dev-exposé. Cf. stores/stage.ts —
+  // window.__hearstStageStore n'existe qu'en NODE_ENV !== "production".
+  const ok = await page.evaluate(() => {
+    type Store = { setState: (s: { current: { mode: string } }) => void };
+    const w = window as unknown as { __hearstStageStore?: Store };
+    if (!w.__hearstStageStore) return false;
+    w.__hearstStageStore.setState({ current: { mode: "cockpit" } });
+    return true;
   });
+  if (!ok) {
+    console.log("  ⚠ __hearstStageStore non exposé — restart du dev server requis");
+  }
   await page.waitForTimeout(2500);
   await shot(page, "01-onboarding-slide1", "Slide 1 : Hearst voit ce que tu vois");
 
@@ -119,8 +113,18 @@ async function main() {
 
   if (missionId) {
     console.log(`  → ouverture mission ${missionId.slice(0, 8)}...`);
-    await page.goto(`${BASE_URL}/?mode=mission&missionId=${missionId}`);
-    await page.waitForTimeout(2500);
+    await page.goto(BASE_URL);
+    // Force le mode mission via le store dev-exposé.
+    await page.evaluate((mid) => {
+      type Store = {
+        setState: (s: { current: { mode: string; missionId: string } }) => void;
+      };
+      const w = window as unknown as { __hearstStageStore?: Store };
+      if (w.__hearstStageStore) {
+        w.__hearstStageStore.setState({ current: { mode: "mission", missionId: mid } });
+      }
+    }, missionId);
+    await page.waitForTimeout(3000);
     await shot(page, "06-mission-stage", "MissionStage avec section Conversation");
 
     // Scroll vers Conversation

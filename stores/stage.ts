@@ -102,6 +102,9 @@ export const useStageStore = create<StageState>((set, get) => ({
   lastManualChangeAt: null,
   commandeurOpen: false,
   commandeurPrefilledQuery: null,
+  // Note : ce store n'est PAS persisté (Zustand sans persist middleware) —
+  // chaque mount de la SPA repart à mode "chat". Pour l'e2e visual loop
+  // et le debugging, on expose le store sur window en dev (cf. setMode).
 
   setMode: (payload) => {
     const prev = get().current;
@@ -159,6 +162,15 @@ export const useStageStore = create<StageState>((set, get) => ({
     return q;
   },
 }));
+
+// Dev-only : expose le store sur window pour permettre Playwright e2e +
+// debugging d'inspecter et muter le mode Stage. En prod le store reste
+// strictement encapsulé. Le check `process.env.NODE_ENV` est inliné par
+// Webpack au build, donc 0 byte ajouté côté production.
+if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+  (window as unknown as { __hearstStageStore?: typeof useStageStore })
+    .__hearstStageStore = useStageStore;
+}
 
 /**
  * Mapping hotkey → stage. Cmd+1..9 = switch direct vers un Stage
