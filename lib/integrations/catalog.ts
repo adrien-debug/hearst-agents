@@ -29,7 +29,7 @@ interface ServiceMetadata {
   name: string;
   description: string;
   tier: ServiceTier;
-  type: "native" | "hybrid" | "nango";
+  type: "native" | "hybrid";
   popularUseCases?: string[];
 }
 
@@ -174,7 +174,7 @@ export function getServiceDefinition(serviceId: string): ServiceDefinition | und
     name: serviceId,
     description: "Intégration",
     tier: "tier_3" as const,
-    type: "nango" as const,
+    type: "hybrid" as const,
   };
 
   return {

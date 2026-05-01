@@ -26,8 +26,7 @@ async function verifyUI(): Promise<CheckResult[]> {
     "NEXT_PUBLIC_SUPABASE_URL",
     "SUPABASE_SERVICE_ROLE_KEY",
     "NEXTAUTH_SECRET",
-    "NANGO_SECRET_KEY",
-    "NEXT_PUBLIC_NANGO_PUBLIC_KEY",
+
   ];
 
   for (const env of requiredEnv) {
@@ -95,15 +94,7 @@ async function verifyUI(): Promise<CheckResult[]> {
     }
   }
 
-  // 4. Nango Configuration
-  console.log("Checking Nango...");
-  if (process.env.NANGO_SECRET_KEY && process.env.NEXT_PUBLIC_NANGO_PUBLIC_KEY) {
-    results.push({ component: "Nango OAuth", status: "✅", message: "Ready (200+ providers)" });
-  } else {
-    results.push({ component: "Nango OAuth", status: "❌", message: "Not configured" });
-  }
-
-  // 5. LLM Providers
+  // 4. LLM Providers
   console.log("Checking LLM providers...");
   const llmProviders = [];
   if (process.env.ANTHROPIC_API_KEY) llmProviders.push("Anthropic");

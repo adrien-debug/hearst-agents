@@ -49,15 +49,6 @@ export const DEFAULT_SETTINGS: SettingDefinition[] = [
     schema: "number",
   },
 
-  // Integrations
-  {
-    key: "nango.enabled",
-    category: "integrations",
-    defaultValue: true,
-    description: "Enable Nango OAuth integration",
-    schema: "boolean",
-  },
-
   // UI
   {
     key: "ui.theme.default",

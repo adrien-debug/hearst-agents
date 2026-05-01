@@ -46,8 +46,7 @@ async function initUIConfig() {
   // 2. Verify environment variables
   console.log("\n2️⃣  Checking environment variables...");
   const checks = [
-    { name: "NANGO_SECRET_KEY", value: process.env.NANGO_SECRET_KEY },
-    { name: "NEXT_PUBLIC_NANGO_PUBLIC_KEY", value: process.env.NEXT_PUBLIC_NANGO_PUBLIC_KEY },
+
     { name: "ANTHROPIC_API_KEY", value: process.env.ANTHROPIC_API_KEY },
     { name: "OPENAI_API_KEY", value: process.env.OPENAI_API_KEY },
     { name: "GOOGLE_CLIENT_ID", value: process.env.GOOGLE_CLIENT_ID },
