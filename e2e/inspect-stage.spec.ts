@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test('Inspect Stage container properties', async ({ page }) => {
   await page.goto('http://localhost:9000', { waitUntil: 'domcontentloaded' });

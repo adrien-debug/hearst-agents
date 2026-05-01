@@ -30,13 +30,9 @@ function makeInput(overrides: Partial<CreateWebhookInput> = {}): CreateWebhookIn
 
 // ── Mock Supabase ─────────────────────────────────────────────
 
-const mockInsert = vi.fn();
 const mockUpdate = vi.fn();
 const mockDelete = vi.fn();
-const mockSelect = vi.fn();
-const mockEq = vi.fn();
 const mockSingle = vi.fn();
-const mockContains = vi.fn();
 const mockOrder = vi.fn();
 
 vi.mock("@/lib/platform/db/supabase", () => ({

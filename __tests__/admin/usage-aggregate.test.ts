@@ -41,7 +41,6 @@ let users: UserRowFixture[] = [];
 vi.mock("@/lib/platform/db/supabase", () => ({
   getServerSupabase: vi.fn(() => {
     const tableHandler = (rows: unknown[]) => ({
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       select: (_cols: string) => {
         const builder = {
           _rows: [...rows],

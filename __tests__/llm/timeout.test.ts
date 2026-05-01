@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { makeAbortSignal, CHAT_TIMEOUT_MS, STREAM_TIMEOUT_MS } from "../../lib/llm/timeout";
-import { LLMTimeoutError } from "../../lib/llm/errors";
 
 describe("makeAbortSignal", () => {
   beforeEach(() => {

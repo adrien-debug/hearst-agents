@@ -16,7 +16,6 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useStageStore } from "@/stores/stage";
 import { useNavigationStore } from "@/stores/navigation";
@@ -36,11 +35,8 @@ function formatUsd(n: number): string {
 }
 
 export function PulseBar() {
-  const router = useRouter();
-
   const coreState = useRuntimeStore((s) => s.coreState);
   const mode = useStageStore((s) => s.current.mode);
-  const setStageMode = useStageStore((s) => s.setMode);
   const setCommandeurOpen = useStageStore((s) => s.setCommandeurOpen);
 
   const toggleLeftDrawer = useNavigationStore((s) => s.toggleLeftDrawer);
@@ -94,11 +90,6 @@ export function PulseBar() {
     }
     lastCoreState.current = coreState;
   }, [coreState]);
-
-  const goCockpit = () => {
-    router.push("/");
-    setStageMode({ mode: "cockpit" });
-  };
 
   return (
     <div

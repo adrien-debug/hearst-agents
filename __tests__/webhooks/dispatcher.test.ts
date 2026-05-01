@@ -141,7 +141,7 @@ describe("postWithRetry", () => {
       return new Response(null, { status: 422 });
     };
 
-    const result = await postWithRetry(TEST_URL, "{}", {}, fetcher as typeof fetch);
+    await postWithRetry(TEST_URL, "{}", {}, fetcher as typeof fetch);
     expect(callCount).toBe(1);
   });
 

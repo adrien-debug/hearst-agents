@@ -60,30 +60,6 @@ const DocIcon = () => (
   </svg>
 );
 
-function Row({
-  icon,
-  label,
-  meta,
-  onClick,
-}: {
-  icon?: ReactNode;
-  label: string;
-  meta?: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="dash-row group"
-    >
-      {icon && <span className="dash-row-icon">{icon}</span>}
-      <span className="dash-row-label">{label}</span>
-      {meta && <span className="dash-row-meta">{meta}</span>}
-    </button>
-  );
-}
-
 /**
  * AssetRow — ligne asset avec actions hover (open / share / delete).
  *

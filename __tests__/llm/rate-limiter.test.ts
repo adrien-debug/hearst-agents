@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { LLMRateLimiter } from "../../lib/llm/rate-limiter";
-import { RateLimitExceededError } from "../../lib/llm/errors";
 
 describe("LLMRateLimiter", () => {
   let limiter: LLMRateLimiter;

@@ -448,7 +448,6 @@ export function Commandeur() {
     // À l'ouverture, consomme la query préremplie si présente.
     const prefill = consumePrefill();
     if (prefill) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- prefill driven par store action explicite
       setQuery(prefill);
     }
   }, [isOpen, consumePrefill]);

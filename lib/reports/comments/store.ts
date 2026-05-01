@@ -100,7 +100,7 @@ export async function addComment(
   if (!sb) return null;
 
   const now = new Date().toISOString();
-  const { data: insertedRows, error } = await sb
+  const { error } = await sb
     .from("report_comments")
     .insert({
       asset_id: input.assetId,

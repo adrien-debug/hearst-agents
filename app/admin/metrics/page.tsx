@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState, useCallback } from "react";
-import type { MetricsSnapshot, ProviderMetrics, CircuitBreakerEntry } from "@/lib/llm/metrics";
+import type { MetricsSnapshot, ProviderMetrics } from "@/lib/llm/metrics";
 import type { CustomWebhook } from "@/lib/webhooks/types";
 import type { CircuitState } from "@/lib/llm/circuit-breaker";
 import type { VitalsSnapshot, VitalName, VitalRating } from "@/lib/monitoring/web-vitals-store";
@@ -59,14 +59,6 @@ function relativeTime(iso: string | undefined): string {
   if (diff < 60) return `il y a ${diff}s`;
   if (diff < 3600) return `il y a ${Math.floor(diff / 60)}min`;
   return `il y a ${Math.floor(diff / 3600)}h`;
-}
-
-function timeSinceMs(ms: number | null): string {
-  if (ms === null) return "—";
-  const diff = Math.floor((Date.now() - ms) / 1000);
-  if (diff < 60) return `${diff}s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}min`;
-  return `${Math.floor(diff / 3600)}h`;
 }
 
 // ---------------------------------------------------------------------------

@@ -77,7 +77,6 @@ export function useCommandeurData(query: string, enabled: boolean) {
 
     const cached = lruGet(trimmed);
     if (cached) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- hit cache : retour synchrone des résultats mémorisés
       setResults(cached);
       setLoading(false);
       setError(null);

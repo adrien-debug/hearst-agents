@@ -66,10 +66,6 @@ export function DocumentParseModal({
     if (!open) return;
     function handleKey(ev: KeyboardEvent) {
       if (ev.key === "Escape" && status !== "submitting") {
-        // resetState volontaire ici — pas un cascading render :
-        // la fermeture est triggered par interaction utilisateur,
-        // pas par un side-effect d'état. Lint suppress local OK.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         resetState();
         onClose();
       }

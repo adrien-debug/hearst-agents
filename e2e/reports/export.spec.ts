@@ -200,7 +200,7 @@ test.describe("Export — API endpoint /api/reports/:id/export", () => {
     expect([400, 401, 302, 307]).toContain(status);
   });
 
-  test("GET /api/reports/:id/export?format=pdf → content-type application/pdf si auth OK", async ({ request, page }) => {
+  test("GET /api/reports/:id/export?format=pdf → content-type application/pdf si auth OK", async ({ request }) => {
     // Nécessite un asset réel — skip si pas d'auth ou asset inexistant
     const check = await request.get("/api/v2/reports").catch(() => null);
     if (!check || check.status() !== 200) {

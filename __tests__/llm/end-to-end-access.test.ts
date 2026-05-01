@@ -99,7 +99,7 @@ describe("LLM Layer — End-to-End Access", () => {
     });
 
     it("timeout utility merges user signal with deadline", async () => {
-      const { makeAbortSignal, CHAT_TIMEOUT_MS } = await import("../../lib/llm/timeout");
+      const { makeAbortSignal } = await import("../../lib/llm/timeout");
       const signal = makeAbortSignal(5000);
       expect(signal).toBeInstanceOf(AbortSignal);
       expect(signal.aborted).toBe(false);

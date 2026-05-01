@@ -8,7 +8,7 @@
  * `X-Search-Mode`.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const { requireScope, getServerSupabase, searchEmbeddings, isEmbeddingsAvailable } =
   vi.hoisted(() => ({

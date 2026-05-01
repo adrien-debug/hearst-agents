@@ -2,7 +2,7 @@
  * lib/browser/stagehand-executor — émission d'events + abort + cap.
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   runBrowserTask,
   requestTakeOver,
