@@ -72,7 +72,7 @@ describe("ContextRailForMission", () => {
     await waitFor(() => {
       expect(screen.getByText(FAKE_MISSION.name)).toBeTruthy();
     });
-    expect(screen.getByTestId("mission-rail-status").textContent).toBe("ACTIVE");
+    expect(screen.getByTestId("mission-rail-status").textContent).toBe("active");
   });
 
   it("affiche le prompt et la cadence en lecture seule", async () => {
