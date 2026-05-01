@@ -417,8 +417,7 @@ export function ConnectionsHub() {
 
       // On charge les actions pour TOUTES les apps (connectées ou pas) pour
       // que le drawer puisse décrire "ce que ton agent pourra faire" même
-      // en mode discovery. L'endpoint /api/composio/app-actions ignore le
-      // filtre activeAccounts utilisé par /api/composio/tools.
+      // en mode discovery.
       setDrawerLoadingActions(true);
       try {
         const res = await fetch(

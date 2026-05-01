@@ -29,7 +29,7 @@ export interface RightPanelAsset {
   name: string;
   type: string;
   runId: string;
-  /** Timestamp ms — date de création de l'asset (cf. AssetsGrid affichage). */
+  /** Timestamp ms — date de création de l'asset. */
   createdAt?: number;
 }
 

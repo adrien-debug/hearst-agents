@@ -3,9 +3,7 @@
  *
  * `formatRelative` est la source de vérité unique pour les timestamps
  * relatifs ("à l'instant", "il y a Nm", "il y a Nh", "il y a Nj",
- * "il y a Nsem", "il y a Nmo"). Précédemment dupliqué dans 4 fichiers
- * (right-panel-helpers, FocalCard inline, runs/page, assets/page),
- * tous fusionnés ici.
+ * "il y a Nsem", "il y a Nmo").
  *
  * **Important** : cette fonction lit `Date.now()` et est donc temps-
  * dépendante. Ne PAS l'appeler depuis un Server Component ni dans le

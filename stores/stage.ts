@@ -54,10 +54,10 @@ export interface StageEntry {
 interface StageState {
   current: StagePayload;
   history: StageEntry[];
-  /** Dernier asset ouvert (via TimelineRail, AssetsGrid, ou Commandeur).
-   * Sert au hotkey ⌘3 pour ré-ouvrir un asset sans param explicite, et
-   * permet de garder le state cross-mode (ex: revenir d'une session
-   * browser au dernier asset focal). null si aucun asset n'a été ouvert. */
+  /** Dernier asset ouvert (via TimelineRail ou Commandeur). Sert au
+   * hotkey ⌘3 pour ré-ouvrir un asset sans param explicite, et permet
+   * de garder le state cross-mode (ex: revenir d'une session browser
+   * au dernier asset focal). null si aucun asset n'a été ouvert. */
   lastAssetId: string | null;
   /** Dernière mission ouverte (via /missions, GeneralDashboard, ou
    * Commandeur). Sert au hotkey ⌘9 pour ré-ouvrir le dernier MissionStage

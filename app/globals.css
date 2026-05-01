@@ -154,9 +154,6 @@
   --height-pulsebar: 48px;             /* PulseBar top fixed : hauteur */
   --height-action-log: 120px;          /* BrowserStage Action Log footer : hauteur */
 
-  /* ─── AgentActivityStrip ─────────────────────────────────────── */
-  --width-activity-label: 180px;       /* Libellé d'activité : max-width */
-
   /* ─── Tracking — valeurs intermédiaires ────────────────────── */
   --tracking-snug: 0.10em;   /* Entre caption (0.08) et wide (0.12) — RunTimeline */
   --tracking-body: 0.15em;   /* Entre label (0.14) et stretch (0.18) — corps de chat */
@@ -1021,18 +1018,6 @@ body {
  * Profondeur progressive sans blur — purement architecture matière. */
 /* .rail-section-card supprimée — Halo UI, pas de boîtes */
 
-/* .rail-section-item — Halo UI: ligne simple, pas de boîte */
-.rail-section-item {
-  border-bottom: 1px solid var(--border-subtle);
-  transition: color var(--duration-base) var(--ease-standard);
-}
-.rail-section-item::before {
-  display: none;
-}
-.rail-section-item:hover {
-  /* Interaction par la lumière uniquement — via text color + text-shadow */
-}
-
 /* ── Ghost Background ─────────────────── */
 
 .ghost-bg {
@@ -1044,24 +1029,6 @@ body {
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.005) 0%, transparent 60%);
   pointer-events: none;
   z-index: -1;
-}
-
-/* ── Subtle Background Utilities ───────── */
-
-.bg-subtle-gradient {
-  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 50%, transparent 100%);
-}
-
-.bg-section-alt {
-  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(163,255,0,0.01) 100%);
-}
-
-.bg-rail-gradient {
-  background: linear-gradient(180deg, #050505 0%, #0a0a0a 50%, #050505 100%);
-}
-
-.bg-panel-gradient {
-  background: linear-gradient(180deg, #080808 0%, #0a0a0a 30%, #060606 100%);
 }
 
 /* ── Ghost Lumineux — Cockpit classes ─────────────────────── */
@@ -1114,26 +1081,6 @@ body {
   transition: color 300ms ease;
 }
 .cockpit-action:hover .ca-hotkey { color: var(--cykan); opacity: 0.7; }
-
-/* Input focal wrap — ambient glow that intensifies on focus-within */
-.cockpit-input-wrap {
-  position: relative;
-  transition: filter 400ms ease;
-}
-.cockpit-input-wrap::before {
-  content: '';
-  position: absolute;
-  inset: -60px -120px;
-  background: radial-gradient(ellipse at 50% 100%, rgba(45,212,191,0.10) 0%, rgba(45,212,191,0.04) 40%, transparent 75%);
-  pointer-events: none;
-  transition: all 600ms ease;
-  opacity: 1;
-  z-index: 0;
-}
-.cockpit-input-wrap:focus-within::before {
-  background: radial-gradient(ellipse at 50% 100%, rgba(45,212,191,0.20) 0%, rgba(45,212,191,0.08) 40%, transparent 75%);
-  inset: -80px -140px;
-}
 
 /* KPI tile — naked number, click target, hover neon */
 .kpi-tile {
@@ -1276,27 +1223,10 @@ body {
   color: var(--text);
 }
 
-.bg-hero-aura {
-  background:
-    radial-gradient(ellipse 60% 50% at 50% 45%, rgba(45, 212, 191, 0.08) 0%, rgba(45, 212, 191, 0.02) 35%, transparent 70%),
-    radial-gradient(circle at 20% 90%, rgba(45, 212, 191, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.015) 0%, transparent 45%);
-  pointer-events: none;
-}
-
 /* ── Halo utilities ────────────────────── */
 
 .halo-cyan-sm {
   text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
-}
-
-/* Group-hover halo: applies cyan glow when ancestor `.group` is hovered */
-.halo-on-group-hover {
-  transition: text-shadow 300ms ease;
-}
-
-.group:hover .halo-on-group-hover {
-  text-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
 }
 
 /* Self-hover halo: applies cyan glow on the element's own hover */
@@ -1321,37 +1251,10 @@ body {
     0 0 100px rgba(45, 212, 191, 0.12);
 }
 
-.halo-rule {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(45, 212, 191, 0.6) 50%,
-    transparent 100%
-  );
-  box-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
-}
-
 .halo-dot {
   box-shadow:
     0 0 6px rgba(45, 212, 191, 0.6),
     0 0 16px rgba(45, 212, 191, 0.35);
-}
-
-.halo-ring {
-  box-shadow:
-    0 0 0 1px rgba(45, 212, 191, 0.25),
-    0 0 24px rgba(45, 212, 191, 0.15);
-}
-
-.halo-card {
-  transition: box-shadow 300ms ease, background-color 300ms ease;
-}
-
-.halo-card:hover {
-  box-shadow:
-    inset 0 1px 0 0 rgba(45, 212, 191, 0.3),
-    0 -8px 32px -8px rgba(45, 212, 191, 0.18),
-    0 16px 32px -16px rgba(0, 0, 0, 0.4);
 }
 
 /* ── Chat transcript utilities ────────── */
@@ -1382,12 +1285,6 @@ body {
   50%      { opacity: 0.85; }
 }
 
-/* Legacy shimmer — gardé sans animation pour ne pas casser d'autres écrans
-   qui pourraient s'en servir (e.g. skeleton génériques). */
-.chat-shimmer {
-  background: var(--surface-2);
-}
-
 /* ── Scrollbar styling ────────────────── */
 ::-webkit-scrollbar {
   width: 3px;
@@ -1414,49 +1311,6 @@ body {
  * add the class. They don't alter existing component rendering.
  * ───────────────────────────────────────────────────────────── */
 
-/* "Cinematic stage" — premium dark stage backdrop (Connect screenshot)
- * Pure black page with subtle dark vignette around edges.
- * Sections are differentiated by tone shift (black-on-black), NOT
- * by gradients on the page itself. Keep this almost invisible.
- */
-.cinematic-stage {
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(45, 212, 191, 0.025) 0%, transparent 60%),
-    radial-gradient(ellipse at 25% 15%, rgba(20, 20, 20, 0.6) 0%, transparent 50%),
-    radial-gradient(ellipse at 75% 85%, rgba(15, 15, 15, 0.5) 0%, transparent 45%);
-}
-
-/* Subtle dot grid pattern (32px) — overlay on dark surfaces */
-.dot-grid {
-  background-image: var(--stage-dot-grid);
-  background-size: 32px 32px;
-}
-
-/* ─── Section-elevated — Connect screenshot signature ─────────
- * Black-on-black raised section: card sits 1 tone lighter than
- * page bg, near-invisible border, big rounded, soft inset top
- * highlight + soft outer drop. This is how the Connect dashboard
- * delineates sections WITHOUT visible borders.
- * ───────────────────────────────────────────────────────────── */
-.section-elevated {
-  background-color: var(--mat-300);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: var(--radius-xl);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 8px 32px -8px rgba(0, 0, 0, 0.5);
-}
-
-/* Section-elevated nested — for cards inside a section-elevated */
-.section-elevated-inner {
-  background-color: var(--mat-gray);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: var(--radius-lg);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-
 /* Card depth stack (3-layer shadow + cyan halo on hover) */
 .card-depth {
   background-color: var(--mat-300);
@@ -1481,33 +1335,6 @@ body {
     0 4px 8px rgba(0, 0, 0, 0.5),
     0 20px 40px -12px rgba(45, 212, 191, 0.10),
     0 30px 60px -16px rgba(0, 0, 0, 0.6);
-}
-
-/* ── Halo Asset Card ────────────────────────────────
-   Mini-card V05 du RightPanel : type label en tête, mini-chart vectoriel
-   au centre, nom truncate en bas. Inset cyan line au hover, identique au
-   pattern halo-suggestion. */
-.halo-asset-card {
-  background: var(--card-flat-bg);
-  border: 1px solid var(--card-flat-border);
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 160ms ease, box-shadow 160ms ease;
-}
-.halo-asset-card:hover {
-  background: var(--cykan-bg-hover);
-  box-shadow: inset 2px 0 0 var(--cykan);
-}
-.halo-asset-card:focus-visible {
-  outline: none;
-  box-shadow: inset 2px 0 0 var(--cykan), inset 0 0 0 1px var(--cykan-border-hover);
-}
-.halo-asset-card--active {
-  border-color: var(--cykan);
-  background: var(--cykan-bg-active);
-  box-shadow: inset 2px 0 0 var(--cykan), 0 0 12px var(--cykan-surface);
 }
 
 /* ── Halo Suggestion Card ───────────────────────────
@@ -1544,103 +1371,12 @@ body {
   box-shadow: inset 2px 0 0 var(--cykan), inset 0 0 0 1px var(--cykan-border-hover);
 }
 
-/* Action row — flat list item, OS-cockpit style.
- * Height = 64px : 2 lignes (titre t-15 + sous-label t-11) confortables,
- * grille 8px préservée. Pas de cards, pas de radius, pas de logos. */
-.halo-action-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  width: 100%;
-  height: 64px;
-  padding: 0 var(--space-4);
-  border-bottom: 1px solid var(--border-shell);
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-  transition: color var(--duration-base) var(--ease-standard);
-}
-
-.halo-action-row:first-child {
-  /* Pas de border-top — Halo UI */
-}
-
-.halo-action-row:hover {
-  /* Interaction par la lumière uniquement — text-shadow/text-color */
-  color: var(--text);
-}
-
-.halo-action-row:focus-visible {
-  outline: none;
-  color: var(--cykan);
-}
-
-/* Flat frame for service logos — terminal feel, no glass / no glow */
-.halo-suggestion-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--card-flat-border);
-  border-radius: 0;
-  box-shadow: none;
-  transition: background-color 160ms ease, border-color 160ms ease;
-  flex-shrink: 0;
-}
-
-.halo-suggestion:hover .halo-suggestion-logo {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--cykan-border-hover);
-}
-
 /* Signature input focus — offset cyan shadow (non-blurred) */
 .input-focus-signature:focus,
 .input-focus-signature:focus-visible {
   outline: none;
   border-color: var(--cyan-accent);
   box-shadow: var(--shadow-input-focus);
-}
-
-/* Pill chip (rounded-full chip with subtle border) */
-.chip-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-pill);
-  font-size: 11px;
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-/* Connect-style accent button — cyan fill, black text, pill */
-.btn-accent {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  background: var(--cyan-accent);
-  color: #000;
-  border: none;
-  border-radius: var(--radius-pill);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-caption);
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: opacity var(--duration-fast) var(--ease-standard),
-              transform var(--duration-fast) var(--ease-standard),
-              box-shadow var(--duration-base) var(--ease-standard);
-}
-
-.btn-accent:hover {
-  opacity: 0.9;
-  box-shadow: 0 4px 16px rgba(45, 212, 191, 0.25);
-}
-
-.btn-accent:active {
-  transform: scale(0.98);
 }
 
 /* Connect-style ghost button */
@@ -1718,27 +1454,6 @@ input[type="range"]:focus-visible {
 
 input[type="range"]:focus-visible::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.30);
-}
-
-/* Click ripple effect — Connect signature */
-.click-ripple {
-  position: fixed;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--cyan-accent);
-  opacity: 0.5;
-  transform: translate(-50%, -50%) scale(0);
-  pointer-events: none;
-  z-index: 9999;
-  animation: ripple-out 0.5s ease-out forwards;
-}
-
-@keyframes ripple-out {
-  to {
-    transform: translate(-50%, -50%) scale(4);
-    opacity: 0;
-  }
 }
 
 /* Panel enter animation (Connect cinematic entrance) */
@@ -1855,8 +1570,8 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 
    Exclusions :
    - .ghost-btn-solid : déjà géré ci-dessus (inset shadow)
-   - .halo-suggestion / .halo-action-row : utilities cards (focus-visible déjà
-     défini avec un traitement spécifique)
+   - .halo-suggestion : utility card (focus-visible déjà défini avec un
+     traitement spécifique)
    - boutons sans aria-label avec opacity-0 / sr-only : couverts par leur parent
 */
 button:focus-visible:not(.ghost-btn-solid):not([data-no-fv-fallback]) {
@@ -1933,14 +1648,3 @@ button:focus-visible:not(.ghost-btn-solid):not([data-no-fv-fallback]) {
   cursor: not-allowed;
 }
 
-/* Modal panel — flat sheet without halo, sits above the focal stage */
-.ghost-modal-panel {
-  background: var(--bg-elev);
-  border: 1px solid var(--border-shell);
-  border-radius: 0;
-  padding: var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  overflow: auto;
-}

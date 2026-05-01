@@ -11,10 +11,9 @@ export interface UseRunReportSuggestion {
 }
 
 /**
- * Hook partagé entre GeneralDashboard et AssetsGrid : déclenche un report
- * du catalogue (POST /api/v2/reports/[specId]/run), maintient la liste des
- * specs en cours pour masquage optimistic, ouvre le focal sur l'asset
- * généré.
+ * Hook partagé : déclenche un report du catalogue (POST
+ * /api/v2/reports/[specId]/run), maintient la liste des specs en cours
+ * pour masquage optimistic, ouvre le focal sur l'asset généré.
  */
 export function useRunReportSuggestion(
   activeThreadId: string | null,
