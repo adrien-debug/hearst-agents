@@ -53,24 +53,18 @@ interface OnboardingTourProps {
 }
 
 export function OnboardingTour({ forceOpen, onClose }: OnboardingTourProps = {}) {
-  const [open, setOpen] = useState(false);
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    if (forceOpen) {
-      setOpen(true);
-      return;
-    }
-    // SSR-safe : window check
-    if (typeof window === "undefined") return;
+  // Lazy init : forceOpen prop ou localStorage flag au mount uniquement.
+  // Pas de useEffect setState pour éviter cascade render.
+  const [open, setOpen] = useState(() => {
+    if (forceOpen) return true;
+    if (typeof window === "undefined") return false;
     try {
-      const flag = window.localStorage.getItem(STORAGE_KEY);
-      if (!flag) setOpen(true);
+      return !window.localStorage.getItem(STORAGE_KEY);
     } catch {
-      // localStorage indisponible (Safari private mode, etc.) — on n'affiche
-      // pas l'onboarding plutôt que de le re-montrer à chaque visite.
+      return false;
     }
-  }, [forceOpen]);
+  });
+  const [step, setStep] = useState(0);
 
   const close = useCallback(() => {
     setOpen(false);
