@@ -209,8 +209,7 @@ export function ReportLayout({
           >
             <span
               className="t-9 font-mono uppercase text-[var(--cykan)]"
-              style={{ letterSpacing: "var(--tracking-display)" }}
-            >
+                         >
               Rapport rafraîchi automatiquement
             </span>
           </div>
@@ -231,8 +230,7 @@ export function ReportLayout({
                 aria-expanded={historyOpen}
                 className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--cykan)]"
                 style={{
-                  letterSpacing: "var(--tracking-display)",
-                  padding: "var(--space-2) var(--space-3)",
+                                    padding: "var(--space-2) var(--space-3)",
                   border: "1px solid var(--surface-2)",
                   borderRadius: "var(--radius-xs)",
                   background: "transparent",
@@ -250,8 +248,7 @@ export function ReportLayout({
                 aria-expanded={editorOpen}
                 className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--cykan)]"
                 style={{
-                  letterSpacing: "var(--tracking-display)",
-                  padding: "var(--space-2) var(--space-3)",
+                                    padding: "var(--space-2) var(--space-3)",
                   border: "1px solid var(--surface-2)",
                   borderRadius: "var(--radius-xs)",
                   background: "transparent",
@@ -282,8 +279,7 @@ export function ReportLayout({
                   <div
                     className="t-9 font-mono uppercase text-[var(--text-muted)]"
                     style={{
-                      letterSpacing: "var(--tracking-display)",
-                      marginBottom: "var(--space-3)",
+                                            marginBottom: "var(--space-3)",
                       paddingBottom: "var(--space-2)",
                       borderBottom: "1px solid var(--surface-2)",
                     }}
@@ -626,8 +622,7 @@ function VersionHistoryPanel({ assetId, onClose }: VersionHistoryPanelProps) {
       <div className="flex items-center justify-between" style={{ gap: "var(--space-2)" }}>
         <span
           className="t-9 font-mono uppercase text-[var(--text-muted)]"
-          style={{ letterSpacing: "var(--tracking-display)" }}
-        >
+                 >
           Historique
         </span>
         <button
@@ -688,14 +683,12 @@ function VersionHistoryPanel({ assetId, onClose }: VersionHistoryPanelProps) {
               <div className="flex items-center justify-between">
                 <span
                   className="t-9 font-mono text-[var(--text-default)]"
-                  style={{ letterSpacing: "var(--tracking-display)" }}
-                >
+                                 >
                   v{v.versionNumber}
                 </span>
                 <span
                   className="t-9 font-mono uppercase text-[var(--text-faint)]"
-                  style={{ letterSpacing: "var(--tracking-display)" }}
-                >
+                                 >
                   {v.triggeredBy}
                 </span>
               </div>
@@ -724,8 +717,7 @@ function VersionHistoryPanel({ assetId, onClose }: VersionHistoryPanelProps) {
                     borderRadius: "var(--radius-xs)",
                     padding: "var(--space-1) var(--space-2)",
                     cursor: "pointer",
-                    letterSpacing: "var(--tracking-display)",
-                    transition: "color var(--duration-fast) var(--ease-standard)",
+                                        transition: "color var(--duration-fast) var(--ease-standard)",
                   }}
                 >
                   {compareA === v.versionNumber ? "A" : compareB === v.versionNumber ? "B" : "Comparer"}
@@ -743,8 +735,7 @@ function VersionHistoryPanel({ assetId, onClose }: VersionHistoryPanelProps) {
                     padding: "var(--space-1) var(--space-2)",
                     cursor: restoring === v.versionNumber ? "not-allowed" : "pointer",
                     opacity: restoring === v.versionNumber ? 0.5 : 1,
-                    letterSpacing: "var(--tracking-display)",
-                    transition: "color var(--duration-fast) var(--ease-standard)",
+                                        transition: "color var(--duration-fast) var(--ease-standard)",
                   }}
                 >
                   {restoring === v.versionNumber ? "…" : "Restaurer"}
@@ -770,8 +761,7 @@ function VersionHistoryPanel({ assetId, onClose }: VersionHistoryPanelProps) {
               padding: "var(--space-2) var(--space-3)",
               cursor: diffLoading ? "not-allowed" : "pointer",
               opacity: diffLoading ? 0.6 : 1,
-              letterSpacing: "var(--tracking-display)",
-              transition: "color var(--duration-fast) var(--ease-standard)",
+                            transition: "color var(--duration-fast) var(--ease-standard)",
             }}
           >
             {diffLoading
@@ -799,15 +789,13 @@ function VersionHistoryPanel({ assetId, onClose }: VersionHistoryPanelProps) {
                     <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
                       <span
                         className="t-9 font-mono text-[var(--text-default)]"
-                        style={{ letterSpacing: "var(--tracking-display)" }}
-                      >
+                                             >
                         {d.blockRef}
                       </span>
                       <span
                         className="t-9 font-mono uppercase"
                         style={{
-                          letterSpacing: "var(--tracking-display)",
-                          color:
+                                                    color:
                             d.kind === "added" ? "var(--cykan)"
                             : d.kind === "removed" ? "var(--danger)"
                             : "var(--text-muted)",

@@ -773,8 +773,7 @@ export function ConnectionsHub() {
                   type="button"
                   onClick={() => setAttentionFilter(false)}
                   className="t-9 font-mono uppercase text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
-                  style={{ letterSpacing: "var(--tracking-section)" }}
-                >
+                                 >
                   ← Voir tout le catalogue
                 </button>
               </div>
@@ -910,8 +909,7 @@ function Header({
 
       <div
         className="flex items-center gap-3 t-10 font-mono uppercase whitespace-nowrap"
-        style={{ letterSpacing: "var(--tracking-section)" }}
-      >
+             >
         <span className="flex items-center gap-2 text-[var(--text)]">
           <span
             className="w-1 h-1 rounded-pill halo-dot"
@@ -958,8 +956,7 @@ function SectionLabel({ label, count }: { label: string; count: number }) {
   return (
     <div
       className="flex items-baseline gap-2 px-8 pt-5 pb-3 t-10 font-mono uppercase"
-      style={{ letterSpacing: "var(--tracking-section)" }}
-    >
+         >
       <span className="text-[var(--text)]">{label}</span>
       <span className="text-[var(--text-ghost)]">·</span>
       <span className="text-[var(--text-faint)]">{count}</span>
@@ -1075,8 +1072,7 @@ function StageTile({
         <span
           className="t-9 font-mono uppercase"
           style={{
-            letterSpacing: "var(--tracking-section)",
-            color: dotColor,
+                        color: dotColor,
           }}
         >
           {statusLabel}
@@ -1153,8 +1149,7 @@ function StarterTile({
       </span>
       <span
         className="t-9 font-mono uppercase text-[var(--cykan-deep)] opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ letterSpacing: "var(--tracking-section)" }}
-      >
+             >
         connecter →
       </span>
     </button>
@@ -1269,8 +1264,7 @@ function CategoriesBar({
       {hiddenCount > 0 && (
         <span
           className="t-10 font-mono uppercase whitespace-nowrap text-[var(--text-faint)] ml-auto"
-          style={{ letterSpacing: "var(--tracking-section)" }}
-        >
+                 >
           + {hiddenCount} catégorie{hiddenCount > 1 ? "s" : ""}
         </span>
       )}
@@ -1295,8 +1289,7 @@ function CategoryChip({
       onClick={onClick}
       className="t-10 font-mono uppercase whitespace-nowrap transition-colors"
       style={{
-        letterSpacing: "var(--tracking-section)",
-        color: on ? "var(--cykan)" : "var(--text-faint)",
+                color: on ? "var(--cykan)" : "var(--text-faint)",
         fontWeight: on ? "var(--weight-semibold)" : "var(--weight-regular)",
       }}
     >
@@ -1356,8 +1349,7 @@ function Wallpaper({
         className="mt-5 pt-4 flex items-center justify-between t-10 font-mono uppercase border-t"
         style={{
           borderColor: "var(--border-shell)",
-          letterSpacing: "var(--tracking-section)",
-          color: "var(--text-faint)",
+                    color: "var(--text-faint)",
         }}
       >
         <span>
@@ -1485,8 +1477,7 @@ function SearchResultsSection({
     <div className="px-8 pt-8 pb-8">
       <div
         className="flex items-baseline gap-2 mb-4 t-10 font-mono uppercase"
-        style={{ letterSpacing: "var(--tracking-section)" }}
-      >
+             >
         <span className="text-[var(--text)]">Résultats</span>
         <span className="text-[var(--text-ghost)]">·</span>
         <span className="text-[var(--text-faint)]">
@@ -1515,8 +1506,7 @@ function SearchResultsSection({
               </div>
               <div
                 className="t-9 font-mono uppercase mt-1 text-[var(--text-faint)] truncate"
-                style={{ letterSpacing: "var(--tracking-section)" }}
-              >
+                             >
                 {connectedSlugs.has(app.key) ? "● connecté" : categoryLabel(app)}
               </div>
             </div>
@@ -1638,15 +1628,13 @@ function AppDrawer({
             type="button"
             onClick={onClose}
             className="t-9 font-mono uppercase text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
-            style={{ letterSpacing: "var(--tracking-section)" }}
-          >
+                     >
             ← Fermer
           </button>
           {isConnected && (
             <span
               className="t-9 font-mono uppercase text-[var(--cykan)]"
-              style={{ letterSpacing: "var(--tracking-section)" }}
-            >
+                         >
               ● connecté
             </span>
           )}
@@ -1737,8 +1725,7 @@ function NativeFooter() {
       <p
         className="t-9 font-mono uppercase"
         style={{
-          letterSpacing: "var(--tracking-section)",
-          color: "var(--cykan-deep)",
+                    color: "var(--cykan-deep)",
         }}
       >
         Géré via le SSO
@@ -1807,8 +1794,7 @@ function ActionsSection({
     <section>
       <div
         className="flex items-baseline gap-2 mb-3 t-9 font-mono uppercase"
-        style={{ letterSpacing: "var(--tracking-section)" }}
-      >
+             >
         <span className="text-[var(--text)]">
           {isConnected ? "Ce que Hearst fait pour toi" : "Ce que ton agent pourra faire"}
         </span>
@@ -1850,8 +1836,7 @@ function ActionsSection({
                 type="button"
                 onClick={onToggleShowAll}
                 className="t-9 font-mono uppercase text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
-                style={{ letterSpacing: "var(--tracking-section)" }}
-              >
+                             >
                 {showAll
                   ? "← Réduire"
                   : `Voir les ${totalActions} actions →`}

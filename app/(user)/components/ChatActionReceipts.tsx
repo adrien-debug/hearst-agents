@@ -30,7 +30,7 @@ export function ChatActionReceipts() {
         return (
           <span
             key={entry.stepId}
-            className="inline-flex items-center gap-1.5 px-2 py-1 t-9 font-mono tracking-body uppercase border border-[var(--warn)]/30 text-[var(--warn)] bg-[var(--warn)]/[0.06]"
+            className="inline-flex items-center gap-1.5 px-2 py-1 t-9 font-medium border border-[var(--warn)]/30 text-[var(--warn)] bg-[var(--warn)]/[0.06]"
           >
             <span aria-hidden>{catalog.icon}</span>
             <span>{catalog.completedVerb}</span>

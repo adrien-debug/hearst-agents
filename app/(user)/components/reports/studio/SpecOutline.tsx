@@ -74,8 +74,7 @@ export function SpecOutline({
           className="t-9 font-mono uppercase"
           style={{
             color: "var(--text-muted)",
-            letterSpacing: "var(--tracking-display)",
-          }}
+                      }}
         >
           Structure
         </h2>
@@ -137,8 +136,7 @@ export function SpecOutline({
                   className="t-9 font-mono uppercase"
                   style={{
                     color: "var(--cykan)",
-                    letterSpacing: "var(--tracking-display)",
-                    minWidth: "var(--space-16)",
+                                        minWidth: "var(--space-16)",
                   }}
                 >
                   {block.type}

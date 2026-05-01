@@ -56,8 +56,7 @@ export function BlockPalette({ onAdd }: BlockPaletteProps) {
           className="t-9 font-mono uppercase"
           style={{
             color: "var(--text-muted)",
-            letterSpacing: "var(--tracking-display)",
-          }}
+                      }}
         >
           Blocks
         </h2>

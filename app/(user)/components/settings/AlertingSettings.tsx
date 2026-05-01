@@ -172,14 +172,7 @@ const SIGNAL_SEVERITY: Record<(typeof BUSINESS_SIGNAL_TYPES)[number], "critical"
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3
-      className="t-9 mb-4"
-      style={{
-        color: "var(--text-muted)",
-        letterSpacing: "var(--tracking-label)",
-        textTransform: "uppercase",
-      }}
-    >
+    <h3 className="t-13 font-medium mb-4" style={{ color: "var(--text-l1)" }}>
       {children}
     </h3>
   );
@@ -618,7 +611,7 @@ export function AlertingSettings() {
         {state.showNewWebhookForm && (
           <Card>
             <div className="flex flex-col gap-3">
-              <label className="t-9" style={{ color: "var(--text-muted)", letterSpacing: "var(--tracking-label)" }}>
+              <label className="t-9" style={{ color: "var(--text-muted)",  }}>
                 URL WEBHOOK
               </label>
               <Input
@@ -628,8 +621,8 @@ export function AlertingSettings() {
                 type="url"
               />
 
-              <label className="t-9" style={{ color: "var(--text-muted)", letterSpacing: "var(--tracking-label)", marginTop: "var(--space-2)" }}>
-                SIGNAUX DÉCLENCHEURS
+              <label className="t-11 font-medium" style={{ color: "var(--text-l2)", marginTop: "var(--space-2)" }}>
+                Signaux déclencheurs
               </label>
               <div className="flex flex-wrap gap-2">
                 <label className="flex items-center gap-1 t-13" style={{ color: "var(--text-soft)", cursor: "pointer" }}>
@@ -702,7 +695,7 @@ export function AlertingSettings() {
             {prefs.email && (
               <>
                 <div>
-                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)", letterSpacing: "var(--tracking-label)" }}>
+                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)",  }}>
                     DESTINATAIRES (séparés par virgule)
                   </label>
                   <Input
@@ -749,7 +742,7 @@ export function AlertingSettings() {
                 </div>
 
                 <div>
-                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)", letterSpacing: "var(--tracking-label)" }}>
+                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)",  }}>
                     SIGNAUX DÉCLENCHEURS
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -803,7 +796,7 @@ export function AlertingSettings() {
             {prefs.slack && (
               <>
                 <div>
-                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)", letterSpacing: "var(--tracking-label)" }}>
+                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)",  }}>
                     WEBHOOK URL SLACK
                   </label>
                   <Input
@@ -852,7 +845,7 @@ export function AlertingSettings() {
         <div className="flex flex-col gap-1">
           {(["critical", "warning", "info"] as const).map((sev) => (
             <div key={sev}>
-              <p className="t-9 mb-2 mt-3" style={{ color: "var(--text-faint)", letterSpacing: "var(--tracking-label)", textTransform: "uppercase" }}>
+              <p className="t-9 mb-2 mt-3" style={{ color: "var(--text-faint)" }}>
                 {sev === "critical" ? "Critique" : sev === "warning" ? "Avertissement" : "Info"}
               </p>
               <div className="flex flex-wrap gap-2">

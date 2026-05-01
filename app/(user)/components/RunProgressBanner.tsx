@@ -58,8 +58,8 @@ export function RunProgressBanner() {
 
           {/* Label flow + step */}
           <span
-            className="t-9 font-mono uppercase truncate"
-            style={{ color: accentColor, letterSpacing: "var(--tracking-display)" }}
+            className="t-9 font-medium truncate"
+            style={{ color: accentColor }}
           >
             {isError
               ? "Erreur"

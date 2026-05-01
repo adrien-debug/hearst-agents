@@ -105,7 +105,7 @@ export function ChatConnectInline() {
       role="region"
       aria-label="Connexion d'un service requise"
     >
-      <div className="flex items-center gap-2 mb-2 t-9 font-mono tracking-display uppercase text-[var(--warn)]">
+      <div className="flex items-center gap-2 mb-2 t-9 font-medium text-[var(--warn)]">
         <span aria-hidden>🔗</span>
         <span>Connexion requise</span>
         <span className="text-[var(--text-ghost)]">·</span>
@@ -127,7 +127,7 @@ export function ChatConnectInline() {
             href={`https://app.composio.dev/app/${encodeURIComponent(request.app)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block mt-2 t-9 font-mono tracking-body uppercase text-[var(--cykan)] hover:underline"
+            className="inline-block mt-2 t-9 font-light text-[var(--cykan)] hover:underline"
           >
             Configurer sur app.composio.dev →
           </a>
@@ -138,7 +138,7 @@ export function ChatConnectInline() {
         <button
           onClick={handleConnect}
           disabled={busy}
-          className="inline-flex items-center gap-2 px-3 py-1.5 t-11 font-mono tracking-body uppercase border border-[var(--warn)] text-[var(--warn)] bg-[var(--warn)]/[0.06] hover:bg-[var(--warn)]/[0.12] transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-3 py-1.5 t-11 font-medium border border-[var(--warn)] text-[var(--warn)] bg-[var(--warn)]/[0.06] hover:bg-[var(--warn)]/[0.12] transition-colors disabled:opacity-50"
         >
           {busy ? (
             <>
@@ -160,7 +160,7 @@ export function ChatConnectInline() {
           href={`/api/composio/diagnose?app=${encodeURIComponent(request.app)}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="t-9 font-mono tracking-body uppercase text-[var(--text-faint)] hover:text-[var(--cykan)]"
+          className="t-9 font-light text-[var(--text-faint)] hover:text-[var(--cykan)]"
           title="Voir le diagnostic Composio (JSON)"
         >
           Diagnostic

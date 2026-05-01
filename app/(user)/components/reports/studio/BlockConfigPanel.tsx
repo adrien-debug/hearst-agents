@@ -77,8 +77,7 @@ export function BlockConfigPanel({
           className="t-9 font-mono uppercase"
           style={{
             color: "var(--text-muted)",
-            letterSpacing: "var(--tracking-display)",
-          }}
+                      }}
         >
           Configuration
         </h2>
@@ -181,8 +180,7 @@ function Field({
         className="t-9 font-mono uppercase"
         style={{
           color: "var(--text-muted)",
-          letterSpacing: "var(--tracking-display)",
-        }}
+                  }}
       >
         {label}
       </span>

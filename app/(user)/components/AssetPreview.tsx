@@ -109,11 +109,8 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
           </div>
         ) : (
           <div className="text-center space-y-4">
-            <p
-              className="font-mono t-10 uppercase text-[var(--text-faint)]"
-              style={{ letterSpacing: "var(--tracking-marquee)" }}
-            >
-              {kindRef}_VIEW
+            <p className="t-11 font-medium text-[var(--text-faint)]">
+              {kindRef.toLowerCase()}
             </p>
             <p className="t-9 font-light text-[var(--text-muted)]">
               {pdfFile ? "Fichier binaire — téléchargement disponible" : "Aucun contenu preview disponible"}

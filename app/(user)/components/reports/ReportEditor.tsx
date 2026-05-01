@@ -206,10 +206,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
         }}
       >
         <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
-          <span
-            className="t-9 font-mono uppercase text-[var(--text-muted)]"
-            style={{ letterSpacing: "var(--tracking-display)" }}
-          >
+          <span className="t-13 font-medium text-[var(--text-l1)]">
             Éditeur
           </span>
           <span className="t-13 text-[var(--text)] tabular-nums">
@@ -222,9 +219,8 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
             onClick={onClose}
             aria-label="Fermer l'éditeur"
             data-testid="report-editor-close"
-            className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
+            className="t-11 font-light text-[var(--text-muted)] hover:text-[var(--text-soft)]"
             style={{
-              letterSpacing: "var(--tracking-display)",
               padding: "var(--space-1) var(--space-3)",
               border: "1px solid var(--surface-2)",
               borderRadius: "var(--radius-xs)",
@@ -248,8 +244,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
           data-testid="report-editor-reset"
           className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
           style={{
-            letterSpacing: "var(--tracking-display)",
-            padding: "var(--space-2) var(--space-3)",
+                        padding: "var(--space-2) var(--space-3)",
             border: "1px solid var(--surface-2)",
             borderRadius: "var(--radius-xs)",
             background: "transparent",
@@ -265,8 +260,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
           aria-expanded={jsonOpen}
           className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
           style={{
-            letterSpacing: "var(--tracking-display)",
-            padding: "var(--space-2) var(--space-3)",
+                        padding: "var(--space-2) var(--space-3)",
             border: "1px solid var(--surface-2)",
             borderRadius: "var(--radius-xs)",
             background: "transparent",
@@ -283,8 +277,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
             data-testid="report-editor-save-template"
             className="t-9 font-mono uppercase text-[var(--cykan)] hover:text-[var(--text-soft)]"
             style={{
-              letterSpacing: "var(--tracking-display)",
-              padding: "var(--space-2) var(--space-3)",
+                            padding: "var(--space-2) var(--space-3)",
               border: "1px solid var(--cykan)",
               borderRadius: "var(--radius-xs)",
               background: "transparent",
@@ -298,8 +291,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
           <span
             data-testid="report-editor-save-feedback"
             className="t-9 font-mono uppercase text-[var(--cykan)]"
-            style={{ letterSpacing: "var(--tracking-display)" }}
-          >
+                     >
             Template sauvegardé
           </span>
         )}
@@ -307,7 +299,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
           <span
             data-testid="report-editor-save-feedback"
             className="t-9 font-mono uppercase"
-            style={{ letterSpacing: "var(--tracking-display)", color: "var(--red)" }}
+            style={{ color: "var(--red)" }}
           >
             Erreur sauvegarde
           </span>
@@ -320,8 +312,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
             data-testid="report-editor-load-template"
             className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
             style={{
-              letterSpacing: "var(--tracking-display)",
-              padding: "var(--space-2) var(--space-3)",
+                            padding: "var(--space-2) var(--space-3)",
               border: "1px solid var(--surface-2)",
               borderRadius: "var(--radius-xs)",
               background: "transparent",
@@ -334,8 +325,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
         {(loadStatus === "loading_list" || loadStatus === "loading_spec") && (
           <span
             className="t-9 font-mono uppercase text-[var(--text-faint)]"
-            style={{ letterSpacing: "var(--tracking-display)" }}
-          >
+                     >
             Chargement…
           </span>
         )}
@@ -343,7 +333,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
           <span
             data-testid="report-editor-load-feedback"
             className="t-9 font-mono uppercase"
-            style={{ letterSpacing: "var(--tracking-display)", color: "var(--red)" }}
+            style={{ color: "var(--red)" }}
           >
             Erreur chargement
           </span>
@@ -365,8 +355,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
         >
           <span
             className="t-9 font-mono uppercase text-[var(--text-muted)]"
-            style={{ letterSpacing: "var(--tracking-display)" }}
-          >
+                     >
             Nom du template
           </span>
           <input
@@ -410,8 +399,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
               data-testid="report-editor-save-confirm"
               className="t-9 font-mono uppercase text-[var(--cykan)] disabled:opacity-40 disabled:cursor-not-allowed"
               style={{
-                letterSpacing: "var(--tracking-display)",
-                padding: "var(--space-2) var(--space-3)",
+                                padding: "var(--space-2) var(--space-3)",
                 border: "1px solid var(--cykan)",
                 borderRadius: "var(--radius-xs)",
                 background: "transparent",
@@ -426,8 +414,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
               data-testid="report-editor-save-cancel"
               className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
               style={{
-                letterSpacing: "var(--tracking-display)",
-                padding: "var(--space-2) var(--space-3)",
+                                padding: "var(--space-2) var(--space-3)",
                 border: "1px solid var(--surface-2)",
                 borderRadius: "var(--radius-xs)",
                 background: "transparent",
@@ -456,8 +443,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
           <div className="flex items-center justify-between">
             <span
               className="t-9 font-mono uppercase text-[var(--text-muted)]"
-              style={{ letterSpacing: "var(--tracking-display)" }}
-            >
+                         >
               Templates disponibles
             </span>
             <button
@@ -466,8 +452,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
               data-testid="report-editor-load-cancel"
               className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)]"
               style={{
-                letterSpacing: "var(--tracking-display)",
-                padding: "var(--space-1) var(--space-2)",
+                                padding: "var(--space-1) var(--space-2)",
                 border: "1px solid var(--surface-2)",
                 borderRadius: "var(--radius-xs)",
                 background: "transparent",
@@ -505,8 +490,7 @@ export function ReportEditor({ spec, onChange, onClose }: ReportEditorProps) {
                     {tpl.description && (
                       <span
                         className="block truncate t-9 font-mono text-[var(--text-faint)]"
-                        style={{ letterSpacing: "var(--tracking-display)" }}
-                      >
+                                             >
                         {tpl.description}
                       </span>
                     )}
@@ -614,20 +598,17 @@ function BlockEditorRow({
         <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
           <span
             className="t-9 font-mono uppercase text-[var(--cykan)]"
-            style={{ letterSpacing: "var(--tracking-display)" }}
-          >
+                     >
             {block.type}
           </span>
           <span
             className="t-9 font-mono uppercase text-[var(--text-faint)]"
-            style={{ letterSpacing: "var(--tracking-display)" }}
-          >
+                     >
             #{block.id}
           </span>
           <span
             className="t-9 font-mono uppercase text-[var(--text-faint)]"
-            style={{ letterSpacing: "var(--tracking-display)" }}
-          >
+                     >
             col_{block.layout.col}
           </span>
         </div>

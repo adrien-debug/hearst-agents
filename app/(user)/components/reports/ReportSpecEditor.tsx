@@ -84,8 +84,7 @@ export function ReportSpecEditor({ spec, onChange }: ReportSpecEditorProps) {
         <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
           <span
             className="t-9 font-mono uppercase text-[var(--text-muted)]"
-            style={{ letterSpacing: "var(--tracking-display)" }}
-          >
+                     >
             Visibilité
           </span>
           <span className="t-13 text-[var(--text)] tabular-nums">
@@ -98,8 +97,7 @@ export function ReportSpecEditor({ spec, onChange }: ReportSpecEditorProps) {
             onClick={resetAll}
             className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)] transition-colors"
             style={{
-              letterSpacing: "var(--tracking-display)",
-              padding: "var(--space-2) var(--space-3)",
+                            padding: "var(--space-2) var(--space-3)",
               border: "1px solid var(--surface-2)",
               borderRadius: "var(--radius-xs)",
               background: "transparent",
@@ -152,8 +150,7 @@ export function ReportSpecEditor({ spec, onChange }: ReportSpecEditorProps) {
               <span
                 className="t-9 font-mono uppercase text-[var(--cykan)]"
                 style={{
-                  letterSpacing: "var(--tracking-display)",
-                  minWidth: "var(--space-20)",
+                                    minWidth: "var(--space-20)",
                 }}
               >
                 {block.type}
@@ -168,8 +165,7 @@ export function ReportSpecEditor({ spec, onChange }: ReportSpecEditorProps) {
               </span>
               <span
                 className="t-9 font-mono uppercase text-[var(--text-faint)]"
-                style={{ letterSpacing: "var(--tracking-display)" }}
-              >
+                             >
                 col_{block.layout.col}
               </span>
             </li>
@@ -191,8 +187,7 @@ export function ReportSpecEditor({ spec, onChange }: ReportSpecEditorProps) {
           <div
             className="t-9 font-mono uppercase text-[var(--text-faint)]"
             style={{
-              letterSpacing: "var(--tracking-display)",
-              textAlign: "center",
+                            textAlign: "center",
               padding: "var(--space-8)",
             }}
           >

@@ -129,8 +129,8 @@ export function FocalRetryButton({
   };
 
   const baseClasses = compact
-    ? "px-4 py-2 t-10 font-mono font-black uppercase tracking-display"
-    : "px-8 py-4 t-11 font-mono font-black uppercase tracking-marquee";
+    ? "px-4 py-2 t-11 font-medium"
+    : "px-8 py-4 t-13 font-medium";
 
   return (
     <button

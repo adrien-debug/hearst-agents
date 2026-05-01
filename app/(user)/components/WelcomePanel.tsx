@@ -41,11 +41,9 @@ export function WelcomePanel() {
 
       <div style={{ padding: "0 var(--space-12) var(--space-12)" }}>
         <p
-          className="t-13 uppercase"
+          className="t-13 font-medium"
           style={{
-            fontWeight: 300,
-            letterSpacing: "var(--tracking-section)",
-            color: "var(--text-l2)",
+            color: "var(--text-l1)",
             marginBottom: "var(--space-8)",
           }}
         >

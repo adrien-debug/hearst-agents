@@ -168,8 +168,7 @@ export default function ReportEditorDemoPage() {
           <div className="flex items-center justify-between">
             <span
               className="t-9 font-mono uppercase text-[var(--text-muted)]"
-              style={{ letterSpacing: "var(--tracking-display)" }}
-            >
+                         >
               Spec final {appliedSpec ? "(applied)" : "(en attente)"}
             </span>
             <button
@@ -177,8 +176,7 @@ export default function ReportEditorDemoPage() {
               onClick={() => setShowJson((v) => !v)}
               className="t-9 font-mono uppercase text-[var(--text-muted)] hover:text-[var(--text-soft)] transition-colors"
               style={{
-                letterSpacing: "var(--tracking-display)",
-                padding: "var(--space-1) var(--space-3)",
+                                padding: "var(--space-1) var(--space-3)",
                 border: "1px solid var(--surface-2)",
                 borderRadius: "var(--radius-xs)",
                 background: "transparent",

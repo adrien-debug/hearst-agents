@@ -155,8 +155,7 @@ function SharePopover({
       <p
         className="t-9 font-mono uppercase text-[var(--text-muted)]"
         style={{
-          letterSpacing: "var(--tracking-display)",
-          marginBottom: "var(--space-2)",
+                    marginBottom: "var(--space-2)",
         }}
       >
         Durée du lien
@@ -416,8 +415,7 @@ function ActionButton({
       onClick={onClick}
       className="t-9 font-mono uppercase hover:text-[var(--cykan)]"
       style={{
-        letterSpacing: "var(--tracking-display)",
-        padding: "var(--space-2) var(--space-3)",
+                padding: "var(--space-2) var(--space-3)",
         border: "1px solid var(--surface-2)",
         borderRadius: "var(--radius-xs)",
         background: "transparent",
@@ -486,8 +484,7 @@ function PopoverShell({
         <h3
           className="t-9 font-mono uppercase"
           style={{
-            letterSpacing: "var(--tracking-display)",
-            color: "var(--text)",
+                        color: "var(--text)",
             margin: 0,
           }}
         >

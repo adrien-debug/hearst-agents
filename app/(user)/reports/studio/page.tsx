@@ -529,8 +529,7 @@ function ReportStudioPageContent() {
           style={{
             color: "var(--text-muted)",
             background: "transparent",
-            letterSpacing: "var(--tracking-display)",
-          }}
+                      }}
         >
           ← Retour au catalogue
         </button>

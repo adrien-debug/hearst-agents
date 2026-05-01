@@ -178,7 +178,7 @@ export function PersonaSwitcher({
           </button>
           {personas.length === 0 ? (
             <div
-              className="t-10 tracking-marquee uppercase font-mono text-[var(--text-ghost)]"
+              className="t-11 font-light text-[var(--text-ghost)]"
               style={{ padding: "var(--space-3) var(--space-4)" }}
             >
               Aucune persona — crée la première sur /personas

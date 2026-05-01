@@ -119,8 +119,7 @@ export function StudioToolbar({
           className="t-9 font-mono uppercase"
           style={{
             color: "var(--text-muted)",
-            letterSpacing: "var(--tracking-display)",
-          }}
+                      }}
         >
           Studio
         </span>
@@ -208,8 +207,7 @@ export function StudioToolbar({
             className="t-9 font-mono uppercase"
             style={{
               color: "var(--text-muted)",
-              letterSpacing: "var(--tracking-display)",
-            }}
+                          }}
           >
             {savedSpecId ? "Mise à jour" : "Sauvegarder"}
           </span>
@@ -289,8 +287,7 @@ export function StudioToolbar({
             className="t-9 font-mono uppercase"
             style={{
               color: "var(--text-muted)",
-              letterSpacing: "var(--tracking-display)",
-            }}
+                          }}
           >
             Programmer
           </span>
@@ -328,7 +325,7 @@ export function StudioToolbar({
             maxWidth: "var(--space-32)",
           }}
         >
-          <span className="t-9 font-mono uppercase" style={{ color: "var(--cykan)", letterSpacing: "var(--tracking-display)" }}>
+          <span className="t-9 font-medium" style={{ color: "var(--cykan)" }}>
             URL copiée
           </span>
           <span className="t-9 truncate" style={{ color: "var(--text-soft)" }} title={shareUrl}>
