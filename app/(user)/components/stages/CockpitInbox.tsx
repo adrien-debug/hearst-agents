@@ -209,7 +209,7 @@ function Section({
         <span className="t-11 font-light text-[var(--text-faint)]">
           {label}
         </span>
-        <span className="t-9 font-mono tracking-display text-[var(--text-faint)]">
+        <span className="t-9 font-mono tabular-nums text-[var(--text-faint)]">
           {count.toString().padStart(2, "0")}
         </span>
       </header>
@@ -278,7 +278,7 @@ function ThreadRow({
       </div>
       <RelativeTime
         ts={lastActivity}
-        className="t-9 font-mono tracking-display text-[var(--text-faint)] shrink-0 ml-3"
+        className="t-9 font-mono tabular-nums text-[var(--text-faint)] shrink-0 ml-3"
       />
     </button>
   );

@@ -94,11 +94,8 @@ export function SuggestionRow(props: SuggestionRowProps) {
       </div>
 
       <span
-        className="t-9 font-mono uppercase shrink-0"
-        style={{
-          letterSpacing: "var(--tracking-marquee)",
-          color: isReady ? "var(--cykan)" : "var(--text-faint)",
-        }}
+        className="t-9 font-medium shrink-0"
+        style={{ color: isReady ? "var(--cykan)" : "var(--text-faint)" }}
       >
         {isLaunching
           ? "lance…"

@@ -81,13 +81,7 @@ export function QuickLaunch({ favoriteReports }: QuickLaunchProps) {
             Décris ton intention, Hearst orchestre.
           </span>
         </div>
-        <span
-          className="t-9 font-mono uppercase"
-          style={{
-            letterSpacing: "var(--tracking-marquee)",
-            color: "var(--cykan)",
-          }}
-        >
+        <span className="t-9 font-mono tabular-nums opacity-60 text-[var(--cykan)]">
           ⌘K
         </span>
       </button>

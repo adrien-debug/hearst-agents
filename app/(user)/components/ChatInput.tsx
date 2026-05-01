@@ -309,7 +309,7 @@ export function ChatInput({
             style={{ background: "var(--mat-300)", boxShadow: "var(--shadow-card-hover)" }}
           >
             {matchingServices.length === 0 ? (
-              <div className="p-4 t-11 tracking-display uppercase text-[var(--text-ghost)]">
+              <div className="p-4 t-11 font-light text-[var(--text-ghost)]">
                 {typeaheadQuery ? (
                   <>Aucune source trouvée&nbsp;: {typeaheadQuery}</>
                 ) : (
@@ -400,13 +400,13 @@ export function ChatInput({
           )}
           {attachment && (
             <div className="flex items-center gap-3 px-1 pb-4 mb-4 border-b border-[var(--line)]">
-              <span className="t-9 tracking-marquee uppercase text-[var(--cykan)]">
+              <span className="t-9 font-medium text-[var(--cykan)]">
                 PDF
               </span>
               <span className="t-13 text-[var(--text-muted)] truncate max-w-xs font-light">
                 {attachment.fileName}
               </span>
-              <span className="t-10 tracking-display text-[var(--text-ghost)]">
+              <span className="t-9 font-mono tabular-nums text-[var(--text-ghost)]">
                 {attachment.pageCount}P
               </span>
               <button

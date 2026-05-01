@@ -125,20 +125,20 @@ export function ContextRailForMission() {
         <header className="flex items-center justify-between mb-4">
           <span className="rail-section-label">Mission</span>
           <span
-            className="t-9 tracking-display uppercase font-mono"
+            className="t-9 font-medium"
             style={{ color: statusColor }}
             data-testid="mission-rail-status"
           >
-            {String(status).toUpperCase()}
+            {String(status)}
           </span>
         </header>
         {missionLoading ? (
-          <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
+          <p className="t-9 font-light text-[var(--text-ghost)] font-light">
             Chargement…
           </p>
         ) : missionError ? (
           <p
-            className="t-10 tracking-body uppercase font-light"
+            className="t-9 font-light font-light"
             style={{ color: "var(--danger)" }}
           >
             {missionError}
@@ -179,16 +179,16 @@ export function ContextRailForMission() {
       <section className="px-6 py-6">
         <header className="flex items-center justify-between mb-4">
           <span className="rail-section-label">Derniers runs</span>
-          <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
+          <span className="t-9 font-medium text-[var(--text-ghost)]">
             {runs.length.toString().padStart(2, "0")}
           </span>
         </header>
         {runsLoading ? (
-          <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
+          <p className="t-9 font-light text-[var(--text-ghost)] font-light">
             Chargement…
           </p>
         ) : runs.length === 0 ? (
-          <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
+          <p className="t-9 font-light text-[var(--text-ghost)] font-light">
             Aucun run pour cette mission
           </p>
         ) : (
@@ -201,8 +201,8 @@ export function ContextRailForMission() {
                 <p className="t-11 font-light text-[var(--text-soft)] truncate">
                   {TIME_FORMATTER.format(new Date(r.createdAt))}
                 </p>
-                <p className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
-                  {r.status?.toUpperCase() ?? "—"}
+                <p className="t-9 font-medium text-[var(--text-ghost)]">
+                  {r.status ?? "—"}
                 </p>
               </li>
             ))}
@@ -259,14 +259,14 @@ function MissionMemorySection({ missionId }: { missionId: string }) {
       <header className="flex items-center justify-between mb-4">
         <span className="rail-section-label">Mémoire</span>
         {messageCount > 0 && (
-          <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
+          <span className="t-9 font-medium text-[var(--text-ghost)]">
             {messageCount.toString().padStart(2, "0")} msg
           </span>
         )}
       </header>
 
       {sections.length === 0 ? (
-        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
+        <p className="t-9 font-light text-[var(--text-ghost)] font-light">
           Pas encore de mémoire — lance une fois pour démarrer.
         </p>
       ) : (

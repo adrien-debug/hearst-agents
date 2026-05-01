@@ -262,13 +262,7 @@ function Section({
           {label}
         </span>
         {meta && (
-          <span
-            className="t-9 font-mono uppercase"
-            style={{
-              letterSpacing: "var(--tracking-display)",
-              color: "var(--text-faint)",
-            }}
-          >
+          <span className="t-11 font-light text-[var(--text-faint)]">
             {meta}
           </span>
         )}
@@ -345,14 +339,8 @@ function CockpitErrorState({ message }: { message: string }) {
         gap: "var(--space-3)",
       }}
     >
-      <span
-        className="t-9 font-mono uppercase"
-        style={{
-          letterSpacing: "var(--tracking-marquee)",
-          color: "var(--text-faint)",
-        }}
-      >
-        cockpit · erreur
+      <span className="t-11 font-medium text-[var(--text-faint)]">
+        Cockpit · erreur
       </span>
       <p className="t-13" style={{ color: "var(--text-l1)" }}>
         Impossible de charger ton cockpit pour le moment.

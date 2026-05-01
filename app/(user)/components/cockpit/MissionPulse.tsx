@@ -71,23 +71,14 @@ export function MissionPulse(props: MissionPulseProps) {
             aria-hidden
           />
           <span
-            className="t-9 font-mono uppercase"
-            style={{
-              letterSpacing: "var(--tracking-marquee)",
-              color: statusColor(props.status),
-            }}
+            className="t-9 font-medium"
+            style={{ color: statusColor(props.status) }}
           >
             {STATUS_LABEL[props.status]}
           </span>
         </div>
         {ts && (
-          <span
-            className="t-9 font-mono"
-            style={{
-              letterSpacing: "var(--tracking-display)",
-              color: "var(--text-faint)",
-            }}
-          >
+          <span className="t-9 font-mono tabular-nums text-[var(--text-faint)]">
             <RelativeTime ts={ts} />
           </span>
         )}

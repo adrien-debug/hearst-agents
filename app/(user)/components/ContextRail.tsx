@@ -407,7 +407,7 @@ function ContextRailForAsset() {
             <ul className="flex flex-col gap-2">
               {readyVariants.map((v) => (
                 <li key={v.id} className="flex items-baseline gap-3">
-                  <span className="t-9 tracking-display uppercase text-[var(--cykan)]">
+                  <span className="t-9 font-medium text-[var(--cykan)]">
                     {v.kind.toUpperCase()}
                   </span>
                   <span className="t-11 text-[var(--text-faint)] tracking-wide">
@@ -458,7 +458,7 @@ function ContextRailForMeeting() {
                   {item.action}
                 </p>
                 {(item.owner || item.deadline) && (
-                  <p className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
+                  <p className="t-9 font-medium text-[var(--text-ghost)]">
                     {[item.owner, item.deadline].filter(Boolean).join(" · ")}
                   </p>
                 )}
@@ -484,7 +484,7 @@ function ContextRailForKnowledge() {
       <Section label="Focus entity">
         {selectedNode ? (
           <div className="flex flex-col gap-3">
-            <span className="t-9 tracking-display uppercase text-[var(--cykan)]">
+            <span className="t-9 font-medium text-[var(--cykan)]">
               {selectedNode.type}
             </span>
             <p className="t-13 font-light text-[var(--text-soft)]">{selectedNode.label}</p>
@@ -496,7 +496,7 @@ function ContextRailForKnowledge() {
                   .slice(0, 6)
                   .map(([k, v]) => (
                     <li key={k} className="flex items-baseline gap-3">
-                      <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] truncate">
+                      <span className="t-9 font-medium text-[var(--text-ghost)] truncate">
                         {k}
                       </span>
                       <span className="t-11 font-light text-[var(--text-muted)] truncate">
@@ -512,7 +512,7 @@ function ContextRailForKnowledge() {
         )}
       </Section>
       <Section label="Graph" count={graph.nodes.length}>
-        <p className="t-10 tracking-body uppercase text-[var(--text-faint)] font-light">
+        <p className="t-9 font-light text-[var(--text-faint)] font-light">
           {graph.nodes.length} entities · {graph.edges.length} relations
         </p>
       </Section>
@@ -563,7 +563,7 @@ function ContextRailForVoice() {
               if (entry.role === "tool_call") {
                 return (
                   <li key={entry.id} className="flex flex-col gap-1.5">
-                    <span className="t-9 tracking-display uppercase text-[var(--warn)]">
+                    <span className="t-9 font-medium text-[var(--warn)]">
                       TOOL CALL
                     </span>
                     <div className="flex items-center gap-2">
@@ -580,7 +580,7 @@ function ContextRailForVoice() {
                 return (
                   <li key={entry.id} className="flex flex-col gap-1.5">
                     <span
-                      className={`t-9 tracking-display uppercase ${
+                      className={`t-9 font-medium ${
                         entry.status === "error"
                           ? "text-[var(--danger)]"
                           : "text-[var(--cykan)]"
@@ -597,7 +597,7 @@ function ContextRailForVoice() {
               return (
                 <li key={entry.id} className="flex flex-col gap-1.5">
                   <span
-                    className={`t-9 tracking-display uppercase ${
+                    className={`t-9 font-medium ${
                       entry.role === "user"
                         ? "text-[var(--cykan)]"
                         : "text-[var(--text-ghost)]"
@@ -617,7 +617,7 @@ function ContextRailForVoice() {
           <button
             type="button"
             onClick={handleLinkThread}
-            className="mt-4 t-9 tracking-display uppercase text-[var(--cykan)] hover:text-[var(--text)] transition-colors"
+            className="mt-4 t-9 font-medium text-[var(--cykan)] hover:text-[var(--text)] transition-colors"
           >
             Lier au thread →
           </button>
@@ -627,7 +627,7 @@ function ContextRailForVoice() {
         {toolCallCount === 0 ? (
           <EmptyHint>No tool calls yet</EmptyHint>
         ) : (
-          <p className="t-10 tracking-body uppercase text-[var(--text-faint)] font-light leading-relaxed">
+          <p className="t-9 font-light text-[var(--text-faint)] font-light leading-relaxed">
             {transcript
               .filter((e) => e.role === "tool_call")
               .slice(-5)
@@ -637,7 +637,7 @@ function ContextRailForVoice() {
         )}
       </Section>
       <Section label="Available tools" count={totalToolsCount}>
-        <p className="t-10 tracking-body uppercase text-[var(--text-faint)] font-light leading-relaxed">
+        <p className="t-9 font-light text-[var(--text-faint)] font-light leading-relaxed">
           {[
             ...voiceToolDefs.map((t) => VOICE_TOOL_LABELS[t.name] ?? t.name),
             ...connectedApps.map((a) => a.name),
@@ -667,7 +667,7 @@ function ContextRailForSimulation() {
           <ul className="flex flex-col gap-3">
             {cleanVars.map((v, i) => (
               <li key={i} className="flex items-baseline gap-3">
-                <span className="t-9 tracking-display uppercase text-[var(--text-ghost)] truncate">
+                <span className="t-9 font-medium text-[var(--text-ghost)] truncate">
                   {v.key}
                 </span>
                 <span className="t-13 font-light text-[var(--text-soft)] truncate">
@@ -691,7 +691,7 @@ function ContextRailForSimulation() {
                 className="border-l border-[var(--cykan-border)] pl-4 py-1"
               >
                 <p className="t-13 font-light text-[var(--text-soft)] truncate mb-1">{s.name}</p>
-                <p className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
+                <p className="t-9 font-medium text-[var(--text-ghost)]">
                   PROB · {(s.probability * 100).toFixed(0)}%
                 </p>
               </li>

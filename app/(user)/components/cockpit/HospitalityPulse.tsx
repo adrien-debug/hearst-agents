@@ -25,24 +25,12 @@ export function HospitalityPulse({ data }: HospitalityPulseProps) {
 
   return (
     <section className="flex flex-col" style={{ gap: "var(--space-5)" }}>
-      <header className="flex items-center justify-between">
-        <span
-          className="t-9 font-mono uppercase"
-          style={{
-            letterSpacing: "var(--tracking-marquee)",
-            color: "var(--text-l2)",
-          }}
-        >
+      <header className="flex items-baseline justify-between">
+        <span className="t-13 font-medium text-[var(--text-l1)]">
           Hospitality Pulse
         </span>
         {isMock && (
-          <span
-            className="t-9 font-mono uppercase"
-            style={{
-              letterSpacing: "var(--tracking-display)",
-              color: "var(--text-ghost)",
-            }}
-          >
+          <span className="t-9 font-light text-[var(--text-ghost)]">
             demo data
           </span>
         )}
@@ -151,13 +139,7 @@ export function HospitalityPulse({ data }: HospitalityPulseProps) {
                   >
                     Ch. {r.room}
                   </span>
-                  <span
-                    className="t-9 font-mono uppercase"
-                    style={{
-                      letterSpacing: "var(--tracking-marquee)",
-                      color: "var(--text-faint)",
-                    }}
-                  >
+                  <span className="t-9 font-light text-[var(--text-faint)]">
                     {r.type}
                   </span>
                 </div>
@@ -183,13 +165,7 @@ function KpiCard({ label, value, delta, deltaTone = "neutral" }: KpiCardProps) {
       className="card-depth flex flex-col text-left w-full"
       style={{ padding: "var(--space-5)", gap: "var(--space-4)" }}
     >
-      <span
-        className="t-9 font-mono uppercase"
-        style={{
-          letterSpacing: "var(--tracking-marquee)",
-          color: "var(--text-faint)",
-        }}
-      >
+      <span className="t-11 font-medium text-[var(--text-faint)]">
         {label}
       </span>
       <div
@@ -235,13 +211,7 @@ function InnerCard({ title, empty, emptyText, children }: InnerCardProps) {
       className="card-depth flex flex-col"
       style={{ padding: "var(--space-5)", gap: "var(--space-4)" }}
     >
-      <span
-        className="t-9 font-mono uppercase"
-        style={{
-          letterSpacing: "var(--tracking-marquee)",
-          color: "var(--text-faint)",
-        }}
-      >
+      <span className="t-11 font-medium text-[var(--text-faint)]">
         {title}
       </span>
       {empty ? (

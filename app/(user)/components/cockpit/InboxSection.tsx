@@ -196,10 +196,8 @@ export function InboxSection({ inbox, onRefreshed }: InboxSectionProps) {
         <button
           type="button"
           onClick={() => setShowAll(true)}
-          className="t-9 font-mono uppercase self-start"
+          className="t-11 font-light text-[var(--text-muted)] hover:text-[var(--cykan)] transition-colors self-start"
           style={{
-            letterSpacing: "var(--tracking-marquee)",
-            color: "var(--text-muted)",
             padding: "var(--space-2) var(--space-3)",
             cursor: "pointer",
           }}
@@ -232,34 +230,16 @@ function Section({
     <section className="flex flex-col" style={{ gap: "var(--space-5)" }}>
       <header className="flex items-center justify-between" style={{ gap: "var(--space-3)" }}>
         <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
-          <span
-            className="t-9 font-mono uppercase"
-            style={{
-              letterSpacing: "var(--tracking-marquee)",
-              color: "var(--text-l2)",
-            }}
-          >
+          <span className="t-13 font-medium text-[var(--text-l1)]">
             Inbox
           </span>
           {count !== null && count > 0 && (
-            <span
-              className="t-9 font-mono"
-              style={{
-                color: "var(--text-faint)",
-                letterSpacing: "var(--tracking-marquee)",
-              }}
-            >
-              {count} {urgent ? `· ${urgent} urgents` : ""}
+            <span className="t-11 font-mono tabular-nums text-[var(--text-faint)]">
+              {count.toString().padStart(2, "0")}{urgent ? ` · ${urgent} urgents` : ""}
             </span>
           )}
           {ageLabel && stale && (
-            <span
-              className="t-9 font-mono uppercase"
-              style={{
-                letterSpacing: "var(--tracking-display)",
-                color: "var(--warn)",
-              }}
-            >
+            <span className="t-11 font-medium text-[var(--warn)]">
               {ageLabel}
             </span>
           )}
@@ -269,10 +249,8 @@ function Section({
             type="button"
             onClick={onRefresh === "loading" ? undefined : onRefresh}
             disabled={onRefresh === "loading"}
-            className="t-9 font-mono uppercase disabled:opacity-50"
+            className="t-11 font-light text-[var(--cykan)] hover:opacity-80 disabled:opacity-50 transition-opacity"
             style={{
-              letterSpacing: "var(--tracking-marquee)",
-              color: "var(--cykan)",
               padding: "var(--space-1) var(--space-3)",
               borderRadius: "var(--radius-pill)",
               border: "1px solid var(--border-subtle)",
@@ -306,11 +284,7 @@ function EmptyState({ text, cta }: { text: string; cta: { label: string; href: s
       </p>
       <a
         href={cta.href}
-        className="t-9 font-mono uppercase shrink-0"
-        style={{
-          letterSpacing: "var(--tracking-marquee)",
-          color: "var(--cykan)",
-        }}
+        className="t-13 font-light text-[var(--cykan)] hover:opacity-80 transition-opacity shrink-0"
       >
         {cta.label} →
       </a>

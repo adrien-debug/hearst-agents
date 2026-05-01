@@ -55,23 +55,11 @@ export function WatchlistCard({
       }}
     >
       <div className="flex items-center justify-between" style={{ gap: "var(--space-3)" }}>
-        <span
-          className="t-9 font-mono uppercase"
-          style={{
-            letterSpacing: "var(--tracking-marquee)",
-            color: "var(--text-faint)",
-          }}
-        >
+        <span className="t-11 font-medium text-[var(--text-l2)]">
           {label}
         </span>
         {isMock && (
-          <span
-            className="t-9 font-mono uppercase"
-            style={{
-              letterSpacing: "var(--tracking-display)",
-              color: "var(--text-ghost)",
-            }}
-          >
+          <span className="t-9 font-light text-[var(--text-ghost)]">
             demo
           </span>
         )}

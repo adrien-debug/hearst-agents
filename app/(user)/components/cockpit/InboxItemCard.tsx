@@ -109,24 +109,15 @@ export function InboxItemCard({ item, onAction }: InboxItemCardProps) {
         </div>
 
         <span
-          className="t-9 font-mono uppercase shrink-0"
-          style={{
-            letterSpacing: "var(--tracking-marquee)",
-            color: priorityBorder(item.priority),
-          }}
+          className="t-9 font-medium shrink-0"
+          style={{ color: priorityBorder(item.priority) }}
         >
           {priorityLabel(item.priority)}
         </span>
       </div>
 
       <div className="flex flex-wrap items-center" style={{ gap: "var(--space-2)" }}>
-        <span
-          className="t-9 font-mono uppercase"
-          style={{
-            letterSpacing: "var(--tracking-marquee)",
-            color: "var(--text-faint)",
-          }}
-        >
+        <span className="t-9 font-light text-[var(--text-faint)]">
           {item.source}
         </span>
         <span style={{ flex: 1 }} />
@@ -136,10 +127,8 @@ export function InboxItemCard({ item, onAction }: InboxItemCardProps) {
             type="button"
             onClick={() => handleClick(action)}
             disabled={pendingAction !== null}
-            className="t-9 font-mono uppercase disabled:opacity-50"
+            className="t-9 font-light text-[var(--cykan)] disabled:opacity-50"
             style={{
-              letterSpacing: "var(--tracking-marquee)",
-              color: "var(--cykan)",
               padding: "var(--space-1) var(--space-3)",
               borderRadius: "var(--radius-pill)",
               border: "1px solid var(--border-subtle)",
