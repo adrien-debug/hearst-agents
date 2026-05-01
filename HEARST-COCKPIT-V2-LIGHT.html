@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1480">
+<title>Hearst OS — Modern Retail</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400,200&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  /* Best-in-class SaaS / Retail Palette */
+  --bg-app: #FAFAFA; /* Extrêmement léger gris pour détacher les panneaux blancs */
+  --bg-panel: #FFFFFF;
+  --bg-nardo: #F4F4F5; /* Gris Nardo moderne (Zinc 100) */
+  --bg-nardo-hover: #E4E4E7; /* Zinc 200 */
+  
+  --border: #E4E4E7;
+  --border-light: #F4F4F5;
+  
+  --text-main: #09090B; /* Zinc 950 */
+  --text-muted: #71717A; /* Zinc 500 */
+  --text-ghost: #A1A1AA; /* Zinc 400 */
+  
+  --cykan: #2DD4BF;
+  --cykan-soft: rgba(45, 212, 191, 0.1);
+  --cykan-muted: rgba(45, 212, 191, 0.2);
+  --cykan-dark: #0D9488;
+  
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.06);
+  --shadow-float: 0 20px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04);
+  
+  --font-sans: 'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg-app);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── APP CONTAINER (The "Browser" Window) ── */
+.app-container {
+  width: 1400px;
+  height: 860px;
+  background: var(--bg-panel);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--border);
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR (Linear/Raycast vibe) ── */
+.sidebar {
+  width: 240px;
+  background: var(--bg-nardo);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 12px;
+}
+
+.brand {
+  padding: 0 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-icon {
+  width: 20px; height: 20px;
+  background: var(--text-main);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+.brand-icon::after {
+  content: ""; width: 8px; height: 8px; background: var(--cykan); border-radius: 50%;
+}
+.brand-name { font-weight: 700; font-size: 14px; letter-spacing: -0.01em; }
+
+.nav-section { margin-bottom: 24px; }
+.nav-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-ghost);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0 12px 8px;
+  font-weight: 600;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--border); color: var(--text-main); }
+.nav-item.active { background: var(--bg-panel); color: var(--text-main); box-shadow: var(--shadow-xs); }
+.nav-item.active .dot { width: 6px; height: 6px; background: var(--cykan); border-radius: 50%; }
+
+.user-profile {
+  margin-top: auto;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: 0.15s;
+}
+.user-profile:hover { background: var(--border); }
+.avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--border); }
+.user-info { display: flex; flex-direction: column; }
+.user-name { font-size: 13px; font-weight: 600; }
+.user-store { font-size: 11px; color: var(--text-muted); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bg-panel);
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+}
+.breadcrumb {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; color: var(--text-muted);
+}
+.breadcrumb-active { color: var(--text-main); font-weight: 500; }
+.slash { color: var(--border); }
+
+.search-cmd {
+  display: flex; align-items: center; gap: 60px;
+  background: var(--bg-nardo);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  font-size: 13px; color: var(--text-muted);
+  cursor: text;
+  transition: 0.2s;
+}
+.search-cmd:hover { border-color: #D4D4D8; }
+.search-cmd kbd {
+  font-family: var(--font-mono); font-size: 10px;
+  background: var(--bg-panel); border: 1px solid var(--border);
+  padding: 2px 6px; border-radius: 4px; color: var(--text-main);
+}
+
+/* ── DASHBOARD VIEW ── */
+.dashboard {
+  flex: 1;
+  padding: 40px 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header-row {
+  display: flex; justify-content: space-between; align-items: flex-end;
+}
+.header-title h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.header-title p { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+.header-actions .btn {
+  background: var(--text-main); color: var(--bg-panel);
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; border: none; cursor: pointer;
+  box-shadow: var(--shadow-sm); transition: 0.2s;
+}
+.header-actions .btn:hover { background: var(--cykan-dark); }
+
+/* ── KPI CARDS (Stripe/Vercel style) ── */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+}
+.kpi-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-xs);
+  display: flex; flex-direction: column; gap: 12px;
+  transition: 0.2s;
+}
+.kpi-card:hover { border-color: #D4D4D8; box-shadow: var(--shadow-sm); }
+.kpi-header { display: flex; justify-content: space-between; align-items: center; }
+.kpi-label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.kpi-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--bg-nardo); display: flex; align-items: center; justify-content: center; }
+.kpi-value { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.kpi-trend { font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+.kpi-trend.positive { color: var(--cykan-dark); }
+.kpi-trend.neutral { color: var(--text-muted); }
+.trend-pill { background: var(--cykan-soft); padding: 2px 6px; border-radius: 4px; }
+
+/* ── SPLIT CONTENT ── */
+.content-split {
+  display: grid; grid-template-columns: 2fr 1fr; gap: 24px;
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  display: flex; flex-direction: column;
+}
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.panel-title { font-size: 14px; font-weight: 600; }
+.panel-link { font-size: 13px; color: var(--text-muted); text-decoration: none; }
+.panel-link:hover { color: var(--text-main); }
+
+/* Table style */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left; padding: 12px 20px;
+  font-size: 12px; font-weight: 500; color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 16px 20px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-light);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg-nardo); }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px; border-radius: var(--radius-full);
+  font-size: 12px; font-weight: 500;
+}
+.status-pill.ready { background: var(--cykan-soft); color: var(--cykan-dark); }
+.status-pill.pending { background: var(--bg-nardo-hover); color: var(--text-muted); }
+
+/* Suggestions / Insights list */
+.insight-list { padding: 8px; }
+.insight-item {
+  padding: 12px; border-radius: var(--radius-sm);
+  display: flex; gap: 12px; transition: 0.2s; cursor: pointer;
+}
+.insight-item:hover { background: var(--bg-nardo); }
+.insight-icon {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--cykan-soft); color: var(--cykan-dark);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 12px;
+}
+.insight-content h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.insight-content p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+/* ── FLOATING VOICE ASSISTANT (Raycast/Apple Intelligence style) ── */
+.floating-assistant {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: var(--radius-full);
+  padding: 8px 16px 8px 8px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-float);
+  z-index: 100;
+  width: 480px;
+}
+.voice-orb {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: conic-gradient(from 90deg at 50% 50%, var(--cykan), #3B82F6, var(--cykan));
+  box-shadow: 0 0 12px var(--cykan-muted);
+  animation: spin 4s linear infinite;
+  display: flex; align-items: center; justify-content: center;
+}
+.voice-orb-inner {
+  width: 24px; height: 24px; background: #FFF; border-radius: 50%;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.voice-input {
+  flex: 1; border: none; background: transparent; outline: none;
+  font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+  color: var(--text-main);
+}
+.voice-input::placeholder { color: var(--text-ghost); }
+
+.voice-shortcut {
+  font-family: var(--font-mono); font-size: 10px; color: var(--text-ghost);
+  font-weight: 600; letter-spacing: 0.05em;
+}
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon"></div>
+      <div class="brand-name">Hearst Retail</div>
+    </div>
+    
+    <div class="nav-section">
+      <div class="nav-label">Général</div>
+      <div class="nav-item active">
+        <div class="dot"></div>
+        <span>Cockpit</span>
+      </div>
+      <div class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        <span>Inventaire</span>
+      </div>
+      <div class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        <span>Commandes</span>
+      </div>
+      <div class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Clients</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Insights</div>
+      <div class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span>Analytiques</span>
+      </div>
+      <div class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <span>Communications</span>
+      </div>
+    </div>
+
+    <div class="user-profile">
+      <div class="avatar"></div>
+      <div class="user-info">
+        <span class="user-name">Adrien</span>
+        <span class="user-store">Boutique Marais</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <main class="main">
+    
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="breadcrumb">
+        <span>Boutique Marais</span>
+        <span class="slash">/</span>
+        <span class="breadcrumb-active">Cockpit</span>
+      </div>
+      <div class="search-cmd">
+        <span>Rechercher...</span>
+        <kbd>⌘K</kbd>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="dashboard">
+      
+      <div class="header-row">
+        <div class="header-title">
+          <h1>Vue d'ensemble</h1>
+          <p>Mercredi 29 Avril 2026. Vos indicateurs en temps réel.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn">Créer une commande</button>
+        </div>
+      </div>
+
+      <!-- KPI GRID -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Ventes du jour</span>
+            <div class="kpi-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+          </div>
+          <div class="kpi-value">12 480 €</div>
+          <div class="kpi-trend positive">
+            <span class="trend-pill">↑ 12.4%</span> vs hier
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Commandes actives</span>
+            <div class="kpi-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+          </div>
+          <div class="kpi-value">24</div>
+          <div class="kpi-trend neutral">
+            <span>8 en préparation</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-label">Alertes Stock</span>
+            <div class="kpi-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+          </div>
+          <div class="kpi-value">3</div>
+          <div class="kpi-trend positive">
+            <span style="color: var(--text-muted)">Actions requises</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTENT SPLIT -->
+      <div class="content-split">
+        <!-- Orders Table -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Commandes récentes</span>
+            <a href="#" class="panel-link">Voir tout</a>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Commande</th>
+                <th>Client</th>
+                <th>Montant</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-family: var(--font-mono); font-size: 13px;">#ORD-4092</td>
+                <td>Sophie Martin</td>
+                <td>145.00 €</td>
+                <td><span class="status-pill ready"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Prêt au retrait</span></td>
+              </tr>
+              <tr>
+                <td style="font-family: var(--font-mono); font-size: 13px;">#ORD-4091</td>
+                <td>Lucas Dubois</td>
+                <td>89.50 €</td>
+                <td><span class="status-pill pending">En préparation</span></td>
+              </tr>
+              <tr>
+                <td style="font-family: var(--font-mono); font-size: 13px;">#ORD-4090</td>
+                <td>Emma Bernard</td>
+                <td>210.00 €</td>
+                <td><span class="status-pill pending">En préparation</span></td>
+              </tr>
+              <tr>
+                <td style="font-family: var(--font-mono); font-size: 13px;">#ORD-4089</td>
+                <td>Thomas Petit</td>
+                <td>45.00 €</td>
+                <td><span class="status-pill ready"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span> Prêt au retrait</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- AI Insights / Assistant -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Suggestions IA</span>
+            <span style="font-size: 12px; color: var(--cykan-dark); background: var(--cykan-soft); padding: 2px 6px; border-radius: 4px; font-weight: 600;">Actif</span>
+          </div>
+          <div class="insight-list">
+            
+            <div class="insight-item">
+              <div class="insight-icon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              </div>
+              <div class="insight-content">
+                <h4>Pic d'affluence prévu</h4>
+                <p>Basé sur la météo et l'historique, attendez-vous à +30% de trafic entre 17h et 19h.</p>
+              </div>
+            </div>
+
+            <div class="insight-item">
+              <div class="insight-icon">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+              <div class="insight-content">
+                <h4>Rupture imminente</h4>
+                <p>Le produit "T-shirt Essentiel Blanc (M)" sera en rupture d'ici demain. Commander ?</p>
+              </div>
+            </div>
+
+            <div class="insight-item">
+              <div class="insight-content" style="margin-left: 36px;">
+                <button style="font-size: 12px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: #FFF; cursor: pointer; font-weight: 500;">Créer le brouillon de commande</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FLOATING AI ASSISTANT -->
+    <div class="floating-assistant">
+      <div class="voice-orb">
+        <div class="voice-orb-inner"></div>
+      </div>
+      <input type="text" class="voice-input" placeholder="Que puis-je faire pour vous, Adrien ?">
+      <div class="voice-shortcut">ESC pour fermer</div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

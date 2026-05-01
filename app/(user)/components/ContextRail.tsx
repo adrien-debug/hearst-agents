@@ -126,6 +126,18 @@ export function ContextRail({ onClose }: ContextRailProps) {
           <ContextRailForSimulation />
         </ContextRailShell>
       );
+    case "artifact":
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForArtifact />
+        </ContextRailShell>
+      );
+    case "asset_compare":
+      return (
+        <ContextRailShell onClose={onClose}>
+          <ContextRailForAssetCompare />
+        </ContextRailShell>
+      );
     default:
       return null;
   }
@@ -650,6 +662,58 @@ function ContextRailForVoice() {
           <span className="text-[var(--cykan)]">openai-realtime</span>, target
           latency &lt; 500&nbsp;ms.
         </p>
+      </Section>
+    </div>
+  );
+}
+
+function ContextRailForArtifact() {
+  return (
+    <div className="h-full overflow-y-auto">
+      <Section label="Sandbox">
+        <p className="t-13 font-light text-[var(--text-faint)] leading-relaxed">
+          Environnement E2B isolé. Exécution Python ou Node selon la sélection.
+        </p>
+      </Section>
+      <Section label="Limites">
+        <ul className="flex flex-col gap-2">
+          {[
+            ["Timeout", "30 s"],
+            ["Mémoire", "512 MB"],
+            ["FS", "Éphémère"],
+          ].map(([k, v]) => (
+            <li key={k} className="flex items-baseline gap-3">
+              <span className="t-9 font-medium text-[var(--text-ghost)]">{k}</span>
+              <span className="t-11 font-mono text-[var(--text-muted)]">{v}</span>
+            </li>
+          ))}
+        </ul>
+      </Section>
+    </div>
+  );
+}
+
+function ContextRailForAssetCompare() {
+  return (
+    <div className="h-full overflow-y-auto">
+      <Section label="Comparaison">
+        <p className="t-13 font-light text-[var(--text-faint)] leading-relaxed">
+          Deux assets côte à côte. Le diff structurel apparaît en bas du Stage.
+        </p>
+      </Section>
+      <Section label="Raccourcis">
+        <ul className="flex flex-col gap-2">
+          {[
+            ["←→", "Naviguer"],
+            ["D", "Basculer diff"],
+            ["Esc", "Fermer"],
+          ].map(([k, v]) => (
+            <li key={k} className="flex items-baseline gap-3">
+              <span className="t-9 font-mono font-medium text-[var(--cykan)]">{k}</span>
+              <span className="t-11 font-light text-[var(--text-muted)]">{v}</span>
+            </li>
+          ))}
+        </ul>
       </Section>
     </div>
   );

@@ -16,7 +16,7 @@ export default function PresentationPage() {
             height: 1080px !important;
             -webkit-print-color-adjust: exact !important; 
             print-color-adjust: exact !important; 
-            background: #f8fafc !important;
+            background: white !important;
             margin: 0 !important;
             padding: 0 !important;
           }
@@ -65,7 +65,7 @@ export default function PresentationPage() {
         <div className="relative z-10 max-w-6xl w-full flex flex-col items-center text-center gap-8">
           <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/80 backdrop-blur-md shadow-sm border border-slate-200/60 mb-2">
             <div className="w-2 h-2 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.6)] animate-pulse" />
-            <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-slate-600">Product Vision</span>
+            <span className="t-11 font-bold tracking-[0.2em] uppercase text-slate-600">Product Vision</span>
           </div>
           
           <h1 className="text-6xl md:text-[5.5rem] font-bold tracking-[-0.02em] text-slate-900 leading-[1.05]">
@@ -137,12 +137,12 @@ export default function PresentationPage() {
           <div className="grid grid-cols-2 gap-8 pt-4">
             <div className="bg-slate-100/60 rounded-[24px] aspect-[21/9] flex items-center justify-center border border-slate-200/60 relative overflow-hidden group">
               <div className="px-5 py-2.5 rounded-full bg-white/70 backdrop-blur-sm border border-slate-100 shadow-sm flex items-center gap-2 group-hover:scale-105 transition-transform">
-                <span className="text-slate-500 font-bold tracking-[0.15em] uppercase text-[10px]">Data Viz [21:9]</span>
+                <span className="text-slate-500 font-bold tracking-[0.15em] uppercase t-10">Data Viz [21:9]</span>
               </div>
             </div>
             <div className="bg-slate-100/60 rounded-[24px] aspect-[21/9] flex items-center justify-center border border-slate-200/60 relative overflow-hidden group">
               <div className="px-5 py-2.5 rounded-full bg-white/70 backdrop-blur-sm border border-slate-100 shadow-sm flex items-center gap-2 group-hover:scale-105 transition-transform">
-                <span className="text-slate-500 font-bold tracking-[0.15em] uppercase text-[10px]">Product Shot [21:9]</span>
+                <span className="text-slate-500 font-bold tracking-[0.15em] uppercase t-10">Product Shot [21:9]</span>
               </div>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function PresentationPage() {
           <div className="flex-1 w-full space-y-12">
             <div className="space-y-6">
               <div className="inline-block px-4 py-1.5 rounded-md bg-white border border-slate-200 shadow-sm">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-500">Methodology</span>
+                <span className="t-10 font-bold tracking-[0.2em] uppercase text-slate-500">Methodology</span>
               </div>
               <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight leading-[1.1]">
                 Space as a <br/> first-class citizen.
@@ -196,7 +196,7 @@ export default function PresentationPage() {
             {/* Floating mini placeholder */}
             <div className="absolute bottom-12 left-0 w-64 aspect-[4/3] bg-slate-900 rounded-[24px] shadow-2xl flex items-center justify-center border-[6px] border-slate-50 overflow-hidden group">
               <div className="px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center gap-2 group-hover:scale-105 transition-transform">
-                <span className="text-white/80 font-bold tracking-[0.15em] uppercase text-[9px]">Detail Overlay</span>
+                <span className="text-white/80 font-bold tracking-[0.15em] uppercase t-9">Detail Overlay</span>
               </div>
             </div>
           </div>
