@@ -18,6 +18,7 @@ import {
   getMissionContext,
   updateMissionContextSummary,
 } from "@/lib/memory/mission-context";
+import { fireAndForgetIngestTurn } from "@/lib/memory/kg-ingest-pipeline";
 import { randomUUID } from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -250,6 +251,18 @@ export async function POST(
       },
     }).catch((err) => {
       console.warn(`[MissionRunNow] updateMissionContextSummary failed for ${id}:`, err);
+    });
+  }
+
+  // KG global — fire-and-forget. Enrichit le knowledge graph user-wide avec
+  // les entités/relations extraites du turn mission_input + finalText. Cf.
+  // plan initial section 4 — sans ça le KG ne se nourrit pas des missions.
+  if (finalText.length > 0) {
+    fireAndForgetIngestTurn({
+      userId: scope.userId,
+      tenantId: scope.tenantId,
+      userMessage: missionInput,
+      assistantReply: finalText,
     });
   }
 
