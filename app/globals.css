@@ -202,12 +202,6 @@
   --input-max-width: 960px;
   --input-height: 64px;
 
-  /* ─── Hearst Connect — Surface levels (cockpit dark) ──────────
-   * Variante par défaut = dark cockpit. Le user surface bascule en
-   * light via [data-theme="light"] plus bas dans ce fichier. */
-  --bg-center: #000000;
-  --bg-rail: #000000;
-
   /* ─── Hearst Connect — Borders alpha (UI overhaul) ──────────── */
   --border-shell: rgba(255, 255, 255, 0.06);
   --border-soft: rgba(255, 255, 255, 0.04);
@@ -348,9 +342,6 @@
   --rail: #FAFAFB;
   --bg-light-stage: #FFFFFF;
   --text-dark-strong: var(--text-dark);
-
-  --bg-center: #F4F4F6;
-  --bg-rail: #FFFFFF;
 
   /* Material scale (light) — utilisé par les cards admin/dashboard */
   --mat-050: #FAFAFB;
@@ -1287,7 +1278,7 @@ body {
 .ghost-overlay-backdrop {
   position: fixed;
   inset: 0;
-  background: color-mix(in srgb, var(--bg-center) 70%, transparent);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
   backdrop-filter: blur(8px);
 }
 

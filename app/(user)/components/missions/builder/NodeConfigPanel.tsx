@@ -51,7 +51,7 @@ function NodeConfigInner({
     return (
       <div
         className="flex flex-col h-full overflow-y-auto"
-        style={{ padding: "var(--space-4)", background: "var(--bg-rail)" }}
+        style={{ padding: "var(--space-4)", background: "var(--rail)" }}
       >
         <h2 className="halo-mono-label">Inspecteur</h2>
         <p
@@ -93,7 +93,7 @@ function NodeConfigInner({
       className="flex flex-col h-full overflow-y-auto"
       style={{
         padding: "var(--space-4)",
-        background: "var(--bg-rail)",
+        background: "var(--rail)",
         gap: "var(--space-4)",
       }}
     >

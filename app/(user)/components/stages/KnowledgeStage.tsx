@@ -347,7 +347,7 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
   return (
     <div
       className="flex-1 flex flex-col min-h-0 relative"
-      style={{ background: "var(--bg-center)" }}
+      style={{ background: "var(--bg-elev)" }}
     >
       <StageActionBar
         context={

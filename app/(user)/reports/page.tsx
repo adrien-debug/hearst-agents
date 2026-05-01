@@ -185,7 +185,7 @@ export default function ReportsDiscoveryPage() {
     <div
       data-testid="reports-page"
       className="flex-1 flex flex-col min-h-0 overflow-auto"
-      style={{ background: "var(--bg-center)", color: "var(--text)" }}
+      style={{ background: "var(--bg-elev)", color: "var(--text)" }}
     >
       <PageHeader
         title="Rapports"

@@ -147,7 +147,7 @@ export function ProviderChip({
       {showTooltip && (latencyMs != null || costUSD != null) && (
         <span
           role="tooltip"
-          className="absolute left-1/2 top-full z-30 mt-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--border-shell)] bg-[var(--bg-rail)] px-2 py-1 t-9 font-mono text-[var(--text-muted)] shadow-[var(--shadow-card)]"
+          className="absolute left-1/2 top-full z-30 mt-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-[var(--border-shell)] bg-[var(--rail)] px-2 py-1 t-9 font-mono text-[var(--text-muted)] shadow-[var(--shadow-card)]"
         >
           <span className="text-[var(--text)]">{displayLabel}</span>
           <span className="ml-2">⌛ {formatLatency(latencyMs)}</span>

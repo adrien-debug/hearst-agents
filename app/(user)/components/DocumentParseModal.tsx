@@ -135,7 +135,7 @@ export function DocumentParseModal({
       data-testid="document-parse-modal"
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
-        background: "color-mix(in srgb, var(--bg-center) 70%, transparent)",
+        background: "color-mix(in srgb, var(--bg) 70%, transparent)",
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget && !submitting) handleClose();

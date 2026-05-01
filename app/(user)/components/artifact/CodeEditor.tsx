@@ -82,7 +82,7 @@ export function CodeEditor({
 
   return (
     <div
-      className="flex h-full min-h-0 flex-1 overflow-hidden rounded-md border border-[var(--border-default)] bg-[var(--bg-rail)]"
+      className="flex h-full min-h-0 flex-1 overflow-hidden rounded-md border border-[var(--border-default)] bg-[var(--rail)]"
       style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
     >
       <div

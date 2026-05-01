@@ -287,7 +287,7 @@ export function WorkflowCanvas({
           className="t-11 font-light text-[var(--text-faint)] pointer-events-auto rounded-md"
           style={{
             padding: "var(--space-2) var(--space-3)",
-            background: "var(--bg-rail)",
+            background: "var(--rail)",
             border: "1px solid var(--border-soft)",
           }}
         >
@@ -305,7 +305,7 @@ export function WorkflowCanvas({
             className="t-11 font-light text-[var(--cykan)] pointer-events-auto rounded-md hover:text-[var(--text)] transition-colors"
             style={{
               padding: "var(--space-2) var(--space-3)",
-              background: "var(--bg-rail)",
+              background: "var(--rail)",
               border: "1px solid var(--cykan)",
             }}
           >

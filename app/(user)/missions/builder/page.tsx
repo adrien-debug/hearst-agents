@@ -330,7 +330,7 @@ export default function WorkflowBuilderPage() {
                 padding: "var(--space-3)",
                 gap: "var(--space-1)",
                 border: "1px solid var(--border-soft)",
-                background: "var(--bg-rail)",
+                background: "var(--rail)",
                 minWidth: "240px",
               }}
             >

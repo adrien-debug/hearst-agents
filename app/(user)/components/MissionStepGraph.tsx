@@ -94,7 +94,7 @@ export function MissionStepGraph({ plan, onApprove, onSkip }: MissionStepGraphPr
     <section
       className="border border-[var(--border-shell)]"
       style={{
-        background: "var(--bg-rail)",
+        background: "var(--rail)",
         padding: "var(--space-4) var(--space-6)",
       }}
       data-testid="mission-step-graph"

@@ -40,7 +40,7 @@ export function BuilderToolbar({
       style={{
         padding: "var(--space-3) var(--space-12)",
         gap: "var(--space-4)",
-        background: "var(--bg-rail)",
+        background: "var(--rail)",
       }}
     >
       <div className="flex items-center" style={{ gap: "var(--space-2)" }}>

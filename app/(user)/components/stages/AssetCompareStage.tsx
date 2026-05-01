@@ -99,7 +99,7 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg-center)" }}>
+    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg-elev)" }}>
       <StageActionBar
         onBack={back}
         context={

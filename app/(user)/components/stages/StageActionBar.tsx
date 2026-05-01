@@ -118,7 +118,7 @@ function PrimaryButton({ action }: { action: StageAction }) {
         paddingTop: "var(--space-1)",
         paddingBottom: "var(--space-1)",
         background: isDanger ? "var(--danger)" : "var(--cykan)",
-        color: "var(--bg-center)",
+        color: "var(--text-on-cykan)",
         border: "1px solid " + (isDanger ? "var(--danger)" : "var(--cykan)"),
         borderRadius: "var(--radius-xs)",
         cursor: action.disabled || action.loading ? "not-allowed" : "pointer",

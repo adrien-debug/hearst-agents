@@ -69,8 +69,8 @@ export function ConfirmModal({
       data-testid="confirm-modal"
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
-        // Backdrop : color-mix sur le bg-center pour rester token-only.
-        background: "color-mix(in srgb, var(--bg-center) 70%, transparent)",
+        // Backdrop : color-mix sur le shell ambient (--bg) pour rester token-only.
+        background: "color-mix(in srgb, var(--bg) 70%, transparent)",
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget && !loading) onCancel();

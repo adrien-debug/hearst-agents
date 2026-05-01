@@ -126,7 +126,7 @@ export function NodePalette({ onAdd }: NodePaletteProps) {
       style={{
         gap: "var(--space-6)",
         padding: "var(--space-4)",
-        background: "var(--bg-rail)",
+        background: "var(--rail)",
       }}
     >
       <h2 className="halo-mono-label">Palette</h2>

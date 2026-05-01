@@ -255,7 +255,7 @@ export function ArtifactStage({
   return (
     <div
       className="flex flex-1 flex-col min-h-0"
-      style={{ background: "var(--bg-center)" }}
+      style={{ background: "var(--bg-elev)" }}
     >
       <StageActionBar
         context={

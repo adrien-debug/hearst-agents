@@ -349,7 +349,7 @@ function MissionsPageContent() {
         <div className="ghost-overlay-backdrop z-[60]" onClick={closeEditor} />
         <div
           className="fixed top-0 right-0 bottom-0 z-[61] flex flex-col overflow-y-auto pointer-events-auto"
-          style={{ width: "clamp(320px, 36vw, 520px)", background: "var(--bg-rail)", borderLeft: "1px solid var(--border-shell)" }}
+          style={{ width: "clamp(320px, 36vw, 520px)", background: "var(--rail)", borderLeft: "1px solid var(--border-shell)" }}
           onClick={(e) => e.stopPropagation()}
         >
             <div className="p-8">
