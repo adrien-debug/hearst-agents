@@ -2,11 +2,13 @@
 
 import { useFocalStore } from "@/stores/focal";
 import { useNavigationStore } from "@/stores/navigation";
+import { useRuntimeStore } from "@/stores/runtime";
 import { useWorkingDocumentStore } from "@/stores/working-document";
 import { ChatMessages } from "../ChatMessages";
 import { Breadcrumb, type Crumb } from "../Breadcrumb";
 import { RunProgressBanner } from "../RunProgressBanner";
 import { FocalStage } from "../FocalStage";
+import { MissionStepGraph } from "../MissionStepGraph";
 import { WelcomePanel } from "../WelcomePanel";
 import { WorkingDocument } from "../chat/WorkingDocument";
 import type { Message } from "@/lib/core/types";
@@ -44,6 +46,11 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
     activeThreadId ? s.threads.find((t) => t.id === activeThreadId) : undefined,
   );
   const isWorkingDocOpen = useWorkingDocumentStore((s) => s.isOpen);
+  // Phase B5 : expose le plan multi-step en cours dans le ChatStage. Avant,
+  // seul MissionStage rendait le StepGraph — un user qui lance un plan
+  // depuis le chat ne voyait que RunProgressBanner (1 ligne). Maintenant
+  // le plan complet est visible en bandeau supérieur quand actif.
+  const currentPlan = useRuntimeStore((s) => s.currentPlan);
 
   const focalVisible = !!focal && isFocalVisible;
 
@@ -52,6 +59,15 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
       {/* Pane gauche — chat (+ focal embedded). Largeur fluide :
           flex-1 quand split actif, max-w-[var(--width-center-max)] sinon. */}
       <div className="flex-1 flex flex-col min-h-0 relative min-w-0">
+        {currentPlan && (
+          <div
+            className="flex-shrink-0 border-b border-[var(--border-default)]"
+            style={{ padding: "var(--space-4) var(--space-12)" }}
+          >
+            <MissionStepGraph plan={currentPlan} />
+          </div>
+        )}
+
         {focalVisible && focal && (() => {
           const threadLabel = activeThread?.name?.trim() ?? "";
           const titleLabel = focal.title?.trim() ?? "";

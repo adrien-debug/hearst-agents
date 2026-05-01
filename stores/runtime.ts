@@ -371,6 +371,17 @@ export const useRuntimeStore = create<RuntimeState>()(
     failRun: (error) => set({ coreState: "error", flowLabel: error, abortController: null }),
     stopRun: () => {
       const controller = get().abortController;
+      const runId = get().currentRunId;
+      // B2 : POST l'endpoint d'abort AVANT de fermer le SSE local — sinon
+      // le serveur continue à tourner (et à payer le LLM) jusqu'à
+      // completion ou maxDuration. Fire-and-forget : on n'attend pas la
+      // réponse pour rendre la main UI immédiatement.
+      if (runId) {
+        void fetch(`/api/orchestrate/abort/${encodeURIComponent(runId)}`, {
+          method: "POST",
+          credentials: "include",
+        }).catch(() => {});
+      }
       if (controller && !controller.signal.aborted) {
         controller.abort();
       }

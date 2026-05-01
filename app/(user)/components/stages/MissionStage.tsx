@@ -8,6 +8,7 @@ import { MissionStepGraph } from "../MissionStepGraph";
 import { useRuntimeStore } from "@/stores/runtime";
 import { Action } from "../ui";
 import type { MissionLike } from "@/lib/ui/focal-mappers";
+import { MissionConversation } from "../mission/MissionConversation";
 
 interface MissionStageProps {
   missionId: string;
@@ -487,6 +488,11 @@ export function MissionStage({ missionId }: MissionStageProps) {
                   </ul>
                 )}
               </div>
+
+              {/* Mission Memory (vague 9) — résumé éditorial + fil de
+                  conversation long-terme. Charge /context côté client, le
+                  POST messages + relance run depuis le composant. */}
+              <MissionConversation missionId={missionId} onRunTriggered={loadRuns} />
             </>
           )}
         </div>

@@ -17,6 +17,7 @@ import { LogPersister } from "@/lib/events/consumers/log-persister";
 import { globalRunBus } from "@/lib/events/global-bus";
 import { runAiPipeline } from "./ai-pipeline";
 import { runPlannerWorkflow, isComplexIntent, isPlannerEnabled } from "./run-planner-workflow";
+import { registerRun, unregisterRun } from "./abort-registry";
 import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, type ExecutionDecision } from "@/lib/capabilities/router";
 
 import { selectToolsForContext } from "@/lib/tools/surface-selector";
@@ -63,6 +64,14 @@ interface OrchestrateInput {
   personaId?: string;
   /** Set when triggered by the scheduler for a scheduled mission. */
   missionId?: string;
+  /**
+   * Mission Memory (vague 9) — bloc XML <mission_context>…</mission_context>
+   * pré-formaté à injecter dans le system prompt cacheable. Contient le
+   * `contextSummary` mission + N derniers `mission_messages`. Calculé en
+   * amont (route /missions/[id]/run) via `formatMissionContextBlock` pour
+   * éviter de coupler l'orchestrator à Supabase.
+   */
+  missionContext?: string;
   tenantId?: string;
   workspaceId?: string;
   /** Injected by runPipeline — resolved capability domain */
@@ -144,6 +153,7 @@ async function handleAiPipeline(
   eventBus: RunEventBus,
   input: OrchestrateInput,
   scope: TenantScope,
+  abortSignal?: AbortSignal,
 ): Promise<void> {
   eventBus.emit({
     type: "orchestrator_log",
@@ -164,6 +174,8 @@ async function handleAiPipeline(
     threadId: input.threadId,
     attachedAssetIds: input.attachedAssetIds,
     personaId: input.personaId,
+    missionContext: input.missionContext,
+    abortSignal,
   });
 }
 
@@ -262,6 +274,12 @@ async function runPipeline(
 
   const engine = await RunEngine.create(db, createInput, eventBus);
   await engine.start();
+
+  // ── Abort plumbing : enregistre un AbortController dans le registry
+  // global pour que POST /api/orchestrate/abort/[runId] puisse vraiment
+  // couper le run (et pas seulement la connexion SSE côté client).
+  const abortController = new AbortController();
+  registerRun(engine.id, abortController);
 
   // ── Safety gate (BEFORE any tool exposure) ─────────────────
   // Hostile / abusive intents are refused here so we never propose a tool
@@ -614,8 +632,16 @@ async function runPipeline(
     // Every other execution mode flows through the same AI pipeline. The
     // model decides which provider tools to call (Gmail, Calendar, Slack…)
     // — there is no orchestrator-level pre-fetch of user data.
-    await handleAiPipeline(engine, eventBus, input, scope);
+    await handleAiPipeline(engine, eventBus, input, scope, abortController.signal);
   } finally {
+    if (abortController.signal.aborted) {
+      eventBus.emit({
+        type: "run_aborted",
+        run_id: engine.id,
+        reason: "client_requested",
+      });
+    }
+    unregisterRun(engine.id);
     await storeAssistantMemory();
   }
 }

@@ -12,6 +12,12 @@ import { requireScope } from "@/lib/platform/auth/scope";
 import { executeWorkflow } from "@/lib/workflows/executor";
 import { executeWorkflowTool } from "@/lib/workflows/handlers";
 import type { WorkflowGraph } from "@/lib/workflows/types";
+import {
+  appendMissionMessage,
+  formatMissionContextBlock,
+  getMissionContext,
+  updateMissionContextSummary,
+} from "@/lib/memory/mission-context";
 import { randomUUID } from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +39,8 @@ export async function POST(
   let missionInput: string | null = null;
   let missionName: string | null = null;
   let missionGraph: WorkflowGraph | undefined;
+  let preloadedSummary: string | null = null;
+  let preloadedSummaryUpdatedAt: number | null = null;
 
   const memMission = getMission(id);
   if (memMission) {
@@ -56,6 +64,8 @@ export async function POST(
       missionInput = found.input;
       missionName = found.name;
       missionGraph = found.workflowGraph;
+      preloadedSummary = found.contextSummary ?? null;
+      preloadedSummaryUpdatedAt = found.contextSummaryUpdatedAt ?? null;
     }
   }
 
@@ -132,18 +142,49 @@ export async function POST(
     }
   }
 
+  // ── Mission Memory : pré-charge le contexte (vague 9) ───────
+  // On préfère un fail-soft : si la table mission_messages n'existe pas
+  // encore (migration pas appliquée) ou si Supabase est down, on tourne
+  // sans mémoire mission plutôt que de bloquer le run.
+  const missionCtx = await getMissionContext({
+    missionId: id,
+    userId: scope.userId,
+    tenantId: scope.tenantId,
+    missionInput,
+    preloadedSummary,
+    preloadedSummaryUpdatedAt,
+  }).catch((err) => {
+    console.warn(`[MissionRunNow] getMissionContext failed for ${id}:`, err);
+    return null;
+  });
+  const missionContextBlock = missionCtx ? formatMissionContextBlock(missionCtx) : "";
+
+  // Trace l'intent côté mission_messages — utile pour reconstruire le fil
+  // côté UI (l'utilisateur voit ce qu'il a déclenché). Fire-and-forget.
+  void appendMissionMessage({
+    missionId: id,
+    userId: scope.userId,
+    tenantId: scope.tenantId,
+    role: "user",
+    content: missionInput,
+  });
+
   const db = requireServerSupabase();
 
   const stream = orchestrate(db, {
     userId: scope.userId,
     message: missionInput,
     missionId: id,
+    missionContext: missionContextBlock || undefined,
+    tenantId: scope.tenantId,
+    workspaceId: scope.workspaceId,
   });
 
-  // Consume the stream to completion, extract the run_id
+  // Consume the stream to completion, extract run_id + assistant final text
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let runId: string | null = null;
+  const textParts: string[] = [];
 
   try {
     while (true) {
@@ -156,6 +197,13 @@ export async function POST(
           const event = JSON.parse(line.slice(6));
           if (event.type === "run_started" && event.run_id) {
             runId = event.run_id;
+          } else if (event.type === "text_delta" && typeof event.delta === "string") {
+            // Reconstruit le finalText pour le summary post-run + persistence
+            // du message assistant. Cap soft à 16k chars accumulés pour ne
+            // pas saturer la mémoire si le LLM streame une longue réponse.
+            if (textParts.join("").length < 16_000) {
+              textParts.push(event.delta);
+            }
           }
         } catch { /* skip */ }
       }
@@ -169,6 +217,39 @@ export async function POST(
     void updateScheduledMission(id, {
       lastRunAt: Date.now(),
       lastRunId: runId,
+    });
+  }
+
+  // ── Mission Memory : append assistant + update summary (fire-and-forget)
+  const finalText = textParts.join("").trim();
+  if (finalText.length > 0) {
+    void appendMissionMessage({
+      missionId: id,
+      userId: scope.userId,
+      tenantId: scope.tenantId,
+      role: "assistant",
+      content: finalText,
+      runId: runId ?? undefined,
+    });
+  }
+
+  // Régénère le context_summary en arrière-plan. On ne bloque pas la
+  // réponse HTTP — le user verra le summary actualisé au prochain
+  // refresh de /context ou au prochain run.
+  if (runId) {
+    void updateMissionContextSummary({
+      missionId: id,
+      userId: scope.userId,
+      tenantId: scope.tenantId,
+      missionInput,
+      previousSummary: preloadedSummary,
+      runResult: {
+        runId,
+        status: "completed",
+        finalText: finalText || null,
+      },
+    }).catch((err) => {
+      console.warn(`[MissionRunNow] updateMissionContextSummary failed for ${id}:`, err);
     });
   }
 

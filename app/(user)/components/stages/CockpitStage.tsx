@@ -8,6 +8,7 @@ import { SuggestionRow } from "../cockpit/SuggestionRow";
 import { QuickLaunch } from "../cockpit/QuickLaunch";
 import { InboxSection } from "../cockpit/InboxSection";
 import { HospitalityPulse } from "../cockpit/HospitalityPulse";
+import { Action } from "../ui";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
 /**
@@ -131,7 +132,7 @@ function CockpitContent({
   data: CockpitTodayPayload;
   onInboxRefreshed: () => void;
 }) {
-  const watchlistMock = data.mockSections.includes("watchlist");
+  const watchlistEmpty = data.watchlist.length === 0;
 
   return (
     <>
@@ -139,25 +140,26 @@ function CockpitContent({
 
       {data.hospitality && <HospitalityPulse data={data.hospitality} />}
 
-      <Section
-        label="Watchlist"
-        meta={watchlistMock ? "demo data" : undefined}
-      >
-        <div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-          style={{ gap: "var(--space-4)" }}
-        >
-          {data.watchlist.map((kpi) => (
-            <WatchlistCard
-              key={kpi.id}
-              label={kpi.label}
-              value={kpi.value}
-              delta={kpi.delta}
-              trend={kpi.trend}
-              isMock={kpi.source === "mock"}
-            />
-          ))}
-        </div>
+      <Section label="Watchlist">
+        {watchlistEmpty ? (
+          <WatchlistEmptyState />
+        ) : (
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+            style={{ gap: "var(--space-4)" }}
+          >
+            {data.watchlist.map((kpi) => (
+              <WatchlistCard
+                key={kpi.id}
+                label={kpi.label}
+                value={kpi.value}
+                delta={kpi.delta}
+                trend={kpi.trend}
+                isMock={false}
+              />
+            ))}
+          </div>
+        )}
       </Section>
 
       <Section label="En cours">
@@ -251,6 +253,22 @@ function Section({
       </header>
       {children}
     </section>
+  );
+}
+
+function WatchlistEmptyState() {
+  return (
+    <div
+      className="flex flex-col items-start"
+      style={{ gap: "var(--space-3)", padding: "var(--space-4) 0" }}
+    >
+      <p className="t-15" style={{ color: "var(--text-soft)" }}>
+        Connecte Stripe et HubSpot pour activer ta watchlist.
+      </p>
+      <Action variant="secondary" size="sm" href="/apps">
+        Configurer les connexions
+      </Action>
+    </div>
   );
 }
 

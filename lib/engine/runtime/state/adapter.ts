@@ -366,7 +366,9 @@ export async function updateScheduledMission(
       patch.lastRunAt !== undefined ||
       patch.lastRunId !== undefined ||
       patch.lastRunStatus !== undefined ||
-      patch.lastError !== undefined;
+      patch.lastError !== undefined ||
+      patch.contextSummary !== undefined ||
+      patch.contextSummaryUpdatedAt !== undefined;
 
     if (hasOpsFields) {
       const { data: existing } = await sb
@@ -380,6 +382,10 @@ export async function updateScheduledMission(
       if (patch.lastRunId !== undefined) actions.lastRunId = patch.lastRunId;
       if (patch.lastRunStatus !== undefined) actions.lastRunStatus = patch.lastRunStatus;
       if (patch.lastError !== undefined) actions.lastError = patch.lastError;
+      if (patch.contextSummary !== undefined) actions.contextSummary = patch.contextSummary;
+      if (patch.contextSummaryUpdatedAt !== undefined) {
+        actions.contextSummaryUpdatedAt = patch.contextSummaryUpdatedAt;
+      }
       update.actions = actions;
     }
 
@@ -493,5 +499,7 @@ function toScheduledMission(row: any): PersistedScheduledMission {
     lastRunStatus: actions.lastRunStatus as PersistedScheduledMission["lastRunStatus"],
     lastError: actions.lastError as string | undefined,
     workflowGraph: actions.workflowGraph as PersistedScheduledMission["workflowGraph"],
+    contextSummary: (actions.contextSummary as string | null | undefined) ?? null,
+    contextSummaryUpdatedAt: actions.contextSummaryUpdatedAt as number | undefined,
   };
 }

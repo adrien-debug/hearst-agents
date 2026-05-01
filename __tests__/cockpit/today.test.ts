@@ -96,11 +96,11 @@ describe("getCockpitToday", () => {
     expect(typeof payload.generatedAt).toBe("number");
   });
 
-  it("renvoie 4 KPIs mock dans la watchlist (MVP)", async () => {
+  it("renvoie une watchlist vide quand Stripe/HubSpot ne sont pas connectés (Phase B3 — empty state honnête, plus de mock)", async () => {
     const payload = await getCockpitToday(SCOPE);
-    expect(payload.watchlist).toHaveLength(4);
-    expect(payload.watchlist.map((k) => k.id)).toEqual(["mrr", "arr", "runway", "pipeline"]);
-    expect(payload.watchlist.every((k) => k.source === "mock")).toBe(true);
+    expect(payload.watchlist).toHaveLength(0);
+    // mockSections doit toujours flagger watchlist comme "non live" pour
+    // que l'UI sache afficher l'empty state CTA.
     expect(payload.mockSections).toContain("watchlist");
   });
 
@@ -234,8 +234,9 @@ describe("getCockpitToday", () => {
     expect(payload.missionsRunning).toEqual([]);
     // Suggestions fallback
     expect(payload.suggestions).toEqual([]);
-    // Watchlist + favorites toujours là (mock + catalog purs)
-    expect(payload.watchlist).toHaveLength(4);
+    // Watchlist : empty state (Phase B3 — plus de mock fallback)
+    expect(payload.watchlist).toHaveLength(0);
+    // Favorites toujours là (catalog pur)
     expect(payload.favoriteReports.length).toBeGreaterThan(0);
   });
 });

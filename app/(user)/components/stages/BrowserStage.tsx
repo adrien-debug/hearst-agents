@@ -67,34 +67,6 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
 
   const debugViewerUrl = sessionId ? debugViewerByid[sessionId] : undefined;
 
-  const executeTaskOn = useCallback(async (sid: string, task: string) => {
-    setExecuting(true);
-    setError(null);
-    setIsControlled(false);
-    try {
-      const res = await fetch(
-        `/api/v2/browser/${encodeURIComponent(sid)}/execute`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ task }),
-        },
-      );
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        message?: string;
-      };
-      if (!res.ok) {
-        setError(data.message || data.error || "Échec de l'exécution");
-        setExecuting(false);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur réseau");
-      setExecuting(false);
-    }
-  }, []);
-
   // Lance la session Browserbase à partir de l'empty state.
   const startSession = useCallback(async () => {
     const task = taskInput.trim();
@@ -126,15 +98,18 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
         }));
       }
       setMode({ mode: "browser", sessionId: data.sessionId });
-
-      // Lance immédiatement la première tâche autonome.
-      void executeTaskOn(data.sessionId, task);
+      // Phase B4 : /api/v2/browser/start lance Stagehand serveur-side en
+      // fire-and-forget. Plus besoin d'appeler /[id]/execute ici. Les
+      // actions arrivent via les events SSE browser_action ; on bascule
+      // executing=true pour afficher l'indicateur d'activité.
+      setExecuting(true);
+      setIsControlled(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur réseau");
     } finally {
       setStarting(false);
     }
-  }, [taskInput, setMode, executeTaskOn]);
+  }, [taskInput, setMode]);
 
   // Lookup le debugViewerUrl si on arrive sur la stage avec un sessionId
   // déjà set (cas où la session a été démarrée par un tool ou un autre flow).

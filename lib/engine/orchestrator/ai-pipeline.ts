@@ -75,6 +75,18 @@ export interface AiPipelineInput {
   attachedAssetIds?: string[];
   /** C4 — persona explicite à appliquer pour ce run. Si absent, fallback sur (surface → default). */
   personaId?: string;
+  /** B2 abort — signal propagé depuis l'orchestrateur. Quand l'user POST
+   * /api/orchestrate/abort/[runId], ce signal devient aborted et streamText
+   * coupe la stream Anthropic immédiatement. */
+  abortSignal?: AbortSignal;
+  /**
+   * Mission Memory (vague 9) — bloc XML <mission_context>…</mission_context>
+   * pré-formaté à injecter dans le system prompt cacheable. Quand la mission
+   * a un context_summary persisté ou des messages récents, le caller (ex:
+   * /api/v2/missions/[id]/run) appelle `formatMissionContextBlock` et passe
+   * la string ici. Vide / undefined = pas de mémoire mission injectée.
+   */
+  missionContext?: string;
 }
 
 const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
@@ -549,6 +561,7 @@ export async function runAiPipeline(
     kgContext: kgContext ?? undefined,
     retrievedMemory: retrievedMemory && retrievedMemory.length > 0 ? retrievedMemory : undefined,
     persona,
+    missionContext: input.missionContext,
   });
 
   // ── 4. Build message history ────────────────────────────────
@@ -624,6 +637,9 @@ export async function runAiPipeline(
       // Long-form reports go through the deterministic research path with
       // its own budget — they don't hit this code path.
       maxOutputTokens: 8000,
+      // B2 abort : POST /api/orchestrate/abort/[runId] déclenche ce signal,
+      // streamText coupe la stream Anthropic immédiatement → coût LLM stoppé.
+      abortSignal: input.abortSignal,
     });
 
     // Track active tool calls for event emission pairing.

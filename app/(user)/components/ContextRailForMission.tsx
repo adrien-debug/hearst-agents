@@ -211,30 +211,117 @@ export function ContextRailForMission() {
         )}
       </section>
 
-      {/* Threads liés (déduits des runs) */}
-      <section className="px-6 py-6">
-        <header className="flex items-center justify-between mb-4">
-          <span className="rail-section-label">Threads liés</span>
-          <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
-            {runs.length.toString().padStart(2, "0")}
-          </span>
-        </header>
-        {runs.length === 0 ? (
-          <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
-            Aucun thread associé
-          </p>
-        ) : (
-          <ul className="flex flex-col" style={{ gap: "var(--space-2)" }}>
-            {runs.slice(0, 3).map((r) => (
-              <li key={r.id}>
-                <p className="t-11 font-light text-[var(--text-faint)] truncate">
-                  Run · {r.id.slice(0, 8)}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {/* Mémoire de mission (vague 9) — 2 premières sections du
+          contextSummary, snapshot rail. Le détail complet vit dans
+          MissionConversation au centre du Stage. */}
+      <MissionMemorySection missionId={missionId} />
     </div>
   );
+}
+
+interface MissionContextRailDto {
+  summary: string | null;
+  summaryUpdatedAt: number | null;
+  recentMessages: Array<{ id: string }>;
+}
+
+const SUMMARY_CACHE_RAIL_FMT = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Paris",
+});
+
+function MissionMemorySection({ missionId }: { missionId: string }) {
+  const [ctx, setCtx] = useState<MissionContextRailDto | null>(null);
+
+  useEffect(() => {
+    if (!missionId) return;
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch(`/api/v2/missions/${missionId}/context`, {
+        credentials: "include",
+      }).catch(() => null);
+      if (cancelled || !res || !res.ok) return;
+      const data = (await res.json()) as { context: MissionContextRailDto };
+      if (!cancelled) setCtx(data.context);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [missionId]);
+
+  const sections = ctx?.summary ? extractSummaryHeads(ctx.summary, 2) : [];
+  const messageCount = ctx?.recentMessages.length ?? 0;
+
+  return (
+    <section className="px-6 py-6">
+      <header className="flex items-center justify-between mb-4">
+        <span className="rail-section-label">Mémoire</span>
+        {messageCount > 0 && (
+          <span className="t-9 tracking-display uppercase text-[var(--text-ghost)]">
+            {messageCount.toString().padStart(2, "0")} msg
+          </span>
+        )}
+      </header>
+
+      {sections.length === 0 ? (
+        <p className="t-10 tracking-body uppercase text-[var(--text-ghost)] font-light">
+          Pas encore de mémoire — lance une fois pour démarrer.
+        </p>
+      ) : (
+        <div className="flex flex-col" style={{ gap: "var(--space-3)" }}>
+          {sections.map((s, i) => (
+            <div key={i} className="flex flex-col" style={{ gap: "var(--space-1)" }}>
+              <span
+                className="t-9 font-medium"
+                style={{
+                  color: "var(--text-l2)",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {s.title}
+              </span>
+              <p
+                className="t-11 font-light"
+                style={{
+                  color: "var(--text-soft)",
+                  lineHeight: 1.45,
+                }}
+              >
+                {s.body}
+              </p>
+            </div>
+          ))}
+          {ctx?.summaryUpdatedAt && (
+            <span className="t-9 font-light text-[var(--text-faint)]">
+              Mis à jour {SUMMARY_CACHE_RAIL_FMT.format(new Date(ctx.summaryUpdatedAt))}
+            </span>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function extractSummaryHeads(
+  summary: string,
+  max: number,
+): Array<{ title: string; body: string }> {
+  const blocks = summary
+    .split(/\n{2,}/)
+    .map((b) => b.trim())
+    .filter((b) => b.length > 0);
+
+  const out: Array<{ title: string; body: string }> = [];
+  for (const block of blocks) {
+    const m = block.match(/^\*\*([^*]+?)\.\*\*\s*([\s\S]+)$/);
+    if (m) {
+      out.push({ title: m[1], body: m[2].length > 160 ? `${m[2].slice(0, 159)}…` : m[2] });
+    }
+    if (out.length >= max) break;
+  }
+  return out;
 }

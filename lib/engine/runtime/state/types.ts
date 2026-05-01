@@ -55,4 +55,13 @@ export interface PersistedScheduledMission {
    * standard. Stocké dans `actions.workflowGraph` JSONB côté Supabase.
    */
   workflowGraph?: import("@/lib/workflows/types").WorkflowGraph;
+  /**
+   * Mission Memory (vague 9) — résumé éditorial actualisé après chaque run.
+   * 4 sections : Objectif / État actuel / Décisions actées / Prochaine étape.
+   * Stocké dans `actions.contextSummary` JSONB. Ré-injecté dans le prompt
+   * système au run suivant pour transformer la mission en compagnon long-terme.
+   */
+  contextSummary?: string | null;
+  /** Timestamp epoch ms de la dernière mise à jour du contextSummary. */
+  contextSummaryUpdatedAt?: number;
 }

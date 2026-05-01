@@ -339,46 +339,10 @@ function buildFavoriteReports(): CockpitFavoriteReport[] {
   }));
 }
 
-/**
- * Watchlist mock — 4 KPIs founder-cockpit avec sparklines factices.
- * Phase B : brancher sur Stripe (MRR/ARR), ledger (runway), HubSpot (pipeline).
- */
-function buildMockWatchlist(): CockpitWatchlistItem[] {
-  return [
-    {
-      id: "mrr",
-      label: "MRR",
-      value: "—",
-      delta: null,
-      trend: [],
-      source: "mock",
-    },
-    {
-      id: "arr",
-      label: "ARR",
-      value: "—",
-      delta: null,
-      trend: [],
-      source: "mock",
-    },
-    {
-      id: "runway",
-      label: "Runway",
-      value: "—",
-      delta: null,
-      trend: [],
-      source: "mock",
-    },
-    {
-      id: "pipeline",
-      label: "Pipeline",
-      value: "—",
-      delta: null,
-      trend: [],
-      source: "mock",
-    },
-  ];
-}
+// Watchlist mock retiré 2026-05-01 (Phase B3) — getLiveWatchlist gère
+// déjà tout. Si Stripe/HubSpot ne sont pas connectés via Composio, la
+// watchlist remonte vide ; l'UI affiche un empty state honnête avec CTA
+// vers /apps. Plus de fake KPI à "—" qui camouflait la vraie cause.
 
 // Agenda mock retiré — l'agenda live (lib/cockpit/agenda-live.ts) gère
 // déjà le fallback vide quand Calendar n'est pas connecté.
@@ -480,15 +444,16 @@ export async function getCockpitToday(scope: CockpitScope): Promise<CockpitToday
 
   const favoriteReports = buildFavoriteReports();
 
-  // Watchlist live (Stripe + HubSpot via Composio) — fallback mock si throw
-  // global. Les fallback partiels par source sont déjà gérés dans
-  // getLiveWatchlist (CTA "Connecte X pour activer").
+  // Watchlist live (Stripe + HubSpot via Composio) — fail-soft : si throw
+  // global, on retourne `[]` plutôt qu'un mock à 4 cards "—". L'UI rend
+  // alors un empty state honnête ("Connecte Stripe + HubSpot pour activer
+  // ta watchlist") plutôt que de camoufler la cause derrière des fake KPI.
   const liveWatchlist = await safe(
     "watchlist.live",
     () => getLiveWatchlist({ userId: scope.userId, tenantId: scope.tenantId }),
-    null as CockpitWatchlistItem[] | null,
+    [] as CockpitWatchlistItem[],
   );
-  const watchlist = liveWatchlist && liveWatchlist.length > 0 ? liveWatchlist : buildMockWatchlist();
+  const watchlist = liveWatchlist;
 
   // Agenda live (Google Calendar via Composio) — fallback empty si throw.
   const liveAgenda = await safe(
@@ -503,9 +468,9 @@ export async function getCockpitToday(scope: CockpitScope): Promise<CockpitToday
     ? safeSync("hospitality", () => buildHospitalitySection(), null)
     : null;
 
-  // Si watchlist live est vide / fallback mock → on garde "watchlist" comme
-  // mock-section pour que l'UI affiche un badge/CTA. Pareil agenda.
-  const watchlistIsLive = !!liveWatchlist && liveWatchlist.length > 0;
+  // Watchlist vide = pas de connecteur Stripe/HubSpot ou throw global.
+  // L'UI affiche un empty state CTA → /apps. Plus de mock fallback.
+  const watchlistIsLive = liveWatchlist.length > 0;
   const agendaIsLive = liveAgenda.length > 0;
   const mockSections: Array<"watchlist" | "agenda" | "hospitality"> = [];
   if (!watchlistIsLive) mockSections.push("watchlist");

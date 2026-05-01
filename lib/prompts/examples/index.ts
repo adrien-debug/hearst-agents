@@ -180,6 +180,55 @@ export const KG_EXTRACTION_FEWSHOT: ReadonlyArray<FewShotExample> = [
   },
 ];
 
+// ── Mission context summary (run précédent → résumé éditorial) ──
+
+export const MISSION_CONTEXT_FEWSHOT_FR: ReadonlyArray<FewShotExample> = [
+  {
+    input: [
+      "Mission : « Suivi deal Acme — pousser à closing avant fin Q2 »",
+      "",
+      "Résumé précédent :",
+      "Objectif. Closer le contrat Acme (240k€) avant le 30 juin.",
+      "État actuel. Term sheet signée, juridique en revue chez Acme depuis 8 jours.",
+      "Décisions actées. Marc (CFO Acme) est l'interlocuteur unique côté client.",
+      "Prochaine étape. Relancer Marc mardi si silence, escalader vers le board sinon.",
+      "",
+      "Dernier run (run_2026-05-04) :",
+      "Action : email envoyé à Marc avec proposition de call mercredi 14h.",
+      "Résultat : Marc a accepté le call mercredi, demande la dernière version du MSA en amont.",
+    ].join("\n"),
+    output: [
+      "**Objectif.** Closer le contrat Acme (240k€) avant le 30 juin.",
+      "",
+      "**État actuel.** Call confirmé mercredi 14h avec Marc (CFO Acme). Juridique côté Acme reprend après le call. MSA dernière version à envoyer avant.",
+      "",
+      "**Décisions actées.** Marc reste l'interlocuteur unique. Pas d'escalade board ce sprint — call mercredi est le checkpoint.",
+      "",
+      "**Prochaine étape.** Envoyer MSA v3 à Marc d'ici lundi soir. Préparer 3 points de négociation pour le call.",
+    ].join("\n"),
+  },
+  {
+    input: [
+      "Mission : « Audit cohérence pricing produit »",
+      "",
+      "Résumé précédent : (aucun — premier run)",
+      "",
+      "Dernier run (run_2026-05-04) :",
+      "Action : extraction des 18 deals fermés Q1 + cross-référence avec grille tarifaire publique.",
+      "Résultat : 4 deals out-of-grid (-15% à -28%). Discount accordés sans approbation ni justification trace.",
+    ].join("\n"),
+    output: [
+      "**Objectif.** Auditer la cohérence pricing entre grille publique et deals fermés.",
+      "",
+      "**État actuel.** 4 deals Q1 hors grille (-15% à -28%) identifiés. Aucune trace d'approbation ni justification.",
+      "",
+      "**Décisions actées.** Discounts > 10% nécessitent désormais approbation écrite (à formaliser avec sales).",
+      "",
+      "**Prochaine étape.** Demander aux owners des 4 deals leur justification. Préparer une note pricing pour la weekly sales.",
+    ].join("\n"),
+  },
+];
+
 // ── Inbox priority classification (email batch → classification) ─
 
 export const INBOX_PRIORITY_FEWSHOT: ReadonlyArray<FewShotExample> = [

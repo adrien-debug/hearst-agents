@@ -68,9 +68,19 @@ interface StageState {
   /** Query préremplie au prochain ouvrage du Commandeur. Consommée après lecture. */
   commandeurPrefilledQuery: string | null;
 
+  /** Timestamp du dernier `setMode` déclenché par l'utilisateur (hotkey,
+   * clic UI, Commandeur). Permet à `setModeFromTool` de respecter le
+   * choix manuel récent et ne pas téléporter l'user contre sa volonté. */
+  lastManualChangeAt: number | null;
+
   /** Switch vers un nouveau mode (push dans l'history). Persiste l'assetId
-   * dans `lastAssetId` quand mode === "asset". */
+   * dans `lastAssetId` quand mode === "asset". Met à jour
+   * `lastManualChangeAt` — usage : action utilisateur explicite. */
   setMode: (payload: StagePayload) => void;
+  /** Switch déclenché par un tool (event SSE `stage_request`). Respecte
+   * un changement manuel récent (< 10s) en no-op pour ne pas téléporter
+   * l'user qui a déjà bougé entre temps. */
+  setModeFromTool: (payload: StagePayload) => void;
   /** Retour au Stage précédent. No-op si history vide. */
   back: () => void;
   /** Reset à cockpit. */
@@ -82,15 +92,37 @@ interface StageState {
   consumeCommandeurPrefilledQuery: () => string | null;
 }
 
+const TOOL_OVERRIDE_GUARD_MS = 10_000;
+
 export const useStageStore = create<StageState>((set, get) => ({
   current: { mode: "chat" },
   history: [],
   lastAssetId: null,
   lastMissionId: null,
+  lastManualChangeAt: null,
   commandeurOpen: false,
   commandeurPrefilledQuery: null,
 
   setMode: (payload) => {
+    const prev = get().current;
+    const nextLastAssetId =
+      payload.mode === "asset" ? payload.assetId : get().lastAssetId;
+    const nextLastMissionId =
+      payload.mode === "mission" ? payload.missionId : get().lastMissionId;
+    set({
+      current: payload,
+      history: [...get().history, { payload: prev, ts: Date.now() }].slice(-20),
+      lastAssetId: nextLastAssetId,
+      lastMissionId: nextLastMissionId,
+      lastManualChangeAt: Date.now(),
+    });
+  },
+
+  setModeFromTool: (payload) => {
+    const lastManual = get().lastManualChangeAt;
+    if (lastManual !== null && Date.now() - lastManual < TOOL_OVERRIDE_GUARD_MS) {
+      return;
+    }
     const prev = get().current;
     const nextLastAssetId =
       payload.mode === "asset" ? payload.assetId : get().lastAssetId;

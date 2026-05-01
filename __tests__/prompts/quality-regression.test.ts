@@ -18,8 +18,10 @@ import {
   KG_EXTRACTION_FEWSHOT,
   INBOX_PRIORITY_FEWSHOT,
   NARRATION_FEWSHOT_FR,
+  MISSION_CONTEXT_FEWSHOT_FR,
   formatFewShotBlock,
 } from "@/lib/prompts/examples";
+import { MISSION_CONTEXT_SYSTEM_PROMPT } from "@/lib/memory/mission-context";
 
 const BANNED_FORMULAS_GLOBAL = [
   "n'hésite pas",
@@ -103,6 +105,21 @@ const PROMPT_CHECKS: ReadonlyArray<PromptCheck> = [
       "commitment",
       "topic",
       "RÈGLES D'EXTRACTION",
+      "EXEMPLES",
+    ],
+    minFewShot: 2,
+  },
+  {
+    name: "mission-context",
+    prompt: MISSION_CONTEXT_SYSTEM_PROMPT,
+    mustContain: [
+      "archiviste",
+      "FORMAT STRICT",
+      "Objectif",
+      "État actuel",
+      "Décisions actées",
+      "Prochaine étape",
+      "Max 250 mots",
       "EXEMPLES",
     ],
     minFewShot: 2,
@@ -215,6 +232,17 @@ describe("Few-shot examples library", () => {
     for (const ex of NARRATION_FEWSHOT_FR) {
       // Au moins un bullet
       expect(ex.output).toMatch(/\* /);
+    }
+  });
+
+  it("MISSION_CONTEXT_FEWSHOT_FR a 2 exemples avec les 4 sections obligatoires", () => {
+    expect(MISSION_CONTEXT_FEWSHOT_FR).toHaveLength(2);
+    for (const ex of MISSION_CONTEXT_FEWSHOT_FR) {
+      expect(ex.input.length).toBeGreaterThan(20);
+      expect(ex.output).toContain("**Objectif.**");
+      expect(ex.output).toContain("**État actuel.**");
+      expect(ex.output).toContain("**Décisions actées.**");
+      expect(ex.output).toContain("**Prochaine étape.**");
     }
   });
 

@@ -21,6 +21,7 @@ export type RunEvent =
   | RunStartedEvent
   | RunCompletedEvent
   | RunFailedEvent
+  | RunAbortedEvent
   | RunCancelledEvent
   | RunSuspendedEvent
   | RunResumedEvent
@@ -111,6 +112,12 @@ export interface RunCompletedEvent extends BaseEvent {
 export interface RunFailedEvent extends BaseEvent {
   type: "run_failed";
   error: string;
+}
+export interface RunAbortedEvent extends BaseEvent {
+  type: "run_aborted";
+  /** Origine de l'abort. `client_requested` = POST /api/orchestrate/abort
+   * envoyé par l'UI ; autres valeurs réservées pour futurs cas (timeout, ops). */
+  reason: "client_requested";
 }
 export interface RunCancelledEvent extends BaseEvent {
   type: "run_cancelled";

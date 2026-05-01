@@ -219,6 +219,8 @@ export class SSEAdapter {
         };
       case "run_failed":
         return { type: "run_failed", error: event.error };
+      case "run_aborted":
+        return { type: "run_aborted", run_id: event.run_id, reason: event.reason };
       case "run_suspended":
         return {
           type: "run_suspended",

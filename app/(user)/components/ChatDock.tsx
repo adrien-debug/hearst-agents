@@ -48,6 +48,7 @@ export function ChatDock() {
   const setAbortController = useRuntimeStore((s) => s.setAbortController);
 
   const setStageMode = useStageStore((s) => s.setMode);
+  const setStageModeFromTool = useStageStore((s) => s.setModeFromTool);
   const stageMode = useStageStore((s) => s.current.mode);
 
   const services = useServicesStore((s) => s.services);
@@ -217,7 +218,7 @@ export function ChatDock() {
                 );
               }
               if (event.type === "stage_request" && event.stage) {
-                setStageMode(event.stage as StagePayload);
+                setStageModeFromTool(event.stage as StagePayload);
               }
               const eventRunId = (event.run_id as string) || canonicalRunId || clientToken;
               addEvent({ ...event, run_id: eventRunId });
@@ -261,6 +262,7 @@ export function ChatDock() {
       updateThreadName,
       stageMode,
       setStageMode,
+      setStageModeFromTool,
     ],
   );
 

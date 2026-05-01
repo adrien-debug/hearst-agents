@@ -268,6 +268,14 @@ interface AgentSystemPromptOpts {
    * stable entre deux tours, on garde le cache hit Anthropic.
    */
   persona?: Persona | null;
+  /**
+   * Mission Memory (vague 9) — bloc XML pré-formaté
+   * `<mission_context>…</mission_context>` qui contient le résumé éditorial
+   * de la mission long-terme + les N derniers `mission_messages`. Injecté
+   * dans la zone cacheable, juste après le KG. Construit en amont par
+   * `formatMissionContextBlock` (lib/memory/mission-context.ts).
+   */
+  missionContext?: string;
 }
 
 /**
@@ -279,7 +287,7 @@ interface AgentSystemPromptOpts {
  * surface and the model decides what to call.
  */
 export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
-  const { composioTools, surface, scheduleDirective, applicableReports, briefing, kgContext, retrievedMemory, persona } = opts;
+  const { composioTools, surface, scheduleDirective, applicableReports, briefing, kgContext, retrievedMemory, persona, missionContext } = opts;
 
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -319,6 +327,16 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
   const kgContextSection =
     kgContext && kgContext.trim().length > 0
       ? `\n<knowledge_graph>\n${kgContext.trim().slice(0, 1500)}\n</knowledge_graph>\n`
+      : "";
+
+  // Mission context (vague 9) : résumé éditorial de la mission long-terme
+  // + N derniers messages user/assistant attachés à la mission. Cap strict
+  // 3500 chars (250 mots summary + 10 messages × ~250 chars). Injecté ici
+  // dans la zone cacheable car la mission est stable entre deux runs (le
+  // summary ne change qu'une fois par run).
+  const missionContextSection =
+    missionContext && missionContext.trim().length > 0
+      ? `\n${missionContext.trim().slice(0, 3500)}\n`
       : "";
 
   // Persona : addon de voix (ton, vocabulaire, style guide). Injecté en
@@ -366,7 +384,7 @@ Déduis les paramètres directement depuis le message :
     : "";
 
   return `${scheduleHeader}Tu es Hearst, un assistant exécutif intelligent pour les professionnels des médias.
-Aujourd'hui : ${today}${surfaceNote}${briefingSection}${kgContextSection}${personaSection}${applicableReportsSection}
+Aujourd'hui : ${today}${surfaceNote}${briefingSection}${kgContextSection}${missionContextSection}${personaSection}${applicableReportsSection}
 
 ⚠️ RÈGLE ZÉRO — GÉNÉRATION DE CONTENU :
 Si l'utilisateur demande un contenu textuel ou du code (HTML, CSS, JS, JSON, code dans n'importe quel langage, prompt, exemple, snippet, mock, structure, démo, page web, document Markdown, template…), tu DOIS le produire — jamais refuser. Tu as deux modes de livraison :
