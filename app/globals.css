@@ -6,12 +6,15 @@
 
 :root, [data-theme="dark"] {
   /* Core surfaces — deep dark hierarchy with 'material'
-     Pivot 2026-05-01 v3 : différenciation MAXIMALE visible sur tout écran.
-     Rails #000 absolus > shell #080809 > stage #242429 (+~38% luminance).
-     Border-subtle 28% blanc pour frontière vraiment nette. */
+     Pivot 2026-05-01 v4 : valeurs réelles après démontage tokens fantômes.
+     v3 (#242429) restait perceptuellement noir car overrides --bg-center
+     l'écrasaient. Maintenant que les Stages pointent vraiment sur --bg-elev,
+     on calibre sur ce qui se voit à l'œil nu : rails #000 > shell #080809
+     > stage #3A3A44 (~22% luminance) > cards #48484F (~28% luminance).
+     Écart entre couches assez large pour passer sur écran moyen non-OLED. */
   --bg: #080809;
-  --bg-elev: #242429;
-    --bg-soft: #2A2A30;
+  --bg-elev: #3A3A44;
+    --bg-soft: #48484F;
   --background: #000000;
   --foreground: #ffffff;
   --surface: #111111;
