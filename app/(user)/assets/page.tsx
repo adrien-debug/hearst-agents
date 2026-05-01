@@ -8,7 +8,7 @@ import { RelativeTime } from "../components/RelativeTime";
 import { toast } from "@/app/hooks/use-toast";
 import { PageHeader } from "../components/PageHeader";
 import { ConfirmModal } from "../components/ConfirmModal";
-import { Action } from "../components/ui";
+import { Action, EmptyState, RowSkeleton } from "../components/ui";
 
 // Format V2 retourné par GET /api/v2/assets (Asset canonique).
 interface AssetListItem {
@@ -110,10 +110,10 @@ export default function AssetsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="t-13 font-light text-[var(--text-faint)] animate-pulse">
-          Chargement des assets…
-        </p>
+      <div className="flex-1 overflow-y-auto px-12 py-6">
+        <div className="max-w-4xl mx-auto">
+          <RowSkeleton count={6} height="var(--space-14)" />
+        </div>
       </div>
     );
   }
@@ -135,12 +135,10 @@ export default function AssetsPage() {
       <div className="flex-1 overflow-y-auto px-12 py-6">
         <div className="max-w-4xl mx-auto">
           {assets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-              <p className="t-15 font-light text-[var(--text-soft)]">Aucun asset</p>
-              <p className="t-13 text-[var(--text-muted)] max-w-md leading-relaxed">
-                Aucun asset pour l&apos;instant. Les rapports, briefs et documents générés par tes runs apparaîtront ici.
-              </p>
-            </div>
+            <EmptyState
+              title="Aucun asset"
+              description="Aucun asset pour l'instant. Les rapports, briefs et documents générés par tes runs apparaîtront ici."
+            />
           ) : (
             <div>
               <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-11 font-medium text-[var(--text-l1)] border-b border-[var(--border-soft)]">

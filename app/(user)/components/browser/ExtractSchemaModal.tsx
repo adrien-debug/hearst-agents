@@ -135,7 +135,7 @@ export function ExtractSchemaModal({
           </p>
         )}
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end" style={{ gap: "var(--space-2)" }}>
           <Action
             variant="ghost"
             tone="neutral"

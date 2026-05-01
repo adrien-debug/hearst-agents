@@ -8,7 +8,7 @@ import { GhostIconPencil, GhostIconPlay, GhostIconTrash, GhostIconX } from "../c
 import { useStageStore } from "@/stores/stage";
 import { PageHeader } from "../components/PageHeader";
 import { ConfirmModal } from "../components/ConfirmModal";
-import { Action } from "../components/ui";
+import { Action, EmptyState, RowSkeleton } from "../components/ui";
 
 type MissionOpsStatus = "idle" | "running" | "success" | "failed" | "blocked";
 
@@ -278,13 +278,8 @@ function MissionsPageContent() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8" style={{ background: "var(--bg)" }}>
-        <p className="ghost-meta-label">Chargement</p>
-        <div className="w-full max-w-xs space-y-2">
-          <div className="ghost-skeleton-bar" />
-          <div className="ghost-skeleton-bar" />
-          <div className="ghost-skeleton-bar" />
-        </div>
+      <div className="flex-1 overflow-y-auto px-12 py-6" style={{ background: "var(--bg)" }}>
+        <RowSkeleton count={5} height="var(--space-16)" />
       </div>
     );
   }
@@ -335,16 +330,11 @@ function MissionsPageContent() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-12 py-6">
         {missions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center gap-6">
-            <p className="ghost-meta-label">Registre vide</p>
-            <h2 className="t-28 font-medium tracking-tight">Aucune mission</h2>
-            <p className="t-13 font-light leading-relaxed text-[var(--text-muted)] max-w-md">
-              Les missions sont des tâches récurrentes planifiées. Exécution automatique selon calendrier.
-            </p>
-            <button type="button" onClick={openNewMission} className="t-13 font-light text-[var(--cykan)] border-b border-[var(--cykan)] bg-transparent hover:text-[var(--text)] hover:border-[var(--text)] transition-colors" style={{ paddingBottom: "var(--space-1)" }}>
-              Créer la première
-            </button>
-          </div>
+          <EmptyState
+            title="Aucune mission"
+            description="Les missions sont des tâches récurrentes planifiées. Exécution automatique selon calendrier."
+            cta={{ label: "Créer la première", onClick: openNewMission }}
+          />
         ) : (
           <div className="border-t border-[var(--line)]">
             <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 gap-y-0 px-2 py-3 t-11 font-medium text-[var(--text-l1)] border-b border-[var(--border-soft)]">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "@/app/hooks/use-toast";
 import { PageHeader } from "../components/PageHeader";
+import { EmptyState, RowSkeleton } from "../components/ui";
 
 type PlanStatus = "draft" | "ready" | "awaiting_approval" | "executing" | "completed" | "failed" | "degraded";
 type PlanType = "one_shot" | "mission" | "monitoring";
@@ -98,8 +99,8 @@ export default function PlannerPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[var(--bg)]">
-        <span className="text-[var(--text-muted)] t-13">Chargement des plans…</span>
+      <div className="flex-1 overflow-y-auto px-12 py-6 bg-[var(--bg)]">
+        <RowSkeleton count={5} height="var(--space-20)" />
       </div>
     );
   }
@@ -132,13 +133,11 @@ export default function PlannerPage() {
 
       <div className="flex-1 overflow-y-auto px-12 py-6">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-sm bg-[var(--card-flat-bg)] border border-[var(--line)] flex items-center justify-center mb-4">
-              <span className="t-24">◉</span>
-            </div>
-            <h2 className="t-13 font-medium text-[var(--text)] mb-2">Aucun plan</h2>
-            <p className="t-13 text-[var(--text-muted)]">Les plans d&apos;exécution apparaîtront ici</p>
-          </div>
+          <EmptyState
+            icon="◉"
+            title="Aucun plan"
+            description="Les plans d'exécution apparaîtront ici."
+          />
         ) : (
           <div className="space-y-3">
             {filtered.map((plan) => (

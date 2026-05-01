@@ -8,7 +8,7 @@ import { RelativeTime } from "../components/RelativeTime";
 import { RowActions, type RowAction } from "../components/RowActions";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { PageHeader } from "../components/PageHeader";
-import { Action } from "../components/ui";
+import { Action, EmptyState, RowSkeleton } from "../components/ui";
 
 interface RunListItem {
   id: string;
@@ -186,10 +186,10 @@ export default function RunsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="t-13 font-light text-[var(--text-faint)] animate-pulse">
-          Chargement des runs…
-        </p>
+      <div className="flex-1 overflow-y-auto px-12 py-6">
+        <div className="max-w-5xl mx-auto">
+          <RowSkeleton count={6} height="var(--space-14)" />
+        </div>
       </div>
     );
   }
@@ -211,12 +211,10 @@ export default function RunsPage() {
       <div className="flex-1 overflow-y-auto px-12 py-6">
         <div className="max-w-5xl mx-auto">
           {runs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-              <p className="t-15 font-light text-[var(--text-soft)]">Aucun run</p>
-              <p className="t-13 text-[var(--text-muted)] max-w-md leading-relaxed">
-                Aucun run pour l&apos;instant. Toutes les exécutions de tes prompts et missions apparaîtront ici.
-              </p>
-            </div>
+            <EmptyState
+              title="Aucun run"
+              description="Aucun run pour l'instant. Toutes les exécutions de tes prompts et missions apparaîtront ici."
+            />
           ) : (
             <div>
               {actionError && (

@@ -9,6 +9,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
+import { EmptyState, CardSkeleton } from "../components/ui";
 import { MarketplaceTemplateCard } from "../components/marketplace/MarketplaceTemplateCard";
 import type { MarketplaceTemplateSummary } from "@/lib/marketplace/types";
 
@@ -157,27 +158,13 @@ export default function MarketplacePage() {
         )}
 
         {isLoading ? (
-          <p className="t-11 font-light text-[var(--text-faint)]">
-            Chargement…
-          </p>
+          <CardSkeleton count={6} columns={3} height="var(--space-32)" />
         ) : isEmpty ? (
-          <div
-            className="flex flex-col items-center justify-center text-center"
-            style={{
-              gap: "var(--space-3)",
-              padding: "var(--space-12)",
-              border: "1px dashed var(--line-strong)",
-              borderRadius: "var(--radius-md)",
-            }}
-          >
-            <p className="t-15 font-light text-[var(--text-soft)]">
-              Aucun template trouvé
-            </p>
-            <p className="t-11 text-[var(--text-muted)]">
-              Sois le premier à publier — depuis le Studio, le Builder ou la
-              page Personas.
-            </p>
-          </div>
+          <EmptyState
+            title="Aucun template trouvé"
+            description="Sois le premier à publier — depuis le Studio, le Builder ou la page Personas."
+            density="compact"
+          />
         ) : (
           <>
             {featured.length > 0 && (

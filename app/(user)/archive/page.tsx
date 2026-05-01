@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { useNavigationStore } from "@/stores/navigation";
 import { useStageStore } from "@/stores/stage";
 import { PageHeader } from "../components/PageHeader";
+import { EmptyState } from "../components/ui";
 
 const FORMATTER = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
@@ -78,11 +79,10 @@ export default function ArchivePage() {
 
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="t-15 font-light text-[var(--text-soft)]">
-              {query ? "Aucun résultat" : "Archive vide"}
-            </p>
-          </div>
+          <EmptyState
+            title={query ? "Aucun résultat" : "Archive vide"}
+            description={query ? undefined : "Toutes tes conversations passées et leurs assets vivront ici."}
+          />
         ) : (
           <div className="max-w-3xl mx-auto px-12 py-6 space-y-2">
             {filtered.map((thread) => (

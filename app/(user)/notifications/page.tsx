@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { useNotificationsStore } from "@/stores/notifications";
 import type { AppNotification } from "@/stores/notifications";
 import { PageHeader } from "../components/PageHeader";
+import { EmptyState, RowSkeleton } from "../components/ui";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -192,29 +193,20 @@ export default function NotificationsPage() {
 
         {/* État chargement */}
         {loading && filtered.length === 0 && (
-          <div className="flex items-center justify-center py-8">
-            <p className="t-11 text-[var(--text-faint)]">Chargement…</p>
-          </div>
+          <RowSkeleton count={4} height="var(--space-20)" />
         )}
 
         {/* État vide */}
         {!loading && filtered.length === 0 && (
-          <div
-            className="flex flex-col items-center text-center py-16"
-            style={{ gap: "var(--space-3)" }}
-          >
-            <span className="text-[var(--text-ghost)]" aria-hidden>
-              <BellIcon />
-            </span>
-            <p className="t-13 text-[var(--text-faint)]">
-              Aucune notification
-            </p>
-            {(severityFilter !== "all" || kindFilter !== "all") && (
-              <p className="t-11 text-[var(--text-ghost)]">
-                Modifie les filtres pour élargir la sélection.
-              </p>
-            )}
-          </div>
+          <EmptyState
+            icon={<BellIcon />}
+            title="Aucune notification"
+            description={
+              severityFilter !== "all" || kindFilter !== "all"
+                ? "Modifie les filtres pour élargir la sélection."
+                : undefined
+            }
+          />
         )}
 
         {/* Liste */}

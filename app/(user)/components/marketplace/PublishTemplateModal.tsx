@@ -213,17 +213,17 @@ export function PublishTemplateModal({
 
         <div
           className="flex items-center justify-end"
-          style={{ gap: "var(--space-3)" }}
+          style={{ gap: "var(--space-2)" }}
         >
-          <button
-            type="button"
+          <Action
+            variant="secondary"
+            tone="neutral"
+            size="sm"
             onClick={onClose}
             disabled={busy}
-            className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--text-soft)]"
-            style={{ background: "transparent", border: "none", cursor: "pointer" }}
           >
             Annuler
-          </button>
+          </Action>
           <Action
             variant="primary"
             tone="brand"

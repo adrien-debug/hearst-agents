@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import type { ApplicableReport } from "@/lib/reports/catalog";
 import { ReportCard, ReportCardSkeleton } from "@/app/(user)/components/reports/ReportCard";
 import { PageHeader } from "@/app/(user)/components/PageHeader";
-import { Action } from "@/app/(user)/components/ui";
+import { Action, EmptyState } from "@/app/(user)/components/ui";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -346,25 +346,14 @@ export default function ReportsDiscoveryPage() {
 
         {/* Empty — filtre actif sans résultats */}
         {!loading && !error && reports.length > 0 && filtered.length === 0 && (
-          <div
-            className="flex flex-col items-center gap-4 py-16 text-center"
-            data-testid="reports-empty-filtered"
-          >
-            <p className="t-13 font-light" style={{ color: "var(--text-faint)" }}>
-              Aucun rapport dans cette catégorie.
-            </p>
-            <button
-              type="button"
-              onClick={() => { setDomainFilter("all"); setStatusFilter("all"); }}
-              className="t-13 font-medium transition-colors"
-              style={{
-                color: "var(--cykan)",
-                transitionDuration: "var(--duration-base)",
-              }}
-            >
-              Réinitialiser les filtres
-            </button>
-          </div>
+          <EmptyState
+            testId="reports-empty-filtered"
+            title="Aucun rapport dans cette catégorie"
+            cta={{
+              label: "Réinitialiser les filtres",
+              onClick: () => { setDomainFilter("all"); setStatusFilter("all"); },
+            }}
+          />
         )}
 
         {/* Section : Vos rapports (custom specs) */}

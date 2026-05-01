@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import { Action } from "./ui";
 
 export interface ConfirmModalProps {
   open: boolean;
@@ -105,50 +106,27 @@ export function ConfirmModal({
           </p>
         )}
         <div className="flex items-center justify-end" style={{ gap: "var(--space-2)" }}>
-          <button
-            type="button"
+          <Action
+            variant="secondary"
+            tone="neutral"
+            size="sm"
             onClick={onCancel}
             disabled={loading}
-            data-testid="confirm-modal-cancel"
-            className="t-11 font-light"
-            style={{
-              paddingLeft: "var(--space-3)",
-              paddingRight: "var(--space-3)",
-              paddingTop: "var(--space-1)",
-              paddingBottom: "var(--space-1)",
-              background: "transparent",
-              color: "var(--text-faint)",
-              border: "1px solid var(--border-shell)",
-              borderRadius: "var(--radius-xs)",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.5 : 1,
-              transition: "color var(--duration-base) var(--ease-standard)",
-            }}
+            testId="confirm-modal-cancel"
           >
             {cancelLabel}
-          </button>
-          <button
-            type="button"
+          </Action>
+          <Action
+            variant="primary"
+            tone={isDanger ? "danger" : "brand"}
+            size="sm"
             onClick={onConfirm}
+            loading={loading}
             disabled={loading}
-            data-testid="confirm-modal-confirm"
-            className="t-11 font-light"
-            style={{
-              paddingLeft: "var(--space-3)",
-              paddingRight: "var(--space-3)",
-              paddingTop: "var(--space-1)",
-              paddingBottom: "var(--space-1)",
-              background: isDanger ? "var(--danger)" : "var(--cykan)",
-              color: "var(--bg-center)",
-              border: "1px solid " + (isDanger ? "var(--danger)" : "var(--cykan)"),
-              borderRadius: "var(--radius-xs)",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.6 : 1,
-              transition: "opacity var(--duration-base) var(--ease-standard)",
-            }}
+            testId="confirm-modal-confirm"
           >
-            {loading ? "…" : confirmLabel}
-          </button>
+            {confirmLabel}
+          </Action>
         </div>
       </div>
     </div>

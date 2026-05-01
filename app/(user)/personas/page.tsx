@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { PersonaABTestPanel } from "../components/PersonaABTestPanel";
 import { PublishTemplateModal } from "../components/marketplace/PublishTemplateModal";
-import { Action } from "../components/ui";
+import { Action, EmptyState, CardSkeleton } from "../components/ui";
 import type { Persona, PersonaTone } from "@/lib/personas/types";
 import { PERSONA_TONES } from "@/lib/personas/types";
 
@@ -143,13 +143,13 @@ export default function PersonasPage() {
         <section className="flex flex-col" style={{ gap: "var(--space-3)" }}>
           <h2 className="t-15 font-medium text-[var(--text)]">Personas</h2>
           {personas === null ? (
-            <p className="t-11 font-light text-[var(--text-faint)]">
-              Chargement…
-            </p>
+            <CardSkeleton count={6} columns={3} height="var(--space-24)" />
           ) : personas.length === 0 ? (
-            <p className="t-11 text-[var(--text-muted)]">
-              Aucune persona — utilise le bouton ci-dessus pour en créer une.
-            </p>
+            <EmptyState
+              title="Aucune persona"
+              description="Utilise le bouton ci-dessus pour créer ta première voix éditoriale."
+              density="compact"
+            />
           ) : (
             <ul
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
