@@ -160,7 +160,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         style={{ gap: "var(--space-6)", paddingBottom: "var(--space-4)" }}
       >
         <header className="flex items-baseline justify-between" style={{ gap: "var(--space-6)" }}>
-          <span className="poster-eyebrow">Brief du jour</span>
+          <h2 className="poster-eyebrow">Brief du jour</h2>
           <span className="poster-eyebrow" style={{ color: "var(--text-faint)" }}>
             {dateParts.dayMonthShort}
           </span>
@@ -207,9 +207,9 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
 
         {data.suggestions.length > 0 && (
           <div className="flex flex-col">
-            <span className="poster-eyebrow" style={{ marginBottom: "var(--space-3)" }}>
+            <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-3)" }}>
               Suggestions
-            </span>
+            </h2>
             {data.suggestions.map((s) => (
               <button key={s.id} type="button" className="cockpit-action">
                 <span className="ca-label">{s.title}</span>
@@ -221,9 +221,9 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
 
         {data.watchlist.length > 0 && (
           <div className="flex flex-col">
-            <span className="poster-eyebrow" style={{ marginBottom: "var(--space-4)" }}>
+            <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-4)" }}>
               Watchlist
-            </span>
+            </h2>
             <div className="flex flex-wrap" style={{ gap: "var(--space-8)" }}>
               {data.watchlist.map((w) => (
                 <div key={w.id} className="kpi-tile">
