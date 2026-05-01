@@ -6,12 +6,12 @@
 
 :root, [data-theme="dark"] {
   /* Core surfaces — deep dark hierarchy with 'material'
-     Pivot 2026-05-01 v2 : valeurs boostées pour différenciation visible
-     même sur LCD non-OLED. Rails #000 (noir absolu) > shell #050505 >
-     stage --bg-elev #1A1A1F (+24% luminance, clairement scène mise en avant). */
-  --bg: #050505;
-  --bg-elev: #1A1A1F;
-    --bg-soft: #1F1F24;
+     Pivot 2026-05-01 v3 : différenciation MAXIMALE visible sur tout écran.
+     Rails #000 absolus > shell #080809 > stage #242429 (+~38% luminance).
+     Border-subtle 28% blanc pour frontière vraiment nette. */
+  --bg: #080809;
+  --bg-elev: #242429;
+    --bg-soft: #2A2A30;
   --background: #000000;
   --foreground: #ffffff;
   --surface: #111111;
@@ -303,7 +303,7 @@
   --shadow-playhead-cykan: 0 0 6px var(--cykan);
 
   /* ─── Hearst Connect — Border strata ────────────────────────── */
-  --border-subtle: rgba(255, 255, 255, 0.18);
+  --border-subtle: rgba(255, 255, 255, 0.28);
   --border-default: rgba(255, 255, 255, 0.12);
   --border-strong: rgba(255, 255, 255, 0.14);
   --border-focus: rgba(255, 255, 255, 0.40);

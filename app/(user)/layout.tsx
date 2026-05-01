@@ -123,9 +123,10 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
               style={{
                 background: "var(--bg-elev)",
                 color: "var(--text)",
-                // Matière subtile : highlight top 1px pour donner du relief sans
-                // chrome supplémentaire. Pivot 2026-05-01 — option E.
-                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.025)",
+                // Matière : highlight top 1px + side highlights pour donner
+                // du relief sans chrome supplémentaire. Pivot 2026-05-01 v3.
+                boxShadow:
+                  "inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 1px 0 0 rgba(255, 255, 255, 0.04), inset -1px 0 0 rgba(255, 255, 255, 0.04)",
               }}
             >
               {/* Banner alerte tokens OAuth expirants — discret, dismissable */}
