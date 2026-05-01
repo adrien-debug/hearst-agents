@@ -53,27 +53,27 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
 
   return (
     <div
-      className="flex-1 flex flex-col min-h-0"
+      className="flex-1 flex flex-col min-h-0 overflow-hidden"
       style={{
         width: "100%",
         maxWidth: "var(--width-poster-body)",
         marginInline: "auto",
-        padding: "var(--space-12) var(--space-16) var(--space-8)",
+        padding: "var(--space-6) var(--space-12) var(--space-4)",
       }}
     >
       {/* ─── ZONE A : Header ──────────────────────────────────────── */}
-      <header className="flex-none flex flex-col" style={{ gap: "var(--space-4)" }}>
+      <header className="flex-none flex flex-col" style={{ gap: "var(--space-3)" }}>
         <span className="poster-eyebrow">Hearst · Cockpit</span>
         <div
           className="grid"
           style={{
             gridTemplateColumns: "auto 1fr",
-            gap: "var(--space-16)",
+            gap: "var(--space-10)",
             alignItems: "start",
           }}
         >
           {/* Col gauche : date + time-tick */}
-          <div className="flex flex-col" style={{ gap: "var(--space-2)" }}>
+          <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
             <span className="poster-display is-display-l" style={{ color: "var(--text)" }}>
               {dateParts.weekday}
             </span>
@@ -89,7 +89,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
           </div>
 
           {/* Col droite : greeting + 3 KPI tiles + observation/hospitality */}
-          <div className="flex flex-col" style={{ gap: "var(--space-5)" }}>
+          <div className="flex flex-col" style={{ gap: "var(--space-3)" }}>
             <h1 className="poster-greeting" style={{ color: "var(--text)" }}>
               Bonjour {firstName}.
             </h1>
@@ -157,12 +157,12 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         </div>
       </header>
 
-      <hr className="poster-rule" style={{ margin: "var(--space-6) 0" }} />
+      <hr className="poster-rule" style={{ margin: "var(--space-4) 0" }} />
 
       {/* ─── ZONE B : Brief / Suggestions / Watchlist ─────────────── */}
       <section
-        className="flex-1 min-h-0 overflow-y-auto flex flex-col"
-        style={{ gap: "var(--space-6)", paddingBottom: "var(--space-4)" }}
+        className="flex-1 min-h-0 overflow-hidden flex flex-col"
+        style={{ gap: "var(--space-4)" }}
       >
         <header className="flex items-baseline justify-between" style={{ gap: "var(--space-6)" }}>
           <h2 className="poster-eyebrow">Brief du jour</h2>
@@ -211,12 +211,12 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         )}
 
         {data.suggestions.length > 0 && (
-          <div className="flex flex-col">
-            <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-3)" }}>
+          <div className="flex flex-col min-h-0">
+            <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-2)" }}>
               Suggestions
             </h2>
             {data.suggestions.map((s) => (
-              <button key={s.id} type="button" className="cockpit-action">
+              <button key={s.id} type="button" className="cockpit-action is-compact">
                 <span className="ca-label">{s.title}</span>
                 <span className="ca-hotkey">{s.status === "ready" ? "Prêt" : "Partiel"}</span>
               </button>
@@ -225,8 +225,8 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         )}
 
         {data.watchlist.length > 0 && (
-          <div className="flex flex-col">
-            <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-4)" }}>
+          <div className="flex flex-col min-h-0">
+            <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-3)" }}>
               Watchlist
             </h2>
             <div
@@ -265,8 +265,8 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         className="flex-none flex items-center"
         style={{
           gap: "var(--space-6)",
-          marginTop: "var(--space-4)",
-          paddingTop: "var(--space-6)",
+          marginTop: "var(--space-3)",
+          paddingTop: "var(--space-3)",
           borderTop: "1px solid var(--line-strong)",
         }}
       >
