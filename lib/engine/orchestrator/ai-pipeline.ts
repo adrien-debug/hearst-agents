@@ -41,6 +41,7 @@ import { getApplicableReports } from "@/lib/reports/catalog";
 import { randomUUID } from "crypto";
 import { buildProposeReportSpecTool } from "@/lib/reports/spec/llm-tool";
 import { defaultMetrics as defaultLlmMetrics } from "@/lib/llm/metrics";
+import { canonicalHash } from "@/lib/utils/canonical-hash";
 import {
   getPersonaById,
   getDefaultPersona,
@@ -665,7 +666,11 @@ export async function runAiPipeline(
     // including synthetic retrieval / research.)
     let assistantTextBuffer = "";
 
-    // Track streaming token count for runaway detection
+    // Track streaming token count for runaway detection.
+    // Estimate live char-based (1 token ≈ 3 chars en français — Claude
+    // BPE tokenize ~3.0-3.5 ch/tok pour FR vs ~4.0 pour EN ; on prend la
+    // borne basse → protection plus tôt). Réajusté vers la valeur exacte
+    // à chaque event "finish-step" via `usage.outputTokens`.
     let streamingTokenCount = 0;
     const MAX_STREAMING_TOKENS = 10000; // Safety limit above maxOutputTokens
 
@@ -674,8 +679,7 @@ export async function runAiPipeline(
         case "text-delta": {
           assistantTextBuffer += event.text;
 
-          // Rough token estimation (1 token ≈ 4 chars for English/French)
-          streamingTokenCount += Math.max(1, Math.ceil(event.text.length / 4));
+          streamingTokenCount += Math.max(1, Math.ceil(event.text.length / 3));
 
           // Runaway generation detection: early abort if greatly exceeding limit
           if (streamingTokenCount > MAX_STREAMING_TOKENS) {
@@ -710,8 +714,10 @@ export async function runAiPipeline(
             isWriteAction(event.toolName) && args._preview !== false;
           const skip = isInternalMetaTool(event.toolName) || isPreviewWrite;
 
-          // Loop detection: check if same tool with same args is called repeatedly
-          const argsHash = JSON.stringify(args);
+          // Loop detection: check if same tool with same args is called repeatedly.
+          // Hash canonique (clés triées + sha256) pour éviter les faux négatifs
+          // dus à l'ordre d'insertion des clés ou aux floats équivalents.
+          const argsHash = canonicalHash(args);
           const loopKey = `${event.toolName}:${argsHash}`;
           const loopCount = (toolCallLoopDetector.get(loopKey) ?? 0) + 1;
           toolCallLoopDetector.set(loopKey, loopCount);
@@ -806,6 +812,17 @@ export async function runAiPipeline(
         case "error":
           console.error("[AiPipeline] stream error:", event.error);
           break;
+
+        // Phase C2 — bascule du compteur runaway sur l'usage exact dès que
+        // dispo (par step LLM), au lieu de garder l'estimate chars/3. Plus
+        // précis en mid-stream sur les longs runs multi-step.
+        case "finish-step": {
+          const ev = event as unknown as { usage?: { outputTokens?: number } };
+          if (typeof ev.usage?.outputTokens === "number") {
+            streamingTokenCount = Math.max(streamingTokenCount, ev.usage.outputTokens);
+          }
+          break;
+        }
 
         default:
           break;

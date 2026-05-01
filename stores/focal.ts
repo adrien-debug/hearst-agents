@@ -81,15 +81,30 @@ interface FocalState {
   hide: () => void;
 
   /**
-   * Monotonic counter incremented on every explicit `setFocal` call (i.e.
-   * user clicked an asset/mission card). Lu par `hydrateThreadState` pour
-   * protéger pendant 30s le focal user-cliqué contre l'écrasement par le
-   * polling SSE. Auto-rehydratation (hydrateThreadState) does NOT bump this.
+   * Identifiant pin du focal user-cliqué (sourceAssetId ou missionId). Lu par
+   * `hydrateThreadState` pour protéger le choix utilisateur contre
+   * l'écrasement par le polling SSE.
+   *
+   * Phase C3 (2026-05-01) : remplace l'ancien timer 30s `viewRequestedAt`.
+   * L'ancien fonctionnait sur un timeout fixe → fragile (race si SSE poll
+   * arrive à T+31s sur un focal cliqué T+0s ; et user qui revient 5min
+   * plus tard se fait écraser sans rien avoir fait). Pin explicite : tant
+   * que l'user n'a pas `clearFocal()` ou `setFocal(autre)`, son choix
+   * reste. Plus de magic 30s.
    */
-  viewRequestedAt: number;
+  pinnedFocalKey: string | null;
 
   // Thread rehydratation — replaces focal and secondary atomically
   hydrateThreadState: (focal: FocalObject | null, secondary: FocalObject[]) => void;
+}
+
+/**
+ * Dérive la clé de pin d'un focal. Préférence sourceAssetId > missionId > id.
+ * Retourne null si le focal n'a aucun de ces identifiants stables.
+ */
+function pinKeyFor(focal: FocalObject | null): string | null {
+  if (!focal) return null;
+  return focal.sourceAssetId ?? focal.missionId ?? null;
 }
 
 // Helper to detect error content
@@ -115,7 +130,7 @@ export const useFocalStore = create<FocalState>((set, get) => ({
   isFocused: false,
   hasContent: false,
   isVisible: false,
-  viewRequestedAt: 0,
+  pinnedFocalKey: null,
 
   // Actions
   setFocal: (focal) => {
@@ -137,11 +152,18 @@ export const useFocalStore = create<FocalState>((set, get) => ({
       isFocused: !!focal,
       hasContent: !!focal?.body || !!focal?.summary,
       isVisible: !!focal,
-      viewRequestedAt: Date.now(),
+      pinnedFocalKey: pinKeyFor(focal),
     });
   },
 
-  clearFocal: () => set({ focal: null, isFocused: false, hasContent: false, isVisible: false }),
+  clearFocal: () =>
+    set({
+      focal: null,
+      isFocused: false,
+      hasContent: false,
+      isVisible: false,
+      pinnedFocalKey: null,
+    }),
 
   show: () => set((state) => (state.focal ? { isVisible: true } : {})),
   hide: () => set({ isVisible: false }),
@@ -151,21 +173,22 @@ export const useFocalStore = create<FocalState>((set, get) => ({
   // Important: this is called by the SSE poll every ~1s, so it must NOT
   // overwrite a focal the user just opened by clicking an asset / mission
   // card in the right panel — otherwise the preview vanishes a second after
-  // it's clicked. We preserve the user-selected focal if it was set within
-  // the last 30s and points to a different asset/mission than the SSE one.
+  // it's clicked.
+  //
+  // Phase C3 : pin explicite par sourceAssetId / missionId (cf.
+  // `pinnedFocalKey`). Tant que l'user n'a pas changé / clear son focal,
+  // les SSE updates ne peuvent pas l'écraser. Si le SSE update porte le
+  // même pin (même asset/mission), il peut updater le contenu (status,
+  // sections) — sinon il ne touche que `secondary`.
   hydrateThreadState: (newFocal, newSecondary) => {
     const state = get();
-    const now = Date.now();
-    const userPicked =
-      !!state.focal &&
-      state.viewRequestedAt > 0 &&
-      now - state.viewRequestedAt < 30_000 &&
-      (!!state.focal.sourceAssetId || !!state.focal.missionId);
-    const sameAsCurrent =
-      !!newFocal && !!state.focal && newFocal.id === state.focal.id;
+    const pin = state.pinnedFocalKey;
+    const incomingKey = pinKeyFor(newFocal);
+    const sameAsPinned = pin !== null && incomingKey === pin;
 
-    if (userPicked && !sameAsCurrent) {
-      // Keep the user's focal selection, only update secondary list.
+    if (pin !== null && !sameAsPinned) {
+      // L'user a un focal pin actif → on garde son focal, on update juste
+      // la liste secondary (l'historique reste à jour).
       set({ secondary: newSecondary.slice(0, 3) });
       return;
     }
@@ -178,6 +201,7 @@ export const useFocalStore = create<FocalState>((set, get) => ({
         secondary: newSecondary.slice(0, 3),
         isFocused: false,
         hasContent: false,
+        pinnedFocalKey: null,
       });
       return;
     }
@@ -188,6 +212,10 @@ export const useFocalStore = create<FocalState>((set, get) => ({
       secondary: newSecondary.slice(0, 3),
       isFocused: !!newFocal,
       hasContent: !!newFocal?.body || !!newFocal?.summary,
+      // Si le SSE refresh le focal pin (même asset/mission), on garde le
+      // pin actif. Sinon on le clear : le focal vient du serveur, pas
+      // d'un clic user.
+      pinnedFocalKey: sameAsPinned ? pin : null,
     });
   },
 }));

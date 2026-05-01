@@ -41,7 +41,7 @@ const resetStores = () => {
     isFocused: false,
     hasContent: false,
     isVisible: false,
-    viewRequestedAt: 0,
+    pinnedFocalKey: null,
   });
   useNavigationStore.setState((s) => ({ ...s, activeThreadId: null }));
 };

@@ -13,6 +13,7 @@ import { VoiceStage } from "./stages/VoiceStage";
 import { SimulationStage } from "./stages/SimulationStage";
 import { ArtifactStage } from "./stages/ArtifactStage";
 import type { Message } from "@/lib/core/types";
+import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
 interface StageProps {
   /** Messages du thread actif (utilisé par ChatStage). */
@@ -20,6 +21,12 @@ interface StageProps {
   /** Handler quick-reply (consommé par ChatMessages). */
   onSubmit: (message: string) => Promise<void>;
   hasMessages: boolean;
+  /**
+   * Phase C5 — payload Cockpit pré-fetché côté serveur. Transmis à
+   * CockpitStage pour skip son fetch initial → gain LCP. Null = client
+   * fait son fetch normal en fallback.
+   */
+  initialCockpitData?: CockpitTodayPayload | null;
 }
 
 /**
@@ -32,7 +39,7 @@ export function Stage(props: StageProps) {
 
   switch (current.mode) {
     case "cockpit":
-      return <CockpitStage />;
+      return <CockpitStage initialData={props.initialCockpitData ?? null} />;
     case "chat":
       return (
         <ChatStage

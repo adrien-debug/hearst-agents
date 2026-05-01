@@ -25,9 +25,19 @@ import type { CockpitTodayPayload } from "@/lib/cockpit/today";
  * Empty states : chaque section a son CTA contextuel (pas de glyphes seuls
  * selon la règle CLAUDE.md §5).
  */
-export function CockpitStage() {
-  const [data, setData] = useState<CockpitTodayPayload | null>(null);
-  const [loading, setLoading] = useState(true);
+interface CockpitStageProps {
+  /**
+   * Phase C5 — payload Cockpit pré-fetché par le RSC parent (`page.tsx`).
+   * Si fourni, on skip le fetch initial et on rend les sections live au
+   * first paint → gain LCP. Null = client fetch normal en fallback (cas
+   * scope dev / hot reload / refetch après run).
+   */
+  initialData?: CockpitTodayPayload | null;
+}
+
+export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
+  const [data, setData] = useState<CockpitTodayPayload | null>(initialData);
+  const [loading, setLoading] = useState(initialData === null);
   const [error, setError] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
@@ -45,6 +55,10 @@ export function CockpitStage() {
   }, []);
 
   useEffect(() => {
+    // Si le RSC parent a déjà fourni initialData, on skip le fetch initial.
+    // Le bouton refresh + onInboxRefreshed appellent quand même `refetch`.
+    if (initialData !== null) return;
+
     let cancelled = false;
     const run = async () => {
       try {
@@ -65,7 +79,7 @@ export function CockpitStage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialData]);
 
   const isHospitality = data?.industry === "hospitality";
 
