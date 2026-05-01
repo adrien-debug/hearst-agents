@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, lazy, Suspense } from "react";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
 import type { ServiceDefinition } from "@/lib/integrations/types";
 import { ContextChips } from "./chat/ContextChips";
 import { readAssetDragPayload, type AssetDragPayload } from "./use-asset-drag";
-import { DocumentParseModal } from "./DocumentParseModal";
 import { PersonaSwitcher } from "./PersonaSwitcher";
+
+// Lazy-load : modal rendu uniquement à la première ouverture (gain bundle
+// initial du chat ~5-8 KB selon le contenu de DocumentParseModal).
+const DocumentParseModal = lazy(() =>
+  import("./DocumentParseModal").then((m) => ({ default: m.DocumentParseModal })),
+);
 
 interface ChatInputProps {
   onSubmit: (
@@ -709,16 +714,20 @@ export function ChatInput({
           </p>
         </div>
       </div>
-      <DocumentParseModal
-        open={docParseOpen}
-        onClose={() => setDocParseOpen(false)}
-        onSuccess={() => {
-          setDocParseMessage(
-            "Document en parsing — il apparaîtra dans tes assets.",
-          );
-          setTimeout(() => setDocParseMessage(null), 4000);
-        }}
-      />
+      {docParseOpen && (
+        <Suspense fallback={null}>
+          <DocumentParseModal
+            open={docParseOpen}
+            onClose={() => setDocParseOpen(false)}
+            onSuccess={() => {
+              setDocParseMessage(
+                "Document en parsing — il apparaîtra dans tes assets.",
+              );
+              setTimeout(() => setDocParseMessage(null), 4000);
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

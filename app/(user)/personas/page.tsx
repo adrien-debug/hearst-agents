@@ -11,6 +11,7 @@ import { PageHeader } from "../components/PageHeader";
 import { PersonaABTestPanel } from "../components/PersonaABTestPanel";
 import { PublishTemplateModal } from "../components/marketplace/PublishTemplateModal";
 import { Action, EmptyState, CardSkeleton } from "../components/ui";
+import { PersonaCard } from "../components/personas/PersonaCard";
 import type { Persona, PersonaTone } from "@/lib/personas/types";
 import { PERSONA_TONES } from "@/lib/personas/types";
 
@@ -156,75 +157,17 @@ export default function PersonasPage() {
               style={{ gap: "var(--space-3)" }}
             >
               {personas.map((p) => (
-                <li
+                <PersonaCard
                   key={p.id}
-                  className="flex flex-col"
-                  style={{
-                    gap: "var(--space-2)",
-                    padding: "var(--space-4)",
-                    border: p.isDefault ? "1px solid var(--cykan)" : "1px solid var(--line-strong)",
-                    borderRadius: "var(--radius-md)",
-                    background: p.isDefault ? "var(--cykan-surface)" : "var(--bg-elev)",
+                  persona={p}
+                  busy={busy}
+                  onEdit={(persona) => {
+                    setCreating(false);
+                    setEditing(persona);
                   }}
-                >
-                  <header
-                    className="flex items-baseline justify-between"
-                    style={{ gap: "var(--space-2)" }}
-                  >
-                    <span className="t-13 font-medium text-[var(--text)]">{p.name}</span>
-                    {p.isDefault && (
-                      <span className="t-11 font-medium text-[var(--cykan)]">
-                        Par défaut
-                      </span>
-                    )}
-                  </header>
-                  {p.description && (
-                    <p className="t-11 text-[var(--text-muted)]">{p.description}</p>
-                  )}
-                  <div
-                    className="flex flex-wrap"
-                    style={{ gap: "var(--space-2)" }}
-                  >
-                    {p.tone && <Chip>{p.tone}</Chip>}
-                    {p.surface && <Chip>surface · {p.surface}</Chip>}
-                    {p.id.startsWith("builtin:") && <Chip>builtin</Chip>}
-                  </div>
-                  <div
-                    className="flex items-center mt-(--space-2)"
-                    style={{ gap: "var(--space-2)" }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCreating(false);
-                        setEditing(p);
-                      }}
-                      disabled={p.id.startsWith("builtin:") || busy}
-                      className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors duration-base"
-                      style={{ background: "transparent", border: "none", cursor: "pointer" }}
-                    >
-                      Éditer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => remove(p)}
-                      disabled={p.id.startsWith("builtin:") || busy}
-                      className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors duration-base"
-                      style={{ background: "transparent", border: "none", cursor: "pointer" }}
-                    >
-                      Supprimer
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPublishing(p)}
-                      disabled={busy}
-                      className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors duration-base"
-                      style={{ background: "transparent", border: "none", cursor: "pointer" }}
-                    >
-                      Publier
-                    </button>
-                  </div>
-                </li>
+                  onRemove={remove}
+                  onPublish={setPublishing}
+                />
               ))}
             </ul>
           )}
@@ -259,21 +202,6 @@ export default function PersonasPage() {
         )}
       </div>
     </div>
-  );
-}
-
-function Chip({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      className="t-11 font-light text-[var(--text-faint)]"
-      style={{
-        padding: "var(--space-1) var(--space-2)",
-        border: "1px solid var(--line-strong)",
-        borderRadius: "var(--radius-pill)",
-      }}
-    >
-      {children}
-    </span>
   );
 }
 

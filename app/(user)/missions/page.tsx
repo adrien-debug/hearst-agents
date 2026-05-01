@@ -5,28 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MissionEditor } from "../components/MissionEditor";
 import { toast } from "@/app/hooks/use-toast";
 import { usePollingEffect } from "@/app/hooks/use-polling-effect";
-import { GhostIconPencil, GhostIconPlay, GhostIconTrash, GhostIconX } from "../components/ghost-icons";
+import { GhostIconX } from "../components/ghost-icons";
 import { useStageStore } from "@/stores/stage";
 import { PageHeader } from "../components/PageHeader";
 import { ConfirmModal } from "../components/ConfirmModal";
 import { Action, EmptyState, RowSkeleton } from "../components/ui";
-
-type MissionOpsStatus = "idle" | "running" | "success" | "failed" | "blocked";
-
-interface Mission {
-  id: string;
-  name: string;
-  description: string;
-  status: "active" | "paused" | "error";
-  lastRun?: string;
-  nextRun?: string;
-  frequency: string;
-  enabled: boolean;
-  input?: string; // From API - mapped to prompt in editor
-  opsStatus?: MissionOpsStatus;
-  lastError?: string;
-  runningSince?: number;
-}
+import { MissionRow, type Mission, type MissionOpsStatus } from "../components/missions/MissionRow";
 
 function MissionsPageContent() {
   const router = useRouter();
@@ -332,103 +316,18 @@ function MissionsPageContent() {
               <span className="text-right">État</span>
               <span className="text-right">Actions</span>
             </div>
-            {missions.map((mission) => {
-              const effectiveOpsStatus = mission.opsStatus || "idle";
-              const statusLine =
-                effectiveOpsStatus === "running"
-                  ? "border-[var(--cykan)] text-[var(--cykan)]"
-                  : effectiveOpsStatus === "success"
-                    ? "border-[var(--money)] text-[var(--money)]"
-                    : effectiveOpsStatus === "failed"
-                      ? "border-[var(--danger)] text-[var(--danger)]"
-                      : effectiveOpsStatus === "blocked"
-                        ? "border-[var(--warn)] text-[var(--warn)]"
-                        : "border-[var(--line-strong)] text-[var(--text-muted)]";
-
-              const opsStatusLabel =
-                effectiveOpsStatus === "running"
-                  ? "En cours"
-                  : effectiveOpsStatus === "success"
-                    ? "Réussi"
-                    : effectiveOpsStatus === "failed"
-                      ? "Échec"
-                      : effectiveOpsStatus === "blocked"
-                        ? "Bloqué"
-                        : "En pause";
-
-              return (
-                <div
-                  key={mission.id}
-                  className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-6 items-start py-6 border-b border-[var(--border-soft)] px-2 group transition-colors"
-                >
-                  <div className="min-w-0 flex gap-4">
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(mission)}
-                      className={`w-2 h-2 rounded-pill mt-1 shrink-0 transition-colors ${
-                        mission.enabled ? "bg-[var(--money)]" : "bg-[var(--text-faint)]"
-                      }`}
-                      title={mission.enabled ? "Désactiver" : "Activer"}
-                      aria-label={mission.enabled ? "Désactiver" : "Activer"}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRowOpen(mission)}
-                      className="min-w-0 text-left group/open cursor-pointer"
-                      title={`Open ${mission.name}`}
-                    >
-                      <p className="t-9 font-light text-[var(--text-faint)] mb-1">Réf {mission.id.slice(0, 8)}</p>
-                      <h3 className="t-13 font-medium text-[var(--text)] tracking-tight group-hover/open:text-[var(--cykan)] transition-colors">{mission.name}</h3>
-                      <p className="t-11 font-light leading-relaxed text-[var(--text-muted)] mt-1">{mission.description}</p>
-                      {mission.lastError && (
-                        <p className="t-10 font-mono text-[var(--danger)] truncate mt-2 border-b border-[var(--danger)] pb-0.5 inline-block max-w-full" title={mission.lastError}>
-                          Erreur : {mission.lastError}
-                        </p>
-                      )}
-                    </button>
-                  </div>
-                  <div className="text-right space-y-2">
-                    <span className={`inline-block t-9 font-medium border-b pb-0.5 ${statusLine}`}>
-                      {opsStatusLabel}
-                    </span>
-                    <div className="t-10 font-mono text-[var(--text-faint)] space-y-1">
-                      <div>{mission.frequency}</div>
-                      {mission.runningSince && (
-                        <div className="text-[var(--cykan)]">{Math.floor((currentTime - mission.runningSince) / 1000)} s</div>
-                      )}
-                      {mission.nextRun && <div>Prochain {new Date(mission.nextRun).toLocaleDateString()}</div>}
-                    </div>
-                  </div>
-                  <div className="flex items-start justify-end gap-1 pt-0.5">
-                    <button
-                      type="button"
-                      onClick={() => handleRunNow(mission.id)}
-                      disabled={mission.opsStatus === "running"}
-                      className="p-2 text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                      title="Exécuter maintenant"
-                    >
-                      <GhostIconPlay className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openEditMission(mission)}
-                      className="p-2 text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
-                      title="Modifier"
-                    >
-                      <GhostIconPencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(mission)}
-                      className="p-2 text-[var(--text-faint)] hover:text-[var(--danger)] transition-colors"
-                      title="Supprimer"
-                    >
-                      <GhostIconTrash className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {missions.map((mission) => (
+              <MissionRow
+                key={mission.id}
+                mission={mission}
+                currentTime={currentTime}
+                onToggle={handleToggle}
+                onOpen={handleRowOpen}
+                onEdit={openEditMission}
+                onRunNow={handleRunNow}
+                onDelete={setConfirmDelete}
+              />
+            ))}
           </div>
         )}
       </div>
