@@ -195,7 +195,7 @@ export default function RunsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: "var(--bg)" }}>
+    <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: "var(--bg-elev)" }}>
       <PageHeader
         title="Runs"
         subtitle={`${runs.length} ${runs.length === 1 ? "exécution récente" : "exécutions récentes"}`}

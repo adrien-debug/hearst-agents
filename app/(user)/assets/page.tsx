@@ -119,7 +119,7 @@ export default function AssetsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: "var(--bg)" }}>
+    <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: "var(--bg-elev)" }}>
       <PageHeader
         title="Assets"
         subtitle={`${assets.length} ${assets.length === 1 ? "fichier stocké" : "fichiers stockés"}`}

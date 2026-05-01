@@ -133,7 +133,7 @@ export default function ReportEditorDemoPage() {
   return (
     <div
       className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-      style={{ background: "var(--bg)" }}
+      style={{ background: "var(--bg-elev)" }}
     >
       <div
         className="flex flex-col"

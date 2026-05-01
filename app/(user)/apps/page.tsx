@@ -7,7 +7,7 @@ export default function AppsPage() {
   return (
     <div
       className="flex-1 flex flex-col min-h-0"
-      style={{ background: "var(--bg)" }}
+      style={{ background: "var(--bg-elev)" }}
     >
       <PageHeader
         title="Apps"

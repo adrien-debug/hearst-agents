@@ -52,7 +52,7 @@ export default function RunDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg)" }}>
+      <div className="flex-1 flex items-center justify-center" style={{ background: "var(--bg-elev)" }}>
         <div className="text-[var(--text-muted)] t-13">Chargement…</div>
       </div>
     );
@@ -60,7 +60,7 @@ export default function RunDetailPage() {
 
   if (!run) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8" style={{ background: "var(--bg)" }}>
+      <div className="flex-1 flex flex-col items-center justify-center p-8" style={{ background: "var(--bg-elev)" }}>
         <div className="text-[var(--text-muted)] t-13 mb-4">Run non trouvé</div>
         <button
           onClick={() => router.push("/")}
@@ -89,7 +89,7 @@ export default function RunDetailPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
+    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg-elev)" }}>
       <PageHeader
         title={`Run ${run.id.slice(0, 8)}…`}
         subtitle={run.input}

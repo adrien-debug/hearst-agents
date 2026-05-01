@@ -252,14 +252,14 @@ function MissionsPageContent() {
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto px-12 py-6" style={{ background: "var(--bg)" }}>
+      <div className="flex-1 overflow-y-auto px-12 py-6" style={{ background: "var(--bg-elev)" }}>
         <RowSkeleton count={5} height="var(--space-16)" />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg)" }}>
+    <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg-elev)" }}>
       <PageHeader
         title="Missions"
         subtitle="Automatisations planifiées"

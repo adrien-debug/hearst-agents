@@ -403,7 +403,7 @@ function ReportStudioPageContent() {
     <div
       data-testid="studio-page"
       className="flex flex-col flex-1 min-h-0"
-      style={{ background: "var(--bg)", color: "var(--text)" }}
+      style={{ background: "var(--bg-elev)", color: "var(--text)" }}
     >
       {/* Top toolbar */}
       <div style={{ position: "relative" }}>
@@ -467,7 +467,7 @@ function ReportStudioPageContent() {
       {/* 3-column layout */}
       <div
         className="hidden lg:flex flex-1 min-h-0"
-        style={{ background: "var(--bg)" }}
+        style={{ background: "var(--bg-elev)" }}
       >
         {/* Left : palette */}
         <div style={{ width: "var(--space-32)", flexShrink: 0 }}>

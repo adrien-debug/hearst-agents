@@ -9,7 +9,7 @@ export default function AlertingSettingsPage() {
   return (
     <div
       className="flex-1 flex flex-col min-h-0 overflow-y-auto panel-enter"
-      style={{ background: "var(--bg)" }}
+      style={{ background: "var(--bg-elev)" }}
     >
       <PageHeader
         title="Alerting"
