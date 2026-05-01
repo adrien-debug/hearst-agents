@@ -169,13 +169,34 @@ function emitFailed(
 
 // ── Default executor ────────────────────────────────────
 // Implémentation par défaut : si `testActions` est fourni, replay scripté.
-// Sinon, on lance un plan minimal interpretable depuis la phrase user
-// (heuristique : extraire la première URL `https?://…`, naviguer dessus,
-// observer, screenshot). Pas de vrai LLM-driven plan ici — c'est un
-// stub fonctionnel ; le branchement Stagehand viendra remplacer
-// `runMinimalPlan` quand l'écosystème sera stabilisé.
+// Sinon, on lance le vrai agent loop LLM-driven (vague 9, action #4) :
+//  - prefetch URL d'entrée si présente dans la task (heuristique inchangée)
+//  - délègue à `runAgentLoop` (Sonnet + tool_use) pour la suite
+//  - émet un browser_action par step exécuté
+// Le mode "stub-light" (playwright-core indispo) reste : on émet juste un
+// event navigate déterministe pour ne pas casser l'UI.
+
+import { runAgentLoop, type AgentStep } from "./agent-loop";
 
 const URL_RE = /https?:\/\/[^\s<>'"]+/i;
+
+/** Mapping tool agent → BrowserActionType pour l'event log. */
+function mapAgentToolToActionType(tool: AgentStep["tool"]): BrowserActionType | null {
+  switch (tool) {
+    case "navigate":
+      return "navigate";
+    case "click":
+      return "click";
+    case "fill":
+      return "type";
+    case "wait":
+      return "wait";
+    case "extract":
+      return "extract";
+    case "done":
+      return null; // pas d'event distinct — le emitCompleted suffit
+  }
+}
 
 async function delay(ms: number, signal?: AbortSignal): Promise<void> {
   if (ms <= 0) return;
@@ -249,13 +270,16 @@ class DefaultBrowserExecutor implements BrowserExecutor {
         }
         summary = `Replay test : ${opts.testActions.length} actions`;
       } else {
-        // Plan minimal réel : connect CDP via playwright-core (si dispo),
-        // navigue sur l'URL extraite, capture screenshot + HTML, observe.
-        // Si playwright indispo → mode "stub-light" (pas d'action navigate
-        // réelle, mais on émet quand même les events pour ne pas casser
-        // les UIs qui les consomment).
+        // Mode live : on essaye de connecter Playwright via Browserbase,
+        // puis on délègue à `runAgentLoop` (Sonnet + tool_use) qui pilote
+        // la page step-by-step. Chaque step exécuté est mappé en
+        // `browser_action` event pour l'ActionLog UI.
+        //
+        // Si playwright-core est indispo → fallback "stub-light" : on émet
+        // une action navigate déterministe à partir de la première URL de
+        // la task pour ne pas casser les UIs SSE qui consomment ces events.
         const urlMatch = opts.task.match(URL_RE);
-        const target = urlMatch ? urlMatch[0] : "about:blank";
+        const fallbackTarget = urlMatch ? urlMatch[0] : "about:blank";
 
         try {
           bridge = await getBrowserContext({ sessionId });
@@ -266,68 +290,81 @@ class DefaultBrowserExecutor implements BrowserExecutor {
           );
         }
 
-        if (bridge && urlMatch && !controller.signal.aborted) {
-          // ── Real navigation
-          const navStart = Date.now();
-          try {
-            await bridge.page.goto(target, {
-              waitUntil: "domcontentloaded",
-              timeout: 30_000,
-            });
-            await bridge.page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
-          } catch (err) {
-            console.warn(
-              "[stagehand-executor] page.goto error :",
-              err instanceof Error ? err.message : err,
-            );
-          }
-          let screenshotUrl: string | undefined;
-          try {
-            const buf = await bridge.page.screenshot({ type: "png" });
-            // base64 inline data URL — le consumer SSE peut l'afficher direct
-            // sans round-trip storage. Cap 1MB pour ne pas saturer le stream.
-            if (buf.length < 1_000_000) {
-              screenshotUrl = `data:image/png;base64,${buf.toString("base64")}`;
-            }
-          } catch {
-            // ignore
-          }
-          safeEmit("navigate", bridge.page.url(), {
-            durationMs: Date.now() - navStart,
-            screenshotUrl,
-          });
-        } else {
-          const navStart = Date.now();
-          await delay(80, controller.signal).catch(() => {});
-          safeEmit("navigate", target, { durationMs: Date.now() - navStart });
-        }
-
-        if (!controller.signal.aborted && Date.now() < deadline) {
-          const obsStart = Date.now();
-          let observeValue = opts.task.slice(0, 120);
-          if (bridge) {
+        if (bridge && !controller.signal.aborted) {
+          // Pré-chargement : si la task contient une URL, on navigue avant
+          // de lancer le LLM. Ça donne à l'agent un contexte page de départ
+          // au lieu de partir de about:blank (ça économe 1-2 steps).
+          if (urlMatch) {
+            const navStart = Date.now();
             try {
-              const title = await bridge.page.title();
-              observeValue = `${title} — ${bridge.page.url()}`;
-            } catch {
-              // ignore
+              await bridge.page.goto(fallbackTarget, {
+                waitUntil: "domcontentloaded",
+                timeout: 30_000,
+              });
+              await bridge.page
+                .waitForLoadState("networkidle", { timeout: 15_000 })
+                .catch(() => {});
+            } catch (err) {
+              console.warn(
+                "[stagehand-executor] page.goto preload error :",
+                err instanceof Error ? err.message : err,
+              );
             }
-          } else {
-            await delay(80, controller.signal).catch(() => {});
+            let screenshotUrl: string | undefined;
+            try {
+              const buf = await bridge.page.screenshot({ type: "png" });
+              if (buf.length < 1_000_000) {
+                screenshotUrl = `data:image/png;base64,${buf.toString("base64")}`;
+              }
+            } catch {
+              /* ignore */
+            }
+            safeEmit("navigate", bridge.page.url(), {
+              durationMs: Date.now() - navStart,
+              screenshotUrl,
+            });
           }
-          safeEmit("observe", "page", {
-            durationMs: Date.now() - obsStart,
-            value: observeValue,
-          });
-        }
 
-        if (
-          !controller.signal.aborted &&
-          opts.extractInstruction &&
-          Date.now() < deadline
-        ) {
-          const extStart = Date.now();
-          if (bridge) {
+          // ── Agent loop LLM-driven ──────────────────────────────
+          // Cap de steps cohérent avec le maxActions de l'executor.
+          const remainingActions = Math.max(1, maxActions - actionCount);
+          const agentResult = await runAgentLoop({
+            task: opts.task,
+            page: bridge.page,
+            maxSteps: Math.min(remainingActions, 15),
+            abortSignal: controller.signal,
+            onStep: (step) => {
+              const actionType = mapAgentToolToActionType(step.tool);
+              if (!actionType) return;
+              const target =
+                step.tool === "navigate"
+                  ? String(step.input.url ?? "")
+                  : step.tool === "wait"
+                    ? `${step.input.ms ?? 0}ms`
+                    : String(step.input.selector ?? step.input.instruction ?? "");
+              const value =
+                step.tool === "fill"
+                  ? String(step.input.value ?? "").slice(0, 120)
+                  : step.result.ok
+                    ? undefined
+                    : `error: ${String(step.result.error ?? "").slice(0, 120)}`;
+              safeEmit(actionType, target, {
+                value,
+                durationMs: step.durationMs,
+              });
+            },
+          });
+
+          // Si la tâche demandait explicitement une extraction et que
+          // l'agent a appelé `extract` au cours du loop, on remonte les
+          // données dans `extractData` (compat ancien contrat de l'executor).
+          if (agentResult.extractedData !== undefined) {
+            extractData = agentResult.extractedData;
+          } else if (opts.extractInstruction && bridge) {
+            // Fallback : l'agent n'a pas extrait → on appelle l'extracteur
+            // structuré legacy. Garde l'ancien comportement pour les missions
+            // qui passent un schema ad-hoc.
+            const extStart = Date.now();
             try {
               extractData = await extractStructured({
                 page: bridge.page,
@@ -335,36 +372,45 @@ class DefaultBrowserExecutor implements BrowserExecutor {
                 schema: opts.extractSchema,
               });
             } catch (err) {
-              console.warn(
-                "[stagehand-executor] extractStructured error :",
-                err instanceof Error ? err.message : err,
-              );
               extractData = {
                 instruction: opts.extractInstruction,
                 schema: opts.extractSchema ?? null,
                 error: err instanceof Error ? err.message : String(err),
               };
             }
-          } else {
-            await delay(80, controller.signal).catch(() => {});
+            safeEmit("extract", opts.extractInstruction, {
+              durationMs: Date.now() - extStart,
+            });
+          }
+
+          summary = agentResult.summary || (urlMatch
+            ? `Navigation sur ${fallbackTarget}`
+            : "Tâche exécutée");
+          if (agentResult.aborted) {
+            controller.abort(new Error("agent_loop_aborted"));
+          }
+        } else {
+          // Stub-light : pas de Playwright, on émet juste une action
+          // navigate déterministe pour que l'UI ne soit pas vide.
+          const navStart = Date.now();
+          await delay(80, controller.signal).catch(() => {});
+          safeEmit("navigate", fallbackTarget, {
+            durationMs: Date.now() - navStart,
+          });
+
+          if (opts.extractInstruction) {
             extractData = {
               instruction: opts.extractInstruction,
               schema: opts.extractSchema ?? null,
               note: "playwright-core indisponible — extraction non réalisée",
             };
+            safeEmit("extract", opts.extractInstruction, { durationMs: 0 });
           }
-          safeEmit("extract", opts.extractInstruction, {
-            durationMs: Date.now() - extStart,
-          });
-        }
 
-        summary = bridge
-          ? urlMatch
-            ? `Navigation réelle sur ${target}`
-            : "Tâche exécutée (aucune URL — observation seule)"
-          : urlMatch
-            ? `Tâche exécutée sur ${target} (mode dégradé)`
-            : "Tâche exécutée (aucune URL — observation seule)";
+          summary = urlMatch
+            ? `Tâche exécutée sur ${fallbackTarget} (mode dégradé)`
+            : "Tâche exécutée (mode dégradé — playwright indisponible)";
+        }
       }
 
       aborted = controller.signal.aborted;

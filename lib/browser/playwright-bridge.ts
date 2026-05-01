@@ -29,6 +29,9 @@ export interface PlaywrightBridge {
 export interface PlaywrightPage {
   goto(url: string, opts?: { waitUntil?: "load" | "domcontentloaded" | "networkidle"; timeout?: number }): Promise<unknown>;
   waitForLoadState(state?: "load" | "domcontentloaded" | "networkidle", opts?: { timeout?: number }): Promise<void>;
+  /** Pause d'attente explicite — utilisée par l'agent loop pour laisser charger
+   *  une page après un click (default 500ms). */
+  waitForTimeout?(ms: number): Promise<void>;
   url(): string;
   title(): Promise<string>;
   content(): Promise<string>;
