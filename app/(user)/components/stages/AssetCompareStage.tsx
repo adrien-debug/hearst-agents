@@ -17,6 +17,7 @@ import { useStageStore } from "@/stores/stage";
 import type { Asset } from "@/lib/assets/types";
 import { AssetLineage } from "../AssetLineage";
 import { Action } from "../ui";
+import { StageActionBar } from "./StageActionBar";
 
 interface AssetCompareStageProps {
   assetIdA: string;
@@ -99,43 +100,21 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
 
   return (
     <div className="flex-1 flex flex-col min-h-0" style={{ background: "var(--bg-center)" }}>
-      {/* Header */}
-      <div
-        className="flex items-center"
-        style={{
-          padding: "var(--space-4) var(--space-6)",
-          borderBottom: "1px solid var(--border-shell)",
-          gap: "var(--space-4)",
+      <StageActionBar
+        onBack={back}
+        context={
+          <span className="t-11 font-light text-[var(--text-muted)]">
+            Comparer · {assetIdA.slice(0, 8)} ↔ {assetIdB.slice(0, 8)}
+          </span>
+        }
+        primary={{
+          id: "diff",
+          label: "Diff sémantique",
+          onClick: () => void handleDiff(),
+          disabled: loading || !assetA || !assetB,
+          loading: diffLoading,
         }}
-      >
-        <button
-          type="button"
-          onClick={back}
-          className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)]"
-          style={{ background: "transparent", border: "none", cursor: "pointer" }}
-        >
-          ← Retour
-        </button>
-        <span className="t-11 font-medium text-[var(--cykan)]">
-          COMPARER ASSETS
-        </span>
-        <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
-        <span className="t-11 font-light text-[var(--text-muted)]">
-          {assetIdA.slice(0, 8)} ↔ {assetIdB.slice(0, 8)}
-        </span>
-        <Action
-          variant="primary"
-          tone="brand"
-          size="sm"
-          onClick={() => void handleDiff()}
-          disabled={loading || !assetA || !assetB}
-          loading={diffLoading}
-          className="ml-auto"
-          testId="asset-compare-diff-btn"
-        >
-          Diff sémantique
-        </Action>
-      </div>
+      />
 
       {error && (
         <div
@@ -204,8 +183,8 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
               }}
             >
               <header className="flex items-center" style={{ gap: "var(--space-3)" }}>
-                <span className="t-11 font-medium text-[var(--cykan)]">
-                  DIFF · {diff.differences.length}
+                <span className="t-13 font-medium text-[var(--cykan)]">
+                  Différences · {diff.differences.length}
                 </span>
               </header>
               <p className="t-13 font-light text-[var(--text)] leading-relaxed">
@@ -263,7 +242,7 @@ function ComparePane({
       }}
     >
       <span className="t-11 font-medium text-[var(--cykan)]">
-        ASSET {side}
+        Asset {side}
       </span>
       <h2
         className="t-15 font-medium tracking-tight text-[var(--text)]"

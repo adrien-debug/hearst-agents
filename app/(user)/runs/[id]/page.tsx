@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { RunTimeline } from "../../components/RunTimeline";
 import { GhostIconChevronRight, ServiceIdGlyph } from "../../components/ghost-icons";
 import { PageHeader } from "../../components/PageHeader";
+import { usePollingEffect } from "@/app/hooks/use-polling-effect";
 import type { RunRecord } from "@/lib/engine/runtime/runs/types";
 import type { TimelineItem } from "@/lib/engine/runtime/timeline/types";
 
@@ -22,42 +23,32 @@ export default function RunDetailPage() {
   // Track run status locally to avoid including entire run object in effect deps
   const runStatus = run?.status;
 
+  const loadRun = async () => {
+    try {
+      const res = await fetch(`/api/v2/runs/${runId}`);
+      if (!res.ok) throw new Error("Failed to load run");
+      const data = await res.json();
+      setRun(data.run);
+      setTimeline(data.timeline || []);
+      setTimelineSource(data.timelineSource || "empty");
+      const liveStatuses = ["running", "awaiting_approval", "awaiting_clarification"];
+      setIsLive(liveStatuses.includes(data.run?.status));
+    } catch (error) {
+      console.error("Failed to load run:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let isActive = true;
-    let interval: ReturnType<typeof setInterval> | null = null;
+    void loadRun();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runId]);
 
-    async function loadRun() {
-      try {
-        const res = await fetch(`/api/v2/runs/${runId}`);
-        if (!res.ok) throw new Error("Failed to load run");
-        const data = await res.json();
-        if (!isActive) return;
-        setRun(data.run);
-        // Use canonical normalized timeline from API
-        setTimeline(data.timeline || []);
-        setTimelineSource(data.timelineSource || "empty");
-        const liveStatuses = ["running", "awaiting_approval", "awaiting_clarification"];
-        setIsLive(liveStatuses.includes(data.run?.status));
-      } catch (error) {
-        console.error("Failed to load run:", error);
-      } finally {
-        if (isActive) setLoading(false);
-      }
-    }
-
-    loadRun();
-
-    // Poll for updates if run is live (including waiting states)
-    const liveStatuses = ["running", "awaiting_approval", "awaiting_clarification"];
-    if (runStatus && liveStatuses.includes(runStatus)) {
-      interval = setInterval(loadRun, 2000);
-    }
-
-    return () => {
-      isActive = false;
-      if (interval) clearInterval(interval);
-    };
-  }, [runId, runStatus]);
+  // Poll only when run is live (running / awaiting_approval / awaiting_clarification)
+  const liveStatuses = ["running", "awaiting_approval", "awaiting_clarification"];
+  const shouldPoll = !!runStatus && liveStatuses.includes(runStatus);
+  usePollingEffect(loadRun, 2000, [runId], { enabled: shouldPoll });
 
   if (loading) {
     return (

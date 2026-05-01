@@ -86,7 +86,7 @@ export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
   const isHospitality = data?.industry === "hospitality";
 
   return (
-    <div className="cockpit-bg flex-1 flex flex-col min-h-0 relative overflow-hidden panel-enter">
+    <div className="cockpit-bg flex-1 flex flex-col min-h-0 relative overflow-hidden">
       <OnboardingTour />
       <div className="relative flex-1 flex flex-col min-h-0 overflow-y-auto">
         {isHospitality && <HospitalityBadge />}

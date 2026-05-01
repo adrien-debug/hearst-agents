@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MissionEditor } from "../components/MissionEditor";
 import { toast } from "@/app/hooks/use-toast";
+import { usePollingEffect } from "@/app/hooks/use-polling-effect";
 import { GhostIconPencil, GhostIconPlay, GhostIconTrash, GhostIconX } from "../components/ghost-icons";
 import { useStageStore } from "@/stores/stage";
 import { PageHeader } from "../components/PageHeader";
@@ -92,44 +93,33 @@ function MissionsPageContent() {
       }
     }
     loadMissions();
-
-    // Refresh ops status every 5s
-    const opsInterval = setInterval(() => {
-      fetch("/api/v2/missions/ops")
-        .then((res) => {
-          if (!res.ok) throw new Error(`ops status fetch failed: ${res.status}`);
-          return res.json();
-        })
-        .then((opsData) => {
-          const opsMap = new Map(
-            opsData.missions?.map((op: { missionId: string; status: MissionOpsStatus; lastError?: string; runningSince?: number }) => [
-              op.missionId,
-              { opsStatus: op.status, lastError: op.lastError, runningSince: op.runningSince },
-            ]) || []
-          );
-          setMissions((prev) =>
-            prev.map((m) => ({
-              ...m,
-              ...(opsMap.get(m.id) || {}),
-            }))
-          );
-        })
-        .catch((err) => {
-          console.error("[MissionsPage] Background ops refresh failed:", err);
-          // Silent fail for background refresh — keep showing last known state
-        });
-    }, 5000);
-
-    // Update current time every second for running duration
-    const timeInterval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 1000);
-
-    return () => {
-      clearInterval(opsInterval);
-      clearInterval(timeInterval);
-    };
   }, []);
+
+  // Refresh ops status toutes les 5s — silencieux en cas d'erreur réseau
+  usePollingEffect(async () => {
+    try {
+      const res = await fetch("/api/v2/missions/ops");
+      if (!res.ok) return;
+      const opsData = await res.json();
+      const opsMap = new Map(
+        opsData.missions?.map((op: { missionId: string; status: MissionOpsStatus; lastError?: string; runningSince?: number }) => [
+          op.missionId,
+          { opsStatus: op.status, lastError: op.lastError, runningSince: op.runningSince },
+        ]) || []
+      );
+      setMissions((prev) =>
+        prev.map((m) => ({
+          ...m,
+          ...(opsMap.get(m.id) || {}),
+        }))
+      );
+    } catch (err) {
+      console.error("[MissionsPage] Background ops refresh failed:", err);
+    }
+  }, 5000);
+
+  // Update current time toutes les secondes pour le compteur "running"
+  usePollingEffect(() => setCurrentTime(Date.now()), 1000);
 
   const CRON_SCHEDULES: Record<string, string> = {
     daily: "0 9 * * *",

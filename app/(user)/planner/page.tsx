@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "@/app/hooks/use-toast";
+import { usePollingEffect } from "@/app/hooks/use-polling-effect";
 import { PageHeader } from "../components/PageHeader";
 import { EmptyState, RowSkeleton } from "../components/ui";
 
@@ -49,16 +50,7 @@ export default function PlannerPage() {
     }
   };
 
-  useEffect(() => {
-    Promise.resolve().then(() => {
-      void loadPlans();
-    });
-    const interval = setInterval(() => {
-      void loadPlans();
-    }, 5000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  usePollingEffect(loadPlans, 5000, [], { immediate: true });
 
   const filtered = filter === "all" ? plans : plans.filter((p) => p.status === filter);
 
