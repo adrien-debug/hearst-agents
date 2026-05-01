@@ -8,6 +8,7 @@
  */
 
 import { useState } from "react";
+import { Action } from "../ui";
 
 interface PublishTemplateModalProps {
   open: boolean;
@@ -223,24 +224,17 @@ export function PublishTemplateModal({
           >
             Annuler
           </button>
-          <button
-            type="button"
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={() => void submit()}
-            disabled={busy || !title.trim()}
-            data-testid="publish-confirm"
-            className="t-11 font-medium"
-            style={{
-              padding: "var(--space-2) var(--space-4)",
-              background: "var(--cykan)",
-              color: "var(--text-on-cykan)",
-              border: "1px solid var(--cykan)",
-              borderRadius: "var(--radius-sm)",
-              cursor: busy ? "not-allowed" : "pointer",
-              opacity: busy ? 0.6 : 1,
-            }}
+            disabled={!title.trim()}
+            loading={busy}
+            testId="publish-confirm"
           >
-            {busy ? "Publication…" : "Publier"}
-          </button>
+            Publier
+          </Action>
         </div>
       </div>
     </div>

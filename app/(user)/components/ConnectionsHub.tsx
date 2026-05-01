@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { toast } from "@/app/hooks/use-toast";
 import { useOAuthStore } from "@/stores/oauth";
 import { useOAuthCompletionPoll } from "@/app/hooks/use-oauth-completion-poll";
+import { Action } from "./ui";
 
 interface ConnectedAccount {
   id: string;
@@ -1700,29 +1701,27 @@ function AppDrawer({
           {isConnected && connectedAccount?.source === "native" ? (
             <NativeFooter />
           ) : isConnected ? (
-            <button
-              type="button"
+            <Action
+              variant="secondary"
+              tone="danger"
               onClick={onDisconnect}
-              disabled={busy}
-              className="ghost-btn-solid ghost-btn-ghost w-full disabled:opacity-50"
-              style={{
-                color: "var(--color-error)",
-                borderColor: "var(--color-error-border)",
-              }}
+              loading={busy}
+              className="w-full"
             >
-              {busy ? "Déconnexion…" : `Déconnecter ${app.name}`}
-            </button>
+              {`Déconnecter ${app.name}`}
+            </Action>
           ) : app.connectable === false ? (
             <NotConnectableFooter app={app} />
           ) : (
-            <button
-              type="button"
+            <Action
+              variant="primary"
+              tone="brand"
               onClick={onConnect}
-              disabled={busy}
-              className="ghost-btn-solid ghost-btn-cykan w-full disabled:opacity-50"
+              loading={busy}
+              className="w-full"
             >
-              {busy ? "Connexion…" : `Connecter ${app.name} →`}
-            </button>
+              {`Connecter ${app.name}`}
+            </Action>
           )}
         </div>
       </aside>

@@ -6,6 +6,7 @@ import { StageActionBar, type StageAction } from "./StageActionBar";
 import { ConfirmModal } from "../ConfirmModal";
 import { MissionStepGraph } from "../MissionStepGraph";
 import { useRuntimeStore } from "@/stores/runtime";
+import { Action } from "../ui";
 import type { MissionLike } from "@/lib/ui/focal-mappers";
 
 interface MissionStageProps {
@@ -397,17 +398,17 @@ export function MissionStage({ missionId }: MissionStageProps) {
                     className="flex mt-4"
                     style={{ gap: "var(--space-2)" }}
                   >
-                    <button
-                      type="button"
+                    <Action
+                      variant="primary"
+                      tone="brand"
+                      size="sm"
                       onClick={handleSaveCadence}
-                      disabled={pendingAction === "cadence" || !cadenceDraft.trim()}
-                      className="ghost-btn-solid ghost-btn-cykan t-9"
-                      data-testid="mission-stage-cadence-save"
+                      disabled={!cadenceDraft.trim()}
+                      loading={pendingAction === "cadence"}
+                      testId="mission-stage-cadence-save"
                     >
-                      <span className="tracking-wide uppercase">
-                        {pendingAction === "cadence" ? "…" : "Enregistrer"}
-                      </span>
-                    </button>
+                      Enregistrer
+                    </Action>
                     <button
                       type="button"
                       onClick={() => setEditingCadence(false)}

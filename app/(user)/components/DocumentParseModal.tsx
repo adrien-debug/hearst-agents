@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { Action } from "./ui";
 
 export interface DocumentParseModalProps {
   open: boolean;
@@ -267,51 +268,27 @@ export function DocumentParseModal({
           className="flex items-center justify-end"
           style={{ gap: "var(--space-2)" }}
         >
-          <button
-            type="button"
+          <Action
+            variant="secondary"
+            tone="neutral"
+            size="sm"
             onClick={handleClose}
             disabled={submitting}
-            data-testid="document-parse-modal-cancel"
-            className="t-11 font-light"
-            style={{
-              paddingLeft: "var(--space-3)",
-              paddingRight: "var(--space-3)",
-              paddingTop: "var(--space-1)",
-              paddingBottom: "var(--space-1)",
-              background: "transparent",
-              color: "var(--text-faint)",
-              border: "1px solid var(--border-shell)",
-              borderRadius: "var(--radius-xs)",
-              cursor: submitting ? "not-allowed" : "pointer",
-              opacity: submitting ? 0.5 : 1,
-              transition: "color var(--duration-base) var(--ease-standard)",
-            }}
+            testId="document-parse-modal-cancel"
           >
             Annuler
-          </button>
-          <button
-            type="button"
+          </Action>
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={handleSubmit}
-            disabled={submitting || !fileUrl.trim()}
-            data-testid="document-parse-modal-submit"
-            className="t-11 font-light"
-            style={{
-              paddingLeft: "var(--space-3)",
-              paddingRight: "var(--space-3)",
-              paddingTop: "var(--space-1)",
-              paddingBottom: "var(--space-1)",
-              background: "var(--cykan)",
-              color: "var(--bg-center)",
-              border: "1px solid var(--cykan)",
-              borderRadius: "var(--radius-xs)",
-              cursor:
-                submitting || !fileUrl.trim() ? "not-allowed" : "pointer",
-              opacity: submitting || !fileUrl.trim() ? 0.6 : 1,
-              transition: "opacity var(--duration-base) var(--ease-standard)",
-            }}
+            disabled={!fileUrl.trim()}
+            loading={submitting}
+            testId="document-parse-modal-submit"
           >
-            {submitting ? "…" : "Parser"}
-          </button>
+            Parser
+          </Action>
         </div>
       </div>
     </div>

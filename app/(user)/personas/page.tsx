@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { PersonaABTestPanel } from "../components/PersonaABTestPanel";
 import { PublishTemplateModal } from "../components/marketplace/PublishTemplateModal";
+import { Action } from "../components/ui";
 import type { Persona, PersonaTone } from "@/lib/personas/types";
 import { PERSONA_TONES } from "@/lib/personas/types";
 
@@ -102,17 +103,17 @@ export default function PersonasPage() {
         title="Brand Voice — Personas"
         subtitle="Voix éditoriales appliquées au LLM. Une persona = ton + vocabulaire + system prompt addon."
         actions={
-          <button
-            type="button"
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={() => {
               setEditing(null);
               setCreating(true);
             }}
-            className="ghost-btn-solid ghost-btn-cykan rounded-(--radius-sm)"
-            style={{ padding: "var(--space-2) var(--space-4)" }}
           >
-            <span className="t-11 font-medium">+ Nouvelle persona</span>
-          </button>
+            + Nouvelle persona
+          </Action>
         }
       />
 
@@ -503,23 +504,25 @@ function PersonaForm({
       </label>
 
       <div className="flex items-center justify-end" style={{ gap: "var(--space-3)" }}>
-        <button
-          type="button"
+        <Action
+          variant="ghost"
+          tone="neutral"
+          size="sm"
           onClick={onCancel}
           disabled={busy}
-          className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--text-soft)] transition-colors duration-base"
-          style={{ background: "transparent", border: "none", cursor: "pointer" }}
         >
           Annuler
-        </button>
-        <button
+        </Action>
+        <Action
           type="submit"
-          disabled={busy || !form.name.trim()}
-          className="ghost-btn-solid ghost-btn-cykan rounded-(--radius-sm)"
-          style={{ padding: "var(--space-2) var(--space-4)" }}
+          variant="primary"
+          tone="brand"
+          size="sm"
+          disabled={!form.name.trim()}
+          loading={busy}
         >
-          <span className="t-11 font-medium">{busy ? "…" : "Sauvegarder"}</span>
-        </button>
+          Sauvegarder
+        </Action>
       </div>
     </form>
   );

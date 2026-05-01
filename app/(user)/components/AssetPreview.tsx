@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Asset, AssetKind } from "@/lib/assets/types";
+import { Action } from "./ui";
 
 interface AssetPreviewProps {
   asset: Asset;
@@ -83,14 +84,16 @@ export function AssetPreview({ asset, onDownload }: AssetPreviewProps) {
           </p>
         </div>
         {onDownload && (
-          <button
-            type="button"
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={handleDownload}
-            disabled={isLoading || !pdfFile}
-            className="ghost-btn-solid ghost-btn-cykan rounded-sm shrink-0 disabled:opacity-40"
+            disabled={!pdfFile}
+            loading={isLoading}
           >
-            {isLoading ? "FETCH…" : "DOWNLOAD"}
-          </button>
+            Télécharger
+          </Action>
         )}
       </div>
 

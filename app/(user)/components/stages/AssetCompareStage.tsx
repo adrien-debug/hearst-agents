@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useStageStore } from "@/stores/stage";
 import type { Asset } from "@/lib/assets/types";
 import { AssetLineage } from "../AssetLineage";
+import { Action } from "../ui";
 
 interface AssetCompareStageProps {
   assetIdA: string;
@@ -122,25 +123,18 @@ export function AssetCompareStage({ assetIdA, assetIdB }: AssetCompareStageProps
         <span className="t-11 font-light text-[var(--text-muted)]">
           {assetIdA.slice(0, 8)} ↔ {assetIdB.slice(0, 8)}
         </span>
-        <button
-          type="button"
+        <Action
+          variant="primary"
+          tone="brand"
+          size="sm"
           onClick={() => void handleDiff()}
-          disabled={diffLoading || loading || !assetA || !assetB}
-          data-testid="asset-compare-diff-btn"
-          className="t-11 font-light"
-          style={{
-            marginLeft: "auto",
-            padding: "var(--space-2) var(--space-4)",
-            background: "var(--cykan)",
-            color: "var(--bg)",
-            border: "none",
-            borderRadius: "var(--radius-xs)",
-            cursor: diffLoading ? "not-allowed" : "pointer",
-            opacity: diffLoading ? 0.6 : 1,
-          }}
+          disabled={loading || !assetA || !assetB}
+          loading={diffLoading}
+          className="ml-auto"
+          testId="asset-compare-diff-btn"
         >
-          {diffLoading ? "Analyse…" : "Diff sémantique"}
-        </button>
+          Diff sémantique
+        </Action>
       </div>
 
       {error && (

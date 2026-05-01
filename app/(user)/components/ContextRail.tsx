@@ -12,7 +12,7 @@
  * `{section.length > 0 && ...}` autour d'un bloc complet.
  */
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { useVoiceStore } from "@/stores/voice";
@@ -23,13 +23,53 @@ import { ProviderChip } from "./ProviderChip";
 import { useRightPanelData } from "./right-panel/useRightPanelData";
 import { GeneralDashboard } from "./right-panel/GeneralDashboard";
 import { ContextRailForMission } from "./ContextRailForMission";
+import {
+  ContextRailForRuns,
+  ContextRailForMissionsAdmin,
+  ContextRailForApps,
+  ContextRailForReports,
+} from "./ContextRailForAdmin";
 
 interface ContextRailProps {
   onClose?: () => void;
 }
 
 export function ContextRail({ onClose }: ContextRailProps) {
+  const pathname = usePathname();
   const mode = useStageStore((s) => s.current.mode);
+
+  // Pages standalone : sub-rails admin overrident le mode du Stage central.
+  // Promesse pivot 2026-04-29 « structure fixe par Stage » étendue aux pages
+  // admin pour qu'elles aient un contexte pertinent au lieu du dashboard
+  // générique du Cockpit.
+  if (pathname?.startsWith("/runs")) {
+    return (
+      <ContextRailShell onClose={onClose}>
+        <ContextRailForRuns />
+      </ContextRailShell>
+    );
+  }
+  if (pathname?.startsWith("/missions")) {
+    return (
+      <ContextRailShell onClose={onClose}>
+        <ContextRailForMissionsAdmin />
+      </ContextRailShell>
+    );
+  }
+  if (pathname?.startsWith("/apps")) {
+    return (
+      <ContextRailShell onClose={onClose}>
+        <ContextRailForApps />
+      </ContextRailShell>
+    );
+  }
+  if (pathname?.startsWith("/reports")) {
+    return (
+      <ContextRailShell onClose={onClose}>
+        <ContextRailForReports />
+      </ContextRailShell>
+    );
+  }
 
   switch (mode) {
     case "cockpit":

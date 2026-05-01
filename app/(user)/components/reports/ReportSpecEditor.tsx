@@ -19,6 +19,7 @@ import { useMemo, useState } from "react";
 import type { ReportSpec, BlockSpec } from "@/lib/reports/spec/schema";
 import type { RenderPayload, RenderedBlock } from "@/lib/reports/engine/render-blocks";
 import { ReportLayout } from "@/app/(user)/components/ReportLayout";
+import { Action } from "@/app/(user)/components/ui";
 
 export interface ReportSpecEditorProps {
   /** Spec source (lecture seule). */
@@ -107,22 +108,16 @@ export function ReportSpecEditor({ spec, onChange }: ReportSpecEditorProps) {
           >
             Reset
           </button>
-          <button
-            type="button"
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={apply}
             disabled={!onChange}
-            className="t-9 font-mono uppercase text-[var(--text-on-cykan)] transition-colors disabled:opacity-50"
-            style={{
-              letterSpacing: "var(--tracking-display)",
-              padding: "var(--space-2) var(--space-3)",
-              background: "var(--cykan)",
-              border: "1px solid var(--cykan)",
-              borderRadius: "var(--radius-xs)",
-            }}
-            data-testid="editor-apply"
+            testId="editor-apply"
           >
-            Apply
-          </button>
+            Appliquer
+          </Action>
         </div>
       </div>
 

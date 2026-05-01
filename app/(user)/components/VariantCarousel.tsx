@@ -16,6 +16,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AssetVariant, AssetVariantKind } from "@/lib/assets/variants";
+import { Action } from "./ui";
 
 interface VariantCarouselProps {
   assetId: string;
@@ -363,23 +364,15 @@ function ActiveVariantPanel({
           Aucun variant {KIND_LABEL[kind]} pour le moment. Génère-en un à partir
           du contenu source.
         </p>
-        <button
-          type="button"
+        <Action
+          variant="primary"
+          tone="brand"
           onClick={onRegenerate}
-          disabled={generating}
-          className="self-start t-13 font-medium hover:opacity-90 transition-opacity duration-base"
-          style={{
-            padding: "var(--space-2) var(--space-4)",
-            background: "var(--cykan)",
-            color: "var(--text-on-cykan)",
-            border: "none",
-            borderRadius: "var(--radius-xs)",
-            cursor: generating ? "not-allowed" : "pointer",
-            opacity: generating ? 0.6 : 1,
-          }}
+          loading={generating}
+          className="self-start"
         >
-          {generating ? "Création…" : `Générer ${KIND_LABEL[kind]}`}
-        </button>
+          {`Générer ${KIND_LABEL[kind]}`}
+        </Action>
       </div>
     );
   }

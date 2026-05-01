@@ -37,6 +37,7 @@ import { AssetLineage } from "../AssetLineage";
 import { isHtmlContent, tryParseReportPayload } from "@/lib/assets/content-parser";
 import { ResearchReportArticle } from "../reports/ResearchReportArticle";
 import { StageActionBar, type StageAction } from "./StageActionBar";
+import { Action } from "../ui";
 import { ConfirmModal } from "../ConfirmModal";
 import type { Asset } from "@/lib/assets/types";
 import { isPlaceholderAssetId } from "@/lib/ui/asset-id";
@@ -521,25 +522,14 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
                     La génération a échoué. Tu peux relancer une nouvelle
                     tentative.
                   </p>
-                  <button
-                    type="button"
+                  <Action
+                    variant="primary"
+                    tone="brand"
+                    size="sm"
                     onClick={handleRerun}
-                    className="inline-flex items-center t-11 font-light"
-                    style={{
-                      gap: "var(--space-2)",
-                      paddingLeft: "var(--space-3)",
-                      paddingRight: "var(--space-3)",
-                      paddingTop: "var(--space-1)",
-                      paddingBottom: "var(--space-1)",
-                      background: "var(--cykan)",
-                      color: "var(--bg-center)",
-                      border: "1px solid var(--cykan)",
-                      borderRadius: "var(--radius-xs)",
-                      cursor: "pointer",
-                    }}
                   >
                     Re-générer
-                  </button>
+                  </Action>
                 </div>
               ) : null}
 

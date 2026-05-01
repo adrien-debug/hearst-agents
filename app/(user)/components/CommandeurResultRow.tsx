@@ -85,7 +85,7 @@ export function CommandeurResultRow({
       </span>
       {hint && (
         <span
-          className={`t-9 font-mono uppercase tracking-snug transition-colors duration-200 ${
+          className={`t-11 font-light transition-colors duration-200 ${
             active && !disabled ? "text-[var(--text-muted)]" : "text-[var(--text-ghost)]"
           }`}
         >

@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import type { Persona } from "@/lib/personas/types";
+import { Action } from "./ui";
 
 interface PersonaABTestPanelProps {
   personas: Persona[];
@@ -98,18 +99,16 @@ export function PersonaABTestPanel({ personas }: PersonaABTestPanelProps) {
         <p className="t-11 font-light text-[var(--text-faint)]">
           {loading ? "Génération en parallèle…" : "Lance la comparaison"}
         </p>
-        <button
-          type="button"
+        <Action
+          variant="primary"
+          tone="brand"
+          size="sm"
           onClick={run}
-          disabled={loading || !message.trim() || !a || !b || a === b}
-          className="ghost-btn-solid ghost-btn-cykan rounded-(--radius-sm)"
-          style={{
-            padding: "var(--space-2) var(--space-4)",
-            opacity: loading || !message.trim() || !a || !b || a === b ? 0.5 : 1,
-          }}
+          disabled={!message.trim() || !a || !b || a === b}
+          loading={loading}
         >
-          <span className="t-11 font-medium">{loading ? "…" : "Lancer A/B"}</span>
-        </button>
+          Lancer A/B
+        </Action>
       </div>
 
       {error && (

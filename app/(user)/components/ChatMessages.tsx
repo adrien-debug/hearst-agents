@@ -8,6 +8,7 @@ import { ChatConnectInline } from "./ChatConnectInline";
 import { ThinkingDisclosure } from "./ThinkingDisclosure";
 import { ChatAssetCard } from "./ChatAssetCard";
 import { Block, type BlockActionId } from "./chat/Block";
+import { Action } from "./ui";
 import type { MessageAssetRef } from "@/stores/navigation";
 
 export interface Message {
@@ -79,28 +80,36 @@ function ConfirmActionChips({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const checkIcon = (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+  const xIcon = (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
   return (
     <div className="flex" style={{ gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
-      <button
+      <Action
+        variant="secondary"
+        tone="brand"
+        size="sm"
         onClick={onConfirm}
-        className="inline-flex items-center px-3 py-1.5 t-11 font-medium border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan-bg-active)] hover:bg-[var(--cykan-bg-hover)] transition-colors duration-base"
-        style={{ gap: "var(--space-2)" }}
+        iconRight={checkIcon}
       >
-        <span>Confirmer</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      </button>
-      <button
+        Confirmer
+      </Action>
+      <Action
+        variant="ghost"
+        tone="danger"
+        size="sm"
         onClick={onCancel}
-        className="inline-flex items-center px-3 py-1.5 t-11 font-light border border-[var(--surface-2)] text-[var(--text-faint)] hover:text-[var(--danger)] hover:border-[var(--border-default)] transition-colors duration-base"
-        style={{ gap: "var(--space-2)" }}
+        iconRight={xIcon}
       >
-        <span>Annuler</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-      </button>
+        Annuler
+      </Action>
     </div>
   );
 }

@@ -90,7 +90,7 @@ function NotificationPill({ priority }: { priority: CommNotification["priority"]
   const c = config[priority];
   return (
     <span
-      className="t-9 font-mono uppercase tracking-stretch px-2 py-0.5 rounded-sm"
+      className="t-11 font-medium px-2 py-0.5 rounded-sm"
       style={{
         color: c.color,
         background: c.bg,

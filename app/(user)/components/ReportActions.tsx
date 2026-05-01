@@ -12,6 +12,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { Action } from "./ui";
 
 interface ReportActionsProps {
   /** L'asset.id du report (optionnel — sans, on n'expose pas les actions). */
@@ -185,22 +186,15 @@ function SharePopover({
         ))}
       </div>
       <div style={{ marginTop: "var(--space-3)" }}>
-        <button
-          type="button"
+        <Action
+          variant="primary"
+          tone="brand"
+          size="sm"
           onClick={() => void generate()}
-          disabled={loading}
-          className="t-9 font-mono uppercase"
-          style={{
-            padding: "var(--space-2) var(--space-3)",
-            border: "1px solid var(--cykan)",
-            borderRadius: "var(--radius-xs)",
-            background: "var(--cykan)",
-            color: "var(--bg)",
-            opacity: loading ? 0.5 : 1,
-          }}
+          loading={loading}
         >
-          {loading ? "Génération…" : "Créer un lien"}
-        </button>
+          Créer un lien
+        </Action>
       </div>
       {error && (
         <p
@@ -385,22 +379,16 @@ function CommentsDrawer({
         }}
       />
       <div className="flex items-center" style={{ marginTop: "var(--space-2)", gap: "var(--space-2)" }}>
-        <button
-          type="button"
+        <Action
+          variant="primary"
+          tone="brand"
+          size="sm"
           onClick={() => void submit()}
-          disabled={loading || !body.trim()}
-          className="t-9 font-mono uppercase"
-          style={{
-            padding: "var(--space-2) var(--space-3)",
-            border: "1px solid var(--cykan)",
-            borderRadius: "var(--radius-xs)",
-            background: "var(--cykan)",
-            color: "var(--bg)",
-            opacity: loading || !body.trim() ? 0.5 : 1,
-          }}
+          disabled={!body.trim()}
+          loading={loading}
         >
-          {loading ? "Envoi…" : "Publier"}
-        </button>
+          Publier
+        </Action>
         {error && (
           <span className="t-9" style={{ color: "var(--color-error)" }}>
             {error}

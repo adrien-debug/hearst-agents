@@ -10,6 +10,7 @@ import { ReportLayout } from "./ReportLayout";
 import { AssetVariantTabs } from "./AssetVariantTabs";
 import { isHtmlContent, tryParseReportPayload } from "@/lib/assets/content-parser";
 import { ResearchReportArticle } from "./reports/ResearchReportArticle";
+import { Action } from "./ui";
 
 const STATUS_LABELS: Record<FocalStatus, string> = {
   composing: "Composition",
@@ -238,17 +239,14 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90"
             />
           ) : (
-            <button
-              className={`px-6 py-3 t-13 font-medium transition-colors duration-base hover:opacity-90 ${
-                focal.primaryAction.kind === "approve"
-                  ? "bg-[var(--text)] text-[var(--bg)]"
-                  : "bg-[var(--cykan)] text-[var(--text-on-cykan)]"
-              }`}
+            <Action
+              variant="primary"
+              tone={focal.primaryAction.kind === "approve" ? "neutral" : "brand"}
               onClick={handlePrimaryAction}
-              disabled={isLoading}
+              loading={isLoading}
             >
-              {isLoading ? "…" : focal.primaryAction.label}
-            </button>
+              {focal.primaryAction.label}
+            </Action>
           )
         ) : null}
       </footer>

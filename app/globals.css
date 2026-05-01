@@ -1848,6 +1848,22 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   box-shadow: inset 0 0 0 1px var(--cykan-border-hover);
 }
 
+/* A11y AA — fallback global focus-visible pour tous les <button> natifs qui
+   n'ont pas leur propre traitement focus-visible (Stages historiques, modals,
+   tabs custom, etc.). Les composants `<Action>` et `<StageActionBar>` ont leur
+   propre ring `var(--cykan-border-hover)` plus marqué et override ce fallback.
+
+   Exclusions :
+   - .ghost-btn-solid : déjà géré ci-dessus (inset shadow)
+   - .halo-suggestion / .halo-action-row : utilities cards (focus-visible déjà
+     défini avec un traitement spécifique)
+   - boutons sans aria-label avec opacity-0 / sr-only : couverts par leur parent
+*/
+button:focus-visible:not(.ghost-btn-solid):not([data-no-fv-fallback]) {
+  outline: 1px solid var(--cykan-border-hover);
+  outline-offset: 1px;
+}
+
 .ghost-btn-cykan {
   background: var(--cykan);
   color: #000;

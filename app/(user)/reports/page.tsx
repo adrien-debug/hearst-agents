@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import type { ApplicableReport } from "@/lib/reports/catalog";
 import { ReportCard, ReportCardSkeleton } from "@/app/(user)/components/reports/ReportCard";
 import { PageHeader } from "@/app/(user)/components/PageHeader";
+import { Action } from "@/app/(user)/components/ui";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -191,20 +192,15 @@ export default function ReportsDiscoveryPage() {
 
         {/* ── CTA Créer un rapport ────────────────────────── */}
         <div className="flex justify-end">
-          <button
-            type="button"
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={() => router.push("/reports/studio")}
-            data-testid="reports-create-cta"
-            className="inline-flex items-center gap-2 px-4 py-2 t-12 font-semibold rounded-md transition-all"
-            style={{
-              background: "var(--cykan)",
-              color: "var(--text-on-cykan)",
-              borderRadius: "var(--radius-sm)",
-              transitionDuration: "var(--duration-base)",
-            }}
+            testId="reports-create-cta"
           >
             + Créer un rapport
-          </button>
+          </Action>
         </div>
 
         {/* ── Filters ────────────────────────────────────────── */}
@@ -332,18 +328,15 @@ export default function ReportsDiscoveryPage() {
                 Les rapports ci-dessous attendent qu&apos;au moins une app soit liée — explorez le catalogue, lisez les pré-requis, puis connectez les sources nécessaires.
               </p>
             </div>
-            <a
+            <Action
+              variant="primary"
+              tone="brand"
+              size="sm"
               href="/apps"
-              className="inline-flex items-center gap-2 px-4 py-2 t-12 font-semibold rounded-md transition-all shrink-0"
-              style={{
-                background: "var(--cykan)",
-                color: "var(--text-on-cykan)",
-                borderRadius: "var(--radius-sm)",
-                transitionDuration: "var(--duration-base)",
-              }}
+              className="shrink-0"
             >
               Connecter une app
-            </a>
+            </Action>
           </div>
         )}
 

@@ -143,7 +143,7 @@ export default function AssetsPage() {
             </div>
           ) : (
             <div>
-              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-9 font-mono uppercase tracking-[0.18em] text-[var(--text-faint)] border-b border-[var(--border-soft)]">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto_auto_auto] gap-x-6 px-2 py-3 t-11 font-medium text-[var(--text-l1)] border-b border-[var(--border-soft)]">
                 <span className="w-4" />
                 <span>Name</span>
                 <span className="text-right">Type</span>

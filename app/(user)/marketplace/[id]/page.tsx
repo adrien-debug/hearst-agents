@@ -14,6 +14,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "../../components/PageHeader";
+import { Action } from "../../components/ui";
 import type {
   MarketplaceTemplate,
   MarketplaceRating,
@@ -206,24 +207,16 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
         back={{ label: "Marketplace", href: "/marketplace" }}
         actions={
           <div className="flex" style={{ gap: "var(--space-2)" }}>
-            <button
-              type="button"
+            <Action
+              variant="primary"
+              tone="brand"
+              size="sm"
               onClick={() => void handleClone()}
-              disabled={busy}
-              data-testid="detail-clone"
-              className="t-11 font-medium"
-              style={{
-                padding: "var(--space-2) var(--space-4)",
-                background: "var(--cykan)",
-                color: "var(--text-on-cykan)",
-                border: "1px solid var(--cykan)",
-                borderRadius: "var(--radius-sm)",
-                cursor: busy ? "not-allowed" : "pointer",
-                opacity: busy ? 0.6 : 1,
-              }}
+              loading={busy}
+              testId="detail-clone"
             >
               Cloner
-            </button>
+            </Action>
             <button
               type="button"
               onClick={() => setReportOpen((v) => !v)}
@@ -391,24 +384,17 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
             }}
           />
           <div className="flex justify-end">
-            <button
-              type="button"
+            <Action
+              variant="primary"
+              tone="brand"
+              size="sm"
               onClick={() => void handleRate()}
-              disabled={busy || rating === 0}
-              data-testid="rate-submit"
-              className="t-11 font-medium"
-              style={{
-                padding: "var(--space-2) var(--space-4)",
-                background: "var(--cykan)",
-                color: "var(--text-on-cykan)",
-                border: "1px solid var(--cykan)",
-                borderRadius: "var(--radius-sm)",
-                cursor: busy || rating === 0 ? "not-allowed" : "pointer",
-                opacity: busy || rating === 0 ? 0.6 : 1,
-              }}
+              disabled={rating === 0}
+              loading={busy}
+              testId="rate-submit"
             >
               Envoyer la note
-            </button>
+            </Action>
           </div>
         </section>
 

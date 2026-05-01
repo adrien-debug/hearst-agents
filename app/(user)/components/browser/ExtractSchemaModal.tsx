@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Action } from "../ui";
 
 interface ExtractSchemaModalProps {
   open: boolean;
@@ -135,22 +136,24 @@ export function ExtractSchemaModal({
         )}
 
         <div className="flex justify-end gap-3">
-          <button
-            type="button"
+          <Action
+            variant="ghost"
+            tone="neutral"
+            size="sm"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 t-11 font-light text-[var(--text-muted)] hover:text-[var(--text)] disabled:opacity-60"
           >
             Annuler
-          </button>
-          <button
-            type="button"
+          </Action>
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={submit}
-            disabled={loading}
-            className="px-6 py-2 t-11 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] disabled:opacity-60"
+            loading={loading}
           >
-            {loading ? "Extraction…" : "Extraire"}
-          </button>
+            Extraire
+          </Action>
         </div>
       </div>
     </div>

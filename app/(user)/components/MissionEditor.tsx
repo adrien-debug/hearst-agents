@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Action } from "./ui";
 
 interface MissionFormData {
   name: string;
@@ -92,7 +93,7 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
                 }`}
               >
                 <p className={`t-9 font-black uppercase tracking-tight ${selected ? "" : "text-[var(--text-soft)]"}`}>{option.label}</p>
-                <p className="t-10 font-mono uppercase tracking-caption text-[var(--text-faint)] mt-1">{option.description}</p>
+                <p className="t-11 font-light text-[var(--text-faint)] mt-1">{option.description}</p>
               </button>
             );
           })}
@@ -135,16 +136,24 @@ export function MissionEditor({ initialData, onSave, onCancel, isLoading }: Miss
       </div>
 
       <div className="flex gap-3 pt-2">
-        <button type="button" onClick={onCancel} className="ghost-btn-solid ghost-btn-ghost flex-1 rounded-sm">
-          Annuler
-        </button>
-        <button
-          type="submit"
-          disabled={!isValid || isLoading}
-          className="ghost-btn-solid ghost-btn-cykan flex-1 rounded-sm disabled:opacity-40"
+        <Action
+          variant="secondary"
+          tone="neutral"
+          onClick={onCancel}
+          className="flex-1"
         >
-          {isLoading ? "Enregistrement…" : "Enregistrer"}
-        </button>
+          Annuler
+        </Action>
+        <Action
+          type="submit"
+          variant="primary"
+          tone="brand"
+          disabled={!isValid}
+          loading={isLoading}
+          className="flex-1"
+        >
+          Enregistrer
+        </Action>
       </div>
     </form>
   );

@@ -18,6 +18,7 @@
 import { useRouter } from "next/navigation";
 import { useNavigationStore } from "@/stores/navigation";
 import { useStageStore } from "@/stores/stage";
+import { Action } from "@/app/(user)/components/ui";
 import type { ApplicableReport } from "@/lib/reports/catalog";
 
 // ── Domain colors (cykan-scale + status colors — tokens only) ──
@@ -282,21 +283,16 @@ export function ReportCard({ report, onLaunch }: ReportCardProps) {
       {/* CTA */}
       <div className="shrink-0">
         {isReady && (
-          <button
-            type="button"
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={handleLaunch}
-            data-testid={`report-launch-${report.id}`}
-            className="inline-flex items-center gap-2 px-4 py-2 t-12 font-semibold rounded-md transition-all"
-            style={{
-              background: "var(--cykan)",
-              color: "var(--text-on-cykan)",
-              borderRadius: "var(--radius-sm)",
-              transitionDuration: "var(--duration-base)",
-            }}
+            iconLeft={<PlayIcon />}
+            testId={`report-launch-${report.id}`}
           >
-            <PlayIcon />
             Lancer
-          </button>
+          </Action>
         )}
 
         {isPartial && (

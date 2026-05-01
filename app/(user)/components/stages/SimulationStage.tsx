@@ -13,6 +13,7 @@ import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { ThinkingDisclosure } from "../ThinkingDisclosure";
 import { StageActionBar } from "./StageActionBar";
+import { Action } from "../ui";
 import { toast } from "@/app/hooks/use-toast";
 
 interface Variable {
@@ -279,14 +280,14 @@ function SimulationForm({
         </div>
       </div>
 
-      <button
-        type="button"
+      <Action
+        variant="primary"
+        tone="brand"
         onClick={onLaunch}
         disabled={!scenarioInput.trim()}
-        className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90 disabled:opacity-60"
       >
         Lancer la simulation
-      </button>
+      </Action>
     </div>
   );
 }
@@ -340,13 +341,14 @@ function SimulationResults({ scenarios, reasoning, assetId, onReset }: Simulatio
 
       <div className="flex items-center gap-3">
         {assetId !== null && (
-          <button
-            type="button"
+          <Action
+            variant="primary"
+            tone="brand"
+            size="sm"
             onClick={() => setStageMode({ mode: "asset", assetId })}
-            className="px-4 py-2 t-11 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90"
           >
             Voir dans l&apos;asset
-          </button>
+          </Action>
         )}
         <button
           type="button"

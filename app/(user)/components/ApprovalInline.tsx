@@ -12,6 +12,7 @@
 
 import { useState } from "react";
 import { ProviderChip } from "./ProviderChip";
+import { Action } from "./ui";
 
 export interface ApprovalInlineProps {
   stepId: string;
@@ -96,17 +97,17 @@ export function ApprovalInline({
       </p>
 
       <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
-        <button
-          type="button"
+        <Action
+          variant="primary"
+          tone="brand"
+          size="sm"
           onClick={handleApprove}
-          disabled={pending !== null}
-          className="ghost-btn-solid ghost-btn-cykan t-9"
-          data-testid="approval-approve"
+          disabled={pending !== null && pending !== "approve"}
+          loading={pending === "approve"}
+          testId="approval-approve"
         >
-          <span className="tracking-wide uppercase">
-            {pending === "approve" ? "…" : "Approuver"}
-          </span>
-        </button>
+          Approuver
+        </Action>
         {onEdit && (
           <button
             type="button"

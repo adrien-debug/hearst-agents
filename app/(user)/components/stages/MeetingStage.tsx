@@ -5,6 +5,7 @@ import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
 import { toast } from "@/app/hooks/use-toast";
 import { StageActionBar, type StageAction } from "./StageActionBar";
+import { Action } from "../ui";
 
 interface MeetingStageProps {
   meetingId: string;
@@ -278,13 +279,16 @@ export function MeetingStage({ meetingId }: MeetingStageProps) {
                   </button>
                 ))}
               </fieldset>
-              <button
+              <Action
                 type="submit"
-                disabled={starting || !meetingUrl.trim()}
-                className="halo-on-hover inline-flex items-center justify-center gap-2 px-4 py-2 t-11 font-light border border-[var(--cykan)] text-[var(--cykan)] bg-[var(--cykan)]/[0.06] hover:bg-[var(--cykan)]/[0.12] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="secondary"
+                tone="brand"
+                size="sm"
+                disabled={!meetingUrl.trim()}
+                loading={starting}
               >
-                {starting ? "Lancement…" : "Lancer le bot"}
-              </button>
+                Lancer le bot
+              </Action>
             </form>
           </div>
         </div>

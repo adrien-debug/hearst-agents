@@ -9,6 +9,7 @@ import { toast } from "@/app/hooks/use-toast";
 import { StageActionBar, type StageAction } from "./StageActionBar";
 import { KgQueryBar } from "../kg/KgQueryBar";
 import { KgNodeDetail } from "../kg/KgNodeDetail";
+import { Action } from "../ui";
 import type { KgEdge, KgNode } from "@/lib/memory/kg";
 
 interface KnowledgeStageProps {
@@ -443,14 +444,15 @@ export function KnowledgeStage({ entityId, query }: KnowledgeStageProps) {
               Ingest le thread actif pour démarrer ton graphe. L{"'"}agent extrait
               personnes, entreprises, projets, décisions et engagements.
             </p>
-            <button
-              type="button"
+            <Action
+              variant="primary"
+              tone="brand"
               onClick={() => void ingestActiveThread()}
-              disabled={ingesting || !activeThreadId}
-              className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={!activeThreadId}
+              loading={ingesting}
             >
-              {ingesting ? "Extraction…" : "Ingest le thread actif"}
-            </button>
+              Ingest le thread actif
+            </Action>
             {!activeThreadId && (
               <p className="t-11 font-light text-[var(--text-faint)]">
                 Sélectionne un thread d{"'"}abord

@@ -5,6 +5,7 @@ import { useStageStore } from "@/stores/stage";
 import { StageActionBar, type StageAction } from "./StageActionBar";
 import { ActionLog } from "../ActionLog";
 import { ExtractSchemaModal } from "../browser/ExtractSchemaModal";
+import { Action } from "../ui";
 import type { BrowserAction } from "@/lib/events/types";
 
 interface BrowserStageProps {
@@ -404,14 +405,15 @@ export function BrowserStage({ sessionId }: BrowserStageProps) {
                 className="ghost-input-line w-full text-left"
                 disabled={starting}
               />
-              <button
-                type="button"
+              <Action
+                variant="primary"
+                tone="brand"
                 onClick={() => void startSession()}
-                disabled={starting || !taskInput.trim()}
-                className="px-6 py-3 t-13 font-medium bg-[var(--cykan)] text-[var(--text-on-cykan)] transition-colors duration-base hover:opacity-90 disabled:opacity-60"
+                disabled={!taskInput.trim()}
+                loading={starting}
               >
-                {starting ? "Création de la session…" : "Lancer la session"}
-              </button>
+                Lancer la session
+              </Action>
               {error && (
                 <p className="t-11 font-medium text-[var(--danger)]">
                   {error}
