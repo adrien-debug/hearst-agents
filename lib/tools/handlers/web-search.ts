@@ -1,16 +1,16 @@
 /**
- * Web Search — routing par intent vers Exa (sémantique) ou Tavily (factuel).
- *
- * Phase 1.4 : deux providers premium remplacent l'ancien Anthropic built-in.
+ * Web Search — routing par intent vers 3 providers.
  *
  * Routing :
- *   factuel  (who / when / what / define / meaning / price / weather / news)
- *            → Tavily  (searchDepth: basic, includeAnswer: true)
+ *   recherche  (explain / analyze / compare / why / how / overview / research…)
+ *              → Perplexity  (sonar-pro, synthèse + citations)
+ *   factuel    (who / when / what / define / meaning / price / weather / news)
+ *              → Tavily  (searchDepth: basic, includeAnswer: true)
  *   sémantique (tout le reste)
- *            → Exa  (type: neural, useAutoprompt: true)
+ *              → Exa  (type: neural, useAutoprompt: true)
  *
- * Si le provider primaire échoue ou que la clé manque, on tente le secondaire.
- * Si les deux échouent → { error: "search_unavailable" }, pas de throw.
+ * Fallback : primary → secondary → tertiary.
+ * Si les trois échouent → { error: "search_unavailable" }, pas de throw.
  *
  * Cache Redis 24h : `search:<sha256-16chars>` via lib/platform/redis/client.
  * Sans Redis (REDIS_URL absent), le cache est simplement ignoré.
@@ -20,6 +20,7 @@ import { createHash } from "node:crypto";
 import { getRedis } from "@/lib/platform/redis/client";
 import { exaSearch } from "@/lib/capabilities/providers/exa";
 import { tavilySearch } from "@/lib/capabilities/providers/tavily";
+import { perplexitySearch } from "@/lib/capabilities/providers/perplexity";
 
 export interface WebSearchResult {
   query: string;
@@ -35,6 +36,18 @@ export interface WebSearchResult {
 const CACHE_TTL_SECONDS = 24 * 60 * 60;
 
 const FACTUAL_KEYWORDS = ["who", "when", "what", "define", "meaning", "price", "weather", "news"];
+const RESEARCH_KEYWORDS = [
+  "explain", "analyze", "analyse", "compare", "why", "how does", "how do",
+  "difference between", "pros", "cons", "overview", "research", "summarize",
+  "summarise", "what is the best", "recommend", "guide", "tutorial",
+];
+
+function isResearchQuery(query: string): boolean {
+  const q = query.toLowerCase().trim();
+  // Long queries (>6 words) avec un mot-clé recherche
+  const wordCount = q.split(/\s+/).length;
+  return wordCount > 6 && RESEARCH_KEYWORDS.some((kw) => q.includes(kw));
+}
 
 function isFactualQuery(query: string): boolean {
   const q = query.toLowerCase().trim();
@@ -60,6 +73,17 @@ async function runTavily(query: string): Promise<{ results: WebSearchResult["res
   };
 }
 
+async function runPerplexity(query: string): Promise<{ results: WebSearchResult["results"]; answer: string }> {
+  const { answer, citations } = await perplexitySearch(query, { model: "sonar-pro" });
+  // Perplexity retourne une synthèse + liste de citations URLs
+  const results: WebSearchResult["results"] = citations.slice(0, 5).map((url, i) => ({
+    title: `Source ${i + 1}`,
+    url,
+    snippet: i === 0 ? answer.slice(0, 500) : "",
+  }));
+  return { results, answer };
+}
+
 export async function searchWeb(query: string): Promise<WebSearchResult> {
   const cacheKey = `search:${hashQuery(query)}`;
 
@@ -77,36 +101,37 @@ export async function searchWeb(query: string): Promise<WebSearchResult> {
   let rawResults: WebSearchResult["results"] = [];
   let summary = "";
 
-  const factual = isFactualQuery(query);
+  const research = isResearchQuery(query);
+  const factual = !research && isFactualQuery(query);
 
-  try {
-    if (factual) {
-      const { results, answer } = await runTavily(query);
-      rawResults = results;
-      summary = answer ?? rawResults.map((r) => `- ${r.title}: ${r.snippet}`).join("\n");
-    } else {
-      rawResults = await runExa(query);
-      summary = rawResults.map((r) => `- ${r.title}: ${r.snippet}`).join("\n");
-    }
-  } catch {
-    // Primary provider failed — try secondary
+  // Ordre de priorité : research → Perplexity, factual → Tavily, reste → Exa
+  const providers: Array<() => Promise<{ results: WebSearchResult["results"]; answer?: string }>> =
+    research
+      ? [() => runPerplexity(query), () => runTavily(query), () => runExa(query).then((r) => ({ results: r }))]
+      : factual
+        ? [() => runTavily(query), () => runExa(query).then((r) => ({ results: r })), () => runPerplexity(query)]
+        : [() => runExa(query).then((r) => ({ results: r })), () => runTavily(query), () => runPerplexity(query)];
+
+  for (const run of providers) {
     try {
-      if (factual) {
-        rawResults = await runExa(query);
-        summary = rawResults.map((r) => `- ${r.title}: ${r.snippet}`).join("\n");
-      } else {
-        const { results, answer } = await runTavily(query);
+      const { results, answer } = await run();
+      if (results.length > 0 || answer) {
         rawResults = results;
         summary = answer ?? rawResults.map((r) => `- ${r.title}: ${r.snippet}`).join("\n");
+        break;
       }
     } catch {
-      return {
-        query,
-        results: [],
-        summary: "search_unavailable",
-        error: "search_unavailable",
-      };
+      // Essaie le provider suivant
     }
+  }
+
+  if (rawResults.length === 0) {
+    return {
+      query,
+      results: [],
+      summary: "search_unavailable",
+      error: "search_unavailable",
+    };
   }
 
   if (rawResults.length === 0) {
