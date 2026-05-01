@@ -54,7 +54,12 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   return (
     <div
       className="flex-1 flex flex-col min-h-0"
-      style={{ padding: "var(--space-10) var(--space-12) var(--space-6)" }}
+      style={{
+        width: "100%",
+        maxWidth: "var(--width-poster-body)",
+        marginInline: "auto",
+        padding: "var(--space-12) var(--space-16) var(--space-8)",
+      }}
     >
       {/* ─── ZONE A : Header ──────────────────────────────────────── */}
       <header className="flex-none flex flex-col" style={{ gap: "var(--space-4)" }}>
@@ -63,7 +68,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
           className="grid"
           style={{
             gridTemplateColumns: "auto 1fr",
-            gap: "var(--space-10)",
+            gap: "var(--space-16)",
             alignItems: "start",
           }}
         >
@@ -169,7 +174,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         {briefReady ? (
           <article
             className="poster-brief-incipit"
-            style={{ maxWidth: "var(--width-prose-wide)" }}
+            style={{ maxWidth: "var(--width-prose-brief)" }}
           >
             <span className="dropcap">{briefIncipit?.[0] ?? ""}</span>
             {briefIncipit?.slice(1)}
@@ -188,7 +193,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
             </span>
           </article>
         ) : (
-          <div className="flex flex-col" style={{ gap: "var(--space-4)", maxWidth: "var(--width-prose-wide)" }}>
+          <div className="flex flex-col" style={{ gap: "var(--space-4)", maxWidth: "var(--width-prose-brief)" }}>
             <p className="t-15" style={{ color: "var(--text-muted)" }}>
               Aucun brief pour aujourd'hui. Hearst synthétise tes emails 24h, messages Slack,
               agenda du jour, PRs GitHub et issues Linear en un éditorial de 2 minutes.
@@ -224,7 +229,13 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
             <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-4)" }}>
               Watchlist
             </h2>
-            <div className="flex flex-wrap" style={{ gap: "var(--space-8)" }}>
+            <div
+              className="grid"
+              style={{
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gap: "var(--space-6)",
+              }}
+            >
               {data.watchlist.map((w) => (
                 <div key={w.id} className="kpi-tile">
                   <span className="kpi-num">{w.value}</span>
@@ -254,8 +265,9 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         className="flex-none flex items-center"
         style={{
           gap: "var(--space-6)",
-          paddingTop: "var(--space-4)",
-          borderTop: "1px solid var(--border-soft)",
+          marginTop: "var(--space-4)",
+          paddingTop: "var(--space-6)",
+          borderTop: "1px solid var(--line-strong)",
         }}
       >
         <a

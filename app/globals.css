@@ -154,7 +154,10 @@
    * éditorial qui doit rester lisible (mesure typographique). */
   --width-prose-narrow: 560px;
   --width-prose: 640px;
+  --width-prose-brief: 680px;
   --width-prose-wide: 780px;
+  /* Largeur max du body éditorial CockpitPoster — grille de lecture centrée. */
+  --width-poster-body: 880px;
 
   /* ─── ChatInput ─────────────────────────────────────────────── */
   --height-input-min: var(--space-8);  /* textarea : hauteur min 1 ligne = 32px */
@@ -432,8 +435,8 @@
   line-height: 0.88;
   font-feature-settings: "kern", "liga";
 }
-.poster-display.is-display-l { font-size: clamp(48px, 5.5vw, 80px); }
-.poster-display.is-display-m { font-size: clamp(36px, 4.4vw, 64px); }
+.poster-display.is-display-l { font-size: clamp(52px, 5vw, 72px); }
+.poster-display.is-display-m { font-size: clamp(40px, 3.9vw, 56px); }
 
 .poster-greeting {
   font-weight: 500;
@@ -493,10 +496,10 @@
 }
 .poster-brief-incipit .dropcap {
   float: left;
-  font-size: 4.6em;
-  line-height: 0.82;
-  margin-right: 0.12em;
-  margin-top: 0.04em;
+  font-size: 3.2em;
+  line-height: 0.88;
+  margin-right: 0.14em;
+  margin-top: 0.06em;
   color: var(--cykan);
   font-weight: 700;
 }
