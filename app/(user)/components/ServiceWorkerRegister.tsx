@@ -20,7 +20,24 @@ export function ServiceWorkerRegister() {
 
     const isDev = process.env.NODE_ENV === "development";
     const force = process.env.NEXT_PUBLIC_ENABLE_SW === "1";
-    if (isDev && !force) return;
+
+    // En dev : nettoyer les SW + caches résiduels d'une visite prod passée.
+    // Évite que l'ancien CSS/HTML soit servi par le SW alors qu'on bosse en local.
+    if (isDev && !force) {
+      void navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => {
+          void r.unregister();
+        });
+      });
+      if ("caches" in window) {
+        void caches.keys().then((keys) => {
+          keys.forEach((k) => {
+            void caches.delete(k);
+          });
+        });
+      }
+      return;
+    }
 
     let cancelled = false;
 
