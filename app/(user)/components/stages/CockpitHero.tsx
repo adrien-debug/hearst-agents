@@ -162,6 +162,52 @@ export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
           >
             {emptyAction.label} →
           </a>
+
+          {/* Aperçu grisé — montre à quoi ressemblera un brief réel.
+              Vague 9 action #5 : empty states explicatifs (pas glyphes seuls). */}
+          <div
+            style={{
+              marginTop: "var(--space-10)",
+              padding: "var(--space-5) var(--space-6)",
+              border: "1px dashed var(--border-shell)",
+              borderRadius: "var(--radius-md)",
+              opacity: 0.4,
+              pointerEvents: "none",
+            }}
+            aria-hidden="true"
+          >
+            <span
+              className="t-9 font-medium"
+              style={{
+                color: "var(--text-l2)",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              Aperçu — exemple type
+            </span>
+            <p
+              className="t-13 font-light"
+              style={{
+                color: "var(--text-l1)",
+                marginTop: "var(--space-3)",
+                lineHeight: 1.5,
+                fontStyle: "italic",
+              }}
+            >
+              Matinée à fort enjeu : la term sheet Sequoia se reclarifie en parallèle de la signature Acme. Le staging encore instable côté backend pèse sur la confiance opérationnelle.
+            </p>
+            <p
+              className="t-11 font-light"
+              style={{
+                color: "var(--text-l2)",
+                marginTop: "var(--space-2)",
+                lineHeight: 1.5,
+              }}
+            >
+              9 signaux ingérés cross-app — 3 emails urgents, 2 PRs stuck, 1 issue P1.
+            </p>
+          </div>
         </div>
       )}
 

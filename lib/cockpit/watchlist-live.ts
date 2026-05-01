@@ -20,6 +20,12 @@
 
 import { executeComposioAction } from "@/lib/connectors/composio/client";
 import type { CockpitWatchlistItem } from "./today";
+import {
+  recordMetricSnapshot,
+  getRecentSnapshots,
+  detectAnomaly,
+} from "@/lib/watchlist/snapshots";
+import { narrateAnomaly } from "@/lib/watchlist/narrate";
 
 interface CacheEntry {
   items: CockpitWatchlistItem[];
@@ -174,6 +180,9 @@ export async function getLiveWatchlist(scope: {
   ]);
 
   const items: CockpitWatchlistItem[] = [];
+  // Map metricId → valeur numérique courante. Sert ensuite à snapshotter +
+  // détecter les anomalies (vague 9, action #3). Vide pour les KPIs en CTA.
+  const numericValues: Record<string, number> = {};
 
   // ── MRR + ARR depuis Stripe subscriptions
   if (!subsRes.ok) {
@@ -185,6 +194,8 @@ export async function getLiveWatchlist(scope: {
     );
     const mrr = subs.reduce((acc, s) => acc + subscriptionToMrr(s), 0);
     const arr = mrr * 12;
+    if (mrr > 0) numericValues.mrr = mrr;
+    if (arr > 0) numericValues.arr = arr;
     items.push({
       id: "mrr",
       label: "MRR",
@@ -237,6 +248,7 @@ export async function getLiveWatchlist(scope: {
       return !stage.includes("won") && !stage.includes("lost") && !stage.includes("closed");
     });
     const weighted = openDeals.reduce((acc, d) => acc + dealValue(d), 0);
+    if (weighted > 0) numericValues.pipeline = weighted;
     items.push({
       id: "pipeline",
       label: "Pipeline",
@@ -246,6 +258,67 @@ export async function getLiveWatchlist(scope: {
       source: "live",
     });
   }
+
+  // ── Vague 9 action #3 — snapshot + anomaly detection + narration ──────
+  // Pour chaque métrique numérique calculée :
+  //   1. Persiste un snapshot (fire-and-forget, dédupé 1h côté DB)
+  //   2. Charge l'historique 30 derniers snapshots
+  //   3. Détecte une anomaly vs baseline 7j (seuil 5%)
+  //   4. Si anomaly détectée, appelle Haiku pour narrer 1 phrase
+  //
+  // Tout en parallèle pour les 3 KPIs — latence ajoutée ≤ 1.2s en pire cas
+  // (1 snapshot read + 1 LLM call). Le cache 5min de la watchlist amortit
+  // sur le mount suivant.
+  await Promise.all(
+    Object.entries(numericValues).map(async ([metricId, value]) => {
+      // Fire-and-forget snapshot (ne bloque pas le suivant)
+      void recordMetricSnapshot({
+        userId: scope.userId,
+        tenantId: scope.tenantId,
+        metricId,
+        value,
+      });
+
+      try {
+        const snapshots = await getRecentSnapshots({
+          userId: scope.userId,
+          tenantId: scope.tenantId,
+          metricId,
+          limit: 30,
+        });
+        // Inject la valeur courante en tête (snapshot pas encore persisté
+        // au moment de cette lecture vu qu'elle est fire-and-forget).
+        const withCurrent = [
+          {
+            id: "current",
+            userId: scope.userId,
+            tenantId: scope.tenantId,
+            metricId,
+            value,
+            capturedAt: Date.now(),
+            metadata: {},
+          },
+          ...snapshots,
+        ];
+        const anomaly = detectAnomaly(withCurrent);
+        if (!anomaly) return;
+
+        const narration = await narrateAnomaly({ anomaly });
+
+        const item = items.find((i) => i.id === metricId);
+        if (item) {
+          item.anomaly = {
+            changePct: anomaly.changePct,
+            direction: anomaly.direction,
+            severity: anomaly.severity,
+            narration: narration ?? "",
+          };
+        }
+      } catch (err) {
+        console.warn(`[watchlist-live] anomaly detection failed for ${metricId}:`, err);
+      }
+    }),
+  );
 
   cache.set(key, { items, expiresAt: Date.now() + CACHE_TTL_MS });
   return items;

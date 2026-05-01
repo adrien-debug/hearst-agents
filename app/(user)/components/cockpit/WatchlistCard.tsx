@@ -16,6 +16,16 @@ interface WatchlistCardProps {
   trend?: number[];
   /** Quand true : affiche un état "données indicatives" (mock). */
   isMock?: boolean;
+  /**
+   * Anomaly détectée vs baseline 7j (vague 9, action #3). Si présente, la
+   * carte affiche un chip de sévérité + une ligne de narration causale.
+   */
+  anomaly?: {
+    changePct: number;
+    direction: "up" | "down";
+    severity: "warning" | "critical";
+    narration: string;
+  } | null;
   onClick?: () => void;
 }
 
@@ -25,6 +35,7 @@ export function WatchlistCard({
   delta,
   trend,
   isMock,
+  anomaly,
   onClick,
 }: WatchlistCardProps) {
   const hasTrend = (trend?.length ?? 0) >= 2;
@@ -90,7 +101,76 @@ export function WatchlistCard({
       </div>
 
       <Sparkline points={trend ?? []} hasData={hasTrend} />
+
+      {anomaly && anomaly.narration && (
+        <AnomalyBanner
+          changePct={anomaly.changePct}
+          severity={anomaly.severity}
+          narration={anomaly.narration}
+        />
+      )}
     </Wrapper>
+  );
+}
+
+/**
+ * AnomalyBanner — badge sévérité + 1 phrase narration. Affiché en bas de
+ * carte quand l'anomaly est détectée. Couleur cykan pour warning, gold pour
+ * critical (cohérent avec le langage HEARST OS — pas de rouge agressif).
+ */
+function AnomalyBanner({
+  changePct,
+  severity,
+  narration,
+}: {
+  changePct: number;
+  severity: "warning" | "critical";
+  narration: string;
+}) {
+  const badgeColor =
+    severity === "critical" ? "var(--gold)" : "var(--cykan)";
+  const badgeBorder =
+    severity === "critical" ? "var(--gold-border)" : "var(--cykan-border)";
+  const badgeBg =
+    severity === "critical" ? "var(--gold-surface)" : "var(--cykan-surface)";
+  const sign = changePct > 0 ? "+" : "";
+  return (
+    <div
+      className="flex flex-col"
+      style={{
+        gap: "var(--space-2)",
+        marginTop: "var(--space-3)",
+        paddingTop: "var(--space-3)",
+        borderTop: "1px solid var(--border-shell)",
+      }}
+    >
+      <div className="flex items-center" style={{ gap: "var(--space-2)" }}>
+        <span
+          className="t-9 font-medium"
+          style={{
+            color: badgeColor,
+            background: badgeBg,
+            border: `1px solid ${badgeBorder}`,
+            borderRadius: "var(--radius-pill)",
+            padding: "var(--space-1) var(--space-3)",
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+          }}
+        >
+          {sign}
+          {changePct.toFixed(1)}% · 7j
+        </span>
+      </div>
+      <p
+        className="t-11 font-light"
+        style={{
+          color: "var(--text-l2)",
+          lineHeight: 1.45,
+        }}
+      >
+        {narration}
+      </p>
+    </div>
   );
 }
 

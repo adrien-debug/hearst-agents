@@ -59,6 +59,18 @@ export interface CockpitWatchlistItem {
   /** Variation sur 7 derniers points (sparkline). */
   trend: number[];
   source: "mock" | "live";
+  /**
+   * Anomaly détectée vs baseline 7j (vague 9, action #3). Présent uniquement
+   * quand la métrique est numérique, qu'on a ≥ 2 snapshots historiques, et
+   * que la variation dépasse 5%. La `narration` est une phrase courte
+   * (≤140 chars) générée par Haiku qui contextualise causalement le mouvement.
+   */
+  anomaly?: {
+    changePct: number;
+    direction: "up" | "down";
+    severity: "warning" | "critical";
+    narration: string;
+  } | null;
 }
 
 export interface CockpitMission {

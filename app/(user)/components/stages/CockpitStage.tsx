@@ -9,6 +9,7 @@ import { QuickLaunch } from "../cockpit/QuickLaunch";
 import { InboxSection } from "../cockpit/InboxSection";
 import { HospitalityPulse } from "../cockpit/HospitalityPulse";
 import { DailyBriefCard } from "../cockpit/DailyBriefCard";
+import { OnboardingTour } from "../OnboardingTour";
 import { Action } from "../ui";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
@@ -86,6 +87,7 @@ export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
 
   return (
     <div className="cockpit-bg flex-1 flex flex-col min-h-0 relative overflow-hidden panel-enter">
+      <OnboardingTour />
       <div className="relative flex-1 flex flex-col min-h-0 overflow-y-auto">
         {isHospitality && <HospitalityBadge />}
         <CockpitHero
@@ -175,6 +177,7 @@ function CockpitContent({
                 delta={kpi.delta}
                 trend={kpi.trend}
                 isMock={false}
+                anomaly={kpi.anomaly}
               />
             ))}
           </div>
