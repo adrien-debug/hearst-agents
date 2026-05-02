@@ -1,17 +1,19 @@
 /**
- * Next.js Proxy — Global Auth Guard
+ * Next.js Proxy — Global Auth Guard + Arcjet Edge Protection
  *
  * Canonical request guard for Next.js 16 / Turbopack.
  * It runs before route handlers and enforces:
- * 1. Authentication (session or API key)
- * 2. Public path exemptions
- * 3. Explicit dev bypass only
+ * 1. Arcjet protection (rate limit + bot detection + shield) sur routes critiques
+ * 2. Authentication (session or API key)
+ * 3. Public path exemptions
+ * 4. Explicit dev bypass only
  *
  * Environment validation is triggered by importing lib/env.server.ts
  */
 
 import "@/lib/env.server";
 import { NextResponse, type NextRequest } from "next/server";
+import { aj, isArcjetEnabled } from "@/lib/security/arcjet";
 
 const PUBLIC_PATHS = [
   "/login",
@@ -51,8 +53,44 @@ function isDevBypass(): boolean {
   return process.env.HEARST_DEV_AUTH_BYPASS === "1";
 }
 
-export function proxy(req: NextRequest): NextResponse {
+const ARCJET_PROTECTED_PATHS = [
+  "/api/orchestrate",
+  "/api/v2/jobs",
+  "/api/v2/missions",
+  "/api/auth",
+];
+
+function isArcjetProtected(path: string): boolean {
+  return ARCJET_PROTECTED_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
+async function applyArcjet(req: NextRequest): Promise<NextResponse | null> {
+  if (!isArcjetEnabled() || !aj) return null;
+  const decision = await aj.protect(req, { requested: 1 });
+  if (decision.isDenied()) {
+    if (decision.reason.isRateLimit()) {
+      return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+    }
+    if (decision.reason.isBot()) {
+      return NextResponse.json({ error: "bot_detected" }, { status: 403 });
+    }
+    if (decision.reason.isShield()) {
+      return NextResponse.json({ error: "request_blocked" }, { status: 403 });
+    }
+    return NextResponse.json({ error: "denied" }, { status: 403 });
+  }
+  return null;
+}
+
+export async function proxy(req: NextRequest): Promise<NextResponse> {
   const path = req.nextUrl.pathname;
+
+  // 1. Arcjet check sur les routes sensibles (avant auth pour bloquer
+  // les attaques sans consommer de ressources auth).
+  if (isArcjetProtected(path)) {
+    const denied = await applyArcjet(req);
+    if (denied) return denied;
+  }
 
   if (isPublic(path)) {
     return NextResponse.next();

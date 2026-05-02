@@ -25,7 +25,5 @@ export default process.env.SENTRY_AUTH_TOKEN
       },
       // Tunnel les requêtes Sentry via /monitoring (contourne adblockers)
       tunnelRoute: "/monitoring",
-      // Désactive le widget de feedback automatique (on l'activera plus tard si besoin)
-      disableLogger: true,
     })
   : nextConfig;
