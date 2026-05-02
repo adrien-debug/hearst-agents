@@ -269,6 +269,190 @@ export async function upsertEdge(
   }
 }
 
+/**
+ * Recherche fuzzy de nodes par label (ILIKE %q%). Scope strict.
+ * Limit raisonnable — au-delà on devra ajouter trigram index ou full-text.
+ */
+export async function searchNodes(
+  scope: KgScope,
+  q: string,
+  limit = 30,
+): Promise<KgNode[]> {
+  const sb = requireServerSupabase();
+  const safe = q.trim().replace(/[%_]/g, "\\$&");
+  if (!safe) return [];
+  const { data, error } = await sb
+    .from("kg_nodes")
+    .select("*")
+    .eq("user_id", scope.userId)
+    .eq("tenant_id", scope.tenantId)
+    .ilike("label", `%${safe}%`)
+    .limit(Math.min(limit, 100));
+  if (error) {
+    throw new Error(`[kg] searchNodes failed: ${error.message}`);
+  }
+  return (data ?? []) as KgNode[];
+}
+
+/**
+ * Plus court chemin (BFS) entre deux nodes du graphe user-scoped.
+ * Capped à `maxHops` pour éviter de scanner tout le graphe sur des
+ * paires non connectées. Retourne null si pas de chemin sous le cap.
+ */
+export async function findPath(
+  scope: KgScope,
+  fromId: string,
+  toId: string,
+  maxHops = 4,
+): Promise<{ nodes: KgNode[]; edges: KgEdge[]; hops: number } | null> {
+  if (fromId === toId) {
+    // Même node : chemin trivial 0 hop, retourne le node seul si trouvé.
+    const sb = requireServerSupabase();
+    const { data } = await sb
+      .from("kg_nodes")
+      .select("*")
+      .eq("user_id", scope.userId)
+      .eq("tenant_id", scope.tenantId)
+      .eq("id", fromId)
+      .maybeSingle();
+    if (!data) return null;
+    return { nodes: [data as KgNode], edges: [], hops: 0 };
+  }
+
+  const graph = await getGraph(scope);
+  const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
+  if (!nodeById.has(fromId) || !nodeById.has(toId)) return null;
+
+  // Adjacency map : nodeId → [{ neighborId, edge }]
+  const adj = new Map<string, Array<{ neighborId: string; edge: KgEdge }>>();
+  for (const e of graph.edges) {
+    if (!adj.has(e.source_id)) adj.set(e.source_id, []);
+    if (!adj.has(e.target_id)) adj.set(e.target_id, []);
+    adj.get(e.source_id)!.push({ neighborId: e.target_id, edge: e });
+    // Considéré bidirectionnel pour les besoins du pathfinder UI
+    adj.get(e.target_id)!.push({ neighborId: e.source_id, edge: e });
+  }
+
+  // BFS
+  const visited = new Set<string>([fromId]);
+  const queue: Array<{ id: string; pathNodes: string[]; pathEdges: string[] }> = [
+    { id: fromId, pathNodes: [fromId], pathEdges: [] },
+  ];
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    if (cur.pathEdges.length >= maxHops) continue;
+    const neighbors = adj.get(cur.id) ?? [];
+    for (const { neighborId, edge } of neighbors) {
+      if (visited.has(neighborId)) continue;
+      const nextPathNodes = [...cur.pathNodes, neighborId];
+      const nextPathEdges = [...cur.pathEdges, edge.id];
+      if (neighborId === toId) {
+        const nodes = nextPathNodes.map((id) => nodeById.get(id)!).filter(Boolean);
+        const edges = nextPathEdges
+          .map((id) => graph.edges.find((e) => e.id === id))
+          .filter((e): e is KgEdge => Boolean(e));
+        return { nodes, edges, hops: nextPathEdges.length };
+      }
+      visited.add(neighborId);
+      queue.push({ id: neighborId, pathNodes: nextPathNodes, pathEdges: nextPathEdges });
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Timeline d'un entité — events liés (edges où l'entité est source ou target),
+ * triés par date desc. Mappe en TimelineEvent (shape consommée par
+ * KgNodeDetail.tsx : kind/type/label/createdAt/relatedNodeId/edgeType).
+ */
+export interface TimelineEvent {
+  id: string;
+  kind: "decision" | "commitment" | "related";
+  type: string;
+  label: string;
+  createdAt: string;
+  relatedNodeId: string;
+  edgeType: string;
+}
+
+export async function getEntityTimeline(
+  scope: KgScope,
+  entityId: string,
+  limit = 50,
+): Promise<TimelineEvent[]> {
+  const sb = requireServerSupabase();
+
+  // Edges où l'entité est source ou target (deux requêtes à cause du OR
+  // pas idéal sur deux colonnes différentes côté supabase-js).
+  const [{ data: outEdges, error: outErr }, { data: inEdges, error: inErr }] = await Promise.all([
+    sb
+      .from("kg_edges")
+      .select("*")
+      .eq("user_id", scope.userId)
+      .eq("tenant_id", scope.tenantId)
+      .eq("source_id", entityId)
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    sb
+      .from("kg_edges")
+      .select("*")
+      .eq("user_id", scope.userId)
+      .eq("tenant_id", scope.tenantId)
+      .eq("target_id", entityId)
+      .order("created_at", { ascending: false })
+      .limit(limit),
+  ]);
+  if (outErr) throw new Error(`[kg] timeline outEdges failed: ${outErr.message}`);
+  if (inErr) throw new Error(`[kg] timeline inEdges failed: ${inErr.message}`);
+
+  const allEdges = [...(outEdges ?? []), ...(inEdges ?? [])] as KgEdge[];
+  if (allEdges.length === 0) return [];
+
+  // Fetch tous les nodes "autres" pour résoudre labels
+  const otherIds = Array.from(
+    new Set(
+      allEdges.map((e) => (e.source_id === entityId ? e.target_id : e.source_id)),
+    ),
+  );
+  const { data: otherNodes, error: nodesErr } = await sb
+    .from("kg_nodes")
+    .select("*")
+    .eq("user_id", scope.userId)
+    .eq("tenant_id", scope.tenantId)
+    .in("id", otherIds);
+  if (nodesErr) throw new Error(`[kg] timeline otherNodes failed: ${nodesErr.message}`);
+  const nodeById = new Map((otherNodes ?? []).map((n) => [n.id, n as KgNode]));
+
+  const events: TimelineEvent[] = allEdges
+    .map((e): TimelineEvent | null => {
+      const otherId = e.source_id === entityId ? e.target_id : e.source_id;
+      const other = nodeById.get(otherId);
+      if (!other) return null;
+      const kind: TimelineEvent["kind"] =
+        other.type === "decision"
+          ? "decision"
+          : other.type === "commitment"
+            ? "commitment"
+            : "related";
+      return {
+        id: e.id,
+        kind,
+        type: other.type,
+        label: other.label,
+        createdAt: e.created_at,
+        relatedNodeId: other.id,
+        edgeType: e.type,
+      };
+    })
+    .filter((e): e is TimelineEvent => e !== null)
+    // Sort final desc + cap
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, limit);
+
+  return events;
+}
+
 export async function getGraph(scope: KgScope): Promise<KgGraph> {
   const sb = requireServerSupabase();
 
