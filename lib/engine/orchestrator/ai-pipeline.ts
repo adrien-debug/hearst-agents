@@ -30,6 +30,7 @@ import { buildWebSearchTools } from "@/lib/tools/native/web-search";
 import { buildMarketDataTools } from "@/lib/tools/native/market-data";
 import { buildExtrasServicesTools } from "@/lib/tools/native/extras-services";
 import { buildResearchTools } from "@/lib/tools/native/research";
+import { buildExtrasMediaTools } from "@/lib/tools/native/extras-media";
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
@@ -481,6 +482,16 @@ export async function runAiPipeline(
     },
     threadId: input.threadId,
   });
+  const extrasMediaTools = buildExtrasMediaTools({
+    scope: {
+      userId: input.userId,
+      tenantId: input.tenantId ?? "dev-tenant",
+      workspaceId: input.workspaceId ?? "dev-workspace",
+    },
+    eventBus,
+    runId: engine.id,
+    threadId: input.threadId,
+  });
 
   const aiTools = {
     ...nativeGoogleTools,
@@ -490,6 +501,7 @@ export async function runAiPipeline(
     ...marketDataTools,
     ...extrasServicesTools,
     ...researchTools,
+    ...extrasMediaTools,
     ...toAiTools(filteredComposio, input.userId),
     request_connection: buildRequestConnectionTool(engine, eventBus),
     create_scheduled_mission: buildCreateScheduledMissionTool(engine, eventBus, {
