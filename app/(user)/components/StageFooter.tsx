@@ -60,7 +60,8 @@ export function StageFooter() {
         height: "var(--height-stage-footer)",
         padding: "0 var(--space-6)",
         borderTop: "1px solid var(--border-subtle)",
-        background: "var(--bg-elev)",
+        background: "var(--rail)",
+        color: "var(--text-soft)",
         gap: "var(--space-4)",
       }}
       aria-live="polite"
