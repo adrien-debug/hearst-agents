@@ -11,6 +11,11 @@
  * The /api/orchestrate module-scope call remains as a secondary guard.
  */
 
+import * as Sentry from "@sentry/nextjs";
+
+// Capture toutes les server request errors automatiquement (Next.js 15+, @sentry/nextjs >=8.28.0)
+export const onRequestError = Sentry.captureRequestError;
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     if (process.env.SENTRY_DSN) {

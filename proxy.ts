@@ -21,6 +21,7 @@ const PUBLIC_PATHS = [
   "/api/health",
   "/api/webhooks",
   "/api/inngest", // Signé par INNGEST_SIGNING_KEY côté Inngest, pas d'auth user
+  "/monitoring", // Tunnel route Sentry (cf. next.config.ts withSentryConfig)
   "/halo-test",
 ];
 

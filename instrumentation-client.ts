@@ -7,8 +7,14 @@ if (dsn) {
     dsn,
     environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? "development",
     tracesSampleRate: 0.1,
+    sendDefaultPii: true,
+    enableLogs: true,
+    // Session Replay : 0% sessions normales, 100% sessions avec erreur
     replaysSessionSampleRate: 0.0,
     replaysOnErrorSampleRate: 1.0,
     integrations: [Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false })],
   });
 }
+
+// Capture les transitions de navigation App Router
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

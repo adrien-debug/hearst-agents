@@ -24,6 +24,8 @@ export default process.env.SENTRY_AUTH_TOKEN && sentryProject && sentryOrg
       authToken: process.env.SENTRY_AUTH_TOKEN,
       // Silencieux en build local, verbeux en CI
       silent: !process.env.CI,
+      // Upload une plus grande surface de fichiers client pour de meilleures stack traces
+      widenClientFileUpload: true,
       // Upload sourcemaps mais ne les serve pas publiquement
       sourcemaps: {
         deleteSourcemapsAfterUpload: true,
