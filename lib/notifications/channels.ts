@@ -17,7 +17,7 @@ import type {
 /** Timeout HTTP fixe pour les canaux externes (webhook, Slack). */
 export const CHANNEL_HTTP_TIMEOUT_MS = 5_000;
 /** 1 retry max avec backoff court (constant). */
-export const CHANNEL_RETRY_BACKOFF_MS = 500;
+const CHANNEL_RETRY_BACKOFF_MS = 500;
 
 export interface AlertContext {
   tenantId: string;
@@ -41,7 +41,7 @@ export interface AlertWebhookPayload {
   };
 }
 
-export type ChannelKind = "webhook" | "slack" | "email";
+type ChannelKind = "webhook" | "slack" | "email";
 
 export interface ChannelResult {
   kind: ChannelKind;
@@ -305,10 +305,3 @@ function truncateUrl(url: string): string {
   return `${url.slice(0, 30)}...${url.slice(-20)}`;
 }
 
-// Exports pour tests
-export const __testInternals = {
-  buildWebhookPayload,
-  buildSlackPayload,
-  buildEmailMessage,
-  matchesSignalFilter,
-};

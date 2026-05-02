@@ -43,7 +43,7 @@ export interface GanttTask {
   dependsOn?: ReadonlyArray<string>;
 }
 
-export interface GanttProps {
+interface GanttProps {
   range: GanttRange;
   tasks: ReadonlyArray<GanttTask>;
   /** Hauteur graphique en pixels. Défaut auto = tasks.length * row + axis. */

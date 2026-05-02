@@ -7,7 +7,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type AuditAction =
+type AuditAction =
   | "settings.create"
   | "settings.update"
   | "settings.delete"
@@ -29,7 +29,7 @@ export type AuditAction =
   | "auth.logout"
   | "auth.failed";
 
-export type AuditSeverity = "info" | "warning" | "error" | "critical";
+type AuditSeverity = "info" | "warning" | "error" | "critical";
 
 export interface AuditLog {
   id: string;
@@ -47,20 +47,6 @@ export interface AuditLog {
   errorMessage?: string;
 }
 
-export interface CreateAuditLogInput {
-  userId: string;
-  action: AuditAction;
-  resource: string;
-  resourceId?: string;
-  details?: Record<string, unknown>;
-  severity?: AuditSeverity;
-  ip?: string;
-  userAgent?: string;
-  tenantId?: string;
-  success?: boolean;
-  errorMessage?: string;
-}
-
 export interface AuditQueryFilters {
   userId?: string;
   action?: AuditAction;
@@ -72,40 +58,6 @@ export interface AuditQueryFilters {
   success?: boolean;
   limit?: number;
   offset?: number;
-}
-
-/**
- * Log an admin action
- */
-export async function logAdminAction(
-  db: SupabaseClient,
-  input: CreateAuditLogInput
-): Promise<AuditLog> {
-  const { data, error } = await db
-    .from("audit_logs")
-    .insert({
-      user_id: input.userId,
-      action: input.action,
-      resource: input.resource,
-      resource_id: input.resourceId,
-      details: input.details || {},
-      severity: input.severity || "info",
-      ip_address: input.ip,
-      user_agent: input.userAgent,
-      tenant_id: input.tenantId,
-      success: input.success ?? true,
-      error_message: input.errorMessage,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    // Log to console as fallback (audit logging should not break the app)
-    console.error("[Admin/Audit] Failed to log action:", error, input);
-    throw new Error(`Failed to log action: ${error.message}`);
-  }
-
-  return parseAuditRow(data);
 }
 
 /**
@@ -162,193 +114,6 @@ export async function getAuditLogs(
   return {
     logs: (data || []).map(parseAuditRow),
     total: count || 0,
-  };
-}
-
-/**
- * Get a single audit log by ID
- */
-export async function getAuditLog(
-  db: SupabaseClient,
-  logId: string
-): Promise<AuditLog | null> {
-  const { data, error } = await db
-    .from("audit_logs")
-    .select("*")
-    .eq("id", logId)
-    .single();
-
-  if (error) {
-    if (error.code === "PGRST116") return null;
-    console.error("[Admin/Audit] Failed to fetch log:", error);
-    throw new Error(`Failed to fetch log: ${error.message}`);
-  }
-
-  return data ? parseAuditRow(data) : null;
-}
-
-/**
- * Export audit logs to CSV format
- */
-export async function exportAuditLogs(
-  db: SupabaseClient,
-  startDate: string,
-  endDate: string,
-  tenantId?: string
-): Promise<string> {
-  const { logs } = await getAuditLogs(db, {
-    startDate,
-    endDate,
-    tenantId,
-    limit: 10000, // Max export size
-  });
-
-  const headers = [
-    "timestamp",
-    "userId",
-    "action",
-    "resource",
-    "resourceId",
-    "severity",
-    "success",
-    "ip",
-    "tenantId",
-    "details",
-  ];
-
-  const rows = logs.map((log) => [
-    log.timestamp,
-    log.userId,
-    log.action,
-    log.resource,
-    log.resourceId || "",
-    log.severity,
-    log.success ? "true" : "false",
-    log.ip || "",
-    log.tenantId || "",
-    JSON.stringify(log.details),
-  ]);
-
-  const escapeCsv = (value: string) => {
-    if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
-  };
-
-  const csv = [
-    headers.join(","),
-    ...rows.map((row) => row.map(escapeCsv).join(",")),
-  ].join("\n");
-
-  return csv;
-}
-
-/**
- * Get audit statistics
- */
-export async function getAuditStats(
-  db: SupabaseClient,
-  startDate: string,
-  endDate: string,
-  tenantId?: string
-): Promise<{
-  totalActions: number;
-  byAction: Record<string, number>;
-  bySeverity: Record<AuditSeverity, number>;
-  byUser: Record<string, number>;
-  successRate: number;
-}> {
-  let query = db
-    .from("audit_logs")
-    .select("action, severity, user_id, success")
-    .gte("created_at", startDate)
-    .lte("created_at", endDate);
-
-  if (tenantId) {
-    query = query.eq("tenant_id", tenantId);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("[Admin/Audit] Failed to fetch stats:", error);
-    throw new Error(`Failed to fetch stats: ${error.message}`);
-  }
-
-  const stats = {
-    totalActions: 0,
-    byAction: {} as Record<string, number>,
-    bySeverity: { info: 0, warning: 0, error: 0, critical: 0 },
-    byUser: {} as Record<string, number>,
-    successCount: 0,
-    successRate: 100,
-  };
-
-  for (const row of data || []) {
-    stats.totalActions++;
-
-    const action = row.action as string;
-    stats.byAction[action] = (stats.byAction[action] || 0) + 1;
-
-    const severity = row.severity as AuditSeverity;
-    if (severity in stats.bySeverity) {
-      stats.bySeverity[severity]++;
-    }
-
-    const userId = row.user_id as string;
-    stats.byUser[userId] = (stats.byUser[userId] || 0) + 1;
-
-    if (row.success) {
-      stats.successCount++;
-    }
-  }
-
-  stats.successRate =
-    stats.totalActions > 0
-      ? Math.round((stats.successCount / stats.totalActions) * 100)
-      : 100;
-
-  return {
-    totalActions: stats.totalActions,
-    byAction: stats.byAction,
-    bySeverity: stats.bySeverity,
-    byUser: stats.byUser,
-    successRate: stats.successRate,
-  };
-}
-
-/**
- * Create a convenience logger with context
- */
-export function createAuditLogger(
-  db: SupabaseClient,
-  context: {
-    userId: string;
-    tenantId?: string;
-    ip?: string;
-    userAgent?: string;
-  }
-) {
-  return {
-    log: (
-      action: AuditAction,
-      resource: string,
-      details?: Record<string, unknown>,
-      options?: { severity?: AuditSeverity; success?: boolean; errorMessage?: string }
-    ) =>
-      logAdminAction(db, {
-        userId: context.userId,
-        action,
-        resource,
-        details,
-        severity: options?.severity,
-        ip: context.ip,
-        userAgent: context.userAgent,
-        tenantId: context.tenantId,
-        success: options?.success,
-        errorMessage: options?.errorMessage,
-      }),
   };
 }
 

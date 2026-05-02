@@ -90,20 +90,30 @@ export default function HomePageClient({ initialCockpitData }: HomePageClientPro
   }, []);
 
   useEffect(() => {
+    // Thread switch : on drop le focal pinned du thread précédent AVANT
+    // toute fetch async. Sinon `hydrateThreadState` court-circuite l'update
+    // (cf. stores/focal.ts:189) et l'ancien asset/report persiste dans la
+    // FocalStage du nouveau thread. Le pin est conçu pour résister au
+    // polling SSE 1s, pas aux changements de thread.
+    clearFocal();
+
     if (!activeThreadId) {
       hydrateThreadState(null, []);
       return;
     }
 
+    let cancelled = false;
     const fetchThreadState = async () => {
       try {
         const res = await fetch(`/api/v2/right-panel?thread_id=${encodeURIComponent(activeThreadId)}`);
+        if (cancelled) return;
         if (!res.ok) {
           hydrateThreadState(null, []);
           return;
         }
 
         const data: RightPanelData = await res.json();
+        if (cancelled) return;
 
         const secondary =
           data.secondaryObjects && Array.isArray(data.secondaryObjects)
@@ -115,12 +125,16 @@ export default function HomePageClient({ initialCockpitData }: HomePageClientPro
           : null;
         hydrateThreadState(mappedFocal, secondary);
       } catch (_err) {
+        if (cancelled) return;
         hydrateThreadState(null, []);
       }
     };
 
     fetchThreadState();
-  }, [activeThreadId, hydrateThreadState]);
+    return () => {
+      cancelled = true;
+    };
+  }, [activeThreadId, hydrateThreadState, clearFocal]);
 
   const hideFocalStage = useFocalStore((s) => s.hide);
   const setStoreServices = useServicesStore((s) => s.setServices);

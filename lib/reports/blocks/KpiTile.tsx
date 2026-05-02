@@ -14,13 +14,13 @@
 import { Sparkline } from "./Sparkline";
 import { fmtCurrency, fmtNumber, fmtDelta } from "./format";
 
-export interface KpiTileData {
+interface KpiTileData {
   value: unknown;
   delta?: unknown;
   sparkline?: ReadonlyArray<number> | null;
 }
 
-export interface KpiTileProps {
+interface KpiTileProps {
   data: KpiTileData;
   /** Label affiché en haut, en mono uppercase. */
   label: string;

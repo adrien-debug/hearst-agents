@@ -36,11 +36,3 @@ export function getBullConnection(): Redis | null {
 
   return _bullConnection;
 }
-
-/** Test-only — rebuild fresh connection for vi.resetModules-like flows. */
-export function resetBullConnectionForTests(): void {
-  if (_bullConnection) {
-    void _bullConnection.quit().catch(() => {});
-  }
-  _bullConnection = null;
-}

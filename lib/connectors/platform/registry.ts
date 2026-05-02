@@ -9,24 +9,12 @@ import type { ConnectorDefinition } from "./types";
 
 const connectors: Map<string, ConnectorDefinition> = new Map();
 
-export function registerConnector(def: ConnectorDefinition): void {
+function registerConnector(def: ConnectorDefinition): void {
   connectors.set(def.id, def);
 }
 
 export function getConnector(id: string): ConnectorDefinition | undefined {
   return connectors.get(id);
-}
-
-export function getAllConnectors(): ConnectorDefinition[] {
-  return Array.from(connectors.values());
-}
-
-export function getConnectorsByCapability(
-  cap: ConnectorDefinition["capabilities"][number],
-): ConnectorDefinition[] {
-  return Array.from(connectors.values()).filter((c) =>
-    c.capabilities.includes(cap),
-  );
 }
 
 // ── Seed registry ────────────────────────────────────────────

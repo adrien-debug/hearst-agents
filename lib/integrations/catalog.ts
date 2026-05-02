@@ -134,7 +134,7 @@ const SERVICE_METADATA: Record<string, ServiceMetadata> = {
 
 // ── Bundles ────────────────────────────────────────────────
 
-export const SERVICE_BUNDLES: ServiceBundle[] = [
+const SERVICE_BUNDLES: ServiceBundle[] = [
   {
     id: "sales-stack",
     name: "Sales Stack",
@@ -215,19 +215,6 @@ export function getServicesByTier(tier: ServiceTier): ServiceDefinition[] {
 }
 
 /**
- * Search services.
- */
-export function searchServices(query: string): ServiceDefinition[] {
-  const q = query.toLowerCase();
-  return getAllServices().filter(
-    (s) =>
-      s.name.toLowerCase().includes(q) ||
-      s.description.toLowerCase().includes(q) ||
-      s.id.toLowerCase().includes(q),
-  );
-}
-
-/**
  * Filter services.
  */
 export function filterServices(filters: CatalogFilters): ServiceDefinition[] {
@@ -264,13 +251,6 @@ export function filterServices(filters: CatalogFilters): ServiceDefinition[] {
 export function getRecommendedServices(_context?: string): ServiceDefinition[] {
   // For now, return Tier 1 services
   return getServicesByTier("tier_1");
-}
-
-/**
- * Get bundle by ID.
- */
-export function getBundle(id: string): ServiceBundle | undefined {
-  return SERVICE_BUNDLES.find((b) => b.id === id);
 }
 
 /**

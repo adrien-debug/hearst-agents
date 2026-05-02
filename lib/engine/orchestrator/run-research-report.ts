@@ -221,6 +221,7 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
     eventBus.emit({
       type: "asset_generated",
       run_id: engine.id,
+      thread_id: threadId,
       asset_id: asset.id,
       asset_type: "report",
       name: asset.title,
@@ -237,6 +238,7 @@ export async function runResearchReport(input: ResearchReportInput): Promise<voi
     eventBus.emit({
       type: "focal_object_ready",
       run_id: engine.id,
+      thread_id: threadId,
       focal_object: {
         objectType: "report",
         id: `fo_${asset.id}`,
@@ -302,11 +304,56 @@ async function synthesizeReport(
     .join("\n");
 }
 
+/**
+ * Strip the meta-conversation prefix ("est-ce que tu peux", "s'il te plaît",
+ * "mets-moi un", "fais-moi un", "peux-tu me", "j'aimerais", etc.) so the
+ * asset title reflects the actual subject and not the polite framing.
+ *
+ * Then cut at a word boundary at ≤ 50 chars (no truncation mid-word like
+ * "Est-ce que sil te plaît tu peux me mettre une miss").
+ */
 function buildAssetName(query: string): string {
-  const cleaned = query
-    .replace(/[^\w\sàâäéèêëïîôùûüÿçæœ-]/gi, "")
-    .trim()
-    .slice(0, 50);
+  let stripped = query
+    .toLowerCase()
+    .replace(/[^\w\sàâäéèêëïîôùûüÿçæœ'-]/gi, "")
+    .trim();
+
+  const META_PREFIX_PATTERNS = [
+    /^est[- ]ce\s+que\s+(?:tu\s+|s'?il\s+te\s+pla[iî]t\s+)*tu\s+peux\s+(?:me\s+|m'?)?/i,
+    /^est[- ]ce\s+que\s+(?:tu\s+|s'?il\s+te\s+pla[iî]t\s+)*/i,
+    /^s'?il\s+te\s+pla[iî]t\s+(?:tu\s+peux\s+|peux[- ]tu\s+)?(?:me\s+|m'?)?/i,
+    /^peux[- ]tu\s+(?:me\s+|m'?)?/i,
+    /^pourrais[- ]tu\s+(?:me\s+|m'?)?/i,
+    /^(?:peux\s+tu|tu\s+peux)\s+(?:me\s+|m'?)?/i,
+    /^(?:mets|met)[- ]moi\s+(?:un[e]?\s+)?/i,
+    /^fais[- ]moi\s+(?:un[e]?\s+)?/i,
+    /^donne[- ]moi\s+(?:un[e]?\s+)?/i,
+    /^j'?aimerais\s+(?:que\s+)?/i,
+    /^je\s+(?:voudrais|veux)\s+(?:que\s+)?/i,
+    /^(?:please|can\s+you|could\s+you)\s+/i,
+  ];
+
+  for (const re of META_PREFIX_PATTERNS) {
+    stripped = stripped.replace(re, "").trim();
+  }
+
+  // Drop leading filler (« une mission », « un rapport ») — on garde le sujet
+  stripped = stripped.replace(/^(?:une?\s+)?(?:mission|rapport|brief|r[ée]sum[ée]|document|note)\s+(?:que\s+|sur\s+|de\s+|du\s+|des\s+|à\s+propos\s+de\s+)?/i, "").trim();
+
+  if (stripped.length === 0) {
+    stripped = query.toLowerCase().slice(0, 50);
+  }
+
+  // Cut at word boundary, max 50 chars
+  let cleaned = stripped;
+  if (cleaned.length > 50) {
+    const truncated = cleaned.slice(0, 50);
+    const lastSpace = truncated.lastIndexOf(" ");
+    cleaned = lastSpace > 20 ? truncated.slice(0, lastSpace) : truncated;
+  }
+
+  cleaned = cleaned.trim();
+  if (cleaned.length === 0) cleaned = "Recherche";
 
   const capitalized = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   return `${capitalized} — Report`;

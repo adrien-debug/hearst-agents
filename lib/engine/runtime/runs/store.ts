@@ -28,13 +28,6 @@ export function getAllRuns(limit = 50): RunRecord[] {
   return all.slice(0, limit);
 }
 
-export function getRunsByUserId(userId: string, limit = 50): RunRecord[] {
-  return Array.from(runs.values())
-    .filter((r) => r.userId === userId)
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, limit);
-}
-
 /** Wipe every run from the in-memory store. Server-only cleanup. */
 export function clearAllRuns(): void {
   runs.clear();

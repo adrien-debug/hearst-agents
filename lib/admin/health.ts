@@ -34,14 +34,6 @@ export interface HealthStatus {
   version: string;
 }
 
-export interface ComponentHealth {
-  name: string;
-  status: "healthy" | "degraded" | "unhealthy";
-  latencyMs: number;
-  message?: string;
-  lastChecked: string;
-}
-
 /**
  * Get comprehensive system health
  */
@@ -123,7 +115,7 @@ export async function getSystemHealth(
 /**
  * Check database connectivity and performance
  */
-export async function checkDatabaseHealth(
+async function checkDatabaseHealth(
   db: SupabaseClient
 ): Promise<{ ok: boolean; latencyMs: number; error?: string }> {
   const start = Date.now();
@@ -157,7 +149,7 @@ export async function checkDatabaseHealth(
 /**
  * Check storage provider health
  */
-export async function checkStorageHealth(
+async function checkStorageHealth(
   storage: StorageProvider
 ): Promise<{ ok: boolean; latencyMs: number; error?: string }> {
   const start = Date.now();
@@ -243,77 +235,4 @@ async function checkLLMHealth(): Promise<{
       error: err instanceof Error ? err.message : "LLM check failed",
     };
   }
-}
-
-/**
- * Get detailed component health
- */
-export async function getComponentHealth(
-  db: SupabaseClient,
-  component: string
-): Promise<ComponentHealth> {
-  const start = Date.now();
-
-  switch (component) {
-    case "database": {
-      const dbHealth = await checkDatabaseHealth(db);
-      return {
-        name: "database",
-        status: dbHealth.ok ? "healthy" : "unhealthy",
-        latencyMs: dbHealth.latencyMs,
-        message: dbHealth.error,
-        lastChecked: new Date().toISOString(),
-      };
-    }
-
-    case "llm": {
-      const llmHealth = await checkLLMHealth();
-      return {
-        name: "llm",
-        status: llmHealth.ok ? "healthy" : "unhealthy",
-        latencyMs: llmHealth.latencyMs,
-        message: llmHealth.error,
-        lastChecked: new Date().toISOString(),
-      };
-    }
-
-    default:
-      return {
-        name: component,
-        status: "unhealthy",
-        latencyMs: Date.now() - start,
-        message: `Unknown component: ${component}`,
-        lastChecked: new Date().toISOString(),
-      };
-  }
-}
-
-/**
- * Health check for load balancers / k8s probes
- */
-export async function livenessProbe(db: SupabaseClient): Promise<boolean> {
-  const health = await checkDatabaseHealth(db);
-  return health.ok;
-}
-
-/**
- * Readiness check (more comprehensive)
- */
-export async function readinessProbe(
-  db: SupabaseClient,
-  storage?: StorageProvider
-): Promise<{ ready: boolean; reason?: string }> {
-  const dbHealth = await checkDatabaseHealth(db);
-  if (!dbHealth.ok) {
-    return { ready: false, reason: "Database unavailable" };
-  }
-
-  if (storage) {
-    const storageHealth = await checkStorageHealth(storage);
-    if (!storageHealth.ok) {
-      return { ready: false, reason: "Storage unavailable" };
-    }
-  }
-
-  return { ready: true };
 }

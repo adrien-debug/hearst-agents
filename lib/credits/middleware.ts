@@ -21,7 +21,7 @@ import { guardAndReserveCredits } from "./client";
 import type { JobKind } from "@/lib/jobs/types";
 import type { CreditGuardResult } from "./types";
 
-export interface RequireCreditsArgs {
+interface RequireCreditsArgs {
   userId: string;
   tenantId: string;
   jobKind: JobKind;

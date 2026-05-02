@@ -59,6 +59,3 @@ export async function ensureCleanupSchedulerStarted(): Promise<void> {
   }
 }
 
-export function getCleanupScheduler(): CleanupScheduler | null {
-  return scheduler;
-}

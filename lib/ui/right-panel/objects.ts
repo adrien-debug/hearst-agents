@@ -16,14 +16,11 @@ import type {
 
 // ── Re-exports from canonical source ────────────────────────
 
-/** @deprecated Use FocalType from @/stores/focal */
-export type FocalObjectType = FocalType;
-
-/** @deprecated Use FocalStatus from @/stores/focal */
+type FocalObjectType = FocalType;
 export type FocalObjectStatus = FocalStatus;
 
 /** Morphing transition — which object type this can become. */
-export type MorphTarget = FocalObjectType | null;
+type MorphTarget = FocalObjectType | null;
 
 interface FocalObjectBase {
   objectType: FocalObjectType;
@@ -47,9 +44,9 @@ interface FocalObjectBase {
 
 // ── Actions (anti-button: max 1) ────────────────────────────
 
-export type FocalActionKind = "approve" | "discard" | "send" | "pause" | "resume" | "retry";
+type FocalActionKind = "approve" | "discard" | "send" | "pause" | "resume" | "retry";
 
-export interface FocalAction {
+interface FocalAction {
   kind: FocalActionKind;
   label: string;
 }

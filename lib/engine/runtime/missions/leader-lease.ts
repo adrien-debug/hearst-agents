@@ -125,28 +125,6 @@ export async function renewSchedulerLeadership(opts?: {
 }
 
 /**
- * Release leadership explicitly (e.g. on graceful shutdown).
- */
-export async function releaseSchedulerLeadership(opts?: {
-  instanceId?: string;
-}): Promise<void> {
-  const sb = db();
-  if (!sb) return;
-
-  const id = opts?.instanceId ?? INSTANCE_ID;
-
-  try {
-    await sb
-      .from("scheduler_leases")
-      .delete()
-      .eq("key", LEASE_KEY)
-      .eq("instance_id", id);
-  } catch (err) {
-    console.error("[LeaderLease] Release error:", err);
-  }
-}
-
-/**
  * Read current leader info (for diagnostics / observability).
  */
 export async function getSchedulerLeader(): Promise<{

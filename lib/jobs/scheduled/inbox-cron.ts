@@ -28,21 +28,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { InboxFetchInput } from "@/lib/jobs/types";
 
 const REPEAT_EVERY_MS = 30 * 60_000; // 30 min
-const MIN_INTERVAL_MS = 5 * 60_000; // throttle 5 min par user (manual refresh)
 
 let _started = false;
 let _inboxQueue: Queue | null = null;
-const _lastEnqueueByUser = new Map<string, number>();
-
-/** Throttle global pour /api/v2/inbox/refresh (manual). */
-export function canEnqueueInboxFetch(userId: string): boolean {
-  const last = _lastEnqueueByUser.get(userId) ?? 0;
-  return Date.now() - last >= MIN_INTERVAL_MS;
-}
-
-export function markInboxFetchEnqueued(userId: string): void {
-  _lastEnqueueByUser.set(userId, Date.now());
-}
 
 interface ActiveUser {
   userId: string;
@@ -178,5 +166,4 @@ export async function startInboxCron(): Promise<void> {
 export function resetInboxCronForTests(): void {
   _started = false;
   _inboxQueue = null;
-  _lastEnqueueByUser.clear();
 }

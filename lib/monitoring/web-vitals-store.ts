@@ -16,7 +16,7 @@
 export type VitalName = "LCP" | "CLS" | "INP" | "TTFB" | "FCP";
 export type VitalRating = "good" | "needs-improvement" | "poor";
 
-export interface VitalRecord {
+interface VitalRecord {
   name: VitalName;
   value: number;
   rating: VitalRating;
@@ -26,7 +26,7 @@ export interface VitalRecord {
   recordedAt: number;
 }
 
-export interface VitalMetricSnapshot {
+interface VitalMetricSnapshot {
   p75: number;
   rating: VitalRating;
   count: number;
@@ -127,7 +127,7 @@ export class WebVitalsStore {
 // Singleton par défaut
 // ---------------------------------------------------------------------------
 
-export const defaultVitalsStore = new WebVitalsStore();
+const defaultVitalsStore = new WebVitalsStore();
 
 export function recordVital(record: Omit<VitalRecord, "recordedAt">): void {
   defaultVitalsStore.recordVital(record);

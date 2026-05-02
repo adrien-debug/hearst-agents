@@ -9,7 +9,7 @@ import { randomUUID } from "crypto";
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import type { ConnectorConnection } from "./types";
 import { getProviderCapabilities } from "./provider-capabilities";
-import { upsertConnection, updateConnectionStatus } from "./store";
+import { upsertConnection } from "./store";
 import { getConnector } from "@/lib/connectors/platform/registry";
 
 export async function registerProviderUsage(input: {
@@ -36,18 +36,3 @@ export async function registerProviderUsage(input: {
   await upsertConnection(connection);
 }
 
-export async function markProviderDegraded(input: {
-  provider: string;
-  scope: TenantScope;
-  error: string;
-}): Promise<void> {
-  await updateConnectionStatus({
-    provider: input.provider,
-    tenantId: input.scope.tenantId,
-    workspaceId: input.scope.workspaceId,
-    userId: input.scope.userId,
-    status: "degraded",
-    lastCheckedAt: Date.now(),
-    lastError: input.error,
-  });
-}

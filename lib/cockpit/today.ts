@@ -38,13 +38,13 @@ import {
 import { getLiveWatchlist } from "./watchlist-live";
 import { getLiveAgenda } from "./agenda-live";
 
-export interface CockpitScope {
+interface CockpitScope {
   userId: string;
   tenantId: string;
   workspaceId: string;
 }
 
-export interface CockpitBriefing {
+interface CockpitBriefing {
   headline: string;
   body: string | null;
   generatedAt: number | null;
@@ -74,7 +74,7 @@ export interface CockpitWatchlistItem {
   } | null;
 }
 
-export interface CockpitMission {
+interface CockpitMission {
   id: string;
   name: string;
   status: "idle" | "running" | "success" | "failed" | "blocked";
@@ -83,7 +83,7 @@ export interface CockpitMission {
   lastError: string | null;
 }
 
-export interface CockpitSuggestion {
+interface CockpitSuggestion {
   id: string;
   title: string;
   description: string;
@@ -92,7 +92,7 @@ export interface CockpitSuggestion {
   missingApps: ReadonlyArray<string>;
 }
 
-export interface CockpitFavoriteReport {
+interface CockpitFavoriteReport {
   id: string;
   title: string;
   domain: string;
@@ -105,7 +105,7 @@ export interface CockpitAgendaItem {
   source: "mock" | "live";
 }
 
-export interface CockpitInboxSection {
+interface CockpitInboxSection {
   brief: InboxBrief | null;
   /** True quand le brief est plus vieux que 1h ou inexistant → propose Refresh. */
   stale: boolean;
@@ -113,14 +113,14 @@ export interface CockpitInboxSection {
   needsConnection: boolean;
 }
 
-export interface CockpitHospitalityVipArrival {
+interface CockpitHospitalityVipArrival {
   guestName: string;
   room: string;
   eta: string;
   specialRequest: string | null;
 }
 
-export interface CockpitHospitalityServiceRequest {
+interface CockpitHospitalityServiceRequest {
   id: string;
   guestName: string;
   room: string;
@@ -129,7 +129,7 @@ export interface CockpitHospitalityServiceRequest {
   text: string;
 }
 
-export interface CockpitHospitalitySection {
+interface CockpitHospitalitySection {
   occupancy: number;
   occupancyYesterday: number;
   occupancyForecast: number;
@@ -144,7 +144,7 @@ export interface CockpitHospitalitySection {
   source: "demo" | "live";
 }
 
-export interface CockpitCounts {
+interface CockpitCounts {
   /** Total assets dans la bibliothèque (tous types confondus). */
   assets: number;
   /** Total missions planifiées (enabled ou non). */

@@ -18,7 +18,7 @@
 import { getServerSupabase } from "@/lib/platform/db/supabase";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type VoiceEntryRole = "user" | "assistant" | "tool_call" | "tool_result";
+type VoiceEntryRole = "user" | "assistant" | "tool_call" | "tool_result";
 
 export interface VoiceTranscriptEntry {
   id: string;
@@ -33,7 +33,7 @@ export interface VoiceTranscriptEntry {
   providerId?: string;
 }
 
-export interface VoiceTranscriptRow {
+interface VoiceTranscriptRow {
   id: string;
   userId: string;
   tenantId: string;
@@ -169,20 +169,3 @@ export async function linkTranscriptToThread(
   return true;
 }
 
-/** Marque la session comme terminée (used at teardown). */
-export async function endTranscript(sessionId: string): Promise<boolean> {
-  const sb = getServerSupabase();
-  if (!sb) return false;
-  const db = rawDb(sb);
-  if (!db) return false;
-
-  const { error } = await db
-    .from("voice_transcripts")
-    .update({ ended_at: new Date().toISOString() })
-    .eq("session_id", sessionId);
-  if (error) {
-    console.error("[voice/transcript-store] end failed:", error.message);
-    return false;
-  }
-  return true;
-}

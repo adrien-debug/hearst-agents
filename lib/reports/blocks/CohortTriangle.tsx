@@ -28,7 +28,7 @@ export interface CohortRow {
   values: ReadonlyArray<number>;
 }
 
-export interface CohortTriangleProps {
+interface CohortTriangleProps {
   cohorts: ReadonlyArray<CohortRow>;
   /** Préfixe affiché sur l'axe horizontal pour chaque période. Défaut "M". */
   periodPrefix?: string;

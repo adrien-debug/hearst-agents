@@ -17,7 +17,7 @@ function rawDb(sb: ReturnType<typeof getServerSupabase>): SupabaseClient<any> | 
 }
 
 export type AssetVariantKind = "text" | "audio" | "video" | "slides" | "site" | "image" | "code";
-export type AssetVariantStatus = "pending" | "generating" | "ready" | "failed";
+type AssetVariantStatus = "pending" | "generating" | "ready" | "failed";
 
 export interface AssetVariant {
   id: string;
@@ -124,20 +124,6 @@ export async function getVariantsForAsset(assetId: string): Promise<AssetVariant
   if (error || !data) return [];
 
   return (data as Record<string, unknown>[]).map(rowToVariant);
-}
-
-export async function getVariantById(id: string): Promise<AssetVariant | null> {
-  const sb = getServerSupabase();
-  if (!sb) return null;
-
-  const { data, error } = await rawDb(sb)!
-    .from("asset_variants")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return rowToVariant(data as Record<string, unknown>);
 }
 
 function rowToVariant(row: Record<string, unknown>): AssetVariant {

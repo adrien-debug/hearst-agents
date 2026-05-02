@@ -134,44 +134,8 @@ export function getProviderIdForService(serviceId: ServiceId): string | undefine
 }
 
 /**
- * Get capability for a service ID.
- * Example: "gmail" → "messaging"
- */
-export function getCapabilityForService(serviceId: ServiceId): ConnectorCapability | undefined {
-  return SERVICE_MAP[serviceId]?.capability;
-}
-
-/**
- * Get all services for a provider.
- * Example: "google" → ["gmail", "calendar", "drive"]
- */
-export function getServicesForProvider(providerId: string): ServiceId[] {
-  return Object.entries(SERVICE_MAP)
-    .filter(([, mapping]) => mapping.providerId === providerId)
-    .map(([serviceId]) => serviceId as ServiceId);
-}
-
-/**
- * Check if a service ID is valid.
- */
-export function isValidServiceId(id: string): id is ServiceId {
-  return id in SERVICE_MAP;
-}
-
-/**
  * Get all service IDs.
  */
 export function getAllServiceIds(): ServiceId[] {
   return Object.keys(SERVICE_MAP) as ServiceId[];
-}
-
-/**
- * Get service mapping or throw.
- */
-export function requireServiceMapping(serviceId: ServiceId): ServiceMapping {
-  const mapping = SERVICE_MAP[serviceId];
-  if (!mapping) {
-    throw new Error(`Unknown serviceId: ${serviceId}`);
-  }
-  return mapping;
 }

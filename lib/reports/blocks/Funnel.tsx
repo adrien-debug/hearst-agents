@@ -12,7 +12,7 @@ import { inferStringField, inferNumericField } from "./infer";
 
 type Row = Record<string, unknown>;
 
-export interface FunnelProps {
+interface FunnelProps {
   data: ReadonlyArray<Row>;
   labelField?: string;
   valueField?: string;

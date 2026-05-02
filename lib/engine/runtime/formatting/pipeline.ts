@@ -11,9 +11,9 @@
 
 export type OutputTier = "message" | "brief" | "report";
 export type OutputTone = "direct" | "structured" | "executive";
-export type OutputFormat = "plain" | "markdown" | "rich";
+type OutputFormat = "plain" | "markdown" | "rich";
 
-export interface OutputQualityProfile {
+interface OutputQualityProfile {
   tier: OutputTier;
   maxLength: number;
   tone: OutputTone;
@@ -21,7 +21,7 @@ export interface OutputQualityProfile {
   signOff: boolean;
 }
 
-export const OUTPUT_PROFILES: Record<OutputTier, OutputQualityProfile> = {
+const OUTPUT_PROFILES: Record<OutputTier, OutputQualityProfile> = {
   message: {
     tier: "message",
     maxLength: 500,
@@ -145,12 +145,3 @@ function deriveSummary(content: string, tier: OutputTier): string {
 
 // ── Tone prompt fragments (for orchestrator injection) ──────
 
-export const TONE_PROMPTS: Record<OutputTone, string> = {
-  direct: "Concis. Pas de fluff. Droit au point. Professionnel naturel.",
-  structured: "Sections claires. Bullet points. Chiffres en premier. Pas de narration.",
-  executive: "Résumé exécutif d'abord, détails après. Données sourcées. Structure formelle.",
-};
-
-export function getTonePromptForTier(tier: OutputTier): string {
-  return TONE_PROMPTS[OUTPUT_PROFILES[tier].tone];
-}

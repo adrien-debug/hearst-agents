@@ -79,14 +79,6 @@ export const createMemorySchema = z.object({
   expires_at: z.string().datetime().optional(),
 });
 
-// ── Evaluate ────────────────────────────────────────────
-
-export const evaluateSchema = z.object({
-  test_input: z.string().min(1),
-  expected_output: z.string().min(1),
-  eval_type: z.enum(["accuracy", "speed", "relevance", "helpfulness"]).default("accuracy"),
-});
-
 // ── Workflows ───────────────────────────────────────────
 
 export const createWorkflowSchema = z.object({
@@ -94,14 +86,6 @@ export const createWorkflowSchema = z.object({
   description: z.string().max(2000).optional(),
   trigger_type: z.enum(["manual", "schedule", "webhook"]).default("manual"),
   status: z.enum(["draft", "active", "archived"]).default("draft"),
-});
-
-// ── Conversations ───────────────────────────────────────
-
-export const createConversationSchema = z.object({
-  agent_id: z.string().uuid(),
-  title: z.string().max(200).default("Nouvelle conversation"),
-  user_identifier: z.string().max(500).optional(),
 });
 
 // ── Model Profiles ──────────────────────────────────────

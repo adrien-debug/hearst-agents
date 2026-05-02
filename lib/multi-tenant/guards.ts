@@ -16,16 +16,3 @@ export function assertTenantScope(
   }
 }
 
-export function sameTenant(
-  a?: Partial<TenantScope>,
-  b?: Partial<TenantScope>,
-): boolean {
-  return (
-    !!a?.tenantId &&
-    !!a?.workspaceId &&
-    !!b?.tenantId &&
-    !!b?.workspaceId &&
-    a.tenantId === b.tenantId &&
-    a.workspaceId === b.workspaceId
-  );
-}

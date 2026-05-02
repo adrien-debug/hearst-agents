@@ -1,4 +1,3 @@
-import { DeepgramClient, type ListenV1Response, type ListenV1AcceptedResponse } from "@deepgram/sdk";
 import Anthropic from "@anthropic-ai/sdk";
 import { ACTION_ITEMS_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples";
 
@@ -25,50 +24,6 @@ export const ACTION_ITEMS_SYSTEM_PROMPT = [
   "EXEMPLES :",
   formatFewShotBlock(ACTION_ITEMS_FEWSHOT),
 ].join("\n");
-
-function isSyncResponse(
-  r: ListenV1Response | ListenV1AcceptedResponse,
-): r is ListenV1Response {
-  return "results" in r;
-}
-
-export async function transcribeAudio(params: {
-  audioUrl: string;
-  language?: string;
-  diarize?: boolean;
-}): Promise<{
-  transcript: string;
-  speakers: Array<{ speaker: number; text: string; start: number; end: number }>;
-}> {
-  const apiKey = process.env.DEEPGRAM_API_KEY;
-  if (!apiKey) throw new Error("Deepgram non configuré");
-
-  const client = new DeepgramClient({ apiKey });
-
-  const result = await client.listen.v1.media.transcribeUrl({
-    url: params.audioUrl,
-    model: "nova-2",
-    language: params.language ?? "fr",
-    diarize: params.diarize ?? true,
-    utterances: true,
-  });
-
-  if (!isSyncResponse(result)) {
-    throw new Error("[Deepgram] réponse asynchrone inattendue");
-  }
-
-  const transcript =
-    result.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "";
-
-  const speakers = (result.results?.utterances ?? []).map((u) => ({
-    speaker: u.speaker ?? 0,
-    text: u.transcript ?? "",
-    start: u.start ?? 0,
-    end: u.end ?? 0,
-  }));
-
-  return { transcript, speakers };
-}
 
 export async function extractActionItems(transcript: string): Promise<
   Array<{

@@ -362,6 +362,13 @@ export interface AssetGeneratedEvent extends BaseEvent {
   asset_type: AssetType;
   name: string;
   url?: string;
+  /**
+   * Thread d'origine de l'asset. Ajouté pour que les consumers UI puissent
+   * filtrer les events qui n'appartiennent pas au thread actif (cf.
+   * ai-pipeline.ts:381 et run-research-report.ts:222). Optionnel pour
+   * compat — les events anciens sans thread_id sont traités comme global.
+   */
+  thread_id?: string;
 }
 
 // ── Focal Object ─────────────────────────────────────────
@@ -369,6 +376,12 @@ export interface AssetGeneratedEvent extends BaseEvent {
 export interface FocalObjectReadyEvent extends BaseEvent {
   type: "focal_object_ready";
   focal_object: Record<string, unknown>;
+  /**
+   * Thread d'origine du focal object. Optionnel pour compat. Permet aux
+   * consumers de drop l'event si l'utilisateur a switché vers un autre
+   * thread entre l'émission et la réception.
+   */
+  thread_id?: string;
 }
 
 // ── Agent selection ──────────────────────────────────────

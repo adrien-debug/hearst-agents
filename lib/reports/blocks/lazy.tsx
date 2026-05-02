@@ -18,20 +18,20 @@ import type { GanttRange, GanttTask } from "@/lib/reports/blocks/Gantt";
 
 // ── Types des props des blocs lourds ────────────────────────────────────────
 
-export interface WaterfallLazyProps {
+interface WaterfallLazyProps {
   data: ReadonlyArray<WaterfallDatum>;
   height?: number;
   format?: "number" | "currency";
   currency?: string;
 }
 
-export interface CohortTriangleLazyProps {
+interface CohortTriangleLazyProps {
   cohorts: ReadonlyArray<CohortRow>;
   periodPrefix?: string;
   asPercent?: boolean;
 }
 
-export interface HeatmapLazyProps {
+interface HeatmapLazyProps {
   xLabels: ReadonlyArray<string>;
   yLabels: ReadonlyArray<string>;
   values: ReadonlyArray<ReadonlyArray<number>>;
@@ -39,20 +39,20 @@ export interface HeatmapLazyProps {
   showValues?: boolean;
 }
 
-export interface SankeyLazyProps {
+interface SankeyLazyProps {
   nodes: ReadonlyArray<SankeyNode>;
   links: ReadonlyArray<SankeyLink>;
   height?: number;
 }
 
-export interface RadarLazyProps {
+interface RadarLazyProps {
   axes: ReadonlyArray<string>;
   series: ReadonlyArray<RadarSeries>;
   height?: number;
   rings?: number;
 }
 
-export interface GanttLazyProps {
+interface GanttLazyProps {
   range: GanttRange;
   tasks: ReadonlyArray<GanttTask>;
   height?: number;
@@ -60,7 +60,7 @@ export interface GanttLazyProps {
 
 // ── BlockSkeleton : placeholder animate-pulse ──────────────────────────────
 
-export const BLOCK_SKELETON_TESTID = "block-skeleton";
+const BLOCK_SKELETON_TESTID = "block-skeleton";
 
 export function BlockSkeleton({ testId }: { testId?: string } = {}) {
   return (

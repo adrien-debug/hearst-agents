@@ -19,7 +19,7 @@
 
 import { fmtNumber } from "./format";
 
-export interface HeatmapProps {
+interface HeatmapProps {
   xLabels: ReadonlyArray<string>;
   yLabels: ReadonlyArray<string>;
   /** Matrice values[y][x]. Cellules manquantes/non-finies traitées comme 0. */

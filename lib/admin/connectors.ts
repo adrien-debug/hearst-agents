@@ -9,7 +9,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export interface ConnectorConfig {
+interface ConnectorConfig {
   id: string;
   provider: string;
   enabled: boolean;
@@ -24,7 +24,7 @@ export interface ConnectorConfig {
   updatedAt: string;
 }
 
-export interface ConnectorInstance {
+interface ConnectorInstance {
   id: string;
   connectorId: string;
   name: string;
@@ -35,15 +35,6 @@ export interface ConnectorInstance {
   lastHealthCheck: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface UpdateConnectorStatusInput {
-  enabled?: boolean;
-}
-
-export interface ConfigureConnectorInput {
-  config: Record<string, unknown>;
-  name?: string;
 }
 
 /**
@@ -168,38 +159,6 @@ export async function updateConnectorStatus(
 }
 
 /**
- * Configure a connector instance (update config jsonb + name)
- */
-export async function configureConnector(
-  db: SupabaseClient,
-  instanceId: string,
-  input: ConfigureConnectorInput
-): Promise<ConnectorInstance> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updatePayload: Record<string, any> = {
-    config: input.config,
-    updated_at: new Date().toISOString(),
-  };
-  if (input.name) {
-    updatePayload.name = input.name;
-  }
-
-  const { data, error } = await db
-    .from("integration_connections")
-    .update(updatePayload)
-    .eq("id", instanceId)
-    .select()
-    .single();
-
-  if (error) {
-    console.error("[Admin/Connectors] Failed to configure:", error.message);
-    throw new Error(`Failed to configure connector: ${error.message}`);
-  }
-
-  return mapRowToInstance(data);
-}
-
-/**
  * Create a new connector instance.
  * Uses `inactive` as initial status (valid per CHECK constraint).
  */
@@ -252,90 +211,6 @@ export async function deleteConnectorInstance(
   if (error) {
     console.error("[Admin/Connectors] Failed to delete instance:", error.message);
     throw new Error(`Failed to delete connector instance: ${error.message}`);
-  }
-}
-
-/**
- * Test connector connectivity with provider-specific health checks.
- */
-export async function testConnectorConnection(
-  db: SupabaseClient,
-  instanceId: string
-): Promise<{ success: boolean; latencyMs: number; error?: string }> {
-  const start = Date.now();
-
-  try {
-    const { data: instance, error } = await db
-      .from("integration_connections")
-      .select("*")
-      .eq("id", instanceId)
-      .single();
-
-    if (error || !instance) {
-      return {
-        success: false,
-        latencyMs: Date.now() - start,
-        error: "Instance not found",
-      };
-    }
-
-    const result = await runProviderHealthCheck(instance.provider, instance.config);
-    const latencyMs = Date.now() - start;
-
-    await db
-      .from("integration_connections")
-      .update({
-        health: result.success ? "ok" : "error",
-        last_health_check: new Date().toISOString(),
-      })
-      .eq("id", instanceId);
-
-    return { ...result, latencyMs };
-  } catch (err) {
-    return {
-      success: false,
-      latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : "Unknown error",
-    };
-  }
-}
-
-/**
- * Route health check to provider-specific logic.
- *
- * After the Composio migration, third-party provider health is owned by
- * Composio (per-user, per-app). The admin diagnostic only stays for the
- * native Google integration that we still drive through NextAuth tokens.
- */
-async function runProviderHealthCheck(
-  provider: string,
-  _config: Record<string, unknown>
-): Promise<{ success: boolean; error?: string }> {
-  switch (provider) {
-    case "gmail":
-    case "google":
-    case "calendar":
-    case "drive":
-      return checkGoogleNative();
-    default:
-      return {
-        success: false,
-        error: `Health check for "${provider}" is now handled by Composio per-user, not by the admin API`,
-      };
-  }
-}
-
-async function checkGoogleNative(): Promise<{ success: boolean; error?: string }> {
-  try {
-    const response = await fetch("https://www.googleapis.com/oauth2/v1/tokeninfo", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    return response.status < 500
-      ? { success: true }
-      : { success: false, error: "Google API unreachable" };
-  } catch {
-    return { success: false, error: "Google API unreachable" };
   }
 }
 

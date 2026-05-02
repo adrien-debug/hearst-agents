@@ -30,7 +30,7 @@ export {
   type ExpiringConnection,
 } from "@/lib/connections/oauth-constants";
 
-export const RefreshResultSchema = z.object({
+const RefreshResultSchema = z.object({
   connectionId: z.string(),
   appName: z.string(),
   ok: z.boolean(),
@@ -40,7 +40,7 @@ export const RefreshResultSchema = z.object({
   outcome: z.enum(["refreshed", "revoked", "unavailable"]).optional(),
 });
 
-export type RefreshResult = z.infer<typeof RefreshResultSchema>;
+type RefreshResult = z.infer<typeof RefreshResultSchema>;
 
 // ── Helpers internes ─────────────────────────────────────────
 

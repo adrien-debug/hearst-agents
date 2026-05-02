@@ -269,7 +269,7 @@ const SUMMARY_SYSTEM_PROMPT = [
   "- Total ≤ 350 mots.",
 ].join("\n");
 
-export async function summarizeMeeting(input: {
+async function summarizeMeeting(input: {
   transcript: string;
   actionItems: Array<{ action: string; owner?: string; deadline?: string }>;
 }): Promise<string | null> {

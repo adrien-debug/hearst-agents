@@ -69,7 +69,7 @@ const METRIC_LABELS: Record<string, string> = {
   runway: "Runway",
 };
 
-export interface NarrateAnomalyOpts {
+interface NarrateAnomalyOpts {
   anomaly: MetricAnomaly;
   /** Drivers optionnels — par exemple « 3 deals stuck > 35j » pour le pipeline. */
   drivers?: string[];

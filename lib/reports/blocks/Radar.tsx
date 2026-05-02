@@ -27,7 +27,7 @@ export interface RadarSeries {
   values: ReadonlyArray<number>;
 }
 
-export interface RadarProps {
+interface RadarProps {
   axes: ReadonlyArray<string>;
   series: ReadonlyArray<RadarSeries>;
   /** Hauteur du graphique en pixels. Défaut 320. */

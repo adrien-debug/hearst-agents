@@ -26,17 +26,8 @@ function getClient(): Langfuse | null {
   return _client;
 }
 
-export const isLangfuseEnabled = (): boolean =>
-  Boolean(process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_SECRET_KEY);
-
 export function startTrace(name: string, metadata?: Record<string, unknown>) {
   const client = getClient();
   if (!client) return null;
   return client.trace({ name, metadata });
-}
-
-export async function flush(): Promise<void> {
-  const client = getClient();
-  if (!client) return;
-  await client.flushAsync();
 }

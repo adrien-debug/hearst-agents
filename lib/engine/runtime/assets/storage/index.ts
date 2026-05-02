@@ -16,13 +16,11 @@ import { SupabaseStorageProvider } from "./supabase";
 export * from "./types";
 export { LocalStorageProvider } from "./local";
 export { R2StorageProvider } from "./r2";
-export { HybridStorageProvider } from "./hybrid";
-export { SupabaseStorageProvider } from "./supabase";
 
 /**
  * Factory — crée le provider approprié selon la config
  */
-export function createStorageProvider(
+function createStorageProvider(
   type: StorageConfig["provider"],
   config: Omit<StorageConfig, "provider">
 ): StorageProvider {
@@ -120,6 +118,3 @@ export function getGlobalStorage(): StorageProvider {
   return globalStorage;
 }
 
-export function clearGlobalStorage(): void {
-  globalStorage = null;
-}

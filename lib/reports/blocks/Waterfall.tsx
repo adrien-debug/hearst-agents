@@ -32,7 +32,7 @@ export interface WaterfallDatum {
   type: WaterfallBarType;
 }
 
-export interface WaterfallProps {
+interface WaterfallProps {
   data: ReadonlyArray<WaterfallDatum>;
   /** Hauteur du graphique en pixels. Défaut 240. */
   height?: number;

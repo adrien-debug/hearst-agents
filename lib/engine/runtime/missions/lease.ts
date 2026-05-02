@@ -23,10 +23,3 @@ export function markMissionRunning(missionId: string): void {
 export function markMissionCompleted(missionId: string): void {
   running.delete(missionId);
 }
-
-export function getRunningMissions(): Array<{ missionId: string; startedAt: number }> {
-  return Array.from(running.entries()).map(([missionId, entry]) => ({
-    missionId,
-    startedAt: entry.startedAt,
-  }));
-}

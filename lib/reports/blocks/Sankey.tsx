@@ -30,7 +30,7 @@ export interface SankeyLink {
   value: number;
 }
 
-export interface SankeyProps {
+interface SankeyProps {
   nodes: ReadonlyArray<SankeyNode>;
   links: ReadonlyArray<SankeyLink>;
   /** Hauteur du graphique en pixels. Défaut 280. */

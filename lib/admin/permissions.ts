@@ -23,22 +23,6 @@ export interface PermissionCheck {
   resourceOwnerId?: string;
 }
 
-export interface UserRoleAssignment {
-  userId: string;
-  role: Role;
-  tenantId?: string;
-  assignedAt: string;
-  assignedBy?: string;
-}
-
-// Role hierarchy for permission inheritance
-const ROLE_HIERARCHY: Record<Role, number> = {
-  admin: 100,
-  editor: 75,
-  viewer: 50,
-  guest: 25,
-};
-
 // Permission matrix: role -> resource -> actions
 const PERMISSION_MATRIX: Record<Role, Record<string, string[]>> = {
   admin: {
@@ -80,7 +64,7 @@ export async function checkPermission(
 /**
  * Check permission synchronously (when role is already known)
  */
-export function hasPermission(
+function hasPermission(
   role: Role,
   resource: string,
   action: PermissionCheck["action"]
@@ -218,69 +202,8 @@ export async function removeRole(
 }
 
 /**
- * Check if role A has higher or equal privilege than role B
- */
-export function hasHigherOrEqualRole(roleA: Role, roleB: Role): boolean {
-  return ROLE_HIERARCHY[roleA] >= ROLE_HIERARCHY[roleB];
-}
-
-/**
  * Get all permissions for a role
  */
 export function getRolePermissions(role: Role): Record<string, string[]> {
   return PERMISSION_MATRIX[role] || {};
-}
-
-/**
- * List users with a specific role (tenant-scoped or global)
- */
-export async function listUsersWithRole(
-  db: SupabaseClient,
-  role: Role,
-  tenantId?: string
-): Promise<string[]> {
-  if (tenantId) {
-    const { data, error } = await db
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", role)
-      .eq("tenant_id", tenantId);
-
-    if (error) {
-      console.error("[Admin/Permissions] Failed to list users with role:", error);
-      throw new Error(`Failed to list users: ${error.message}`);
-    }
-
-    return (data || []).map((r) => r.user_id);
-  }
-
-  // For global roles, we'd need to query auth users with specific metadata
-  // This is expensive and should be cached or paginated
-  console.warn("[Admin/Permissions] Listing global users by role not optimized");
-  return [];
-}
-
-/**
- * Require permission or throw
- */
-export async function requirePermission(
-  db: SupabaseClient,
-  check: PermissionCheck
-): Promise<void> {
-  const hasPerm = await checkPermission(db, check);
-  if (!hasPerm) {
-    throw new PermissionDeniedError(
-      `User ${check.userId} lacks ${check.action} permission on ${check.resource}`
-    );
-  }
-}
-
-/**
- * Custom error for permission denial
- */
-export class PermissionDeniedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "PermissionDeniedError";
-  }
 }

@@ -7,7 +7,7 @@
  * labellisé `source: "demo"` quand exposé à l'UI.
  */
 
-export interface HospitalityArrival {
+interface HospitalityArrival {
   guestName: string;
   room: string;
   eta: string; // HH:MM
@@ -15,13 +15,13 @@ export interface HospitalityArrival {
   specialRequest: string | null;
 }
 
-export interface HospitalityDeparture {
+interface HospitalityDeparture {
   guestName: string;
   room: string;
   lateCheckout: boolean;
 }
 
-export interface HospitalityKpiSnapshot {
+interface HospitalityKpiSnapshot {
   occupancy: number; // 0..1
   occupancyYesterday: number;
   occupancyForecast: number;
@@ -33,7 +33,7 @@ export interface HospitalityKpiSnapshot {
   pendingServiceRequests: number;
 }
 
-export interface HospitalityServiceRequest {
+interface HospitalityServiceRequest {
   id: string;
   guestName: string;
   room: string;
@@ -43,19 +43,19 @@ export interface HospitalityServiceRequest {
   receivedAt: number;
 }
 
-export interface HospitalityRevenueBySource {
+interface HospitalityRevenueBySource {
   source: "direct" | "ota" | "corporate" | "group";
   amount: number;
 }
 
-export interface HospitalityRevparPoint {
+interface HospitalityRevparPoint {
   date: string; // YYYY-MM-DD
   occupancy: number;
   adr: number;
   revpar: number;
 }
 
-export interface HospitalitySatisfactionRow {
+interface HospitalitySatisfactionRow {
   channel: "post_stay_survey" | "google_reviews" | "tripadvisor" | "in_app";
   responses: number;
   nps: number;

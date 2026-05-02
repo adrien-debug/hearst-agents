@@ -46,10 +46,6 @@ export function setMissionResult(
   });
 }
 
-export function getMissionOps(missionId: string): OpsEntry | undefined {
-  return store.get(missionId);
-}
-
 export function getAllMissionOps(): Map<string, OpsEntry> {
   return store;
 }

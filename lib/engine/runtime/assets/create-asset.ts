@@ -6,7 +6,7 @@
 import { randomUUID } from "crypto";
 import type { Asset, AssetType } from "./types";
 
-export interface CreateAssetInput {
+interface CreateAssetInput {
   type: AssetType;
   name: string;
   run_id: string;
@@ -39,15 +39,6 @@ export function storeAsset(asset: Asset): void {
 
 export function getAsset(id: string): Asset | undefined {
   return assetStore.get(id);
-}
-
-export function getAllAssets(): Asset[] {
-  return Array.from(assetStore.values());
-}
-
-/** Drop a single asset from the in-memory store. Called by DELETE API. */
-export function evictAsset(id: string): void {
-  assetStore.delete(id);
 }
 
 /** Wipe every asset from the in-memory store. Server-only cleanup. */

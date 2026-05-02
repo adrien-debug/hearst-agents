@@ -8,7 +8,7 @@
  * Capacity bounded à 200 entries (LRU simple via Map insertion order).
  */
 
-export interface RecallWebhookEvent {
+interface RecallWebhookEvent {
   event: string;
   statusCode?: string;
   recordingUrl?: string;

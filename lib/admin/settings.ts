@@ -24,21 +24,13 @@ import type {
   SystemSetting,
 } from "@/lib/platform/settings/types";
 
-export interface CreateSettingInput {
+interface CreateSettingInput {
   key: string;
   value: unknown;
   category: SettingCategory;
   description?: string;
   isEncrypted?: boolean;
   tenantId?: string | null;
-  updatedBy?: string;
-}
-
-export interface UpdateSettingInput {
-  value?: unknown;
-  category?: SettingCategory;
-  description?: string;
-  isEncrypted?: boolean;
   updatedBy?: string;
 }
 
@@ -69,20 +61,9 @@ export async function getSystemSettings(
 }
 
 /**
- * Get a single setting by key
- */
-export async function getSystemSetting(
-  db: SupabaseClient,
-  key: string,
-  tenantId?: string | null
-): Promise<SystemSetting | null> {
-  return getSetting(db, key, tenantId ?? null);
-}
-
-/**
  * Get effective setting (tenant override or global fallback)
  */
-export async function getEffectiveSetting<T = unknown>(
+async function getEffectiveSetting<T = unknown>(
   db: SupabaseClient,
   key: string,
   tenantId?: string | null,
@@ -100,48 +81,6 @@ export async function getEffectiveSetting<T = unknown>(
 }
 
 /**
- * Create a new setting
- */
-export async function createSystemSetting(
-  db: SupabaseClient,
-  input: CreateSettingInput
-): Promise<SystemSetting> {
-  return setSetting(db, input.key, input.value as string | number | boolean | object, input.category, input.tenantId ?? null, {
-    description: input.description,
-    isEncrypted: input.isEncrypted,
-    updatedBy: input.updatedBy,
-  });
-}
-
-/**
- * Update an existing setting
- */
-export async function updateSystemSetting(
-  db: SupabaseClient,
-  key: string,
-  input: UpdateSettingInput,
-  tenantId?: string | null
-): Promise<SystemSetting> {
-  const existing = await getSetting(db, key, tenantId ?? null);
-  if (!existing) {
-    throw new Error(`Setting '${key}' not found`);
-  }
-
-  return setSetting(
-    db,
-    key,
-    (input.value ?? existing.value) as string | number | boolean | object,
-    input.category ?? existing.category,
-    tenantId ?? null,
-    {
-      description: input.description ?? existing.description,
-      isEncrypted: input.isEncrypted ?? existing.isEncrypted,
-      updatedBy: input.updatedBy,
-    }
-  );
-}
-
-/**
  * Upsert a setting (create if not exists, update otherwise)
  */
 export async function upsertSystemSetting(
@@ -153,33 +92,6 @@ export async function upsertSystemSetting(
     isEncrypted: input.isEncrypted,
     updatedBy: input.updatedBy,
   });
-}
-
-/**
- * Delete a setting
- */
-export async function deleteSystemSetting(
-  db: SupabaseClient,
-  key: string,
-  tenantId?: string | null
-): Promise<void> {
-  let query = db
-    .from("system_settings")
-    .delete()
-    .eq("key", key);
-
-  if (tenantId === null || tenantId === undefined) {
-    query = query.is("tenant_id", null);
-  } else {
-    query = query.eq("tenant_id", tenantId);
-  }
-
-  const { error } = await query;
-
-  if (error) {
-    console.error("[Admin/Settings] Failed to delete setting:", error.message);
-    throw new Error(`Failed to delete setting: ${error.message}`);
-  }
 }
 
 /**

@@ -187,24 +187,6 @@ export async function deleteAssetById(
   }
 }
 
-export async function getAssetById(id: string): Promise<Asset | null> {
-  const sb = db();
-  if (!sb) return null;
-
-  try {
-    const { data, error } = await sb
-      .from("assets")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error || !data) return null;
-    return toAsset(data);
-  } catch {
-    return null;
-  }
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toAsset(row: any): Asset {
   const provenance = (row.provenance ?? {}) as Record<string, unknown>;

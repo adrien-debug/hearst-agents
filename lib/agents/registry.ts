@@ -9,16 +9,12 @@ import type { AgentDefinition } from "./types";
 
 const agents: Map<string, AgentDefinition> = new Map();
 
-export function registerAgent(agent: AgentDefinition): void {
+function registerAgent(agent: AgentDefinition): void {
   agents.set(agent.id, agent);
 }
 
 export function getAgentById(id: string): AgentDefinition | undefined {
   return agents.get(id);
-}
-
-export function getAllAgents(): AgentDefinition[] {
-  return Array.from(agents.values());
 }
 
 export function getAgentsByContext(context: string): AgentDefinition[] {

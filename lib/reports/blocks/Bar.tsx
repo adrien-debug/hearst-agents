@@ -12,7 +12,7 @@ import { inferStringField, inferNumericField } from "./infer";
 
 type Row = Record<string, unknown>;
 
-export interface BarProps {
+interface BarProps {
   data: ReadonlyArray<Row>;
   /** Champ pour le label (axe Y). Défaut : 1ère clé string trouvée. */
   labelField?: string;

@@ -7,7 +7,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { ConnectorConnection, ConnectorStatus } from "./types";
+import type { ConnectorConnection } from "./types";
 import { getProviderCapabilities } from "./provider-capabilities";
 
 let _client: SupabaseClient | null = null;
@@ -69,52 +69,6 @@ export async function upsertConnection(
     );
   } catch (err) {
     console.error("[ControlPlane] upsertConnection error:", err);
-  }
-}
-
-export async function updateConnectionStatus(input: {
-  provider: string;
-  tenantId: string;
-  workspaceId: string;
-  userId?: string;
-  status: ConnectorStatus;
-  lastCheckedAt?: number;
-  lastError?: string;
-}): Promise<void> {
-  const key = connectionKey(input.provider, input.tenantId, input.workspaceId, input.userId);
-  const existing = memoryStore.get(key);
-  if (existing) {
-    existing.status = input.status;
-    existing.updatedAt = Date.now();
-    if (input.lastCheckedAt) existing.lastCheckedAt = input.lastCheckedAt;
-    if (input.lastError !== undefined) existing.lastError = input.lastError;
-  }
-
-  const sb = db();
-  if (!sb || !existing) return;
-
-  try {
-    await sb
-      .from("integration_connections")
-      .update({
-        status: input.status,
-        health: input.status === "connected" ? "healthy" : input.status,
-        last_health_check: input.lastCheckedAt
-          ? new Date(input.lastCheckedAt).toISOString()
-          : undefined,
-        config: {
-          ...(typeof existing === "object" ? {} : {}),
-          tenantId: input.tenantId,
-          workspaceId: input.workspaceId,
-          userId: input.userId,
-          capabilities: existing?.capabilities ?? getProviderCapabilities(input.provider),
-          lastError: input.lastError,
-        },
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", existing?.id ?? "");
-  } catch (err) {
-    console.error("[ControlPlane] updateConnectionStatus error:", err);
   }
 }
 

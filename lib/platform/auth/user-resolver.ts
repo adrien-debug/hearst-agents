@@ -50,21 +50,3 @@ export async function resolveOrCreateUserUuid(email: string): Promise<string | n
   return (data as { id: string }).id;
 }
 
-/**
- * Lookup-only — utilisé par les routes API qui veulent résoudre un email
- * sans risquer de créer un user fantôme (ex: admin lookups).
- */
-export async function lookupUserUuid(email: string): Promise<string | null> {
-  if (!email) return null;
-  const sb = getServerSupabase();
-  if (!sb) return null;
-
-  const { data, error } = await rawDb(sb)!
-    .from("users")
-    .select("id")
-    .eq("email", email)
-    .maybeSingle();
-
-  if (error || !data) return null;
-  return (data as { id: string }).id;
-}

@@ -11,7 +11,7 @@ import { fmtNumber, fmtCurrency } from "./format";
 
 type Row = Record<string, unknown>;
 
-export interface TableProps {
+interface TableProps {
   data: ReadonlyArray<Row>;
   /** Colonnes à afficher dans cet ordre. Défaut : toutes les clés du 1er row. */
   columns?: ReadonlyArray<string>;

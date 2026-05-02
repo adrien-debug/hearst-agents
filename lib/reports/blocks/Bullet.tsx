@@ -26,7 +26,7 @@
 
 import { fmtNumber } from "./format";
 
-export interface BulletRange {
+interface BulletRange {
   bad: number;
   ok: number;
   good: number;
@@ -39,7 +39,7 @@ export interface BulletItem {
   ranges: BulletRange;
 }
 
-export interface BulletProps {
+interface BulletProps {
   items: ReadonlyArray<BulletItem>;
   /** Format des valeurs affichées. */
   format?: "number" | "currency";

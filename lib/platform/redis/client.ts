@@ -20,7 +20,7 @@
 import IoRedis from "ioredis";
 import { Redis as UpstashRedis } from "@upstash/redis";
 
-export interface RedisClient {
+interface RedisClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, mode?: "EX", ttlSeconds?: number): Promise<unknown>;
   setex(key: string, ttlSeconds: number, value: string): Promise<unknown>;
@@ -116,16 +116,3 @@ export function getRedis(): RedisClient | null {
   }
 }
 
-/**
- * Test-only — drops the cached singleton so the next `getRedis()` re-reads
- * env vars and rebuilds. Should never be called in production code.
- */
-export function resetRedisForTests(): void {
-  if (_client && "quit" in _client && typeof (_client as { quit?: unknown }).quit === "function") {
-    void (_client as unknown as { quit: () => Promise<unknown> })
-      .quit()
-      .catch(() => {});
-  }
-  _client = null;
-  _initialized = false;
-}

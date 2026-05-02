@@ -8,8 +8,6 @@
  *   - never expose secrets in outputs
  */
 
-export type IntegrationAuthType = "none" | "api_key" | "oauth2" | "bearer";
-
 export interface IntegrationCredentials {
   api_key?: string;
   bearer_token?: string;

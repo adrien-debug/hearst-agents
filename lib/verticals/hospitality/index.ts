@@ -46,7 +46,6 @@ export const HOSPITALITY_KPIS = [
   "service_requests_pending",
   "guest_satisfaction_nps",
 ] as const;
-export type HospitalityKpi = (typeof HOSPITALITY_KPIS)[number];
 
 let _client: SupabaseClient | null = null;
 

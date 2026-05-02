@@ -184,28 +184,3 @@ export function normalizeRunEventsToTimeline(input: {
   items.sort((a, b) => a.ts - b.ts);
   return items;
 }
-
-/**
- * Normalize a single SSE event for live timeline merge.
- */
-export function normalizeSingleEvent(
-  runId: string,
-  event: RawEvent,
-): TimelineItem | null {
-  if (SKIP_TYPES.has(event.type)) return null;
-  const mapping = MAPPINGS[event.type];
-  if (!mapping) return null;
-
-  const extra = mapping.extract?.(event) ?? {};
-
-  return {
-    id: nextId(),
-    type: mapping.type,
-    ts: toTs(event.timestamp),
-    title: mapping.title(event),
-    description: mapping.description?.(event),
-    severity: mapping.severity,
-    runId,
-    ...extra,
-  };
-}

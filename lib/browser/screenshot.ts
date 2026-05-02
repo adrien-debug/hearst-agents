@@ -31,7 +31,7 @@ interface CaptureScope {
   workspaceId: string;
 }
 
-export interface CaptureResult {
+interface CaptureResult {
   asset: Asset;
   url: string;
   sizeBytes: number;
@@ -48,7 +48,7 @@ function getApiKey(): string {
  * Récupère un screenshot PNG de la session via l'API Browserbase.
  * Lève sur erreur réseau / status >= 400.
  */
-export async function fetchSessionScreenshot(
+async function fetchSessionScreenshot(
   sessionId: string,
 ): Promise<Buffer> {
   const res = await fetch(

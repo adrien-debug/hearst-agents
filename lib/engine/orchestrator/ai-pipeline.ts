@@ -381,6 +381,7 @@ function buildCreateArtifactTool(
       eventBus.emit({
         type: "asset_generated",
         run_id: engine.id,
+        thread_id: ctx.threadId,
         asset_id: asset.id,
         asset_type: eventAssetType,
         name: cleanTitle,

@@ -25,7 +25,7 @@ function rawDb(sb: ReturnType<typeof getServerSupabase>): SupabaseClient<any> | 
 
 // ── Read ────────────────────────────────────────────────────
 
-export async function getBalance(
+async function getBalance(
   userId: string,
   tenantId: string,
 ): Promise<CreditBalance | null> {
@@ -56,7 +56,7 @@ export async function getBalance(
 
 // ── Reserve / Settle (atomiques via RPC) ────────────────────
 
-export async function reserveCredits(args: ReserveCreditsArgs): Promise<boolean> {
+async function reserveCredits(args: ReserveCreditsArgs): Promise<boolean> {
   const sb = getServerSupabase();
   if (!sb) {
     console.warn("[Credits] No DB — reserve bypassed (dev mode)");
@@ -95,27 +95,6 @@ export async function settleCredits(args: SettleCreditsArgs): Promise<void> {
 
   if (error) {
     console.error("[Credits] settle_credits RPC failed:", error.message);
-  }
-}
-
-// ── Trial grant (onboarding / admin) ────────────────────────
-
-export async function grantTrialCredits(
-  userId: string,
-  tenantId: string,
-  amountUsd = 1.0,
-): Promise<void> {
-  const sb = getServerSupabase();
-  if (!sb) return;
-
-  const { error } = await rawDb(sb)!.rpc("grant_trial_credits", {
-    p_user_id: userId,
-    p_tenant_id: tenantId,
-    p_amount_usd: amountUsd,
-  });
-
-  if (error) {
-    console.error("[Credits] grant_trial_credits RPC failed:", error.message);
   }
 }
 
