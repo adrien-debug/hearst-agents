@@ -6,6 +6,7 @@ import { LeftPanelShell } from "./components/LeftPanelShell";
 import { RightPanel } from "./components/RightPanel";
 import { Commandeur } from "./components/Commandeur";
 import { ChatDock } from "./components/ChatDock";
+import { StageFooter } from "./components/StageFooter";
 import { PulseBar } from "./components/PulseBar";
 import { MobileBottomNav } from "./components/MobileBottomNav";
 import { VoicePulse } from "./components/voice/VoicePulse";
@@ -152,6 +153,10 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
               <Suspense fallback={null}>
                 <ChatDock />
               </Suspense>
+              {/* StageFooter — barre état LLM live sous ChatDock. Reflète
+                 useRuntimeStore.coreState (idle/streaming/processing/...)
+                 via 3 dots animés + label voix régulière FR. */}
+              <StageFooter />
             </div>
 
             <RightPanel />

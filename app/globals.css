@@ -172,6 +172,7 @@
   --height-stage-empty-icon: 80px;     /* Empty state Stage : hauteur icône signature */
   --height-pulsebar: 48px;             /* PulseBar top fixed : hauteur */
   --height-action-log: 120px;          /* BrowserStage Action Log footer : hauteur */
+  --height-stage-footer: 28px;         /* StageFooter sous ChatDock : barre état LLM */
 
   /* ─── Tracking — valeurs intermédiaires ────────────────────── */
   --tracking-snug: 0.10em;   /* Entre caption (0.08) et wide (0.12) — RunTimeline */
@@ -1396,6 +1397,66 @@ body {
 @keyframes pulse-status-cykan {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%      { opacity: 0.55; transform: scale(1.25); }
+}
+
+/* ─── StageFooter — dots état LLM ───────────────────────────────
+ * 3 dots animés sous ChatDock, pattern dépend de useRuntimeStore.coreState.
+ * Chaque dot reçoit `animationDelay` pour décaler la vague (typing-style).
+ * Couleur portée par `style.background` (cykan / gold / danger / muted). */
+.sf-dot {
+  display: inline-block;
+  width: var(--space-1);
+  height: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  opacity: 0.3;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes sf-wave {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.85); }
+  40%           { opacity: 1;    transform: scale(1.15); box-shadow: 0 0 6px currentColor; }
+}
+.sf-dot-wave-fast   { animation-name: sf-wave; animation-duration: 900ms; }
+.sf-dot-wave-medium { animation-name: sf-wave; animation-duration: 1300ms; }
+.sf-dot-wave-slow   { animation-name: sf-wave; animation-duration: 1800ms; }
+
+@keyframes sf-heartbeat {
+  0%, 100% { opacity: 0.18; transform: scale(0.9); }
+  50%      { opacity: 0.55; transform: scale(1); }
+}
+.sf-dot-heartbeat { animation-name: sf-heartbeat; animation-duration: 2400ms; }
+/* idle : seulement le dot médian respire, les latéraux restent faints */
+.sf-dot-heartbeat[data-index="0"],
+.sf-dot-heartbeat[data-index="2"] {
+  animation: none;
+  opacity: 0.18;
+}
+
+@keyframes sf-pulse-mid {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.2); box-shadow: 0 0 6px currentColor; }
+}
+.sf-dot-pulse-mid {
+  opacity: 0.5;
+  animation: none;
+}
+.sf-dot-pulse-mid[data-index="1"] {
+  animation-name: sf-pulse-mid;
+  animation-duration: 1400ms;
+}
+
+.sf-dot-static {
+  opacity: 0.7;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-dot {
+    animation: none !important;
+    opacity: 0.5;
+  }
 }
 
 /* Input pill itself — glass premium, soft sep border, focus glow */
