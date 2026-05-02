@@ -114,7 +114,7 @@ function CollapsibleRailSection({
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="w-full flex items-baseline justify-between gap-3 group pr-6"
+        className="w-full flex items-baseline justify-between gap-3 group"
         style={{ marginBottom: expanded ? "var(--space-4)" : 0 }}
       >
         <span className="t-13 font-medium text-[var(--text-l1)] truncate text-left">
