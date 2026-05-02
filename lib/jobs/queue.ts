@@ -47,6 +47,10 @@ export interface EnqueueResult {
  * Enqueue a job for async processing. Returns the BullMQ job ID
  * immediately ; le worker pickup et streame le progress.
  *
+ * Si INNGEST_EVENT_KEY est configuré, certains jobKind sont routés vers
+ * Inngest (durable, serverless-compatible) plutôt que BullMQ. Migration
+ * progressive : `daily-brief` est le premier ; les autres suivront.
+ *
  * **Important** : le caller doit avoir déjà appelé `requireCredits()`
  * et obtenu un go avant d'enqueue, sinon on facturera potentiellement
  * un job pour un user sans crédits suffisants.
@@ -55,6 +59,15 @@ export async function enqueueJob(
   payload: JobPayload,
   opts?: JobsOptions,
 ): Promise<EnqueueResult> {
+  if (payload.jobKind === "daily-brief" && process.env.INNGEST_EVENT_KEY) {
+    const { inngest } = await import("./inngest/client");
+    const result = await inngest.send({
+      name: "app/daily-brief.requested",
+      data: payload,
+    });
+    return { jobId: result.ids[0] ?? "unknown", jobKind: payload.jobKind };
+  }
+
   const queue = getQueue(payload.jobKind);
   if (!queue) {
     throw new Error(

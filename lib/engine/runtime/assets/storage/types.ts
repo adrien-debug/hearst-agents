@@ -5,7 +5,7 @@
  * Permet migration transparente dev → production.
  */
 
-export type StorageProviderType = "local" | "r2" | "s3" | "hybrid";
+export type StorageProviderType = "local" | "r2" | "s3" | "hybrid" | "supabase";
 
 export interface StorageObject {
   key: string; // path relative (e.g., "runs/{runId}/{filename}")
@@ -136,5 +136,11 @@ export interface StorageConfig {
     maxHotSizeBytes: number; // e.g., 100MB
     maxHotFiles?: number; // e.g., 1000
     ttlSeconds: number; // Cache TTL
+  };
+  supabase?: {
+    url: string;
+    serviceRoleKey: string;
+    bucket: string;
+    publicUrlBase?: string;
   };
 }

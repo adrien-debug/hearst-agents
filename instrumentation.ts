@@ -24,9 +24,15 @@ export async function register() {
   }
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // 1. Storage — doit être initialisé avant les workers et le cleanup.
+    // Priorité : Supabase Storage (serverless-friendly, pas d'AWS SDK).
+    // Fallback historique : R2 (S3-compatible) si configuré.
     const { initGlobalStorage } = await import(
       "@/lib/engine/runtime/assets/storage"
     );
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseBucket = process.env.SUPABASE_STORAGE_BUCKET ?? "assets";
 
     const r2Keys =
       process.env.R2_ACCOUNT_ID &&
@@ -35,7 +41,17 @@ export async function register() {
       process.env.R2_BUCKET &&
       process.env.R2_PUBLIC_URL;
 
-    if (r2Keys) {
+    if (supabaseUrl && supabaseKey) {
+      initGlobalStorage({
+        provider: "supabase",
+        supabase: {
+          url: supabaseUrl,
+          serviceRoleKey: supabaseKey,
+          bucket: supabaseBucket,
+        },
+      });
+      console.info(`[Storage] Initialized — supabase (bucket: ${supabaseBucket})`);
+    } else if (r2Keys) {
       const isProd = process.env.NODE_ENV === "production";
       initGlobalStorage({
         provider: isProd ? "r2" : "hybrid",
@@ -62,10 +78,9 @@ export async function register() {
               },
             }),
       });
-      console.info(`[Storage] Initialized — ${isProd ? "r2" : "hybrid (local+r2)"}`);
+      console.info(`[Storage] Initialized — ${isProd ? "r2" : "hybrid (local+r2)"} (legacy fallback)`);
     } else {
-      // Dev sans clés R2 — getGlobalStorage() tombera sur le fallback local
-      console.info("[Storage] R2 keys absent — using local dev storage");
+      console.info("[Storage] No backend configured — using local dev storage");
     }
 
     // 2. Mission scheduler

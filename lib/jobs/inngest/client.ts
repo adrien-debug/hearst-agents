@@ -19,17 +19,8 @@ export const inngest = new Inngest({
 export const isInngestEnabled = (): boolean =>
   Boolean(process.env.INNGEST_EVENT_KEY && process.env.INNGEST_SIGNING_KEY);
 
-// ── Function definitions (à remplir au fil de la migration) ─────
+// ── Function definitions ───────────────────────────────────────
 
-/**
- * Exemple de fonction Inngest. À remplacer par les vraies fonctions migrées
- * depuis lib/jobs/workers/*.ts.
- *
- * export const dailyBrief = inngest.createFunction(
- *   { id: "daily-brief", name: "Daily Brief Generation" },
- *   { cron: "TZ=Europe/Paris 0 7 * * *" },
- *   async ({ event, step }) => { ... }
- * );
- */
+import { dailyBriefFunction } from "./functions/daily-brief";
 
-export const inngestFunctions: ReturnType<typeof inngest.createFunction>[] = [];
+export const inngestFunctions = [dailyBriefFunction];

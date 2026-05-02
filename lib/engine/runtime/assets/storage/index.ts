@@ -11,11 +11,13 @@ import type { StorageProvider, StorageConfig } from "./types";
 import { LocalStorageProvider } from "./local";
 import { R2StorageProvider } from "./r2";
 import { HybridStorageProvider } from "./hybrid";
+import { SupabaseStorageProvider } from "./supabase";
 
 export * from "./types";
 export { LocalStorageProvider } from "./local";
 export { R2StorageProvider } from "./r2";
 export { HybridStorageProvider } from "./hybrid";
+export { SupabaseStorageProvider } from "./supabase";
 
 /**
  * Factory — crée le provider approprié selon la config
@@ -47,6 +49,18 @@ export function createStorageProvider(
         bucket: config.r2.bucket,
         publicUrl: config.r2.publicUrl,
         region: config.r2.region,
+      });
+    }
+
+    case "supabase": {
+      if (!config.supabase) {
+        throw new Error("[Storage] Supabase config required");
+      }
+      return new SupabaseStorageProvider({
+        url: config.supabase.url,
+        serviceRoleKey: config.supabase.serviceRoleKey,
+        bucket: config.supabase.bucket,
+        publicUrlBase: config.supabase.publicUrlBase,
       });
     }
 
