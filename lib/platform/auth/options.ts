@@ -10,6 +10,7 @@ const DEV_BYPASS = process.env.HEARST_DEV_AUTH_BYPASS === "1";
 const DEV_USER_UUID = "36914162-75f9-4c27-b38b-bb050f51d52b";
 
 export const authOptions: AuthOptions = {
+  debug: DEV_BYPASS,
   pages: {
     signIn: "/login",
   },
