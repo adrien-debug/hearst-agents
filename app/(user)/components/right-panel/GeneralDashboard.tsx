@@ -111,12 +111,15 @@ function MissionTile({
       onClick={onOpen}
       className="context-tile is-mission"
       aria-label={`${mission.name} · ${label}`}
-      title={`${mission.name} · ${label}`}
       data-testid={`dashboard-mission-tile-${mission.id}`}
     >
       <span className={`context-tile-status ${statusClass}`.trim()} aria-hidden />
       <span className="context-tile-icon">
         <MissionIcon />
+      </span>
+      <span className="context-tile-tip" role="tooltip">
+        <span className="context-tile-tip-title">{mission.name}</span>
+        <span className="context-tile-tip-sub">{label}</span>
       </span>
     </button>
   );
@@ -146,12 +149,15 @@ function AssetTile({
       onClick={onOpen}
       className="context-tile is-asset"
       aria-label={`${name} · ${badge}`}
-      title={name}
       data-testid={`dashboard-asset-tile-${asset.id}`}
     >
       <span className="context-tile-badge">{badge}</span>
       <span className="context-tile-icon">
         {isReport ? <ReportIcon /> : <DocIcon />}
+      </span>
+      <span className="context-tile-tip" role="tooltip">
+        <span className="context-tile-tip-title">{name}</span>
+        <span className="context-tile-tip-sub">{badge}</span>
       </span>
     </button>
   );

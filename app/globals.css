@@ -1515,6 +1515,69 @@ body {
   50%      { opacity: 0.55; transform: scale(1.25); }
 }
 
+/* Tooltip immédiat au hover — carte stylisée DS (apparaît sous la tuile,
+ * centrée, z-index haut pour passer devant les voisines de la grille). */
+.context-tile-tip {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 144px;
+  max-width: 220px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-shell);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+  text-align: left;
+  white-space: normal;
+  transition:
+    opacity var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+.context-tile:hover .context-tile-tip,
+.context-tile:focus-visible .context-tile-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.context-tile-tip::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: var(--bg-elev);
+  border-left: 1px solid var(--border-shell);
+  border-top: 1px solid var(--border-shell);
+}
+.context-tile-tip-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.3;
+  word-wrap: break-word;
+  letter-spacing: -0.005em;
+}
+.context-tile-tip-sub {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-family: var(--font-satoshi);
+  margin-top: var(--space-1);
+}
+
 /* Input pill itself — glass premium, soft sep border, focus glow */
 .cockpit-input-pill {
   position: relative;
