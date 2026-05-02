@@ -26,6 +26,11 @@ interface MintRealtimeSessionInput {
   voice?: RealtimeVoice;
   /** Tone de la persona active — résolu via `resolveRealtimeVoice`. */
   personaTone?: string;
+  /** Apps Composio réellement connectées par l'utilisateur (slugs lowercase, ex: ["gmail","slack"]).
+   * Injecté dynamiquement dans les instructions pour que la voix annonce
+   * correctement ce qu'elle peut faire. Sans ça, le modèle hallucine ou nie
+   * avoir accès aux apps connectées. */
+  connectedApps?: string[];
 }
 
 export async function mintRealtimeSession(
@@ -44,6 +49,11 @@ export async function mintRealtimeSession(
     input.voice ??
     (input.personaTone ? resolveRealtimeVoice(input.personaTone) : DEFAULT_REALTIME_VOICE);
 
+  const connectedAppsLine =
+    input.connectedApps && input.connectedApps.length > 0
+      ? `L'utilisateur a actuellement ${input.connectedApps.length} apps connectées : ${input.connectedApps.join(", ")}. N'invente pas d'autres services — si l'utilisateur te demande Notion ou GitHub par exemple et qu'ils ne sont pas dans cette liste, dis-lui qu'il faut d'abord les connecter dans /apps.`
+      : "L'utilisateur n'a aucune app tierce connectée pour le moment. Si on te demande Gmail/Slack/etc, dis-lui de les connecter dans /apps avant.";
+
   const body: Record<string, unknown> = {
     model: "gpt-4o-realtime-preview",
     voice,
@@ -54,7 +64,8 @@ export async function mintRealtimeSession(
         "Réponds en français, ton conversationnel, phrases courtes.",
         "L'utilisateur parle naturellement pendant qu'il travaille — sois bref, utile, jamais bavard.",
         "Quand l'utilisateur demande une action concrète (lancer un meeting bot, ouvrir une simulation, générer une image, envoyer un mail, créer une tâche, etc.), invoque l'outil correspondant — ne te contente pas de décrire ce que tu ferais.",
-        "Tu as accès aux tools internes Hearst (start_meeting_bot, start_simulation, generate_image) et aux tools des apps connectées de l'utilisateur (Gmail, Slack, Linear, Notion, Calendar, Drive, etc. — préfixés par le nom de l'app en majuscules, ex: GMAIL_SEND_EMAIL).",
+        "Tu as accès aux tools internes Hearst (start_meeting_bot, start_simulation, generate_image, start_browser) et aux tools des apps connectées (préfixés par le nom de l'app en majuscules, ex: GMAIL_FETCH_EMAILS, SLACK_SEND_MESSAGE).",
+        connectedAppsLine,
         "Pour les actions DESTRUCTIVES (envoyer un mail, créer un ticket, supprimer, archiver, poster un message public), confirme oralement AVANT d'invoquer le tool : redonne à l'utilisateur les paramètres clés (destinataire, sujet, contenu) et demande 'je l'envoie ?'. Invoque le tool seulement après un 'oui', 'confirme', 'go' explicite.",
         "Pour les actions LECTURE (chercher, lister, récupérer), invoque directement sans demander.",
       ].join(" "),

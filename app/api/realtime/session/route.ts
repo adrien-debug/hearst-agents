@@ -79,10 +79,21 @@ export async function POST(req: NextRequest) {
   try {
     const composioTools = await getVoiceComposioTools(scope.userId);
     const tools = [...voiceToolDefs, ...composioTools];
+    // Extrait les slugs d'apps depuis les tools Composio (préfixe avant "_") :
+    // SLACK_SEND_MESSAGE → slack, GMAIL_FETCH_EMAILS → gmail. Dédupliqué et trié
+    // pour produire une liste stable injectée dans les instructions voix.
+    const connectedApps = Array.from(
+      new Set(
+        composioTools
+          .map((t) => t.name.split("_")[0]?.toLowerCase())
+          .filter((s): s is string => Boolean(s)),
+      ),
+    ).sort();
     const session = await mintRealtimeSession({
       tools,
       voice: parsedVoice,
       personaTone: parsedTone,
+      connectedApps,
     });
     return NextResponse.json({
       ...session,
