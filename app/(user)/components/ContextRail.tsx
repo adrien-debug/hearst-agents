@@ -255,7 +255,7 @@ function CockpitChatBody() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-visible scrollbar-hide">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide">
         <GeneralDashboard
           assets={assets}
           missions={missions}
