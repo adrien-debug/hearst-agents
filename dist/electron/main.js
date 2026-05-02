@@ -130,8 +130,9 @@ function createWindow() {
       webSecurity: true
     }
   });
-  const url = isDev ? "http://localhost:9001" : `http://127.0.0.1:${serverPort}`;
-  void mainWindow.loadURL(url);
+  const base = isDev ? "http://localhost:9001" : `http://127.0.0.1:${serverPort}`;
+  const startUrl = isDev ? `${base}/api/auth/dev-login` : base;
+  void mainWindow.loadURL(startUrl);
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
     if (isDev) mainWindow?.webContents.openDevTools({ mode: "detach" });

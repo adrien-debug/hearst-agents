@@ -1,15 +1,36 @@
 import type { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { saveTokens } from "@/lib/platform/auth/tokens";
 import { registerProviderUsage } from "@/lib/connectors/control-plane/register";
 import { resolveOrCreateUserUuid } from "./user-resolver";
+
+const DEV_BYPASS = process.env.HEARST_DEV_AUTH_BYPASS === "1";
+const DEV_USER_UUID = "36914162-75f9-4c27-b38b-bb050f51d52b";
 
 export const authOptions: AuthOptions = {
   pages: {
     signIn: "/login",
   },
   providers: [
+    // ── Dev bypass provider (HEARST_DEV_AUTH_BYPASS=1 uniquement) ──────────
+    // Crée une vraie session JWT sans OAuth pour le dev/Electron local.
+    // Désactivé automatiquement en prod (DEV_BYPASS=false).
+    ...(DEV_BYPASS ? [
+      CredentialsProvider({
+        id: "dev-bypass",
+        name: "Dev Bypass",
+        credentials: {},
+        async authorize() {
+          return {
+            id: DEV_USER_UUID,
+            name: "Adrien (dev)",
+            email: "adriennejkovic@gmail.com",
+          };
+        },
+      }),
+    ] : []),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
@@ -48,7 +69,13 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, user }) {
+      // Dev bypass : injecter l'userId directement depuis le user object
+      if (account?.provider === "dev-bypass" && user) {
+        token.userId = user.id;
+        token.email = user.email ?? undefined;
+        return token;
+      }
       if (account && profile) {
         const email = (profile as { email?: string }).email ?? null;
         const providerName = account.provider === "azure-ad" ? "microsoft" : "google";

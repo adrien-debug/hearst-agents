@@ -130,11 +130,13 @@ function createWindow(): void {
     },
   });
 
-  const url = isDev
-    ? "http://localhost:9001"
-    : `http://127.0.0.1:${serverPort}`;
+  const base = isDev ? "http://localhost:9001" : `http://127.0.0.1:${serverPort}`;
 
-  void mainWindow.loadURL(url);
+  // En dev, passer d'abord par /api/auth/dev-login qui crée la session
+  // JWT via CredentialsProvider si HEARST_DEV_AUTH_BYPASS=1 (sinon 403).
+  const startUrl = isDev ? `${base}/api/auth/dev-login` : base;
+
+  void mainWindow.loadURL(startUrl);
 
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
