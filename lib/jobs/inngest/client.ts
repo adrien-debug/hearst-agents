@@ -19,8 +19,7 @@ export const inngest = new Inngest({
 export const isInngestEnabled = (): boolean =>
   Boolean(process.env.INNGEST_EVENT_KEY && process.env.INNGEST_SIGNING_KEY);
 
-// ── Function definitions ───────────────────────────────────────
-
-import { dailyBriefFunction } from "./functions/daily-brief";
-
-export const inngestFunctions = [dailyBriefFunction];
+// ── Function registry ──────────────────────────────────────────
+// Le registre des fonctions est séparé dans ./functions/index.ts pour
+// éviter une dépendance circulaire (les fonctions importent `inngest`
+// depuis ce fichier, donc on ne peut pas les importer ici).
