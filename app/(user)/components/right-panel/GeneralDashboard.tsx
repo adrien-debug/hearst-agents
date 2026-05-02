@@ -51,15 +51,51 @@ export function GeneralDashboard({
 
   const runningMissions = activeMissions.filter((m) => m.opsStatus === "running");
   const failedMissions  = activeMissions.filter((m) => m.opsStatus === "failed");
+  const reportsCount = Array.isArray(_assets)
+    ? (_assets as DashboardAsset[]).filter((a) => a.type === "report").length
+    : 0;
 
   return (
     <div
       className="flex flex-col"
-      style={{ padding: "var(--space-8) var(--space-5)", gap: "var(--space-3)" }}
+      style={{ padding: "var(--space-8) var(--space-5)", gap: "var(--space-6)" }}
     >
-      {/* KPIs top supprimés 2026-05-03 : redondants avec les recap-cards
-         juste en dessous (Missions/Assets affichaient les mêmes counts).
-         Reports vit dans /runs, accessible via la nav rail gauche. */}
+      {/* KPIs sommaire — 3 chiffres click-through. Restaurés 2026-05-03
+         après retrait initial. Voix régulière FR (pas de mono caps), juste
+         des nombres avec label faint en dessous. Les recap-cards plus bas
+         apportent le détail textuel (running/failed/recent assets). */}
+      <div
+        className="grid grid-cols-3"
+        style={{ gap: "var(--space-3)" }}
+      >
+        {[
+          { n: assetsCount,   label: "Assets",   view: "assets"   as const },
+          { n: missionsCount, label: "Missions", view: "missions" as const },
+          { n: reportsCount,  label: "Reports",  view: "reports"  as const },
+        ].map(({ n, label, view }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => onViewChange(view)}
+            className="flex flex-col items-start text-left transition-colors group"
+            style={{ gap: "var(--space-1)" }}
+            data-testid={`dashboard-kpi-${view}`}
+          >
+            <span
+              className="t-28 font-medium tabular-nums transition-colors group-hover:text-[var(--cykan)]"
+              style={{ color: "var(--text-l1)", lineHeight: 1, letterSpacing: "-0.02em" }}
+            >
+              {n.toString().padStart(2, "0")}
+            </span>
+            <span
+              className="t-11 font-light transition-colors group-hover:text-[var(--text-soft)]"
+              style={{ color: "var(--text-faint)" }}
+            >
+              {label}
+            </span>
+          </button>
+        ))}
+      </div>
 
       {/* 3 recap cards — hauteur uniforme */}
       <div className="flex flex-col" style={{ gap: "var(--space-3)" }}>
