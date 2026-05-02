@@ -31,7 +31,7 @@ var net = __toESM(require("net"));
 var isDev = process.defaultApp === true || process.env.NODE_ENV === "development";
 var mainWindow = null;
 var nextServer = null;
-var serverPort = 9e3;
+var serverPort = 9001;
 function findFreePort(preferred) {
   return new Promise((resolve) => {
     const s = net.createServer();
@@ -78,7 +78,7 @@ function waitForServer(port, maxMs = 3e4) {
 }
 async function startNextServer() {
   if (isDev) return;
-  serverPort = await findFreePort(9e3);
+  serverPort = await findFreePort(9001);
   const serverScript = (0, import_path.join)(
     process.resourcesPath,
     ".next",
@@ -130,7 +130,7 @@ function createWindow() {
       webSecurity: true
     }
   });
-  const url = isDev ? "http://localhost:9000" : `http://127.0.0.1:${serverPort}`;
+  const url = isDev ? "http://localhost:9001" : `http://127.0.0.1:${serverPort}`;
   void mainWindow.loadURL(url);
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();

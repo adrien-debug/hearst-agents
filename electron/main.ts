@@ -12,7 +12,7 @@ const isDev =
 
 let mainWindow: BrowserWindow | null = null;
 let nextServer: ChildProcess | null = null;
-let serverPort = 9000;
+let serverPort = 9001;
 
 // ── Port discovery ──────────────────────────────────────────────────────────
 
@@ -70,9 +70,9 @@ function waitForServer(port: number, maxMs = 30_000): Promise<void> {
 // ── Next.js standalone server (prod only) ───────────────────────────────────
 
 async function startNextServer(): Promise<void> {
-  if (isDev) return; // En dev, next dev tourne séparément sur port 9000.
+  if (isDev) return; // En dev, next dev tourne séparément sur port 9001 (lancé par launch-hearst.sh).
 
-  serverPort = await findFreePort(9000);
+  serverPort = await findFreePort(9001);
 
   // .next/standalone/ est copié dans Resources par electron-builder.
   const serverScript = join(
@@ -131,7 +131,7 @@ function createWindow(): void {
   });
 
   const url = isDev
-    ? "http://localhost:9000"
+    ? "http://localhost:9001"
     : `http://127.0.0.1:${serverPort}`;
 
   void mainWindow.loadURL(url);
