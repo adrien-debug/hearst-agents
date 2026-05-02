@@ -172,7 +172,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
 
   if (error) {
     return (
-      <div className="h-full min-h-0 overflow-y-auto bg-bg text-text">
+      <div className="h-full min-h-0 overflow-y-auto bg-[var(--bg-elev)] text-[var(--text)]">
         <PageHeader
           title="Marketplace"
           back={{ label: "Retour", href: "/marketplace" }}
@@ -184,7 +184,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
 
   if (!data) {
     return (
-      <div className="h-full min-h-0 overflow-y-auto bg-bg text-text">
+      <div className="h-full min-h-0 overflow-y-auto bg-[var(--bg-elev)] text-[var(--text)]">
         <PageHeader
           title="Marketplace"
           back={{ label: "Retour", href: "/marketplace" }}
@@ -200,7 +200,7 @@ export default function MarketplaceDetailPage({ params }: PageProps) {
   const author = tpl.authorDisplayName?.trim() || "Anonyme";
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto bg-bg text-text">
+    <div className="h-full min-h-0 overflow-y-auto bg-[var(--bg-elev)] text-[var(--text)]">
       <PageHeader
         title={tpl.title}
         subtitle={tpl.description ?? undefined}

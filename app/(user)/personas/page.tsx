@@ -99,7 +99,7 @@ export default function PersonasPage() {
   }
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto bg-bg text-text">
+    <div className="h-full min-h-0 overflow-y-auto bg-[var(--bg-elev)] text-[var(--text)]">
       <PageHeader
         title="Brand Voice — Personas"
         subtitle="Voix éditoriales appliquées au LLM. Une persona = ton + vocabulaire + system prompt addon."

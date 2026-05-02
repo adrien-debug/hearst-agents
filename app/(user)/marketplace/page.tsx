@@ -84,7 +84,7 @@ export default function MarketplacePage() {
   );
 
   return (
-    <div className="h-full min-h-0 overflow-y-auto bg-bg text-text">
+    <div className="h-full min-h-0 overflow-y-auto bg-[var(--bg-elev)] text-[var(--text)]">
       <PageHeader
         title="Marketplace"
         subtitle="Templates communautaires — workflows, rapports, personas. Clone en un clic."
