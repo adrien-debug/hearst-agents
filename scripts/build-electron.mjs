@@ -15,19 +15,19 @@ import { join } from "path";
 const outDir = "dist/electron";
 mkdirSync(outDir, { recursive: true });
 
-// Main process — ESM
+// Main process — CJS (require("electron") fonctionne nativement en CJS dans Electron)
 await build({
   entryPoints: ["electron/main.ts"],
   bundle: true,
   platform: "node",
-  format: "esm",
+  format: "cjs",
   external: ["electron"],
-  outfile: join(outDir, "main.mjs"),
+  outfile: join(outDir, "main.js"),
   minify: false,
   sourcemap: false,
 });
 
-// Preload — CJS (Electron preloads ne supportent pas ESM dans tous les contextes)
+// Preload — CJS
 await build({
   entryPoints: ["electron/preload.ts"],
   bundle: true,
@@ -38,11 +38,5 @@ await build({
   minify: false,
   sourcemap: false,
 });
-
-// Package.json pour indiquer à Node que dist/electron/ est ESM
-writeFileSync(
-  join(outDir, "package.json"),
-  JSON.stringify({ type: "module" }, null, 2),
-);
 
 console.log("✓ Electron main process compilé dans", outDir);

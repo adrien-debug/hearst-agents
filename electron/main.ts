@@ -1,13 +1,8 @@
 import { app, BrowserWindow, shell, nativeTheme } from "electron";
 import { spawn, ChildProcess } from "child_process";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
 import * as http from "http";
 import * as net from "net";
-
-// ESM n'a pas __dirname — on le reconstitue depuis import.meta.url.
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // process.defaultApp est défini quand Electron est lancé via `electron .` (dev).
 // Undefined = binaire packagé par electron-builder (prod).
