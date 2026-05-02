@@ -8,16 +8,16 @@ import { CockpitHero } from "./stages/CockpitHero";
 /**
  * WelcomePanel — Empty state du ChatStage (mode="chat" sans messages).
  *
- * Visuellement identique au CockpitStage (greeting + quick actions),
- * mais SANS l'input (l'input est rendu par ChatStage en bas via ChatDock).
- *
- * Pas de section "Active missions" ni de footer hint : duplications retirées.
- * L'opérationnel vit uniquement dans le panneau droit (GeneralDashboard).
+ * Si un thread est déjà actif, on skip le greeting CockpitHero : il fait
+ * doublon avec <ConversationHeader> (titre + date) qui est rendu par
+ * ChatStage juste au-dessus. Sinon (cas rare : ChatStage sans thread),
+ * on garde le greeting éditorial pour ne pas atterrir sur un écran vide.
  */
 export function WelcomePanel() {
   const router = useRouter();
   const addThread = useNavigationStore((s) => s.addThread);
   const setStageMode = useStageStore((s) => s.setMode);
+  const activeThreadId = useNavigationStore((s) => s.activeThreadId);
 
   const newBrief = () => {
     const threadId = addThread("New", "home");
@@ -37,9 +37,15 @@ export function WelcomePanel() {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <CockpitHero />
+      {!activeThreadId && <CockpitHero />}
 
-      <div style={{ padding: "0 var(--space-12) var(--space-12)" }}>
+      <div
+        style={{
+          padding: activeThreadId
+            ? "var(--space-12)"
+            : "0 var(--space-12) var(--space-12)",
+        }}
+      >
         <p
           className="t-13 font-medium"
           style={{
