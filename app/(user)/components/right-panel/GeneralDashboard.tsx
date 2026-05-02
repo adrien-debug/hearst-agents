@@ -82,8 +82,8 @@ export function GeneralDashboard({
             data-testid={`dashboard-kpi-${view}`}
           >
             <span
-              className="t-28 font-medium tabular-nums transition-colors group-hover:text-[var(--cykan)]"
-              style={{ color: "var(--text-l1)", lineHeight: 1, letterSpacing: "-0.02em" }}
+              className="t-18 font-medium tabular-nums transition-colors group-hover:text-[var(--cykan)]"
+              style={{ color: "var(--text-l1)", lineHeight: "var(--leading-tight)" }}
             >
               {n.toString().padStart(2, "0")}
             </span>
