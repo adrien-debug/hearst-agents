@@ -105,7 +105,7 @@ export default function NotificationsPage() {
 
   return (
     <div
-      className="flex-1 flex flex-col min-h-0 overflow-y-auto text-[var(--text)]"
+      className="flex-1 flex flex-col min-h-0 overflow-y-auto text-[var(--text)] no-scrollbar scroll-fade-bottom"
       style={{ background: "var(--bg-elev)" }}
     >
       <PageHeader

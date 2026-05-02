@@ -186,7 +186,7 @@ export default function RunsPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto px-12 py-6">
+      <div className="flex-1 overflow-y-auto px-12 py-6 no-scrollbar scroll-fade-bottom">
         <div className="max-w-5xl mx-auto">
           <RowSkeleton count={6} height="var(--space-14)" />
         </div>
@@ -208,7 +208,7 @@ export default function RunsPage() {
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-12 py-6">
+      <div className="flex-1 overflow-y-auto px-12 py-6 no-scrollbar scroll-fade-bottom">
         <div className="max-w-5xl mx-auto">
           {runs.length === 0 ? (
             <EmptyState

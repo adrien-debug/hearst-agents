@@ -252,7 +252,7 @@ function MissionsPageContent() {
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto px-12 py-6" style={{ background: "var(--bg-elev)" }}>
+      <div className="flex-1 overflow-y-auto px-12 py-6 no-scrollbar scroll-fade-bottom" style={{ background: "var(--bg-elev)" }}>
         <RowSkeleton count={5} height="var(--space-16)" />
       </div>
     );
@@ -302,7 +302,7 @@ function MissionsPageContent() {
       })()}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-12 py-6">
+      <div className="flex-1 overflow-y-auto px-12 py-6 no-scrollbar scroll-fade-bottom">
         {missions.length === 0 ? (
           <EmptyState
             title="Aucune mission"

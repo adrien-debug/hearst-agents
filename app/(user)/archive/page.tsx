@@ -77,7 +77,7 @@ export default function ArchivePage() {
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto no-scrollbar scroll-fade-bottom">
         {filtered.length === 0 ? (
           <EmptyState
             title={query ? "Aucun résultat" : "Archive vide"}

@@ -57,6 +57,8 @@ export function ChatInput({
   const [docParseMessage, setDocParseMessage] = useState<string | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // Pill étendue dès qu'il y a du focus ou du texte
+  const isExpanded = inputFocused || input.length > 0;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isRunning = useRuntimeStore((s) => s.coreState !== "idle");
   const surface = useNavigationStore((s) => s.surface);
@@ -301,7 +303,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="px-6 py-6">
+    <div className="px-4 py-2">
       <div
         className="mx-auto relative"
         style={{ maxWidth: "var(--input-max-width)" }}
@@ -354,7 +356,7 @@ export function ChatInput({
 
         {/* Input Pill — flat, sans halo cykan en focus */}
         <div
-          className="cockpit-input-pill-flat peer group px-10 py-6 backdrop-blur-xl relative"
+          className="cockpit-input-pill-flat peer group px-6 py-3 backdrop-blur-xl relative"
           onDragOver={handleAssetDragOver}
           onDragLeave={handleAssetDragLeave}
           onDrop={handleAssetDrop}
@@ -499,12 +501,12 @@ export function ChatInput({
             rows={1}
             className="block w-full bg-transparent t-18 font-light text-[var(--text)] placeholder:text-[var(--text-muted)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
             style={{
-              minHeight: "var(--space-12)",
+              minHeight: "var(--space-9)",
               maxHeight: "var(--height-input-max)",
             }}
           />
 
-          <div className="flex items-center justify-end gap-4 pt-4">
+          <div className={isExpanded ? "flex items-center justify-end gap-4 pt-2" : "hidden"}>
               <PersonaSwitcher
                 threadId={threadId}
                 onChange={(id) => setPersonaId(id)}

@@ -184,7 +184,7 @@ export default function ReportsDiscoveryPage() {
   return (
     <div
       data-testid="reports-page"
-      className="flex-1 flex flex-col min-h-0 overflow-auto"
+      className="flex-1 flex flex-col min-h-0 overflow-auto no-scrollbar scroll-fade-bottom"
       style={{ background: "var(--bg-elev)", color: "var(--text)" }}
     >
       <PageHeader

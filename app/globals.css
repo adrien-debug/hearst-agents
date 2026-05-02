@@ -162,6 +162,9 @@
   /* ─── ChatInput ─────────────────────────────────────────────── */
   --height-input-min: var(--space-8);  /* textarea : hauteur min 1 ligne = 32px */
   --height-input-max: 200px;           /* textarea : hauteur max avant scroll */
+  --height-chatbar-idle:   64px;       /* pill chat compacte, idle */
+  --height-chatbar-active: 112px;      /* pill chat étendue, focus ou input */
+  --height-brief-card:     160px;      /* max-height brief du jour avant fade */
 
   /* ─── FocalStage ─────────────────────────────────────────────── */
   --height-focal-min: 320px;           /* Surface focale : hauteur minimale */
@@ -431,7 +434,7 @@
  * la pièce maîtresse unique. */
 .poster-greeting {
   font-weight: 500;
-  font-size: clamp(22px, 2.6vw, 36px);
+  font-size: clamp(18px, 2vw, 28px);
   letter-spacing: -0.025em;
   line-height: 1.05;
 }
@@ -1581,6 +1584,20 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(45, 212, 191, 0.3);
+}
+
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+.scroll-fade-bottom { position: relative; }
+.scroll-fade-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: var(--space-12);
+  background: linear-gradient(to bottom, transparent, var(--scroll-fade-color, var(--bg-elev)));
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ─────────────────────────────────────────────────────────────

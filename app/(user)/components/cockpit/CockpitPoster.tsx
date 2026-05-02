@@ -55,7 +55,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         width: "100%",
         maxWidth: "var(--width-poster-body)",
         marginInline: "auto",
-        padding: "var(--space-8) var(--space-12) var(--space-4)",
+        padding: "var(--space-4) var(--space-8) var(--space-3)",
       }}
     >
       {/* ─── Hero (greeting + status line) ────────────────────────── */}
@@ -78,7 +78,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
       {/* ─── Body : brief éditorial + suggestions ────────────────── */}
       <main
         className="flex-1 min-h-0 flex flex-col"
-        style={{ gap: "var(--space-5)", marginTop: "var(--space-8)" }}
+        style={{ gap: "var(--space-3)", marginTop: "var(--space-4)" }}
       >
         {observation && (
           <p
@@ -103,10 +103,13 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
           </header>
           {briefReady ? (
             <>
-              <p className="body">
-                {briefSentence.first && <strong>{briefSentence.first}</strong>}
-                {briefSentence.rest && <> {briefSentence.rest}</>}
-              </p>
+              <div style={{ maxHeight: "var(--height-brief-card)", overflow: "hidden", position: "relative" }}>
+                <p className="body">
+                  {briefSentence.first && <strong>{briefSentence.first}</strong>}
+                  {briefSentence.rest && <> {briefSentence.rest}</>}
+                </p>
+                <div aria-hidden style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 40, background: "linear-gradient(transparent, var(--surface-1))" }} />
+              </div>
               <a href="/briefing" className="read-more">
                 Lire la suite →
               </a>
@@ -182,8 +185,8 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
       <footer
         className="flex-none flex items-center"
         style={{
-          gap: "var(--space-6)",
-          marginTop: "var(--space-4)",
+          gap: "var(--space-4)",
+          marginTop: "var(--space-2)",
           paddingTop: "var(--space-3)",
           borderTop: "1px solid var(--line-strong)",
         }}

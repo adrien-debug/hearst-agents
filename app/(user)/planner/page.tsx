@@ -91,7 +91,7 @@ export default function PlannerPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto px-12 py-6 bg-[var(--bg)]">
+      <div className="flex-1 overflow-y-auto px-12 py-6 bg-[var(--bg)] no-scrollbar scroll-fade-bottom" style={{ '--scroll-fade-color': 'var(--bg)' } as React.CSSProperties}>
         <RowSkeleton count={5} height="var(--space-20)" />
       </div>
     );
@@ -123,7 +123,7 @@ export default function PlannerPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-12 py-6">
+      <div className="flex-1 overflow-y-auto px-12 py-6 no-scrollbar scroll-fade-bottom">
         {filtered.length === 0 ? (
           <EmptyState
             icon="◉"
