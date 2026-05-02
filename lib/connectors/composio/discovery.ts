@@ -119,14 +119,33 @@ export async function getToolsForUser(
       return [];
     }
 
-    // 2. Fetch tool definitions for the toolkits we know are ACTIVE.
-    //    SDK default page size is 20 — we bump to 100 so we don't truncate
-    //    multi-toolkit users (e.g. slack alone has 75+ actions).
-    const raw = (await composio.tools.get(userId, {
-      toolkits: targetSlugs,
-      limit: 100,
-    })) as { items?: RawTool[] } | RawTool[];
-    const items = Array.isArray(raw) ? raw : (raw.items ?? []);
+    // 2. Fetch tool definitions PER TOOLKIT en parallèle.
+    //    L'API Composio limite la réponse globale (limit=100 retourne 100 max
+    //    AU TOTAL sur tous les toolkits demandés). Pour un user avec 5+ apps,
+    //    ça tronque silencieusement — les premiers toolkits (alphabétique)
+    //    saturent la limite, les suivants (slack, stripe, etc.) reviennent
+    //    vides → "ACTIVE toolkits with no tools" warning + agent qui dit
+    //    "je n'ai pas accès à Slack". Itération individuelle = couverture
+    //    équitable et déterministe entre toolkits.
+    const TOOLS_PER_TOOLKIT = 25;
+    const perToolkitResults = await Promise.all(
+      targetSlugs.map(async (slug) => {
+        try {
+          const raw = (await composio.tools.get(userId, {
+            toolkits: [slug],
+            limit: TOOLS_PER_TOOLKIT,
+          })) as { items?: RawTool[] } | RawTool[];
+          return Array.isArray(raw) ? raw : (raw.items ?? []);
+        } catch (err) {
+          console.warn(
+            `[Composio/Discovery] tools.get failed for toolkit ${slug}: ` +
+              `${err instanceof Error ? err.message : String(err)}`,
+          );
+          return [];
+        }
+      }),
+    );
+    const items = perToolkitResults.flat();
     const tools = items
       .map(toDiscoveredTool)
       .filter((t): t is DiscoveredTool => t !== null);
