@@ -2,11 +2,17 @@
   "name": "hearst-os",
   "version": "1.0.0",
   "private": true,
+  "main": "dist/electron/main.mjs",
   "scripts": {
     "dev": "lsof -ti tcp:9000 | xargs kill -9 2>/dev/null || true; sleep 1; mkdir -p .next && xattr -w com.apple.fileprovider.ignore#P 1 .next 2>/dev/null; next dev -p 9000",
     "dev:solo": "npm run dev",
     "dev:stack": "bash scripts/dev-stack.sh",
     "dev:fresh": "lsof -ti tcp:9000 | xargs kill -9 2>/dev/null || true; sleep 1; rm -rf .next && npm run dev",
+    "electron:compile": "node scripts/build-electron.mjs",
+    "electron": "npm run electron:compile && electron .",
+    "dev:electron": "npm run electron:compile && concurrently -n next,electron -c cyan,yellow \"npm run dev\" \"wait-on http://localhost:9000 && electron .\"",
+    "electron:build": "next build && npm run electron:compile",
+    "electron:dist": "npm run electron:build && electron-builder",
     "launch": "./launch.sh",
     "launch:all": "./launch.sh",
     "stop": "./launch-stop.sh",
@@ -68,11 +74,16 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.184.0",
+    "concurrently": "^9.2.1",
+    "electron": "^41.5.0",
+    "electron-builder": "^26.8.1",
+    "esbuild": "^0.28.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "jsdom": "^26.0.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.4",
+    "wait-on": "^9.0.5"
   }
 }

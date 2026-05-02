@@ -1,0 +1,73 @@
+appId: com.hearst.os
+productName: Hearst OS
+copyright: Copyright © 2026 Hearst
+
+# Point d'entrée compilé (dist/electron/main.js)
+# Le "main" field de package.json pointe ici.
+
+asar: true
+asarUnpack:
+  # pdfkit charge ses polices AFM via require.resolve()
+  # → les data files doivent rester décompressés pour fs.readFile().
+  - "node_modules/pdfkit/js/data/**/*"
+  - "node_modules/pdfkit/js/font/**/*"
+
+files:
+  - dist/electron/**/*
+  - "!**/.env*"
+  - "!**/.env.local"
+  - "!**/node_modules/.cache/**"
+
+# Next.js standalone + static + public copiés dans Resources
+extraResources:
+  - from: ".next/standalone"
+    to: ".next/standalone"
+    filter:
+      - "**/*"
+  - from: ".next/static"
+    to: ".next/standalone/.next/static"
+    filter:
+      - "**/*"
+  - from: "public"
+    to: ".next/standalone/public"
+    filter:
+      - "**/*"
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+  icon: public/icon-512.png
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  # Entitlements nécessaires pour WebRTC (microphone) + réseau
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: public/icon-512.png
+
+linux:
+  target: AppImage
+  icon: public/icon-512.png
+  category: Utility
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
