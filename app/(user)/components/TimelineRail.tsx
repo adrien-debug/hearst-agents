@@ -72,6 +72,18 @@ const AppIcon = () => (
     <rect x="14" y="14" width="7" height="7" rx="1" />
   </svg>
 );
+
+const ChatIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+  </svg>
+);
+
+const ChevronDownIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
 // ── Section helpers ────────────────────────────────────────
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -163,6 +175,17 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
       onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
       title={thread.name}
     >
+      <span
+        className="rounded-pill shrink-0"
+        style={{
+          width: "var(--space-2)",
+          height: "var(--space-2)",
+          background: "var(--cykan)",
+          boxShadow: isActive ? "var(--shadow-neon-cykan)" : "var(--glow-cyan-sm)",
+          opacity: isActive ? 1 : 0.7,
+        }}
+        aria-hidden
+      />
       <p
         className="flex-1 t-14 truncate min-w-0 transition-all duration-300"
         style={{
@@ -363,6 +386,7 @@ export function TimelineRail() {
   const sectionPadX = leftCollapsed ? "pl-6 pr-2" : "px-8";
 
   const groups = useMemo(() => groupThreadsByDate(threads), [threads]);
+  const [recentsExpanded, setRecentsExpanded] = useState(true);
 
   const handleThreadSelect = (threadId: string) => {
     setActiveThread(threadId);
@@ -472,39 +496,69 @@ export function TimelineRail() {
                   borderTop: "1px solid var(--border-default)",
                 }}
               >
-                <TopMenuItem label="Nouvelle conversation" hotkey="⌘N" onClick={handleNewThread} />
+                <TopMenuItem
+                  label="Chat"
+                  hotkey="⌘N"
+                  icon={<ChatIcon />}
+                  onClick={handleNewThread}
+                />
               </div>
             </div>
 
-            {/* Recent */}
+            {/* Recent — toggleable */}
             <section>
-              <SectionHeader label="Récents" />
-              {groups.today.length === 0 && groups.thisWeek.length === 0 ? (
-                <EmptyHint>Aucune activité récente</EmptyHint>
-              ) : (
-                <div className="space-y-px">
-                  {groups.today.map((t) => (
-                    <ThreadRow
-                      key={t.id}
-                      thread={t}
-                      isActive={t.id === activeThreadId}
-                      onSelect={() => handleThreadSelect(t.id)}
-                      onDelete={() => handleThreadDelete(t.id)}
-                      onArchive={() => toggleArchived(t.id)}
-                    />
-                  ))}
-                  {groups.thisWeek.map((t) => (
-                    <ThreadRow
-                      key={t.id}
-                      thread={t}
-                      isActive={t.id === activeThreadId}
-                      onSelect={() => handleThreadSelect(t.id)}
-                      onDelete={() => handleThreadDelete(t.id)}
-                      onArchive={() => toggleArchived(t.id)}
-                    />
-                  ))}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => setRecentsExpanded((v) => !v)}
+                aria-expanded={recentsExpanded}
+                className="w-full flex items-center justify-between first:mt-0 mt-12 mb-6 px-3 group"
+              >
+                <span
+                  className="t-11 font-medium transition-colors group-hover:text-[var(--text-soft)]"
+                  style={{
+                    color: "var(--text-faint)",
+                    letterSpacing: "var(--tracking-tight)",
+                  }}
+                >
+                  Récents
+                </span>
+                <span
+                  className="inline-flex items-center justify-center transition-transform duration-emphasis ease-out-soft text-[var(--text-faint)] group-hover:text-[var(--text-soft)]"
+                  style={{
+                    transform: recentsExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                  }}
+                  aria-hidden
+                >
+                  <ChevronDownIcon />
+                </span>
+              </button>
+              {recentsExpanded &&
+                (groups.today.length === 0 && groups.thisWeek.length === 0 ? (
+                  <EmptyHint>Aucune activité récente</EmptyHint>
+                ) : (
+                  <div className="space-y-px">
+                    {groups.today.map((t) => (
+                      <ThreadRow
+                        key={t.id}
+                        thread={t}
+                        isActive={t.id === activeThreadId}
+                        onSelect={() => handleThreadSelect(t.id)}
+                        onDelete={() => handleThreadDelete(t.id)}
+                        onArchive={() => toggleArchived(t.id)}
+                      />
+                    ))}
+                    {groups.thisWeek.map((t) => (
+                      <ThreadRow
+                        key={t.id}
+                        thread={t}
+                        isActive={t.id === activeThreadId}
+                        onSelect={() => handleThreadSelect(t.id)}
+                        onDelete={() => handleThreadDelete(t.id)}
+                        onArchive={() => toggleArchived(t.id)}
+                      />
+                    ))}
+                  </div>
+                ))}
             </section>
 
             {/* Archive */}
