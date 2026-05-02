@@ -74,6 +74,26 @@ export const voiceToolDefs: VoiceToolDef[] = [
       },
     },
   },
+  {
+    type: "function",
+    name: "start_browser",
+    description:
+      "Ouvre une session de navigation web en temps réel (Browserbase + Stagehand). Le BrowserStage s'ouvre pour que l'utilisateur voie la navigation en direct. Utilise ce tool dès que l'utilisateur veut consulter un site, faire une recherche sur Internet, ou extraire des données d'une page.",
+    parameters: {
+      type: "object",
+      required: ["task"],
+      properties: {
+        task: {
+          type: "string",
+          description: "Tâche à effectuer dans le navigateur (ex: 'Cherche le prix de l'iPhone sur apple.com').",
+        },
+        start_url: {
+          type: "string",
+          description: "URL de départ optionnelle.",
+        },
+      },
+    },
+  },
 ];
 
 /** Label compact affichable dans le ContextRail. */
@@ -81,4 +101,5 @@ export const VOICE_TOOL_LABELS: Record<string, string> = {
   start_meeting_bot: "Meeting",
   start_simulation: "Simulation",
   generate_image: "Image",
+  start_browser: "Navigateur",
 };

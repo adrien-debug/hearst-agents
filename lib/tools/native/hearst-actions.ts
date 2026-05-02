@@ -5,6 +5,7 @@
  *  - start_meeting_bot   → Recall.ai → MeetingStage
  *  - start_simulation    → DeepSeek (par la stage) → SimulationStage
  *  - generate_image      → fal.ai (job-gen) → AssetStage avec variant image
+ *  - start_browser       → Browserbase + Stagehand → BrowserStage (co-browsing)
  *
  * Pattern : chaque tool fait son setup minimal (mint session, persist
  * placeholder, enqueue job), émet un `stage_request` event, retourne un
@@ -22,6 +23,8 @@ import { storeAsset } from "@/lib/assets/types";
 import { createVariant } from "@/lib/assets/variants";
 import { enqueueJob } from "@/lib/jobs/queue";
 import type { ImageGenInput } from "@/lib/jobs/types";
+import { createSession } from "@/lib/capabilities/providers/browserbase";
+import { runBrowserTask } from "@/lib/browser/stagehand-executor";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AiToolMap = Record<string, Tool<any, any>>;
@@ -41,8 +44,13 @@ interface GenerateImageArgs {
   style?: string;
 }
 
+interface StartBrowserArgs {
+  task: string;
+  start_url?: string;
+}
+
 /**
- * Build the Hearst Action tool map. Always returns the 3 tools — pas
+ * Build the Hearst Action tool map. Always returns the 4 tools — pas
  * de gating user (les tools eux-mêmes throw si l'API key manque côté
  * provider).
  */
@@ -185,9 +193,55 @@ export function buildHearstActionTools(opts: {
     },
   };
 
+  const startBrowser: Tool<StartBrowserArgs, unknown> = {
+    description:
+      "Ouvre une session de navigation web en temps réel (Browserbase + Stagehand). Le BrowserStage s'ouvre pour que l'utilisateur voie la navigation en direct et puisse reprendre la main. Utilise ce tool dès que l'utilisateur veut consulter un site, faire une recherche sur Internet, extraire des données d'une page, ou remplir un formulaire.",
+    inputSchema: jsonSchema<StartBrowserArgs>({
+      type: "object",
+      required: ["task"],
+      properties: {
+        task: { type: "string", description: "Tâche à effectuer dans le navigateur (ex: 'Cherche le prix de l'iPhone sur apple.com', 'Résume la page d'accueil de techcrunch.com')." },
+        start_url: { type: "string", description: "URL de départ optionnelle (ex: 'https://google.com'). Si absente, Stagehand choisit lui-même le point de départ." },
+      },
+    }),
+    execute: async (args) => {
+      let sessionId: string;
+      try {
+        const session = await createSession();
+        sessionId = session.sessionId;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("[start_browser] createSession failed:", msg);
+        return `Impossible de démarrer la session navigateur : ${msg}`;
+      }
+
+      const taskId = randomUUID();
+      void (async () => {
+        try {
+          await runBrowserTask({
+            sessionId,
+            task: args.task,
+            runId: taskId,
+          });
+        } catch (err) {
+          console.error("[start_browser] runBrowserTask failed:", err);
+        }
+      })();
+
+      eventBus.emit({
+        type: "stage_request",
+        run_id: runId,
+        stage: { mode: "browser", sessionId },
+      });
+
+      return "Navigation lancée. Je t'amène sur le Browser Stage pour suivre en direct.";
+    },
+  };
+
   return {
     start_meeting_bot: startMeetingBot,
     start_simulation: startSimulation,
     generate_image: generateImage,
+    start_browser: startBrowser,
   };
 }
