@@ -37,9 +37,6 @@ export function GeneralDashboard({
 }: GeneralDashboardProps) {
   const assetsCount = Array.isArray(_assets) ? _assets.length : 0;
   const missionsCount = Array.isArray(_missions) ? _missions.length : 0;
-  const reportsCount = Array.isArray(_assets)
-    ? (_assets as DashboardAsset[]).filter((a) => a.type === "report").length
-    : 0;
   const recentAssets = Array.isArray(_assets) ? (_assets as DashboardAsset[]).slice(0, 3) : [];
   const activeMissions = Array.isArray(_missions)
     ? (_missions as DashboardMission[]).slice(0, 6)
@@ -51,27 +48,11 @@ export function GeneralDashboard({
   return (
     <div
       className="flex flex-col"
-      style={{ padding: "var(--space-8) var(--space-5)", gap: "var(--space-6)" }}
+      style={{ padding: "var(--space-8) var(--space-5)", gap: "var(--space-3)" }}
     >
-      {/* KPIs */}
-      <div className="grid grid-cols-3" style={{ gap: "var(--space-3)", alignItems: "baseline" }}>
-        {[
-          { n: assetsCount,   label: "Assets",   view: "assets"   as const },
-          { n: missionsCount, label: "Missions", view: "missions" as const },
-          { n: reportsCount,  label: "Reports",  view: "reports"  as const },
-        ].map(({ n, label, view }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => onViewChange(view)}
-            className="kpi-tile group"
-            data-testid={`dashboard-kpi-${view}`}
-          >
-            <span className="kpi-num">{n.toString().padStart(2, "0")}</span>
-            <span className="kpi-label">{label}</span>
-          </button>
-        ))}
-      </div>
+      {/* KPIs top supprimés 2026-05-03 : redondants avec les recap-cards
+         juste en dessous (Missions/Assets affichaient les mêmes counts).
+         Reports vit dans /runs, accessible via la nav rail gauche. */}
 
       {/* 3 recap cards — hauteur uniforme */}
       <div className="flex flex-col" style={{ gap: "var(--space-3)" }}>

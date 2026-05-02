@@ -120,7 +120,10 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                 boxShadow: "var(--shadow-shell-relief)",
               }}
             >
-              {/* Watermark H en points — centré, mix-blend-mode overlay pour percer le contenu */}
+              {/* Watermark H en points — ambient, behind content.
+                 Pivot 2026-05-03 : opacity 0.8 → 0.06 + zIndex 10 → 0. À 0.8
+                 le watermark devenait sujet visuel central et perçait le brief.
+                 Maintenant il vit en arrière-plan, présent mais discret. */}
               <img
                 aria-hidden
                 alt=""
@@ -132,8 +135,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                   top: "50%",
                   left: "50%",
                   transform: "translate(-50%, -50%)",
-                  zIndex: 10,
-                  opacity: 0.8,
+                  zIndex: 0,
+                  opacity: 0.06,
                   userSelect: "none",
                 }}
               />

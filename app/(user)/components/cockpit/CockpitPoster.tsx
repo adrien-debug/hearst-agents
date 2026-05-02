@@ -124,8 +124,13 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
 
         <article className="poster-brief-block">
           <header className="flex items-baseline justify-between" style={{ gap: "var(--space-4)" }}>
-            <h2 className="poster-eyebrow">Brief du jour</h2>
-            <span className="poster-eyebrow" style={{ color: "var(--text-faint)" }}>
+            <h2
+              className="t-13 font-medium"
+              style={{ color: "var(--text-l1)" }}
+            >
+              Brief du jour
+            </h2>
+            <span className="t-11 font-light" style={{ color: "var(--text-faint)" }}>
               {dateParts.dayMonthShort}
             </span>
           </header>
@@ -145,23 +150,61 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
           ) : (
             <>
               <p className="body" style={{ color: "var(--text-muted)" }}>
-                <strong style={{ color: "var(--text)" }}>Hearst observe ton quotidien.</strong>{" "}
-                Connecte tes sources — je m'occupe de l'éditorial du matin.
+                {connectedSources.length === 0 ? (
+                  <>
+                    <strong style={{ color: "var(--text)" }}>Hearst observe ton quotidien.</strong>{" "}
+                    Connecte tes sources — je m’occupe de l’éditorial du matin.
+                  </>
+                ) : missingSources.length === 0 ? (
+                  <>
+                    <strong style={{ color: "var(--text)" }}>Tes sources sont prêtes.</strong>{" "}
+                    Génère ton brief — je consolide les signaux du matin.
+                  </>
+                ) : (
+                  <>
+                    <strong style={{ color: "var(--text)" }}>
+                      {connectedSources.length} source{connectedSources.length > 1 ? "s" : ""} connectée{connectedSources.length > 1 ? "s" : ""}.
+                    </strong>{" "}
+                    Tu peux générer ton brief maintenant ou ajouter {humanJoin(missingSources.map((s) => s.label))} pour plus de signal.
+                  </>
+                )}
               </p>
               <div
-                className="poster-eyebrow"
-                style={{ color: "var(--text-decor-25)", letterSpacing: "0.18em" }}
+                className="t-11 font-light flex flex-wrap"
+                style={{ gap: "var(--space-3)", color: "var(--text-faint)" }}
               >
-                Gmail · Slack · Linear · Calendar · GitHub
+                {sourcesStatus.map((s, i) => (
+                  <span
+                    key={s.id}
+                    className="inline-flex items-baseline"
+                    style={{ gap: "var(--space-1)" }}
+                  >
+                    {i > 0 && <span style={{ color: "var(--text-decor-25)" }}>·</span>}
+                    <span
+                      style={{
+                        color: s.connected ? "var(--cykan)" : "var(--text-faint)",
+                        opacity: s.connected ? 1 : 0.6,
+                      }}
+                    >
+                      {s.label}
+                    </span>
+                  </span>
+                ))}
               </div>
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={generating}
-                className="read-more"
-              >
-                {generating ? "Génération en cours…" : "Générer le brief →"}
-              </button>
+              {connectedSources.length === 0 ? (
+                <a href="/apps" className="read-more">
+                  Connecter une source →
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={generating}
+                  className="read-more"
+                >
+                  {generating ? "Génération en cours…" : "Générer le brief →"}
+                </button>
+              )}
             </>
           )}
         </article>
@@ -172,10 +215,10 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
             style={{ borderLeftColor: "var(--gold)", background: "var(--gold-surface)" }}
           >
             <header className="flex items-baseline justify-between" style={{ gap: "var(--space-4)" }}>
-              <h2 className="poster-eyebrow" style={{ color: "var(--gold)" }}>
+              <h2 className="t-13 font-medium" style={{ color: "var(--gold)" }}>
                 Hôtel · {data.hospitality.source === "demo" ? "Données de démo" : "Live"}
               </h2>
-              <span className="poster-eyebrow" style={{ color: "var(--text-faint)" }}>
+              <span className="t-11 font-light" style={{ color: "var(--text-faint)" }}>
                 {data.hospitality.occupancy}% occupé
               </span>
             </header>
@@ -198,7 +241,12 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
 
         {data.suggestions.length > 0 && (
           <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
-            <h2 className="poster-eyebrow">Suggestions</h2>
+            <h2
+              className="t-13 font-medium"
+              style={{ color: "var(--text-l1)" }}
+            >
+              Suggestions
+            </h2>
             {data.suggestions.map((s) => (
               <button key={s.id} type="button" className="cockpit-action is-compact">
                 <span className="ca-label">{s.title}</span>
@@ -209,48 +257,18 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         )}
       </main>
 
-      {/* ─── Footer nav ──────────────────────────────────────────── */}
-      <footer
-        className="flex-none flex items-center"
-        style={{
-          gap: "var(--space-4)",
-          marginTop: "var(--space-2)",
-          paddingTop: "var(--space-3)",
-          borderTop: "1px solid var(--line-strong)",
-        }}
-      >
-        <a
-          href="/missions"
-          className="poster-eyebrow transition-opacity hover:opacity-80"
-          style={{ color: "var(--text-faint)" }}
-        >
-          Missions →
-        </a>
-        <a
-          href="/assets"
-          className="poster-eyebrow transition-opacity hover:opacity-80"
-          style={{ color: "var(--text-faint)" }}
-        >
-          Assets →
-        </a>
-        <a
-          href="/briefing"
-          className="poster-eyebrow transition-opacity hover:opacity-80"
-          style={{ color: "var(--text-faint)" }}
-        >
-          Briefing →
-        </a>
-        {data.missionsRunning.length > 0 && (
-          <span
-            className="poster-eyebrow"
-            style={{ marginLeft: "auto", color: "var(--cykan)" }}
-          >
-            {pad2(data.missionsRunning.length)} en cours
-          </span>
-        )}
-      </footer>
+      {/* Footer nav retiré 2026-05-03 : doublon avec ContextRail (cards
+         Missions/Assets cliquables) + TimelineRail. Le compteur "X en cours"
+         remonte dans la card Missions du rail droit. */}
     </div>
   );
+}
+
+function humanJoin(items: string[]): string {
+  if (items.length === 0) return "";
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} ou ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")} ou ${items[items.length - 1]}`;
 }
 
 function pad2(n: number): string {
@@ -295,7 +313,10 @@ function formatDate(d: Date | null): {
   };
 }
 
-function computeObservation(data: CockpitTodayPayload): string | null {
+function computeObservation(
+  data: CockpitTodayPayload,
+  connectedInboxSourcesCount: number,
+): string | null {
   const failed = data.missionsRunning.find((m) => m.status === "failed");
   if (failed) {
     return `${capitalize(failed.name)} a échoué au dernier run. À surveiller.`;
@@ -316,8 +337,11 @@ function computeObservation(data: CockpitTodayPayload): string | null {
     return `Suggestion prête à exécuter : ${ready.title.toLowerCase()}.`;
   }
 
-  if (data.inbox.needsConnection) {
-    return "Connecte Gmail ou Slack pour activer ton inbox du matin.";
+  // Inbox states : on ne re-formule qu'une seule fois la même intention que
+  // le brief block. Si zéro source → message déjà porté par le brief block,
+  // on évite le doublon en haut. Sinon on parle du brief lui-même.
+  if (connectedInboxSourcesCount === 0) {
+    return null;
   }
 
   if (data.inbox.stale) {
