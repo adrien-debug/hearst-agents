@@ -1398,6 +1398,45 @@ export type Database = {
           },
         ]
       }
+      embeddings: {
+        Row: {
+          created_at: string
+          embedding: string
+          id: string
+          metadata: Json
+          source_id: string
+          source_kind: string
+          tenant_id: string
+          text_excerpt: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          embedding: string
+          id?: string
+          metadata?: Json
+          source_id: string
+          source_kind: string
+          tenant_id: string
+          text_excerpt: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          embedding?: string
+          id?: string
+          metadata?: Json
+          source_id?: string
+          source_kind?: string
+          tenant_id?: string
+          text_excerpt?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       evaluations: {
         Row: {
           actual_output: string | null
@@ -1770,6 +1809,127 @@ export type Database = {
           },
         ]
       }
+      marketplace_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          rating: number
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          rating: number
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          rating?: number
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_ratings_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_reports: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string
+          reporter_user_id: string
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason: string
+          reporter_user_id: string
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string
+          reporter_user_id?: string
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_templates: {
+        Row: {
+          author_display_name: string | null
+          author_tenant_id: string
+          author_user_id: string
+          clone_count: number
+          created_at: string
+          description: string | null
+          id: string
+          is_archived: boolean
+          is_featured: boolean
+          kind: string
+          payload: Json
+          rating_avg: number
+          rating_count: number
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_display_name?: string | null
+          author_tenant_id: string
+          author_user_id: string
+          clone_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          is_featured?: boolean
+          kind: string
+          payload: Json
+          rating_avg?: number
+          rating_count?: number
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_display_name?: string | null
+          author_tenant_id?: string
+          author_user_id?: string
+          clone_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_archived?: boolean
+          is_featured?: boolean
+          kind?: string
+          payload?: Json
+          rating_avg?: number
+          rating_count?: number
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       memory_policies: {
         Row: {
           auto_expire: boolean
@@ -1849,6 +2009,80 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_snapshots: {
+        Row: {
+          captured_at: string
+          id: string
+          metadata: Json
+          metric_id: string
+          tenant_id: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          captured_at?: string
+          id?: string
+          metadata?: Json
+          metric_id: string
+          tenant_id: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          captured_at?: string
+          id?: string
+          metadata?: Json
+          metric_id?: string
+          tenant_id?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      mission_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json
+          mission_id: string
+          role: string
+          run_id: string | null
+          tenant_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          mission_id: string
+          role: string
+          run_id?: string | null
+          tenant_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          mission_id?: string
+          role?: string
+          run_id?: string | null
+          tenant_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_messages_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
             referencedColumns: ["id"]
           },
         ]
@@ -2014,6 +2248,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      personas: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          name: string
+          style_guide: string | null
+          surface: string | null
+          system_prompt_addon: string | null
+          tenant_id: string
+          tone: string | null
+          updated_at: string
+          user_id: string
+          vocabulary: Json | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          style_guide?: string | null
+          surface?: string | null
+          system_prompt_addon?: string | null
+          tenant_id: string
+          tone?: string | null
+          updated_at?: string
+          user_id: string
+          vocabulary?: Json | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          style_guide?: string | null
+          surface?: string | null
+          system_prompt_addon?: string | null
+          tenant_id?: string
+          tone?: string | null
+          updated_at?: string
+          user_id?: string
+          vocabulary?: Json | null
+        }
+        Relationships: []
       }
       plan_steps: {
         Row: {
@@ -2373,52 +2655,64 @@ export type Database = {
       run_steps: {
         Row: {
           actor: string
+          approval_state: string | null
           completed_at: string | null
+          cost_usd: number | null
           created_at: string
           error: Json | null
           id: string
           input: Json | null
           output: Json | null
+          output_ref: string | null
           parent_step_id: string | null
           retry_count: number
           run_id: string
           seq: number
           started_at: string | null
           status: string
+          step_kind: string | null
           title: string
           type: string
         }
         Insert: {
           actor: string
+          approval_state?: string | null
           completed_at?: string | null
+          cost_usd?: number | null
           created_at?: string
           error?: Json | null
           id?: string
           input?: Json | null
           output?: Json | null
+          output_ref?: string | null
           parent_step_id?: string | null
           retry_count?: number
           run_id: string
           seq: number
           started_at?: string | null
           status?: string
+          step_kind?: string | null
           title: string
           type: string
         }
         Update: {
           actor?: string
+          approval_state?: string | null
           completed_at?: string | null
+          cost_usd?: number | null
           created_at?: string
           error?: Json | null
           id?: string
           input?: Json | null
           output?: Json | null
+          output_ref?: string | null
           parent_step_id?: string | null
           retry_count?: number
           run_id?: string
           seq?: number
           started_at?: string | null
           status?: string
+          step_kind?: string | null
           title?: string
           type?: string
         }
@@ -2469,6 +2763,7 @@ export type Database = {
           retry_count: number
           started_at: string | null
           status: Database["public"]["Enums"]["run_status"]
+          tenant_id: string | null
           timeout_ms: number | null
           tokens_in: number
           tokens_out: number
@@ -2507,6 +2802,7 @@ export type Database = {
           retry_count?: number
           started_at?: string | null
           status?: Database["public"]["Enums"]["run_status"]
+          tenant_id?: string | null
           timeout_ms?: number | null
           tokens_in?: number
           tokens_out?: number
@@ -2545,6 +2841,7 @@ export type Database = {
           retry_count?: number
           started_at?: string | null
           status?: Database["public"]["Enums"]["run_status"]
+          tenant_id?: string | null
           timeout_ms?: number | null
           tokens_in?: number
           tokens_out?: number
@@ -2929,6 +3226,30 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
           value?: string
+        }
+        Relationships: []
+      }
+      tenant_settings: {
+        Row: {
+          created_at: string
+          industry: string
+          metadata: Json
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          industry?: string
+          metadata?: Json
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          industry?: string
+          metadata?: Json
+          tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3405,6 +3726,39 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_transcripts: {
+        Row: {
+          ended_at: string | null
+          entries: Json
+          id: string
+          session_id: string
+          started_at: string
+          tenant_id: string
+          thread_id: string | null
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          entries?: Json
+          id?: string
+          session_id: string
+          started_at?: string
+          tenant_id: string
+          thread_id?: string | null
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          entries?: Json
+          id?: string
+          session_id?: string
+          started_at?: string
+          tenant_id?: string
+          thread_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       workflow_runs: {
         Row: {
           created_at: string
@@ -3648,12 +4002,31 @@ export type Database = {
       }
     }
     Functions: {
+      _jwt_tenant_id: { Args: never; Returns: string }
       exec: { Args: { sql: string }; Returns: undefined }
       grant_trial_credits: {
         Args: { p_amount_usd?: number; p_tenant_id: string; p_user_id: string }
         Returns: undefined
       }
       mark_overdue_invoices: { Args: never; Returns: undefined }
+      match_embeddings: {
+        Args: {
+          match_count?: number
+          match_tenant_id: string
+          match_user_id: string
+          query_embedding: string
+          source_kinds?: string[]
+        }
+        Returns: {
+          created_at: string
+          id: string
+          metadata: Json
+          similarity: number
+          source_id: string
+          source_kind: string
+          text_excerpt: string
+        }[]
+      }
       reserve_credits: {
         Args: {
           p_amount_usd: number
