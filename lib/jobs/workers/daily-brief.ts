@@ -86,12 +86,14 @@ const handler: WorkerHandler<DailyBriefInput> = {
 
     await reportProgress(90, "PDF uploadé");
 
+    const extrasItemCount = data.extras.reduce((acc, ex) => acc + ex.items.length, 0);
     const totalItems =
       data.emails.length +
       data.slack.length +
       data.calendar.length +
       data.github.length +
-      data.linear.length;
+      data.linear.length +
+      extrasItemCount;
 
     const meta: DailyBriefAssetMeta = {
       totalItems,
@@ -128,6 +130,7 @@ const handler: WorkerHandler<DailyBriefInput> = {
           calendar: data.calendar.length,
           github: data.github.length,
           linear: data.linear.length,
+          extras: Object.fromEntries(data.extras.map((e) => [e.toolkit, e.items.length])),
         },
       }),
       createdAt: data.generatedAt,

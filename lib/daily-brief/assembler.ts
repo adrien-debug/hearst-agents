@@ -13,6 +13,12 @@
 import { getRecentEmails } from "@/lib/connectors/google/gmail";
 import { getTodayEvents } from "@/lib/connectors/google/calendar";
 import { executeComposioAction } from "@/lib/connectors/composio/client";
+import { listConnections } from "@/lib/connectors/composio/connections";
+import {
+  EXTRAS_PROVIDERS,
+  isReservedToolkit,
+  type ExtraSource,
+} from "./extras-providers";
 import type {
   DailyBriefCalendarItem,
   DailyBriefData,
@@ -227,6 +233,35 @@ async function fetchLinear(userId: string, limit: number): Promise<DailyBriefLin
     .filter((i) => i.title && i.title !== "(sans titre)");
 }
 
+// ── Extras dynamiques (Notion, Jira, HubSpot, etc.) ───────────
+
+async function fetchExtras(userId: string, perSourceLimit: number): Promise<ExtraSource[]> {
+  const connections = await listConnections(userId, { includeInactive: false });
+  const candidates = connections.filter(
+    (c) => c.status === "ACTIVE" && !isReservedToolkit(c.appName),
+  );
+
+  const tasks = candidates
+    .map((c) => {
+      const provider = EXTRAS_PROVIDERS[c.appName.toLowerCase()];
+      return provider ? { provider, conn: c } : null;
+    })
+    .filter((x): x is { provider: (typeof EXTRAS_PROVIDERS)[string]; conn: (typeof connections)[number] } => x !== null);
+
+  if (tasks.length === 0) return [];
+
+  const results = await Promise.allSettled(
+    tasks.map(async (t) => {
+      const items = await t.provider.fetch(userId, perSourceLimit);
+      return { toolkit: t.provider.toolkit, label: t.provider.label, items };
+    }),
+  );
+
+  return results
+    .filter((r): r is PromiseFulfilledResult<ExtraSource> => r.status === "fulfilled")
+    .map((r) => r.value);
+}
+
 // ── Public API ───────────────────────────────────────────────
 
 export interface AssembleDailyBriefOpts {
@@ -259,12 +294,13 @@ export async function assembleDailyBriefData(
   const githubLimit = opts.githubLimit ?? 15;
   const linearLimit = opts.linearLimit ?? 15;
 
-  const [emailsRes, calendarRes, slackRes, githubRes, linearRes] = await Promise.allSettled([
+  const [emailsRes, calendarRes, slackRes, githubRes, linearRes, extrasRes] = await Promise.allSettled([
     fetchEmails(opts.userId, gmailLimit),
     fetchCalendar(opts.userId, calendarLimit),
     fetchSlack(opts.userId, slackLimit),
     fetchGithub(opts.userId, githubLimit),
     fetchLinear(opts.userId, linearLimit),
+    fetchExtras(opts.userId, 10),
   ]);
 
   const sources: string[] = [];
@@ -289,12 +325,21 @@ export async function assembleDailyBriefData(
       ? (sources.push(linearRes.value.length > 0 ? "linear" : "linear:empty"), linearRes.value)
       : (sources.push("linear:error"), [] as DailyBriefLinearItem[]);
 
+  const extras: ExtraSource[] = extrasRes.status === "fulfilled" ? extrasRes.value : [];
+  for (const ex of extras) {
+    sources.push(ex.items.length > 0 ? ex.toolkit : `${ex.toolkit}:empty`);
+  }
+  if (extrasRes.status === "rejected") {
+    sources.push("extras:error");
+  }
+
   return {
     emails,
     calendar,
     slack,
     github,
     linear,
+    extras,
     sources,
     generatedAt: Date.now(),
     targetDate: opts.targetDate ?? todayIso(),

@@ -97,12 +97,14 @@ export const dailyBriefFunction = inngest.createFunction(
       }
     });
 
+    const extrasItemCount = data.extras.reduce((acc, ex) => acc + ex.items.length, 0);
     const totalItems =
       data.emails.length +
       data.slack.length +
       data.calendar.length +
       data.github.length +
-      data.linear.length;
+      data.linear.length +
+      extrasItemCount;
 
     await step.run("store-asset", async () => {
       const meta: DailyBriefAssetMeta = {
@@ -143,6 +145,7 @@ export const dailyBriefFunction = inngest.createFunction(
             calendar: data.calendar.length,
             github: data.github.length,
             linear: data.linear.length,
+            extras: Object.fromEntries(data.extras.map((e) => [e.toolkit, e.items.length])),
           },
         }),
         createdAt: data.generatedAt,

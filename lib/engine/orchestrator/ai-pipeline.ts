@@ -26,6 +26,8 @@ import {
 } from "@/lib/tools/native/google";
 import { buildHearstActionTools } from "@/lib/tools/native/hearst-actions";
 import { buildEnrichTools } from "@/lib/tools/native/enrich";
+import { buildWebSearchTools } from "@/lib/tools/native/web-search";
+import { buildMarketDataTools } from "@/lib/tools/native/market-data";
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
@@ -463,11 +465,15 @@ export async function runAiPipeline(
   });
 
   const enrichTools = buildEnrichTools();
+  const webSearchTools = buildWebSearchTools();
+  const marketDataTools = buildMarketDataTools();
 
   const aiTools = {
     ...nativeGoogleTools,
     ...hearstActionTools,
     ...enrichTools,
+    ...webSearchTools,
+    ...marketDataTools,
     ...toAiTools(filteredComposio, input.userId),
     request_connection: buildRequestConnectionTool(engine, eventBus),
     create_scheduled_mission: buildCreateScheduledMissionTool(engine, eventBus, {

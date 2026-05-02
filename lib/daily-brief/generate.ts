@@ -25,7 +25,7 @@ import type {
 export const DAILY_BRIEF_SYSTEM_PROMPT = [
   "Tu es l'analyste exécutif de l'utilisateur — l'équivalent d'un chef de cabinet pour un fondateur, qui prépare chaque matin un Daily Brief style CIA : 2 pages éditoriales qui concentrent l'attention.",
   "",
-  "Tu reçois 5 sources brutes (emails 24h, Slack 4h, agenda du jour, GitHub PRs, Linear issues) et tu produis 4 sections éditoriales JSON.",
+  "Tu reçois jusqu'à 10+ sources brutes : 5 noyau (emails 24h, Slack 4h, agenda du jour, GitHub PRs, Linear issues) + sources additionnelles connectées via Composio (Notion, Jira, HubSpot, Asana, Trello, etc. si l'utilisateur les a liées). Tu produis 4 sections éditoriales JSON qui synthétisent l'ensemble.",
   "",
   "FORMAT STRICT (JSON valide uniquement, pas de markdown fence) :",
   "{",
@@ -121,6 +121,21 @@ function fmtLinear(d: DailyBriefData): string[] {
   return lines;
 }
 
+function fmtExtras(d: DailyBriefData): string[] {
+  if (d.extras.length === 0) return [];
+  const lines: string[] = [];
+  for (const ex of d.extras) {
+    if (ex.items.length === 0) continue;
+    lines.push(`${ex.label} (${ex.items.length}) :`);
+    for (const item of ex.items.slice(0, 5)) {
+      const sub = item.subtitle ? ` — ${item.subtitle}` : "";
+      lines.push(`- ${item.title}${sub}`);
+    }
+    lines.push("");
+  }
+  return lines;
+}
+
 function buildUserMessage(d: DailyBriefData): string {
   const date = new Date(d.targetDate).toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -141,6 +156,7 @@ function buildUserMessage(d: DailyBriefData): string {
     "",
     ...fmtLinear(d),
     "",
+    ...fmtExtras(d),
     "Génère le Daily Brief maintenant — JSON strict, 4 sections.",
   ].join("\n");
 }

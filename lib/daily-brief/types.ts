@@ -66,6 +66,11 @@ export interface DailyBriefLinearItem {
 /**
  * Bundle de données brutes assemblé pour générer le PDF. Chaque liste peut
  * être vide (source pas connectée ou pas de signal) — c'est attendu.
+ *
+ * `extras` regroupe les apps connectées hors les 5 hardcodées ci-dessus
+ * (Notion, Jira, HubSpot, Asana, Trello, etc.). Le narrator les évoque
+ * dans la prose mais elles ne sont pas rendues comme sections dédiées
+ * dans le PDF — juste agrégées.
  */
 export interface DailyBriefData {
   emails: DailyBriefEmailItem[];
@@ -73,6 +78,8 @@ export interface DailyBriefData {
   calendar: DailyBriefCalendarItem[];
   github: DailyBriefGithubItem[];
   linear: DailyBriefLinearItem[];
+  /** Sources connectées additionnelles via Composio (Notion, Jira, HubSpot…). */
+  extras: import("./extras-providers").ExtraSource[];
   /** Sources contributrices ; suffixé `:error` quand le fetch a échoué. */
   sources: string[];
   /** Timestamp d'assemblage (epoch ms). */

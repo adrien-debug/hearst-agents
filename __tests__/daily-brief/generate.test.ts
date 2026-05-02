@@ -17,6 +17,7 @@ const EMPTY_DATA: DailyBriefData = {
   calendar: [],
   github: [],
   linear: [],
+  extras: [],
   sources: [],
   generatedAt: Date.now(),
   targetDate: "2026-05-01",

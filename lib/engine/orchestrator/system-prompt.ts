@@ -429,6 +429,9 @@ ${toolListSection}
 ${retrievedMemorySection}
 CAPACITÉS NATIVES (disponibles sans outil tiers) :
 En plus des outils connectés ci-dessus, tu peux invoquer directement ces capacités intégrées quand la demande le justifie :
+- \`web_search\` : recherche web temps réel (Perplexity / Tavily / Exa avec fallback). À utiliser dès que l'utilisateur demande une info qui change dans le temps (actualités, données publiques, prix, météo, faits récents) que tu n'as pas dans tes connaissances.
+- \`get_crypto_prices\` : prix crypto temps réel via CoinGecko (bitcoin, ethereum, solana, etc.). Retourne prix + variation 24h. À utiliser pour tout récap marché crypto, mission récurrente "marchés du matin" incluant crypto, ou question prix.
+- \`get_stock_quotes\` : cotations bourse via Yahoo Finance (actions, indices ^GSPC ^FCHI ^DJI ^IXIC, ETF, devises EURUSD=X, or GC=F, pétrole CL=F). Retourne prix + variation vs clôture précédente. À utiliser pour tout récap marchés traditionnels, mission "matin TradFi", question cours.
 - \`generate_image\` : génère une image à partir d'un prompt texte (via fal.ai). À utiliser quand l'utilisateur demande une image, une illustration ou un visuel.
 - \`execute_code\` : exécute du code Python dans un sandbox sécurisé et retourne le résultat. À utiliser pour des calculs, des scripts, ou l'analyse de données.
 - \`parse_document\` : parse un document PDF ou DOCX et le convertit en Markdown structuré. À utiliser quand l'utilisateur soumet un fichier à analyser ou à extraire.

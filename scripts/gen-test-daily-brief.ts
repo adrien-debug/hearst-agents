@@ -100,6 +100,7 @@ const data: DailyBriefData = {
       updatedAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
     },
   ],
+  extras: [],
   sources: ["gmail", "slack", "calendar", "github", "linear"],
   generatedAt: Date.now(),
   targetDate: new Date().toISOString().slice(0, 10),
