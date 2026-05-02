@@ -587,7 +587,14 @@ async function runPipeline(
     // Research / report intents (« cherche … », « rapport sur … ») use a
     // deterministic web-search pipeline rather than streamText. Everything
     // else routes to the AI pipeline below.
-    if (researchDetected) {
+    //
+    // EXCEPTION : si l'intent est aussi récurrent (« tous les matins, fais
+    // un rapport sur X »), on N'IGNORE PAS la planification. Le research
+    // path est one-shot et ne connaît pas `create_scheduled_mission` —
+    // route vers ai-pipeline qui voit la scheduleDirective et appelle le
+    // bon tool. La mission elle-même appellera ensuite get_stock_quotes /
+    // get_crypto_prices / web_search au moment du tick.
+    if (researchDetected && !scheduleDetected) {
       const pathLabel = reportDetected ? "research + report" : "research";
       eventBus.emit({
         type: "orchestrator_log",

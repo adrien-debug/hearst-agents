@@ -22,6 +22,13 @@ const INBOX_SOURCE_LABELS: Record<InboxSourceId, string> = {
   calendar: "Calendar",
   github: "GitHub",
 };
+const INBOX_SOURCE_ICONS: Record<InboxSourceId, string> = {
+  gmail: "/icons/services/gmail.svg",
+  slack: "/icons/services/slack.svg",
+  linear: "/icons/services/linear.svg",
+  calendar: "/icons/services/google-calendar.svg",
+  github: "/icons/services/github.svg",
+};
 
 function isCoreSource(id: string): id is InboxSourceId {
   return (INBOX_SOURCE_IDS as readonly string[]).includes(id);
@@ -43,6 +50,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const dateParts = useMemo(() => formatDate(now), [now]);
 
   const sourcesStatus = useMemo(() => {
+    const allMap = new Map(services.map((s) => [s.id, s]));
     const connectedMap = new Map(
       services.filter((s) => s.connectionStatus === "connected").map((s) => [s.id, s]),
     );
@@ -51,6 +59,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
     const core = INBOX_SOURCE_IDS.map((id) => ({
       id: id as string,
       label: INBOX_SOURCE_LABELS[id],
+      icon: allMap.get(id)?.icon ?? INBOX_SOURCE_ICONS[id],
       connected: connectedMap.has(id),
     }));
 
@@ -60,6 +69,7 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
       .map((s) => ({
         id: s.id,
         label: s.name ?? s.id,
+        icon: s.icon,
         connected: true,
       }));
 
@@ -191,24 +201,30 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
                 )}
               </p>
               <div
-                className="t-11 font-light flex flex-wrap"
-                style={{ gap: "var(--space-3)", color: "var(--text-faint)" }}
+                className="flex flex-wrap items-center"
+                style={{ gap: "var(--space-2)" }}
               >
-                {sourcesStatus.map((s, i) => (
+                {sourcesStatus.map((s) => (
                   <span
                     key={s.id}
-                    className="inline-flex items-baseline"
-                    style={{ gap: "var(--space-1)" }}
+                    title={`${s.label}${s.connected ? " — connecté" : " — non connecté"}`}
+                    className="inline-flex items-center justify-center"
+                    style={{
+                      width: 18,
+                      height: 18,
+                      opacity: s.connected ? 1 : 0.3,
+                      transition: "opacity 150ms ease",
+                    }}
                   >
-                    {i > 0 && <span style={{ color: "var(--text-decor-25)" }}>·</span>}
-                    <span
+                    <img
+                      src={s.icon}
+                      alt={s.label}
+                      width={16}
+                      height={16}
                       style={{
-                        color: s.connected ? "var(--cykan)" : "var(--text-faint)",
-                        opacity: s.connected ? 1 : 0.6,
+                        filter: s.connected ? "none" : "grayscale(100%)",
                       }}
-                    >
-                      {s.label}
-                    </span>
+                    />
                   </span>
                 ))}
               </div>
