@@ -16,7 +16,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 | Lint visuel | ✅ 0 violation (`npm run lint:visual`) |
 | Build | ✅ via `npm run build` (bloque si lint visuel échoue) |
 | Pipeline runtime | Capability-first (`lib/capabilities/router.ts`) + Backend V2 multi-provider |
-| Connector Packs | 5 (finance, crm, productivity, design, developer) — 200+ OAuth via Nango |
+| Connector Packs | 5 (finance, crm, productivity, design, developer) — 1500+ OAuth via Composio |
 | Reports | V2 catalog (`/api/v2/reports/[specId]/run`) — cron Railway *supprimés* (voir section Reports) |
 | RightPanel | Structure fixe : 4 sections always-on, empty states internes, scope strict du lint |
 
@@ -335,26 +335,17 @@ Le système utilise une nomenclature unifiée pour les états d'attente:
 - `run_id` canonique (`run_${ts}_${n}`) → utilisé partout (SSE, store, API)
 - `dbRunId` → identique au `run_id` canonique pour correlation directe
 
-### Connecteurs Réels — Flow OAuth Nango
+### Connecteurs Réels — Flow OAuth Composio
 
 **Architecture**:
 - Source canonique: `/api/v2/user/connections` — retourne les statuts réels depuis control-plane + user_tokens
-- OAuth flow: Nango SDK (backend) + redirection frontend
-- Callback: `/api/nango/callback` → redirige vers `/apps`
+- OAuth flow: Composio SDK (backend) + redirection frontend
+- Callback: redirection gérée par Composio vers l'app
 
 **APIs**:
 - `GET /api/v2/user/connections` — Liste des services avec statut de connexion
-- `POST /api/nango/connect` — Initie le flow OAuth (retourne config pour frontend)
-- `GET /api/nango/callback` — Callback OAuth, sync vers control-plane, redirect vers `/apps`
-
-**Flow complet**:
-1. User clique "Connecter" sur App Hub ou bannière
-2. Frontend appelle `POST /api/nango/connect` avec le provider
-3. Backend génère `connectionId` et retourne la config Nango
-4. Frontend redirige vers `/apps?connecting={serviceId}` (préparation pour popup SDK)
-5. OAuth popup s'ouvre avec Nango (à implémenter avec `@nangohq/frontend`)
-6. Nango callback → backend sync → redirect vers `/apps?connected={provider}`
-7. Frontend recharge les connexions via `/api/v2/user/connections`
+- `POST /api/composio/connect` — Initie le flow OAuth (retourne `redirectUrl`)
+- `/api/composio/connections` — CRUD connections actives
 
 **État des connecteurs**:
 - `lib/integrations/catalog.ts:enrichWithConnectionStatus()` — fetch côté client, reconciler côté serveur
@@ -364,8 +355,7 @@ Le système utilise une nomenclature unifiée pour les états d'attente:
 
 **Logs backend**:
 - `[UserConnections] User xxx: N/M connected` — Chargement des connexions
-- `[NangoConnect] Initiating OAuth: {provider}` — Début flow OAuth
-- `[NangoCallback] Connection synced: {provider}` — Succès OAuth + sync control-plane
+- `[Composio] Initiating OAuth: {provider}` — Début flow OAuth
 
 ### Design System — Halo Phase 1
 
@@ -533,7 +523,7 @@ cd /Users/adrienbeyondcrypto/Dev/hearst-os
 npm install
 
 # 2. Config déjà présente dans .env.local
-# ✅ Supabase, Google OAuth, NextAuth, Nango, LLM déjà configurés
+# ✅ Supabase, Google OAuth, NextAuth, Composio, LLM déjà configurés
 
 # 3. Démarrer
 npm run dev
@@ -546,7 +536,7 @@ npm run dev
 | **Supabase** | `SUPABASE_*` | ✅ Base de données connectée |
 | **Google OAuth** | `GOOGLE_CLIENT_ID/SECRET` | ✅ Gmail, Calendar, Drive |
 | **NextAuth** | `NEXTAUTH_SECRET` | ✅ Sessions activées |
-| **Nango** | `NANGO_SECRET_KEY`, `NEXT_PUBLIC_NANGO_PUBLIC_KEY` | ✅ 200+ OAuth providers |
+| **Composio** | `COMPOSIO_API_KEY` | ✅ 1500+ OAuth providers |
 | **Anthropic** | `ANTHROPIC_API_KEY` | ✅ LLM Claude |
 | **Hearst API** | `HEARST_API_KEY` | ✅ Auth interne |
 | **Dev Bypass** | `HEARST_DEV_AUTH_BYPASS=1` | ✅ Mode dev simplifié |
@@ -556,7 +546,7 @@ npm run dev
 | Page | URL | Description |
 |------|-----|-------------|
 | **Home** | `/` | Chat principal avec orchestration |
-| **Apps** | `/apps` | Connecteurs OAuth (200+ services) |
+| **Apps** | `/apps` | Connecteurs OAuth (1500+ services) |
 | **Missions** | `/missions` | Missions planifiées et récurrentes |
 | **Assets** | `/assets` | Fichiers générés (PDF, Excel) |
 | **Admin** | `/admin` | Settings, health, audit, connectors |
@@ -569,8 +559,6 @@ npm run dev
 | `npm run dev` | Démarre le serveur (:9000) |
 | `npm run build` | Build production |
 | `npm test` | Lance les 407 tests |
-| `npx tsx scripts/verify-all-connections.ts` | Vérifie toutes les connexions |
-| `npx tsx scripts/test-nango-github.ts` | Test GitHub via Nango |
 | `npx tsx scripts/init-ui-config.ts` | Initialise les settings DB |
 
 # 6. Tests
@@ -1070,7 +1058,7 @@ lib/
 │       ├── guard.ts          # Validation runtime tool calls vs ActionPlan
 │       └── executor.ts       # Exécution séquentielle + idempotency + action_executions
 └── connectors/
-    ├── router.ts             # Pack-first routing (Stripe, GitHub) + Nango fallback
+    ├── router.ts             # Pack-first routing (Stripe, GitHub) + Composio fallback
     └── packs/
         ├── finance-pack/     # Stripe connector
         │   ├── auth/         # OAuth & token management

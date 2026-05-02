@@ -2,15 +2,26 @@
  * Next.js Instrumentation — runs once when the server starts.
  *
  * Primary bootstrap point for:
+ * 0. Sentry init (server + edge runtimes, gated on SENTRY_DSN)
  * 1. Global storage (R2 en prod, hybrid local+R2 en dev avec clés, local sinon)
  * 2. Mission scheduler (orchestration engine)
  * 3. Asset cleanup scheduler (garbage collection)
- * 4. BullMQ workers Phase B (audio-gen, image-gen, video-gen, etc.)
+ * 4. BullMQ workers Phase B (audio-gen, image-gen, video-gen, etc.) — gated off sur Vercel
  *
  * The /api/orchestrate module-scope call remains as a secondary guard.
  */
 
 export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    if (process.env.SENTRY_DSN) {
+      await import("./sentry.server.config");
+    }
+  }
+  if (process.env.NEXT_RUNTIME === "edge") {
+    if (process.env.SENTRY_DSN) {
+      await import("./sentry.edge.config");
+    }
+  }
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // 1. Storage — doit être initialisé avant les workers et le cleanup.
     const { initGlobalStorage } = await import(
@@ -70,7 +81,14 @@ export async function register() {
     await ensureCleanupSchedulerStarted();
 
     // 4. BullMQ workers — audio-gen et suivants. Sans REDIS_URL, no-op.
-    const { startAllWorkers } = await import("@/lib/jobs/workers");
-    startAllWorkers();
+    // Sur Vercel serverless, les workers ne peuvent pas tourner en arrière-plan :
+    // chaque invocation lambda meurt à la fin de la requête. Les jobs restent
+    // dans la queue Redis sans être consommés. À déplacer vers Inngest (cf. plan migration).
+    if (process.env.VERCEL !== "1") {
+      const { startAllWorkers } = await import("@/lib/jobs/workers");
+      startAllWorkers();
+    } else {
+      console.info("[Workers] Vercel detected — workers disabled (use Inngest for async jobs)");
+    }
   }
 }

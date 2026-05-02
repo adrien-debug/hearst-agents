@@ -80,7 +80,7 @@ const SERVICE_METADATA: Record<string, ServiceMetadata> = {
     popularUseCases: ["Voir mes PRs", "Revue de code"],
   },
 
-  // Tier 2 — Hybrid (Nango auth + Hearst UI)
+  // Tier 2 — Hybrid (Composio auth + Hearst UI)
   hubspot: {
     name: "HubSpot",
     description: "CRM et contacts",

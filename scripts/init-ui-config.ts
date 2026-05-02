@@ -79,7 +79,7 @@ async function initUIConfig() {
   console.log("\n✅ UI Configuration initialized!");
   console.log("\n📋 Summary:");
   console.log("   - Default settings: OK");
-  console.log("   - Nango OAuth: Configured (200+ integrations ready)");
+  console.log("   - Composio OAuth: Configured (1500+ integrations ready)");
   console.log("   - LLM Providers: Anthropic ✓ (add OpenAI for more options)");
   console.log("   - Google OAuth: Configured ✓");
   console.log("\n🚀 App ready at: http://localhost:9000");

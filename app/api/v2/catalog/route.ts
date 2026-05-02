@@ -45,7 +45,6 @@ const CATEGORY_ORDER = [
  * - category: Filter by category
  * - tier: Filter by tier (tier_1, tier_2, tier_3)
  * - search: Search query
- * - includeNango: Include Tier 3 Nango services (default: true)
  * - limit: Max results (default: 50)
  * - connectedOnly: Only show connected services (default: false)
  */
@@ -62,7 +61,6 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category") || undefined;
     const tier = (searchParams.get("tier") as CatalogFilters["tier"]) || undefined;
     const search = searchParams.get("search") || undefined;
-    const includeNango = searchParams.get("includeNango") !== "false";
     const limit = parseInt(searchParams.get("limit") || "50", 10);
     const connectedOnly = searchParams.get("connectedOnly") === "true";
 
@@ -86,9 +84,7 @@ export async function GET(req: NextRequest) {
       services = getAllServices();
     }
 
-    // Tier 3 long-tail services are now served by Composio's per-user
-    // discovery layer; the static Nango catalog has been retired.
-    void includeNango;
+    // Tier 3 long-tail services are served by Composio's per-user discovery layer.
 
     // Enrich with connection status (placeholder — will use control-plane)
     const servicesWithStatus = await enrichWithConnectionStatus(services, userId);
@@ -139,7 +135,7 @@ export async function GET(req: NextRequest) {
       counts,
       recommended,
       bundles: getAllBundles(),
-      filters: { category, tier, search, includeNango, connectedOnly },
+      filters: { category, tier, search, connectedOnly },
     });
   } catch (e) {
     console.error("GET /api/v2/catalog: error", e);
