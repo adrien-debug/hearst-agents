@@ -19,6 +19,7 @@
  */
 
 import { useRuntimeStore, type CoreState } from "@/stores/runtime";
+import { useNavigationStore } from "@/stores/navigation";
 
 interface StateConfig {
   label: string;
@@ -46,44 +47,36 @@ const TONE_VAR: Record<StateConfig["tone"], string> = {
 export function StageFooter() {
   const coreState = useRuntimeStore((s) => s.coreState);
   const flowLabel = useRuntimeStore((s) => s.flowLabel);
-  const events = useRuntimeStore((s) => s.events);
   const config = STATE_MAP[coreState];
   const color = TONE_VAR[config.tone];
+  const leftCollapsed = useNavigationStore((s) => s.leftCollapsed);
 
-  const eventCount = events.length;
+  // Spacers calés sur les widths réels des rails pour que les dots
+  // soient centrés sur l'axe horizontal du chat (centre du paper), et
+  // pas sur le centre du viewport — les rails ne sont pas symétriques.
+  const leftSpacer = leftCollapsed
+    ? "var(--width-threads-collapsed)"
+    : "var(--width-threads)";
+  const rightSpacer = "var(--width-context)";
   const labelText = flowLabel && coreState !== "idle" ? flowLabel : config.label;
 
   return (
     <footer
-      className="shrink-0 flex items-center justify-between"
+      className="shrink-0 flex items-stretch"
       style={{
         height: "var(--height-stage-footer)",
-        padding: "0 var(--space-6)",
         borderTop: "1px solid var(--border-subtle)",
         background: "var(--rail)",
         color: "var(--text-soft)",
-        gap: "var(--space-4)",
       }}
       aria-live="polite"
+      aria-label={labelText}
     >
-      <div className="flex items-center min-w-0" style={{ gap: "var(--space-3)" }}>
+      <div className="shrink-0" style={{ width: leftSpacer }} aria-hidden />
+      <div className="flex-1 flex items-center justify-center min-w-0">
         <DotsCluster pattern={config.pattern} color={color} />
-        <span
-          className="t-11 font-light truncate"
-          style={{ color: "var(--text-faint)" }}
-        >
-          {labelText}
-        </span>
       </div>
-      {eventCount > 0 && (
-        <span
-          className="t-9 font-mono tabular-nums shrink-0"
-          style={{ color: "var(--text-faint)" }}
-          title={`${eventCount} événements depuis le dernier reset`}
-        >
-          {eventCount.toString().padStart(3, "0")} evt
-        </span>
-      )}
+      <div className="shrink-0" style={{ width: rightSpacer }} aria-hidden />
     </footer>
   );
 }
