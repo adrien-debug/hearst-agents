@@ -25,7 +25,7 @@ export async function GET() {
 (async () => {
   try {
     const csrf = await fetch('/api/auth/csrf').then(r => r.json());
-    await fetch('/api/auth/callback/credentials', {
+    await fetch('/api/auth/callback/dev-bypass', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ csrfToken: csrf.csrfToken, callbackUrl: '/', json: 'true' })
