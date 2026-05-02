@@ -1,5 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useServicesStore } from "@/stores/services";
+
 interface GeneralDashboardProps {
   assets?: unknown;
   missions?: unknown;
@@ -35,6 +38,10 @@ export function GeneralDashboard({
   missions: _missions,
   onViewChange = () => {},
 }: GeneralDashboardProps) {
+  const router = useRouter();
+  const services = useServicesStore((s) => s.services);
+  const connectedServices = services.filter((s) => s.connectionStatus === "connected");
+  const totalServices = services.length;
   const assetsCount = Array.isArray(_assets) ? _assets.length : 0;
   const missionsCount = Array.isArray(_missions) ? _missions.length : 0;
   const recentAssets = Array.isArray(_assets) ? (_assets as DashboardAsset[]).slice(0, 3) : [];
@@ -117,6 +124,64 @@ export function GeneralDashboard({
         </div>
 
       </div>
+
+      {/* Apps connectées — récap visuel des services qui alimentent
+         Hearst. Logos couleur = connectés, opacité 0.3 + grayscale = pas
+         encore connectés. Click → /apps. */}
+      {totalServices > 0 && (
+        <button
+          type="button"
+          onClick={() => router.push("/apps")}
+          className="recap-card text-left"
+        >
+          <div className="recap-card-row">
+            <span className="recap-card-label">Apps connectées</span>
+            <span className="recap-card-count">
+              {connectedServices.length.toString().padStart(2, "0")}
+              <span style={{ color: "var(--text-faint)", fontWeight: 300 }}>
+                {" "}/ {totalServices.toString().padStart(2, "0")}
+              </span>
+            </span>
+          </div>
+          <div
+            className="flex flex-wrap items-center"
+            style={{ gap: "var(--space-2)", marginTop: "var(--space-2)" }}
+          >
+            {services.slice(0, 12).map((s) => {
+              const isConn = s.connectionStatus === "connected";
+              return (
+                <span
+                  key={s.id}
+                  title={`${s.name}${isConn ? " — connecté" : ""}`}
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    width: 18,
+                    height: 18,
+                    opacity: isConn ? 1 : 0.3,
+                    transition: "opacity 150ms ease",
+                  }}
+                >
+                  <img
+                    src={s.icon}
+                    alt={s.name}
+                    width={16}
+                    height={16}
+                    style={{ filter: isConn ? "none" : "grayscale(100%)" }}
+                  />
+                </span>
+              );
+            })}
+            {totalServices > 12 && (
+              <span
+                className="t-9 font-mono"
+                style={{ color: "var(--text-faint)" }}
+              >
+                +{totalServices - 12}
+              </span>
+            )}
+          </div>
+        </button>
+      )}
     </div>
   );
 }
