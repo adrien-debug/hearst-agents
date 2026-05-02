@@ -20,6 +20,7 @@ const PUBLIC_PATHS = [
   "/api/auth",
   "/api/health",
   "/api/webhooks",
+  "/api/inngest", // Signé par INNGEST_SIGNING_KEY côté Inngest, pas d'auth user
   "/halo-test",
 ];
 
