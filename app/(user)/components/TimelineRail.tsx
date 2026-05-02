@@ -467,9 +467,9 @@ export function TimelineRail() {
               <div
                 className="flex flex-col"
                 style={{
-                  marginTop: "var(--space-3)",
-                  paddingTop: "var(--space-3)",
-                  borderTop: "1px solid var(--sep)",
+                  marginTop: "var(--space-4)",
+                  paddingTop: "var(--space-4)",
+                  borderTop: "1px solid var(--border-default)",
                 }}
               >
                 <TopMenuItem label="Nouvelle conversation" hotkey="⌘N" onClick={handleNewThread} />
