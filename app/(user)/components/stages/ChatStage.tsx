@@ -10,6 +10,7 @@ import { RunProgressBanner } from "../RunProgressBanner";
 import { FocalStage } from "../FocalStage";
 import { MissionStepGraph } from "../MissionStepGraph";
 import { WelcomePanel } from "../WelcomePanel";
+import { ConversationHeader } from "../chat/ConversationHeader";
 import { WorkingDocument } from "../chat/WorkingDocument";
 import type { Message } from "@/lib/core/types";
 
@@ -59,6 +60,7 @@ export function ChatStage({ messages, hasMessages, onSubmit }: ChatStageProps) {
       {/* Pane gauche — chat (+ focal embedded). Largeur fluide :
           flex-1 quand split actif, max-w-[var(--width-center-max)] sinon. */}
       <div className="flex-1 flex flex-col min-h-0 relative min-w-0">
+        {hasMessages && <ConversationHeader />}
         {currentPlan && (
           <div
             className="flex-shrink-0 border-b border-[var(--border-default)]"
