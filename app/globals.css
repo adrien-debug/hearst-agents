@@ -1908,3 +1908,15 @@ button:focus-visible:not(.ghost-btn-solid):not([data-no-fv-fallback]) {
   cursor: not-allowed;
 }
 
+/* Electron — drag regions pour la titlebar custom (titleBarStyle: hiddenInset).
+   Sans ces classes sur le top bar, la fenêtre n'est pas draggable. */
+.app-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.app-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
