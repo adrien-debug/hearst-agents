@@ -200,34 +200,6 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
                   </>
                 )}
               </p>
-              <div
-                className="flex flex-wrap items-center"
-                style={{ gap: "var(--space-2)" }}
-              >
-                {sourcesStatus.map((s) => (
-                  <span
-                    key={s.id}
-                    title={`${s.label}${s.connected ? " — connecté" : " — non connecté"}`}
-                    className="inline-flex items-center justify-center"
-                    style={{
-                      width: 18,
-                      height: 18,
-                      opacity: s.connected ? 1 : 0.3,
-                      transition: "opacity 150ms ease",
-                    }}
-                  >
-                    <img
-                      src={s.icon}
-                      alt={s.label}
-                      width={16}
-                      height={16}
-                      style={{
-                        filter: s.connected ? "none" : "grayscale(100%)",
-                      }}
-                    />
-                  </span>
-                ))}
-              </div>
               {connectedSources.length === 0 ? (
                 <a href="/apps" className="read-more">
                   Connecter une source →
@@ -243,6 +215,44 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
                 </button>
               )}
             </>
+          )}
+          {/* Footer constant du brief block : ligne de logos sources.
+             Présent dans tous les états (briefReady ou empty) — agit comme
+             signature visuelle qui rappelle quelles sources alimentent
+             le brief. Connectés en couleur, non-connectés grisés à 0.3. */}
+          {sourcesStatus.length > 0 && (
+            <div
+              className="flex flex-wrap items-center"
+              style={{
+                gap: "var(--space-2)",
+                marginTop: "var(--space-2)",
+                paddingTop: "var(--space-3)",
+                borderTop: "1px solid var(--border-subtle)",
+              }}
+              aria-label="Sources qui alimentent le brief"
+            >
+              {sourcesStatus.map((s) => (
+                <span
+                  key={s.id}
+                  title={`${s.label}${s.connected ? " — connecté" : " — non connecté"}`}
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    width: 18,
+                    height: 18,
+                    opacity: s.connected ? 1 : 0.3,
+                    transition: "opacity 150ms ease",
+                  }}
+                >
+                  <img
+                    src={s.icon}
+                    alt={s.label}
+                    width={16}
+                    height={16}
+                    style={{ filter: s.connected ? "none" : "grayscale(100%)" }}
+                  />
+                </span>
+              ))}
+            </div>
           )}
         </article>
 

@@ -15,7 +15,6 @@ import {
   getAllBundles,
   filterServices,
   enrichWithConnectionStatus,
-  SERVICE_BUNDLES,
 } from "@/lib/integrations/catalog";
 import type { CatalogFilters, ServiceDefinition } from "@/lib/integrations/types";
 
@@ -141,36 +140,4 @@ export async function GET(req: NextRequest) {
     console.error("GET /api/v2/catalog: error", e);
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
-}
-
-/**
- * GET /api/v2/catalog/categories
- * Helper endpoint for category list.
- */
-export async function getCategories() {
-  const categories = [
-    { id: "communication", label: "Communication", icon: "communication" },
-    { id: "productivity", label: "Productivité", icon: "productivity" },
-    { id: "storage", label: "Stockage", icon: "storage" },
-    { id: "project", label: "Gestion de projet", icon: "project" },
-    { id: "crm", label: "CRM & Ventes", icon: "crm" },
-    { id: "dev", label: "Développement", icon: "dev" },
-    { id: "design", label: "Design", icon: "design" },
-    { id: "finance", label: "Finance", icon: "finance" },
-    { id: "support", label: "Support client", icon: "support" },
-    { id: "analytics", label: "Analytics", icon: "analytics" },
-    { id: "automation", label: "Automatisation", icon: "automation" },
-    { id: "commerce", label: "E-commerce", icon: "commerce" },
-    { id: "other", label: "Autres", icon: "other" },
-  ];
-
-  return NextResponse.json({ categories });
-}
-
-/**
- * GET /api/v2/catalog/bundles
- * Helper endpoint for bundles.
- */
-export async function getBundles() {
-  return NextResponse.json({ bundles: SERVICE_BUNDLES });
 }

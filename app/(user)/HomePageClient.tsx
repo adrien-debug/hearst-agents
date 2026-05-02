@@ -48,6 +48,7 @@ function trackAnalytics(type: "first_message_sent" | "run_completed" | "run_fail
  */
 export default function HomePageClient({ initialCockpitData }: HomePageClientProps) {
   const hydrateThreadState = useFocalStore((s) => s.hydrateThreadState);
+  const clearFocal = useFocalStore((s) => s.clearFocal);
   const addEvent = useRuntimeStore((s) => s.addEvent);
   const startRun = useRuntimeStore((s) => s.startRun);
   const setAbortController = useRuntimeStore((s) => s.setAbortController);

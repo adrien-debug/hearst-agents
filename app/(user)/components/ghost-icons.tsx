@@ -33,36 +33,10 @@ export function GhostIconX(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export function GhostIconChevronLeft(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgBox {...props}>
-      <path d="M15 18l-6-6 6-6" />
-    </SvgBox>
-  );
-}
-
 export function GhostIconChevronRight(props: SVGProps<SVGSVGElement>) {
   return (
     <SvgBox {...props}>
       <path d="M9 18l6-6-6-6" />
-    </SvgBox>
-  );
-}
-
-export function GhostIconLogOut(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgBox {...props}>
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
-    </SvgBox>
-  );
-}
-
-export function GhostIconPlus(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgBox {...props}>
-      <path d="M12 5v14M5 12h14" />
     </SvgBox>
   );
 }
@@ -111,23 +85,6 @@ export function GhostIconMenu(props: SVGProps<SVGSVGElement>) {
   return (
     <SvgBox {...props}>
       <path d="M4 6h16M4 12h16M4 18h16" />
-    </SvgBox>
-  );
-}
-
-export function GhostIconDownload(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgBox {...props}>
-      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-    </SvgBox>
-  );
-}
-
-export function GhostIconSearch(props: SVGProps<SVGSVGElement>) {
-  return (
-    <SvgBox {...props}>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.35-4.35" />
     </SvgBox>
   );
 }

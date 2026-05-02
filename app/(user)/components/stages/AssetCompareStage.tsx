@@ -16,7 +16,6 @@ import { useEffect, useState } from "react";
 import { useStageStore } from "@/stores/stage";
 import type { Asset } from "@/lib/assets/types";
 import { AssetLineage } from "../AssetLineage";
-import { Action } from "../ui";
 import { StageActionBar } from "./StageActionBar";
 
 interface AssetCompareStageProps {

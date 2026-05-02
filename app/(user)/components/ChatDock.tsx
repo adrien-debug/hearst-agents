@@ -221,7 +221,7 @@ export function ChatDock() {
               }
               const eventRunId = (event.run_id as string) || canonicalRunId || clientToken;
               addEvent({ ...event, run_id: eventRunId });
-            } catch (_parseErr) {}
+            } catch {}
           }
         }
 
