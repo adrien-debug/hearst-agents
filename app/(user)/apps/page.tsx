@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { ConnectionsHub } from "../components/ConnectionsHub";
 import { PageHeader } from "../components/PageHeader";
 
@@ -14,7 +15,9 @@ export default function AppsPage() {
         subtitle="Catalogue des intégrations disponibles. Connectez les sources qui alimentent vos rapports et missions."
         breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Apps" }]}
       />
-      <ConnectionsHub />
+      <Suspense>
+        <ConnectionsHub />
+      </Suspense>
     </div>
   );
 }

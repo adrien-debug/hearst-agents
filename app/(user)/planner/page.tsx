@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "@/app/hooks/use-toast";
 import { usePollingEffect } from "@/app/hooks/use-polling-effect";
+import { useNavigationStore } from "@/stores/navigation";
+import { useStageStore } from "@/stores/stage";
 import { PageHeader } from "../components/PageHeader";
-import { EmptyState, RowSkeleton } from "../components/ui";
+import { Action, EmptyState, RowSkeleton } from "../components/ui";
 
 type PlanStatus = "draft" | "ready" | "awaiting_approval" | "executing" | "completed" | "failed" | "degraded";
 type PlanType = "one_shot" | "mission" | "monitoring";
@@ -27,9 +30,18 @@ interface Plan {
 }
 
 export default function PlannerPage() {
+  const router = useRouter();
+  const addThread = useNavigationStore((s) => s.addThread);
+  const setStageMode = useStageStore((s) => s.setMode);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | PlanStatus>("all");
+
+  const handleNewPlan = () => {
+    const id = addThread("Nouveau plan", "home");
+    setStageMode({ mode: "chat", threadId: id });
+    router.push("/");
+  };
 
   const loadPlans = async () => {
     try {
@@ -103,6 +115,11 @@ export default function PlannerPage() {
         title="Planner"
         subtitle="Plans d'exécution et orchestration"
         breadcrumb={[{ label: "Hearst", href: "/" }, { label: "Planner" }]}
+        actions={
+          <Action variant="primary" tone="brand" size="sm" onClick={handleNewPlan}>
+            Demander un plan
+          </Action>
+        }
       />
       <div className="px-12 py-4 border-b border-[var(--line)]">
         <div className="flex items-center gap-2">

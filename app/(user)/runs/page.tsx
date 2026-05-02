@@ -108,6 +108,12 @@ export default function RunsPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!actionError) return;
+    const t = setTimeout(() => setActionError(null), 5000);
+    return () => clearTimeout(t);
+  }, [actionError]);
+
   const handleNewReport = () => {
     const id = addThread("Nouveau report", "home");
     setStageMode({ mode: "chat", threadId: id });

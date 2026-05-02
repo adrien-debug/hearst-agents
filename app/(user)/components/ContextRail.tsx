@@ -12,6 +12,7 @@
  * `{section.length > 0 && ...}` autour d'un bloc complet.
  */
 
+import { Suspense } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
@@ -59,7 +60,9 @@ export function ContextRail({ onClose }: ContextRailProps) {
   if (pathname?.startsWith("/apps")) {
     return (
       <ContextRailShell onClose={onClose}>
-        <ContextRailForApps />
+        <Suspense>
+          <ContextRailForApps />
+        </Suspense>
       </ContextRailShell>
     );
   }

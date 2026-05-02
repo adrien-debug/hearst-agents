@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "@/app/hooks/use-toast";
 import { useOAuthStore } from "@/stores/oauth";
 import { useOAuthCompletionPoll } from "@/app/hooks/use-oauth-completion-poll";
@@ -159,13 +160,14 @@ interface DrawerState {
 }
 
 export function ConnectionsHub() {
+  const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [apps, setApps] = useState<ComposioApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [enabled, setEnabled] = useState(true);
   const [sdkError, setSdkError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(() => searchParams.get("category"));
   const [wallpaperLimit, setWallpaperLimit] = useState(WALLPAPER_PAGE);
   // Filtre "attentions" — quand actif, le wallpaper ne montre que les
   // services en pending/error/expired. Activé par click sur le badge ⚠ N

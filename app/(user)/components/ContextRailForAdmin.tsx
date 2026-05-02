@@ -17,7 +17,7 @@
  * pour les liens d'apprentissage, brand pour les actions principales).
  */
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { RailSection, Action } from "./ui";
 
 // ── Runs ──────────────────────────────────────────────────────
@@ -124,6 +124,9 @@ export function ContextRailForMissionsAdmin() {
 // ── Apps ──────────────────────────────────────────────────────
 
 export function ContextRailForApps() {
+  const searchParams = useSearchParams();
+  const activeCategory = searchParams.get("category");
+
   return (
     <div className="h-full overflow-y-auto">
       <RailSection label="Catégories">
@@ -139,12 +142,14 @@ export function ContextRailForApps() {
             { label: "Analytics", slug: "analytics" },
           ].map((c) => (
             <li key={c.slug}>
-              <a
-                href={`/apps#${c.slug}`}
-                className="t-13 font-light text-[var(--text-soft)] hover:text-[var(--cykan)] transition-colors duration-base"
+              <Action
+                variant="ghost"
+                tone={activeCategory === c.slug ? "brand" : "neutral"}
+                size="sm"
+                href={`/apps?category=${c.slug}`}
               >
                 {c.label}
-              </a>
+              </Action>
             </li>
           ))}
         </ul>

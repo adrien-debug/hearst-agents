@@ -11,6 +11,7 @@ import { PageHeader } from "../components/PageHeader";
 import { PersonaABTestPanel } from "../components/PersonaABTestPanel";
 import { PublishTemplateModal } from "../components/marketplace/PublishTemplateModal";
 import { Action, EmptyState, CardSkeleton } from "../components/ui";
+import { ConfirmModal } from "../components/ConfirmModal";
 import { PersonaCard } from "../components/personas/PersonaCard";
 import type { Persona, PersonaTone } from "@/lib/personas/types";
 import { PERSONA_TONES } from "@/lib/personas/types";
@@ -24,6 +25,8 @@ export default function PersonasPage() {
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const [publishing, setPublishing] = useState<Persona | null>(null);
+  const [confirmDeletePersona, setConfirmDeletePersona] = useState<Persona | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function reload() {
     const res = await fetch("/api/v2/personas", { credentials: "include" });
@@ -78,22 +81,27 @@ export default function PersonasPage() {
     }
   }
 
-  async function remove(persona: Persona) {
+  function remove(persona: Persona) {
     if (persona.id.startsWith("builtin:")) return;
-    if (!confirm(`Supprimer la persona "${persona.name}" ?`)) return;
-    setBusy(true);
+    setConfirmDeletePersona(persona);
+  }
+
+  async function handleConfirmDelete() {
+    if (!confirmDeletePersona) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`/api/v2/personas/${persona.id}`, {
+      const res = await fetch(`/api/v2/personas/${confirmDeletePersona.id}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (!res.ok) throw new Error(`delete_${res.status}`);
       setFlash("Supprimée.");
+      setConfirmDeletePersona(null);
       await reload();
     } catch (err) {
       setFlash(err instanceof Error ? err.message : "Erreur suppression");
     } finally {
-      setBusy(false);
+      setIsDeleting(false);
       setTimeout(() => setFlash(null), 4000);
     }
   }
@@ -176,6 +184,17 @@ export default function PersonasPage() {
         {personas && personas.length >= 2 && (
           <PersonaABTestPanel personas={personas} />
         )}
+
+        <ConfirmModal
+          open={confirmDeletePersona !== null}
+          title="Supprimer cette persona ?"
+          description={confirmDeletePersona ? `« ${confirmDeletePersona.name} » sera supprimée définitivement. Cette action est irréversible.` : undefined}
+          confirmLabel="Supprimer"
+          variant="danger"
+          loading={isDeleting}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setConfirmDeletePersona(null)}
+        />
 
         {publishing && (
           <PublishTemplateModal

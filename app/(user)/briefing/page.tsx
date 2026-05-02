@@ -17,7 +17,7 @@ export default function BriefingPage() {
 
   const load = async () => {
     try {
-      const res = await fetch("/api/v2/briefing");
+      const res = await fetch("/api/briefing");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setData(await res.json());
     } catch {
