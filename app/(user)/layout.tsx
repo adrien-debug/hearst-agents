@@ -153,14 +153,16 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
               <Suspense fallback={null}>
                 <ChatDock />
               </Suspense>
-              {/* StageFooter — barre état LLM live sous ChatDock. Reflète
-                 useRuntimeStore.coreState (idle/streaming/processing/...)
-                 via 3 dots animés + label voix régulière FR. */}
-              <StageFooter />
             </div>
 
             <RightPanel />
           </div>
+
+          {/* StageFooter — full-width sous les 3 colonnes. Sorti du div
+             central pour ne pas hériter des bordures border-l/border-r du
+             paper (qui ressortaient en clair sur le fond noir du footer).
+             Devient une "ligne système" continue, pendant bas de la PulseBar. */}
+          <StageFooter />
 
           {/* Bottom nav mobile — < md uniquement, fixed bottom */}
           <MobileBottomNav />
