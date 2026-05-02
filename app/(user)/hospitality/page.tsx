@@ -66,6 +66,25 @@ export default function HospitalityPage() {
           gap: "var(--space-12)",
         }}
       >
+        {/* Banner mode démo : PMS connectors out-of-scope MVP */}
+        <div
+          className="t-11"
+          style={{
+            padding: "var(--space-3) var(--space-4)",
+            background: "var(--surface-2)",
+            borderLeft: "2px solid var(--warn)",
+            borderRadius: "var(--radius-xs)",
+            color: "var(--text-muted)",
+          }}
+        >
+          <strong style={{ color: "var(--text)" }}>Mode démo</strong> — les
+          données PMS (Mews, Cloudbeds, Opera) sont mockées. Connecte ton PMS
+          via{" "}
+          <Link href="/apps" style={{ color: "var(--cykan)" }}>
+            /apps
+          </Link>{" "}
+          quand l&apos;intégration sera disponible (intégrations PMS planifiées Q3 2026).
+        </div>
         <Section
           label="Reports recommandés"
           meta="3 specs"

@@ -132,6 +132,30 @@ export async function getDefaultPersona(
   return rowToPersona(data as PersonaRow);
 }
 
+/**
+ * Fallback vertical-aware : si tenant.industry est verticale (ex: hospitality),
+ * ET qu'aucune persona DB ne match la surface, ET qu'aucun builtin ne match
+ * la surface non plus, on retourne le builtin vertical (hospitality-concierge).
+ *
+ * Custom user persona prévaut toujours (jamais override).
+ */
+async function getVerticalFallbackPersona(
+  scope: { userId: string; tenantId: string },
+): Promise<Persona | null> {
+  try {
+    // Lazy import pour éviter cycle (verticals/hospitality importe peut-être
+    // d'autres modules personas dans une future itération).
+    const { getTenantIndustry } = await import("@/lib/verticals/hospitality");
+    const industry = await getTenantIndustry(scope.tenantId);
+    if (industry !== "hospitality") return null;
+    const builtin = BUILTIN_PERSONAS.find((p) => p.id === "builtin:hospitality-concierge");
+    if (!builtin) return null;
+    return { ...builtin, userId: scope.userId, tenantId: scope.tenantId };
+  } catch {
+    return null;
+  }
+}
+
 export async function getPersonaForSurface(
   surface: string,
   scope: { userId: string; tenantId: string },
@@ -139,9 +163,11 @@ export async function getPersonaForSurface(
   const db = getServerSupabase();
   if (!db) {
     const builtin = BUILTIN_PERSONAS.find((p) => p.surface === surface) ?? null;
-    return builtin
-      ? { ...builtin, userId: scope.userId, tenantId: scope.tenantId }
-      : null;
+    if (builtin) {
+      return { ...builtin, userId: scope.userId, tenantId: scope.tenantId };
+    }
+    // Fallback vertical
+    return await getVerticalFallbackPersona(scope);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -155,9 +181,11 @@ export async function getPersonaForSurface(
 
   if (error || !data) {
     const builtin = BUILTIN_PERSONAS.find((p) => p.surface === surface) ?? null;
-    return builtin
-      ? { ...builtin, userId: scope.userId, tenantId: scope.tenantId }
-      : null;
+    if (builtin) {
+      return { ...builtin, userId: scope.userId, tenantId: scope.tenantId };
+    }
+    // Fallback vertical (hospitality-concierge si tenant.industry === "hospitality")
+    return await getVerticalFallbackPersona(scope);
   }
   return rowToPersona(data as PersonaRow);
 }
