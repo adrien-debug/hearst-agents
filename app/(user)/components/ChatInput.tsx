@@ -354,14 +354,16 @@ export function ChatInput({
           <ContextChips />
         </div>
 
-        {/* Input Pill — flat, sans halo cykan en focus */}
+        {/* Input "two-lines" — pivot 2026-05-03. Deux filets top/bottom
+           en gradient (fade aux extrémités), background transparent, plus
+           de coquille ni de halo cykan. Drag-over passe en cykan via le
+           data-drag-over (CSS le pickup, pas de style inline). */}
         <div
-          className="cockpit-input-pill-flat peer group px-6 py-3 backdrop-blur-xl relative"
+          className="cockpit-input-pill-line peer group px-6 py-3 relative"
           onDragOver={handleAssetDragOver}
           onDragLeave={handleAssetDragLeave}
           onDrop={handleAssetDrop}
           data-drag-over={isDragOver}
-          style={isDragOver ? { borderColor: "var(--cykan)", boxShadow: "var(--shadow-input-focus)" } : undefined}
         >
           {attachedAssets.length > 0 && (
             <div

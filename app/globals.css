@@ -1506,6 +1506,73 @@ body {
   box-shadow: var(--shadow-card-hover);
 }
 
+/* Input "two-lines" — pivot 2026-05-03.
+ * Plus de coquille rounded, plus de halo cykan en focus, plus de fond.
+ * Juste deux filets 1px (top + bottom) avec un linear-gradient qui fade
+ * aux extrémités (transparent → couleur → transparent) pour donner de la
+ * légèreté éditoriale. Le textarea flotte dans le paper.
+ *
+ * Focus : les filets passent de var(--border-default) à var(--text-soft),
+ * shift de contraste subtil, JAMAIS de cykan. */
+.cockpit-input-pill-line {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text);
+}
+.cockpit-input-pill-line::before,
+.cockpit-input-pill-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--border-default) 18%,
+    var(--border-default) 82%,
+    transparent 100%
+  );
+  transition: background var(--duration-base) var(--ease-standard);
+}
+.cockpit-input-pill-line::before { top: 0; }
+.cockpit-input-pill-line::after { bottom: 0; }
+.cockpit-input-pill-line:hover::before,
+.cockpit-input-pill-line:hover::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--border-strong) 18%,
+    var(--border-strong) 82%,
+    transparent 100%
+  );
+}
+.cockpit-input-pill-line:focus-within::before,
+.cockpit-input-pill-line:focus-within::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--text-soft) 12%,
+    var(--text-soft) 88%,
+    transparent 100%
+  );
+}
+.cockpit-input-pill-line[data-drag-over="true"]::before,
+.cockpit-input-pill-line[data-drag-over="true"]::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--cykan) 12%,
+    var(--cykan) 88%,
+    transparent 100%
+  );
+}
+
 /* Sélection texte — calmer, teintée cykan (Thinking Canvas). */
 ::selection {
   background: color-mix(in srgb, var(--cykan) 22%, transparent);
