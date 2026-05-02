@@ -28,6 +28,11 @@ interface UsageToday {
   runs: number;
 }
 
+interface ConnectionsMeta {
+  connected: number;
+  total: number;
+}
+
 function formatUsd(n: number): string {
   if (!Number.isFinite(n)) return "—";
   if (n < 0.01) return "$0.00";
@@ -52,6 +57,32 @@ export function PulseBar() {
   // ── Cost meter live ────────────────────────────────────
   const [usage, setUsage] = useState<UsageToday | null>(null);
   const lastCoreState = useRef<string>(coreState);
+
+  // ── Connections meter — feedback ambient sur l'état des apps ──
+  // Source : /api/v2/user/connections (canonical, retourne meta { connected, total }).
+  // Refresh 60s pour capter les nouvelles connexions OAuth sans saturer.
+  const [connections, setConnections] = useState<ConnectionsMeta | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function refreshConnections() {
+      try {
+        const r = await fetch("/api/v2/user/connections", { cache: "no-store" });
+        if (!r.ok) return;
+        const data = (await r.json()) as { meta?: ConnectionsMeta };
+        if (!cancelled && data?.meta) {
+          setConnections({ connected: data.meta.connected, total: data.meta.total });
+        }
+      } catch {
+        // Fail-soft : on garde l'ancienne valeur, jamais de crash.
+      }
+    }
+    refreshConnections();
+    const interval = setInterval(refreshConnections, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,6 +192,28 @@ export function PulseBar() {
               / {formatUsd(usage.budgetUSD)}
             </span>
           </div>
+        )}
+
+        {connections && (
+          <a
+            href="/apps"
+            className="hidden md:flex items-center hover:opacity-80 transition-opacity"
+            style={{ gap: "var(--space-2)" }}
+            title={`${connections.connected}/${connections.total} services connectés — gérer dans /apps`}
+            data-testid="connections-meter"
+          >
+            <span
+              className="rounded-pill bg-[var(--cykan)]"
+              style={{ width: "var(--space-2)", height: "var(--space-2)" }}
+              aria-hidden
+            />
+            <span className="t-11 font-mono tabular-nums text-[var(--text-soft)]">
+              {connections.connected}
+            </span>
+            <span className="t-11 font-light text-[var(--text-faint)]">
+              / {connections.total} apps
+            </span>
+          </a>
         )}
 
         <NotificationBell />
