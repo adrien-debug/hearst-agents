@@ -424,43 +424,16 @@
   --shadow-input-focus: 4px 4px 0px var(--cyan-accent);
 }
 
-/* ─── Cockpit Poster — Direction « Atelier » 2026-05-01 ───────────────
- * Typographie éditoriale du dashboard d'accueil (CockpitPoster).
- * Pas de cards, pas de scroll : tout repose sur la hiérarchie typo.
- * Satoshi Variable partout — hiérarchie par weight + size uniquement.
- * Drop-cap cykan sur l'incipit du brief — signature visuelle. */
-.poster-display {
-  font-weight: 300;
-  letter-spacing: -0.035em;
-  line-height: 0.88;
-  font-feature-settings: "kern", "liga";
-}
-.poster-display.is-display-l { font-size: clamp(40px, 4.5vw, 64px); }
-.poster-display.is-display-m { font-size: clamp(28px, 3.4vw, 48px); }
-
+/* ─── Cockpit Poster — typo éditoriale ────────────────────────────
+ * Greeting H1 + eyebrow uppercase + brief block (filet cykan). Le reste
+ * du langage poster (display, prose, dropcap, observation, rule, cta)
+ * a été retiré au pivot 2026-05-02 quand le brief block est devenu
+ * la pièce maîtresse unique. */
 .poster-greeting {
   font-weight: 500;
   font-size: clamp(22px, 2.6vw, 36px);
   letter-spacing: -0.025em;
   line-height: 1.05;
-}
-
-.poster-prose {
-  font-weight: 400;
-  font-size: clamp(20px, 1.8vw, 26px);
-  line-height: 1.45;
-  letter-spacing: -0.008em;
-}
-.poster-prose .kpi {
-  display: inline-block;
-  font-weight: 700;
-  font-size: 1.85em;
-  line-height: 0.85;
-  letter-spacing: -0.04em;
-  vertical-align: -0.10em;
-  margin-right: 0.06em;
-  color: var(--text);
-  font-feature-settings: "tnum", "ss01";
 }
 
 .poster-eyebrow {
@@ -471,62 +444,6 @@
   font-family: var(--font-satoshi);
   font-weight: 500;
 }
-
-.poster-observation {
-  font-weight: 400;
-  font-size: clamp(14px, 1.05vw, 17px);
-  line-height: 1.55;
-  color: var(--text-muted);
-  padding-left: 16px;
-  border-left: 1px solid var(--cykan);
-}
-
-.poster-rule {
-  border: none;
-  border-top: 1px solid var(--border-shell);
-  margin: 0;
-}
-
-.poster-brief-incipit {
-  font-size: clamp(14px, 1.15vw, 17px);
-  line-height: 1.55;
-  color: var(--text);
-  letter-spacing: -0.008em;
-  font-weight: 400;
-}
-.poster-brief-incipit .dropcap {
-  float: left;
-  font-size: 2.8em;
-  line-height: 0.88;
-  margin-right: 0.14em;
-  margin-top: 0.08em;
-  color: var(--cykan);
-  font-weight: 700;
-}
-
-.poster-cta {
-  font-size: clamp(28px, 3vw, 42px);
-  font-weight: 500;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
-  color: var(--text);
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--cykan);
-  padding: 0 0 4px;
-  cursor: pointer;
-  transition: color 150ms var(--ease-standard), border-color 150ms var(--ease-standard);
-}
-.poster-cta:hover { color: var(--cykan); }
-.poster-cta:disabled { opacity: 0.5; cursor: progress; }
-.poster-cta .arrow {
-  font-style: normal;
-  display: inline-block;
-  margin-left: 12px;
-  transition: transform 200ms var(--ease-spring);
-}
-.poster-cta:hover .arrow { transform: translateX(4px); }
-.poster-cta.is-compact { font-size: clamp(18px, 0.469vw + 15px, 27px); }
 
 /* ─── Cockpit éditorial — pivot 2026-05-02 ───────────────────────
  * Le poster central porte uniquement le brief (la promesse Hearst).
@@ -567,6 +484,78 @@
   cursor: pointer;
 }
 .poster-brief-block .read-more:disabled { opacity: 0.5; cursor: progress; }
+
+/* ─── Recap cards — ContextRail GeneralDashboard ─────────────
+ * 3 cards uniformes (même hauteur min), structure identique :
+ * label + count en header, body one-liner, dots optionnels. */
+.recap-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 80px;
+  padding: var(--space-4) var(--space-4);
+  background: var(--layer-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color var(--duration-base) var(--ease-standard),
+    background var(--duration-base) var(--ease-standard);
+  width: 100%;
+}
+.recap-card:hover {
+  border-color: var(--cykan-border);
+  background: var(--cykan-bg-hover);
+}
+.recap-card:focus-visible {
+  border-color: var(--cykan);
+  box-shadow: 0 0 0 2px var(--cykan-bg-active);
+}
+.recap-card.is-static {
+  cursor: default;
+}
+.recap-card.is-static:hover {
+  border-color: var(--border-soft);
+  background: var(--layer-2);
+}
+.recap-card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.recap-card-label {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-l1);
+  font-family: var(--font-satoshi);
+}
+.recap-card-count {
+  font-size: 11px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, monospace;
+  color: var(--text-faint);
+}
+.recap-card-body {
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--text-muted);
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-satoshi);
+  margin: 0;
+}
+.recap-card-dots {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
 
 .poster-time-tick {
   font-family: var(--font-satoshi);
@@ -1328,17 +1317,6 @@ body {
 
 /* ── Ghost Lumineux — Cockpit classes ─────────────────────── */
 
-/* Cockpit stage background — calibré sur la scène (--bg-elev), pas sur
- * le noir absolu (--layer-0). Les rails sont sur --rail noir, le shell
- * sur --bg, la scène sur --bg-elev. La texture fractale est un overlay
- * 3% pour casser l'aplat. */
-.cockpit-bg {
-  background-color: var(--bg-elev);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
-}
-
 /* Quick action row — command-line shortcut, no container */
 .cockpit-action {
   display: flex;
@@ -1420,57 +1398,10 @@ body {
 }
 .kpi-tile:hover .kpi-label { color: var(--text-l1); }
 
-/* ─── Context tiles — objets visuels du right rail (pivot 2026-05-02) ─
- * Remplace les .dash-row textuelles tronquées à 4-6 chars dans 22vw.
- * Lecture par signal visuel (status dot + icône typée + élévation hover) ;
- * le nom complet est révélé via title/aria-label natif (tooltip browser). */
-.context-tile-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
-  gap: var(--space-2);
-}
-.context-tile-grid.is-asset {
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-}
-.context-tile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-md);
-  background: var(--layer-2);
-  border: 1px solid var(--border-soft);
-  cursor: pointer;
-  outline: none;
-  transition:
-    transform var(--duration-base) var(--ease-spring),
-    border-color var(--duration-base) var(--ease-standard),
-    box-shadow var(--duration-base) var(--ease-standard),
-    background var(--duration-base) var(--ease-standard);
-}
-.context-tile:hover {
-  transform: translateY(-1px);
-  border-color: var(--cykan-border);
-  background: var(--cykan-bg-hover);
-  box-shadow: var(--shadow-tile-hover);
-}
-.context-tile:focus-visible {
-  border-color: var(--cykan);
-  box-shadow: 0 0 0 2px var(--cykan-bg-active), var(--shadow-tile-hover);
-}
-.context-tile.is-mission {
-  aspect-ratio: 1 / 1;
-}
-.context-tile.is-asset {
-  aspect-ratio: 4 / 5;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-.context-tile-icon {
-  color: var(--text-l1);
-  transition: color var(--duration-base) var(--ease-standard);
-}
-.context-tile:hover .context-tile-icon { color: var(--cykan); }
+/* ─── Status dots — pastilles d'état (pivot 2026-05-02) ─────────
+ * Initialement enfants des .context-tile (refactor remplacé par .recap-card
+ * dans GeneralDashboard). Réutilisés en standalone pour signaler l'état
+ * d'une mission (running pulse cykan / blocked ambre / failed rouge / success vert). */
 .context-tile-status {
   position: absolute;
   top: var(--space-1);
@@ -1497,85 +1428,9 @@ body {
   background: var(--color-success);
   box-shadow: var(--glow-success-sm);
 }
-.context-tile-badge {
-  position: absolute;
-  top: var(--space-1);
-  left: var(--space-1);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-l2);
-  font-family: var(--font-satoshi);
-  font-variant-numeric: tabular-nums;
-}
-.context-tile:hover .context-tile-badge { color: var(--cykan); }
 @keyframes pulse-status-cykan {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%      { opacity: 0.55; transform: scale(1.25); }
-}
-
-/* Tooltip immédiat au hover — carte stylisée DS (apparaît sous la tuile,
- * centrée, z-index haut pour passer devant les voisines de la grille). */
-.context-tile-tip {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  left: 50%;
-  transform: translateX(-50%) translateY(-4px);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 144px;
-  max-width: 220px;
-  padding: var(--space-2) var(--space-3);
-  background: var(--bg-elev);
-  border: 1px solid var(--border-shell);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 50;
-  text-align: left;
-  white-space: normal;
-  transition:
-    opacity var(--duration-fast) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard);
-}
-.context-tile:hover .context-tile-tip,
-.context-tile:focus-visible .context-tile-tip {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-.context-tile-tip::before {
-  content: "";
-  position: absolute;
-  top: -5px;
-  left: 50%;
-  transform: translateX(-50%) rotate(45deg);
-  width: 8px;
-  height: 8px;
-  background: var(--bg-elev);
-  border-left: 1px solid var(--border-shell);
-  border-top: 1px solid var(--border-shell);
-}
-.context-tile-tip-title {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-  line-height: 1.3;
-  word-wrap: break-word;
-  letter-spacing: -0.005em;
-}
-.context-tile-tip-sub {
-  display: block;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  font-family: var(--font-satoshi);
-  margin-top: var(--space-1);
 }
 
 /* Input pill itself — glass premium, soft sep border, focus glow */
@@ -1635,15 +1490,6 @@ body {
 
 .halo-cyan-sm {
   text-shadow: 0 0 12px rgba(45, 212, 191, 0.35);
-}
-
-/* Self-hover halo: applies cyan glow on the element's own hover */
-.halo-on-hover {
-  transition: text-shadow 300ms ease;
-}
-
-.halo-on-hover:hover {
-  text-shadow: 0 0 12px rgba(45, 212, 191, 0.4);
 }
 
 .halo-cyan-lg {
@@ -1768,40 +1614,6 @@ body {
     0 4px 8px rgba(0, 0, 0, 0.5),
     0 20px 40px -12px rgba(45, 212, 191, 0.10),
     0 30px 60px -16px rgba(0, 0, 0, 0.6);
-}
-
-/* ── Halo Suggestion Card ───────────────────────────
-   Premium variant for the homepage suggestion grid: ambient cyan glow
-   in the top-left, animated bottom accent line, deeper hover halo. */
-.halo-suggestion {
-  position: relative;
-  width: 100%;
-  height: var(--card-height);
-  padding: var(--card-pad);
-  background: var(--card-flat-bg);
-  border: 1px solid var(--card-flat-border);
-  border-radius: 0;
-  box-shadow: none;
-  transition: background-color 160ms ease, box-shadow 160ms ease;
-}
-
-.halo-suggestion::before,
-.halo-suggestion::after {
-  content: none;
-}
-
-.halo-suggestion:hover {
-  background: var(--cykan-bg-hover);
-  box-shadow: inset 2px 0 0 var(--cykan);
-}
-
-.halo-suggestion:active {
-  background: var(--cykan-bg-active);
-}
-
-.halo-suggestion:focus-visible {
-  outline: none;
-  box-shadow: inset 2px 0 0 var(--cykan), inset 0 0 0 1px var(--cykan-border-hover);
 }
 
 /* Signature input focus — offset cyan shadow (non-blurred) */
@@ -2003,8 +1815,6 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 
    Exclusions :
    - .ghost-btn-solid : déjà géré ci-dessus (inset shadow)
-   - .halo-suggestion : utility card (focus-visible déjà défini avec un
-     traitement spécifique)
    - boutons sans aria-label avec opacity-0 / sr-only : couverts par leur parent
 */
 button:focus-visible:not(.ghost-btn-solid):not([data-no-fv-fallback]) {
