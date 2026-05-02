@@ -15,11 +15,47 @@
 
 import { jsonSchema } from "ai";
 import type { Tool } from "ai";
-import { sendEmail, isResendEnabled } from "@/lib/platform/email/resend";
+import { Resend } from "resend";
 import { inngest, isInngestEnabled } from "@/lib/jobs/inngest/client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AiToolMap = Record<string, Tool<any, any>>;
+
+// ── Inline Resend client (le wrapper lib/platform/email/resend.ts a été retiré) ──
+let _resendClient: Resend | null = null;
+function getResend(): Resend | null {
+  if (_resendClient) return _resendClient;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
+  _resendClient = new Resend(apiKey);
+  return _resendClient;
+}
+const isResendEnabled = (): boolean => Boolean(process.env.RESEND_API_KEY);
+const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL ?? "Hearst OS <noreply@hearst.app>";
+
+async function sendEmail(params: {
+  to: string | string[];
+  subject: string;
+  html?: string;
+  text?: string;
+  from?: string;
+}): Promise<{ id?: string; error?: string }> {
+  const client = getResend();
+  if (!client) return { error: "resend_not_configured" };
+  try {
+    const { data, error } = await client.emails.send({
+      from: params.from ?? DEFAULT_FROM,
+      to: params.to,
+      subject: params.subject,
+      html: params.html ?? "",
+      text: params.text,
+    });
+    if (error) return { error: error.message };
+    return { id: data?.id };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "unknown_error" };
+  }
+}
 
 // ── send_email ────────────────────────────────────────────────────
 
