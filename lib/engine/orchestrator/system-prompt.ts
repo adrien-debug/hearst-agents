@@ -11,6 +11,7 @@
 import type { DiscoveredTool } from "@/lib/connectors/composio/discovery";
 import type { Persona } from "@/lib/personas/types";
 import { buildPersonaAddonOrNull } from "@/lib/personas/system-prompt-addon";
+import { buildSlugStrictnessRule } from "@/lib/agents/connected-apps-context";
 
 export const ORCHESTRATOR_MODEL = "claude-sonnet-4-6";
 
@@ -296,7 +297,7 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
     day: "numeric",
   });
 
-  const connectedApps = [...new Set(composioTools.map((t) => t.app))];
+  const connectedApps = [...new Set(composioTools.map((t) => t.app))].sort();
 
   const toolsHeader =
     connectedApps.length > 0
@@ -310,7 +311,7 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
           .map((t) => `- ${t.name} : ${t.description.slice(0, 100)}`)
           .join("\n") +
         (composioTools.length > 120 ? `\n(+${composioTools.length - 120} autres actions)` : "") +
-        "\n\n⚠️ Règle absolue : utilise UNIQUEMENT les slugs listés ci-dessus, tels qu'écrits. N'invente jamais un slug. Si l'action n'est pas dans la liste, dis-le à l'utilisateur."
+        "\n\n" + buildSlugStrictnessRule()
       : "(aucun outil tiers connecté pour ce tour)";
 
   const surfaceNote = surface ? `\nSurface active : ${surface}` : "";

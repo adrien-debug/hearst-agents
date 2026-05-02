@@ -17,6 +17,10 @@ import {
   DEFAULT_REALTIME_VOICE,
   type RealtimeVoice,
 } from "@/lib/voice/voice-mapping";
+import {
+  buildConnectedAppsContext,
+  buildSlugStrictnessRule,
+} from "@/lib/agents/connected-apps-context";
 
 const OPENAI_BASE = "https://api.openai.com/v1";
 
@@ -49,10 +53,11 @@ export async function mintRealtimeSession(
     input.voice ??
     (input.personaTone ? resolveRealtimeVoice(input.personaTone) : DEFAULT_REALTIME_VOICE);
 
-  const connectedAppsLine =
-    input.connectedApps && input.connectedApps.length > 0
-      ? `L'utilisateur a actuellement ${input.connectedApps.length} apps connectées : ${input.connectedApps.join(", ")}. N'invente pas d'autres services — si l'utilisateur te demande Notion ou GitHub par exemple et qu'ils ne sont pas dans cette liste, dis-lui qu'il faut d'abord les connecter dans /apps.`
-      : "L'utilisateur n'a aucune app tierce connectée pour le moment. Si on te demande Gmail/Slack/etc, dis-lui de les connecter dans /apps avant.";
+  const connectedAppsLine = buildConnectedAppsContext({
+    connectedApps: input.connectedApps ?? [],
+    channel: "voice",
+    totalTools: input.tools?.length,
+  });
 
   const body: Record<string, unknown> = {
     model: "gpt-4o-realtime-preview",
@@ -66,6 +71,7 @@ export async function mintRealtimeSession(
         "Quand l'utilisateur demande une action concrète (lancer un meeting bot, ouvrir une simulation, générer une image, envoyer un mail, créer une tâche, etc.), invoque l'outil correspondant — ne te contente pas de décrire ce que tu ferais.",
         "Tu as accès aux tools internes Hearst (start_meeting_bot, start_simulation, generate_image, start_browser) et aux tools des apps connectées (préfixés par le nom de l'app en majuscules, ex: GMAIL_FETCH_EMAILS, SLACK_SEND_MESSAGE).",
         connectedAppsLine,
+        buildSlugStrictnessRule(),
         "Pour les actions DESTRUCTIVES (envoyer un mail, créer un ticket, supprimer, archiver, poster un message public), confirme oralement AVANT d'invoquer le tool : redonne à l'utilisateur les paramètres clés (destinataire, sujet, contenu) et demande 'je l'envoie ?'. Invoque le tool seulement après un 'oui', 'confirme', 'go' explicite.",
         "Pour les actions LECTURE (chercher, lister, récupérer), invoque directement sans demander.",
       ].join(" "),
@@ -85,8 +91,8 @@ export async function mintRealtimeSession(
   });
 
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`[OpenAI Realtime] mint failed ${res.status}: ${body.slice(0, 200)}`);
+    const errorBody = await res.text().catch(() => "");
+    throw new Error(`[OpenAI Realtime] mint failed ${res.status}: ${errorBody.slice(0, 200)}`);
   }
 
   const data = (await res.json()) as {

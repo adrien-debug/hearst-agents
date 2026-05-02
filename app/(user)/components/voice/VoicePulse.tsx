@@ -122,8 +122,6 @@ export function VoicePulse() {
       let output = "Erreur d'exécution de l'outil.";
       let stageRequest: StagePayload | undefined;
       let providerId: string | undefined;
-      let latencyMs: number | undefined;
-      let costUsd: number | undefined;
       let status: "success" | "error" = "error";
 
       const sessionId = useVoiceStore.getState().sessionId ?? undefined;
@@ -140,16 +138,12 @@ export function VoicePulse() {
           stageRequest?: StagePayload;
           error?: string;
           providerId?: string;
-          latencyMs?: number;
-          costUsd?: number;
           status?: "success" | "error";
         };
         if (res.ok) {
           output = data.output ?? output;
           stageRequest = data.stageRequest;
           providerId = data.providerId;
-          latencyMs = data.latencyMs;
-          costUsd = data.costUsd;
           status = data.status ?? "success";
         } else {
           output = data.output ?? data.error ?? `HTTP ${res.status}`;
@@ -203,10 +197,6 @@ export function VoicePulse() {
         useStageStore.getState().setMode(stageRequest);
       }
 
-      // Évite le warning "unused variable" sur latencyMs/costUsd —
-      // potentiellement utiles côté UI plus tard (tooltip).
-      void latencyMs;
-      void costUsd;
     },
     [setPhase, appendTranscript, patchTranscriptEntry],
   );
