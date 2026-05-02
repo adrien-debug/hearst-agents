@@ -193,6 +193,13 @@ export function VoicePulse() {
       }
 
       if (stageRequest) {
+        // Restaure la phase AVANT le changement de stage : si setMode()
+        // déclenche un changement de mode qui démonte VoicePulse (ex: voice
+        // → asset après generate_image), le DataChannel event listener
+        // disparaît avant que response.done puisse remettre la phase à
+        // "listening". Sans ce reset, la phase reste bloquée en "processing"
+        // dans le store et l'interface voice est gelée à la prochaine session.
+        setPhase("listening");
         useStageStore.getState().setMode(stageRequest);
       }
 
