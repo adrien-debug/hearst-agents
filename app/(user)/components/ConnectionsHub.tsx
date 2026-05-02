@@ -706,7 +706,7 @@ export function ConnectionsHub() {
   if (loading) return <LoadingState />;
 
   return (
-    <div className="flex-1 overflow-y-auto" style={{ background: "var(--bg)" }}>
+    <div className="flex-1 overflow-y-auto" style={{ background: "var(--bg-elev)" }}>
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -869,7 +869,7 @@ function Header({
   return (
     <div
       className="sticky top-0 z-10 flex items-center gap-4 px-8 py-3 border-b"
-      style={{ background: "var(--bg)", borderColor: "var(--border-shell)" }}
+      style={{ background: "var(--bg-elev)", borderColor: "var(--border-shell)" }}
     >
       <span
         className="t-10 font-mono uppercase whitespace-nowrap"
@@ -1617,7 +1617,7 @@ function AppDrawer({
         role="dialog"
         aria-label={app.name}
         className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 flex flex-col border-l panel-enter"
-        style={{ background: "var(--bg)", borderColor: "var(--border-shell)" }}
+        style={{ background: "var(--bg-elev)", borderColor: "var(--border-shell)" }}
       >
         {/* Header — close + status badge, fixe en haut */}
         <div
