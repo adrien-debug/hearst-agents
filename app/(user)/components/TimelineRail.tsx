@@ -464,7 +464,14 @@ export function TimelineRail() {
                   onClick={() => router.push("/apps")}
                 />
               </div>
-              <div className="flex flex-col" style={{ marginTop: "var(--space-6)" }}>
+              <div
+                className="flex flex-col"
+                style={{
+                  marginTop: "var(--space-3)",
+                  paddingTop: "var(--space-3)",
+                  borderTop: "1px solid var(--sep)",
+                }}
+              >
                 <TopMenuItem label="Nouvelle conversation" hotkey="⌘N" onClick={handleNewThread} />
               </div>
             </div>
