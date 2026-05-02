@@ -528,6 +528,76 @@
 .poster-cta:hover .arrow { transform: translateX(4px); }
 .poster-cta.is-compact { font-size: clamp(18px, 0.469vw + 15px, 27px); }
 
+/* ─── Cockpit dense premium — direction B (Bloomberg/Linear) ──────
+ * Bandeau KPI horizontal pleine largeur + bloc brief encadré filet cykan.
+ * Pivot 2026-05-02 : remplace le layout tiles/dropcap/eyebrow en colonnes
+ * par un cockpit data-dense — la matière vient des bordures et de la
+ * tabulation des chiffres, pas d'empilements de cards. */
+.kpi-bandeau {
+  display: flex;
+  border-block: 1px solid var(--line-strong);
+  background: var(--surface-1);
+}
+.kpi-bandeau > * {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-5);
+  border-right: 1px solid var(--line-strong);
+}
+.kpi-bandeau > *:last-child { border-right: none; }
+.kpi-bandeau-num {
+  font-size: clamp(26px, 2.4vw, 36px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.kpi-bandeau-sub {
+  font-size: 11px;
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.poster-brief-block {
+  border-left: 2px solid var(--cykan);
+  padding: var(--space-4) var(--space-6);
+  background: var(--surface-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+}
+.poster-brief-block .body {
+  font-size: clamp(14px, 1.1vw, 16px);
+  line-height: 1.6;
+  color: var(--text);
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+.poster-brief-block .body strong {
+  font-weight: 600;
+  color: var(--text);
+}
+.poster-brief-block .read-more {
+  align-self: flex-start;
+  color: var(--cykan);
+  font-size: 13px;
+  border-bottom: 1px solid var(--cykan-border);
+  padding-bottom: 2px;
+  text-decoration: none;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  cursor: pointer;
+}
+.poster-brief-block .read-more:disabled { opacity: 0.5; cursor: progress; }
+
 .poster-time-tick {
   font-family: var(--font-satoshi);
   font-size: 12px;

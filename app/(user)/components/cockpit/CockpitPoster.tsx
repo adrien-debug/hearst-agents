@@ -27,13 +27,15 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const assetsTotal = data.counts.assets;
   const missionsTotal = data.counts.missions;
   const reportsTotal = data.counts.reports;
+  const missionsRunning = data.missionsRunning.length;
 
   const observation = useMemo(() => computeObservation(data), [data]);
   const briefReady = !data.briefing.empty && Boolean(data.briefing.body);
   const briefIncipit = useMemo(
-    () => (briefReady ? truncate(stripMarkdown(data.briefing.body ?? ""), 280) : null),
+    () => (briefReady ? truncate(stripMarkdown(data.briefing.body ?? ""), 320) : null),
     [briefReady, data.briefing.body],
   );
+  const briefSentence = useMemo(() => splitFirstSentence(briefIncipit ?? ""), [briefIncipit]);
 
   const handleGenerate = async () => {
     if (generating) return;
@@ -58,163 +60,137 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         width: "100%",
         maxWidth: "var(--width-poster-body)",
         marginInline: "auto",
-        padding: "var(--space-6) var(--space-12) var(--space-4)",
+        padding: "var(--space-8) var(--space-12) var(--space-4)",
       }}
     >
-      {/* ─── ZONE A : Header ──────────────────────────────────────── */}
-      <header className="flex-none flex flex-col" style={{ gap: "var(--space-3)" }}>
-        <span className="poster-eyebrow">Hearst · Cockpit</span>
-        <div
-          className="grid"
-          style={{
-            gridTemplateColumns: "auto 1fr",
-            gap: "var(--space-10)",
-            alignItems: "start",
-          }}
-        >
-          {/* Col gauche : date + time-tick */}
-          <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
-            <span className="poster-display is-display-l" style={{ color: "var(--text)" }}>
-              {dateParts.weekday}
-            </span>
-            <span className="poster-display is-display-m" style={{ color: "var(--text-muted)" }}>
-              {dateParts.dayMonth}
-            </span>
-            <div className="poster-time-tick" style={{ marginTop: "var(--space-2)" }}>
-              <span className="poster-pulse" aria-hidden />
-              <span>{dateParts.time ?? "--:--:--"}</span>
-              <span style={{ color: "var(--text-decor-25)" }}>·</span>
-              <span>Système éveillé</span>
-            </div>
-          </div>
-
-          {/* Col droite : greeting + 3 KPI tiles + observation/hospitality */}
-          <div className="flex flex-col" style={{ gap: "var(--space-3)" }}>
-            <h1 className="poster-greeting" style={{ color: "var(--text)" }}>
-              Bonjour {firstName}.
-            </h1>
-            <div className="flex" style={{ gap: "var(--space-8)" }}>
-              <button type="button" className="kpi-tile">
-                <span className="kpi-num">{pad2(assetsTotal)}</span>
-                <span className="kpi-label">assets</span>
-              </button>
-              <button type="button" className="kpi-tile">
-                <span className="kpi-num">{pad2(missionsTotal)}</span>
-                <span className="kpi-label">missions</span>
-              </button>
-              <button type="button" className="kpi-tile">
-                <span className="kpi-num">{pad2(reportsTotal)}</span>
-                <span className="kpi-label">reports</span>
-              </button>
-            </div>
-            {observation && (
-              <aside className="poster-observation" style={{ maxWidth: "var(--width-prose-narrow)" }}>
-                {observation}
-              </aside>
-            )}
-            {data.hospitality && (
-              <aside
-                className="poster-observation"
-                style={{
-                  maxWidth: "var(--width-prose)",
-                  borderLeftColor: "var(--gold)",
-                  color: "var(--text)",
-                }}
-              >
-                <span
-                  className="poster-eyebrow"
-                  style={{ color: "var(--gold)", display: "block", marginBottom: "var(--space-2)" }}
-                >
-                  Hôtel · {data.hospitality.source === "demo" ? "Données de démo" : "Live"}
-                </span>
-                <span>
-                  <strong style={{ fontWeight: 600 }}>{data.hospitality.occupancy}%</strong> occupé.
-                  {" "}
-                  <strong style={{ fontWeight: 600 }}>{pad2(data.hospitality.vipCount)}</strong> VIP{data.hospitality.vipCount === 1 ? "" : "s"} attendu{data.hospitality.vipCount === 1 ? "" : "s"}.
-                  {data.hospitality.pendingServiceRequests > 0 && (
-                    <>
-                      {" "}
-                      <strong style={{ fontWeight: 600 }}>{pad2(data.hospitality.pendingServiceRequests)}</strong> demande{data.hospitality.pendingServiceRequests === 1 ? "" : "s"} en attente.
-                    </>
-                  )}
-                </span>
-                {data.hospitality.urgentRequests.length > 0 && (
-                  <span
-                    className="t-13"
-                    style={{
-                      display: "block",
-                      marginTop: "var(--space-2)",
-                      fontStyle: "normal",
-                      color: "var(--danger)",
-                    }}
-                  >
-                    Urgent · {data.hospitality.urgentRequests[0].guestName} · {data.hospitality.urgentRequests[0].room} — {data.hospitality.urgentRequests[0].text}
-                  </span>
-                )}
-              </aside>
-            )}
-          </div>
+      {/* ─── Hero (greeting + status line) ────────────────────────── */}
+      <header className="flex-none flex flex-col" style={{ gap: "var(--space-2)" }}>
+        <h1 className="poster-greeting" style={{ color: "var(--text)" }}>
+          Bonjour {firstName}.
+        </h1>
+        <div className="poster-time-tick">
+          <span className="poster-pulse" aria-hidden />
+          <span style={{ color: "var(--text-muted)" }}>
+            {dateParts.weekday} {dateParts.dayMonth}
+          </span>
+          <span style={{ color: "var(--text-decor-25)" }}>·</span>
+          <span>{dateParts.time ?? "--:--:--"}</span>
+          <span style={{ color: "var(--text-decor-25)" }}>·</span>
+          <span>Système éveillé</span>
         </div>
       </header>
 
-      <hr className="poster-rule" style={{ margin: "var(--space-4) 0" }} />
-
-      {/* ─── ZONE B : Brief / Suggestions / Watchlist ─────────────── */}
-      <section
-        className="flex-1 min-h-0 overflow-hidden flex flex-col"
-        style={{ gap: "var(--space-4)" }}
-      >
-        <header className="flex items-baseline justify-between" style={{ gap: "var(--space-6)" }}>
-          <h2 className="poster-eyebrow">Brief du jour</h2>
-          <span className="poster-eyebrow" style={{ color: "var(--text-faint)" }}>
-            {dateParts.dayMonthShort}
-          </span>
-        </header>
-
-        {briefReady ? (
-          <article
-            className="poster-brief-incipit"
-            style={{ maxWidth: "var(--width-prose-brief)" }}
+      {/* ─── KPI bandeau (assets / missions / reports) ───────────── */}
+      <div className="kpi-bandeau" style={{ marginTop: "var(--space-6)" }}>
+        <div>
+          <span className="poster-eyebrow">Assets</span>
+          <span className="kpi-bandeau-num">{pad2(assetsTotal)}</span>
+          <span className="kpi-bandeau-sub">Bibliothèque</span>
+        </div>
+        <div>
+          <span className="poster-eyebrow">Missions</span>
+          <span className="kpi-bandeau-num">{pad2(missionsTotal)}</span>
+          <span
+            className="kpi-bandeau-sub"
+            style={missionsRunning > 0 ? { color: "var(--cykan)" } : undefined}
           >
-            <span className="dropcap">{briefIncipit?.[0] ?? ""}</span>
-            {briefIncipit?.slice(1)}
-            <span style={{ display: "block", clear: "both", marginTop: "var(--space-4)" }}>
-              <a
-                href="/briefing"
-                style={{
-                  color: "var(--cykan)",
-                  borderBottom: "1px solid var(--cykan-border)",
-                  fontSize: "16px",
-                  paddingBottom: "2px",
-                }}
-              >
+            {missionsRunning > 0 ? `${pad2(missionsRunning)} en cours` : "Aucune en cours"}
+          </span>
+        </div>
+        <div>
+          <span className="poster-eyebrow">Reports</span>
+          <span className="kpi-bandeau-num">{pad2(reportsTotal)}</span>
+          <span className="kpi-bandeau-sub">Catalogue</span>
+        </div>
+      </div>
+
+      {/* ─── Body : brief + suggestions + watchlist ──────────────── */}
+      <main
+        className="flex-1 min-h-0 flex flex-col"
+        style={{ gap: "var(--space-4)", marginTop: "var(--space-5)" }}
+      >
+        {observation && (
+          <p
+            className="t-13"
+            style={{
+              color: "var(--text-muted)",
+              fontStyle: "italic",
+              borderLeft: "1px solid var(--cykan)",
+              paddingLeft: "var(--space-3)",
+            }}
+          >
+            {observation}
+          </p>
+        )}
+
+        <article className="poster-brief-block">
+          <header className="flex items-baseline justify-between" style={{ gap: "var(--space-4)" }}>
+            <h2 className="poster-eyebrow">Brief du jour</h2>
+            <span className="poster-eyebrow" style={{ color: "var(--text-faint)" }}>
+              {dateParts.dayMonthShort}
+            </span>
+          </header>
+          {briefReady ? (
+            <>
+              <p className="body">
+                {briefSentence.first && <strong>{briefSentence.first}</strong>}
+                {briefSentence.rest && <> {briefSentence.rest}</>}
+              </p>
+              <a href="/briefing" className="read-more">
                 Lire la suite →
               </a>
-            </span>
-          </article>
-        ) : (
-          <div className="flex flex-col" style={{ gap: "var(--space-4)", maxWidth: "var(--width-prose-brief)" }}>
-            <p className="t-15" style={{ color: "var(--text-muted)" }}>
-              Aucun brief pour aujourd'hui. Hearst synthétise tes emails 24h, messages Slack,
-              agenda du jour, PRs GitHub et issues Linear en un éditorial de 2 minutes.
+            </>
+          ) : (
+            <>
+              <p className="body" style={{ color: "var(--text-muted)" }}>
+                Aucun brief pour aujourd'hui. Hearst synthétise tes emails, messages Slack,
+                agenda, PRs et issues en un éditorial de 2 minutes.
+              </p>
+              <button
+                type="button"
+                onClick={handleGenerate}
+                disabled={generating}
+                className="read-more"
+              >
+                {generating ? "Génération en cours…" : "Générer le brief →"}
+              </button>
+            </>
+          )}
+        </article>
+
+        {data.hospitality && (
+          <article
+            className="poster-brief-block"
+            style={{ borderLeftColor: "var(--gold)", background: "var(--gold-surface)" }}
+          >
+            <header className="flex items-baseline justify-between" style={{ gap: "var(--space-4)" }}>
+              <h2 className="poster-eyebrow" style={{ color: "var(--gold)" }}>
+                Hôtel · {data.hospitality.source === "demo" ? "Données de démo" : "Live"}
+              </h2>
+              <span className="poster-eyebrow" style={{ color: "var(--text-faint)" }}>
+                {data.hospitality.occupancy}% occupé
+              </span>
+            </header>
+            <p className="body">
+              <strong>{pad2(data.hospitality.vipCount)}</strong> VIP{data.hospitality.vipCount === 1 ? "" : "s"} attendu{data.hospitality.vipCount === 1 ? "" : "s"}.
+              {data.hospitality.pendingServiceRequests > 0 && (
+                <>
+                  {" "}
+                  <strong>{pad2(data.hospitality.pendingServiceRequests)}</strong> demande{data.hospitality.pendingServiceRequests === 1 ? "" : "s"} en attente.
+                </>
+              )}
+              {data.hospitality.urgentRequests.length > 0 && (
+                <span style={{ display: "block", marginTop: "var(--space-2)", color: "var(--danger)" }}>
+                  Urgent · {data.hospitality.urgentRequests[0].guestName} · {data.hospitality.urgentRequests[0].room} — {data.hospitality.urgentRequests[0].text}
+                </span>
+              )}
             </p>
-            <button
-              type="button"
-              className="poster-cta is-compact"
-              onClick={handleGenerate}
-              disabled={generating}
-            >
-              {generating ? "Génération en cours…" : "Générer le brief du matin"}
-              <span className="arrow">→</span>
-            </button>
-          </div>
+          </article>
         )}
 
         {data.suggestions.length > 0 && (
-          <div className="flex flex-col min-h-0">
-            <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-2)" }}>
-              Suggestions
-            </h2>
+          <div className="flex flex-col" style={{ gap: "var(--space-1)" }}>
+            <h2 className="poster-eyebrow">Suggestions</h2>
             {data.suggestions.map((s) => (
               <button key={s.id} type="button" className="cockpit-action is-compact">
                 <span className="ca-label">{s.title}</span>
@@ -225,24 +201,16 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         )}
 
         {data.watchlist.length > 0 && (
-          <div className="flex flex-col min-h-0">
-            <h2 className="poster-eyebrow" style={{ marginBottom: "var(--space-3)" }}>
-              Watchlist
-            </h2>
-            <div
-              className="grid"
-              style={{
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                gap: "var(--space-6)",
-              }}
-            >
-              {data.watchlist.map((w) => (
-                <div key={w.id} className="kpi-tile">
-                  <span className="kpi-num">{w.value}</span>
-                  <span className="kpi-label">{w.label}</span>
+          <div className="flex flex-col" style={{ marginTop: "auto", gap: "var(--space-2)" }}>
+            <h2 className="poster-eyebrow">Watchlist</h2>
+            <div className="kpi-bandeau">
+              {data.watchlist.slice(0, 4).map((w) => (
+                <div key={w.id}>
+                  <span className="poster-eyebrow">{w.label}</span>
+                  <span className="kpi-bandeau-num">{w.value}</span>
                   {w.delta && (
                     <span
-                      className="t-11"
+                      className="kpi-bandeau-sub"
                       style={{
                         color:
                           w.anomaly?.direction === "down"
@@ -258,14 +226,14 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
             </div>
           </div>
         )}
-      </section>
+      </main>
 
-      {/* ─── ZONE C : Quick actions bar ───────────────────────────── */}
+      {/* ─── Footer nav ──────────────────────────────────────────── */}
       <footer
         className="flex-none flex items-center"
         style={{
           gap: "var(--space-6)",
-          marginTop: "var(--space-3)",
+          marginTop: "var(--space-4)",
           paddingTop: "var(--space-3)",
           borderTop: "1px solid var(--line-strong)",
         }}
@@ -400,4 +368,11 @@ function truncate(s: string, max: number): string {
   const cut = s.slice(0, max);
   const lastSpace = cut.lastIndexOf(" ");
   return (lastSpace > max * 0.7 ? cut.slice(0, lastSpace) : cut).trimEnd() + "…";
+}
+
+function splitFirstSentence(s: string): { first: string; rest: string } {
+  if (!s) return { first: "", rest: "" };
+  const idx = s.search(/[.!?]\s/);
+  if (idx === -1) return { first: s, rest: "" };
+  return { first: s.slice(0, idx + 1), rest: s.slice(idx + 2).trim() };
 }
