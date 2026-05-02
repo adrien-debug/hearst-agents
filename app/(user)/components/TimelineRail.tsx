@@ -57,6 +57,21 @@ const AdminIcon = () => (
     <path d="M3 12h4l2-7 4 14 2-7h6" />
   </svg>
 );
+
+const HearstIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v18M5 12l7 4 7-4M5 17l7 4 7-4" />
+  </svg>
+);
+
+const AppIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+  </svg>
+);
 // ── Section helpers ────────────────────────────────────────
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -201,11 +216,13 @@ function ThreadRow({ thread, isActive, onSelect, onDelete, onArchive }: ThreadRo
 function TopMenuItem({
   label,
   hotkey,
+  icon,
   isActive = false,
   onClick,
 }: {
   label: string;
   hotkey?: string;
+  icon?: React.ReactNode;
   isActive?: boolean;
   onClick?: () => void;
 }) {
@@ -222,14 +239,24 @@ function TopMenuItem({
       style={{ padding: "var(--space-2) 0" }}
     >
       <span
-        className="t-13 transition-all duration-emphasis ease-out-soft"
+        className="flex items-center t-13 transition-all duration-emphasis ease-out-soft"
         style={{
+          gap: "var(--space-3)",
           color: highlight ? "var(--cykan)" : "var(--text-l2)",
           fontWeight: isActive ? 500 : 300,
           textShadow: highlight ? "var(--neon-cykan)" : "none",
         }}
       >
-        {label}
+        {icon ? (
+          <span
+            className="inline-flex items-center justify-center shrink-0"
+            style={{ width: "var(--space-4)", height: "var(--space-4)" }}
+            aria-hidden
+          >
+            {icon}
+          </span>
+        ) : null}
+        <span>{label}</span>
       </span>
       {hotkey ? (
         <span
@@ -426,11 +453,13 @@ export function TimelineRail() {
                 <TopMenuItem
                   label="Hearst"
                   hotkey="⌘1"
+                  icon={<HearstIcon />}
                   isActive={isHearstActive}
                   onClick={handleHearstHome}
                 />
                 <TopMenuItem
                   label="App"
+                  icon={<AppIcon />}
                   isActive={isAppsActive}
                   onClick={() => router.push("/apps")}
                 />
