@@ -31,6 +31,7 @@ import { buildMarketDataTools } from "@/lib/tools/native/market-data";
 import { buildExtrasServicesTools } from "@/lib/tools/native/extras-services";
 import { buildResearchTools } from "@/lib/tools/native/research";
 import { buildExtrasMediaTools } from "@/lib/tools/native/extras-media";
+import { buildKgQueryTools } from "@/lib/tools/native/kg-query";
 import { createScheduledMission } from "@/lib/engine/runtime/missions/create-mission";
 import { addMission } from "@/lib/engine/runtime/missions/store";
 import { saveScheduledMission as persistMission } from "@/lib/engine/runtime/state/adapter";
@@ -492,6 +493,13 @@ export async function runAiPipeline(
     runId: engine.id,
     threadId: input.threadId,
   });
+  const kgQueryTools = buildKgQueryTools({
+    scope: {
+      userId: input.userId,
+      tenantId: input.tenantId ?? "dev-tenant",
+      workspaceId: input.workspaceId ?? "dev-workspace",
+    },
+  });
 
   const aiTools = {
     ...nativeGoogleTools,
@@ -502,6 +510,7 @@ export async function runAiPipeline(
     ...extrasServicesTools,
     ...researchTools,
     ...extrasMediaTools,
+    ...kgQueryTools,
     ...toAiTools(filteredComposio, input.userId),
     request_connection: buildRequestConnectionTool(engine, eventBus),
     create_scheduled_mission: buildCreateScheduledMissionTool(engine, eventBus, {

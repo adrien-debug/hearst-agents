@@ -13,6 +13,28 @@
 
 import { extractEntities, upsertNode, upsertEdge } from "./kg";
 import { __clearKgContextCache } from "./kg-context";
+import { upsertEmbedding } from "@/lib/embeddings/store";
+
+/**
+ * Construit un texte excerpt pour embedding d'un node KG.
+ * Format : "<type>: <label> — <key1>: <val1>; <key2>: <val2>"
+ * (cap implicite à 4000 chars côté upsertEmbedding).
+ */
+function buildNodeExcerpt(entity: {
+  type: string;
+  label: string;
+  properties?: Record<string, unknown>;
+}): string {
+  const props = entity.properties ?? {};
+  const propsString = Object.entries(props)
+    .filter(([, v]) => v !== null && v !== undefined && v !== "")
+    .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`)
+    .slice(0, 8)
+    .join("; ");
+  return propsString
+    ? `${entity.type}: ${entity.label} — ${propsString}`
+    : `${entity.type}: ${entity.label}`;
+}
 
 export interface IngestTurnInput {
   userId: string;
@@ -82,6 +104,18 @@ export async function ingestConversationTurn(
       });
       idByLabel.set(entity.label, id);
       entitiesCreated += 1;
+
+      // Auto-embed le node pour permettre query_knowledge_graph (semantic search).
+      // Fire-and-forget : si OPENAI_API_KEY manque ou Supabase down, fail-soft
+      // (la fonction interne log warn et retourne false).
+      void upsertEmbedding({
+        userId: scope.userId,
+        tenantId: scope.tenantId,
+        sourceKind: "kg_node",
+        sourceId: id,
+        textExcerpt: buildNodeExcerpt(entity),
+        metadata: { type: entity.type, label: entity.label },
+      });
     } catch (err) {
       console.warn(
         `[kg-ingest-pipeline] upsertNode failed for "${entity.label}":`,
