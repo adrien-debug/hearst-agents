@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useNavigationStore } from "@/stores/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useStageStore, type StagePayload } from "@/stores/stage";
@@ -31,6 +31,7 @@ const baseServices: ServiceWithConnectionStatus[] = getAllServices().map((s) => 
 export function ChatDock() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const surface = useNavigationStore((s) => s.surface);
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
@@ -78,26 +79,24 @@ export function ChatDock() {
       }
     }
 
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const justConnected = params.get("connected");
-      if (justConnected) {
-        void fetch("/api/composio/invalidate-cache", { method: "POST", credentials: "include" })
-          .catch(() => {})
-          .finally(() => {
-            loadConnections();
-            const url = new URL(window.location.href);
-            url.searchParams.delete("connected");
-            window.history.replaceState({}, "", url.toString());
-            toast.success(`${justConnected} connecté`, "Vous pouvez relancer votre demande.");
-          });
-        return;
-      }
+    const justConnected = searchParams.get("connected");
+    if (justConnected) {
+      void fetch("/api/composio/invalidate-cache", { method: "POST", credentials: "include" })
+        .catch(() => {})
+        .finally(() => {
+          loadConnections();
+          const params = new URLSearchParams(searchParams.toString());
+          params.delete("connected");
+          const newUrl = pathname + (params.toString() ? `?${params.toString()}` : "");
+          router.replace(newUrl);
+          toast.success(`${justConnected} connecté`, "Vous pouvez relancer votre demande.");
+        });
+      return;
     }
 
     loadConnections();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   const assistantBufferRef = useRef<string>("");
   const currentAssistantIdRef = useRef<string | null>(null);

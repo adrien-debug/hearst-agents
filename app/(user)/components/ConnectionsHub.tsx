@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { toast } from "@/app/hooks/use-toast";
 import { useOAuthStore } from "@/stores/oauth";
 import { useOAuthCompletionPoll } from "@/app/hooks/use-oauth-completion-poll";
+import { openOAuthPopup } from "@/lib/oauth/popup";
 import { Action } from "./ui";
 
 interface ConnectedAccount {
@@ -448,10 +449,7 @@ export function ConnectionsHub() {
       // du fetch /api/composio/connect, le browser perd le contexte de geste
       // utilisateur et le popup blocker la rejette. On ouvre vide, on
       // navigue ensuite quand on a la redirectUrl.
-      const POPUP_FEATURES = "width=480,height=720,left=200,top=100,resizable=yes,scrollbars=yes";
-      const popup = typeof window !== "undefined"
-        ? window.open("about:blank", "hearst-oauth", POPUP_FEATURES)
-        : null;
+      const popup = openOAuthPopup();
 
       useOAuthStore.getState().start({
         slug: app.key,
@@ -499,7 +497,7 @@ export function ConnectionsHub() {
             // la page de configuration du toolkit, sans flash de popup vide.
             const dashboardUrl = `https://app.composio.dev/app/${encodeURIComponent(app.key)}`;
             if (popup && !popup.closed) {
-              popup.location.href = dashboardUrl;
+              popup.navigate(dashboardUrl);
             } else {
               window.open(dashboardUrl, "_blank", "noopener,noreferrer");
             }
@@ -516,7 +514,7 @@ export function ConnectionsHub() {
           // — comportement de fallback acceptable, l'utilisateur revient via
           // le redirectUri vers /apps?connected=slug.
           if (popup && !popup.closed) {
-            popup.location.href = data.redirectUrl;
+            popup.navigate(data.redirectUrl);
             useOAuthStore.getState().setStatus("active");
           } else {
             useOAuthStore.getState().clear();

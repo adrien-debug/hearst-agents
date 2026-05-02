@@ -11,6 +11,7 @@
  */
 
 import { create } from "zustand";
+import type { PopupHandle } from "@/lib/oauth/popup";
 
 export type OAuthStatus =
   | "idle"
@@ -25,12 +26,11 @@ interface OAuthState {
   appName: string | null;
   status: OAuthStatus;
   errorMessage: string | null;
-  // La popup window n'est pas sérialisable. Le store n'est pas persisté
-  // donc c'est safe. `clear()` la met à null sans la fermer (la popup peut
-  // se fermer toute seule via window.close après postMessage).
-  popup: Window | null;
+  // Le handle popup n'est pas sérialisable. Le store n'est pas persisté
+  // donc c'est safe. `clear()` la met à null sans la fermer.
+  popup: PopupHandle | null;
 
-  start: (params: { slug: string; appName: string; popup: Window | null }) => void;
+  start: (params: { slug: string; appName: string; popup: PopupHandle | null }) => void;
   setStatus: (status: OAuthStatus, errorMessage?: string | null) => void;
   focusPopup: () => void;
   clear: () => void;

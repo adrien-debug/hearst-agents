@@ -8,7 +8,6 @@ import { Commandeur } from "./components/Commandeur";
 import { ChatDock } from "./components/ChatDock";
 import { PulseBar } from "./components/PulseBar";
 import { MobileBottomNav } from "./components/MobileBottomNav";
-import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { VoicePulse } from "./components/voice/VoicePulse";
 import { ToastContainer } from "@/app/components/ToastContainer";
 import { useToast } from "@/app/hooks/use-toast";
@@ -16,7 +15,6 @@ import { useGlobalHotkeys } from "@/app/hooks/use-global-hotkeys";
 import { useVoiceStore } from "@/stores/voice";
 import { useNotificationsStore } from "@/stores/notifications";
 import { OAuthExpiryBanner } from "./components/OAuthExpiryBanner";
-import { initWebVitals } from "@/app/web-vitals";
 
 function BriefingAutoTrigger() {
   useEffect(() => {
@@ -24,13 +22,6 @@ function BriefingAutoTrigger() {
     if (h >= 6 && h <= 10) {
       void fetch("/api/briefing", { method: "POST" }).catch(() => {});
     }
-  }, []);
-  return null;
-}
-
-function WebVitalsInit() {
-  useEffect(() => {
-    initWebVitals("/api/admin/vitals");
   }, []);
   return null;
 }
@@ -95,9 +86,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   return (
     <SessionProvider>
       <BriefingAutoTrigger />
-      <WebVitalsInit />
       <NotificationsHydrate />
-      <ServiceWorkerRegister />
       <ToastProvider>
         <div
           className="h-screen w-full flex flex-col overflow-hidden"
@@ -126,6 +115,24 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                 boxShadow: "var(--shadow-shell-relief)",
               }}
             >
+              {/* Watermark H en points — centré, mix-blend-mode overlay pour percer le contenu */}
+              <img
+                aria-hidden
+                alt=""
+                src="/hearst-dot-h.svg"
+                width={330}
+                height={363}
+                className="pointer-events-none absolute"
+                style={{
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 10,
+                  opacity: 0.8,
+                  userSelect: "none",
+                }}
+              />
+
               {/* Banner alerte tokens OAuth expirants — discret, dismissable */}
               <OAuthExpiryBanner />
 
