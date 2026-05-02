@@ -21,7 +21,7 @@
 
 import type { ProviderId } from "@/lib/providers/types";
 import type { ConnectorCapability } from "@/lib/connectors/platform/types";
-import type { FocalObject } from "@/lib/ui/right-panel/objects";
+import type { FocalObject } from "@/stores/focal";
 import type { ExecutionPlan } from "./types";
 import { createPlanFromIntent, approvePlan } from "./index";
 import { executePlan } from "./executor";

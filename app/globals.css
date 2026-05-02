@@ -528,41 +528,11 @@
 .poster-cta:hover .arrow { transform: translateX(4px); }
 .poster-cta.is-compact { font-size: clamp(18px, 0.469vw + 15px, 27px); }
 
-/* ─── Cockpit dense premium — direction B (Bloomberg/Linear) ──────
- * Bandeau KPI horizontal pleine largeur + bloc brief encadré filet cykan.
- * Pivot 2026-05-02 : remplace le layout tiles/dropcap/eyebrow en colonnes
- * par un cockpit data-dense — la matière vient des bordures et de la
- * tabulation des chiffres, pas d'empilements de cards. */
-.kpi-bandeau {
-  display: flex;
-  border-block: 1px solid var(--line-strong);
-  background: var(--surface-1);
-}
-.kpi-bandeau > * {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-5);
-  border-right: 1px solid var(--line-strong);
-}
-.kpi-bandeau > *:last-child { border-right: none; }
-.kpi-bandeau-num {
-  font-size: clamp(26px, 2.4vw, 36px);
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.025em;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-.kpi-bandeau-sub {
-  font-size: 11px;
-  color: var(--text-faint);
-  letter-spacing: 0.02em;
-  font-variant-numeric: tabular-nums;
-}
-
+/* ─── Cockpit éditorial — pivot 2026-05-02 ───────────────────────
+ * Le poster central porte uniquement le brief (la promesse Hearst).
+ * Les KPI vivent au right rail (GeneralDashboard) — un seul endroit.
+ * Le brief block reste filet cykan, l'incipit est mis en valeur par
+ * la première phrase en strong. */
 .poster-brief-block {
   border-left: 2px solid var(--cykan);
   padding: var(--space-4) var(--space-6);
@@ -1450,55 +1420,100 @@ body {
 }
 .kpi-tile:hover .kpi-label { color: var(--text-l1); }
 
-/* Dashboard row — list item, no card, sep on bottom only */
-.dash-row {
+/* ─── Context tiles — objets visuels du right rail (pivot 2026-05-02) ─
+ * Remplace les .dash-row textuelles tronquées à 4-6 chars dans 22vw.
+ * Lecture par signal visuel (status dot + icône typée + élévation hover) ;
+ * le nom complet est révélé via title/aria-label natif (tooltip browser). */
+.context-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: var(--space-2);
+}
+.context-tile-grid.is-asset {
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+}
+.context-tile {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 4px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--sep);
-  text-align: left;
-  cursor: pointer;
-  width: 100%;
-  transition: background 300ms ease, padding 300ms ease;
-}
-.dash-row:last-child { border-bottom: none; }
-.dash-row:hover {
+  justify-content: center;
+  border-radius: var(--radius-md);
   background: var(--layer-2);
-  padding-left: 10px;
+  border: 1px solid var(--border-soft);
+  cursor: pointer;
+  outline: none;
+  transition:
+    transform var(--duration-base) var(--ease-spring),
+    border-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard),
+    background var(--duration-base) var(--ease-standard);
 }
-.dash-row .dash-row-icon {
-  display: flex;
-  align-items: center;
-  color: var(--text-l3);
-  flex-shrink: 0;
-  transition: color 300ms ease;
+.context-tile:hover {
+  transform: translateY(-1px);
+  border-color: var(--cykan-border);
+  background: var(--cykan-bg-hover);
+  box-shadow: var(--shadow-tile-hover);
 }
-.dash-row:hover .dash-row-icon { color: var(--cykan); }
-.dash-row .dash-row-label {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 300;
+.context-tile:focus-visible {
+  border-color: var(--cykan);
+  box-shadow: 0 0 0 2px var(--cykan-bg-active), var(--shadow-tile-hover);
+}
+.context-tile.is-mission {
+  aspect-ratio: 1 / 1;
+}
+.context-tile.is-asset {
+  aspect-ratio: 4 / 5;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.context-tile-icon {
   color: var(--text-l1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color 300ms ease;
+  transition: color var(--duration-base) var(--ease-standard);
 }
-.dash-row:hover .dash-row-label { color: var(--text-l0); }
-.dash-row .dash-row-meta {
-  font-family: var(--font-satoshi);
+.context-tile:hover .context-tile-icon { color: var(--cykan); }
+.context-tile-status {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--text-l3);
+}
+.context-tile-status.is-running {
+  background: var(--cykan);
+  box-shadow: var(--glow-cyan-sm);
+  animation: pulse-status-cykan 2s ease-in-out infinite;
+}
+.context-tile-status.is-blocked {
+  background: var(--warn);
+  box-shadow: var(--glow-warn-sm);
+}
+.context-tile-status.is-failed {
+  background: var(--danger);
+  box-shadow: var(--glow-danger-sm);
+}
+.context-tile-status.is-success {
+  background: var(--color-success);
+  box-shadow: var(--glow-success-sm);
+}
+.context-tile-badge {
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-1);
   font-size: 9px;
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--text-l3);
-  flex-shrink: 0;
-  transition: color 300ms ease;
+  color: var(--text-l2);
+  font-family: var(--font-satoshi);
+  font-variant-numeric: tabular-nums;
 }
-.dash-row:hover .dash-row-meta { color: var(--cykan); opacity: 0.7; }
+.context-tile:hover .context-tile-badge { color: var(--cykan); }
+@keyframes pulse-status-cykan {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(1.25); }
+}
 
 /* Input pill itself — glass premium, soft sep border, focus glow */
 .cockpit-input-pill {
