@@ -131,6 +131,29 @@ export function getComposioInitError(): { code: string; message: string } | null
  *
  * `entityId` from the old API is the new SDK's `userId`.
  */
+/**
+ * Slugs hallucinés par le LLM (noms qu'il connaît de son entraînement) →
+ * slugs réels du SDK Composio 0.6.x. Complété au fur et à mesure des erreurs
+ * "Unable to retrieve tool with slug X" remontées en production.
+ */
+const SLUG_ALIASES: Record<string, string> = {
+  GMAIL_GET_EMAILS: "GMAIL_FETCH_EMAILS",
+  GMAIL_LIST_EMAILS: "GMAIL_FETCH_EMAILS",
+  GMAIL_READ_EMAILS: "GMAIL_FETCH_EMAILS",
+  GMAIL_GET_INBOX: "GMAIL_FETCH_EMAILS",
+  GMAIL_LIST_MESSAGES: "GMAIL_FETCH_EMAILS",
+  SLACK_GET_MESSAGES: "SLACK_LIST_MESSAGES",
+  SLACK_READ_MESSAGES: "SLACK_LIST_MESSAGES",
+  SLACK_FETCH_MESSAGES: "SLACK_LIST_MESSAGES",
+  SLACK_GET_CHANNELS: "SLACK_LIST_CHANNELS_AND_DMS",
+  SLACK_LIST_CHANNELS: "SLACK_LIST_CHANNELS_AND_DMS",
+  NOTION_GET_PAGE: "NOTION_RETRIEVE_A_PAGE",
+  NOTION_READ_PAGE: "NOTION_RETRIEVE_A_PAGE",
+  NOTION_LIST_PAGES: "NOTION_SEARCH",
+  HUBSPOT_GET_CONTACTS: "HUBSPOT_LIST_CONTACTS",
+  HUBSPOT_LIST_DEALS: "HUBSPOT_GET_ALL_DEALS",
+};
+
 export async function executeComposioAction(
   call: ComposioCallParams,
 ): Promise<ComposioResult> {
@@ -143,8 +166,16 @@ export async function executeComposioAction(
     };
   }
 
+  // Résolution des slugs hallucinés par le LLM → slug réel du SDK.
+  const resolvedAction = SLUG_ALIASES[call.action] ?? call.action;
+  if (resolvedAction !== call.action) {
+    console.warn(
+      `[Composio] Slug alias: ${call.action} → ${resolvedAction} (LLM hallucination corrigée)`,
+    );
+  }
+
   try {
-    const data = await client.tools.execute(call.action, {
+    const data = await client.tools.execute(resolvedAction, {
       userId: call.entityId,
       arguments: call.params,
       // SDK 0.6+ throw ComposioToolVersionRequiredError si on n'a pas pinné
@@ -161,10 +192,14 @@ export async function executeComposioAction(
       /(connected.*account|not.*authoriz|missing.*connection|unauthorized|no.*active.*connection)/i.test(
         msg,
       );
+    const looksLikeUnknownSlug = /unable to retrieve tool|unknown.*slug|slug.*not.*found/i.test(msg);
+    const userFacingError = looksLikeUnknownSlug
+      ? `L'action "${resolvedAction}" n'est pas disponible pour ce service. Essaie une formulation différente ou consulte la liste des actions disponibles via /apps.`
+      : msg;
     return {
       ok: false,
-      error: msg,
-      errorCode: looksLikeAuth ? "AUTH_REQUIRED" : "ACTION_FAILED",
+      error: userFacingError,
+      errorCode: looksLikeAuth ? "AUTH_REQUIRED" : looksLikeUnknownSlug ? "UNKNOWN_SLUG" : "ACTION_FAILED",
     };
   }
 }

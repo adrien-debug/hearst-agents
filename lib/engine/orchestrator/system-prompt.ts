@@ -306,10 +306,11 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
   const toolListSection =
     composioTools.length > 0
       ? composioTools
-          .slice(0, 60)
+          .slice(0, 120)
           .map((t) => `- ${t.name} : ${t.description.slice(0, 100)}`)
           .join("\n") +
-        (composioTools.length > 60 ? `\n(+${composioTools.length - 60} autres actions)` : "")
+        (composioTools.length > 120 ? `\n(+${composioTools.length - 120} autres actions)` : "") +
+        "\n\n⚠️ Règle absolue : utilise UNIQUEMENT les slugs listés ci-dessus, tels qu'écrits. N'invente jamais un slug. Si l'action n'est pas dans la liste, dis-le à l'utilisateur."
       : "(aucun outil tiers connecté pour ce tour)";
 
   const surfaceNote = surface ? `\nSurface active : ${surface}` : "";

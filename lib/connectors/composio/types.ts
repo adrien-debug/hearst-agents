@@ -24,6 +24,7 @@ export type ComposioErrorCode =
   | "SDK_NOT_INSTALLED"
   | "AUTH_REQUIRED"
   | "ACTION_FAILED"
+  | "UNKNOWN_SLUG"
   | "UNKNOWN";
 
 export interface ComposioResult {
