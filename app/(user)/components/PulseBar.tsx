@@ -124,7 +124,7 @@ export function PulseBar() {
 
   return (
     <div
-      className="app-drag relative flex items-center border-b border-[var(--border-default)] px-4 shrink-0 z-30"
+      className="relative flex items-center border-b border-[var(--border-default)] px-4 shrink-0 z-30"
       style={{ height: "var(--height-pulsebar)", background: "var(--rail)", gap: "var(--space-3)", paddingLeft: "calc(var(--space-4) + 70px)" }}
     >
       {/* Gauche : hamburger mobile uniquement (branding vit dans la sidebar) */}
@@ -132,7 +132,7 @@ export function PulseBar() {
         <button
           type="button"
           onClick={toggleLeftDrawer}
-          className="app-no-drag md:hidden w-7 h-7 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
+          className="md:hidden w-7 h-7 flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors shrink-0"
           aria-label="Ouvrir les conversations"
         >
           <GhostIconMenu className="w-4 h-4" />
@@ -143,7 +143,7 @@ export function PulseBar() {
       <button
         type="button"
         onClick={() => setCommandeurOpen(true)}
-        className="app-no-drag flex-1 min-w-0 max-w-xl mx-auto flex items-center justify-between px-3 py-1.5 border border-[var(--border-shell)] rounded-sm text-[var(--text-faint)] hover:border-[var(--cykan-border-hover)] hover:text-[var(--cykan)] transition-colors"
+        className="flex-1 min-w-0 max-w-xl mx-auto flex items-center justify-between px-3 py-1.5 border border-[var(--border-shell)] rounded-sm text-[var(--text-faint)] hover:border-[var(--cykan-border-hover)] hover:text-[var(--cykan)] transition-colors"
         title="Ouvrir le Commandeur"
       >
         <span className="t-11 truncate">Demande à Hearst…</span>
@@ -197,7 +197,7 @@ export function PulseBar() {
         {connections && (
           <a
             href="/apps"
-            className="app-no-drag hidden md:flex items-center hover:opacity-80 transition-opacity"
+            className="hidden md:flex items-center hover:opacity-80 transition-opacity"
             style={{ gap: "var(--space-2)" }}
             title={`${connections.connected}/${connections.total} services connectés — gérer dans /apps`}
             data-testid="connections-meter"
@@ -216,9 +216,7 @@ export function PulseBar() {
           </a>
         )}
 
-        <span className="app-no-drag inline-flex">
-          <NotificationBell />
-        </span>
+        <NotificationBell />
       </div>
     </div>
   );

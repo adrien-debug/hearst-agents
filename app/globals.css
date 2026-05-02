@@ -1909,7 +1909,11 @@ button:focus-visible:not(.ghost-btn-solid):not([data-no-fv-fallback]) {
 }
 
 /* Electron — drag regions pour la titlebar custom (titleBarStyle: hiddenInset).
-   Sans ces classes sur le top bar, la fenêtre n'est pas draggable. */
+   Sans ces classes sur le top bar, la fenêtre n'est pas draggable.
+   La classe .electron-titlebar fournit une zone fixe 32px en haut qui reste
+   draggable même quand le content du PulseBar re-render — fix du bug
+   "déplaçable une fois puis bloqué". pointer-events:none laisse passer les
+   clics vers les boutons en dessous (Electron lit app-region avant pointer-events). */
 .app-drag {
   -webkit-app-region: drag;
   app-region: drag;
@@ -1918,5 +1922,17 @@ button:focus-visible:not(.ghost-btn-solid):not([data-no-fv-fallback]) {
 .app-no-drag {
   -webkit-app-region: no-drag;
   app-region: no-drag;
+}
+
+.electron-titlebar {
+  position: fixed;
+  top: 0;
+  left: 80px; /* skip traffic lights macOS (x=16, width≈70) */
+  right: 0;
+  height: 32px;
+  z-index: 9999;
+  -webkit-app-region: drag;
+  app-region: drag;
+  pointer-events: none;
 }
 

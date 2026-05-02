@@ -4,14 +4,26 @@ import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 import { toast } from "@/app/hooks/use-toast";
+import { useServicesStore } from "@/stores/services";
 
 interface CockpitPosterProps {
   data: CockpitTodayPayload;
   onBriefRefreshed?: () => void;
 }
 
+const INBOX_SOURCE_IDS = ["gmail", "slack", "linear", "calendar", "github"] as const;
+type InboxSourceId = (typeof INBOX_SOURCE_IDS)[number];
+const INBOX_SOURCE_LABELS: Record<InboxSourceId, string> = {
+  gmail: "Gmail",
+  slack: "Slack",
+  linear: "Linear",
+  calendar: "Calendar",
+  github: "GitHub",
+};
+
 export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const { data: session } = useSession();
+  const services = useServicesStore((s) => s.services);
   const [now, setNow] = useState<Date | null>(null);
   const [generating, setGenerating] = useState(false);
 
@@ -24,7 +36,23 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const firstName = useMemo(() => extractFirstName(session?.user?.name, session?.user?.email), [session]);
   const dateParts = useMemo(() => formatDate(now), [now]);
 
-  const observation = useMemo(() => computeObservation(data), [data]);
+  const sourcesStatus = useMemo(() => {
+    const connected = new Set(
+      services.filter((s) => s.connectionStatus === "connected").map((s) => s.id),
+    );
+    return INBOX_SOURCE_IDS.map((id) => ({
+      id,
+      label: INBOX_SOURCE_LABELS[id],
+      connected: connected.has(id),
+    }));
+  }, [services]);
+  const connectedSources = sourcesStatus.filter((s) => s.connected);
+  const missingSources = sourcesStatus.filter((s) => !s.connected);
+
+  const observation = useMemo(
+    () => computeObservation(data, connectedSources.length),
+    [data, connectedSources.length],
+  );
   const briefReady = !data.briefing.empty && Boolean(data.briefing.body);
   const briefIncipit = useMemo(
     () => (briefReady ? truncate(stripMarkdown(data.briefing.body ?? ""), 320) : null),

@@ -92,6 +92,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           className="h-screen w-full flex flex-col overflow-hidden"
           style={{ background: "var(--bg)", color: "var(--text)" }}
         >
+          {/* Electron titlebar drag region — zone 32px fixe en haut qui reste
+              toujours draggable. pointer-events:none laisse les clics passer
+              aux boutons du PulseBar. */}
+          <div className="electron-titlebar" aria-hidden />
+
           {/* PulseBar — top fixed, état système + Cmd+K + voice + notifications */}
           <PulseBar />
 
