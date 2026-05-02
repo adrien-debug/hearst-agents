@@ -14,6 +14,7 @@ import { startBrowserTaskWorker } from "./browser-task";
 import { startInboxFetchWorker } from "./inbox-fetch";
 import { startMeetingBotWorker } from "./meeting-bot";
 import { startDailyBriefWorker } from "./daily-brief";
+import { startSimulationWorker } from "./simulation";
 import { startInboxCron } from "../scheduled/inbox-cron";
 
 let _started = false;
@@ -31,6 +32,7 @@ export function startAllWorkers(): void {
   startInboxFetchWorker();
   startMeetingBotWorker();
   startDailyBriefWorker();
+  startSimulationWorker();
   void startInboxCron();
   // startMemoryIngestWorker();  // Phase B.10 (Letta + pgvector)
   // startAssetVariantWorker();  // wrapper qui re-dispatch

@@ -146,4 +146,18 @@ export const JOB_QUEUE_CONFIGS: Record<JobKind, JobQueueConfig> = {
     removeOnComplete: 30,
     removeOnFail: { age: 7 * 24 * 3600 },
   },
+  simulation: {
+    queueName: "simulation",
+    // DeepSeek streaming long (~30-60s par run). Concurrency 2 pour ne pas
+    // saturer le ratelimit DeepSeek (30 RPM en streaming).
+    concurrency: 2,
+    // 120s : DeepSeek reasoning (~60s) + JSON parse + Zod validation +
+    // asset persist + marge.
+    maxDurationMs: 120_000,
+    retryAttempts: 1,
+    retryDelayMs: 15_000,
+    priority: 3,
+    removeOnComplete: 30,
+    removeOnFail: { age: 7 * 24 * 3600 },
+  },
 };

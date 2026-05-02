@@ -508,6 +508,6 @@ export interface StageRequestEvent extends BaseEvent {
     | { mode: "browser"; sessionId: string }
     | { mode: "meeting"; meetingId: string }
     | { mode: "kg"; entityId?: string; query?: string }
-    | { mode: "simulation"; scenario?: string }
+    | { mode: "simulation"; scenario?: string; simulationId?: string }
     | { mode: "voice"; sessionId?: string };
 }

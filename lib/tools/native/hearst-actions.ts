@@ -88,7 +88,7 @@ export function buildHearstActionTools(opts: {
 
   const startSimulation: Tool<StartSimulationArgs, unknown> = {
     description:
-      "Ouvre la Chambre de Simulation pour explorer un scénario business via DeepSeek R1 (3-5 scénarios chiffrés avec probabilités). Use this when the user wants to explore alternatives, model decisions, or evaluate strategic options.",
+      "Ouvre la Chambre de Simulation pour explorer un scénario business via DeepSeek R1 (3-5 scénarios chiffrés avec probabilités, 30-60s). Use this when the user wants to explore alternatives, model decisions, or evaluate strategic options. Pipeline async branché via worker simulation : crée une row simulation_runs, lance le job DeepSeek, persist asset markdown, complete row.",
     inputSchema: jsonSchema<StartSimulationArgs>({
       type: "object",
       required: ["scenario"],
@@ -109,12 +109,53 @@ export function buildHearstActionTools(opts: {
       },
     }),
     execute: async (args) => {
+      // 1. Créer la row simulation_runs en pending
+      const { requireServerSupabase } = await import("@/lib/platform/db/supabase");
+      const sb = requireServerSupabase();
+      const simulationId = randomUUID();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: insertErr } = await (sb.from("simulation_runs" as any) as any)
+        .insert({
+          id: simulationId,
+          user_id: scope.userId,
+          tenant_id: scope.tenantId,
+          parent_run_id: runId,
+          scenario_input: args.scenario,
+          variables: args.variables ?? [],
+          status: "pending",
+        });
+      if (insertErr) {
+        console.error("[start_simulation] insert failed:", insertErr);
+        return `Erreur création simulation : ${insertErr.message}`;
+      }
+
+      // 2. Enqueue le worker
+      const { enqueueJob } = await import("@/lib/jobs/queue");
+      try {
+        await enqueueJob({
+          jobKind: "simulation",
+          userId: scope.userId ?? "anonymous",
+          tenantId: scope.tenantId,
+          workspaceId: scope.workspaceId,
+          estimatedCostUsd: 0.05,
+          scenario: args.scenario,
+          variables: args.variables,
+          parentRunId: runId,
+          simulationId,
+        });
+      } catch (err) {
+        console.error("[start_simulation] enqueue failed:", err);
+        return `Erreur enqueue : ${err instanceof Error ? err.message : "unknown"}`;
+      }
+
+      // 3. Émettre stage_request pour basculer UI
       eventBus.emit({
         type: "stage_request",
         run_id: runId,
-        stage: { mode: "simulation", scenario: args.scenario },
+        stage: { mode: "simulation", scenario: args.scenario, simulationId },
       });
-      return "Simulation lancée. Je t'amène sur la Chambre.";
+
+      return "Simulation lancée. 30-60s pour DeepSeek R1 — résultats sur la Chambre.";
     },
   };
 

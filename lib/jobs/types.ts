@@ -23,7 +23,8 @@ export type JobKind =
   | "memory-ingest"
   | "asset-variant"
   | "inbox-fetch"
-  | "daily-brief";
+  | "daily-brief"
+  | "simulation";
 
 // ── Payloads par JobKind (discriminated union) ───────────────
 
@@ -153,6 +154,26 @@ export interface DailyBriefInput extends JobScopeFields {
   linearLimit?: number;
 }
 
+/**
+ * Simulation (Sprint 2.2) — DeepSeek R1 multi-scenario business simulation.
+ *
+ * Le worker insère une row simulation_runs (status pending → streaming →
+ * completed/failed), streame le reasoning DeepSeek chunk-par-chunk via
+ * eventBus (event simulation_reasoning_chunk), parse final JSON, persist
+ * asset markdown.
+ */
+export interface SimulationInput extends JobScopeFields {
+  jobKind: "simulation";
+  /** Description du scénario business à explorer. */
+  scenario: string;
+  /** Variables clés (budget, timeline, marché). */
+  variables?: Array<{ key: string; value: string }>;
+  /** Run ID de la conversation parent (pour eventBus events). */
+  parentRunId?: string;
+  /** simulation_runs row id pré-créé (le worker UPDATE plutôt qu'INSERT). */
+  simulationId: string;
+}
+
 export type JobPayload =
   | ImageGenInput
   | AudioGenInput
@@ -164,7 +185,8 @@ export type JobPayload =
   | MemoryIngestInput
   | AssetVariantInput
   | InboxFetchInput
-  | DailyBriefInput;
+  | DailyBriefInput
+  | SimulationInput;
 
 // ── Result canonique ─────────────────────────────────────────
 
