@@ -23,9 +23,12 @@ ON CONFLICT (id) DO UPDATE SET
 -- Si on expose plus tard une API client (ex: upload direct via signed URL
 -- generated server-side), les policies ci-dessous garantissent que l'objet
 -- ne peut être lu/écrit que par les users du tenant correspondant.
+--
+-- Postgres ne supporte pas CREATE POLICY IF NOT EXISTS — on utilise
+-- DROP POLICY IF EXISTS + CREATE POLICY pour idempotence.
 
--- Authenticated read scoped par tenantId (premier segment du path).
-CREATE POLICY IF NOT EXISTS "assets_read_own_tenant"
+DROP POLICY IF EXISTS "assets_read_own_tenant" ON storage.objects;
+CREATE POLICY "assets_read_own_tenant"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (
@@ -35,8 +38,8 @@ USING (
   )
 );
 
--- Authenticated write scoped par tenantId.
-CREATE POLICY IF NOT EXISTS "assets_write_own_tenant"
+DROP POLICY IF EXISTS "assets_write_own_tenant" ON storage.objects;
+CREATE POLICY "assets_write_own_tenant"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -46,8 +49,8 @@ WITH CHECK (
   )
 );
 
--- Authenticated delete scoped par tenantId.
-CREATE POLICY IF NOT EXISTS "assets_delete_own_tenant"
+DROP POLICY IF EXISTS "assets_delete_own_tenant" ON storage.objects;
+CREATE POLICY "assets_delete_own_tenant"
 ON storage.objects FOR DELETE
 TO authenticated
 USING (
