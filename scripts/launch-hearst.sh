@@ -56,7 +56,7 @@ echo "✅  Hearst OS prêt sur http://localhost:$PORT"
 # ── Lancer Electron ──────────────────────────────────────────────────────────
 npm run electron:compile > /dev/null 2>&1
 unset ELECTRON_RUN_AS_NODE
-"$(npm bin)/electron" . || true
+"$DIR/node_modules/.bin/electron" "$DIR" || true
 
 # ── Nettoyage ────────────────────────────────────────────────────────────────
 echo "🛑  Arrêt de Next.js (pid $NEXT_PID)..."
