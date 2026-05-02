@@ -599,8 +599,8 @@ export function TimelineRail() {
               style={{
                 width: "var(--space-2)",
                 height: "var(--space-2)",
-                background: "var(--color-success)",
-                boxShadow: "var(--shadow-status-online)",
+                background: "var(--cykan)",
+                boxShadow: "var(--shadow-neon-cykan)",
               }}
               title={firstName}
               aria-label={`${firstName} en ligne`}
