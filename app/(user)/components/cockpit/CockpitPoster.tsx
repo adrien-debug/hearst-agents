@@ -11,6 +11,8 @@ interface CockpitPosterProps {
   onBriefRefreshed?: () => void;
 }
 
+// Sources "noyau" : 5 apps hardcodées qui ont des fetchers spécialisés dans
+// le brief assembler. Affichées toujours, même non-connectées (suggestion).
 const INBOX_SOURCE_IDS = ["gmail", "slack", "linear", "calendar", "github"] as const;
 type InboxSourceId = (typeof INBOX_SOURCE_IDS)[number];
 const INBOX_SOURCE_LABELS: Record<InboxSourceId, string> = {
@@ -20,6 +22,10 @@ const INBOX_SOURCE_LABELS: Record<InboxSourceId, string> = {
   calendar: "Calendar",
   github: "GitHub",
 };
+
+function isCoreSource(id: string): id is InboxSourceId {
+  return (INBOX_SOURCE_IDS as readonly string[]).includes(id);
+}
 
 export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const { data: session } = useSession();
@@ -37,17 +43,32 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const dateParts = useMemo(() => formatDate(now), [now]);
 
   const sourcesStatus = useMemo(() => {
-    const connected = new Set(
-      services.filter((s) => s.connectionStatus === "connected").map((s) => s.id),
+    const connectedMap = new Map(
+      services.filter((s) => s.connectionStatus === "connected").map((s) => [s.id, s]),
     );
-    return INBOX_SOURCE_IDS.map((id) => ({
-      id,
+
+    // 5 sources noyau (Gmail, Calendar, Slack, GitHub, Linear) toujours affichées
+    const core = INBOX_SOURCE_IDS.map((id) => ({
+      id: id as string,
       label: INBOX_SOURCE_LABELS[id],
-      connected: connected.has(id),
+      connected: connectedMap.has(id),
     }));
+
+    // Sources connectées additionnelles (Notion, Jira, HubSpot, etc.)
+    const extras = Array.from(connectedMap.values())
+      .filter((s) => !isCoreSource(s.id))
+      .map((s) => ({
+        id: s.id,
+        label: s.name ?? s.id,
+        connected: true,
+      }));
+
+    return [...core, ...extras];
   }, [services]);
   const connectedSources = sourcesStatus.filter((s) => s.connected);
-  const missingSources = sourcesStatus.filter((s) => !s.connected);
+  // Suggestions d'ajout : seulement les sources noyau manquantes
+  // (les extras Composio sont à connecter via /apps si l'user le veut)
+  const missingSources = sourcesStatus.filter((s) => !s.connected && isCoreSource(s.id));
 
   const observation = useMemo(
     () => computeObservation(data, connectedSources.length),
