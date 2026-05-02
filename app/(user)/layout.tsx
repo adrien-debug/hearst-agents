@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { SessionProvider } from "next-auth/react";
 import { LeftPanelShell } from "./components/LeftPanelShell";
 import { RightPanel } from "./components/RightPanel";
@@ -139,7 +139,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
               <main className="flex-1 flex flex-col min-w-0 min-h-0 relative">
                 {children}
               </main>
-              <ChatDock />
+              {/* ChatDock utilise useSearchParams() — wrapper Suspense
+                  obligatoire pour le build static (Next.js 16). */}
+              <Suspense fallback={null}>
+                <ChatDock />
+              </Suspense>
             </div>
 
             <RightPanel />
