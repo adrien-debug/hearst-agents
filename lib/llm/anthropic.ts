@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { LLMProvider, ChatRequest, ChatMessage, ChatResponse, StreamChunk } from "./types";
 import { makeAbortSignal, CHAT_TIMEOUT_MS, STREAM_TIMEOUT_MS } from "./timeout";
+import { startTrace } from "@/lib/observability/langfuse";
 
 export interface ToolUseRequest {
   id: string;
@@ -53,9 +54,30 @@ export class AnthropicProvider implements LLMProvider {
       params.tools = tools;
     }
 
+    const trace = startTrace("anthropic.chatWithTools", {
+      model: req.model,
+      hasTools: Boolean(tools?.length),
+    });
+    const generation = trace?.generation({
+      name: "anthropic.messages.create",
+      model: req.model,
+      modelParameters: {
+        max_tokens: params.max_tokens,
+        temperature: params.temperature ?? null,
+        top_p: params.top_p ?? null,
+      },
+      input: { system: params.system, messages: params.messages },
+    });
+
     const timeoutMs = req.timeoutMs ?? CHAT_TIMEOUT_MS;
     const signal = makeAbortSignal(timeoutMs, req.signal);
-    const res = await this.client.messages.create({ ...params, stream: false }, { signal });
+    let res: Anthropic.Message;
+    try {
+      res = await this.client.messages.create({ ...params, stream: false }, { signal });
+    } catch (err) {
+      generation?.end({ level: "ERROR", statusMessage: err instanceof Error ? err.message : String(err) });
+      throw err;
+    }
 
     const text = res.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
@@ -65,6 +87,15 @@ export class AnthropicProvider implements LLMProvider {
     const toolCalls = res.content
       .filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use")
       .map((b) => ({ id: b.id, name: b.name, input: b.input as Record<string, unknown> }));
+
+    generation?.end({
+      output: { text, toolCalls },
+      usage: {
+        input: res.usage.input_tokens,
+        output: res.usage.output_tokens,
+        unit: "TOKENS",
+      },
+    });
 
     return {
       text,
