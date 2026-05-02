@@ -24,11 +24,6 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const firstName = useMemo(() => extractFirstName(session?.user?.name, session?.user?.email), [session]);
   const dateParts = useMemo(() => formatDate(now), [now]);
 
-  const assetsTotal = data.counts.assets;
-  const missionsTotal = data.counts.missions;
-  const reportsTotal = data.counts.reports;
-  const missionsRunning = data.missionsRunning.length;
-
   const observation = useMemo(() => computeObservation(data), [data]);
   const briefReady = !data.briefing.empty && Boolean(data.briefing.body);
   const briefIncipit = useMemo(
@@ -80,34 +75,10 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
         </div>
       </header>
 
-      {/* ─── KPI bandeau (assets / missions / reports) ───────────── */}
-      <div className="kpi-bandeau" style={{ marginTop: "var(--space-6)" }}>
-        <div>
-          <span className="poster-eyebrow">Assets</span>
-          <span className="kpi-bandeau-num">{pad2(assetsTotal)}</span>
-          <span className="kpi-bandeau-sub">Bibliothèque</span>
-        </div>
-        <div>
-          <span className="poster-eyebrow">Missions</span>
-          <span className="kpi-bandeau-num">{pad2(missionsTotal)}</span>
-          <span
-            className="kpi-bandeau-sub"
-            style={missionsRunning > 0 ? { color: "var(--cykan)" } : undefined}
-          >
-            {missionsRunning > 0 ? `${pad2(missionsRunning)} en cours` : "Aucune en cours"}
-          </span>
-        </div>
-        <div>
-          <span className="poster-eyebrow">Reports</span>
-          <span className="kpi-bandeau-num">{pad2(reportsTotal)}</span>
-          <span className="kpi-bandeau-sub">Catalogue</span>
-        </div>
-      </div>
-
-      {/* ─── Body : brief + suggestions + watchlist ──────────────── */}
+      {/* ─── Body : brief éditorial + suggestions ────────────────── */}
       <main
         className="flex-1 min-h-0 flex flex-col"
-        style={{ gap: "var(--space-4)", marginTop: "var(--space-5)" }}
+        style={{ gap: "var(--space-5)", marginTop: "var(--space-8)" }}
       >
         {observation && (
           <p
@@ -143,9 +114,15 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
           ) : (
             <>
               <p className="body" style={{ color: "var(--text-muted)" }}>
-                Aucun brief pour aujourd'hui. Hearst synthétise tes emails, messages Slack,
-                agenda, PRs et issues en un éditorial de 2 minutes.
+                <strong style={{ color: "var(--text)" }}>Hearst observe ton quotidien.</strong>{" "}
+                Connecte tes sources — je m'occupe de l'éditorial du matin.
               </p>
+              <div
+                className="poster-eyebrow"
+                style={{ color: "var(--text-decor-25)", letterSpacing: "0.18em" }}
+              >
+                Gmail · Slack · Linear · Calendar · GitHub
+              </div>
               <button
                 type="button"
                 onClick={handleGenerate}
@@ -197,33 +174,6 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
                 <span className="ca-hotkey">{s.status === "ready" ? "Prêt" : "Partiel"}</span>
               </button>
             ))}
-          </div>
-        )}
-
-        {data.watchlist.length > 0 && (
-          <div className="flex flex-col" style={{ marginTop: "auto", gap: "var(--space-2)" }}>
-            <h2 className="poster-eyebrow">Watchlist</h2>
-            <div className="kpi-bandeau">
-              {data.watchlist.slice(0, 4).map((w) => (
-                <div key={w.id}>
-                  <span className="poster-eyebrow">{w.label}</span>
-                  <span className="kpi-bandeau-num">{w.value}</span>
-                  {w.delta && (
-                    <span
-                      className="kpi-bandeau-sub"
-                      style={{
-                        color:
-                          w.anomaly?.direction === "down"
-                            ? "var(--danger)"
-                            : "var(--color-success)",
-                      }}
-                    >
-                      {w.delta}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </main>
