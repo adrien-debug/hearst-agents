@@ -11,11 +11,16 @@ const nextConfig: NextConfig = {
 };
 
 // Sentry config — wrapper pour upload des sourcemaps + tunneling.
-// Active uniquement si SENTRY_AUTH_TOKEN présent au build (sinon no-op).
-export default process.env.SENTRY_AUTH_TOKEN
+// Active uniquement si SENTRY_AUTH_TOKEN + SENTRY_PROJECT + SENTRY_ORG présents.
+// Sans ça, le DSN runtime reste actif (errors capturées) mais pas de release
+// tracking ni de sourcemaps upload.
+const sentryProject = process.env.SENTRY_PROJECT;
+const sentryOrg = process.env.SENTRY_ORG;
+
+export default process.env.SENTRY_AUTH_TOKEN && sentryProject && sentryOrg
   ? withSentryConfig(nextConfig, {
-      org: "adrien-debug",
-      project: "hearst-os",
+      org: sentryOrg,
+      project: sentryProject,
       authToken: process.env.SENTRY_AUTH_TOKEN,
       // Silencieux en build local, verbeux en CI
       silent: !process.env.CI,

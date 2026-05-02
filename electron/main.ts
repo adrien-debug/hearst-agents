@@ -82,7 +82,7 @@ async function startNextServer(): Promise<void> {
     "server.js",
   );
 
-  const env = {
+  const env: NodeJS.ProcessEnv = {
     ...process.env,
     PORT: String(serverPort),
     HOSTNAME: "127.0.0.1",
