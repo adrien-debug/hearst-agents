@@ -27,6 +27,7 @@
     "test:e2e:ci": "playwright test --reporter=list",
     "test:e2e:ui": "playwright test --ui",
     "composio:enable-all": "node --env-file=.env.local scripts/composio-bulk-enable.mjs",
+    "health": "npx tsx scripts/health-check.ts",
     "workers:audit": "bash scripts/next-worker-helper.sh",
     "workers:kill-orphans": "bash scripts/next-worker-helper.sh --kill-orphans"
   },
