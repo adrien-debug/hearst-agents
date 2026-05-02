@@ -24,6 +24,17 @@ pkill -f "next dev" 2>/dev/null || true
 pkill -f "next-server" 2>/dev/null || true
 sleep 1
 
+# ── Charger explicitement .env.local dans le shell ──────────────────────────
+# Sécurité : Terminal lancé via osascript peut avoir un environnement minimal,
+# certaines env vars n'arrivent pas jusqu'à instrumentation.ts au boot Next.js.
+# On les force ici (set -a + source) pour qu'elles soient héritées par npm.
+if [ -f "$DIR/.env.local" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$DIR/.env.local"
+  set +a
+fi
+
 # ── Démarrer Next.js ─────────────────────────────────────────────────────────
 echo "🚀  Démarrage Next.js sur le port $PORT..."
 unset ELECTRON_RUN_AS_NODE
