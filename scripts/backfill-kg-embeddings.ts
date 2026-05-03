@@ -14,31 +14,13 @@
 
 /* eslint-disable no-console */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { loadEnv } from "./lib/load-env";
 
-(() => {
-  try {
-    const content = readFileSync(join(process.cwd(), ".env.local"), "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      const key = trimmed.slice(0, eq).trim();
-      let value = trimmed.slice(eq + 1).trim();
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-      if (!process.env[key]) process.env[key] = value;
-    }
-  } catch {
-    // .env.local optional
-  }
-})();
+loadEnv();
 
 import { createClient } from "@supabase/supabase-js";
 import { upsertEmbedding } from "@/lib/embeddings/store";
+import { buildNodeExcerpt } from "@/lib/memory/kg-excerpt";
 
 interface KgNodeRow {
   id: string;
@@ -47,16 +29,6 @@ interface KgNodeRow {
   type: string;
   label: string;
   properties: Record<string, unknown> | null;
-}
-
-function buildExcerpt(node: KgNodeRow): string {
-  const props = node.properties ?? {};
-  const propsString = Object.entries(props)
-    .filter(([, v]) => v !== null && v !== undefined && v !== "")
-    .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`)
-    .slice(0, 8)
-    .join("; ");
-  return propsString ? `${node.type}: ${node.label} — ${propsString}` : `${node.type}: ${node.label}`;
 }
 
 async function main(): Promise<void> {
@@ -98,7 +70,7 @@ async function main(): Promise<void> {
 
     for (const node of data as KgNodeRow[]) {
       total++;
-      const excerpt = buildExcerpt(node);
+      const excerpt = buildNodeExcerpt(node);
       const ok = await upsertEmbedding({
         userId: node.user_id,
         tenantId: node.tenant_id,

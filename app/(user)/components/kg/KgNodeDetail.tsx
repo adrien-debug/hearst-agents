@@ -7,17 +7,7 @@
  */
 
 import { useState } from "react";
-import type { KgEdge, KgNode } from "@/lib/memory/kg";
-
-interface TimelineEvent {
-  id: string;
-  kind: "decision" | "commitment" | "related";
-  type: string;
-  label: string;
-  createdAt: string;
-  relatedNodeId: string;
-  edgeType: string;
-}
+import type { KgEdge, KgNode, TimelineEvent } from "@/lib/memory/kg";
 
 interface KgNodeDetailProps {
   node: KgNode;

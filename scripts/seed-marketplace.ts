@@ -16,29 +16,9 @@
 
 /* eslint-disable no-console */
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { loadEnv } from "./lib/load-env";
 
-// Charge .env.local manuellement (Node n'a pas de support natif)
-(() => {
-  try {
-    const content = readFileSync(join(process.cwd(), ".env.local"), "utf-8");
-    for (const line of content.split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      const key = trimmed.slice(0, eq).trim();
-      let value = trimmed.slice(eq + 1).trim();
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-      if (!process.env[key]) process.env[key] = value;
-    }
-  } catch {
-    // .env.local optional
-  }
-})();
+loadEnv();
 
 import { publishTemplate, listTemplates } from "@/lib/marketplace/store";
 import { guestArrivalPrepTemplate } from "@/lib/workflows/templates/hospitality/guest-arrival-prep";

@@ -14,27 +14,7 @@
 import { extractEntities, upsertNode, upsertEdge } from "./kg";
 import { __clearKgContextCache } from "./kg-context";
 import { upsertEmbedding } from "@/lib/embeddings/store";
-
-/**
- * Construit un texte excerpt pour embedding d'un node KG.
- * Format : "<type>: <label> — <key1>: <val1>; <key2>: <val2>"
- * (cap implicite à 4000 chars côté upsertEmbedding).
- */
-function buildNodeExcerpt(entity: {
-  type: string;
-  label: string;
-  properties?: Record<string, unknown>;
-}): string {
-  const props = entity.properties ?? {};
-  const propsString = Object.entries(props)
-    .filter(([, v]) => v !== null && v !== undefined && v !== "")
-    .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`)
-    .slice(0, 8)
-    .join("; ");
-  return propsString
-    ? `${entity.type}: ${entity.label} — ${propsString}`
-    : `${entity.type}: ${entity.label}`;
-}
+import { buildNodeExcerpt } from "./kg-excerpt";
 
 export interface IngestTurnInput {
   userId: string;
