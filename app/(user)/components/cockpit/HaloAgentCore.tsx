@@ -50,6 +50,23 @@ function isHaloAgentId(name: string | undefined): name is HaloAgentId {
   return typeof name === "string" && (HALO_AGENT_IDS as readonly string[]).includes(name);
 }
 
+// Mapping temporaire jusqu'à ce que les objets Spline soient renommés.
+// Ordre dérivé de getAllObjects() : Block 6 → 1 visible dans la scène.
+const BLOCK_TO_AGENT: Record<string, HaloAgentId> = {
+  "Block 1": "pilot",
+  "Block 2": "scribe",
+  "Block 3": "delve",
+  "Block 4": "pulse",
+  "Block 5": "warden",
+  "Block 6": "cortex",
+};
+
+function resolveAgentId(name: string | undefined): HaloAgentId | null {
+  if (!name) return null;
+  if (isHaloAgentId(name)) return name;
+  return BLOCK_TO_AGENT[name] ?? null;
+}
+
 // --- Orchestration -----------------------------------------------------------
 
 function dispatchAgent(
@@ -80,6 +97,30 @@ function dispatchAgent(
     case "cortex":
       ctx.setMode({ mode: "kg" });
       return;
+  }
+}
+
+// --- Scene adjustments -------------------------------------------------------
+
+function applySceneAdjustments(app: Application) {
+  // Grille → invisible
+  const grid = app.findObjectByName("Grid");
+  if (grid) grid.visible = false;
+
+  // Fond = couleur exacte du cockpit --bg (#050709) pour ne pas transparaître
+  // de différence de rendu à la jointure canvas/layout.
+  app.setBackgroundColor?.("#050709");
+
+  // Caméra : angle trop zénithal dans l'export par défaut.
+  // Vue 3/4 haut (style isométrique référence) :
+  //   - on recule en Z pour voir toute la constellation
+  //   - on baisse Y pour réduire le plongeon
+  //   - on réduit rotation.x (inclinaison) pour plus de perspective latérale
+  const cam = app.findObjectByName("Camera");
+  if (cam) {
+    cam.position.y = cam.position.y * 0.58;
+    cam.position.z = cam.position.z * 1.45;
+    cam.rotation.x = cam.rotation.x * 0.50;
   }
 }
 
@@ -147,15 +188,16 @@ export function HaloAgentCore() {
           scene={SPLINE_SCENE_URL}
           onLoad={(app) => {
             splineRef.current = app;
+            applySceneAdjustments(app);
             setReady(true);
           }}
           onSplineMouseDown={(e) => {
-            const name = e.target?.name;
-            if (isHaloAgentId(name)) onActivate(name);
+            const id = resolveAgentId(e.target?.name);
+            if (id) onActivate(id);
           }}
           onSplineMouseHover={(e) => {
-            const name = e.target?.name;
-            if (isHaloAgentId(name) && typeof document !== "undefined") {
+            const id = resolveAgentId(e.target?.name);
+            if (id && typeof document !== "undefined") {
               document.body.style.cursor = "pointer";
             }
           }}
