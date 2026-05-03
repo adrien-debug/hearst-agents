@@ -543,29 +543,32 @@ function Scene() {
 export function HaloAgentCore() {
   return (
     <section
-      className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center overflow-hidden select-none"
+      className="relative h-full w-full select-none"
       style={{
-        minHeight: "var(--space-120, 600px)",
-        paddingBlock: "var(--space-8)",
+        minHeight: "400px",
         background: "transparent",
       }}
       aria-label="Système agentique Hearst"
     >
-      <div className="absolute inset-0 h-full w-full">
-        <Canvas
-          shadows
-          gl={{
-            antialias: true,
-            alpha: true,
-            powerPreference: "high-performance",
-            stencil: false,
-          }}
-          dpr={[1, 1.5]} // DPR limité pour performance
-          style={{ width: "100%", height: "100%", pointerEvents: "auto" }}
-        >
-          <Scene />
-        </Canvas>
-      </div>
+      <Canvas
+        shadows
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance",
+          stencil: false,
+        }}
+        dpr={[1, 1.5]}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "absolute",
+          top: 0,
+          left: 0,
+        }}
+      >
+        <Scene />
+      </Canvas>
     </section>
   );
 }

@@ -3,7 +3,7 @@
 import { CockpitHeader } from "./CockpitHeader";
 import { ActivityStrip } from "./ActivityStrip";
 import { KPIStrip } from "./KPIStrip";
-import { QuickActionsGrid } from "./QuickActionsGrid";
+import { HaloAgentCore } from "./HaloAgentCore";
 import { CockpitAgenda } from "./CockpitAgenda";
 import { WatchlistMini } from "./WatchlistMini";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
@@ -13,10 +13,9 @@ interface CockpitHomeProps {
 }
 
 /**
- * CockpitHome — orchestrateur de la home Cockpit (mode="cockpit").
+ * CockpitHome — home Cockpit (mode="cockpit").
  *
- * Layout : Header → ActivityStrip → KPI → Actions rapides → Agenda + Watchlist.
- * Les logos d’apps restent uniquement sous le chat (`ChatInput`).
+ * Layout : Header → ActivityStrip → KPIStrip → HaloAgentCore → Agenda/Veille repliable.
  */
 export function CockpitHome({ data }: CockpitHomeProps) {
   return (
@@ -30,7 +29,6 @@ export function CockpitHome({ data }: CockpitHomeProps) {
       <CockpitHeader data={data} />
       <ActivityStrip data={data} />
 
-      {/* KPI puis séparation visuelle avant Actions rapides */}
       <div
         className="flex flex-col shrink-0"
         style={{
@@ -42,27 +40,37 @@ export function CockpitHome({ data }: CockpitHomeProps) {
         <KPIStrip data={data} />
       </div>
 
-      <div
-        className="flex flex-col min-h-0 shrink-0"
+      <div className="relative flex-1 min-h-0">
+        <HaloAgentCore />
+      </div>
+
+      <details
+        className="shrink-0 border-t"
         style={{
-          height: "var(--space-40)",
+          borderColor: "var(--border-subtle)",
           paddingTop: "var(--space-2)",
         }}
       >
-        <QuickActionsGrid data={data} />
-      </div>
-
-      {/* Split 60/40 : Agenda + Watchlist */}
-      <div
-        className="grid min-h-0 flex-1"
-        style={{
-          gridTemplateColumns: "minmax(0, 60fr) minmax(0, 40fr)",
-          gap: "var(--space-4)",
-        }}
-      >
-        <CockpitAgenda data={data} />
-        <WatchlistMini data={data} />
-      </div>
+        <summary
+          className="cursor-pointer t-11 font-light text-[var(--text-faint)] transition-opacity hover:opacity-80"
+          style={{ listStyle: "none" }}
+        >
+          Agenda et veille
+        </summary>
+        <div
+          className="grid min-h-0 shrink-0"
+          style={{
+            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+            gap: "var(--space-3)",
+            marginTop: "var(--space-3)",
+            maxHeight: "min(132px, 22vh)",
+            overflowY: "auto",
+          }}
+        >
+          <CockpitAgenda data={data} />
+          <WatchlistMini data={data} />
+        </div>
+      </details>
     </div>
   );
 }
