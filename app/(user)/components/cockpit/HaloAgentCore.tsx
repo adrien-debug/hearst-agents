@@ -27,7 +27,7 @@ const Spline = dynamic(() => import("@splinetool/react-spline"), {
 });
 
 const SPLINE_SCENE_URL =
-  "https://my.spline.design/webdiagram-MY7x5Oi0r11d3Z49mwnVYRIu/";
+  "https://prod.spline.design/NdXjSGGZFpZ2L6dl/scene.splinecode";
 
 export type HaloAgentId =
   | "pilot"
