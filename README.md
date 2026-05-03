@@ -25,7 +25,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 **Dernière session 29/04/2026 — cleanup right-panel + lint bloquant** :
 - 6 composants UI orphelins supprimés (`LibraryTabs`, `GeneralRecap`, `ActivityTimeline`, `HaloLogo3D`, `HaloLogo3D.canvas`, doublon `RightPanelContent`)
 - Sous-système reports legacy supprimé (~700 lignes : `app/api/cron/{daily-report,market-alert,market-watch}`, `app/api/reports/{route,today,health}`, `lib/engine/runtime/report-runner.ts`)
-- Hook partagé [`useRunReportSuggestion`](./app/(user)/components/right-panel/useRunReportSuggestion.ts) câblé dans les 3 vues du panneau
+- Hook partagé [`useRunReportSuggestion`](./app/(user)/components/right-panel/useRunReportSuggestion.ts) (rapports + Quick Actions) : `threadId` obligatoire côté API pour persister l’asset ; création de thread et bascule `cockpit` → `chat` si besoin pour afficher le focal.
 - Types signaux mono-domaine business → [`lib/reports/signals/types.ts`](./lib/reports/signals/types.ts)
 - Lint visuel renforcé (8 règles) + chaîné dans `npm run lint` + `prebuild` — voir section *Lint visuel* sous Tokens
 
@@ -99,7 +99,7 @@ Empilement vertical (orchestré par [`RightPanelContent`](./app/(user)/component
 | `GeneralDashboard` | [`right-panel/GeneralDashboard.tsx`](./app/(user)/components/right-panel/GeneralDashboard.tsx) | Vue défaut. 4 sections always-on (Suggestions / Missions / Livrables / Alertes), chacune avec son `EmptyRow` ou `SkeletonRow`. |
 | `AssetsGrid` | [`right-panel/AssetsGrid.tsx`](./app/(user)/components/right-panel/AssetsGrid.tsx) | Grille 2 colonnes des livrables + bandeau suggestions cliquable. |
 | `MissionsList` | [`right-panel/MissionsList.tsx`](./app/(user)/components/right-panel/MissionsList.tsx) | Liste verticale des missions avec ring SVG par état. |
-| `useRunReportSuggestion` | [`right-panel/useRunReportSuggestion.ts`](./app/(user)/components/right-panel/useRunReportSuggestion.ts) | Hook partagé : déclenche `POST /api/v2/reports/[specId]/run`, ouvre le focal sur l'asset généré. Câblé dans les 3 vues. |
+| `useRunReportSuggestion` | [`right-panel/useRunReportSuggestion.ts`](./app/(user)/components/right-panel/useRunReportSuggestion.ts) | `POST /api/v2/reports/[specId]/run` avec `threadId` (crée un thread « Rapports » si besoin pour persister l’asset), focal + passage en `chat` si on était en `cockpit`. |
 
 **État** : la vue active est persistée dans `localStorage` (`hearst.rightpanel.view`). Au changement de thread, reset vers `general` + `setData(null)`.
 
