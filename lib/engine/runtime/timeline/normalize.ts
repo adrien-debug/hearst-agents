@@ -134,6 +134,15 @@ const MAPPINGS: Record<string, Mapping> = {
     title: (e) => `Connect required: ${(e.app as string) || "unknown app"}`,
     description: (e) => (e.reason as string) || undefined,
   },
+  mission_run_request: {
+    type: "log",
+    severity: "info",
+    title: (e) => `Mission proposée : ${(e.mission_name as string) || "?"}`,
+    description: (e) =>
+      e.schedule_label
+        ? `${e.schedule_label as string} (match ${e.match_kind as string})`
+        : `match ${(e.match_kind as string) || "unknown"}`,
+  },
   delegate_enqueued: {
     type: "step_started",
     severity: "info",

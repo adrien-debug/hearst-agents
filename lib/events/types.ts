@@ -47,6 +47,8 @@ export type RunEvent =
   | ToolCallCompletedEvent
   // Inline app connect (Composio, per-user)
   | AppConnectRequiredEvent
+  // Inline mission run confirm
+  | MissionRunRequestEvent
   // Approvals
   | ApprovalRequestedEvent
   | ApprovalDecidedEvent
@@ -273,6 +275,23 @@ export interface AppConnectRequiredEvent extends BaseEvent {
   app: string;
   /** One-line message displayed above the connect button. */
   reason: string;
+}
+
+// ── Inline mission run request ───────────────────────────
+// Emitted when `run_mission` resolves a query to an existing mission.
+// The UI renders an inline confirm card with "Lancer maintenant" — clicking
+// it POSTs to /api/v2/missions/[id]/run.
+
+export interface MissionRunRequestEvent extends BaseEvent {
+  type: "mission_run_request";
+  /** ID of the matched mission (DB uuid). */
+  mission_id: string;
+  /** Display name of the mission. */
+  mission_name: string;
+  /** Cron schedule label, e.g. "Chaque vendredi à 17h". */
+  schedule_label?: string;
+  /** Match strength : "exact" | "prefix" | "substring" — drives UI copy. */
+  match_kind: "exact" | "prefix" | "substring";
 }
 
 // ── Approvals ────────────────────────────────────────────

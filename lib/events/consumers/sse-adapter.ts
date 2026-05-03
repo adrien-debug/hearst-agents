@@ -298,6 +298,16 @@ export class SSEAdapter {
           reason: event.reason,
         };
 
+      // ── Inline mission run confirm (visible — renders confirm card) ──
+      case "mission_run_request":
+        return {
+          type: "mission_run_request",
+          mission_id: event.mission_id,
+          mission_name: event.mission_name,
+          schedule_label: event.schedule_label,
+          match_kind: event.match_kind,
+        };
+
       // ── Text streaming ───────────────────────────────────
       // Strip emoji glyphs server-side before forwarding to the UI.
       // Rule 7 of the system prompt forbids them, but the model occasionally
