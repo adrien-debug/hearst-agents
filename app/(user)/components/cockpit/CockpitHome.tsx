@@ -16,10 +16,8 @@ interface CockpitHomeProps {
 /**
  * CockpitHome — orchestrateur de la home Cockpit (mode="cockpit").
  *
- * Layout : carte centrale détachée (radius lg + padding shell), contenu
- * organisé en grille 2D pour tenir dans une seule fenêtre 1440×900 sans
- * scroll. 6 zones : Header / ActivityStrip / KPIStrip /
- * QuickActions+Constellation (split horizontal) / Agenda+Watchlist (split).
+ * Layout : Header → ActivityStrip → bande KPI + agents (droite, sous Usage &
+ * Signaux) → Quick Actions pleine largeur → Agenda + Watchlist.
  */
 export function CockpitHome({ data }: CockpitHomeProps) {
   return (
@@ -32,19 +30,32 @@ export function CockpitHome({ data }: CockpitHomeProps) {
     >
       <CockpitHeader data={data} />
       <ActivityStrip data={data} />
-      <KPIStrip data={data} />
 
-      {/* Split 58/42 : QuickActions + AgentsConstellation */}
+      {/* KPI — grille 5 cols ; ligne suivante : vide sur cols 1–3, agents cols 4–5 */}
+      <div className="flex flex-col shrink-0" style={{ gap: "var(--space-2)" }}>
+        <KPIStrip data={data} />
+        <div
+          className="grid shrink-0"
+          style={{
+            gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+            gap: "var(--space-3)",
+            alignItems: "start",
+          }}
+        >
+          <div style={{ gridColumn: "1 / 4" }} aria-hidden className="min-h-0" />
+          <div style={{ gridColumn: "4 / 6", minWidth: 0 }}>
+            <AgentsConstellation data={data} layout="band" />
+          </div>
+        </div>
+      </div>
+
       <div
-        className="grid min-h-0 shrink-0"
+        className="flex flex-col min-h-0 shrink-0"
         style={{
-          gridTemplateColumns: "minmax(0, 58fr) minmax(0, 42fr)",
-          gap: "var(--space-4)",
           height: "var(--space-40)",
         }}
       >
         <QuickActionsGrid data={data} />
-        <AgentsConstellation data={data} />
       </div>
 
       {/* Split 60/40 : Agenda + Watchlist */}

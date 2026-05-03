@@ -11,6 +11,11 @@ import type { ServiceWithConnectionStatus } from "@/lib/integrations/types";
 
 interface AgentsConstellationProps {
   data: CockpitTodayPayload;
+  /**
+   * `band` — rangée compacte alignée à droite (sous Usage + Signaux).
+   * `panel` — grille 4×3 (layout historique).
+   */
+  layout?: "panel" | "band";
 }
 
 const MAX_VISIBLE = 11; // 12e tile = "+N"
@@ -105,7 +110,7 @@ function isActive(service: ServiceWithConnectionStatus, active: Set<string>): bo
   );
 }
 
-export function AgentsConstellation({ data }: AgentsConstellationProps) {
+export function AgentsConstellation({ data, layout = "panel" }: AgentsConstellationProps) {
   const services = useServicesStore((s) => s.services);
   const loaded = useServicesStore((s) => s.loaded);
   const router = useRouter();
@@ -142,21 +147,168 @@ export function AgentsConstellation({ data }: AgentsConstellationProps) {
     }
   };
 
-  return (
-    <section className="flex flex-col min-h-0 min-w-0" aria-label="Agents connectés">
-      <SectionHeader
-        label="Agents connectés"
-        action={
-          loaded ? (
+  const headerLink =
+    loaded ? (
+      <Link
+        href="/apps"
+        className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors tabular-nums"
+      >
+        {connectedCount}/{services.length} →
+      </Link>
+    ) : null;
+
+  const tileButtonClassPanel =
+    "group relative flex flex-col items-center justify-center transition-colors duration-(--duration-base) ease-(--ease-standard) focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]";
+  const tileButtonClassBand =
+    "group relative flex flex-col items-center justify-center transition-colors duration-(--duration-base) ease-(--ease-standard) focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]";
+
+  const renderTile = (s: ServiceWithConnectionStatus, mode: "panel" | "band") => {
+    const active = isActive(s, activeAgents) && s.connectionStatus === "connected";
+    const status = s.connectionStatus;
+    const titleAttr = `${s.name} — ${status === "connected" ? (active ? "actif" : "connecté") : status === "pending" ? "en attente d'OAuth" : status === "error" ? "erreur" : "déconnecté"}`;
+    return (
+      <button
+        key={s.id}
+        type="button"
+        aria-label={titleAttr}
+        onClick={() => handleClick(s)}
+        onMouseEnter={() => setHoverId(s.id)}
+        onMouseLeave={() => setHoverId(null)}
+        onFocus={() => setHoverId(s.id)}
+        onBlur={() => setHoverId(null)}
+        title={titleAttr}
+        className={mode === "band" ? tileButtonClassBand : tileButtonClassPanel}
+        style={{
+          padding: mode === "band" ? "var(--space-1)" : "var(--space-2)",
+          borderRadius: "var(--radius-pill)",
+          opacity: status === "disconnected" ? 0.4 : status === "pending" ? 0.7 : 1,
+          filter: status === "disconnected" ? "grayscale(1)" : "none",
+          boxShadow: active ? "0 0 16px 1px var(--cykan)" : "none",
+          gap: mode === "band" ? 0 : "var(--space-1)",
+          minHeight: 0,
+          minWidth: mode === "band" ? "var(--space-10)" : undefined,
+          transform: active && mode === "panel" ? "scale(1.05)" : "scale(1)",
+        }}
+      >
+        <div className={`${mode === "band" ? "" : "transition-all duration-500"} ${active ? "animate-pulse" : ""}`}>
+          <ServiceGlyph service={s} />
+        </div>
+        {mode === "panel" && (
+          <span className="t-9 font-light text-[var(--text-faint)] truncate w-full text-center group-hover:text-[var(--cykan)] transition-colors">
+            {s.name}
+          </span>
+        )}
+        <span
+          aria-hidden
+          className={
+            active
+              ? "context-tile-status is-running"
+              : status === "connected"
+                ? "sf-dot-heartbeat"
+                : status === "error"
+                  ? "context-tile-status is-failed"
+                  : status === "pending"
+                    ? "context-tile-status is-blocked"
+                    : ""
+          }
+          style={{
+            position: "absolute",
+            bottom: "var(--space-1)",
+            right: "var(--space-1)",
+            width: "var(--space-2)",
+            height: "var(--space-2)",
+            borderRadius: "var(--radius-pill)",
+            background:
+              status === "connected" && !active
+                ? "var(--cykan)"
+                : status === "pending"
+                  ? "var(--gold)"
+                  : status === "disconnected"
+                    ? "var(--text-decor-25, var(--border-default))"
+                    : undefined,
+          }}
+        />
+        {hoverId === s.id && status === "connected" && (
+          <span
+            role="tooltip"
+            className="absolute z-30 whitespace-nowrap t-9 font-light text-[var(--text-soft)]"
+            style={{
+              bottom: "calc(100% + var(--space-1))",
+              left: "50%",
+              transform: "translateX(-50%)",
+              padding: "var(--space-1) var(--space-2)",
+              background: "var(--rail)",
+              border: "1px solid var(--border-shell)",
+              borderRadius: "var(--radius-xs)",
+              boxShadow: "var(--shadow-card)",
+            }}
+          >
+            {active ? `${s.name} · en cours` : s.name}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  if (layout === "band") {
+    return (
+      <section className="flex flex-col min-h-0 min-w-0 items-end text-right" aria-label="Agents connectés">
+        <header
+          className="flex items-center justify-end gap-3 w-full shrink-0"
+          style={{ marginBottom: "var(--space-2)" }}
+        >
+          <span className="t-11 font-medium text-[var(--text-faint)]">Agents connectés</span>
+          {headerLink}
+        </header>
+        {!loaded ? (
+          <div
+            className="flex flex-wrap justify-end gap-2 w-full"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="ghost-skeleton-bar shrink-0"
+                style={{
+                  borderRadius: "var(--radius-pill)",
+                  width: "var(--space-10)",
+                  height: "var(--space-10)",
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            className="flex flex-wrap justify-end gap-x-2 gap-y-1 w-full"
+            style={{ rowGap: "var(--space-1)" }}
+          >
+            {visible.map((s) => renderTile(s, "band"))}
             <Link
               href="/apps"
-              className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors tabular-nums"
+              className="inline-flex flex-col items-center justify-center shrink-0 transition-colors hover:text-[var(--cykan)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+              style={{
+                padding: "var(--space-1)",
+                borderRadius: "var(--radius-pill)",
+                color: "var(--text-faint)",
+                minWidth: "var(--space-10)",
+                minHeight: "var(--space-10)",
+              }}
+              aria-label="Voir toutes les apps"
             >
-              {connectedCount}/{services.length} →
+              <span aria-hidden className="t-13 font-medium leading-none">
+                {hiddenCount > 0 ? `+${hiddenCount}` : "+"}
+              </span>
             </Link>
-          ) : null
-        }
-      />
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <section className="flex flex-col min-h-0 min-w-0" aria-label="Agents connectés">
+      <SectionHeader label="Agents connectés" action={headerLink} />
       {!loaded ? (
         <div
           className="grid"
@@ -179,116 +331,34 @@ export function AgentsConstellation({ data }: AgentsConstellationProps) {
           ))}
         </div>
       ) : (
-      <div
-        className="grid"
-        style={{
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-          gridTemplateRows: "repeat(3, minmax(0, 1fr))",
-          gap: "var(--space-2)",
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
-        {visible.map((s) => {
-          const active = isActive(s, activeAgents) && s.connectionStatus === "connected";
-          const status = s.connectionStatus;
-          return (
-            <button
-              key={s.id}
-              onClick={() => handleClick(s)}
-              onMouseEnter={() => setHoverId(s.id)}
-              onMouseLeave={() => setHoverId(null)}
-              onFocus={() => setHoverId(s.id)}
-              onBlur={() => setHoverId(null)}
-              title={`${s.name} — ${status === "connected" ? (active ? "actif" : "connecté") : status === "pending" ? "en attente d'OAuth" : status === "error" ? "erreur" : "déconnecté"}`}
-              className="group relative flex flex-col items-center justify-center transition-all duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
-              style={{
-                padding: "var(--space-2)",
-                borderRadius: "var(--radius-pill)",
-                opacity: status === "disconnected" ? 0.4 : status === "pending" ? 0.7 : 1,
-                filter: status === "disconnected" ? "grayscale(1)" : "none",
-                boxShadow: active ? "0 0 20px 2px var(--cykan)" : "none",
-                gap: "var(--space-1)",
-                minHeight: 0,
-                transform: active ? "scale(1.05)" : "scale(1)",
-              }}
-            >
-              <div className={`transition-all duration-500 ${active ? "animate-pulse" : ""}`}>
-                <ServiceGlyph service={s} />
-              </div>
-              <span className="uppercase tracking-widest text-[0.55rem] text-[var(--text-faint)] truncate w-full text-center group-hover:text-[var(--cykan)] transition-colors">
-                {s.name}
-              </span>
-              {/* Status dot bottom-right */}
-              <span
-                aria-hidden
-                className={
-                  active
-                    ? "context-tile-status is-running"
-                    : status === "connected"
-                      ? "sf-dot-heartbeat"
-                      : status === "error"
-                        ? "context-tile-status is-failed"
-                        : status === "pending"
-                          ? "context-tile-status is-blocked"
-                          : ""
-                }
-                style={{
-                  position: "absolute",
-                  bottom: "var(--space-1)",
-                  right: "var(--space-1)",
-                  width: "var(--space-2)",
-                  height: "var(--space-2)",
-                  borderRadius: "var(--radius-pill)",
-                  background:
-                    status === "connected" && !active
-                      ? "var(--cykan)"
-                      : status === "pending"
-                        ? "var(--gold)"
-                        : status === "disconnected"
-                          ? "var(--text-decor-25, var(--border-default))"
-                          : undefined,
-                }}
-              />
-              {hoverId === s.id && status === "connected" && (
-                <span
-                  role="tooltip"
-                  className="absolute z-30 whitespace-nowrap t-9 font-light text-[var(--text-soft)]"
-                  style={{
-                    bottom: "calc(100% + var(--space-1))",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    padding: "var(--space-1) var(--space-2)",
-                    background: "var(--rail)",
-                    border: "1px solid var(--border-shell)",
-                    borderRadius: "var(--radius-xs)",
-                    boxShadow: "var(--shadow-card)",
-                  }}
-                >
-                  {active ? `${s.name} · en cours` : s.name}
-                </span>
-              )}
-            </button>
-          );
-        })}
-        {/* +N tile */}
-        <Link
-          href="/apps"
-          className="flex flex-col items-center justify-center transition-all duration-500 hover:-translate-y-1 hover:text-[var(--cykan)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+        <div
+          className="grid"
           style={{
-            padding: "var(--space-2)",
-            borderRadius: "var(--radius-pill)",
-            color: "var(--text-faint)",
-            gap: "var(--space-1)",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gridTemplateRows: "repeat(3, minmax(0, 1fr))",
+            gap: "var(--space-2)",
+            flex: 1,
             minHeight: 0,
           }}
         >
-          <span aria-hidden className="t-13 font-medium">
-            {hiddenCount > 0 ? `+${hiddenCount}` : "+"}
-          </span>
-          <span className="uppercase tracking-widest text-[0.55rem]">Voir tout</span>
-        </Link>
-      </div>
+          {visible.map((s) => renderTile(s, "panel"))}
+          <Link
+            href="/apps"
+            className="flex flex-col items-center justify-center transition-colors duration-(--duration-base) hover:text-[var(--cykan)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+            style={{
+              padding: "var(--space-2)",
+              borderRadius: "var(--radius-pill)",
+              color: "var(--text-faint)",
+              gap: "var(--space-1)",
+              minHeight: 0,
+            }}
+          >
+            <span aria-hidden className="t-13 font-medium">
+              {hiddenCount > 0 ? `+${hiddenCount}` : "+"}
+            </span>
+            <span className="t-9 font-light text-[var(--text-faint)]">Voir tout</span>
+          </Link>
+        </div>
       )}
     </section>
   );
