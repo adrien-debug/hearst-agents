@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RunTimeline } from "../../components/RunTimeline";
 import { GhostIconChevronRight, ServiceIdGlyph } from "../../components/ghost-icons";
@@ -23,7 +23,7 @@ export default function RunDetailPage() {
   // Track run status locally to avoid including entire run object in effect deps
   const runStatus = run?.status;
 
-  const loadRun = async () => {
+  const loadRun = useCallback(async () => {
     try {
       const res = await fetch(`/api/v2/runs/${runId}`);
       if (!res.ok) throw new Error("Failed to load run");
@@ -38,12 +38,13 @@ export default function RunDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [runId]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
-    void loadRun();
-  }, [runId]);
+    queueMicrotask(() => {
+      void loadRun();
+    });
+  }, [loadRun]);
 
   // Poll only when run is live (running / awaiting_approval / awaiting_clarification)
   const liveStatuses = ["running", "awaiting_approval", "awaiting_clarification"];

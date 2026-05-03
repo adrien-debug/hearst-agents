@@ -46,24 +46,21 @@ function fmtLatency(ms?: number): string {
 
 export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
   const [showSources, setShowSources] = useState(false);
-  const prov = asset.provenance ?? {};
 
-  const sources = prov.sourceUrls ?? [];
-  const derived = prov.derivedFrom ?? [];
-
-  const hasAnyMeta = useMemo(
-    () =>
-      Boolean(
-        prov.runId ||
-          prov.missionId ||
-          prov.modelUsed ||
-          typeof prov.costUsd === "number" ||
-          typeof prov.latencyMs === "number" ||
-          sources.length > 0 ||
-          derived.length > 0,
-      ),
-    [prov, sources, derived],
-  );
+  const hasAnyMeta = useMemo(() => {
+    const prov = asset.provenance ?? {};
+    const sources = prov.sourceUrls ?? [];
+    const derived = prov.derivedFrom ?? [];
+    return Boolean(
+      prov.runId ||
+        prov.missionId ||
+        prov.modelUsed ||
+        typeof prov.costUsd === "number" ||
+        typeof prov.latencyMs === "number" ||
+        sources.length > 0 ||
+        derived.length > 0,
+    );
+  }, [asset]);
 
   if (!hasAnyMeta) {
     return (
@@ -85,6 +82,10 @@ export function AssetLineage({ asset, onOpenParent }: AssetLineageProps) {
       </div>
     );
   }
+
+  const prov = asset.provenance ?? {};
+  const sources = prov.sourceUrls ?? [];
+  const derived = prov.derivedFrom ?? [];
 
   return (
     <section

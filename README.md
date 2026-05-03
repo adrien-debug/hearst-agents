@@ -15,12 +15,15 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 | Métrique | Valeur |
 |----------|--------|
 | TypeScript | ✅ 0 erreur (`npx tsc --noEmit`) |
+| ESLint | ✅ 0 erreur, 0 warning (`npm run lint`) |
 | Lint visuel | ✅ 0 violation (`npm run lint:visual`) |
 | Build | ✅ via `npm run build` (bloque si lint visuel échoue) |
 | Pipeline runtime | Capability-first (`lib/capabilities/router.ts`) + Backend V2 multi-provider |
 | Connector Packs | 5 (finance, crm, productivity, design, developer) — 1500+ OAuth via Composio |
 | Reports | V2 catalog (`/api/v2/reports/[specId]/run`) — cron Railway *supprimés* (voir section Reports) |
 | RightPanel | Structure fixe : 4 sections always-on, empty states internes, scope strict du lint |
+
+**Dernière session 03/05/2026 — ESLint sans warning** : hooks (`briefing` ref snapshot, `AssetLineage` / `SourceCitation` dépendances, `runs/[id]` `useCallback` + `queueMicrotask` pour le fetch initial), `next/image` (watermark `layout`, icônes onboarding, image base64 `PreviewPane` avec `unoptimized`), retrait de directives ESLint inutiles dans les scripts, types morts (`oauth-refresh`, `manifestation`, `stagehand-executor`).
 
 **Dernière session 29/04/2026 — cleanup right-panel + lint bloquant** :
 - 6 composants UI orphelins supprimés (`LibraryTabs`, `GeneralRecap`, `ActivityTimeline`, `HaloLogo3D`, `HaloLogo3D.canvas`, doublon `RightPanelContent`)

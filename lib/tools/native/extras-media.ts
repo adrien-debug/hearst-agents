@@ -82,7 +82,6 @@ function checkCodeSafety(args: RunCodeArgs): { ok: true } | { ok: false; reason:
   if (args.runtime === "node") {
     try {
       // SyntaxError early — pas d'exécution
-      // eslint-disable-next-line @typescript-eslint/no-implied-eval
       new Function(args.code);
       return { ok: true };
     } catch (err) {

@@ -14,8 +14,6 @@
  * du clone (cf. lib/marketplace/store.cloneTemplate).
  */
 
-/* eslint-disable no-console */
-
 import { loadEnv } from "./lib/load-env";
 
 loadEnv();

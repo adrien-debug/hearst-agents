@@ -9,7 +9,7 @@
  */
 
 import { build } from "esbuild";
-import { writeFileSync, mkdirSync } from "fs";
+import { mkdirSync } from "fs";
 import { join } from "path";
 
 const outDir = "dist/electron";

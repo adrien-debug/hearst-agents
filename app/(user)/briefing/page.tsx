@@ -62,41 +62,45 @@ export default function BriefingPage() {
   };
 
   useEffect(() => {
-    void load();
-    void loadHistory();
+    queueMicrotask(() => {
+      void load();
+      void loadHistory();
+    });
   }, []);
 
   // Auto-poll audio quand status === "generating"
   useEffect(() => {
+    const poll = audioPollRef.current;
     const status = data?.audio?.status;
     if (status !== "generating" && status !== "pending") {
       // Reset le polling si l'audio est ready/failed/absent
-      if (audioPollRef.current.timerId) {
-        clearTimeout(audioPollRef.current.timerId);
-        audioPollRef.current.timerId = null;
+      if (poll.timerId) {
+        clearTimeout(poll.timerId);
+        poll.timerId = null;
       }
-      audioPollRef.current.attempts = 0;
+      poll.attempts = 0;
       return;
     }
 
     // Évite double-init
-    if (audioPollRef.current.timerId) return;
+    if (poll.timerId) return;
 
     const tick = async () => {
-      audioPollRef.current.attempts += 1;
-      if (audioPollRef.current.attempts > AUDIO_POLL_MAX_ATTEMPTS) {
+      poll.attempts += 1;
+      if (poll.attempts > AUDIO_POLL_MAX_ATTEMPTS) {
         toast.info("Audio en attente", "La génération audio prend plus de 5 min. Recharge la page si besoin.");
         return;
       }
       await load();
-      audioPollRef.current.timerId = setTimeout(tick, AUDIO_POLL_INTERVAL_MS);
+      poll.timerId = setTimeout(tick, AUDIO_POLL_INTERVAL_MS);
     };
-    audioPollRef.current.timerId = setTimeout(tick, AUDIO_POLL_INTERVAL_MS);
+    poll.timerId = setTimeout(tick, AUDIO_POLL_INTERVAL_MS);
 
     return () => {
-      if (audioPollRef.current.timerId) {
-        clearTimeout(audioPollRef.current.timerId);
-        audioPollRef.current.timerId = null;
+      const { timerId } = poll;
+      if (timerId) {
+        clearTimeout(timerId);
+        poll.timerId = null;
       }
     };
   }, [data?.audio?.status]);

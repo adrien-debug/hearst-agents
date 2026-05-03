@@ -253,9 +253,6 @@ class DefaultBrowserExecutor implements BrowserExecutor {
     };
 
     let bridge: PlaywrightBridge | null = null;
-    const TIMEOUT_MS = 5 * 60_000; // 5 min hard cap
-    const startedAt = Date.now();
-    const deadline = startedAt + TIMEOUT_MS;
 
     try {
       // Mode test : replay scripté.

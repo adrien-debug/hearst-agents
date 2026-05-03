@@ -25,8 +25,6 @@
  *   1 = drift détecté (tools fantômes / charte non-uniforme / events orphelins)
  */
 
-/* eslint-disable no-console */
-
 import { readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
 

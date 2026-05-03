@@ -8,12 +8,13 @@
  *   - stderr       → block warn
  *   - HTML         → iframe sandboxed (allow-scripts uniquement, jamais
  *                    allow-same-origin pour des HTML user-générés)
- *   - image base64 → <img>
+ *   - image base64 → `next/image` (data URL, `unoptimized`)
  *   - JSON         → <pre> mono (chart spec rendering = phase 2)
  *
  * Empty/loading/error états gérés inline. Pas de dépendance externe.
  */
 
+import Image from "next/image";
 import { useMemo } from "react";
 
 export type ExecResultItem = {
@@ -148,10 +149,13 @@ export function PreviewPane({ state, result, errorMessage, progress }: PreviewPa
           <span className="t-11 font-medium text-[var(--cykan)]">
             IMAGE
           </span>
-          <img
+          <Image
+            unoptimized
             src={`data:${imageResult.type};base64,${imageResult.data as string}`}
             alt="Sortie image E2B"
-            className="max-w-full rounded-md border border-[var(--border-default)]"
+            width={1600}
+            height={1200}
+            className="max-w-full h-auto rounded-md border border-[var(--border-default)]"
           />
         </section>
       )}

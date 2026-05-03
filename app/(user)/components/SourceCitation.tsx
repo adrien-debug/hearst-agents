@@ -44,12 +44,11 @@ export function SourceCitation({ sources, children }: SourceCitationProps) {
   const [activeSource, setActiveSource] = useState<Source | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Map id → source pour lookup rapide
-  const sourceById = new Map(sources.map((s) => [s.id, s]));
-
   useEffect(() => {
     const root = containerRef.current;
     if (!root) return;
+
+    const sourceById = new Map(sources.map((s) => [s.id, s]));
 
     const sups = Array.from(
       root.querySelectorAll<HTMLElement>("sup[data-source-id]"),
@@ -95,8 +94,8 @@ export function SourceCitation({ sources, children }: SourceCitationProps) {
         sup.removeEventListener("click", handleClick);
       });
     };
-    // children peut changer ; sourceById est stable tant que sources ne change pas.
-  }, [children, sourceById]);
+    // children peut changer ; sources synchronise la map.
+  }, [children, sources]);
 
   return (
     <div ref={containerRef} className="relative" data-testid="source-citation-root">

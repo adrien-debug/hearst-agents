@@ -15,7 +15,6 @@
  * Composio, ce module reste léger.
  */
 
-import { z } from "zod";
 import { listConnections } from "@/lib/connectors/composio/connections";
 import { isComposioConfigured, getComposio } from "@/lib/connectors/composio/client";
 import {
@@ -32,17 +31,16 @@ export {
   type ExpiringConnection,
 } from "@/lib/connections/oauth-constants";
 
-const RefreshResultSchema = z.object({
-  connectionId: z.string(),
-  appName: z.string(),
-  ok: z.boolean(),
+/** Résultat d'une tentative de refresh OAuth (Composio). */
+interface RefreshResult {
+  connectionId: string;
+  appName: string;
+  ok: boolean;
   /** Raison d'échec si ok=false. */
-  reason: z.string().optional(),
+  reason?: string;
   /** "refreshed" = token renouvelé, "revoked" = token révoqué (reconnecter manuellement). */
-  outcome: z.enum(["refreshed", "revoked", "unavailable"]).optional(),
-});
-
-type RefreshResult = z.infer<typeof RefreshResultSchema>;
+  outcome?: "refreshed" | "revoked" | "unavailable";
+}
 
 // ── Helpers internes ─────────────────────────────────────────
 

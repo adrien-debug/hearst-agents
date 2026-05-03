@@ -12,8 +12,6 @@
  * Usage : `npx tsx scripts/backfill-kg-embeddings.ts`
  */
 
-/* eslint-disable no-console */
-
 import { loadEnv } from "./lib/load-env";
 
 loadEnv();

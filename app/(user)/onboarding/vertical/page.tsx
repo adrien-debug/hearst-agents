@@ -11,6 +11,7 @@
  */
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { PageHeader } from "../../components/PageHeader";
 import { toast } from "@/app/hooks/use-toast";
@@ -156,7 +157,7 @@ export default function OnboardingVerticalPage() {
                   borderRadius: "var(--radius-xs)",
                 }}
               >
-                <img src={ind.icon} alt="" width={20} height={20} />
+                <Image src={ind.icon} alt="" width={20} height={20} />
               </span>
               <div style={{ flex: "1 1 auto" }}>
                 <div

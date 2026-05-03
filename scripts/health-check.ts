@@ -12,8 +12,6 @@
  * services optionnels non configurés).
  */
 
-/* eslint-disable no-console */
-
 import { loadEnv } from "./lib/load-env";
 
 loadEnv();

@@ -21,8 +21,7 @@
 import type { ExecutionPlan } from "@/lib/engine/planner/types";
 import type { MissionDefinition } from "@/lib/engine/planner/types";
 import type { Asset } from "@/lib/assets/types";
-import type { ProviderId } from "@/lib/providers/types";
-import type { FormattedOutput, FormattedSection } from "@/lib/engine/runtime/formatting/pipeline";
+import type { FormattedOutput } from "@/lib/engine/runtime/formatting/pipeline";
 import type {
   FocalObject,
   MessageDraftObject,

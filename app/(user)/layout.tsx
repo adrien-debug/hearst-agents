@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
+import Image from "next/image";
 import { SessionProvider } from "next-auth/react";
 import { LeftPanelShell } from "./components/LeftPanelShell";
 import { RightPanel } from "./components/RightPanel";
@@ -126,7 +127,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
                  Pivot 2026-05-03 : opacity 0.8 → 0.06 + zIndex 10 → 0. À 0.8
                  le watermark devenait sujet visuel central et perçait le brief.
                  Maintenant il vit en arrière-plan, présent mais discret. */}
-              <img
+              <Image
                 aria-hidden
                 alt=""
                 src="/hearst-dot-h.svg"
