@@ -17,7 +17,6 @@
  * provider managed), extractActionItems retourne [] en silence.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import { startWorker, type WorkerHandler } from "@/lib/jobs/worker-base";
 import {
   getBotStatus,
@@ -28,6 +27,7 @@ import {
 import { extractActionItems } from "@/lib/capabilities/providers/deepgram";
 import { storeAsset, loadAssetById, type Asset } from "@/lib/assets/types";
 import type { MeetingBotInput, JobResult } from "@/lib/jobs/types";
+import { generateMeetingDebrief } from "@/lib/meetings/debrief";
 
 const POLL_INTERVAL_MS = 30_000;
 const TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2h
@@ -157,13 +157,13 @@ const handler: WorkerHandler<MeetingBotInput> = {
     let editorialSummary: string | null = null;
     if (finalTranscript.trim().length > 0) {
       try {
-        editorialSummary = await summarizeMeeting({
+        editorialSummary = await generateMeetingDebrief({
           transcript: finalTranscript,
           actionItems: finalActionItems,
         });
       } catch (err) {
         console.warn(
-          "[meeting-bot] summary génération échouée :",
+          "[meeting-bot] debrief génération échouée :",
           err instanceof Error ? err.message : err,
         );
       }
@@ -231,81 +231,6 @@ function parseContentRef(asset: Asset | null): Record<string, unknown> | null {
   try {
     return JSON.parse(asset.contentRef) as Record<string, unknown>;
   } catch {
-    return null;
-  }
-}
-
-/**
- * Génère un résumé éditorial structuré (Contexte / Décisions / Actions /
- * Open questions) via Claude Sonnet à partir du transcript final + des
- * action items déjà extraits par Deepgram/Haiku.
- *
- * Pas de fallback texte si l'appel échoue → on remonte null (le worker
- * persiste editorialSummary=null, l'UI affichera le transcript brut).
- */
-const SUMMARY_SYSTEM_PROMPT = [
-  "Tu es éditeur de comptes-rendus de réunion pour un dirigeant pressé.",
-  "",
-  "Produis un résumé en 4 sections markdown, dans cet ordre exact :",
-  "",
-  "## Contexte",
-  "Une seule phrase qui pose le sujet et les participants identifiables.",
-  "",
-  "## Décisions prises",
-  "Bullets factuels — uniquement les décisions explicites validées en réunion.",
-  "Si aucune décision claire, écris « Aucune décision actée. »",
-  "",
-  "## Actions à entreprendre",
-  "Bullets au format : `- [Owner] action — deadline si nommée, sinon (à planifier).`",
-  "Si plusieurs owners, sépare par /. Aligne-toi sur les action items déjà extraits passés en input.",
-  "",
-  "## Open questions",
-  "Bullets — sujets soulevés sans réponse. Si aucun, écris « Aucune. »",
-  "",
-  "RÈGLES :",
-  "- Pas de blabla introductif/conclusif autour des sections.",
-  "- Reste factuel : pas d'inférence sur les émotions, intentions, sous-textes.",
-  "- Français, ton sobre.",
-  "- Total ≤ 350 mots.",
-].join("\n");
-
-async function summarizeMeeting(input: {
-  transcript: string;
-  actionItems: Array<{ action: string; owner?: string; deadline?: string }>;
-}): Promise<string | null> {
-  if (!input.transcript.trim()) return null;
-  if (!process.env.ANTHROPIC_API_KEY) return null;
-
-  const client = new Anthropic();
-  const userPrompt = [
-    "## Action items pré-extraits",
-    input.actionItems.length > 0
-      ? input.actionItems
-          .map(
-            (a) =>
-              `- ${a.action}${a.owner ? ` (owner: ${a.owner})` : ""}${a.deadline ? ` [deadline: ${a.deadline}]` : ""}`,
-          )
-          .join("\n")
-      : "(aucun)",
-    "",
-    "## Transcript brut",
-    input.transcript.slice(0, 30_000),
-  ].join("\n");
-
-  try {
-    const msg = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 1500,
-      system: SUMMARY_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-    });
-    const text = msg.content[0]?.type === "text" ? msg.content[0].text.trim() : "";
-    return text.length > 0 ? text : null;
-  } catch (err) {
-    console.warn(
-      "[meeting-bot] summarizeMeeting Anthropic error :",
-      err instanceof Error ? err.message : err,
-    );
     return null;
   }
 }
