@@ -1,5 +1,11 @@
 # Hearst OS — Instructions Claude
 
+## ⚠ Avant toute modification : lire `docs/AGENT-DRIVEN-DEV.md`
+
+[docs/AGENT-DRIVEN-DEV.md](docs/AGENT-DRIVEN-DEV.md) est le **document maître** qui liste les features verrouillées et les invariants à respecter. Avant de toucher à un fichier d'une feature listée comme `verrouillé`, ouvre `docs/features/<id>.md` et vérifie que tu ne contredis aucun invariant. Si tu en contredis un → demande update spec à Adrien avant de coder.
+
+Pour les features non verrouillées : mode autonomie standard ci-dessous.
+
 ## Mode autonomie (défaut)
 
 Adrien commande. Les règles ci-dessous sont des **principes de qualité**, pas des barrières bloquantes. Tu prends les décisions cohérentes au système et tu avances. Tu ne t'arrêtes pas pour demander sauf si :
