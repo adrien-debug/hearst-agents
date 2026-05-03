@@ -1,8 +1,24 @@
 /**
- * Tool Registry — In-memory registry of tool definitions.
+ * Tool Registry — In-memory registry of tool definitions for the UI palette.
  *
  * Tools are registered at module load time. The orchestrator queries
- * the registry to build a context-aware tool surface for the UI.
+ * the registry via `surface-selector` to emit a `tool_surface` event at
+ * the start of each run (consumed by the SSE adapter, the timeline persister,
+ * and the admin canvas event-reducer for state transitions).
+ *
+ * NOTE — registry currently empty. The previous seed (13 tool-IDs : browse_web,
+ * schedule_task, analyze_data, export_excel, generate_report, search_web,
+ * get_messages, get_calendar_events, get_files, generate_image, parse_document,
+ * execute_code, generate_video) was orphaned : those IDs did not match the
+ * tools actually wired into the agent (`aiTools` in `ai-pipeline.ts`).
+ *
+ * If/when the user-facing tool palette is implemented, repopulate this file
+ * with the real tools exposed to the agent : `web_search`, `generate_image`,
+ * `run_code`, `parse_document`, `generate_video`, `generate_audio`,
+ * `research_report`, `query_knowledge_graph`, `start_simulation`,
+ * `get_crypto_prices`, `get_stock_quotes`, `enrich_company`, `enrich_contact`,
+ * `start_meeting_bot`, `start_browser`, plus the Google natives
+ * (`gmail_*`, `googlecalendar_*`, `googledrive_*`).
  */
 
 import type { ToolCapability, ToolContext, ToolDefinition } from "./types";
@@ -28,157 +44,3 @@ export function getToolsByCapability(cap: ToolCapability): ToolDefinition[] {
 export function getToolById(id: string): ToolDefinition | undefined {
   return tools.find((t) => t.id === id);
 }
-
-// ── Seed tools ───────────────────────────────────────────────
-
-registerTool({
-  id: "get_messages",
-  name: "Get Messages",
-  description: "Retrieve user messages (email, Slack)",
-  capability: "messaging",
-  surfaceLabel: "Messages",
-  handler: "get_messages",
-  contexts: ["inbox", "general"],
-});
-
-registerTool({
-  id: "get_calendar_events",
-  name: "Get Calendar Events",
-  description: "Retrieve calendar events",
-  capability: "calendar",
-  surfaceLabel: "Agenda",
-  handler: "get_calendar_events",
-  contexts: ["calendar", "general"],
-});
-
-registerTool({
-  id: "get_files",
-  name: "Get Files",
-  description: "Retrieve documents from Drive",
-  capability: "documents",
-  surfaceLabel: "Documents",
-  handler: "get_files",
-  contexts: ["files", "general"],
-});
-
-registerTool({
-  id: "search_web",
-  name: "Search Web",
-  description: "Search external information on the web",
-  capability: "research",
-  surfaceLabel: "Recherche",
-  handler: "searchWeb",
-  contexts: ["research", "general"],
-});
-
-registerTool({
-  id: "generate_report",
-  name: "Generate Report",
-  description: "Create a structured report or document",
-  capability: "documents",
-  surfaceLabel: "Rapport",
-  handler: "generateReport",
-  contexts: ["research", "finance", "general"],
-});
-
-registerTool({
-  id: "export_excel",
-  name: "Export Excel",
-  description: "Export data to Excel format",
-  capability: "finance",
-  surfaceLabel: "Export",
-  handler: "exportExcel",
-  contexts: ["finance"],
-});
-
-registerTool({
-  id: "analyze_data",
-  name: "Analyze Data",
-  description: "Analyze and summarize structured data",
-  capability: "finance",
-  surfaceLabel: "Analyse",
-  handler: "analyzeData",
-  contexts: ["finance", "research"],
-});
-
-registerTool({
-  id: "schedule_task",
-  name: "Schedule Task",
-  description: "Create a scheduled automation",
-  capability: "automation",
-  surfaceLabel: "Planifier",
-  handler: "scheduleTask",
-  contexts: ["general", "inbox", "calendar"],
-});
-
-registerTool({
-  id: "generate_image",
-  name: "Generate Image",
-  description: "Generate an image from a text prompt via fal.ai",
-  capability: "documents",
-  surfaceLabel: "Image",
-  handler: "generateImage",
-  contexts: ["general", "research", "files"],
-  parameters: {
-    prompt:    { type: "string", required: true,  description: "Texte décrivant l'image à générer" },
-    style:     { type: "string", required: false, description: "Style artistique (ex: photorealistic, watercolor)" },
-    imageSize: { type: "string", required: false, description: "Dimensions : square_hd | landscape_16_9 | portrait_4_3", enum: ["square_hd", "landscape_16_9", "portrait_4_3"] },
-  },
-});
-
-registerTool({
-  id: "parse_document",
-  name: "Parse Document",
-  description: "Extract and convert a document (PDF, DOCX) to structured Markdown",
-  capability: "documents",
-  surfaceLabel: "Parser",
-  handler: "parseDocument",
-  contexts: ["files", "research", "general"],
-  parameters: {
-    fileUrl:  { type: "string", required: true,  description: "URL du fichier à parser" },
-    mimeType: { type: "string", required: false, description: "MIME type du fichier (défaut: application/pdf)" },
-  },
-});
-
-registerTool({
-  id: "execute_code",
-  name: "Execute Code",
-  description: "Run Python or Node.js code in a secure sandbox and return the output",
-  capability: "automation",
-  surfaceLabel: "Exécuter",
-  handler: "executeCode",
-  contexts: ["general", "finance", "research"],
-  parameters: {
-    code:     { type: "string", required: true,  description: "Code source à exécuter" },
-    language: { type: "string", required: false, description: "Langage : python | javascript (défaut: python)", enum: ["python", "javascript"] },
-  },
-});
-
-registerTool({
-  id: "browse_web",
-  name: "browse_web",
-  description: "Navigue de façon autonome sur le web — clique, remplit des formulaires, collecte des données. Retourne une session Browserbase live que l'user peut voir dans le Browser Stage.",
-  capability: "research",
-  surfaceLabel: "Naviguer",
-  handler: "browseWeb",
-  contexts: ["general", "research"],
-  parameters: {
-    task:     { type: "string", required: true,  description: "Description en langage naturel de la tâche de navigation" },
-    startUrl: { type: "string", required: false, description: "URL de départ optionnelle" },
-  },
-});
-
-registerTool({
-  id: "generate_video",
-  name: "Generate Video",
-  description: "Génère une vidéo courte depuis un prompt texte via HeyGen ou Runway",
-  capability: "automation",
-  surfaceLabel: "Vidéo",
-  handler: "generateVideo",
-  contexts: ["general", "research"],
-  parameters: {
-    prompt:   { type: "string", required: true,  description: "Texte décrivant ou narrant la vidéo" },
-    provider: { type: "string", required: false, description: "Fournisseur : heygen | runway (défaut: runway)", enum: ["heygen", "runway"] },
-    avatarId: { type: "string", required: false, description: "ID avatar HeyGen (heygen uniquement)" },
-  },
-});

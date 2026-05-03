@@ -151,13 +151,22 @@ export function GeneralDashboard({
           </p>
         </button>
 
-        <div className="recap-card is-static">
+        <button
+          type="button"
+          onClick={() => onViewChange("missions")}
+          disabled={failedMissions.length === 0}
+          className={`recap-card${failedMissions.length === 0 ? " is-static" : ""}`}
+        >
           <div className="recap-card-row">
             <span className="recap-card-label">Alertes</span>
-            <span className="recap-card-count">00</span>
+            <span className="recap-card-count">{failedMissions.length.toString().padStart(2, "0")}</span>
           </div>
-          <p className="recap-card-body">Tout est calme</p>
-        </div>
+          <p className="recap-card-body">
+            {failedMissions.length === 0
+              ? "Aucune alerte"
+              : `${failedMissions.length} mission${failedMissions.length > 1 ? "s" : ""} en échec`}
+          </p>
+        </button>
 
       </div>
 

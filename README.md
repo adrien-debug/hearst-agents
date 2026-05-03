@@ -582,10 +582,10 @@ npm test            # Vitest (LLM, momentum, design tokens, …)
 - **Profils Supabase** : migration `supabase/migrations/0018_model_profiles_composer_gemini.sql` — profil tête `composer_2_with_gemini_fallback` (UUID `a1e2f3a4-b5c6-4789-a012-000000000001`) → repli `gemini_3_flash_leaf` (`…000002`). Usage : `chatWithProfile(sb, "<uuid>", messages)` enchaîne les providers selon `fallback_profile_id`.
 - **Tests** : `__tests__/llm/router-providers.test.ts` (getProvider + `loadFallbackChain`), `__tests__/llm/providers-http.test.ts` (réponses HTTP mockées), `__tests__/llm/chat-with-profile-composer-gemini.test.ts` (chaîne `chatWithProfile` composer→gemini).
 
-### Momentum — `useMomentum()` / `MomentumIndicator` (cible non montée)
+### Momentum — concept produit envisagé (non livré)
 
-- **Code** : `app/hooks/use-momentum.ts`, modèle pur `app/lib/momentum-model.ts`, UI `MomentumIndicator.tsx` (fichiers existent mais **non montés** actuellement).
-- **Statut** : `TopContextBar` et `MomentumIndicator` sont des cibles de convergence future, pas l'état actuel.
+- **Statut** : aucun code livré à ce jour. Vérifié 2026-05-03 — les fichiers `app/hooks/use-momentum.ts`, `app/lib/momentum-model.ts`, `app/components/MomentumIndicator.tsx` n'existent pas dans le repo.
+- **Si réactivé** : prévoir hook `useMomentum()`, modèle pur `momentum-model.ts`, UI `MomentumIndicator.tsx` montée dans `TopContextBar`. Décision produit en suspens.
 
 ## Architecture
 
