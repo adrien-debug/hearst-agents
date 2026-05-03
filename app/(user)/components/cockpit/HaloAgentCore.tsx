@@ -20,10 +20,8 @@ import {
   PerspectiveCamera,
   Float,
   AdaptiveDpr,
-  Environment,
   useGLTF,
 } from "@react-three/drei";
-import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 export type HaloAgentId =
@@ -82,10 +80,10 @@ const FALLBACK_COLORS: ThemeColors = {
   mode: "light",
   cykan: "#2DD4BF",
   gold: "#C8A961",
-  pedestal: "#2A2A30",
-  satellite: "#9CA3AF",
-  badgeBg: "#2DD4BF",
-  badgeText: "#FFFFFF",
+  pedestal: "#FFFFFF",
+  satellite: "#E5E7EB",
+  badgeBg: "#FFFFFF",
+  badgeText: "#1C1D20",
   text: "rgba(20, 20, 25, 0.85)",
   textMuted: "rgba(20, 20, 25, 0.55)",
 };
@@ -99,31 +97,19 @@ function readThemeColors(mode: ThemeMode): ThemeColors {
 
   const cykan = get("--cykan", "#2DD4BF");
   const gold = get("--gold", "#C8A961");
-
-  if (mode === "light") {
-    return {
-      mode,
-      cykan,
-      gold,
-      pedestal: "#2A2A30",
-      satellite: "#9CA3AF",
-      badgeBg: cykan,
-      badgeText: "#FFFFFF",
-      text: "rgba(20, 20, 25, 0.85)",
-      textMuted: "rgba(20, 20, 25, 0.55)",
-    };
-  }
+  const text = get("--text-l1", mode === "light" ? "rgba(20, 20, 25, 0.85)" : "rgba(255, 255, 255, 0.78)");
+  const textMuted = get("--text-muted", mode === "light" ? "rgba(20, 20, 25, 0.55)" : "rgba(255, 255, 255, 0.55)");
 
   return {
     mode,
     cykan,
     gold,
-    pedestal: "#FAFAFA",
-    satellite: "#CFD1D6",
-    badgeBg: "rgba(255, 255, 255, 0.92)",
+    pedestal: get("--bg-elev", mode === "light" ? "#FAFAFB" : "#3A3A44"),
+    satellite: get("--text-decor-25", mode === "light" ? "rgba(28, 29, 32, 0.25)" : "rgba(255, 255, 255, 0.25)"),
+    badgeBg: get("--surface", mode === "light" ? "#FFFFFF" : "#111111"),
     badgeText: cykan,
-    text: get("--text-l1", "rgba(255, 255, 255, 0.78)"),
-    textMuted: get("--text-muted", "rgba(255, 255, 255, 0.55)"),
+    text,
+    textMuted,
   };
 }
 
@@ -181,51 +167,50 @@ function useResponsiveLayout(): ResponsiveLayout {
 function useMaterials(colors: ThemeColors) {
   return useMemo(() => {
     const isLight = colors.mode === "light";
-    
-    // Socles : Aspect céramique/verre dépoli
-    const surface = new THREE.MeshPhysicalMaterial({
-      color: colors.pedestal,
-      roughness: 0.1,
-      metalness: 0.1,
-      transmission: 0.2,
-      thickness: 0.5,
-      clearcoat: 1,
-      clearcoatRoughness: 0.1,
+
+    // Standard partout : pas de clearcoat / transmission, ~3× moins de coût
+    // shader que MeshPhysicalMaterial. Suffit pour un look céramique propre.
+    const surface = new THREE.MeshStandardMaterial({
+      color: "#FAFAFB",
+      roughness: 0.32,
+      metalness: 0.08,
     });
 
-    const surfaceMuted = new THREE.MeshPhysicalMaterial({
-      color: colors.satellite,
-      roughness: 0.3,
-      metalness: 0.2,
-      clearcoat: 0.5,
+    const surfaceMuted = new THREE.MeshStandardMaterial({
+      color: "#E5E7EB",
+      roughness: 0.55,
+      metalness: 0,
     });
 
-    // Cœurs : Aspect gemme émissive
-    const cykanCore = new THREE.MeshPhysicalMaterial({
+    const silverIcon = new THREE.MeshStandardMaterial({
+      color: "#E2E8F0",
+      roughness: 0.28,
+      metalness: 0.85,
+    });
+
+    const cykanCore = new THREE.MeshStandardMaterial({
       color: colors.cykan,
-      roughness: 0,
-      metalness: 0.8,
+      roughness: 0.22,
+      metalness: 0.4,
       emissive: colors.cykan,
-      emissiveIntensity: isLight ? 2.5 : 1.8,
-      clearcoat: 1,
+      emissiveIntensity: isLight ? 0.35 : 0.7,
     });
 
-    const goldCore = new THREE.MeshPhysicalMaterial({
+    const goldCore = new THREE.MeshStandardMaterial({
       color: colors.gold,
-      roughness: 0.1,
-      metalness: 0.9,
+      roughness: 0.2,
+      metalness: 0.7,
       emissive: colors.gold,
-      emissiveIntensity: isLight ? 1.5 : 1.2,
-      clearcoat: 1,
+      emissiveIntensity: isLight ? 0.4 : 0.9,
     });
 
     const cykanGlow = new THREE.MeshBasicMaterial({
       color: colors.cykan,
       transparent: true,
-      opacity: isLight ? 0.4 : 0.3,
+      opacity: isLight ? 0.22 : 0.32,
     });
 
-    return { surface, surfaceMuted, cykanCore, goldCore, cykanGlow };
+    return { surface, surfaceMuted, silverIcon, cykanCore, goldCore, cykanGlow };
   }, [colors]);
 }
 
@@ -249,20 +234,20 @@ function AgentPedestal({ agent, isHovered, onHover, materials, colors, orbitRadi
 
   const baseRef = useRef<THREE.Group>(null);
   const iconRef = useRef<THREE.Group>(null);
-  const accentMat = agent.tone === "primary" ? materials.cykanCore : materials.goldCore;
+  const iconMat = materials.silverIcon;
 
   const { scene } = useGLTF(`/models/${agent.id}.glb`);
   const clonedScene = useMemo(() => {
     const root = scene.clone(true);
     root.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
-        obj.material = accentMat;
+        obj.material = iconMat;
         obj.castShadow = true;
         obj.receiveShadow = true;
       }
     });
     return root;
-  }, [scene, accentMat]);
+  }, [scene, iconMat]);
 
   useFrame((_, delta) => {
     const d = Math.min(delta, 0.05);
@@ -289,8 +274,8 @@ function AgentPedestal({ agent, isHovered, onHover, materials, colors, orbitRadi
 
       <group ref={baseRef}>
         <RoundedBox
-          args={[2.2, 0.18, 2.2]}
-          radius={0.08}
+          args={[2.4, 0.35, 2.4]}
+          radius={0.15}
           smoothness={4}
           material={materials.surface}
           castShadow
@@ -298,13 +283,13 @@ function AgentPedestal({ agent, isHovered, onHover, materials, colors, orbitRadi
         />
 
         {isHovered && (
-          <mesh position={[0, -0.07, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[1.32, 1.55, 48]} />
+          <mesh position={[0, -0.15, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[1.4, 1.6, 48]} />
             <primitive object={materials.cykanGlow} attach="material" />
           </mesh>
         )}
 
-        <group ref={iconRef} position={[0, 0.6, 0]}>
+        <group ref={iconRef} position={[0, 0.5, 0]}>
           <primitive object={clonedScene} scale={isHovered ? 1.4 : 1.2} />
           
           {/* On garde les petits satellites pour le style Hearst */}
@@ -349,40 +334,26 @@ function AgentPedestal({ agent, isHovered, onHover, materials, colors, orbitRadi
 
 function CenterCore({ materials, colors }: { materials: Materials; colors: ThemeColors }) {
   const groupRef = useRef<THREE.Group>(null);
-  const ringRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
     if (groupRef.current) {
-      const scale = 1 + Math.sin(t * 1.2) * 0.04;
+      const scale = 1 + Math.sin(t * 1.2) * 0.02;
       groupRef.current.scale.setScalar(scale);
-    }
-    if (ringRef.current) {
-      ringRef.current.rotation.z = t * 0.35;
     }
   });
 
   return (
     <group ref={groupRef}>
-      <Float speed={1.4} rotationIntensity={0.1} floatIntensity={0.22}>
-        <group>
-          <RoundedBox args={[2, 0.14, 2]} radius={0.06} position={[0, 0.07, 0]} material={materials.surface} castShadow receiveShadow />
-          <RoundedBox args={[1.4, 0.12, 1.4]} radius={0.05} position={[0, 0.21, 0]} material={materials.surface} castShadow receiveShadow />
-          <RoundedBox args={[0.9, 0.1, 0.9]} radius={0.04} position={[0, 0.34, 0]} material={materials.surface} castShadow receiveShadow />
-
-          <mesh position={[0, 0.55, 0]} castShadow>
-            <sphereGeometry args={[0.3, 32, 32]} />
-            <primitive object={materials.cykanCore} attach="material" />
-          </mesh>
-
-          <mesh ref={ringRef} position={[0, 0.55, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[0.5, 0.62, 64]} />
-            <primitive object={materials.cykanGlow} attach="material" />
-          </mesh>
+      <Float speed={1.4} rotationIntensity={0.05} floatIntensity={0.1}>
+        <group position={[0, -0.2, 0]}>
+          <RoundedBox args={[3.2, 0.25, 3.2]} radius={0.2} material={materials.surface} castShadow receiveShadow />
+          <RoundedBox args={[2.4, 0.2, 2.4]} radius={0.15} position={[0, 0.22, 0]} material={materials.surface} castShadow receiveShadow />
+          <RoundedBox args={[1.6, 0.15, 1.6]} radius={0.1} position={[0, 0.4, 0]} material={materials.surface} castShadow receiveShadow />
         </group>
       </Float>
 
-      <Html position={[0, 1.15, 0]} center zIndexRange={[100, 0]} wrapperClass="halo-core-badge-wrap">
+      <Html position={[0, 0.8, 0]} center zIndexRange={[100, 0]} wrapperClass="halo-core-badge-wrap">
         <div
           className="halo-core-badge"
           data-mode={colors.mode}
@@ -412,17 +383,15 @@ function OrbitTrack({ orbitRadius, colors }: { orbitRadius: number; colors: Them
     return points;
   }, [orbitRadius]);
 
+  // THREE.Color n'accepte pas le hex à alpha (#RRGGBBAA) ni rgba(),
+  // donc on extrait un hex pur depuis le DS et on contrôle l'alpha via `opacity`.
   return (
     <Line
       points={orbitPoints}
-      color={colors.cykan}
+      color={colors.mode === "light" ? "#E5E7EB" : "#FFFFFF"}
       lineWidth={1}
-      opacity={0.32}
+      opacity={colors.mode === "light" ? 0.55 : 0.22}
       transparent
-      dashed
-      dashScale={8}
-      dashSize={0.2}
-      gapSize={0.12}
     />
   );
 }
@@ -471,19 +440,34 @@ function Scene({ mode }: { mode: ThemeMode }) {
   return (
     <Suspense fallback={null}>
       <ResponsiveCamera layout={layout} />
-      <Environment preset="city" />
 
-      <ambientLight intensity={0.4} />
-      <spotLight
-        position={[15, 20, 15]}
-        angle={0.3}
-        penumbra={1}
-        intensity={2}
+      {/* Lights — pas d'Environment HDRI (lourd à charger + au shading).
+          On compense avec un trio key/fill/rim qui donne assez de relief
+          aux MeshStandardMaterial sans IBL. */}
+      <ambientLight intensity={0.55} />
+      <directionalLight
+        position={[10, 14, 8]}
+        intensity={1.6}
         castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-camera-left={-14}
+        shadow-camera-right={14}
+        shadow-camera-top={14}
+        shadow-camera-bottom={-14}
+        shadow-bias={-0.001}
       />
-      <pointLight position={[-10, -10, -10]} color={colors.cykan} intensity={1} />
+      <directionalLight position={[-8, 6, -10]} intensity={0.45} />
+      <pointLight position={[0, -4, 0]} color={colors.cykan} intensity={0.6} distance={18} />
 
-      <ContactShadows position={[0, -0.05, 0]} opacity={0.4} scale={30} blur={2.5} far={4} />
+      <ContactShadows
+        position={[0, -0.01, 0]}
+        opacity={0.14}
+        scale={36}
+        blur={1.6}
+        far={4}
+        resolution={512}
+        color="#000000"
+      />
 
       <AutoRotateGroup paused={hoveredId !== null}>
         <CenterCore materials={materials} colors={colors} />
@@ -500,15 +484,6 @@ function Scene({ mode }: { mode: ThemeMode }) {
           />
         ))}
       </AutoRotateGroup>
-
-      <EffectComposer>
-        <Bloom 
-          luminanceThreshold={1} 
-          mipmapBlur 
-          intensity={0.8} 
-          radius={0.4}
-        />
-      </EffectComposer>
     </Suspense>
   );
 }
@@ -533,7 +508,7 @@ export function HaloAgentCore({ mode = "dark" }: HaloAgentCoreProps = {}) {
           powerPreference: "high-performance",
           stencil: false,
         }}
-        dpr={[1, 1.75]}
+        dpr={[1, 1.5]}
         style={{
           width: "100%",
           height: "100%",
