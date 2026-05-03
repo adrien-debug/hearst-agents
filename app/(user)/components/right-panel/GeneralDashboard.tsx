@@ -1,19 +1,16 @@
 "use client";
 
 /**
- * GeneralDashboard — rail droit cockpit/chat (post-refonte 2026-05-03).
+ * GeneralDashboard — rail droit cockpit/chat (cleanup 2026-05-03 v2).
  *
- * Structure : 3 KPIs grid cliquables + 4 modules sémantiques empilés.
+ * 4 modules sémantiques empilés (le bloc KPI 3-col Assets/Missions/Reports
+ * a été déplacé au centre dans <KPIStrip> — anti-doublon, vue d'ensemble
+ * dans le Stage, contextualisation dans le rail).
  *
- *   ① KPIs           Assets / Missions / Reports — chiffre + label, hover cykan
- *   ② Maintenant     coreState live + heure + 1 session active si présente
- *   ③ Aujourd'hui    Brief + prochain meeting + inbox count (CockpitTodayPayload)
- *   ④ Activité       3 derniers events significatifs (assets + missions runs)
- *   ⑤ Suggestion     1 heuristique client (brief non lu, mission échouée)
- *
- * Les recap-cards Missions/Assets/Alertes ont été retirées : elles
- * faisaient doublon avec les KPIs (chiffres) et avec les modules sémantiques
- * (qui contextualisent au lieu de juste compter).
+ *   ① Maintenant     coreState live + heure + 1 session active si présente
+ *   ② Aujourd'hui    Brief + prochain meeting + inbox count (CockpitTodayPayload)
+ *   ③ Activité       3 derniers events significatifs (assets + missions runs)
+ *   ④ Suggestion     1 heuristique client (brief non lu, mission échouée)
  *
  * Aucune mention de coût/budget/argent — pivot 2026-05-03, l'utilisateur
  * ne veut pas de friction financière dans le flow cockpit.
@@ -67,17 +64,16 @@ export function GeneralDashboard({
   missions: _missions,
   onViewChange = () => {},
 }: GeneralDashboardProps) {
+  // onViewChange : préservé dans l'API (callers ContextRail le passent encore),
+  // plus utilisé localement depuis le retrait du bloc KPI 3-col.
+  void onViewChange;
   const coreState = useRuntimeStore((s) => s.coreState);
   const stageMode = useStageStore((s) => s.current.mode);
   const voiceActive = useVoiceStore((s) => s.voiceActive);
 
-  // ── Counts ────────────────────────────────────────────────
-  const assetsCount = Array.isArray(_assets) ? _assets.length : 0;
-  const missionsCount = Array.isArray(_missions) ? _missions.length : 0;
-  const reportsCount = Array.isArray(_assets)
-    ? (_assets as DashboardAsset[]).filter((a) => a.type === "report").length
-    : 0;
-
+  // ── Counts (utilisés uniquement pour activeMissions désormais —
+  // le bloc KPI 3-col Assets/Missions/Reports a migré au centre du
+  // Cockpit dans <KPIStrip> pour éviter le doublon visuel). ────────
   const activeMissions = Array.isArray(_missions) ? (_missions as DashboardMission[]) : [];
   const runningMissions = activeMissions.filter((m) => m.opsStatus === "running");
   const failedMissions = activeMissions.filter((m) => m.opsStatus === "failed");
@@ -192,38 +188,7 @@ export function GeneralDashboard({
       className="flex flex-col"
       style={{ padding: "var(--space-8) var(--space-5)", gap: "var(--space-6)" }}
     >
-      {/* ① KPIs grid cliquables — Assets / Missions / Reports */}
-      <div className="grid grid-cols-3" style={{ gap: "var(--space-3)" }}>
-        {[
-          { n: assetsCount, label: "Assets", view: "assets" as const },
-          { n: missionsCount, label: "Missions", view: "missions" as const },
-          { n: reportsCount, label: "Reports", view: "reports" as const },
-        ].map(({ n, label, view }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => onViewChange(view)}
-            className="flex flex-col items-start text-left transition-colors group"
-            style={{ gap: "var(--space-1)" }}
-            data-testid={`dashboard-kpi-${view}`}
-          >
-            <span
-              className="t-18 font-medium tabular-nums transition-colors group-hover:text-[var(--cykan)]"
-              style={{ color: "var(--text-l1)", lineHeight: "var(--leading-tight)" }}
-            >
-              {n.toString().padStart(2, "0")}
-            </span>
-            <span
-              className="t-11 font-light transition-colors group-hover:text-[var(--text-soft)]"
-              style={{ color: "var(--text-faint)" }}
-            >
-              {label}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* ② Maintenant */}
+      {/* ① Maintenant */}
       <DashboardSection label="Maintenant">
         <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
           <BulletDot tone="cykan" pulse={coreState !== "idle"} />
@@ -256,7 +221,7 @@ export function GeneralDashboard({
         )}
       </DashboardSection>
 
-      {/* ③ Aujourd'hui */}
+      {/* ② Aujourd'hui */}
       {today && (
         <DashboardSection label="Aujourd'hui">
           <ul className="flex flex-col" style={{ gap: "var(--space-2)" }}>
@@ -290,7 +255,7 @@ export function GeneralDashboard({
         </DashboardSection>
       )}
 
-      {/* ④ Activité récente */}
+      {/* ③ Activité récente */}
       <DashboardSection label="Activité récente">
         {activityItems.length === 0 ? (
           <p className="t-11 font-light" style={{ color: "var(--text-faint)" }}>
@@ -321,7 +286,7 @@ export function GeneralDashboard({
         )}
       </DashboardSection>
 
-      {/* ⑤ Suggestion */}
+      {/* ④ Suggestion */}
       {suggestion && (
         <DashboardSection label="Suggestion">
           <button

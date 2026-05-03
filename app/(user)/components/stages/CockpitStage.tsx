@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CockpitPoster } from "../cockpit/CockpitPoster";
+import { CockpitHome } from "../cockpit/CockpitHome";
 import { OnboardingTour } from "../OnboardingTour";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
@@ -76,6 +76,8 @@ export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
   }, [initialData]);
 
   const isHospitality = data?.industry === "hospitality";
+  // refetch est conservé pour usage futur (refresh inbox, suggestions live)
+  void refetch;
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
@@ -83,9 +85,7 @@ export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
       {isHospitality && <HospitalityBadge />}
       {loading && <CockpitSkeleton />}
       {!loading && error && <CockpitErrorState message={error} />}
-      {!loading && !error && data && (
-        <CockpitPoster data={data} onBriefRefreshed={refetch} />
-      )}
+      {!loading && !error && data && <CockpitHome data={data} />}
     </div>
   );
 }

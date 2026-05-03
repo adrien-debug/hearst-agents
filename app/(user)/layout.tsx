@@ -102,11 +102,10 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           <PulseBar />
 
           {/* Row 3 colonnes : TimelineRail / Stage / ContextRail
-             Pivot UI 2026-05-01 : suppression de la coquille rounded-2xl autour
-             du centre + des paddings/gaps extérieurs. Le centre devient un vrai
-             canvas bord-à-bord ; la séparation avec les rails est portée par un
-             simple 1px var(--border-shell), pas par une carte flottante avec
-             shadow halo cykan. Mobile : pb-20 préservé pour MobileBottomNav. */}
+             Pivot UI 2026-05-03 : le Stage central devient une carte
+             détachée — radius lg, shadow douce, padding shell vertical
+             16px (top + bot). Les rails restent bord-à-bord. Mobile :
+             pb-20 préservé pour MobileBottomNav. */}
           <div
             className="flex-1 flex min-h-0 w-full overflow-hidden pb-20 md:pb-0"
             style={{ background: "var(--bg)", color: "var(--text)" }}
@@ -114,11 +113,13 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
             <LeftPanelShell />
 
             <div
-              className="stage-cool-paper flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden border-l border-r border-[var(--border-subtle)]"
+              className="stage-cool-paper flex-1 flex flex-col min-w-0 min-h-0 relative overflow-hidden"
               style={{
-                background: "var(--bg-elev)",
+                background: "var(--surface)",
                 color: "var(--text)",
-                boxShadow: "var(--shadow-shell-relief)",
+                margin: "var(--space-4) 0",
+                borderRadius: "var(--radius-lg)",
+                boxShadow: "var(--shadow-stage-card)",
               }}
             >
               {/* Watermark H en points — ambient, behind content.

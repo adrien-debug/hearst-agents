@@ -120,6 +120,8 @@
   --space-20: 80px;
   --space-24: 120px;
   --space-32: 160px;
+  --space-40: 192px; /* zone Quick Actions / Constellation cockpit */
+  --space-48: 224px;
 
   /* ─── Hearst Connect — Layout shell (3 zones) ─────────────────
    * Sidebars : largeurs égales, fluides ~20vw (18–22% selon viewport),
@@ -215,6 +217,11 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     inset 1px 0 0 rgba(255, 255, 255, 0.04),
     inset -1px 0 0 rgba(255, 255, 255, 0.04);
+  /* Stage card — carte centrale flottante (radius + padding shell).
+   * Pivot 2026-05-03 : la zone Stage devient une carte détachée des rails. */
+  --shadow-stage-card:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 8px 28px rgba(0, 0, 0, 0.22);
   /* Rail shells — inset borders séparateurs de sections */
   --shadow-rail-shell: inset 0 0 0 1px var(--border-soft);
   --shadow-divider-bottom: inset 0 -1px 0 0 var(--border-soft);
@@ -432,6 +439,10 @@
   --shadow-card: 0 1px 2px rgba(28, 29, 32, 0.04),
                  0 12px 24px rgba(28, 29, 32, 0.06);
   --shadow-input-focus: 4px 4px 0px var(--cyan-accent);
+  /* Stage card — version light : shadows plus douces sur fond clair */
+  --shadow-stage-card:
+    0 1px 2px rgba(28, 29, 32, 0.04),
+    0 8px 28px rgba(28, 29, 32, 0.05);
 }
 
 /* ─── Cockpit Poster — typo éditoriale ────────────────────────────
