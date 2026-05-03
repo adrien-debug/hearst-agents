@@ -17,6 +17,7 @@ import type { RunEventBus } from "@/lib/events/bus";
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import { getScheduledMissions } from "@/lib/engine/runtime/state/adapter";
 import { scheduleDailyBriefing } from "@/lib/engine/runtime/briefing-scheduler";
+import { loadAssetsForScope } from "@/lib/assets/types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AiToolMap = Record<string, Tool<any, any>>;
@@ -186,8 +187,106 @@ export function buildMissionTools(opts: BuildMissionToolsOpts): AiToolMap {
     },
   };
 
+  // find_asset — recherche d'assets persistés (rapports, briefs, documents,
+  // images, vidéos générés). Read-only, retourne les top matches avec id +
+  // titre + kind + thread + date. Claude peut ensuite répondre avec un
+  // résumé et un lien vers /assets/{id} pour ouverture.
+  const findAsset: Tool<{ query: string; kind?: string; limit?: number }, string> = {
+    description:
+      "Recherche dans les assets persistés de l'utilisateur (rapports, briefs, documents, images, vidéos générés via le chat ou les missions). Fuzzy match sur le titre. À utiliser quand il dit : « retrouve mon rapport pipeline d'hier », « ouvre le brief Sequoia », « cherche l'image du logo H ». Retourne les top 5 matches avec id, titre, kind, thread, date — Claude peut ensuite proposer le lien /assets/{id} ou résumer le contenu.",
+    inputSchema: jsonSchema<{ query: string; kind?: string; limit?: number }>({
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: {
+          type: "string",
+          description:
+            "Le terme de recherche tel que l'utilisateur l'a écrit. Ex: « rapport pipeline », « logo H », « brief sequoia ».",
+        },
+        kind: {
+          type: "string",
+          enum: ["report", "brief", "document", "page", "code", "snippet", "message", "spreadsheet", "task", "event"],
+          description:
+            "Filtre optionnel par type d'asset. Si omis, cherche dans tous les types.",
+        },
+        limit: {
+          type: "number",
+          description: "Nombre max de résultats à retourner (défaut 5, max 20).",
+        },
+      },
+    }),
+    execute: async (input) => {
+      const limit = Math.min(Math.max(input.limit ?? 5, 1), 20);
+      const all = await loadAssetsForScope({
+        tenantId: scope.tenantId ?? "dev-tenant",
+        workspaceId: scope.workspaceId ?? "dev-workspace",
+        userId: scope.userId,
+        limit: 100,
+      });
+
+      const filtered = input.kind ? all.filter((a) => a.kind === input.kind) : all;
+
+      if (filtered.length === 0) {
+        return JSON.stringify({
+          ok: false,
+          reason: "no_assets",
+          query: input.query,
+          kindFilter: input.kind ?? null,
+          message:
+            "Aucun asset persisté. Suggérer d'en générer un via le chat (rapport, brief, etc.).",
+        });
+      }
+
+      const q = normalize(input.query);
+      const scored = filtered
+        .map((a) => {
+          const t = normalize(a.title);
+          let score = 0;
+          if (t === q) score = 100;
+          else if (t.startsWith(q)) score = 80;
+          else if (t.includes(q)) score = 60;
+          else if (q.includes(t)) score = 40;
+          return { asset: a, score };
+        })
+        .filter((x) => x.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit);
+
+      if (scored.length === 0) {
+        return JSON.stringify({
+          ok: false,
+          reason: "no_match",
+          query: input.query,
+          recent: filtered.slice(0, 5).map((a) => ({
+            id: a.id,
+            title: a.title,
+            kind: a.kind,
+            createdAt: a.createdAt,
+          })),
+          message:
+            "Aucun match. Lister les assets récents à l'utilisateur ou suggérer de reformuler la requête.",
+        });
+      }
+
+      return JSON.stringify({
+        ok: true,
+        count: scored.length,
+        matches: scored.map(({ asset, score }) => ({
+          id: asset.id,
+          title: asset.title,
+          kind: asset.kind,
+          summary: asset.summary?.slice(0, 200),
+          threadId: asset.threadId,
+          createdAt: asset.createdAt,
+          matchScore: score,
+        })),
+      });
+    },
+  };
+
   return {
     run_mission: runMission,
     request_daily_brief: requestDailyBrief,
+    find_asset: findAsset,
   };
 }
