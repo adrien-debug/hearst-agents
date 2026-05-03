@@ -31,12 +31,12 @@ import {
 import * as THREE from "three";
 
 export type HaloAgentId =
-  | "mission-planner"
-  | "data-miner"
-  | "report-generator"
-  | "market-watch"
-  | "asset-monitor"
-  | "memory-knowledge";
+  | "pilot"
+  | "delve"
+  | "scribe"
+  | "pulse"
+  | "warden"
+  | "cortex";
 
 export interface HaloAgentDef {
   id: HaloAgentId;
@@ -49,12 +49,12 @@ export interface HaloAgentDef {
 }
 
 export const HALO_AGENTS_V1: readonly HaloAgentDef[] = [
-  { id: "mission-planner",  label: "Mission Planner",    desc: "Planifie et structure\nles objectifs stratégiques", angleDeg: -90, tone: "primary" },
-  { id: "report-generator", label: "Report Generator",   desc: "Analyse et synthétise\nles données en rapports",   angleDeg: -30, tone: "accent"  },
-  { id: "asset-monitor",    label: "Asset Monitor",      desc: "Surveille et protège\nles actifs en temps réel",   angleDeg:  30, tone: "primary" },
-  { id: "memory-knowledge", label: "Memory & Knowledge", desc: "Connecte et active\nl'intelligence collective",     angleDeg:  90, tone: "accent"  },
-  { id: "market-watch",     label: "Market Watch",       desc: "Anticipe les tendances\net signaux faibles",        angleDeg: 150, tone: "primary" },
-  { id: "data-miner",       label: "Data Miner",         desc: "Transforme les données\nen insights actionnables",  angleDeg: 210, tone: "accent"  },
+  { id: "pilot",  label: "PILOT",  desc: "Planifie. Structure.\nAligne les objectifs.",          angleDeg: -90, tone: "primary" },
+  { id: "scribe", label: "SCRIBE", desc: "Analyse. Synthétise.\nGénère des rapports à fort impact.", angleDeg: -30, tone: "accent"  },
+  { id: "warden", label: "WARDEN", desc: "Analyse en continu.\nÉvalue et protège tes actifs.",    angleDeg:  30, tone: "primary" },
+  { id: "cortex", label: "CORTEX", desc: "Conserve. Connecte.\nActive l'intelligence collective.", angleDeg:  90, tone: "accent"  },
+  { id: "pulse",  label: "PULSE",  desc: "Surveille. Anticipe.\nDétecte les signaux faibles.",     angleDeg: 150, tone: "primary" },
+  { id: "delve",  label: "DELVE",  desc: "Extrait. Enrichit.\nTransforme la donnée en valeur.",    angleDeg: 210, tone: "accent"  },
 ] as const;
 
 if (typeof window !== "undefined") {
@@ -536,28 +536,28 @@ function dispatchAgent(
   },
 ) {
   switch (id) {
-    case "mission-planner":
+    case "pilot":
       // Reprend la dernière mission ouverte ; sinon ouvre le builder.
       if (ctx.lastMissionId) ctx.setMode({ mode: "mission", missionId: ctx.lastMissionId });
       else ctx.push("/missions/builder");
       return;
-    case "report-generator":
+    case "scribe":
       // Reports a un studio dédié hors Stage system.
       ctx.push("/reports");
       return;
-    case "data-miner":
+    case "delve":
       // Exploration de données → KG avec query d'amorce.
       ctx.setMode({ mode: "kg", query: "data exploration" });
       return;
-    case "market-watch":
+    case "pulse":
       // Pas de browserStage sans sessionId valide ; marketplace est l'entrée.
       ctx.push("/marketplace");
       return;
-    case "asset-monitor":
+    case "warden":
       // Liste des connexions / apps surveillées.
       ctx.push("/apps");
       return;
-    case "memory-knowledge":
+    case "cortex":
       ctx.setMode({ mode: "kg" });
       return;
   }

@@ -58,12 +58,60 @@ const mat = () =>
 
 /** Une mesh distinctive par agent (remplaçable plus tard par un vrai asset). */
 const builders = {
-  "mission-planner": () => new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.72, 0.55), mat()),
-  "data-miner": () => new THREE.Mesh(new THREE.IcosahedronGeometry(0.42, 1), mat()),
-  "report-generator": () => new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.36, 0.65, 24), mat()),
-  "market-watch": () => new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.12, 16, 40), mat()),
-  "asset-monitor": () => new THREE.Mesh(new THREE.OctahedronGeometry(0.48, 0), mat()),
-  "memory-knowledge": () => new THREE.Mesh(new THREE.DodecahedronGeometry(0.44, 0), mat()),
+  pilot: () => {
+    // Boussole / flèche directrice
+    const group = new THREE.Group();
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 3), mat());
+    cone.rotation.x = Math.PI / 2;
+    group.add(cone);
+    return group;
+  },
+  delve: () => {
+    // Stack disques (extraction de couches data)
+    const group = new THREE.Group();
+    for (let i = 0; i < 3; i++) {
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.12, 32), mat());
+      ring.position.y = i * 0.18 - 0.18;
+      group.add(ring);
+    }
+    return group;
+  },
+  scribe: () => {
+    // Document / feuille
+    const group = new THREE.Group();
+    const sheet = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.65, 0.05), mat());
+    group.add(sheet);
+    return group;
+  },
+  pulse: () => {
+    // Onde / signal
+    const group = new THREE.Group();
+    const torus = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.08, 16, 32, Math.PI), mat());
+    torus.rotation.z = Math.PI / 2;
+    group.add(torus);
+    return group;
+  },
+  warden: () => {
+    // Bouclier stylisé
+    const group = new THREE.Group();
+    const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.2, 0.1, 6), mat());
+    shield.rotation.x = Math.PI / 2;
+    group.add(shield);
+    return group;
+  },
+  cortex: () => {
+    // Cerveau / réseau de noeuds
+    const group = new THREE.Group();
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), mat());
+    group.add(core);
+    for (let i = 0; i < 4; i++) {
+      const s = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), mat());
+      const a = (i / 4) * Math.PI * 2;
+      s.position.set(Math.cos(a) * 0.35, Math.sin(a) * 0.35, 0);
+      group.add(s);
+    }
+    return group;
+  },
 };
 
 async function main() {
