@@ -8,6 +8,8 @@ export type KpiTone = "default" | "cykan" | "warn" | "danger" | "success" | "mon
 interface KpiCardProps {
   label: string;
   value: ReactNode;
+  /** Variation positive affichée à côté du chiffre (ex. watchlist). */
+  delta?: ReactNode;
   sub?: ReactNode;
   tone?: KpiTone;
   /** 7 derniers points pour sparkline mini (optionnel). */
@@ -16,6 +18,8 @@ interface KpiCardProps {
   href?: string;
   /** Affiche un point status à côté du label. */
   statusDot?: "running" | "warn" | "danger" | "success" | null;
+  /** Barre de progression fine (0–100), ex. missions actives / total. */
+  missionFillPct?: number;
   testId?: string;
 }
 
@@ -59,11 +63,13 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 export function KpiCard({
   label,
   value,
+  delta,
   sub,
   tone = "default",
   trend,
   href,
   statusDot = null,
+  missionFillPct,
   testId,
 }: KpiCardProps) {
   const valueColor = TONE_COLORS[tone];
@@ -90,12 +96,35 @@ export function KpiCard({
           />
         )}
       </div>
-      <div
-        className="t-28 font-light tracking-tight tabular-nums leading-none transition-colors group-hover:text-[var(--cykan)]"
-        style={{ color: valueColor }}
-      >
-        {value}
+      <div className="flex min-w-0 flex-wrap items-baseline gap-2">
+        <div
+          className="t-28 font-light tracking-tight tabular-nums leading-none transition-colors group-hover:text-[var(--cykan)]"
+          style={{ color: valueColor }}
+        >
+          {value}
+        </div>
+        {delta != null && delta !== "" && (
+          <span className="t-11 font-medium tabular-nums text-[var(--color-success)] shrink-0">
+            {delta}
+          </span>
+        )}
       </div>
+      {typeof missionFillPct === "number" && (
+        <div
+          className="h-1 w-full overflow-hidden rounded-pill"
+          style={{ background: "var(--surface-2)" }}
+          aria-hidden
+        >
+          <div
+            className="h-full rounded-pill"
+            style={{
+              width: `${Math.min(100, Math.max(0, missionFillPct))}%`,
+              background: "var(--cykan)",
+              opacity: 0.55,
+            }}
+          />
+        </div>
+      )}
       <div className="flex items-center justify-between gap-2 min-w-0">
         {sub && (
           <span className="t-9 font-mono tabular-nums text-[var(--text-faint)] truncate">

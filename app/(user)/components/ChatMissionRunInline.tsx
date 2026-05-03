@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRuntimeStore, type StreamEvent } from "@/stores/runtime";
 import { toast } from "@/app/hooks/use-toast";
@@ -139,13 +140,13 @@ export function ChatMissionRunInline() {
             </>
           )}
         </button>
-        <a
+        <Link
           href="/missions"
           className="t-9 font-light text-[var(--text-faint)] hover:text-[var(--cykan)]"
           title="Ouvrir la page Missions"
         >
           Voir toutes les missions
-        </a>
+        </Link>
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { KpiCard } from "../ui/KpiCard";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
@@ -8,90 +7,56 @@ interface KPIStripProps {
   data: CockpitTodayPayload;
 }
 
-interface UsageSnapshot {
-  usedUSD: number;
-  budgetUSD: number;
-  runs: number;
-  /** 7 dernières runs cost — pour sparkline. Optionnel : non exposé par l'API actuelle. */
-  trend?: number[];
-}
-
-const USAGE_REFRESH_MS = 60_000;
-
+/**
+ * Récap discret : Assets, Missions, Reports uniquement.
+ * Variations vertes optionnelles depuis la watchlist (delta texte API).
+ */
 export function KPIStrip({ data }: KPIStripProps) {
-  const [usage, setUsage] = useState<UsageSnapshot | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      try {
-        const res = await fetch("/api/v2/usage/today", { credentials: "include" });
-        if (!res.ok) return;
-        const json = (await res.json()) as UsageSnapshot;
-        if (!cancelled) setUsage(json);
-      } catch (e) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn("[KPIStrip] /api/v2/usage/today indisponible", e);
-        }
-        // fail-soft
-      }
-    };
-    void load();
-    const id = window.setInterval(load, USAGE_REFRESH_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, []);
-
-  // 1. Assets
   const assetsCount = data.counts.assets;
   const reportsCount = data.counts.reports;
 
-  // 2. Missions
   const missionsTotal = data.counts.missions;
   const runningCount = data.missionsRunning.filter((m) => m.status === "running").length;
   const failedCount = data.missionsRunning.filter((m) => m.status === "failed").length;
 
-  // 3. Reports favoris
   const favCount = data.favoriteReports.length;
   const favSub = data.favoriteReports
     .slice(0, 3)
     .map((r) => r.title)
     .join(" · ");
 
-  // 4. Usage
-  const usagePct = usage && usage.budgetUSD > 0 ? (usage.usedUSD / usage.budgetUSD) * 100 : 0;
-  const usageTone = usagePct >= 95 ? "danger" : usagePct >= 80 ? "warn" : "default";
-  const usageValue = usage
-    ? `$${usage.usedUSD.toFixed(2)}`
-    : "—";
-  const usageSub = usage ? `/ $${usage.budgetUSD.toFixed(0)} · ${usagePct.toFixed(0)}%` : "—";
+  const w = data.watchlist;
+  const delta0 = w[0]?.delta?.trim();
+  const delta1 = w[1]?.delta?.trim();
+  const assetsDelta =
+    delta0 && (delta0.startsWith("+") || delta0.startsWith("-")) ? delta0 : undefined;
+  const reportsDelta =
+    delta1 && (delta1.startsWith("+") || delta1.startsWith("-"))
+      ? delta1
+      : w[2]?.delta?.trim() &&
+          (w[2].delta.trim().startsWith("+") || w[2].delta.trim().startsWith("-"))
+        ? w[2].delta.trim()
+        : undefined;
 
-  // 5. Signals critiques
-  const criticalCount = data.watchlist.filter(
-    (w) => w.anomaly?.severity === "critical",
-  ).length;
-  const signalsTone = criticalCount > 0 ? "danger" : "success";
-  const signalsValue = criticalCount.toString().padStart(2, "0");
-  const signalsSub =
-    criticalCount > 0
-      ? `${criticalCount} critique${criticalCount > 1 ? "s" : ""}`
-      : "Aucune alerte";
+  const missionFillPct =
+    missionsTotal > 0 ? Math.round((runningCount / missionsTotal) * 100) : 0;
 
   return (
     <section
       className="grid shrink-0"
       style={{
-        gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-        gap: "var(--space-3)",
-        height: "var(--space-20)",
+        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+        gap: "var(--space-5)",
+        maxWidth: "min(820px, 100%)",
+        marginInline: "auto",
+        minHeight: "var(--space-20)",
       }}
       aria-label="Récap KPIs"
     >
       <KpiCard
         label="Assets"
         value={assetsCount.toString().padStart(2, "0")}
+        delta={assetsDelta}
         sub={`${reportsCount} report${reportsCount > 1 ? "s" : ""}`}
         href="/assets"
         testId="kpi-assets"
@@ -99,6 +64,8 @@ export function KPIStrip({ data }: KPIStripProps) {
       <KpiCard
         label="Missions"
         value={`${runningCount.toString().padStart(2, "0")}/${missionsTotal.toString().padStart(2, "0")}`}
+        delta={undefined}
+        missionFillPct={missionFillPct}
         sub={failedCount > 0 ? `${failedCount} en échec` : "Tout va bien"}
         tone={failedCount > 0 ? "warn" : "default"}
         statusDot={runningCount > 0 ? "running" : null}
@@ -108,26 +75,10 @@ export function KPIStrip({ data }: KPIStripProps) {
       <KpiCard
         label="Reports"
         value={favCount.toString().padStart(2, "0")}
+        delta={reportsDelta}
         sub={favSub || "Catalog"}
         href="/reports"
         testId="kpi-reports"
-      />
-      <KpiCard
-        label="Usage du jour"
-        value={usageValue}
-        sub={usageSub}
-        tone={usageTone}
-        trend={usage?.trend}
-        href="/runs"
-        testId="kpi-usage"
-      />
-      <KpiCard
-        label="Signaux"
-        value={signalsValue}
-        sub={signalsSub}
-        tone={signalsTone}
-        statusDot={criticalCount > 0 ? "danger" : null}
-        testId="kpi-signals"
       />
     </section>
   );

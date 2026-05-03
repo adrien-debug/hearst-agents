@@ -40,7 +40,10 @@ export function CockpitHome({ data }: CockpitHomeProps) {
         <KPIStrip data={data} />
       </div>
 
-      <div className="relative flex-1 min-h-0">
+      <div
+        className="relative flex-1 min-h-0 w-full"
+        style={{ minHeight: "min(42vh, 480px)" }}
+      >
         <HaloAgentCore />
       </div>
 

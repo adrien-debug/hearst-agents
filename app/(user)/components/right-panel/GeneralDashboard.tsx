@@ -100,7 +100,7 @@ export function GeneralDashboard({
   // ── Live clock ────────────────────────────────────────────
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
-    setNow(new Date());
+    queueMicrotask(() => setNow(new Date()));
     const id = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(id);
   }, []);

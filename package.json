@@ -30,7 +30,8 @@
     "health": "npx tsx scripts/health-check.ts",
     "audit": "npx tsx scripts/audit-pipeline.ts",
     "workers:audit": "bash scripts/next-worker-helper.sh",
-    "workers:kill-orphans": "bash scripts/next-worker-helper.sh --kill-orphans"
+    "workers:kill-orphans": "bash scripts/next-worker-helper.sh --kill-orphans",
+    "models:halo-glb": "node scripts/generate-halo-agent-glbs.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.71",

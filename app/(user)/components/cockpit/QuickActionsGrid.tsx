@@ -41,6 +41,8 @@ const TONE_BG: Record<TileTone, string> = {
 export function QuickActionsGrid({ data }: QuickActionsGridProps) {
   const router = useRouter();
   const activeThreadId = useNavigationStore((s) => s.activeThreadId);
+  const addThread = useNavigationStore((s) => s.addThread);
+  const surface = useNavigationStore((s) => s.surface);
   const { runningSpecs, runSuggestion } = useRunReportSuggestion(activeThreadId);
   const setMode = useStageStore((s) => s.setMode);
   const setVoiceActive = useVoiceStore((s) => s.setVoiceActive);
@@ -83,7 +85,10 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
         tone: "neutral",
         status: null,
         loading: false,
-        onClick: () => setMode({ mode: "chat" }),
+        onClick: () => {
+          const tid = activeThreadId ?? addThread("Conversation", surface);
+          setMode({ mode: "chat", threadId: tid });
+        },
       },
       {
         id: "u-voice",
@@ -113,7 +118,18 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
     }
 
     return list.slice(0, 6);
-  }, [data.suggestions, data.favoriteReports, runningSpecs, runSuggestion, setMode, setVoiceActive, router]);
+  }, [
+    data.suggestions,
+    data.favoriteReports,
+    runningSpecs,
+    runSuggestion,
+    setMode,
+    setVoiceActive,
+    router,
+    activeThreadId,
+    addThread,
+    surface,
+  ]);
 
   return (
     <section className="flex flex-col min-h-0 min-w-0" aria-label="Actions rapides">

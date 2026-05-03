@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/app/hooks/use-toast";
 import { usePollingEffect } from "@/app/hooks/use-polling-effect";

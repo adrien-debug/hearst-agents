@@ -12,7 +12,7 @@
  * `{section.length > 0 && ...}` autour d'un bloc complet.
  */
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
@@ -22,6 +22,7 @@ import { useNavigationStore } from "@/stores/navigation";
 import { voiceToolDefs, VOICE_TOOL_LABELS } from "@/lib/voice/tool-defs";
 import { ProviderChip } from "./ProviderChip";
 import { useRightPanelData } from "./right-panel/useRightPanelData";
+import { QuickActionsGrid } from "./cockpit/QuickActionsGrid";
 import { GeneralDashboard } from "./right-panel/GeneralDashboard";
 import { ContextRailForMission } from "./ContextRailForMission";
 import {
@@ -30,6 +31,7 @@ import {
   ContextRailForApps,
   ContextRailForReports,
 } from "./ContextRailForAdmin";
+import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
 interface ContextRailProps {
   onClose?: () => void;
@@ -250,6 +252,24 @@ function CockpitChatBody() {
     loading,
   } = useRightPanelData();
 
+  const [cockpitToday, setCockpitToday] = useState<CockpitTodayPayload | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/v2/cockpit/today", { credentials: "include" });
+        if (!res.ok || cancelled) return;
+        setCockpitToday((await res.json()) as CockpitTodayPayload);
+      } catch {
+        // fail-soft : actions rapides absentes si fetch échoue
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleViewChange = (view: "reports" | "missions" | "assets") => {
     if (view === "missions") router.push("/missions");
     else if (view === "assets") router.push("/assets");
@@ -266,6 +286,16 @@ function CockpitChatBody() {
           activeThreadId={activeThreadId}
           loading={loading}
         />
+        {cockpitToday && (
+          <div
+            style={{
+              borderTop: "1px solid var(--border-subtle)",
+              padding: "var(--space-4) var(--space-3) var(--space-5)",
+            }}
+          >
+            <QuickActionsGrid data={cockpitToday} />
+          </div>
+        )}
       </div>
     </div>
   );

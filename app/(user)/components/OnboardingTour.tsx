@@ -60,15 +60,17 @@ export function OnboardingTour({ forceOpen, onClose }: OnboardingTourProps = {})
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (forceOpen) {
-      setOpen(true);
-      return;
-    }
-    try {
-      setOpen(!window.localStorage.getItem(STORAGE_KEY));
-    } catch {
-      setOpen(false);
-    }
+    queueMicrotask(() => {
+      if (forceOpen) {
+        setOpen(true);
+        return;
+      }
+      try {
+        setOpen(!window.localStorage.getItem(STORAGE_KEY));
+      } catch {
+        setOpen(false);
+      }
+    });
   }, [forceOpen]);
 
   const close = useCallback(() => {

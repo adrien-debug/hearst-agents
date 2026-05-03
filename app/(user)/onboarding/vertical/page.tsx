@@ -36,7 +36,7 @@ const INDUSTRIES: IndustryCard[] = [
     id: "general",
     name: "Général",
     description: "Cockpit polyvalent, pas de spécialisation métier.",
-    icon: "/icons/services/general.svg",
+    icon: "/icons/services/notion.svg",
   },
   {
     id: "hospitality",

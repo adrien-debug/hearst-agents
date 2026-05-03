@@ -22,10 +22,11 @@ const PUBLIC_PATHS = [
   "/api/webhooks",
   "/api/inngest", // Signé par INNGEST_SIGNING_KEY côté Inngest, pas d'auth user
   "/monitoring", // Tunnel route Sentry (cf. next.config.ts withSentryConfig)
-  "/halo-test",
 ];
 
-const STATIC_RE = /^\/(?:_next|favicon\.ico|.*\.(?:svg|png|jpg|ico|webp|woff2?|css|js))$/;
+/** Fichiers statiques publics (dont modèles 3D) — exemptés d’auth si le proxy est actif. */
+const STATIC_RE =
+  /^\/(?:_next|favicon\.ico|.*\.(?:svg|png|jpg|ico|webp|woff2?|css|js|glb|gltf))$/;
 
 function isPublic(path: string): boolean {
   if (STATIC_RE.test(path)) return true;

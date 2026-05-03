@@ -6,7 +6,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 
 > 🚀 **Quick Start** : `npm run dev` = hearst-os seul sur `:9000`. `npm run launch` = stack complète.
 
-**Cockpit (home)** : le RSC pré-charge `getCockpitToday` pour le LCP ; `CockpitStage` synchronise `/api/v2/cockpit/today` au mount. Zone hero centrale **`HaloAgentCore`** : Vue 3D isométrique premium avec burst central animé (particules orbitales cyan/gold, pulse respiratoire), icônes 3D élégantes (RoundedBox avec détails), labels agents en voix régulière (pas de mono caps), H central halo glow. Performance optimisée : pas de rotation continue, DPR [1, 1.5], ombres 1024×1024, materials instanciés. KPI : variations vertes optionnelles depuis `watchlist.delta` ; barre fine pour Missions.
+**Cockpit (home)** : le RSC pré-charge `getCockpitToday` pour le LCP ; `CockpitStage` synchronise `/api/v2/cockpit/today` au mount. Zone hero centrale **`HaloAgentCore`** : constellation 3D (`@react-three/fiber`), agents chargés en **GLB** depuis `public/models/{agent-id}.glb` ; régénérer les placeholders procéduraux : `npm run models:halo-glb` (`scripts/generate-halo-agent-glbs.mjs`). Matériaux DS (cykan/gold), bloom, `Environment`. Labels agents en voix régulière (pas de mono caps).
 
 **Workers Next (CPU / orphelins)** : si la machine chauffe après un build ou un arrêt brutal, des `jest-worker/processChild.js` peuvent rester avec **PPID=1**. Audit : `npm run workers:audit` ; nettoyage **uniquement des orphelins** (sans casser un `next build` en cours) : `npm run workers:kill-orphans` — script [`scripts/next-worker-helper.sh`](./scripts/next-worker-helper.sh).
 
@@ -23,14 +23,16 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 | Reports | V2 catalog (`/api/v2/reports/[specId]/run`) — cron Railway *supprimés* (voir section Reports) |
 | RightPanel | Structure fixe : 4 sections always-on, empty states internes, scope strict du lint |
 
+**Dernière session — nettoyage public & proxy** : suppression des SVG Next boilerplate (`next.svg`, `vercel.svg`, etc.), `hearst-logo.svg` et `public/assets/hearst-ai-logo.png` non référencés, `patterns/hcyan.svg`, dump `presentation.html`, icônes services sans entrée dans `service-map` (`shopify`, `trello`, `salesforce`), scripts orphelins `scripts/__halo-screenshot.mjs` et `scripts/screenshot-halo.mjs` (route `/halo-test` inexistante). `proxy.ts` : retrait de `/halo-test` des chemins publics, extension `STATIC_RE` pour `.glb`/`.gltf`. Onboarding vertical : icône « Général » → `notion.svg` (fichier `general.svg` absent). Cockpit : conteneur `HaloAgentCore` avec `minHeight` pour éviter un canvas à hauteur nulle en flex.
+
 **Dernière session 03/05/2026 — ESLint sans warning** : hooks (`briefing` ref snapshot, `AssetLineage` / `SourceCitation` dépendances, `runs/[id]` `useCallback` + `queueMicrotask` pour le fetch initial), `next/image` (watermark `layout`, icônes onboarding, image base64 `PreviewPane` avec `unoptimized`), retrait de directives ESLint inutiles dans les scripts, types morts (`oauth-refresh`, `manifestation`, `stagehand-executor`).
-|**Dernière session 03/05/2026 — HaloAgentCore refonte 3D complète** :
-|- Performance : suppression rotation continue (rame), DPR limite [1, 1.5], ombres 1024×1024, materials instancies
-|- Burst central 3D : particules orbitales cyan/gold animees, pulse respiratoire, glow ring
-|- Icones 3D refaites : RoundedBox elegants avec details (base de donnees, document, graphique, bouclier, cerveau, curseur)
-|- Labels : suppression mono caps → voix reguliere FR ("Mission Planner", "Report Generator", etc.)
-|- H central : halo glow cyan, bordure subtile, ombre portee
-|- ESLint 100% clean, types checkes, lint:visual 0 violation
+**Dernière session 03/05/2026 — HaloAgentCore refonte 3D complète** :
+- Performance : suppression rotation continue (rame), DPR limite [1, 1.5], ombres 1024×1024, materials instancies
+- Burst central 3D : particules orbitales cyan/gold animees, pulse respiratoire, glow ring
+- Icones 3D refaites : RoundedBox elegants avec details (base de donnees, document, graphique, bouclier, cerveau, curseur)
+- Labels : suppression mono caps → voix reguliere FR ("Mission Planner", "Report Generator", etc.)
+- H central : halo glow cyan, bordure subtile, ombre portee
+- ESLint 100% clean, types checkes, lint:visual 0 violation
 
 
 **Dernière session 29/04/2026 — cleanup right-panel + lint bloquant** :

@@ -35,8 +35,12 @@ export function useRunReportSuggestion(
       setRunningSpecs((prev) => new Set(prev).add(specId));
 
       const nav = useNavigationStore.getState();
-      const threadId =
-        activeThreadId ?? nav.addThread("Rapports", nav.surface);
+      let threadId = activeThreadId;
+      let createdThreadForThisRun = false;
+      if (!threadId) {
+        threadId = nav.addThread("Rapports", nav.surface);
+        createdThreadForThisRun = true;
+      }
 
       try {
         const res = await fetch(
@@ -49,7 +53,13 @@ export function useRunReportSuggestion(
           },
         );
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
+          const detail = await res
+            .json()
+            .then((j) => (typeof j?.error === "string" ? j.error : ""))
+            .catch(() => "");
+          throw new Error(
+            detail ? `HTTP ${res.status} — ${detail}` : `HTTP ${res.status}`,
+          );
         }
         const data = (await res.json()) as {
           assetId: string | null;
@@ -65,9 +75,18 @@ export function useRunReportSuggestion(
           if (useStageStore.getState().current.mode === "cockpit") {
             useStageStore.getState().setMode({ mode: "chat", threadId });
           }
+          toast.success("Report généré", data.title ?? title);
+        } else {
+          console.warn(
+            "[useRunReportSuggestion] run OK but assetId null",
+            specId,
+          );
+          toast.success("Rapport calculé", "Aucun asset enregistré (vérifie la persistance).");
         }
-        toast.success("Report généré", title);
       } catch (err) {
+        if (createdThreadForThisRun) {
+          nav.removeThread(threadId);
+        }
         toast.error(
           "Échec génération",
           err instanceof Error ? err.message : "Erreur inconnue",

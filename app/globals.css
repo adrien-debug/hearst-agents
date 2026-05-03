@@ -1615,6 +1615,82 @@ body {
     0 0 16px rgba(45, 212, 191, 0.35);
 }
 
+/* ── HaloAgentCore — constellation 3D des agents (cockpit home) ───────── */
+
+.halo-agent-core {
+  min-height: 280px;
+}
+
+.halo-agent-label-wrap,
+.halo-core-badge-wrap {
+  pointer-events: none;
+}
+
+.halo-agent-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 168px;
+  text-align: center;
+  opacity: 0.78;
+  transition:
+    opacity 220ms var(--ease-out, ease-out),
+    transform 220ms var(--ease-out, ease-out);
+}
+
+.halo-agent-label[data-active="true"] {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.halo-agent-label-name {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: var(--tracking-snug, 0.10em);
+  white-space: nowrap;
+}
+
+.halo-agent-label-desc {
+  font-size: 10px;
+  font-weight: 300;
+  line-height: 1.35;
+  white-space: pre-line;
+}
+
+.halo-core-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  /* background, color, borderColor inline depuis JS (palette inversée selon mode) */
+  border: 2px solid;
+  font-weight: 600;
+  font-size: 22px;
+  box-shadow:
+    0 0 24px rgba(45, 212, 191, 0.40),
+    0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.halo-core-badge[data-mode="dark"] {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+@media (max-width: 720px) {
+  .halo-agent-label {
+    width: 132px;
+  }
+  .halo-agent-label-name {
+    font-size: 11px;
+  }
+  .halo-agent-label-desc {
+    font-size: 9px;
+  }
+}
+
 /* ── Ghost Protocol legacy classes — utilisées par /missions, MissionEditor,
    RightPanel, /runs/[id]. Définitions tokens-based pour rendre l'affichage
    visible (avant ces classes étaient référencées sans définition CSS). */

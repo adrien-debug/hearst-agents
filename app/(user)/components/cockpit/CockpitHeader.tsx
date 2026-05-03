@@ -41,7 +41,7 @@ export function CockpitHeader({ data }: CockpitHeaderProps) {
       className="flex items-baseline justify-between gap-4 shrink-0"
       style={{ height: "var(--space-16)" }}
     >
-      <h1 className="t-15 font-medium text-[var(--text-l1)] truncate">{greeting}</h1>
+      <h1 className="t-28 font-medium leading-tight text-[var(--text-l1)] truncate">{greeting}</h1>
       <div className="flex items-baseline gap-2 shrink-0">
         <span className="t-10 font-light text-[var(--text-faint)] tabular-nums">
           {formatNow(now)}
