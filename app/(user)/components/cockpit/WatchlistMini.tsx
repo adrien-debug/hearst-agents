@@ -41,31 +41,33 @@ function WatchRow({ item }: { item: CockpitWatchlistItem }) {
 
   return (
     <li
-      className="flex items-center gap-2"
+      className="flex items-center w-full gap-3"
       style={{
         padding: "var(--space-2) var(--space-3)",
         borderRadius: "var(--radius-xs)",
       }}
     >
-      <span className="t-11 font-light text-[var(--text-soft)] truncate" style={{ minWidth: "var(--space-12)" }}>
+      <span className="t-11 font-light text-[var(--text-soft)] truncate min-w-0 flex-1">
         {item.label}
       </span>
-      <span className="t-13 font-medium tabular-nums shrink-0" style={{ color: tone }}>
-        {item.value}
-      </span>
-      {item.delta && (
-        <span className="t-9 font-mono tabular-nums text-[var(--text-faint)] shrink-0">
-          {arrow} {item.delta}
+      <div className="flex items-baseline justify-end gap-2 shrink-0">
+        <span className="t-13 font-medium tabular-nums" style={{ color: tone }}>
+          {item.value}
         </span>
-      )}
-      <span className="ml-auto shrink-0">
+        {item.delta && (
+          <span className="t-9 font-mono tabular-nums text-[var(--text-faint)] whitespace-nowrap">
+            {arrow} {item.delta}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
         <MiniSparkline data={item.trend} color={sparklineColor} />
-      </span>
-      {critical && (
-        <span className="t-9 shrink-0" style={{ color: "var(--danger)" }} aria-label="Critique">
-          ⚠
-        </span>
-      )}
+        {critical && (
+          <span className="t-9" style={{ color: "var(--danger)" }} aria-label="Critique">
+            ⚠
+          </span>
+        )}
+      </div>
     </li>
   );
 }

@@ -116,8 +116,8 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
   }, [data.suggestions, data.favoriteReports, runningSpecs, runSuggestion, setMode, setVoiceActive, router]);
 
   return (
-    <section className="flex flex-col min-h-0 min-w-0" aria-label="Quick actions">
-      <SectionHeader label="Quick Actions" />
+    <section className="flex flex-col min-h-0 min-w-0" aria-label="Actions rapides">
+      <SectionHeader label="Actions rapides" />
       <div
         className="grid"
         style={{
@@ -133,18 +133,20 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
             key={t.id}
             onClick={t.onClick}
             disabled={t.loading}
-            className="group text-left flex flex-col justify-between transition-all duration-500 hover:-translate-y-1 hover:shadow-sm disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+            className="group text-left flex flex-col justify-between transition-colors duration-(--duration-base) ease-(--ease-standard) disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
             style={{
               padding: "var(--space-3)",
               borderRadius: "var(--radius-sm)",
-              gap: "var(--space-1)",
+              gap: "var(--space-2)",
               minHeight: 0,
+              background: TONE_BG[t.tone],
+              border: `1px solid ${TONE_BORDER[t.tone]}`,
             }}
           >
-            <span className="uppercase tracking-widest text-[0.65rem] text-[var(--text-faint)] truncate">
+            <span className="t-10 font-medium text-[var(--text-faint)] truncate leading-tight">
               {t.eyebrow}
             </span>
-            <span className="t-13 font-medium text-[var(--text-l1)] line-clamp-2 leading-snug transition-colors group-hover:text-[var(--cykan)] group-hover:drop-shadow-[0_0_8px_rgba(0,255,255,0.3)]">
+            <span className="t-13 font-medium text-[var(--text-l1)] line-clamp-2 leading-snug transition-colors group-hover:text-[var(--cykan)]">
               {t.loading ? "…" : t.title}
             </span>
             <span className="flex items-center justify-between gap-2">

@@ -25,6 +25,11 @@ interface ChatInputProps {
   onProviderMention?: (providerId: string) => void;
   /** Thread courant — utilisé pour scoper la persona active per-thread. */
   threadId?: string | null;
+  /**
+   * Masque la rangée de logos « mention rapide » (ex. sur le Cockpit où
+   * `AgentsConstellation` est déjà affiché au-dessus).
+   */
+  hideConnectedAppsStrip?: boolean;
 }
 
 export function ChatInput({
@@ -33,6 +38,7 @@ export function ChatInput({
   connectedServices = [],
   onProviderMention,
   threadId = null,
+  hideConnectedAppsStrip = false,
 }: ChatInputProps) {
   const router = useRouter();
   const [input, setInput] = useState("");
@@ -707,14 +713,8 @@ export function ChatInput({
               )}
           </div>
         </div>
-        {/* Quick-mention apps — pivot 2026-05-03.
-           Remplace l'ancienne hint zone (↩ Envoyer · ⇧↩ Saut de ligne · @ Mention
-           · ⌘K Commandeur) qui était redondante avec les conventions clavier.
-           Devient un outil : click sur un logo d'app connectée → insère
-           `@<service.id>` dans l'input. Bouton `+` à droite → /apps pour
-           connecter une nouvelle source. Source unique des logos dans toute
-           l'app (plus de doublon brief central / rail droit). */}
-        {connectedServices.length > 0 && (
+        {/* Quick-mention apps — masqué sur le Cockpit (`hideConnectedAppsStrip`, doublon avec la bande agents). */}
+        {!hideConnectedAppsStrip && connectedServices.length > 0 && (
           <div
             className="mt-3 flex items-center justify-center"
             style={{ gap: "var(--space-2)", minHeight: "var(--space-5)" }}

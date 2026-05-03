@@ -43,7 +43,7 @@ export function CockpitHeader({ data }: CockpitHeaderProps) {
     >
       <h1 className="t-15 font-medium text-[var(--text-l1)] truncate">{greeting}</h1>
       <div className="flex items-baseline gap-2 shrink-0">
-        <span className="uppercase tracking-widest text-[0.65rem] text-[var(--text-faint)] tabular-nums">
+        <span className="t-10 font-light text-[var(--text-faint)] tabular-nums">
           {formatNow(now)}
         </span>
         {runningCount > 0 && (
