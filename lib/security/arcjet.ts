@@ -8,6 +8,9 @@
 import arcjet, { tokenBucket, detectBot, shield } from "@arcjet/next";
 
 const KEY = process.env.ARCJET_KEY;
+// En dev, le renderer Electron est flagué comme bot et casse NextAuth
+// (/api/auth/session → 403). On reste en DRY_RUN pour logger sans bloquer.
+const MODE = process.env.NODE_ENV === "development" ? "DRY_RUN" : "LIVE";
 
 export const isArcjetEnabled = (): boolean => Boolean(KEY);
 
@@ -16,16 +19,13 @@ export const aj = KEY
       key: KEY,
       characteristics: ["ip.src"],
       rules: [
-        // Shield protects against common attacks (SQLi, XSS, etc.)
-        shield({ mode: "LIVE" }),
-        // Bot detection — block known scrapers, allow search engines
+        shield({ mode: MODE }),
         detectBot({
-          mode: "LIVE",
+          mode: MODE,
           allow: ["CATEGORY:SEARCH_ENGINE", "CATEGORY:MONITOR", "CATEGORY:PREVIEW"],
         }),
-        // Rate limit — 60 requests / minute per IP, refill 60/min, capacity 100
         tokenBucket({
-          mode: "LIVE",
+          mode: MODE,
           characteristics: ["ip.src"],
           refillRate: 60,
           interval: 60,

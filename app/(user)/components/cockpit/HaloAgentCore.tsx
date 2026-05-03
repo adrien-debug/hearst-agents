@@ -9,7 +9,7 @@
  * Auto-rotation lente, pause au hover. Shadows allégées pour stabilité GPU.
  */
 
-import { Suspense, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
@@ -430,8 +430,15 @@ function OrbitTrack({ orbitRadius, colors }: { orbitRadius: number; colors: Them
 // --- Camera ------------------------------------------------------------------
 
 function ResponsiveCamera({ layout }: { layout: ResponsiveLayout }) {
+  const cameraRef = useRef<THREE.PerspectiveCamera>(null);
+  // PerspectiveCamera de drei ne fait pas de lookAt auto : on le force vers
+  // l'origine sinon les agents (au plan y=0) sont sous le frustum.
+  useEffect(() => {
+    cameraRef.current?.lookAt(0, 0, 0);
+  }, [layout.cameraPos, layout.fov]);
   return (
     <PerspectiveCamera
+      ref={cameraRef}
       makeDefault
       position={layout.cameraPos}
       fov={layout.fov}
@@ -512,7 +519,7 @@ interface HaloAgentCoreProps {
   mode?: ThemeMode;
 }
 
-export function HaloAgentCore({ mode = "light" }: HaloAgentCoreProps = {}) {
+export function HaloAgentCore({ mode = "dark" }: HaloAgentCoreProps = {}) {
   return (
     <section
       className="halo-agent-core relative h-full w-full select-none"
