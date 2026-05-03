@@ -16,10 +16,12 @@
  *   et littéraux nombres/strings. Étendable à l'avenir.
  * - Approval : on émet `awaiting_approval` puis on s'arrête. Le run est
  *   relancé par le caller via `executeWorkflow` avec context.outputs déjà
- *   peuplé (resume manuel). TODO : persister `{ graph, outputs, awaitingNodeId }`
- *   en base pour permettre un resume transparent depuis
- *   `POST /api/v2/workflows/[runId]/approve-node` — la route existe (D5)
- *   mais reste audit-only en attendant cette persistance.
+ *   peuplé (resume manuel). NOTE produit : pour un resume transparent
+ *   depuis `POST /api/v2/workflows/[runId]/approve-node` (route D5
+ *   audit-only aujourd'hui), il faudrait persister
+ *   `{ graph, outputs, awaitingNodeId }` en base. Décision pas prise —
+ *   tant que les workflows à approval restent rares, le resume manuel
+ *   côté caller suffit.
  */
 
 import type {

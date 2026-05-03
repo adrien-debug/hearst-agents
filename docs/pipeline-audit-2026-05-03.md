@@ -27,11 +27,12 @@ Aucun.
 - `lib/memory/conversation-summary.ts`
 - `lib/memory/mission-context.ts`
 - `lib/reports/engine/narrate.ts`
+- `lib/tools/native/kg-query.ts`
 - `lib/watchlist/narrate.ts`
 - `lib/workflows/handlers/ai-draft-welcome-notes.ts`
 
 ### Candidats potentiels (SYSTEM_PROMPT sans charter)
-- `lib/tools/native/kg-query.ts`
+Aucun.
 
 ## 3. Events SSE
 
@@ -43,16 +44,7 @@ Aucun.
 
 ## 4. TODOs critiques
 
-- lib/analytics/events.ts:41 — // TODO: remplacer par backend analytics (PostHog, Amplitude, etc.)
-- lib/connections/oauth-refresh.ts:12 — * TODO: Si Hearst migre vers une table `oauth_tokens` propriétaire,
-- lib/connections/oauth-refresh.ts:52 — * TODO: Utiliser le champ `expiresAt` dès que Composio SDK l'expose.
-- lib/connections/oauth-refresh.ts:98 — // TODO: Si Composio absent, interroger une table oauth_tokens propriétaire.
-- lib/connections/oauth-refresh.ts:180 — * TODO: Utiliser `composio.connectedAccounts.refresh(connectionId)` quand
-- lib/connections/oauth-refresh.ts:241 — * TODO: Brancher sur une vraie queue (BullMQ, Inngest, etc.) quand disponible.
-- lib/connections/oauth-refresh.ts:253 — // TODO: Enqueue chaque connexion via la queue de jobs.
-- lib/tools/handlers/send-message.ts:44 — // TODO: integrate with Slack Web API (chat.postMessage)
-- lib/tools/handlers/send-message.ts:56 — // TODO: integrate with Meta Cloud API (messages endpoint)
-- lib/workflows/executor.ts:19 — *   peuplé (resume manuel). TODO : persister `{ graph, outputs, awaitingNodeId }`
+Aucun.
 
 ---
 

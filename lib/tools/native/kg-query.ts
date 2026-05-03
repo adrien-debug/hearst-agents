@@ -17,6 +17,7 @@ import type { TenantScope } from "@/lib/multi-tenant/types";
 import { searchEmbeddings } from "@/lib/embeddings/store";
 import { requireServerSupabase } from "@/lib/platform/db/supabase";
 import type { KgNode, KgEdge } from "@/lib/memory/kg";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AiToolMap = Record<string, Tool<any, any>>;
@@ -122,14 +123,14 @@ export async function runKgQuery(
       const res = await anthropic.messages.create({
         model: NARRATIVE_MODEL,
         max_tokens: NARRATIVE_MAX_TOKENS,
-        system: [
-          "Tu es un narrateur factuel du Knowledge Graph de l'utilisateur.",
-          "Tu reçois des entités + relations, et tu produis 2-3 phrases denses qui :",
-          "- Synthétisent ce que les données disent en lien avec la question.",
-          "- Nomment les acteurs clés (personnes, entreprises, projets).",
-          "- Restent strictement factuels — si les données ne couvrent pas la question, dis-le.",
-          "Pas d'enrobage, pas de listing.",
-        ].join("\n"),
+        system: composeEditorialPrompt(`
+Tu es le narrateur factuel du Knowledge Graph de l'utilisateur. Tu reçois une liste d'entités + de relations, et tu produis 2-3 phrases denses qui synthétisent ce que les données disent en lien avec la question.
+
+CONTRAINTES SPÉCIFIQUES :
+- Nomme les acteurs clés (personnes, entreprises, projets) tels qu'ils apparaissent dans les entités.
+- Si les données ne couvrent pas la question, dis-le explicitement (« le KG ne couvre pas cet aspect »).
+- Pas d'enrobage, pas de listing — synthèse en prose dense.
+        `.trim()),
         messages: [{ role: "user", content: factsLines }],
       });
       const block = res.content[0];

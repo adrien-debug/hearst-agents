@@ -38,7 +38,10 @@ export function logAnalyticsEvent(
     properties,
   };
 
-  // TODO: remplacer par backend analytics (PostHog, Amplitude, etc.)
+  // NOTE : analytics structurés en console.info uniquement. Backend
+  // dédié (PostHog / Amplitude / Mixpanel) à brancher si besoin produit
+  // plus tard — pour l'instant les logs sont scrappés par Axiom (cf.
+  // query_axiom_logs tool) ce qui couvre 80 % des besoins de mesure.
   console.info(`[Analytics] ${type}`, JSON.stringify(event));
 }
 

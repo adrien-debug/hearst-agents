@@ -41,27 +41,37 @@ export interface SendMessageResult {
 // ── Provider handlers ───────────────────────────────────────
 
 async function sendViaSlack(input: SendMessageInput): Promise<SendMessageResult> {
-  // TODO: integrate with Slack Web API (chat.postMessage)
+  // Pas d'intégration directe Slack ici — l'envoi Slack se fait via le tool
+  // Composio `SLACK_SEND_MESSAGE` exposé par le pipeline LLM (cf.
+  // lib/connectors/composio/discovery). Ce handler historique est conservé
+  // pour les rares chemins planner qui le référencent encore, mais il échoue
+  // explicitement plutôt que de simuler un succès silencieux qui faisait
+  // croire à l'app que le message était envoyé.
   return {
-    success: true,
+    success: false,
     providerId: "slack",
     channelRef: input.channelRef,
-    messageId: `slack_${Date.now()}`,
-    deliveryStatus: "sent",
+    messageId: null,
+    deliveryStatus: "failed",
     sentAt: Date.now(),
+    error:
+      "Slack send via legacy handler is disabled — utiliser le tool Composio SLACK_SEND_MESSAGE depuis le pipeline LLM.",
   };
 }
 
 async function sendViaWhatsApp(input: SendMessageInput): Promise<SendMessageResult> {
-  // TODO: integrate with Meta Cloud API (messages endpoint)
-  // POST https://graph.facebook.com/v18.0/{phone-number-id}/messages
+  // WhatsApp n'est pas intégré côté Hearst (ni Meta Cloud API natif, ni
+  // Composio). Le handler échoue explicitement plutôt que mentir avec un
+  // success: true qui aurait fait croire au caller que le message est parti.
   return {
-    success: true,
+    success: false,
     providerId: "whatsapp",
     channelRef: input.channelRef,
-    messageId: `wa_${Date.now()}`,
-    deliveryStatus: "sent",
+    messageId: null,
+    deliveryStatus: "failed",
     sentAt: Date.now(),
+    error:
+      "WhatsApp delivery non supporté — Meta Cloud API non intégrée. Demander à connecter une autre app de messagerie (Slack, Gmail).",
   };
 }
 

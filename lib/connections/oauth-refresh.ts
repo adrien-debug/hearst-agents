@@ -9,8 +9,10 @@
  * Infrastructure OAuth : Composio gère les tokens OAuth côté serveur.
  * Les connexions Hearst sont les `ConnectedAccount` Composio (via userId).
  *
- * TODO: Si Hearst migre vers une table `oauth_tokens` propriétaire,
- *       brancher `checkExpiringTokens` sur cette table au lieu de Composio.
+ * NOTE produit : si Hearst migre un jour vers une table `oauth_tokens`
+ * propriétaire (décision pas prise), `checkExpiringTokens` devra être
+ * branché sur cette table au lieu de Composio. Tant qu'on reste 100 %
+ * Composio, ce module reste léger.
  */
 
 import { z } from "zod";
@@ -49,7 +51,8 @@ type RefreshResult = z.infer<typeof RefreshResultSchema>;
  * Composio ne retourne pas d'expiry explicite — on estime à partir du
  * statut (EXPIRED = 0, ACTIVE = estimation 90j depuis updatedAt).
  *
- * TODO: Utiliser le champ `expiresAt` dès que Composio SDK l'expose.
+ * NOTE SDK : remplacer cette estimation par le champ `expiresAt` dès que
+ * Composio l'expose (suivi côté changelog Composio SDK ≥ v0.7).
  */
 function estimateDaysUntilExpiry(
   status: string,
@@ -95,7 +98,8 @@ export async function checkExpiringTokens({
   tenantId: string;
 }): Promise<ExpiringConnection[]> {
   if (!isComposioConfigured()) {
-    // TODO: Si Composio absent, interroger une table oauth_tokens propriétaire.
+    // NOTE : sans Composio, aucune source de tokens OAuth disponible côté
+    // Hearst (cf. note produit en tête de fichier). Retour vide délibéré.
     return [];
   }
 
@@ -177,8 +181,8 @@ export async function refreshOAuthToken({
      * Composio ne fournit pas d'endpoint "refresh token" direct dans le SDK v0.6.
      * La stratégie : vérifier le statut de la connexion existante via connectedAccounts.
      *
-     * TODO: Utiliser `composio.connectedAccounts.refresh(connectionId)` quand
-     * cette méthode sera disponible dans le SDK Composio v0.7+.
+     * NOTE SDK : remplacer par `composio.connectedAccounts.refresh(connectionId)`
+     * quand cette méthode sera disponible (Composio SDK ≥ v0.7).
      *
      * En attendant : on liste les comptes et on vérifie si ACTIVE.
      * Si toujours ACTIVE → le token est encore valide (pas vraiment expiré).
@@ -238,8 +242,12 @@ export async function refreshOAuthToken({
 /**
  * Enqueue un job de refresh pour tous les tokens expirant d'un tenant/user.
  *
- * TODO: Brancher sur une vraie queue (BullMQ, Inngest, etc.) quand disponible.
- * Pour l'instant, appelle directement checkExpiringTokens pour retourner la liste.
+ * NOTE infra : tant que `composio.connectedAccounts.refresh()` n'existe
+ * pas (cf. NOTE SDK plus haut), pas de bénéfice à enqueue chaque connexion
+ * individuellement — on retourne juste la liste pour que le job
+ * `check_oauth_tokens` (cron Inngest) émette les notifications. Le jour
+ * où le refresh devient possible côté Composio, brancher cette fonction
+ * sur une vraie queue (BullMQ ou Inngest fan-out).
  */
 export async function scheduleTokenRefresh({
   userId,
@@ -250,8 +258,8 @@ export async function scheduleTokenRefresh({
 }): Promise<{ queued: number; connectionIds: string[] }> {
   const expiring = await checkExpiringTokens({ userId, tenantId });
 
-  // TODO: Enqueue chaque connexion via la queue de jobs.
-  // Pour l'instant, retourne simplement la liste pour le job `check_oauth_tokens`.
+  // Pas d'enqueue individuel pour l'instant : on retourne la liste pour
+  // que le job `check_oauth_tokens` émette les notifications en bloc.
 
   return {
     queued: expiring.length,
