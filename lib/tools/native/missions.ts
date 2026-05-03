@@ -10,6 +10,7 @@
  * cliquable. L'user clique → POST /api/v2/missions/[id]/run (route existante).
  */
 
+import crypto from "node:crypto";
 import { jsonSchema } from "ai";
 import type { Tool } from "ai";
 import type { RunEngine } from "@/lib/engine/runtime/engine";
@@ -17,7 +18,16 @@ import type { RunEventBus } from "@/lib/events/bus";
 import type { TenantScope } from "@/lib/multi-tenant/types";
 import { getScheduledMissions } from "@/lib/engine/runtime/state/adapter";
 import { scheduleDailyBriefing } from "@/lib/engine/runtime/briefing-scheduler";
-import { loadAssetsForScope } from "@/lib/assets/types";
+import { loadAssetsForScope, type Asset } from "@/lib/assets/types";
+import {
+  signToken,
+  buildShareUrl,
+  checkShareRateLimit,
+  TTL_DEFAULT_HOURS,
+  TTL_MIN_HOURS,
+  TTL_MAX_HOURS,
+} from "@/lib/reports/sharing/signed-url";
+import { createShareRow } from "@/lib/reports/sharing/store";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AiToolMap = Record<string, Tool<any, any>>;
@@ -284,9 +294,199 @@ export function buildMissionTools(opts: BuildMissionToolsOpts): AiToolMap {
     },
   };
 
+  // ── Helper privé : fuzzy match d'un report asset par titre ────────────
+  // Réutilisé par share_asset + export_asset_pdf pour rester DRY.
+  async function findReportAsset(
+    query: string,
+  ): Promise<
+    | { ok: true; asset: Asset }
+    | { ok: false; reason: "no_assets" | "no_match" | "ambiguous"; matches?: Asset[]; available?: Asset[] }
+  > {
+    const all = await loadAssetsForScope({
+      tenantId: scope.tenantId ?? "dev-tenant",
+      workspaceId: scope.workspaceId ?? "dev-workspace",
+      userId: scope.userId,
+      limit: 100,
+    });
+    const reports = all.filter((a) => a.kind === "report");
+    if (reports.length === 0) return { ok: false, reason: "no_assets" };
+
+    const q = normalize(query);
+    const matched = reports
+      .map((a) => {
+        const t = normalize(a.title);
+        let score = 0;
+        if (t === q) score = 100;
+        else if (t.startsWith(q)) score = 80;
+        else if (t.includes(q)) score = 60;
+        return { asset: a, score };
+      })
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    if (matched.length === 0) {
+      return { ok: false, reason: "no_match", available: reports.slice(0, 5) };
+    }
+    if (matched[0].score === 100 || matched.length === 1) {
+      return { ok: true, asset: matched[0].asset };
+    }
+    return { ok: false, reason: "ambiguous", matches: matched.slice(0, 5).map((m) => m.asset) };
+  }
+
+  // share_asset — génère un lien partageable signé pour un report.
+  // L'API existante POST /api/reports/share fait pareil pour les requêtes
+  // utilisateur ; on appelle directement les helpers (signToken / createShareRow)
+  // pour éviter un round-trip HTTP interne sans cookie d'auth.
+  const shareAsset: Tool<{ query: string; ttlHours?: number }, string> = {
+    description:
+      "Génère un lien partageable signé pour un rapport persisté. Fuzzy match sur le titre, puis crée un share token TTL configurable (1-168h, défaut 24h). À utiliser sur « partage le rapport pipeline », « envoie le brief Sequoia à Marc avec un lien expirant dans 7 jours ». Le lien retourné est public et lisible jusqu'à expiration. Rate limit : 30 partages/h par utilisateur.",
+    inputSchema: jsonSchema<{ query: string; ttlHours?: number }>({
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: {
+          type: "string",
+          description: "Titre du rapport à partager (fuzzy match).",
+        },
+        ttlHours: {
+          type: "number",
+          description: `Durée de validité du lien en heures. Défaut ${TTL_DEFAULT_HOURS}h. Min ${TTL_MIN_HOURS}h, max ${TTL_MAX_HOURS}h (7 jours).`,
+        },
+      },
+    }),
+    execute: async (input) => {
+      const ttl = Math.min(
+        Math.max(input.ttlHours ?? TTL_DEFAULT_HOURS, TTL_MIN_HOURS),
+        TTL_MAX_HOURS,
+      );
+
+      const found = await findReportAsset(input.query);
+      if (!found.ok) {
+        return JSON.stringify({
+          ok: false,
+          reason: found.reason,
+          query: input.query,
+          ...(found.matches && {
+            matches: found.matches.map((a) => ({ id: a.id, title: a.title })),
+          }),
+          ...(found.available && {
+            available: found.available.map((a) => ({ id: a.id, title: a.title })),
+          }),
+          message:
+            found.reason === "no_assets"
+              ? "Aucun rapport persisté à partager."
+              : found.reason === "no_match"
+                ? "Aucun rapport ne correspond à la requête. Lister les rapports disponibles."
+                : "Plusieurs rapports correspondent. Demander à l'utilisateur de préciser.",
+        });
+      }
+
+      const rate = checkShareRateLimit(scope.userId);
+      if (!rate.ok) {
+        return JSON.stringify({
+          ok: false,
+          reason: "rate_limited",
+          retryAfterMs: rate.retryAfterMs,
+          message: "Limite de 30 partages/heure atteinte. Réessayer plus tard.",
+        });
+      }
+
+      const shareId = crypto.randomUUID();
+      const signed = signToken({ shareId, assetId: found.asset.id, ttlHours: ttl });
+      if (!signed) {
+        return JSON.stringify({
+          ok: false,
+          reason: "signing_unavailable",
+          message: "REPORT_SHARING_SECRET non configuré côté serveur.",
+        });
+      }
+
+      const tenantId = found.asset.provenance.tenantId ?? scope.tenantId ?? "dev-tenant";
+      const row = await createShareRow({
+        shareId,
+        assetId: found.asset.id,
+        tenantId,
+        tokenHash: signed.tokenHash,
+        expiresAt: signed.expiresAt,
+        createdBy: scope.userId,
+      });
+      if (!row) {
+        return JSON.stringify({
+          ok: false,
+          reason: "store_failed",
+          message: "Échec persistence du share. Vérifier la table report_shares.",
+        });
+      }
+
+      const shareUrl = buildShareUrl(signed.token);
+      return JSON.stringify({
+        ok: true,
+        assetId: found.asset.id,
+        assetTitle: found.asset.title,
+        shareUrl,
+        expiresAt: new Date(signed.expiresAt).toISOString(),
+        ttlHours: ttl,
+        message:
+          "Lien créé. Présenter à l'utilisateur sous forme de lien clickable inline.",
+      });
+    },
+  };
+
+  // export_asset_pdf — retourne l'URL d'export PDF d'un rapport.
+  // Pas d'appel back ; la route GET /api/reports/[id]/export?format=pdf
+  // streame le binaire au moment du clic (avec auth cookie utilisateur).
+  const exportAssetPdf: Tool<{ query: string }, string> = {
+    description:
+      "Retourne l'URL d'export PDF d'un rapport persisté. Fuzzy match sur le titre. À utiliser sur « exporte le rapport pipeline en PDF », « télécharge le brief Sequoia ». L'URL nécessite l'auth cookie de l'utilisateur — le téléchargement se fait au clic dans le navigateur.",
+    inputSchema: jsonSchema<{ query: string }>({
+      type: "object",
+      required: ["query"],
+      properties: {
+        query: {
+          type: "string",
+          description: "Titre du rapport à exporter (fuzzy match).",
+        },
+      },
+    }),
+    execute: async (input) => {
+      const found = await findReportAsset(input.query);
+      if (!found.ok) {
+        return JSON.stringify({
+          ok: false,
+          reason: found.reason,
+          query: input.query,
+          ...(found.matches && {
+            matches: found.matches.map((a) => ({ id: a.id, title: a.title })),
+          }),
+          ...(found.available && {
+            available: found.available.map((a) => ({ id: a.id, title: a.title })),
+          }),
+          message:
+            found.reason === "no_assets"
+              ? "Aucun rapport persisté à exporter."
+              : found.reason === "no_match"
+                ? "Aucun rapport ne correspond. Lister les rapports disponibles."
+                : "Plusieurs rapports correspondent. Demander à l'utilisateur de préciser.",
+        });
+      }
+
+      const exportUrl = `/api/reports/${encodeURIComponent(found.asset.id)}/export?format=pdf`;
+      return JSON.stringify({
+        ok: true,
+        assetId: found.asset.id,
+        assetTitle: found.asset.title,
+        exportUrl,
+        message:
+          "Présenter à l'utilisateur sous forme de lien clickable « Télécharger le PDF ». Le téléchargement démarre au clic.",
+      });
+    },
+  };
+
   return {
     run_mission: runMission,
     request_daily_brief: requestDailyBrief,
     find_asset: findAsset,
+    share_asset: shareAsset,
+    export_asset_pdf: exportAssetPdf,
   };
 }
