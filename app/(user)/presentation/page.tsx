@@ -1,4 +1,21 @@
 "use client";
+// lint-visual-disable-file
+
+/**
+ * Page démo isolée du Design System Hearst OS.
+ *
+ * Cette page est volontairement détachée du DS de l'app : couleurs Tailwind
+ * directes (slate / teal / blue / indigo), magic numbers (rounded-[24px],
+ * text-6xl, tracking-[0.2em]) et utilitaires `shadow-2xl` / `shadow-xl`
+ * sont intentionnels — c'est une présentation produit/PDF print 16:9
+ * (slides commerciales, hero visuels), conçue pour vivre hors du langage
+ * visuel cockpit (PulseBar / TimelineRail / Stage).
+ *
+ * Voir CLAUDE.md §Voix éditoriale 2026-04-29 — la page reste à part pour
+ * éviter de polluer le scope strict du DS. Si elle migre un jour dans
+ * l'app, retirer le pragma `lint-visual-disable-file` et convertir en
+ * tokens var(--*).
+ */
 
 import React from "react";
 

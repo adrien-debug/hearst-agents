@@ -201,7 +201,7 @@ function FocalContent({ focal, onActionComplete }: { focal: FocalObject; onActio
               title={focal.title}
               srcDoc={previewContent}
               sandbox="allow-same-origin"
-              className="w-full rounded-sm border border-[var(--surface-2)] bg-white"
+              className="w-full rounded-sm border border-[var(--surface-2)] bg-[var(--bg-light-stage)]"
               style={{ height: "var(--space-32)", minHeight: "var(--height-focal-min)" }}
             />
           ) : previewContent ? (

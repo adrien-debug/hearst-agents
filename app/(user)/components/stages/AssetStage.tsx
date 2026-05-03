@@ -366,7 +366,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
         <StageActionBar
           context={
             <>
-              <span className="t-11 font-light text-[var(--text-faint)]">ASSET</span>
+              <span className="t-11 font-light text-[var(--text-faint)]">Asset</span>
               <span className="rounded-pill bg-[var(--text-ghost)]" style={{ width: "var(--space-1)", height: "var(--space-1)" }} />
               <span className="t-11 font-light text-[var(--text-muted)]">{assetId.slice(0, 8)}</span>
               {asset && (
@@ -428,7 +428,7 @@ export function AssetStage({ assetId, variantKind }: AssetStageProps) {
 
           {error && !loading && (
             <div className="border-l-2 border-[var(--danger)] bg-[var(--danger)]/5 px-4 py-3">
-              <p className="t-11 font-medium text-[var(--danger)]">ERREUR · {error}</p>
+              <p className="t-11 font-medium text-[var(--danger)]">Erreur · {error}</p>
             </div>
           )}
 
@@ -604,7 +604,7 @@ function AssetBody({ contentRef, title }: { contentRef?: string; title: string }
         title={title}
         srcDoc={contentRef}
         sandbox="allow-same-origin"
-        className="w-full rounded-sm border border-[var(--surface-2)] bg-white"
+        className="w-full rounded-sm border border-[var(--surface-2)] bg-[var(--bg-light-stage)]"
         style={{ height: "var(--space-32)", minHeight: "var(--height-focal-min)" }}
       />
     );

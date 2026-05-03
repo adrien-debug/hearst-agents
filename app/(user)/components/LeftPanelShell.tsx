@@ -43,7 +43,8 @@ export function LeftPanelShell() {
     <>
       {leftDrawerOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50"
+          className="fixed inset-0 z-40"
+          style={{ background: "var(--overlay-scrim)" }}
           onClick={closeLeftDrawer}
           aria-hidden
         />

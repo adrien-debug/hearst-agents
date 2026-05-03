@@ -772,8 +772,8 @@ export function ConnectionsHub() {
                 <button
                   type="button"
                   onClick={() => setAttentionFilter(false)}
-                  className="t-9 font-mono uppercase text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
-                                 >
+                  className="t-11 font-medium text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
+                >
                   ← Voir tout le catalogue
                 </button>
               </div>
@@ -822,11 +822,8 @@ export function ConnectionsHub() {
 function DisabledState({ message }: { message: string | null }) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8 py-24">
-      <p
-        className="halo-mono-label"
-        style={{ letterSpacing: "var(--tracking-brand)" }}
-      >
-        COMPOSIO_UNAVAILABLE
+      <p className="t-15 font-medium text-[var(--text-muted)]">
+        Composio indisponible
       </p>
       <p className="t-13 text-[var(--text-soft)] max-w-md text-center leading-relaxed">
         {message ?? "Composio n'est pas configuré."}
@@ -871,11 +868,8 @@ function Header({
       className="sticky top-0 z-10 flex items-center gap-4 px-8 py-3 border-b"
       style={{ background: "var(--bg-elev)", borderColor: "var(--border-shell)" }}
     >
-      <span
-        className="t-10 font-mono uppercase whitespace-nowrap"
-        style={{ letterSpacing: "var(--tracking-brand)" }}
-      >
-        <span className="text-[var(--cykan)]">[ APPS ]</span>
+      <span className="t-13 font-medium whitespace-nowrap text-[var(--cykan)]">
+        Apps
       </span>
 
       <label
@@ -907,9 +901,7 @@ function Header({
         </kbd>
       </label>
 
-      <div
-        className="flex items-center gap-3 t-10 font-mono uppercase whitespace-nowrap"
-             >
+      <div className="flex items-center gap-3 t-11 font-medium whitespace-nowrap">
         <span className="flex items-center gap-2 text-[var(--text)]">
           <span
             className="w-1 h-1 rounded-pill halo-dot"
@@ -954,12 +946,10 @@ function Header({
 
 function SectionLabel({ label, count }: { label: string; count: number }) {
   return (
-    <div
-      className="flex items-baseline gap-2 px-8 pt-5 pb-3 t-10 font-mono uppercase"
-         >
+    <div className="flex items-baseline gap-2 px-8 pt-5 pb-3 t-13 font-medium">
       <span className="text-[var(--text)]">{label}</span>
       <span className="text-[var(--text-ghost)]">·</span>
-      <span className="text-[var(--text-faint)]">{count}</span>
+      <span className="text-[var(--text-faint)] font-light">{count}</span>
     </div>
   );
 }
@@ -1025,8 +1015,8 @@ function StageTile({
       : variant === "error" ? "var(--color-error)"
         : "var(--cykan)";
   const statusLabel =
-    variant === "warn" ? "oauth en cours"
-      : variant === "error" ? "à reconnecter"
+    variant === "warn" ? "OAuth en cours"
+      : variant === "error" ? "À reconnecter"
         : null;
 
   return (
@@ -1070,10 +1060,8 @@ function StageTile({
       </span>
       {statusLabel && (
         <span
-          className="t-9 font-mono uppercase"
-          style={{
-                        color: dotColor,
-          }}
+          className="t-9 font-light"
+          style={{ color: dotColor }}
         >
           {statusLabel}
         </span>
@@ -1148,9 +1136,9 @@ function StarterTile({
         {app.name}
       </span>
       <span
-        className="t-9 font-mono uppercase text-[var(--cykan-deep)] opacity-0 group-hover:opacity-100 transition-opacity"
-             >
-        connecter →
+        className="t-9 font-light text-[var(--cykan-deep)] opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        Connecter →
       </span>
     </button>
   );
@@ -1216,7 +1204,7 @@ function SuggestionCard({
         </div>
       </div>
       <span
-        className="font-mono text-[var(--text-ghost)] group-hover:text-[var(--cykan-deep)] transition-colors"
+        className="text-[var(--text-ghost)] group-hover:text-[var(--cykan-deep)] transition-colors"
         aria-hidden
       >
         →
@@ -1262,9 +1250,7 @@ function CategoriesBar({
         />
       ))}
       {hiddenCount > 0 && (
-        <span
-          className="t-10 font-mono uppercase whitespace-nowrap text-[var(--text-faint)] ml-auto"
-                 >
+        <span className="t-11 font-light whitespace-nowrap text-[var(--text-faint)] ml-auto">
           + {hiddenCount} catégorie{hiddenCount > 1 ? "s" : ""}
         </span>
       )}
@@ -1287,9 +1273,9 @@ function CategoryChip({
     <button
       type="button"
       onClick={onClick}
-      className="t-10 font-mono uppercase whitespace-nowrap transition-colors"
+      className="t-11 whitespace-nowrap transition-colors"
       style={{
-                color: on ? "var(--cykan)" : "var(--text-faint)",
+        color: on ? "var(--cykan)" : "var(--text-faint)",
         fontWeight: on ? "var(--weight-semibold)" : "var(--weight-regular)",
       }}
     >
@@ -1326,11 +1312,8 @@ function Wallpaper({
   return (
     <div className="px-8 pt-4 pb-8">
       {apps.length === 0 ? (
-        <p
-          className="t-11 font-mono uppercase text-center py-10 text-[var(--text-faint)]"
-          style={{ letterSpacing: "var(--tracking-brand)" }}
-        >
-          AUCUN SERVICE DANS CETTE CATÉGORIE
+        <p className="t-13 font-light text-center py-10 text-[var(--text-faint)]">
+          Aucun service dans cette catégorie.
         </p>
       ) : (
         <div className="grid grid-cols-6 sm:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12 gap-2">
@@ -1346,10 +1329,10 @@ function Wallpaper({
         </div>
       )}
       <div
-        className="mt-5 pt-4 flex items-center justify-between t-10 font-mono uppercase border-t"
+        className="mt-5 pt-4 flex items-center justify-between t-11 font-light border-t"
         style={{
           borderColor: "var(--border-shell)",
-                    color: "var(--text-faint)",
+          color: "var(--text-faint)",
         }}
       >
         <span>
@@ -1464,23 +1447,18 @@ function SearchResultsSection({
   if (results.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center gap-3 px-8">
-        <p
-          className="t-11 font-mono uppercase text-[var(--text-faint)]"
-          style={{ letterSpacing: "var(--tracking-brand)" }}
-        >
-          AUCUN RÉSULTAT
+        <p className="t-15 font-medium text-[var(--text-muted)]">
+          Aucun résultat
         </p>
       </div>
     );
   }
   return (
     <div className="px-8 pt-8 pb-8">
-      <div
-        className="flex items-baseline gap-2 mb-4 t-10 font-mono uppercase"
-             >
+      <div className="flex items-baseline gap-2 mb-4 t-13 font-medium">
         <span className="text-[var(--text)]">Résultats</span>
         <span className="text-[var(--text-ghost)]">·</span>
-        <span className="text-[var(--text-faint)]">
+        <span className="text-[var(--text-faint)] font-light">
           {results.length} sur {totalCount}
         </span>
       </div>
@@ -1504,10 +1482,8 @@ function SearchResultsSection({
               >
                 {app.name}
               </div>
-              <div
-                className="t-9 font-mono uppercase mt-1 text-[var(--text-faint)] truncate"
-                             >
-                {connectedSlugs.has(app.key) ? "● connecté" : categoryLabel(app)}
+              <div className="t-11 font-light mt-1 text-[var(--text-faint)] truncate">
+                {connectedSlugs.has(app.key) ? "Connecté" : categoryLabel(app)}
               </div>
             </div>
           </button>
@@ -1627,15 +1603,13 @@ function AppDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="t-9 font-mono uppercase text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
-                     >
+            className="t-11 font-medium text-[var(--text-faint)] hover:text-[var(--text)] transition-colors"
+          >
             ← Fermer
           </button>
           {isConnected && (
-            <span
-              className="t-9 font-mono uppercase text-[var(--cykan)]"
-                         >
-              ● connecté
+            <span className="t-11 font-medium text-[var(--cykan)]">
+              ● Connecté
             </span>
           )}
         </div>
@@ -1651,10 +1625,7 @@ function AppDrawer({
               >
                 {app.name}
               </h2>
-              <p
-                className="t-11 font-mono uppercase text-[var(--text-faint)] m-0 mt-1"
-                style={{ letterSpacing: "var(--tracking-stretch)" }}
-              >
+              <p className="t-11 font-light text-[var(--text-faint)] m-0 mt-1">
                 {categoryLabel(app)}
               </p>
             </div>
@@ -1722,12 +1693,7 @@ function AppDrawer({
 function NativeFooter() {
   return (
     <div className="flex flex-col gap-2">
-      <p
-        className="t-9 font-mono uppercase"
-        style={{
-                    color: "var(--cykan-deep)",
-        }}
-      >
+      <p className="t-11 font-medium" style={{ color: "var(--cykan-deep)" }}>
         Géré via le SSO
       </p>
       <p
@@ -1792,16 +1758,14 @@ function ActionsSection({
 }) {
   return (
     <section>
-      <div
-        className="flex items-baseline gap-2 mb-3 t-9 font-mono uppercase"
-             >
+      <div className="flex items-baseline gap-2 mb-3 t-13 font-medium">
         <span className="text-[var(--text)]">
           {isConnected ? "Ce que Hearst fait pour toi" : "Ce que ton agent pourra faire"}
         </span>
         {totalActions > 0 && (
           <>
             <span className="text-[var(--text-ghost)]">·</span>
-            <span className="text-[var(--text-faint)]">{totalActions}</span>
+            <span className="text-[var(--text-faint)] font-light">{totalActions}</span>
           </>
         )}
       </div>
@@ -1835,8 +1799,8 @@ function ActionsSection({
               <button
                 type="button"
                 onClick={onToggleShowAll}
-                className="t-9 font-mono uppercase text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
-                             >
+                className="t-11 font-medium text-[var(--cykan-deep)] hover:text-[var(--cykan)] transition-colors"
+              >
                 {showAll
                   ? "← Réduire"
                   : `Voir les ${totalActions} actions →`}
