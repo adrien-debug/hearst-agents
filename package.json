@@ -51,6 +51,8 @@
     "@react-three/fiber": "^9.6.1",
     "@react-three/postprocessing": "^3.0.4",
     "@sentry/nextjs": "^10.51.0",
+    "@splinetool/react-spline": "^4.1.0",
+    "@splinetool/runtime": "^1.12.90",
     "@supabase/supabase-js": "^2.103.3",
     "@upstash/redis": "^1.37.0",
     "ai": "^6.0.168",
