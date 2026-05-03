@@ -106,7 +106,6 @@ export function ChatConnectInline() {
       aria-label="Connexion d'un service requise"
     >
       <div className="flex items-center gap-2 mb-2 t-9 font-medium text-[var(--warn)]">
-        <span aria-hidden>🔗</span>
         <span>Connexion requise</span>
         <span className="text-[var(--text-ghost)]">·</span>
         <span className="text-[var(--text-faint)]">{request.app}</span>

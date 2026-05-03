@@ -5,6 +5,7 @@ import { useRuntimeStore } from "@/stores/runtime";
 import { ChatToolStream } from "./ChatToolStream";
 import { ChatActionReceipts } from "./ChatActionReceipts";
 import { ChatConnectInline } from "./ChatConnectInline";
+import { ChatMissionRunInline } from "./ChatMissionRunInline";
 import { ThinkingDisclosure } from "./ThinkingDisclosure";
 import { ChatAssetCard } from "./ChatAssetCard";
 import { Block, type BlockActionId } from "./chat/Block";
@@ -252,6 +253,7 @@ export function ChatMessages({
               {isLastAssistant && !showShimmer && (
                 <>
                   <ChatConnectInline />
+                  <ChatMissionRunInline />
                   <ChatActionReceipts />
                 </>
               )}
