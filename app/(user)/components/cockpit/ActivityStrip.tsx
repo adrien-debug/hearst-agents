@@ -24,6 +24,26 @@ function formatTs(ts: number): string {
   return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
 }
 
+const SSE_TYPE_FR: Record<string, string> = {
+  step_started: "Étape démarrée",
+  step_completed: "Étape terminée",
+  run_started: "Run démarré",
+  run_completed: "Run terminé",
+  run_failed: "Run en échec",
+  text_delta: "Texte généré",
+  asset_generated: "Asset généré",
+  focal_object_ready: "Asset prêt",
+  approval_requested: "Approbation requise",
+  clarification_requested: "Précision requise",
+  plan_preview: "Plan prêt",
+  plan_step_started: "Étape de plan démarrée",
+  plan_step_completed: "Étape de plan terminée",
+};
+
+function prettifyType(type: string): string {
+  return SSE_TYPE_FR[type] ?? type.replace(/_/g, " ");
+}
+
 export function ActivityStrip({ data }: ActivityStripProps) {
   const coreState = useRuntimeStore((s) => s.coreState);
   const events = useRuntimeStore((s) => s.events);
@@ -42,9 +62,22 @@ export function ActivityStrip({ data }: ActivityStripProps) {
     return events[events.length - 1];
   }, [events]);
 
-  const lastTs = lastEvent?.timestamp ?? data.generatedAt;
+  // Fallback en idle : dernier `lastRunAt` parmi missionsRunning
+  const lastMissionRun = useMemo(() => {
+    let best: { name: string; ts: number; status: string } | null = null;
+    for (const m of data.missionsRunning) {
+      if (typeof m.lastRunAt !== "number") continue;
+      if (!best || m.lastRunAt > best.ts) {
+        best = { name: m.name, ts: m.lastRunAt, status: m.status };
+      }
+    }
+    return best;
+  }, [data.missionsRunning]);
+
+  const lastTs = lastEvent?.timestamp ?? lastMissionRun?.ts ?? data.generatedAt;
   const idleSince = now - lastTs;
-  const isHidden = !isLive && runningCount === 0 && idleSince > IDLE_HIDE_MS;
+  const isHidden =
+    !isLive && runningCount === 0 && !lastEvent && !lastMissionRun && idleSince > IDLE_HIDE_MS;
 
   if (isHidden) {
     return (
@@ -61,15 +94,31 @@ export function ActivityStrip({ data }: ActivityStripProps) {
     );
   }
 
-  const eventLabel = (() => {
-    if (!lastEvent) return null;
-    const label = lastEvent["label"];
-    if (typeof label === "string") return label;
-    return lastEvent.type.replace(/_/g, " ");
+  // Calcul du label ticker, par priorité décroissante :
+  // 1. Event SSE en cours (label fourni ou type FR)
+  // 2. Dernière mission terminée (avec statut)
+  // 3. Briefing du jour (si récent)
+  // 4. Fallback "Aucune activité récente"
+  const tickerLabel = (() => {
+    if (lastEvent) {
+      const label = lastEvent["label"];
+      if (typeof label === "string" && label.length > 0) return label;
+      return prettifyType(lastEvent.type);
+    }
+    if (lastMissionRun) {
+      const verb =
+        lastMissionRun.status === "success"
+          ? "Mission réussie"
+          : lastMissionRun.status === "failed"
+            ? "Mission en échec"
+            : "Dernière mission";
+      return `${verb} : ${lastMissionRun.name}`;
+    }
+    if (data.briefing && !data.briefing.empty && data.briefing.generatedAt) {
+      return "Briefing du jour disponible";
+    }
+    return "Aucune activité récente";
   })();
-  const tickerLabel =
-    eventLabel ??
-    (runningCount > 0 ? `${runningCount} mission${runningCount > 1 ? "s" : ""} en cours` : "—");
 
   return (
     <div
@@ -77,8 +126,6 @@ export function ActivityStrip({ data }: ActivityStripProps) {
       style={{
         height: "var(--space-10)",
         padding: "0 var(--space-3)",
-        background: "var(--surface-1)",
-        borderBottom: "1px solid var(--border-soft)",
       }}
     >
       {/* Gauche : count + dots */}

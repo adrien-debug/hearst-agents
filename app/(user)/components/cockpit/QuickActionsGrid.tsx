@@ -133,23 +133,18 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
             key={t.id}
             onClick={t.onClick}
             disabled={t.loading}
-            className="text-left flex flex-col justify-between transition-colors disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+            className="group text-left flex flex-col justify-between transition-all duration-500 hover:-translate-y-1 hover:shadow-sm disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
             style={{
               padding: "var(--space-3)",
-              background: TONE_BG[t.tone],
-              borderLeft: `2px solid ${TONE_BORDER[t.tone]}`,
-              borderTop: "1px solid var(--border-soft)",
-              borderRight: "1px solid var(--border-soft)",
-              borderBottom: "1px solid var(--border-soft)",
               borderRadius: "var(--radius-sm)",
               gap: "var(--space-1)",
               minHeight: 0,
             }}
           >
-            <span className="t-9 font-light text-[var(--text-faint)] truncate">
+            <span className="uppercase tracking-widest text-[0.65rem] text-[var(--text-faint)] truncate">
               {t.eyebrow}
             </span>
-            <span className="t-13 font-medium text-[var(--text-l1)] line-clamp-2 leading-snug">
+            <span className="t-13 font-medium text-[var(--text-l1)] line-clamp-2 leading-snug transition-colors group-hover:text-[var(--cykan)] group-hover:drop-shadow-[0_0_8px_rgba(0,255,255,0.3)]">
               {t.loading ? "…" : t.title}
             </span>
             <span className="flex items-center justify-between gap-2">

@@ -16,8 +16,50 @@ interface AgentsConstellationProps {
 const MAX_VISIBLE = 11; // 12e tile = "+N"
 const ACTIVE_WINDOW_MS = 5_000;
 
-function glyphFor(service: ServiceWithConnectionStatus): string {
-  return service.icon || service.name.charAt(0).toUpperCase();
+function isImagePath(s: string | undefined): boolean {
+  if (!s) return false;
+  return s.startsWith("/") || s.startsWith("http://") || s.startsWith("https://") || s.endsWith(".svg") || s.endsWith(".png");
+}
+
+function ServiceGlyph({ service }: { service: ServiceWithConnectionStatus }) {
+  const fallbackChar = service.name.charAt(0).toUpperCase();
+  if (isImagePath(service.icon)) {
+    return (
+      <span
+        className="relative inline-flex items-center justify-center"
+        style={{ width: "var(--space-5)", height: "var(--space-5)" }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={service.icon}
+          alt=""
+          aria-hidden
+          width={20}
+          height={20}
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+          onError={(e) => {
+            // Fallback char si l'icône fail à charger
+            const el = e.currentTarget;
+            el.style.display = "none";
+            const sib = el.nextElementSibling as HTMLElement | null;
+            if (sib) sib.style.display = "inline";
+          }}
+        />
+        <span
+          className="absolute t-13 font-medium text-[var(--text-l1)]"
+          style={{ display: "none", lineHeight: 1 }}
+          aria-hidden
+        >
+          {fallbackChar}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span aria-hidden className="t-13 font-medium text-[var(--text-l1)]" style={{ lineHeight: 1 }}>
+      {service.icon || fallbackChar}
+    </span>
+  );
 }
 
 /**
@@ -65,6 +107,7 @@ function isActive(service: ServiceWithConnectionStatus, active: Set<string>): bo
 
 export function AgentsConstellation({ data }: AgentsConstellationProps) {
   const services = useServicesStore((s) => s.services);
+  const loaded = useServicesStore((s) => s.loaded);
   const router = useRouter();
   const [hoverId, setHoverId] = useState<string | null>(null);
   const activeAgents = useActiveAgents(data);
@@ -104,14 +147,38 @@ export function AgentsConstellation({ data }: AgentsConstellationProps) {
       <SectionHeader
         label="Agents connectés"
         action={
-          <Link
-            href="/apps"
-            className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors tabular-nums"
-          >
-            {connectedCount}/{services.length} →
-          </Link>
+          loaded ? (
+            <Link
+              href="/apps"
+              className="t-11 font-light text-[var(--text-faint)] hover:text-[var(--cykan)] transition-colors tabular-nums"
+            >
+              {connectedCount}/{services.length} →
+            </Link>
+          ) : null
         }
       />
+      {!loaded ? (
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gridTemplateRows: "repeat(3, minmax(0, 1fr))",
+            gap: "var(--space-2)",
+            flex: 1,
+            minHeight: 0,
+          }}
+          aria-busy="true"
+          aria-live="polite"
+        >
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="ghost-skeleton-bar"
+              style={{ borderRadius: "var(--radius-sm)", minHeight: 0 }}
+            />
+          ))}
+        </div>
+      ) : (
       <div
         className="grid"
         style={{
@@ -134,32 +201,22 @@ export function AgentsConstellation({ data }: AgentsConstellationProps) {
               onFocus={() => setHoverId(s.id)}
               onBlur={() => setHoverId(null)}
               title={`${s.name} — ${status === "connected" ? (active ? "actif" : "connecté") : status === "pending" ? "en attente d'OAuth" : status === "error" ? "erreur" : "déconnecté"}`}
-              className="relative flex flex-col items-center justify-center transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+              className="group relative flex flex-col items-center justify-center transition-all duration-500 hover:-translate-y-1 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
               style={{
                 padding: "var(--space-2)",
-                background: "var(--surface-1)",
-                border:
-                  status === "error"
-                    ? "1px solid var(--danger)"
-                    : active
-                      ? "1px solid var(--cykan-border)"
-                      : "1px solid var(--border-soft)",
-                borderRadius: "var(--radius-sm)",
+                borderRadius: "var(--radius-pill)",
                 opacity: status === "disconnected" ? 0.4 : status === "pending" ? 0.7 : 1,
                 filter: status === "disconnected" ? "grayscale(1)" : "none",
-                boxShadow: active ? "var(--glow-cyan-sm)" : "none",
+                boxShadow: active ? "0 0 20px 2px var(--cykan)" : "none",
                 gap: "var(--space-1)",
                 minHeight: 0,
+                transform: active ? "scale(1.05)" : "scale(1)",
               }}
             >
-              <span
-                aria-hidden
-                className="t-13 font-medium text-[var(--text-l1)]"
-                style={{ lineHeight: 1 }}
-              >
-                {glyphFor(s)}
-              </span>
-              <span className="t-9 font-light text-[var(--text-faint)] truncate w-full text-center">
+              <div className={`transition-all duration-500 ${active ? "animate-pulse" : ""}`}>
+                <ServiceGlyph service={s} />
+              </div>
+              <span className="uppercase tracking-widest text-[0.55rem] text-[var(--text-faint)] truncate w-full text-center group-hover:text-[var(--cykan)] transition-colors">
                 {s.name}
               </span>
               {/* Status dot bottom-right */}
@@ -217,12 +274,10 @@ export function AgentsConstellation({ data }: AgentsConstellationProps) {
         {/* +N tile */}
         <Link
           href="/apps"
-          className="flex flex-col items-center justify-center transition-colors hover:text-[var(--cykan)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+          className="flex flex-col items-center justify-center transition-all duration-500 hover:-translate-y-1 hover:text-[var(--cykan)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
           style={{
             padding: "var(--space-2)",
-            background: "var(--surface-1)",
-            border: "1px dashed var(--border-soft)",
-            borderRadius: "var(--radius-sm)",
+            borderRadius: "var(--radius-pill)",
             color: "var(--text-faint)",
             gap: "var(--space-1)",
             minHeight: 0,
@@ -231,9 +286,10 @@ export function AgentsConstellation({ data }: AgentsConstellationProps) {
           <span aria-hidden className="t-13 font-medium">
             {hiddenCount > 0 ? `+${hiddenCount}` : "+"}
           </span>
-          <span className="t-9 font-light">Voir tout</span>
+          <span className="uppercase tracking-widest text-[0.55rem]">Voir tout</span>
         </Link>
       </div>
+      )}
     </section>
   );
 }

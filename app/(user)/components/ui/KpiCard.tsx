@@ -73,17 +73,15 @@ export function KpiCard({
   const inner = (
     <div
       data-testid={testId}
-      className="flex flex-col h-full justify-between transition-colors"
+      className="group flex flex-col h-full justify-between transition-all duration-500 hover:-translate-y-1"
       style={{
         gap: "var(--space-1)",
         padding: "var(--space-3)",
-        background: "var(--surface-1)",
-        border: "1px solid var(--border-soft)",
         borderRadius: "var(--radius-sm)",
       }}
     >
       <div className="flex items-center justify-between gap-2 min-w-0">
-        <span className="t-9 font-light text-[var(--text-faint)] truncate">{label}</span>
+        <span className="uppercase tracking-widest text-[0.65rem] text-[var(--text-faint)] truncate">{label}</span>
         {statusDot && (
           <span
             className={`context-tile-status is-${statusDot}`}
@@ -93,7 +91,7 @@ export function KpiCard({
         )}
       </div>
       <div
-        className="t-28 font-medium tabular-nums leading-none"
+        className="t-28 font-light tracking-tight tabular-nums leading-none transition-colors group-hover:text-[var(--cykan)]"
         style={{ color: valueColor }}
       >
         {value}
