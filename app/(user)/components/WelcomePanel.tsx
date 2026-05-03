@@ -30,9 +30,9 @@ export function WelcomePanel() {
   };
 
   const QUICK_ACTIONS = [
-    { label: "New brief",   hotkey: "⌘B", action: newBrief },
-    { label: "Run query",   hotkey: "⌘Q", action: focusInput },
-    { label: "View assets", hotkey: "⌘A", action: () => router.push("/assets") },
+    { label: "Brief du jour",      hotkey: "⌘B", action: newBrief },
+    { label: "Lancer une recherche", hotkey: "⌘Q", action: focusInput },
+    { label: "Mes artefacts",      hotkey: "⌘A", action: () => router.push("/assets") },
   ];
 
   return (
@@ -53,7 +53,7 @@ export function WelcomePanel() {
             marginBottom: "var(--space-8)",
           }}
         >
-          Quick actions
+          Raccourcis
         </p>
         {QUICK_ACTIONS.map((a) => (
           <button key={a.label} type="button" onClick={a.action} className="cockpit-action">

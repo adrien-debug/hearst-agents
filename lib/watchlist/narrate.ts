@@ -15,10 +15,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { MetricAnomaly } from "./snapshots";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 // ── System prompt ────────────────────────────────────────────
 
-export const ANOMALY_NARRATOR_SYSTEM_PROMPT = [
+export const ANOMALY_NARRATOR_SYSTEM_PROMPT = composeEditorialPrompt([
   "Tu es l'analyste qui contextualise une variation de métrique business pour un fondateur.",
   "",
   "Tu reçois :",
@@ -36,13 +37,10 @@ export const ANOMALY_NARRATOR_SYSTEM_PROMPT = [
   '<example><input>Pipeline +24% en 7j (412k → 510k)</input><output>Pipeline +24% sur 7 jours — 3 deals nouveaux pondèrent fort.</output></example>',
   '<example><input>ARR -2% en 7j</input><output>ARR -2% sur 7 jours — bruit mensuel attendu, pas de signal fort.</output></example>',
   "",
-  "CONTRAINTES :",
-  "- Max 140 caractères au total.",
-  "- Pas d'emojis, pas de markdown.",
+  "CONTRAINTES SPÉCIFIQUES :",
+  "- Max 140 caractères au total (cap dur).",
   "- N'invente jamais un driver — si pas fourni, reste descriptif.",
-  "- Vocabulaire premium : signal, levier, friction, marqué, à creuser, bruit attendu.",
-  "- Bannis : « voici », « il faut », « les données montrent », « on peut voir que ».",
-].join("\n");
+].join("\n"));
 
 // ── Cache mémoire ────────────────────────────────────────────
 

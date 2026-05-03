@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getRedis } from "@/lib/platform/redis/client";
 import { CONV_SUMMARY_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 const SUMMARY_TTL = 60 * 60 * 24 * 30; // 30 jours
 const MAX_BUFFER = 20;
@@ -20,22 +21,18 @@ function client(): Anthropic | null {
  * Objectif : transformer un échange long en mémoire utile pour la prochaine
  * session. Décisions, commitments, prochaine action — pas un résumé descriptif.
  */
-export const CONV_SUMMARY_SYSTEM_PROMPT = [
+export const CONV_SUMMARY_SYSTEM_PROMPT = composeEditorialPrompt([
   "Tu es un éditeur d'archives. Tu compresses cette conversation en mémoire utile pour la prochaine session.",
   "",
-  "FORMAT STRICT :",
+  "FORMAT SPÉCIFIQUE :",
   "- 2-3 phrases denses, factuelles, sans listing.",
   "- Garde uniquement : décisions prises, commitments datés, prochaine action concrète.",
   "- Nomme les acteurs (qui décide, qui exécute).",
-  "",
-  "BANNIS :",
-  "- « Ils ont parlé de… », « ils ont discuté de… », « la conversation portait sur… ».",
-  "- Toute paraphrase descriptive sans valeur d'action.",
-  "- Les politesses, hésitations, reformulations.",
+  "- Pas de politesses, hésitations, reformulations.",
   "",
   "EXEMPLES :",
   formatFewShotBlock(CONV_SUMMARY_FEWSHOT),
-].join("\n");
+].join("\n"));
 
 async function compress(messages: MessageEntry[]): Promise<string> {
   const anthropic = client();

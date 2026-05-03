@@ -12,6 +12,7 @@ import { generateText } from "ai";
 import type { ReportSpec, NarrationSpec } from "@/lib/reports/spec/schema";
 import type { RenderPayload } from "./render-blocks";
 import { NARRATION_FEWSHOT_FR, formatFewShotBlock } from "@/lib/prompts/examples";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 const NARRATE_MODEL = "claude-sonnet-4-6";
 
@@ -40,11 +41,6 @@ const MODE_PROMPTS = {
     "4. **Recommendation** : 1 phrase actionnable au futur ou à l'impératif (« Recentre l'effort commercial sur… »).",
   ].join("\n"),
 } as const;
-
-const VOCABULARY_GUIDE = [
-  "VOCABULAIRE PRÉFÉRÉ : signal, levier, tension, friction, anticipation, équilibre, vitalité, recentrer, concentrer, arbitrer, nommer, trancher.",
-  "VOCABULAIRE INTERDIT (toujours) : « il faut », « on peut voir que », « les données montrent », « voici », « il est intéressant de noter », « n'hésite pas », « au global », « globalement parlant ».",
-].join("\n");
 
 export interface NarrateInput {
   spec: ReportSpec;
@@ -116,13 +112,8 @@ function buildSystemPrompt(persona: string, narrationSpec: NarrationSpec): strin
     `Style : ${STYLE_PROMPTS[narrationSpec.style]}`,
     `${MODE_PROMPTS[narrationSpec.mode]}`,
     "",
-    VOCABULARY_GUIDE,
-    "",
-    "RÈGLES STRICTES :",
+    "RÈGLES SPÉCIFIQUES :",
     "- Ne JAMAIS inventer un chiffre. Utilise uniquement les valeurs du payload.",
-    "- Pas d'introduction type 'Voici les résultats'. Va droit au point.",
-    "- Pas de markdown autre que `*` pour les bullets et `**` pour le bold.",
-    "- Pas d'emojis.",
     "- Si une valeur est null, dis 'donnée indisponible' au lieu de l'inventer.",
   ];
 
@@ -130,7 +121,7 @@ function buildSystemPrompt(persona: string, narrationSpec: NarrationSpec): strin
     lines.push("", "EXEMPLES (mode éditorial) :", formatFewShotBlock(NARRATION_FEWSHOT_FR));
   }
 
-  return lines.join("\n");
+  return composeEditorialPrompt(lines.join("\n"));
 }
 
 function buildUserPrompt(spec: ReportSpec, payload: RenderPayload): string {

@@ -305,9 +305,9 @@ function MissionsPageContent() {
       <div className="flex-1 overflow-y-auto px-12 py-6 no-scrollbar scroll-fade-bottom">
         {missions.length === 0 ? (
           <EmptyState
-            title="Aucune mission"
-            description="Les missions sont des tâches récurrentes planifiées. Exécution automatique selon calendrier."
-            cta={{ label: "Créer la première", onClick: openNewMission }}
+            title="Pas encore de mission"
+            description="Une mission est une tâche récurrente — agenda matinal, rapport hebdo, alerte quotidienne. Lance-en une, elle s'exécutera seule selon ton calendrier."
+            cta={{ label: "Créer une mission", onClick: openNewMission }}
           />
         ) : (
           <div className="border-t border-[var(--line)]">

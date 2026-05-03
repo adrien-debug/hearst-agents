@@ -137,7 +137,7 @@ export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
               color: "var(--text-l1)",
             }}
           >
-            Aucun signal pour aujourd{"'"}hui.
+            Pas encore de signal aujourd{"'"}hui.
           </p>
           <p
             className="t-13"
@@ -148,7 +148,7 @@ export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
               marginBottom: "var(--space-4)",
             }}
           >
-            Hearst observe ton quotidien dès que tu lui donnes accès à tes outils.
+            Connecte tes apps depuis ⌘K — Hearst commence à briefer dès la première synchro.
           </p>
           <a
             href={emptyAction.href}

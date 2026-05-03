@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getSummary } from "./conversation-summary";
 import { BRIEFING_FEWSHOT_FR, formatFewShotBlock } from "@/lib/prompts/examples";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 const GENERIC_BRIEFING = {
   text: "Aucune activité récente enregistrée.",
@@ -34,13 +35,11 @@ function formatDate(date: Date): string {
 /**
  * Prompt briefing matinal — niveau "chef de cabinet".
  *
- * Contraintes :
- * - 3 sections obligatoires (What happened / What matters / What's next).
- * - Max 180 mots, ton sobre, factuel.
- * - Bannit les formules creuses ("voici", "n'hésite pas", "j'espère que").
- * - Few-shot injecté pour ancrer le style éditorial.
+ * Le ton, le vocabulaire et les bannis sont chargés via `composeEditorialPrompt`
+ * (charte unifiée). Ne sont définis ici que les contraintes spécifiques au
+ * briefing : format 3 sections, cap 180 mots, italic citations OK, few-shot.
  */
-export const BRIEFING_SYSTEM_PROMPT = [
+export const BRIEFING_SYSTEM_PROMPT = composeEditorialPrompt([
   "Tu es l'analyste exécutif de l'utilisateur — l'équivalent d'un chef de cabinet pour un fondateur.",
   "Tu lis sa mémoire d'activité récente et tu produis un briefing matinal qui concentre l'attention.",
   "",
@@ -49,18 +48,13 @@ export const BRIEFING_SYSTEM_PROMPT = [
   "2. **What matters.** 2-3 bullets qui nomment ce qui demande de l'attention aujourd'hui.",
   "3. **What's next.** Une recommandation actionnable, formulée à l'impératif.",
   "",
-  "CONTRAINTES :",
+  "CONTRAINTES SPÉCIFIQUES :",
   "- Max 180 mots au total.",
-  "- Phrases courtes, factuelles, sans adjectifs marketing.",
-  "- Italic (`*…*`) autorisé pour citations brèves.",
-  "- Vocabulaire premium : anticipation, équilibre, vitalité, signal, levier, tension, friction, recentrer.",
-  "- Bannis ces formules : « voici », « n'hésite pas », « j'espère que », « bonne journée », « il faut », « les données montrent », « on peut voir que ».",
-  "- N'invente jamais un fait absent du contexte.",
-  "- Pas d'emojis.",
+  "- Italic (`*…*`) autorisé pour citations brèves (renforce le côté éditorial).",
   "",
   "EXEMPLES :",
   formatFewShotBlock(BRIEFING_FEWSHOT_FR),
-].join("\n");
+].join("\n"));
 
 export async function generateBriefing(params: {
   userId: string;

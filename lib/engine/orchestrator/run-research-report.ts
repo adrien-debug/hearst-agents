@@ -21,6 +21,38 @@ import { generatePdfArtifact } from "@/lib/engine/runtime/assets/generators/pdf"
 import type { AssetFileInfo } from "@/lib/engine/runtime/assets/types";
 import { extractResearchQuery, isReportIntent } from "./research-intent";
 import Anthropic from "@anthropic-ai/sdk";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
+
+/**
+ * System prompt pour synthesizeReport — appelé uniquement si le summary
+ * Perplexity/Tavily/Exa est trop court (<200 chars). Charte éditoriale
+ * complète + structure pyramide pour produire un livrable scannable et
+ * cohérent avec le reste de la voix Hearst.
+ */
+const RESEARCH_REPORT_SYSTEM_PROMPT = composeEditorialPrompt([
+  "Tu es l'analyste éditorial qui rédige un rapport de recherche pour un fondateur exigeant.",
+  "Le rapport sera affiché tel quel dans l'app — il doit être livrable, pas un brouillon.",
+  "",
+  "STRUCTURE PYRAMIDE OBLIGATOIRE :",
+  "",
+  "1. **Synthèse** (1 paragraphe, ≤ 30 mots)",
+  "   La une du rapport — quel est le signal central ? Incarné, pas mécanique.",
+  "",
+  "2. **Sections thématiques** (3 à 6 sections, format `## Titre`)",
+  "   Chacune ≤ 200 mots, structure interne :",
+  "   - Une phrase d'intro qui nomme le fait pivot.",
+  "   - 3 à 5 bullets factuels (cap 18 mots/bullet, parallélisme strict).",
+  "   - Citations sources entre crochets [1], [2] quand factuel.",
+  "",
+  "3. **À retenir** (1 paragraphe ≤ 40 mots)",
+  "   La conclusion opérationnelle. Si une décision se profile, nomme-la. Pas de récap.",
+  "",
+  "RÈGLES SPÉCIFIQUES :",
+  "- Pas de heading H1 (`#`) — le titre est porté par le composant React.",
+  "- Pas de tables ni de code blocks.",
+  "- Cite les sources entre crochets uniquement quand un fait précis est référencé.",
+  "- Si une donnée est absente des sources, dis-le (« non documenté dans les sources retenues ») plutôt que combler.",
+].join("\n"));
 
 export interface ResearchReportInput {
   message: string;
@@ -287,13 +319,11 @@ async function synthesizeReport(
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 4096,
-    system:
-      "Tu es un analyste expert. Rédige un rapport structuré, factuel et professionnel en français. " +
-      "Utilise des titres, sous-titres et bullet points. Cite les sources quand pertinent.",
+    system: RESEARCH_REPORT_SYSTEM_PROMPT,
     messages: [
       {
         role: "user",
-        content: `Rédige un rapport structuré sur : "${query}"\n\nSources disponibles :\n${sourcesContext}`,
+        content: `Rédige le rapport sur : "${query}"\n\nSources disponibles (cite par leur numéro quand factuel) :\n${sourcesContext}`,
       },
     ],
   });

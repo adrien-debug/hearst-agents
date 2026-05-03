@@ -218,8 +218,8 @@ export default function RunsPage() {
         <div className="max-w-5xl mx-auto">
           {runs.length === 0 ? (
             <EmptyState
-              title="Aucun run"
-              description="Aucun run pour l'instant. Toutes les exécutions de tes prompts et missions apparaîtront ici."
+              title="Pas encore de run"
+              description="Chaque prompt envoyé et chaque mission exécutée laisse une trace ici — input, plan, sortie, durée."
             />
           ) : (
             <div>

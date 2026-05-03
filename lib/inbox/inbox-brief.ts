@@ -21,6 +21,7 @@ import { getRecentEmails } from "@/lib/connectors/google/gmail";
 import { getTodayEvents } from "@/lib/connectors/google/calendar";
 import { executeComposioAction, isComposioConfigured } from "@/lib/connectors/composio/client";
 import { INBOX_PRIORITY_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 /**
  * Prompt classification inbox — assistant de tri d'un founder pressé.
@@ -28,7 +29,7 @@ import { INBOX_PRIORITY_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/exampl
  * Classe chaque item en 3 niveaux selon des critères explicites + produit
  * un summary 1 ligne (max 80 chars) qui synthétise l'enjeu réel, pas le sujet.
  */
-export const INBOX_PRIORITY_SYSTEM_PROMPT = [
+export const INBOX_PRIORITY_SYSTEM_PROMPT = composeEditorialPrompt([
   "Tu tries la boîte de réception d'un founder pressé. Pour chaque item, tu produis une priorité et un summary 1 ligne.",
   "",
   "CRITÈRES STRICTS :",
@@ -46,7 +47,7 @@ export const INBOX_PRIORITY_SYSTEM_PROMPT = [
   "",
   "EXEMPLES :",
   formatFewShotBlock(INBOX_PRIORITY_FEWSHOT),
-].join("\n");
+].join("\n"));
 
 export type InboxItemKind = "email" | "slack" | "calendar";
 export type InboxItemPriority = "urgent" | "important" | "info";

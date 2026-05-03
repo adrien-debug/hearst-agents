@@ -17,6 +17,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { WorkflowHandler } from "./types";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 interface ArrivalLite {
   guestName: string;
@@ -25,22 +26,27 @@ interface ArrivalLite {
   vip?: boolean;
 }
 
-const SYSTEM_PROMPT = [
+/**
+ * Voix dérivée "Hospitality" : la charte Hearst s'applique (zéro emoji,
+ * vocab sobre, pas de superlatifs creux), avec une dérogation explicite
+ * sur le tutoiement → vouvoiement requis pour le contexte concierge VIP.
+ */
+const SYSTEM_PROMPT = composeEditorialPrompt([
   "Tu es un concierge premium qui rédige des welcome notes courtes et personnalisées pour des guests VIP.",
   "",
   "FORMAT STRICT — JSON ARRAY uniquement, sans markdown fence, sans préambule :",
   '[{ "guestName": string, "room": string, "note": string }]',
   "",
-  "RÈGLES :",
+  "RÈGLES SPÉCIFIQUES :",
   "- Chaque note ≤ 80 mots (cap dur).",
   "- Ton chaleureux, jamais obséquieux. Pas de superlatifs creux.",
   "- Si specialRequest est présent, le mentionner discrètement (« nous avons préparé… »).",
-  "- Toujours en français, vouvoiement.",
+  "- DÉROGATION CHARTE : vouvoiement obligatoire ici (contexte hospitality VIP). Le tutoiement par défaut de Hearst ne s'applique pas.",
   "- Pas de phrase générique copiée-collée d'un guest à l'autre.",
-].join("\n");
+].join("\n"));
 
 function fallbackNote(a: ArrivalLite): string {
-  return `Bienvenue ${a.guestName}. Votre chambre ${a.room ?? ""} est prête. N'hésitez pas à solliciter la conciergerie.`.trim();
+  return `Bienvenue ${a.guestName}. Votre chambre ${a.room ?? ""} est prête. La conciergerie reste à votre disposition.`.trim();
 }
 
 export const aiDraftWelcomeNotes: WorkflowHandler = async (args) => {

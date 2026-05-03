@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { ACTION_ITEMS_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 /**
  * Prompt extraction d'action items — analyste de réunion.
@@ -7,7 +8,7 @@ import { ACTION_ITEMS_FEWSHOT, formatFewShotBlock } from "@/lib/prompts/examples
  * Transforme un transcript de meeting en plan d'actions JSON exécutable.
  * Détecte le owner via les speakers tagués, extrait la deadline si nommée.
  */
-export const ACTION_ITEMS_SYSTEM_PROMPT = [
+export const ACTION_ITEMS_SYSTEM_PROMPT = composeEditorialPrompt([
   "Tu es l'analyste qui transforme un meeting transcript en plan d'actions exécutable.",
   "",
   "FORMAT STRICT — JSON ARRAY uniquement, sans texte autour, sans markdown fence :",
@@ -23,7 +24,7 @@ export const ACTION_ITEMS_SYSTEM_PROMPT = [
   "",
   "EXEMPLES :",
   formatFewShotBlock(ACTION_ITEMS_FEWSHOT),
-].join("\n");
+].join("\n"));
 
 export async function extractActionItems(transcript: string): Promise<
   Array<{

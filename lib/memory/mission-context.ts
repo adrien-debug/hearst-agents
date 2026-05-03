@@ -29,6 +29,7 @@ import { formatRetrievedItems } from "./retrieval-context";
 import { getKgContextForUser } from "./kg-context";
 import { updateScheduledMission } from "@/lib/engine/runtime/state/adapter";
 import { MISSION_CONTEXT_FEWSHOT_FR, formatFewShotBlock } from "@/lib/prompts/examples";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -64,9 +65,10 @@ export interface MissionContext {
 /**
  * Prompt « archiviste de mission ». Garde 4 sections strictes pour éviter
  * la dérive run-after-run. Chaque update reçoit le previousSummary pour
- * que Claude ré-écrive plutôt que d'append (évite le creep).
+ * que Claude ré-écrive plutôt que d'append (évite le creep). Le ton et
+ * les bannis sont chargés via la charte éditoriale unifiée.
  */
-export const MISSION_CONTEXT_SYSTEM_PROMPT = [
+export const MISSION_CONTEXT_SYSTEM_PROMPT = composeEditorialPrompt([
   "Tu es l'archiviste d'une mission longue durée. Tu maintiens un résumé éditorial actualisé qui sera relu au prochain run.",
   "",
   "FORMAT STRICT (4 sections, dans cet ordre, en markdown) :",
@@ -75,17 +77,13 @@ export const MISSION_CONTEXT_SYSTEM_PROMPT = [
   "3. **Décisions actées.** Bullet ou phrase qui consigne les décisions stables (ne pas re-débattre).",
   "4. **Prochaine étape.** Une recommandation concrète, datée si possible.",
   "",
-  "CONTRAINTES :",
+  "CONTRAINTES SPÉCIFIQUES :",
   "- Max 250 mots au total.",
   "- Tu RÉ-ÉCRIS le résumé entier, tu n'appendes pas. Le previousSummary est ta base, pas un préfixe à conserver.",
-  "- Phrases courtes, factuelles. Pas d'adjectifs marketing.",
-  "- Vocabulaire premium : signal, levier, friction, recentrer, anticiper.",
-  "- Bannis : « voici », « n'hésite pas », « il faut », « les données montrent ».",
-  "- N'invente jamais un fait absent du run ou du previousSummary.",
   "",
   "EXEMPLES :",
   formatFewShotBlock(MISSION_CONTEXT_FEWSHOT_FR),
-].join("\n");
+].join("\n"));
 
 // ── Supabase queries ─────────────────────────────────────────
 

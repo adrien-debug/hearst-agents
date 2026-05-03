@@ -335,7 +335,7 @@ function CommentsDrawer({
       >
         {comments.length === 0 ? (
           <p className="t-9" style={{ color: "var(--text-muted)" }}>
-            Aucun commentaire pour l&apos;instant.
+            Pas encore de commentaire.
           </p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -366,7 +366,7 @@ function CommentsDrawer({
         value={body}
         onChange={(e) => setBody(e.currentTarget.value)}
         rows={3}
-        placeholder="Votre commentaire…"
+        placeholder="Ton commentaire…"
         className="t-13 w-full"
         style={{
           padding: "var(--space-2)",

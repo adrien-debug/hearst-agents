@@ -182,18 +182,12 @@ function ListView({ text }: { text: string }) {
       {items.map((it, i) => (
         <li
           key={i}
-          className="flex items-start t-15 leading-relaxed font-light text-[var(--text-soft)]"
+          className="flex items-baseline t-15 leading-relaxed font-light text-[var(--text-soft)]"
           style={{ gap: "var(--space-3)" }}
         >
-          <span
-            className="rounded-pill bg-[var(--cykan)] shrink-0"
-            aria-hidden
-            style={{
-              width: "var(--space-1)",
-              height: "var(--space-1)",
-              marginTop: "var(--space-2)",
-            }}
-          />
+          <span className="t-9 font-mono text-[var(--cykan)] shrink-0" aria-hidden>
+            ─
+          </span>
           <span>{renderInline(it)}</span>
         </li>
       ))}

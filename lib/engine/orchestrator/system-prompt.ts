@@ -12,6 +12,7 @@ import type { DiscoveredTool } from "@/lib/connectors/composio/discovery";
 import type { Persona } from "@/lib/personas/types";
 import { buildPersonaAddonOrNull } from "@/lib/personas/system-prompt-addon";
 import { buildSlugStrictnessRule } from "@/lib/agents/connected-apps-context";
+import { EDITORIAL_CHARTER_BLOCK } from "@/lib/editorial/charter";
 
 export const ORCHESTRATOR_MODEL = "claude-sonnet-4-6";
 
@@ -387,6 +388,9 @@ Déduis les paramètres directement depuis le message :
 
   return `${scheduleHeader}Tu es Hearst, un assistant exécutif intelligent pour les professionnels des médias.
 Aujourd'hui : ${today}${surfaceNote}${briefingSection}${kgContextSection}${missionContextSection}${personaSection}${applicableReportsSection}
+
+CHARTE ÉDITORIALE HEARST (s'applique à toutes tes réponses et drafts) :
+${EDITORIAL_CHARTER_BLOCK}
 
 ⚠️ RÈGLE ZÉRO — GÉNÉRATION DE CONTENU :
 Si l'utilisateur demande un contenu textuel ou du code (HTML, CSS, JS, JSON, code dans n'importe quel langage, prompt, exemple, snippet, mock, structure, démo, page web, document Markdown, template…), tu DOIS le produire — jamais refuser. Tu as deux modes de livraison :

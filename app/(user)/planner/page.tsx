@@ -144,8 +144,8 @@ export default function PlannerPage() {
         {filtered.length === 0 ? (
           <EmptyState
             icon="◉"
-            title="Aucun plan"
-            description="Les plans d'exécution apparaîtront ici."
+            title="Pas encore de plan"
+            description="Quand un run produit un plan d'exécution multi-étapes, il s'affiche ici avec sa progression."
           />
         ) : (
           <div className="space-y-3">

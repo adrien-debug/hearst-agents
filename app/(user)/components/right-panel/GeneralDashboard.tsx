@@ -111,7 +111,7 @@ export function GeneralDashboard({
           </div>
           <p className="recap-card-body">
             {activeMissions.length === 0
-              ? "Aucune mission — lance via ⌘K"
+              ? "Pas encore de mission — ⌘K pour lancer"
               : runningMissions.length > 0
                 ? `${runningMissions.length} en cours${failedMissions.length > 0 ? ` · ${failedMissions.length} en échec` : ""}`
                 : failedMissions.length > 0
@@ -146,7 +146,7 @@ export function GeneralDashboard({
           </div>
           <p className="recap-card-body">
             {recentAssets.length === 0
-              ? "Aucun asset — génère via chat"
+              ? "Pas encore d'asset — demande dans le chat"
               : recentAssets.map((a) => a.name ?? a.title ?? "Asset").join(" · ")}
           </p>
         </button>

@@ -43,7 +43,7 @@ const SEVERITY_BG: Record<AppNotification["severity"], string> = {
 };
 
 const KIND_LABELS: Record<AppNotification["kind"], string> = {
-  signal: "Signal",
+  signal: "Alerte",
   report_ready: "Rapport prêt",
   export_done: "Export terminé",
   share_viewed: "Partage consulté",

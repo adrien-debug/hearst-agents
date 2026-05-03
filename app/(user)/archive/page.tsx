@@ -81,7 +81,7 @@ export default function ArchivePage() {
         {filtered.length === 0 ? (
           <EmptyState
             title={query ? "Aucun résultat" : "Archive vide"}
-            description={query ? undefined : "Toutes tes conversations passées et leurs assets vivront ici."}
+            description={query ? undefined : "Tes conversations passées et leurs assets atterrissent ici une fois closes."}
           />
         ) : (
           <div className="max-w-3xl mx-auto px-12 py-6 space-y-2">

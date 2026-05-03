@@ -155,8 +155,8 @@ export default function PersonasPage() {
             <CardSkeleton count={6} columns={3} height="var(--space-24)" />
           ) : personas.length === 0 ? (
             <EmptyState
-              title="Aucune persona"
-              description="Utilise le bouton ci-dessus pour créer ta première voix éditoriale."
+              title="Pas encore de persona"
+              description="Une persona définit ta voix éditoriale par surface (cockpit, briefs, drafts). Crée-la depuis le bouton ci-dessus."
               density="compact"
             />
           ) : (

@@ -136,8 +136,8 @@ export default function AssetsPage() {
         <div className="max-w-4xl mx-auto">
           {assets.length === 0 ? (
             <EmptyState
-              title="Aucun asset"
-              description="Aucun asset pour l'instant. Les rapports, briefs et documents générés par tes runs apparaîtront ici."
+              title="Pas encore d'asset"
+              description="Demande un rapport, un brief ou un document via le chat — le livrable atterrira ici dès qu'il est prêt."
             />
           ) : (
             <div>
