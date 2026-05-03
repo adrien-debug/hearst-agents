@@ -29,7 +29,10 @@ export function KPIStrip({ data }: KPIStripProps) {
         if (!res.ok) return;
         const json = (await res.json()) as UsageSnapshot;
         if (!cancelled) setUsage(json);
-      } catch {
+      } catch (e) {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("[KPIStrip] /api/v2/usage/today indisponible", e);
+        }
         // fail-soft
       }
     };

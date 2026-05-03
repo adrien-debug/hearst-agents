@@ -13,8 +13,8 @@ import type { CockpitTodayPayload } from "@/lib/cockpit/today";
  * constellation Hearst reste en background.
  *
  * Loading : skeleton 3 sections (Hero / Watchlist / Suggestions) — pas de
- * spinner. Refetch on mount uniquement (MVP) ; phase B ajoutera un focus
- * listener pour rafraîchir au retour de l'user.
+ * spinner. Sync client au mount (même si RSC a pré-hydraté) pour des KPI
+ * à jour ; phase B : focus / visibilité.
  *
  * Empty states : chaque section a son CTA contextuel (pas de glyphes seuls
  * selon la règle CLAUDE.md §5).
@@ -22,11 +22,20 @@ import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 interface CockpitStageProps {
   /**
    * Phase C5 — payload Cockpit pré-fetché par le RSC parent (`page.tsx`).
-   * Si fourni, on skip le fetch initial et on rend les sections live au
-   * first paint → gain LCP. Null = client fetch normal en fallback (cas
-   * scope dev / hot reload / refetch après run).
+   * First paint immédiat + sync client au mount pour éviter des KPI figés.
    */
   initialData?: CockpitTodayPayload | null;
+}
+
+function logCockpitSyncedDev(payload: CockpitTodayPayload) {
+  if (process.env.NODE_ENV !== "development") return;
+  console.info("[CockpitStage] cockpit/today synchronisé", {
+    assets: payload.counts.assets,
+    missions: payload.counts.missions,
+    reports: payload.counts.reports,
+    missionsRunning: payload.missionsRunning.length,
+    generatedAt: payload.generatedAt,
+  });
 }
 
 export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
@@ -34,37 +43,59 @@ export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
   const [loading, setLoading] = useState(initialData === null);
   const [error, setError] = useState<string | null>(null);
 
+  const applyCockpitPayload = useCallback((payload: CockpitTodayPayload) => {
+    setData(payload);
+    setError(null);
+    logCockpitSyncedDev(payload);
+  }, []);
+
   const refetch = useCallback(async () => {
     try {
       const res = await fetch("/api/v2/cockpit/today", { credentials: "include" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = (await res.json()) as CockpitTodayPayload;
-      setData(payload);
-      setError(null);
+      applyCockpitPayload(payload);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur");
+      setData((prev) => {
+        if (prev !== null) {
+          console.warn(
+            "[CockpitStage] refetch cockpit échoué, conservation du snapshot :",
+            err instanceof Error ? err.message : err,
+          );
+          return prev;
+        }
+        setError(err instanceof Error ? err.message : "Erreur");
+        return prev;
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyCockpitPayload]);
 
   useEffect(() => {
-    // Si le RSC parent a déjà fourni initialData, on skip le fetch initial.
-    // Le bouton refresh + onInboxRefreshed appellent quand même `refetch`.
-    if (initialData !== null) return;
-
+    // initialData (RSC) sert au LCP ; on synchronise toujours au mount avec
+    // l’API pour éviter des KPI figés sur le snapshot SSR (session longue).
     let cancelled = false;
     const run = async () => {
       try {
         const res = await fetch("/api/v2/cockpit/today", { credentials: "include" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = (await res.json()) as CockpitTodayPayload;
-        if (!cancelled) {
-          setData(payload);
-          setError(null);
-        }
+        if (!cancelled) applyCockpitPayload(payload);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Erreur");
+        if (!cancelled) {
+          setData((prev) => {
+            if (prev !== null) {
+              console.warn(
+                "[CockpitStage] refresh cockpit échoué, conservation du snapshot :",
+                err instanceof Error ? err.message : err,
+              );
+              return prev;
+            }
+            setError(err instanceof Error ? err.message : "Erreur");
+            return prev;
+          });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -73,7 +104,7 @@ export function CockpitStage({ initialData = null }: CockpitStageProps = {}) {
     return () => {
       cancelled = true;
     };
-  }, [initialData]);
+  }, [applyCockpitPayload]);
 
   const isHospitality = data?.industry === "hospitality";
   // refetch est conservé pour usage futur (refresh inbox, suggestions live)
