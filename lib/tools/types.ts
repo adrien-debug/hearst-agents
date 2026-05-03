@@ -1,9 +1,12 @@
 /**
  * Tool Abstraction Layer — Types.
  *
- * Provides a capability-based model for tools so the orchestrator
- * can select and expose a small, context-aware set to the UI,
- * regardless of how many raw implementations exist.
+ * Capabilities + contextes utilisés par le routeur de capabilities et le
+ * système d'agents. NOTE : `registry.ts` et `surface-selector.ts` ont été
+ * supprimés (jamais consommés par l'UI utilisateur). Les types orphelins
+ * (ToolDefinition, ToolParameterDef, ToolSurfaceItem) ont été retirés
+ * avec eux. Si une vraie palette UI émerge un jour, ré-introduire les
+ * types nécessaires côté composant cible.
  */
 
 export type ToolCapability =
@@ -22,27 +25,3 @@ export type ToolContext =
   | "finance"
   | "research"
   | "general";
-
-export interface ToolParameterDef {
-  type: "string" | "number" | "boolean";
-  required?: boolean;
-  description?: string;
-  enum?: string[];
-}
-
-export interface ToolDefinition {
-  id: string;
-  name: string;
-  description: string;
-  capability: ToolCapability;
-  surfaceLabel: string;
-  handler: string;
-  contexts: ToolContext[];
-  parameters?: Record<string, ToolParameterDef>;
-}
-
-export interface ToolSurfaceItem {
-  id: string;
-  label: string;
-  capability: ToolCapability;
-}

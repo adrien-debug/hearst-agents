@@ -20,7 +20,6 @@ import { runPlannerWorkflow, isComplexIntent, isPlannerEnabled } from "./run-pla
 import { registerRun, unregisterRun } from "./abort-registry";
 import { resolveExecutionMode, resolveCapabilityScope, scopeRequiresProviders, type ExecutionDecision } from "@/lib/capabilities/router";
 
-import { selectToolsForContext } from "@/lib/tools/surface-selector";
 import { selectAgentForContext } from "@/lib/agents/agent-selector";
 import type { RunRecord } from "@/lib/engine/runtime/runs/types";
 import { addRun as storeRun } from "@/lib/engine/runtime/runs/store";
@@ -386,15 +385,17 @@ async function runPipeline(
     }
   });
 
-  // ── Emit tool surface (first event for UI) ─────────────────
+  // ── Emit tool surface (signal de transition d'état pour admin canvas) ─
+  // Le contenu `tools` n'est plus consommé par l'UI principale (la palette
+  // n'a jamais été implémentée côté user). On garde l'event pour les
+  // transitions du graphe admin (intent → preflight → tools active) — il
+  // suffit que l'event soit émis, son tableau peut rester vide.
   const toolContext = capScope.toolContext;
-  const surfaceTools = selectToolsForContext(toolContext);
-
   eventBus.emit({
     type: "tool_surface",
     run_id: engine.id,
     context: toolContext,
-    tools: surfaceTools,
+    tools: [],
   });
 
   // ── Select agent (CUSTOM_AGENT mode) ────────────────────────
