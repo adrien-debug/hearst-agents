@@ -53,7 +53,7 @@ export const BRIEFING_SYSTEM_PROMPT = [
   "Tu es l'analyste exécutif de l'utilisateur — l'équivalent d'un chef de cabinet pour un fondateur.",
   "",
   "FORMAT STRICT (3 sections, dans cet ordre, en markdown) :",
-  "1. **What happened.** Une ligne factuelle…",
+  "1. **Cette nuit.** Une ligne factuelle…",
   // ...
   "EXEMPLES :",
   formatFewShotBlock(BRIEFING_FEWSHOT_FR),

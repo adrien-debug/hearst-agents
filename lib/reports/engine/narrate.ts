@@ -16,6 +16,53 @@ import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 const NARRATE_MODEL = "claude-sonnet-4-6";
 
+/**
+ * Presets de narration — 4 combinaisons nommées qui couvrent 95 % des cas.
+ *
+ * Auparavant le schema exposait 3 modes × 3 styles = 9 combos théoriques,
+ * dont la plupart n'étaient pas utilisées. Ces presets nomment les 4 cas
+ * réels et donnent un point d'entrée stable aux producteurs de ReportSpec.
+ *
+ * Usage :
+ *   import { NARRATION_PRESETS } from "@/lib/reports/engine/narrate";
+ *   const spec: ReportSpec = { ..., narration: NARRATION_PRESETS["kpi-action"] };
+ *
+ * Les combos hors presets restent valides (rétrocompat) mais ne sont pas
+ * recommandées : ce sont des configurations sans cas d'usage validé.
+ */
+export const NARRATION_PRESETS = {
+  /** Snapshot court pour board / signal rapide — 80 mots, factuel. */
+  "kpi-quick": {
+    mode: "bullets" as const,
+    style: "executive" as const,
+    target: "summary" as const,
+    maxTokens: 200,
+  },
+  /** Cockpit founder — intro 1 ligne + bullets actionnables, ~150 mots. */
+  "kpi-action": {
+    mode: "intro+bullets" as const,
+    style: "operational" as const,
+    target: "focal_body" as const,
+    maxTokens: 350,
+  },
+  /** Section éditoriale long-form (PDF, board pack) — ~200 mots, lead + findings + risks + recommendation. */
+  "kpi-board": {
+    mode: "editorial" as const,
+    style: "executive" as const,
+    target: "focal_body" as const,
+    maxTokens: 500,
+  },
+  /** Lecture franche, nomme les tensions sans ménagement — ~100 mots. */
+  "kpi-frank": {
+    mode: "bullets" as const,
+    style: "candid" as const,
+    target: "focal_body" as const,
+    maxTokens: 250,
+  },
+} as const;
+
+export type NarrationPresetName = keyof typeof NARRATION_PRESETS;
+
 const STYLE_PROMPTS = {
   executive:
     "Style cadre exécutif : factuel, orienté décision, signal-to-noise élevé. " +

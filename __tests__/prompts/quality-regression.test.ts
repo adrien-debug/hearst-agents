@@ -49,9 +49,9 @@ const PROMPT_CHECKS: ReadonlyArray<PromptCheck> = [
     prompt: BRIEFING_SYSTEM_PROMPT,
     mustContain: [
       "analyste exécutif",
-      "What happened",
-      "What matters",
-      "What's next",
+      "Cette nuit",
+      "À surveiller",
+      "Action",
       "180 mots",
       "EXEMPLES",
     ],
@@ -201,9 +201,9 @@ describe("Few-shot examples library", () => {
     expect(BRIEFING_FEWSHOT_FR).toHaveLength(2);
     for (const ex of BRIEFING_FEWSHOT_FR) {
       expect(ex.input.length).toBeGreaterThan(20);
-      expect(ex.output).toContain("**What happened.**");
-      expect(ex.output).toContain("**What matters.**");
-      expect(ex.output).toContain("**What's next.**");
+      expect(ex.output).toContain("**Cette nuit.**");
+      expect(ex.output).toContain("**À surveiller.**");
+      expect(ex.output).toContain("**Action.**");
     }
   });
 
