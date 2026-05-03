@@ -6,7 +6,7 @@ Système d'action centré chat avec orchestration v2, artifacts file-backed, et 
 
 > 🚀 **Quick Start** : `npm run dev` = hearst-os seul sur `:9000`. `npm run launch` = stack complète.
 
-**Cockpit (home)** : le RSC pré-charge `getCockpitToday` pour le LCP ; `CockpitStage` appelle quand même `/api/v2/cockpit/today` au mount client afin de synchroniser les tuiles (assets, missions, etc.) et d’éviter un snapshot SSR figé sur session longue. Layout : bande KPI puis agents connectés alignés sous « Usage du jour » / « Signaux », puis Actions rapides sur toute la largeur (`CockpitHome`). Sur le mode Cockpit, la rangée de logos dans `ChatInput` est masquée pour éviter le doublon avec la bande agents.
+**Cockpit (home)** : le RSC pré-charge `getCockpitToday` pour le LCP ; `CockpitStage` appelle quand même `/api/v2/cockpit/today` au mount client afin de synchroniser les tuiles (assets, missions, etc.) et d’éviter un snapshot SSR figé sur session longue. Layout : bande KPI puis Actions rapides ; les logos d’apps connectées sont **uniquement** sous le champ de chat (`ChatInput`).
 
 **Workers Next (CPU / orphelins)** : si la machine chauffe après un build ou un arrêt brutal, des `jest-worker/processChild.js` peuvent rester avec **PPID=1**. Audit : `npm run workers:audit` ; nettoyage **uniquement des orphelins** (sans casser un `next build` en cours) : `npm run workers:kill-orphans` — script [`scripts/next-worker-helper.sh`](./scripts/next-worker-helper.sh).
 

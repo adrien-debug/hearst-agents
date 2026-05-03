@@ -270,7 +270,6 @@ export function ChatDock() {
       onSubmit={handleSubmit}
       connectedServices={connectedServices}
       threadId={activeThreadId ?? null}
-      hideConnectedAppsStrip={stageMode === "cockpit"}
     />
   );
 }

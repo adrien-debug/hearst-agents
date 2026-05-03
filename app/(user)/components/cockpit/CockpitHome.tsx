@@ -4,7 +4,6 @@ import { CockpitHeader } from "./CockpitHeader";
 import { ActivityStrip } from "./ActivityStrip";
 import { KPIStrip } from "./KPIStrip";
 import { QuickActionsGrid } from "./QuickActionsGrid";
-import { AgentsConstellation } from "./AgentsConstellation";
 import { CockpitAgenda } from "./CockpitAgenda";
 import { WatchlistMini } from "./WatchlistMini";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
@@ -16,8 +15,8 @@ interface CockpitHomeProps {
 /**
  * CockpitHome — orchestrateur de la home Cockpit (mode="cockpit").
  *
- * Layout : Header → ActivityStrip → bande KPI + agents (droite, sous Usage &
- * Signaux) → Quick Actions pleine largeur → Agenda + Watchlist.
+ * Layout : Header → ActivityStrip → KPI → Actions rapides → Agenda + Watchlist.
+ * Les logos d’apps restent uniquement sous le chat (`ChatInput`).
  */
 export function CockpitHome({ data }: CockpitHomeProps) {
   return (
@@ -31,8 +30,7 @@ export function CockpitHome({ data }: CockpitHomeProps) {
       <CockpitHeader data={data} />
       <ActivityStrip data={data} />
 
-      {/* KPI — grille 5 cols ; ligne suivante : vide sur cols 1–3, agents cols 4–5 */}
-      {/* KPI + agents : bord bas pour ancrer la hiérarchie avant Actions rapides */}
+      {/* KPI puis séparation visuelle avant Actions rapides */}
       <div
         className="flex flex-col shrink-0"
         style={{
@@ -42,23 +40,6 @@ export function CockpitHome({ data }: CockpitHomeProps) {
         }}
       >
         <KPIStrip data={data} />
-        <div
-          className="grid shrink-0"
-          style={{
-            gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-            gap: "var(--space-3)",
-            alignItems: "center",
-          }}
-        >
-          <div
-            style={{ gridColumn: "1 / 4", minHeight: "var(--space-14)" }}
-            aria-hidden
-            className="min-h-0"
-          />
-          <div style={{ gridColumn: "4 / 6", minWidth: 0 }}>
-            <AgentsConstellation data={data} layout="band" />
-          </div>
-        </div>
       </div>
 
       <div

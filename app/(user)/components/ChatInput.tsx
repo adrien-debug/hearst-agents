@@ -25,11 +25,6 @@ interface ChatInputProps {
   onProviderMention?: (providerId: string) => void;
   /** Thread courant — utilisé pour scoper la persona active per-thread. */
   threadId?: string | null;
-  /**
-   * Masque la rangée de logos « mention rapide » (ex. sur le Cockpit où
-   * `AgentsConstellation` est déjà affiché au-dessus).
-   */
-  hideConnectedAppsStrip?: boolean;
 }
 
 export function ChatInput({
@@ -38,7 +33,6 @@ export function ChatInput({
   connectedServices = [],
   onProviderMention,
   threadId = null,
-  hideConnectedAppsStrip = false,
 }: ChatInputProps) {
   const router = useRouter();
   const [input, setInput] = useState("");
@@ -713,8 +707,8 @@ export function ChatInput({
               )}
           </div>
         </div>
-        {/* Quick-mention apps — masqué sur le Cockpit (`hideConnectedAppsStrip`, doublon avec la bande agents). */}
-        {!hideConnectedAppsStrip && connectedServices.length > 0 && (
+        {/* Quick-mention apps — clic logo → @mention ; + vers /apps */}
+        {connectedServices.length > 0 && (
           <div
             className="mt-3 flex items-center justify-center"
             style={{ gap: "var(--space-2)", minHeight: "var(--space-5)" }}
