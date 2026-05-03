@@ -9,34 +9,23 @@
  * Trois zones :
  *   gauche  — hamburger mobile + logo H (clic → cockpit)
  *   centre  — Cmd+K trigger (placeholder rotatif, ouvre Commandeur)
- *   droite  — RUN_ACTIVE/VOICE_ON + cost meter live (conditionnels)
+ *   droite  — En cours / Voix + connections meter + cloche
  *
- * Cost meter : poll /api/v2/usage/today au mount + à chaque run_completed
- * + toutes les 60s pour rester live sans saturer l'API.
+ * Pivot 2026-05-03 : retrait du cost meter (mention coût/budget bannie
+ * de l'UI cockpit — l'utilisateur ne veut pas de friction financière
+ * dans le flow de travail).
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useStageStore } from "@/stores/stage";
 import { useNavigationStore } from "@/stores/navigation";
 import { GhostIconMenu } from "./ghost-icons";
 import { NotificationBell } from "./NotificationBell";
 
-interface UsageToday {
-  usedUSD: number;
-  budgetUSD: number;
-  runs: number;
-}
-
 interface ConnectionsMeta {
   connected: number;
   total: number;
-}
-
-function formatUsd(n: number): string {
-  if (!Number.isFinite(n)) return "—";
-  if (n < 0.01) return "$0.00";
-  return `$${n.toFixed(2)}`;
 }
 
 export function PulseBar() {
@@ -53,10 +42,6 @@ export function PulseBar() {
     coreState === "processing" ||
     coreState === "awaiting_approval" ||
     coreState === "awaiting_clarification";
-
-  // ── Cost meter live ────────────────────────────────────
-  const [usage, setUsage] = useState<UsageToday | null>(null);
-  const lastCoreState = useRef<string>(coreState);
 
   // ── Connections meter — feedback ambient sur l'état des apps ──
   // Source : /api/v2/user/connections (canonical, retourne meta { connected, total }).
@@ -83,44 +68,6 @@ export function PulseBar() {
       clearInterval(interval);
     };
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function refreshUsage() {
-      try {
-        const r = await fetch("/api/v2/usage/today", { cache: "no-store" });
-        if (!r.ok) return;
-        const data = (await r.json()) as UsageToday;
-        if (!cancelled) setUsage(data);
-      } catch {
-        // Fail-soft : on garde l'ancienne valeur, jamais de crash.
-      }
-    }
-
-    refreshUsage();
-    const interval = setInterval(refreshUsage, 60_000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Refresh on run_completed transition (idle ← processing) — le budget
-  // bouge à chaque run terminé, autant l'afficher tout de suite.
-  useEffect(() => {
-    const prev = lastCoreState.current;
-    if (prev !== "idle" && coreState === "idle") {
-      fetch("/api/v2/usage/today", { cache: "no-store" })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data: UsageToday | null) => {
-          if (data) setUsage(data);
-        })
-        .catch(() => {});
-    }
-    lastCoreState.current = coreState;
-  }, [coreState]);
 
   return (
     <div
@@ -175,22 +122,6 @@ export function PulseBar() {
               aria-hidden
             />
             <span className="t-11 font-light text-[var(--cykan)]">Voix</span>
-          </div>
-        )}
-
-        {usage && (
-          <div
-            className="hidden md:flex items-baseline"
-            style={{ gap: "var(--space-2)" }}
-            title={`${usage.runs} run(s) aujourd'hui — budget ${formatUsd(usage.budgetUSD)}`}
-            data-testid="cost-meter"
-          >
-            <span className="t-11 font-mono tabular-nums text-[var(--text-soft)]">
-              {formatUsd(usage.usedUSD)}
-            </span>
-            <span className="t-11 font-light text-[var(--text-faint)]">
-              / {formatUsd(usage.budgetUSD)}
-            </span>
           </div>
         )}
 
