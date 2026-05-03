@@ -26,19 +26,19 @@ interface Slide {
 
 const SLIDES: Slide[] = [
   {
-    eyebrow: "01 — BIENVENUE",
+    eyebrow: "01 — Bienvenue",
     title: "Hearst voit ce que tu vois.",
     body: "Tes emails, ton agenda, ton pipeline, tes PRs. Hearst observe ton quotidien et te livre un brief éditorial chaque matin — un PDF qui se lit, pas un dashboard de plus.",
     cta: "Suivant",
   },
   {
-    eyebrow: "02 — CONNEXIONS",
+    eyebrow: "02 — Connexions",
     title: "Branche tes outils en un clic.",
     body: "Gmail, Slack, GitHub, Linear, HubSpot, Stripe… Plus d'apps connectées, plus de signal. Tu peux commencer avec une seule, et brancher le reste plus tard.",
     cta: "Suivant",
   },
   {
-    eyebrow: "03 — DÉMARRER",
+    eyebrow: "03 — Démarrer",
     title: "Lance ta première mission.",
     body: "Tape une intention dans le Commandeur (⌘K), ou demande à Hearst de générer ton brief du jour. Tout part de là.",
     cta: "Démarrer",
@@ -127,11 +127,7 @@ export function OnboardingTour({ forceOpen, onClose }: OnboardingTourProps = {})
         <div className="flex items-baseline justify-between" style={{ marginBottom: "var(--space-8)" }}>
           <span
             className="t-9 font-medium"
-            style={{
-              color: "var(--gold)",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-            }}
+            style={{ color: "var(--gold)" }}
           >
             {slide.eyebrow}
           </span>

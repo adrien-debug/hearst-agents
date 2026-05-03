@@ -35,6 +35,30 @@ const TIME_FORMATTER = new Intl.DateTimeFormat("fr-FR", {
   timeZone: "Europe/Paris",
 });
 
+function runStatusLabel(status: string | undefined | null): string {
+  switch (status) {
+    case "running":
+    case "in_progress":
+      return "En cours";
+    case "succeeded":
+    case "success":
+    case "ok":
+    case "completed":
+      return "Réussi";
+    case "failed":
+    case "error":
+      return "Échec";
+    case "queued":
+    case "pending":
+      return "En attente";
+    case "cancelled":
+    case "canceled":
+      return "Annulé";
+    default:
+      return status ?? "—";
+  }
+}
+
 export function ContextRailForMission() {
   const current = useStageStore((s) => s.current);
 
@@ -114,6 +138,16 @@ export function ContextRailForMission() {
         : status === "active"
           ? "var(--cykan)"
           : "var(--text-faint)";
+  const statusLabel =
+    status === "running"
+      ? "En cours"
+      : status === "failed"
+        ? "Échec"
+        : status === "active"
+          ? "Actif"
+          : status === "paused"
+            ? "En pause"
+            : String(status);
 
   const cadence = mission?.schedule ?? mission?.frequency ?? null;
   const promptText = mission?.input ?? mission?.description ?? null;
@@ -129,7 +163,7 @@ export function ContextRailForMission() {
             style={{ color: statusColor }}
             data-testid="mission-rail-status"
           >
-            {String(status)}
+            {statusLabel}
           </span>
         </header>
         {missionLoading ? (
@@ -202,7 +236,7 @@ export function ContextRailForMission() {
                   {TIME_FORMATTER.format(new Date(r.createdAt))}
                 </p>
                 <p className="t-9 font-medium text-[var(--text-ghost)]">
-                  {r.status ?? "—"}
+                  {runStatusLabel(r.status)}
                 </p>
               </li>
             ))}
@@ -275,11 +309,7 @@ function MissionMemorySection({ missionId }: { missionId: string }) {
             <div key={i} className="flex flex-col" style={{ gap: "var(--space-1)" }}>
               <span
                 className="t-9 font-medium"
-                style={{
-                  color: "var(--text-l2)",
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                }}
+                style={{ color: "var(--text-l2)" }}
               >
                 {s.title}
               </span>

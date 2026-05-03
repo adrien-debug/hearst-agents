@@ -213,6 +213,12 @@ export default function NotificationsPage() {
         {filtered.length > 0 && (
           <div
             className="flex flex-col overflow-hidden rounded-md border border-[var(--border-subtle)]"
+            /**
+             * gap: 1px → fait apparaître la couleur de la bordure parente
+             * entre chaque carte comme un séparateur fin (hairline divider).
+             * Reste 1px volontairement, pas un token --space-* (4px serait
+             * trop épais pour ce pattern de carte empilée).
+             */
             style={{ gap: "1px" }}
           >
             {filtered.map((notif) => (
@@ -286,6 +292,11 @@ function NotifCard({
         >
           <span
             className="t-9 font-medium inline-flex items-center rounded-xs"
+            /**
+             * padding-y: 1px → pill de statut compacte qui suit la baseline
+             * de la ligne adjacente. --space-1 (4px) gonflerait trop la
+             * pill et casserait l'alignement. Volontairement hairline.
+             */
             style={{
               padding: "1px var(--space-2)",
               background: SEVERITY_BG[notif.severity],

@@ -145,7 +145,7 @@ export function NotificationBell() {
           if (!open) (e.currentTarget as HTMLButtonElement).style.background = "transparent";
         }}
         onFocus={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 0 2px var(--border-focus)";
+          (e.currentTarget as HTMLButtonElement).style.boxShadow = "var(--shadow-focus-ring)";
         }}
         onBlur={(e) => {
           (e.currentTarget as HTMLButtonElement).style.boxShadow = "none";
@@ -189,7 +189,7 @@ export function NotificationBell() {
             position: "absolute",
             top: "calc(100% + var(--space-2))",
             right: 0,
-            width: "clamp(300px, 22vw, 380px)",
+            width: "var(--width-popover)",
             borderRadius: "var(--radius-lg)",
             background: "var(--mat-400)",
             border: "1px solid var(--border-default)",
@@ -213,8 +213,6 @@ export function NotificationBell() {
               style={{
                 color: "var(--text-soft)",
                 fontWeight: "var(--weight-semibold)" as string,
-                letterSpacing: "var(--tracking-caption)",
-                textTransform: "uppercase" as const,
               }}
             >
               Notifications
@@ -402,8 +400,6 @@ function NotifRow({
             color: "var(--text-ghost)",
             marginTop: "var(--space-1)",
             display: "block",
-            letterSpacing: "var(--tracking-caption)",
-            textTransform: "uppercase" as const,
           }}
         >
           {kindLabel(notif.kind)}

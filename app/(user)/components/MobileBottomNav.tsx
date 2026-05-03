@@ -124,7 +124,7 @@ export function MobileBottomNav() {
                   : "var(--text-muted)",
             }}
           >
-            <span aria-hidden="true" style={{ fontSize: "var(--space-4)", lineHeight: 1 }}>
+            <span aria-hidden="true" className="t-15" style={{ lineHeight: 1 }}>
               {item.glyph}
             </span>
             <span className="t-11 font-light">
