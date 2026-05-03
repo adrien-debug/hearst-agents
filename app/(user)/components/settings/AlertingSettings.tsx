@@ -610,8 +610,8 @@ export function AlertingSettings() {
         {state.showNewWebhookForm && (
           <Card>
             <div className="flex flex-col gap-3">
-              <label className="t-9" style={{ color: "var(--text-muted)",  }}>
-                URL WEBHOOK
+              <label className="t-9" style={{ color: "var(--text-muted)" }}>
+                URL du webhook
               </label>
               <Input
                 value={state.newWebhook.url}
@@ -694,8 +694,8 @@ export function AlertingSettings() {
             {prefs.email && (
               <>
                 <div>
-                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)",  }}>
-                    DESTINATAIRES (séparés par virgule)
+                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)" }}>
+                    Destinataires (séparés par virgule)
                   </label>
                   <Input
                     value={state.emailInputRaw}
@@ -741,8 +741,8 @@ export function AlertingSettings() {
                 </div>
 
                 <div>
-                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)",  }}>
-                    SIGNAUX DÉCLENCHEURS
+                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)" }}>
+                    Signaux déclencheurs
                   </label>
                   <div className="flex flex-wrap gap-2">
                     <label className="flex items-center gap-1 t-13" style={{ color: "var(--text-soft)", cursor: "pointer" }}>
@@ -795,8 +795,8 @@ export function AlertingSettings() {
             {prefs.slack && (
               <>
                 <div>
-                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)",  }}>
-                    WEBHOOK URL SLACK
+                  <label className="t-9 block mb-2" style={{ color: "var(--text-muted)" }}>
+                    URL du webhook Slack
                   </label>
                   <Input
                     value={prefs.slack.webhookUrl}

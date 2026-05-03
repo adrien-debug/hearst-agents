@@ -178,11 +178,7 @@ export function CockpitHero({ briefing, emptyAction }: CockpitHeroProps = {}) {
           >
             <span
               className="t-9 font-medium"
-              style={{
-                color: "var(--text-l2)",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-              }}
+              style={{ color: "var(--text-l2)" }}
             >
               Aperçu — exemple type
             </span>

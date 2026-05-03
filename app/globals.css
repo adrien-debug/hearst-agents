@@ -158,6 +158,8 @@
   --width-prose-wide: 780px;
   /* Largeur max du body éditorial CockpitPoster — grille de lecture centrée. */
   --width-poster-body: 880px;
+  /* WorkingDocument — split panel droit du Thinking Canvas (50/50 max 720). */
+  --width-working-doc: min(50%, 720px);
 
   /* ─── ChatInput ─────────────────────────────────────────────── */
   --height-input-min: var(--space-8);  /* textarea : hauteur min 1 ligne = 32px */

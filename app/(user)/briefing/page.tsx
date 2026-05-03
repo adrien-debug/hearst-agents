@@ -171,7 +171,11 @@ export default function BriefingPage() {
                   >
                     Version audio
                   </p>
-                  <audio controls src={data.audio.url} style={{ width: "100%", height: 32 }} />
+                  <audio
+                    controls
+                    src={data.audio.url}
+                    style={{ width: "100%", height: "var(--space-8)" }}
+                  />
                 </div>
               )}
 
@@ -258,8 +262,6 @@ export default function BriefingPage() {
           className="t-9 font-medium"
           style={{
             color: "var(--text-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.04em",
             marginBottom: "var(--space-3)",
           }}
         >
@@ -271,7 +273,7 @@ export default function BriefingPage() {
               <div
                 key={i}
                 className="skeleton-line"
-                style={{ width: "100%", height: 32, borderRadius: "var(--radius-xs)" }}
+                style={{ width: "100%", height: "var(--space-8)", borderRadius: "var(--radius-xs)" }}
               />
             ))}
           </div>

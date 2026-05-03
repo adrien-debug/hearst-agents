@@ -64,7 +64,7 @@ export function WorkingDocument() {
     <aside
       className="flex flex-col flex-shrink-0 min-h-0 working-document-panel"
       style={{
-        width: "min(50%, 720px)",
+        width: "var(--width-working-doc)",
         background: "var(--bg-elev)",
         borderLeft: "1px solid var(--border-shell)",
         animation: "wd-slide-in var(--duration-slow) var(--ease-out-soft)",

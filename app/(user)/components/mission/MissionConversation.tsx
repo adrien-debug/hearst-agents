@@ -318,11 +318,7 @@ function SummaryRendered({ text }: { text: string }) {
             <div key={i} className="flex flex-col" style={{ gap: "var(--space-1)" }}>
               <span
                 className="t-9 font-medium"
-                style={{
-                  color: "var(--text-l2)",
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                }}
+                style={{ color: "var(--text-l2)" }}
               >
                 {title}
               </span>
