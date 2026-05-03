@@ -253,7 +253,7 @@ function CockpitChatBody() {
   const handleViewChange = (view: "reports" | "missions" | "assets") => {
     if (view === "missions") router.push("/missions");
     else if (view === "assets") router.push("/assets");
-    else if (view === "reports") router.push("/runs");
+    else if (view === "reports") router.push("/reports");
   };
 
   return (
@@ -288,7 +288,7 @@ function ContextRailForChat() {
   const handleViewChange = (view: "reports" | "missions" | "assets") => {
     if (view === "missions") router.push("/missions");
     else if (view === "assets") router.push("/assets");
-    else if (view === "reports") router.push("/runs");
+    else if (view === "reports") router.push("/reports");
   };
 
   return (

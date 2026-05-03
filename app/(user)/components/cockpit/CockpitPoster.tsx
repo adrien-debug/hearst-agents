@@ -12,7 +12,9 @@ interface CockpitPosterProps {
 }
 
 // Sources "noyau" : 5 apps hardcodées qui ont des fetchers spécialisés dans
-// le brief assembler. Affichées toujours, même non-connectées (suggestion).
+// le brief assembler. Servent uniquement au texte d'observation/empty state
+// (compteur connectées + suggestion d'ajout). Les logos vivent désormais
+// uniquement sous ChatInput, plus dans le brief.
 const INBOX_SOURCE_IDS = ["gmail", "slack", "linear", "calendar", "github"] as const;
 type InboxSourceId = (typeof INBOX_SOURCE_IDS)[number];
 const INBOX_SOURCE_LABELS: Record<InboxSourceId, string> = {
@@ -21,13 +23,6 @@ const INBOX_SOURCE_LABELS: Record<InboxSourceId, string> = {
   linear: "Linear",
   calendar: "Calendar",
   github: "GitHub",
-};
-const INBOX_SOURCE_ICONS: Record<InboxSourceId, string> = {
-  gmail: "/icons/services/gmail.svg",
-  slack: "/icons/services/slack.svg",
-  linear: "/icons/services/linear.svg",
-  calendar: "/icons/services/google-calendar.svg",
-  github: "/icons/services/github.svg",
 };
 
 function isCoreSource(id: string): id is InboxSourceId {
@@ -49,36 +44,35 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
   const firstName = useMemo(() => extractFirstName(session?.user?.name, session?.user?.email), [session]);
   const dateParts = useMemo(() => formatDate(now), [now]);
 
-  const sourcesStatus = useMemo(() => {
-    const allMap = new Map(services.map((s) => [s.id, s]));
-    const connectedMap = new Map(
-      services.filter((s) => s.connectionStatus === "connected").map((s) => [s.id, s]),
+  const { connectedSources, missingSources } = useMemo(() => {
+    const connectedIds = new Set(
+      services.filter((s) => s.connectionStatus === "connected").map((s) => s.id),
     );
 
-    // 5 sources noyau (Gmail, Calendar, Slack, GitHub, Linear) toujours affichées
+    // 5 sources noyau (Gmail/Slack/Linear/Calendar/GitHub) — utilisées pour
+    // les suggestions d'ajout dans le brief empty state.
     const core = INBOX_SOURCE_IDS.map((id) => ({
       id: id as string,
       label: INBOX_SOURCE_LABELS[id],
-      icon: allMap.get(id)?.icon ?? INBOX_SOURCE_ICONS[id],
-      connected: connectedMap.has(id),
+      connected: connectedIds.has(id),
     }));
 
-    // Sources connectées additionnelles (Notion, Jira, HubSpot, etc.)
-    const extras = Array.from(connectedMap.values())
-      .filter((s) => !isCoreSource(s.id))
+    // Sources connectées additionnelles (Notion, Jira, HubSpot...) —
+    // comptent dans connectedSources mais pas dans missingSources.
+    const extras = services
+      .filter((s) => s.connectionStatus === "connected" && !isCoreSource(s.id))
       .map((s) => ({
         id: s.id,
         label: s.name ?? s.id,
-        icon: s.icon,
         connected: true,
       }));
 
-    return [...core, ...extras];
+    const all = [...core, ...extras];
+    return {
+      connectedSources: all.filter((s) => s.connected),
+      missingSources: core.filter((s) => !s.connected),
+    };
   }, [services]);
-  const connectedSources = sourcesStatus.filter((s) => s.connected);
-  // Suggestions d'ajout : seulement les sources noyau manquantes
-  // (les extras Composio sont à connecter via /apps si l'user le veut)
-  const missingSources = sourcesStatus.filter((s) => !s.connected && isCoreSource(s.id));
 
   const observation = useMemo(
     () => computeObservation(data, connectedSources.length),
@@ -216,44 +210,10 @@ export function CockpitPoster({ data, onBriefRefreshed }: CockpitPosterProps) {
               )}
             </>
           )}
-          {/* Footer constant du brief block : ligne de logos sources.
-             Présent dans tous les états (briefReady ou empty) — agit comme
-             signature visuelle qui rappelle quelles sources alimentent
-             le brief. Connectés en couleur, non-connectés grisés à 0.3. */}
-          {sourcesStatus.length > 0 && (
-            <div
-              className="flex flex-wrap items-center"
-              style={{
-                gap: "var(--space-2)",
-                marginTop: "var(--space-2)",
-                paddingTop: "var(--space-3)",
-                borderTop: "1px solid var(--border-subtle)",
-              }}
-              aria-label="Sources qui alimentent le brief"
-            >
-              {sourcesStatus.map((s) => (
-                <span
-                  key={s.id}
-                  title={`${s.label}${s.connected ? " — connecté" : " — non connecté"}`}
-                  className="inline-flex items-center justify-center"
-                  style={{
-                    width: 18,
-                    height: 18,
-                    opacity: s.connected ? 1 : 0.3,
-                    transition: "opacity 150ms ease",
-                  }}
-                >
-                  <img
-                    src={s.icon}
-                    alt={s.label}
-                    width={16}
-                    height={16}
-                    style={{ filter: s.connected ? "none" : "grayscale(100%)" }}
-                  />
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Logos sources retirés 2026-05-03 : doublon avec la rangée
+             d'icônes sous ChatInput (source unique des logos dans toute
+             l'app). Le brief reste pure éditorial — les sources s'expriment
+             dans le texte du brief lui-même quand pertinent. */}
         </article>
 
         {data.hospitality && (

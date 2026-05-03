@@ -1,8 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useServicesStore } from "@/stores/services";
-
 interface GeneralDashboardProps {
   assets?: unknown;
   missions?: unknown;
@@ -38,10 +35,6 @@ export function GeneralDashboard({
   missions: _missions,
   onViewChange = () => {},
 }: GeneralDashboardProps) {
-  const router = useRouter();
-  const services = useServicesStore((s) => s.services);
-  const connectedServices = services.filter((s) => s.connectionStatus === "connected");
-  const totalServices = services.length;
   const assetsCount = Array.isArray(_assets) ? _assets.length : 0;
   const missionsCount = Array.isArray(_missions) ? _missions.length : 0;
   const recentAssets = Array.isArray(_assets) ? (_assets as DashboardAsset[]).slice(0, 3) : [];
@@ -144,11 +137,27 @@ export function GeneralDashboard({
             <span className="recap-card-label">Assets</span>
             <span className="recap-card-count">{assetsCount.toString().padStart(2, "0")}</span>
           </div>
-          <p className="recap-card-body">
-            {recentAssets.length === 0
-              ? "Pas encore d'asset — demande dans le chat"
-              : recentAssets.map((a) => a.name ?? a.title ?? "Asset").join(" · ")}
-          </p>
+          {recentAssets.length === 0 ? (
+            <p className="recap-card-body">
+              Pas encore d&apos;asset — demande dans le chat
+            </p>
+          ) : (
+            <ul
+              className="flex flex-col"
+              style={{ gap: "var(--space-1)", marginTop: "var(--space-1)" }}
+            >
+              {recentAssets.map((a, i) => (
+                <li
+                  key={a.id ?? i}
+                  className="t-11 font-light truncate text-left"
+                  style={{ color: "var(--text-faint)" }}
+                  title={a.name ?? a.title ?? "Asset"}
+                >
+                  {a.name ?? a.title ?? "Asset"}
+                </li>
+              ))}
+            </ul>
+          )}
         </button>
 
         <button
@@ -170,63 +179,9 @@ export function GeneralDashboard({
 
       </div>
 
-      {/* Apps connectées — récap visuel des services qui alimentent
-         Hearst. Logos couleur = connectés, opacité 0.3 + grayscale = pas
-         encore connectés. Click → /apps. */}
-      {totalServices > 0 && (
-        <button
-          type="button"
-          onClick={() => router.push("/apps")}
-          className="recap-card text-left"
-        >
-          <div className="recap-card-row">
-            <span className="recap-card-label">Apps connectées</span>
-            <span className="recap-card-count">
-              {connectedServices.length.toString().padStart(2, "0")}
-              <span style={{ color: "var(--text-faint)", fontWeight: 300 }}>
-                {" "}/ {totalServices.toString().padStart(2, "0")}
-              </span>
-            </span>
-          </div>
-          <div
-            className="flex flex-wrap items-center"
-            style={{ gap: "var(--space-2)", marginTop: "var(--space-2)" }}
-          >
-            {services.slice(0, 12).map((s) => {
-              const isConn = s.connectionStatus === "connected";
-              return (
-                <span
-                  key={s.id}
-                  title={`${s.name}${isConn ? " — connecté" : ""}`}
-                  className="inline-flex items-center justify-center"
-                  style={{
-                    width: 18,
-                    height: 18,
-                    opacity: isConn ? 1 : 0.3,
-                    transition: "opacity 150ms ease",
-                  }}
-                >
-                  <img
-                    src={s.icon}
-                    alt={s.name}
-                    width={16}
-                    height={16}
-                    style={{ filter: isConn ? "none" : "grayscale(100%)" }}
-                  />
-                </span>
-              );
-            })}
-            {totalServices > 12 && (
-              <span
-                className="t-9 font-mono"
-                style={{ color: "var(--text-faint)" }}
-              >
-                +{totalServices - 12}
-              </span>
-            )}
-          </div>
-        </button>
-      )}
+      {/* Card "Apps connectées" retirée 2026-05-03 : doublon avec la rangée
+         d'icônes sous ChatInput (source unique des logos). Le compteur
+         10/15 est déjà porté par PulseBar. */}
     </div>
   );
 }

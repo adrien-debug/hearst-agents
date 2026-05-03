@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, lazy, Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { useRuntimeStore } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
 import type { ServiceDefinition } from "@/lib/integrations/types";
@@ -33,6 +34,7 @@ export function ChatInput({
   onProviderMention,
   threadId = null,
 }: ChatInputProps) {
+  const router = useRouter();
   const [input, setInput] = useState("");
   const [attachment, setAttachment] = useState<{
     fileName: string;
@@ -113,6 +115,21 @@ export function ChatInput({
     const newInput = `${beforeAt}@${service.id} ${afterQuery}`;
     setInput(newInput);
     setHideTypeahead(true);
+    onProviderMention?.(service.id);
+    inputRef.current?.focus();
+  }
+
+  // Quick-mention depuis la rangée d'icônes sous l'input. Insère
+  // `@<service.id>` à la fin du texte courant (avec espace de séparation
+  // si nécessaire), focus le textarea. Si l'user était en train de taper
+  // un `@<query>`, on remplace cette query par le service complet.
+  function insertMentionFromIcon(service: ServiceDefinition) {
+    if (lastAtIndex !== -1 && !hasSpace) {
+      selectService(service);
+      return;
+    }
+    const trail = input.length === 0 || input.endsWith(" ") ? "" : " ";
+    setInput(`${input}${trail}@${service.id} `);
     onProviderMention?.(service.id);
     inputRef.current?.focus();
   }
@@ -690,33 +707,75 @@ export function ChatInput({
               )}
           </div>
         </div>
-        {/* Hint zone — pivot UI 2026-05-01 : visible UNIQUEMENT au focus de l'input.
-           Avant : affichée en permanence sous l'input → bruit chrome qui rappelait
-           du clavier basique connu. Maintenant : apparaît au focus, voix calme
-           (font-mono sans tracking-marquee), opacity transition pour éviter
-           le layout shift. Hauteur réservée par min-h pour ne pas pousser. */}
-        <div
-          className="mt-3 flex justify-center transition-opacity duration-base"
-          style={{
-            minHeight: "var(--space-4)",
-            opacity: inputFocused ? 1 : 0,
-            pointerEvents: inputFocused ? "auto" : "none",
-          }}
-          aria-hidden={!inputFocused}
-        >
-          <p
-            className="t-9 font-mono flex items-center gap-3 flex-wrap justify-center"
-            style={{ color: "var(--text-faint)" }}
+        {/* Quick-mention apps — pivot 2026-05-03.
+           Remplace l'ancienne hint zone (↩ Envoyer · ⇧↩ Saut de ligne · @ Mention
+           · ⌘K Commandeur) qui était redondante avec les conventions clavier.
+           Devient un outil : click sur un logo d'app connectée → insère
+           `@<service.id>` dans l'input. Bouton `+` à droite → /apps pour
+           connecter une nouvelle source. Source unique des logos dans toute
+           l'app (plus de doublon brief central / rail droit). */}
+        {connectedServices.length > 0 && (
+          <div
+            className="mt-3 flex items-center justify-center"
+            style={{ gap: "var(--space-2)", minHeight: "var(--space-5)" }}
+            aria-label="Mention rapide d'une app connectée"
           >
-            <span>↩ Envoyer</span>
-            <span aria-hidden="true">·</span>
-            <span>⇧↩ Saut de ligne</span>
-            <span aria-hidden="true">·</span>
-            <span>@ Mention</span>
-            <span aria-hidden="true">·</span>
-            <span>⌘K Commandeur</span>
-          </p>
-        </div>
+            <div
+              className="flex items-center overflow-x-auto scrollbar-hide"
+              style={{ gap: "var(--space-2)" }}
+            >
+              {connectedServices.slice(0, 12).map((service) => (
+                <button
+                  key={service.id}
+                  type="button"
+                  onClick={() => insertMentionFromIcon(service)}
+                  title={`Mentionner @${service.id}`}
+                  aria-label={`Mentionner ${service.name}`}
+                  className="inline-flex items-center justify-center shrink-0 transition-opacity hover:opacity-100"
+                  style={{
+                    width: "var(--space-5)",
+                    height: "var(--space-5)",
+                    opacity: 0.7,
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={service.icon}
+                    alt=""
+                    width={16}
+                    height={16}
+                    aria-hidden
+                  />
+                </button>
+              ))}
+              {connectedServices.length > 12 && (
+                <span
+                  className="t-9 font-mono shrink-0"
+                  style={{ color: "var(--text-faint)" }}
+                  aria-hidden
+                >
+                  +{connectedServices.length - 12}
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push("/apps")}
+              title="Connecter une nouvelle app"
+              aria-label="Connecter une nouvelle app"
+              className="inline-flex items-center justify-center shrink-0 transition-colors text-[var(--text-faint)] hover:text-[var(--cykan)]"
+              style={{
+                width: "var(--space-5)",
+                height: "var(--space-5)",
+                marginLeft: "var(--space-2)",
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
       {docParseOpen && (
         <Suspense fallback={null}>
