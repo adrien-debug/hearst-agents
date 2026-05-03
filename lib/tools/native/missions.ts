@@ -36,7 +36,7 @@ interface RunMissionArgs {
   query: string;
 }
 
-interface MissionMatch {
+export interface MissionMatch {
   id: string;
   name: string;
   schedule?: string;
@@ -45,7 +45,7 @@ interface MissionMatch {
 }
 
 /** Normalise un nom pour le matching : lowercase + retire accents + trim. */
-function normalize(s: string): string {
+export function normalize(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")
@@ -53,8 +53,11 @@ function normalize(s: string): string {
     .trim();
 }
 
-/** Fuzzy match exact > prefix > substring. Retourne tous les matches triés. */
-function matchMissions(
+/**
+ * Fuzzy match exact > prefix > substring sur le nom des missions.
+ * Exporté pour testabilité (helpers purs sans I/O).
+ */
+export function matchMissions(
   query: string,
   missions: ReadonlyArray<{ id: string; name: string; schedule?: string; label?: string }>,
 ): MissionMatch[] {

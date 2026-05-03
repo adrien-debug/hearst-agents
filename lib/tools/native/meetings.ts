@@ -23,7 +23,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AiToolMap = Record<string, Tool<any, any>>;
 
-interface MeetingContent {
+export interface MeetingContent {
   transcript?: string;
   actionItems?: MeetingActionItem[];
   editorialSummary?: string | null;
@@ -32,7 +32,11 @@ interface MeetingContent {
   status?: string;
 }
 
-function parseMeetingContent(asset: Asset): MeetingContent | null {
+/**
+ * Parse le contentRef JSON d'un asset kind="event" en MeetingContent.
+ * Exporté pour testabilité — pure, pas d'I/O.
+ */
+export function parseMeetingContent(asset: Asset): MeetingContent | null {
   if (!asset.contentRef) return null;
   try {
     return JSON.parse(asset.contentRef) as MeetingContent;
@@ -41,7 +45,8 @@ function parseMeetingContent(asset: Asset): MeetingContent | null {
   }
 }
 
-function normalize(s: string): string {
+/** Normalize string for fuzzy matching (lowercase, no accents, trim). */
+export function normalize(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")
