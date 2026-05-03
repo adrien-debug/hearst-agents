@@ -53,18 +53,23 @@ interface OnboardingTourProps {
 }
 
 export function OnboardingTour({ forceOpen, onClose }: OnboardingTourProps = {}) {
-  // Lazy init : forceOpen prop ou localStorage flag au mount uniquement.
-  // Pas de useEffect setState pour éviter cascade render.
-  const [open, setOpen] = useState(() => {
-    if (forceOpen) return true;
-    if (typeof window === "undefined") return false;
-    try {
-      return !window.localStorage.getItem(STORAGE_KEY);
-    } catch {
-      return false;
-    }
-  });
+  // Ne jamais lire localStorage dans l'initializer : SSR et premier rendu client
+  // doivent matcher (open=false), sinon hydration mismatch. Après mount,
+  // useEffect ouvre le tour si le flag n'est pas persisté.
+  const [open, setOpen] = useState(() => Boolean(forceOpen));
   const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (forceOpen) {
+      setOpen(true);
+      return;
+    }
+    try {
+      setOpen(!window.localStorage.getItem(STORAGE_KEY));
+    } catch {
+      setOpen(false);
+    }
+  }, [forceOpen]);
 
   const close = useCallback(() => {
     setOpen(false);
