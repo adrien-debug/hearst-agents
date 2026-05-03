@@ -15,6 +15,7 @@ import { z } from "zod";
 import { requireScope } from "@/lib/platform/auth/scope";
 import { loadAssetById, type Asset } from "@/lib/assets/types";
 import Anthropic from "@anthropic-ai/sdk";
+import { composeEditorialPrompt } from "@/lib/editorial/charter";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -125,12 +126,19 @@ async function llmDiff(a: Asset, b: Asset): Promise<DiffResult> {
   const response = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 1024,
-    system:
-      "Tu es un assistant qui compare deux assets Hearst OS et retourne un diff sémantique structuré. " +
-      "Réponds STRICTEMENT en JSON valide avec la forme : " +
-      `{"summary": "...", "differences": [{"kind": "...", "description": "..."}]}. ` +
-      "Le summary fait 1-2 phrases en français. Chaque difference.kind est un slug court (ex: 'title', 'tone', 'metrics', 'sources'). " +
-      "Limite-toi à 6 différences principales. Pas de markdown, pas de prose hors JSON.",
+    system: composeEditorialPrompt(`
+Tu es l'analyste qui compare deux assets Hearst OS et produit un diff sémantique structuré.
+
+FORMAT STRICT (JSON valide uniquement, pas de markdown fence) :
+{"summary": "...", "differences": [{"kind": "...", "description": "..."}]}
+
+CONTRAINTES SPÉCIFIQUES :
+- summary : 1-2 phrases qui nomment ce qui a vraiment bougé entre A et B (pas un récap mécanique).
+- differences : max 6 entrées principales.
+- kind : slug court (ex: 'title', 'tone', 'metrics', 'sources', 'structure').
+- description : nomme le delta (« A → B » ou « ajouté X » ou « retiré Y »).
+- Pas d'inférence si le contenu ne le supporte pas — dis « différence non détectable » plutôt qu'inventer.
+    `.trim()),
     messages: [
       {
         role: "user",

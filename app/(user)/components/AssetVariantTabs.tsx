@@ -173,22 +173,22 @@ export function AssetVariantTabs({ assetId, sourceText, defaultKind }: AssetVari
       {(() => {
         const TAB_META: Record<string, { empty: string; cta: string; ctaLoading: string }> = {
           audio: {
-            empty: "Aucun variant audio. Génère un fichier audio narré à partir du texte de cet asset (ElevenLabs TTS).",
+            empty: "Pas encore de variant audio. Génère un fichier audio narré à partir du texte de cet asset (ElevenLabs TTS).",
             cta: "Générer l'audio",
             ctaLoading: "Création…",
           },
           video: {
-            empty: "Aucun variant vidéo. Génère une vidéo animée à partir de cet asset (HeyGen / Runway).",
+            empty: "Pas encore de variant vidéo. Génère une vidéo animée à partir de cet asset (HeyGen / Runway).",
             cta: "Générer la vidéo",
             ctaLoading: "Création…",
           },
           image: {
-            empty: "Aucune image générée. Génère une illustration à partir du titre ou du contenu (fal.ai).",
+            empty: "Pas encore d'image générée. Génère une illustration à partir du titre ou du contenu (fal.ai).",
             cta: "Générer l'image",
             ctaLoading: "Création…",
           },
           code: {
-            empty: "Aucun résultat d'exécution. Lance le code associé à cet asset dans un sandbox sécurisé (E2B).",
+            empty: "Pas encore de résultat d'exécution. Lance le code associé à cet asset dans un sandbox sécurisé (E2B).",
             cta: "Exécuter le code",
             ctaLoading: "Exécution…",
           },

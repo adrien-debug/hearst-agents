@@ -80,6 +80,11 @@ const ENTITY_TYPES: ReadonlyArray<KgNodeType> = [
 const EXTRACTION_MODEL = "claude-haiku-4-5-20251001";
 const EXTRACTION_MAX_TOKENS = 2048;
 
+// NOTE charte : prompt d'EXTRACTION structurée (entities/relations JSON),
+// pas un prompt éditorial. La charte (composeEditorialPrompt) n'est
+// délibérément PAS chargée ici — les sorties ne sont jamais affichées
+// telles quelles à l'utilisateur, elles sont rendues visuellement par
+// KnowledgeStage (nodes/edges via Cytoscape).
 export const EXTRACTION_PROMPT = [
   "Tu es un extracteur de Knowledge Graph. Tu analyses le texte fourni et tu produis entités + relations en JSON strict.",
   "",

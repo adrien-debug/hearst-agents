@@ -178,7 +178,7 @@ export function MissionStepGraph({ plan, onApprove, onSkip }: MissionStepGraphPr
 
       {plan.steps.length === 0 && (
         <p className="t-11 font-light text-[var(--text-faint)]">
-          Aucun step planifié.
+          Pas encore de step planifié.
         </p>
       )}
     </section>

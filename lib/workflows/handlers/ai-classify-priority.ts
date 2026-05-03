@@ -20,6 +20,10 @@ import type { WorkflowHandler } from "./types";
 const DEFAULT_CATEGORIES = ["urgent", "normal", "low"] as const;
 type Priority = (typeof DEFAULT_CATEGORIES)[number];
 
+// NOTE charte : prompt de CLASSIFICATION structurée (JSON priority +
+// reasoning ≤ 20 mots), pas un prompt éditorial. La charte
+// (composeEditorialPrompt) n'est pas chargée — la sortie est consommée
+// par le routeur de tickets, pas par l'utilisateur final.
 const SYSTEM = [
   "Tu es un dispatcher hôtelier qui classe une service request guest selon son urgence.",
   "",

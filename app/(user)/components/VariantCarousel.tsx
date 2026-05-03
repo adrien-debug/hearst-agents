@@ -361,7 +361,7 @@ function ActiveVariantPanel({
         }}
       >
         <p className="t-13 font-light text-[var(--text-muted)]">
-          Aucun variant {KIND_LABEL[kind]} pour le moment. Génère-en un à partir
+          Pas encore de variant {KIND_LABEL[kind]}. Génère-en un à partir
           du contenu source.
         </p>
         <Action

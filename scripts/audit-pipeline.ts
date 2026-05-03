@@ -185,6 +185,15 @@ function inspectPrompts(): PromptSurvey {
   const migrated: string[] = [];
   const candidates: string[] = [];
 
+  // Whitelist — prompts d'extraction/classification structurée (JSON-only).
+  // La charte éditoriale ne s'applique pas : ces sorties ne sont JAMAIS
+  // affichées telles quelles à l'utilisateur, elles sont consommées par
+  // un parser/router (KG ingest, ticket dispatcher, etc.).
+  const STRUCTURAL_EXTRACTION_FILES = new Set([
+    "lib/memory/kg.ts",
+    "lib/workflows/handlers/ai-classify-priority.ts",
+  ]);
+
   for (const f of allTs) {
     const src = readFileSync(f, "utf-8");
     const usesCharter = src.includes("composeEditorialPrompt") || src.includes("EDITORIAL_CHARTER_BLOCK");
@@ -195,7 +204,7 @@ function inspectPrompts(): PromptSurvey {
 
     const rel = relative(ROOT, f);
     if (usesCharter) migrated.push(rel);
-    else if (looksLikePrompt) candidates.push(rel);
+    else if (looksLikePrompt && !STRUCTURAL_EXTRACTION_FILES.has(rel)) candidates.push(rel);
   }
 
   return { migrated: migrated.sort(), candidates: candidates.sort() };

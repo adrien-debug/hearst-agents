@@ -270,7 +270,7 @@ export function NotificationBell() {
                   <BellIcon hasUnread={false} />
                 </span>
                 <span className="t-11" style={{ color: "var(--text-faint)" }}>
-                  Aucune notification
+                  Pas encore de notification
                 </span>
               </div>
             ) : (

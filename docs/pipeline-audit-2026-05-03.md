@@ -25,10 +25,12 @@ Aucun.
 - `lib/meetings/debrief.ts`
 - `lib/memory/briefing.ts`
 - `lib/memory/conversation-summary.ts`
+- `lib/memory/kg.ts`
 - `lib/memory/mission-context.ts`
 - `lib/reports/engine/narrate.ts`
 - `lib/tools/native/kg-query.ts`
 - `lib/watchlist/narrate.ts`
+- `lib/workflows/handlers/ai-classify-priority.ts`
 - `lib/workflows/handlers/ai-draft-welcome-notes.ts`
 
 ### Candidats potentiels (SYSTEM_PROMPT sans charter)
