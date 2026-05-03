@@ -131,36 +131,42 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
         {tiles.map((t, idx) => (
           <button
             key={t.id}
+            type="button"
             onClick={t.onClick}
             disabled={t.loading}
-            className="group text-left flex flex-col justify-between transition-colors duration-(--duration-base) ease-(--ease-standard) disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+            className="group flex h-full min-h-0 flex-col gap-2 overflow-hidden text-left transition-colors duration-(--duration-base) ease-(--ease-standard) disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
             style={{
               padding: "var(--space-3)",
               borderRadius: "var(--radius-sm)",
-              gap: "var(--space-2)",
-              minHeight: 0,
               background: TONE_BG[t.tone],
               border: `1px solid ${TONE_BORDER[t.tone]}`,
             }}
           >
-            <span className="t-10 font-medium text-[var(--text-faint)] truncate leading-tight">
+            {/* Pas de justify-between sur le même axe qu’un line-clamp (-webkit-box) : chevauchement WebKit. */}
+            <span className="shrink-0 t-10 font-medium text-[var(--text-faint)] truncate leading-tight">
               {t.eyebrow}
             </span>
-            <span className="t-13 font-medium text-[var(--text-l1)] line-clamp-2 leading-snug transition-colors group-hover:text-[var(--cykan)]">
-              {t.loading ? "…" : t.title}
-            </span>
-            <span className="flex items-center justify-between gap-2">
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <p className="t-13 font-medium leading-snug text-[var(--text-l1)] transition-colors line-clamp-2 group-hover:text-[var(--cykan)]">
+                {t.loading ? "…" : t.title}
+              </p>
+            </div>
+            <div
+              className="mt-auto flex shrink-0 items-center justify-between gap-2"
+              style={{
+                paddingTop: "var(--space-2)",
+                borderTop: "1px solid var(--border-subtle)",
+              }}
+            >
               <span className="t-9 font-light text-[var(--text-faint)]">
                 {t.status === "ready"
                   ? "Prêt"
                   : t.status === "partial"
                     ? "Partiel"
-                    : ""}
+                    : "\u00a0"}
               </span>
-              <span className="t-9 font-mono text-[var(--text-faint)] tabular-nums">
-                {idx + 1}
-              </span>
-            </span>
+              <span className="t-9 font-mono tabular-nums text-[var(--text-faint)]">{idx + 1}</span>
+            </div>
           </button>
         ))}
       </div>
