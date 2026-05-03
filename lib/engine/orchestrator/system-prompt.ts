@@ -12,6 +12,7 @@ import type { DiscoveredTool } from "@/lib/connectors/composio/discovery";
 import type { Persona } from "@/lib/personas/types";
 import { buildPersonaAddonOrNull } from "@/lib/personas/system-prompt-addon";
 import { buildSlugStrictnessRule } from "@/lib/agents/connected-apps-context";
+import { buildDualAppGuidance } from "@/lib/agents/dual-apps";
 import { EDITORIAL_CHARTER_BLOCK } from "@/lib/editorial/charter";
 
 export const ORCHESTRATOR_MODEL = "claude-sonnet-4-6";
@@ -305,6 +306,9 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
       ? `Outils disponibles ce tour-ci (${composioTools.length} au total, apps : ${connectedApps.join(", ")}) :`
       : "Outils disponibles ce tour-ci : aucun.";
 
+  const dualAppGuidance = buildDualAppGuidance(connectedApps);
+  const dualAppSection = dualAppGuidance ? `\n\n${dualAppGuidance}` : "";
+
   const toolListSection =
     composioTools.length > 0
       ? composioTools
@@ -312,7 +316,8 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOpts): string {
           .map((t) => `- ${t.name} : ${t.description.slice(0, 100)}`)
           .join("\n") +
         (composioTools.length > 120 ? `\n(+${composioTools.length - 120} autres actions)` : "") +
-        "\n\n" + buildSlugStrictnessRule()
+        "\n\n" + buildSlugStrictnessRule() +
+        dualAppSection
       : "(aucun outil tiers connecté pour ce tour)";
 
   const surfaceNote = surface ? `\nSurface active : ${surface}` : "";

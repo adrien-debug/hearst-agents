@@ -269,6 +269,8 @@ export const DAILY_BRIEF_FEWSHOT_FR: ReadonlyArray<FewShotExample> = [
           "Trancher les deux points term sheet avant le call 9h. Confirmer la fenêtre signature Acme (11h30, pas de glissement). Décider si on bloque le merge de #244 (Léa) sur la résolution ENG-118 ou si on fast-tracke pour soulager le staging.",
         signals:
           "CI rouge sur main signalée par Pierre — blocking pour toute mise en prod. PR #241 sans review depuis 2 jours, sortir Pierre du focus pour 30 min. Bug staging /api/runs récurrent : ENG-118 reste P1 tant qu'on n'a pas trace claire du root cause.",
+        action:
+          "Avant 9h, écris à Sarah les deux arbitrages chiffrés sur la term sheet.",
       },
       null,
       2,
@@ -292,6 +294,8 @@ export const DAILY_BRIEF_FEWSHOT_FR: ReadonlyArray<FewShotExample> = [
           "Choix unique du jour : protéger le focus block ou rattraper de la dette accumulée. Pas de demande externe à arbitrer.",
         signals:
           "Aucune anomalie, aucun PR stuck, aucune issue critique. Profiter — ces journées sont rares.",
+        action:
+          "Bloque 90 minutes sur la dette tech la plus visible avant midi.",
       },
       null,
       2,

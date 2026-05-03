@@ -216,6 +216,97 @@ export function getCatalogEntry(id: string): CatalogEntry | undefined {
 }
 
 /**
+ * Distance de Levenshtein simple — tolère les typos courantes (caractères
+ * insérés / supprimés / substitués). Retourne le nombre d'éditions
+ * nécessaires pour passer de a à b.
+ */
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+
+  const prev = new Array<number>(b.length + 1);
+  const curr = new Array<number>(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+
+  for (let i = 1; i <= a.length; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+  }
+  return prev[b.length];
+}
+
+function normalizeForMatch(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[—–\-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export interface CatalogFuzzyMatch {
+  entry: CatalogEntry;
+  /** Distance de Levenshtein normalisée (0 = identique, plus haut = plus loin). */
+  distance: number;
+  /** "exact" | "prefix" | "substring" | "levenshtein" */
+  kind: "exact" | "prefix" | "substring" | "levenshtein";
+}
+
+/**
+ * Fuzzy match d'une CatalogEntry par titre, tolérant aux typos courantes.
+ *
+ * Stratégie en cascade :
+ *   1. Match exact (normalisé) — distance 0
+ *   2. Préfixe (l'un est début de l'autre) — distance 1
+ *   3. Substring (l'un contient l'autre) — distance 2
+ *   4. Levenshtein (cap distance ≤ 3 pour éviter les faux positifs)
+ *
+ * Tolère "Customer 3600" → "Customer 360", "Founder Coqpit" → "Founder Cockpit",
+ * "vélocité eng" → "Engineering Velocity" (substring).
+ *
+ * Retourne null si aucune entry n'est en deçà du seuil.
+ */
+export function findCatalogByFuzzyName(
+  query: string,
+  options: { maxLevenshtein?: number } = {},
+): CatalogFuzzyMatch | null {
+  const max = options.maxLevenshtein ?? 3;
+  const q = normalizeForMatch(query);
+  if (!q) return null;
+
+  let best: CatalogFuzzyMatch | null = null;
+  for (const entry of CATALOG) {
+    const t = normalizeForMatch(entry.title);
+    let candidate: CatalogFuzzyMatch | null = null;
+
+    if (t === q) {
+      candidate = { entry, distance: 0, kind: "exact" };
+    } else if (t.startsWith(q) || q.startsWith(t)) {
+      candidate = { entry, distance: 1, kind: "prefix" };
+    } else if (t.includes(q) || q.includes(t)) {
+      candidate = { entry, distance: 2, kind: "substring" };
+    } else {
+      const dist = levenshtein(q, t);
+      if (dist <= max) {
+        candidate = { entry, distance: dist, kind: "levenshtein" };
+      }
+    }
+
+    if (candidate && (best === null || candidate.distance < best.distance)) {
+      best = candidate;
+      if (best.distance === 0) break;
+    }
+  }
+  return best;
+}
+
+/**
  * Retourne les reports applicables au user (intersect des apps connectées).
  *   - status="ready"   : toutes les requiredApps sont connectées
  *   - status="partial" : au moins une mais pas toutes

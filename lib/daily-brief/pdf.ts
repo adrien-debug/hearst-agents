@@ -122,12 +122,16 @@ export async function renderDailyBriefPdf(
     embedded,
   });
 
-  // 3 sous-sections People / Decisions / Signals
-  for (const section of [
+  // Sous-sections People / Decisions / Signals + Action (optionnel, Migration B)
+  const sections: Array<{ title: string; body: string }> = [
     { title: "Personnes", body: input.narration.people },
     { title: "Décisions", body: input.narration.decisions },
     { title: "Signaux", body: input.narration.signals },
-  ]) {
+  ];
+  if (input.narration.action && input.narration.action.trim().length > 0) {
+    sections.push({ title: "Action", body: input.narration.action });
+  }
+  for (const section of sections) {
     doc.y += SPACE.s4;
     setFont(doc, "sansSemiBold", embedded);
     doc

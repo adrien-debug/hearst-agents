@@ -125,7 +125,7 @@ export function buildMissionTools(opts: BuildMissionToolsOpts): AiToolMap {
           ok: false,
           reason: "no_match",
           query: input.query,
-          available: persisted.slice(0, 10).map((m) => ({ name: m.name, schedule: m.label })),
+          available: persisted.slice(0, 10).map((m) => ({ name: m.name, schedule: m.schedule })),
           message:
             "Aucune mission ne correspond. Lister les missions disponibles à l'utilisateur pour qu'il choisisse, ou proposer d'en créer une nouvelle.",
         });
@@ -181,8 +181,16 @@ export function buildMissionTools(opts: BuildMissionToolsOpts): AiToolMap {
       properties: {},
     }),
     execute: async () => {
+      if (!scope.userId) {
+        return JSON.stringify({
+          ok: false,
+          reason: "no_user",
+          message: "Scope utilisateur incomplet — impossible de générer le brief.",
+        });
+      }
+      const userId = scope.userId;
       void scheduleDailyBriefing({
-        userId: scope.userId,
+        userId,
         tenantId: scope.tenantId ?? "dev-tenant",
         workspaceId: scope.workspaceId ?? "dev-workspace",
       }).catch((err) => {
@@ -381,7 +389,16 @@ export function buildMissionTools(opts: BuildMissionToolsOpts): AiToolMap {
         });
       }
 
-      const rate = checkShareRateLimit(scope.userId);
+      if (!scope.userId) {
+        return JSON.stringify({
+          ok: false,
+          reason: "no_user",
+          message: "Scope utilisateur incomplet — impossible de partager.",
+        });
+      }
+      const userId = scope.userId;
+
+      const rate = checkShareRateLimit(userId);
       if (!rate.ok) {
         return JSON.stringify({
           ok: false,
@@ -408,7 +425,7 @@ export function buildMissionTools(opts: BuildMissionToolsOpts): AiToolMap {
         tenantId,
         tokenHash: signed.tokenHash,
         expiresAt: signed.expiresAt,
-        createdBy: scope.userId,
+        createdBy: userId,
       });
       if (!row) {
         return JSON.stringify({

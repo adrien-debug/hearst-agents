@@ -33,7 +33,8 @@ export const DAILY_BRIEF_SYSTEM_PROMPT = composeEditorialPrompt([
   '  "lead": "1-2 phrases. La une de la matinée — quel est le signal dominant ?",',
   '  "people": "2-4 phrases. Qui attend quoi de toi aujourd\'hui. Nomme les acteurs.",',
   '  "decisions": "2-4 phrases. Ce qu\'il faut trancher / prioriser. Impératif.",',
-  '  "signals": "2-4 phrases. Anomalies, PRs stuck, issues critiques, friction technique."',
+  '  "signals": "2-4 phrases. Anomalies, PRs stuck, issues critiques, friction technique.",',
+  '  "action": "1 phrase impérative ≤ 20 mots — la première action de la journée si toi tu devais en imposer une seule."',
   "}",
   "",
   "CONTRAINTES SPÉCIFIQUES :",
@@ -155,7 +156,7 @@ function buildUserMessage(d: DailyBriefData): string {
     ...fmtLinear(d),
     "",
     ...fmtExtras(d),
-    "Génère le Daily Brief maintenant — JSON strict, 4 sections.",
+    "Génère le Daily Brief maintenant — JSON strict, 5 sections (lead, people, decisions, signals, action).",
   ].join("\n");
 }
 
@@ -174,7 +175,11 @@ function safeParseNarration(raw: string): Omit<DailyBriefNarration, "costUsd"> |
     const decisions = typeof parsed.decisions === "string" ? parsed.decisions.trim() : "";
     const signals = typeof parsed.signals === "string" ? parsed.signals.trim() : "";
     if (!lead || !people || !decisions || !signals) return null;
-    return { lead, people, decisions, signals };
+    // action est optionnelle (Migration B) — on l'ajoute uniquement si fournie
+    const action = typeof parsed.action === "string" ? parsed.action.trim() : "";
+    return action
+      ? { lead, people, decisions, signals, action }
+      : { lead, people, decisions, signals };
   } catch {
     return null;
   }
@@ -187,7 +192,8 @@ function fallbackNarration(d: DailyBriefData): Omit<DailyBriefNarration, "costUs
       lead: "Aucun signal entrant ce matin — fenêtre rare pour le travail de fond.",
       people: "Personne n'attend de retour de toi aujourd'hui.",
       decisions: "Choix unique : imposer ton tempo, protéger le focus.",
-      signals: "Aucune anomalie. Profiter de la calme avant qu'elle ne se referme.",
+      signals: "Aucune anomalie. Profiter du calme avant qu'il ne se referme.",
+      action: "Bloque 90 minutes sur le projet le plus stratégique avant 10 h.",
     };
   }
   return {
@@ -195,6 +201,7 @@ function fallbackNarration(d: DailyBriefData): Omit<DailyBriefNarration, "costUs
     people: `${d.emails.length} emails, ${d.slack.length} messages Slack — voir l'inbox pour le détail.`,
     decisions: `${d.calendar.length} events au calendrier, ${d.github.length} PRs ouvertes — arbitrage manuel ce matin.`,
     signals: `${d.linear.length} issues Linear actives. Source(s) en erreur : ${d.sources.filter((s) => s.endsWith(":error")).join(", ") || "aucune"}.`,
+    action: "Trie l'inbox et identifie la première décision bloquante avant 9 h.",
   };
 }
 

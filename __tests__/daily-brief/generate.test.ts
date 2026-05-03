@@ -32,6 +32,7 @@ describe("DAILY_BRIEF_SYSTEM_PROMPT", () => {
     expect(DAILY_BRIEF_SYSTEM_PROMPT).toContain("people");
     expect(DAILY_BRIEF_SYSTEM_PROMPT).toContain("decisions");
     expect(DAILY_BRIEF_SYSTEM_PROMPT).toContain("signals");
+    expect(DAILY_BRIEF_SYSTEM_PROMPT).toContain("action");
     expect(DAILY_BRIEF_SYSTEM_PROMPT).toContain("EXEMPLES");
   });
 
@@ -47,7 +48,7 @@ describe("DAILY_BRIEF_SYSTEM_PROMPT", () => {
 });
 
 describe("DAILY_BRIEF_FEWSHOT_FR", () => {
-  it("a 2 exemples avec output JSON valide 4 sections", () => {
+  it("a 2 exemples avec output JSON valide 5 sections (lead/people/decisions/signals/action)", () => {
     expect(DAILY_BRIEF_FEWSHOT_FR).toHaveLength(2);
     for (const ex of DAILY_BRIEF_FEWSHOT_FR) {
       const parsed = JSON.parse(ex.output) as Record<string, unknown>;
@@ -55,6 +56,7 @@ describe("DAILY_BRIEF_FEWSHOT_FR", () => {
       expect(parsed.people).toBeTruthy();
       expect(parsed.decisions).toBeTruthy();
       expect(parsed.signals).toBeTruthy();
+      expect(parsed.action).toBeTruthy();
     }
   });
 });
@@ -70,6 +72,7 @@ describe("generateDailyBriefNarration (fallback déterministe)", () => {
       expect(result.people).toBeTruthy();
       expect(result.decisions).toBeTruthy();
       expect(result.signals).toBeTruthy();
+      expect(result.action).toBeTruthy();
       expect(result.costUsd).toBe(0);
     } finally {
       if (original) process.env.ANTHROPIC_API_KEY = original;

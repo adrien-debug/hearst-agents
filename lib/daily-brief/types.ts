@@ -102,6 +102,13 @@ export interface DailyBriefNarration {
   decisions: string;
   /** Section "Signaux" : faits saillants (PRs bloquantes, issues critiques, anomalies). */
   signals: string;
+  /**
+   * Section "Action" — recommandation concrète à l'impératif (≤ 1 phrase).
+   * Optionnelle pour rétrocompat : les briefs générés avant Migration B
+   * (mai 2026) n'ont pas ce champ. Le PDF la rend en bas de la page Manifeste
+   * quand elle est présente.
+   */
+  action?: string;
   /** Coût Sonnet réel (en USD), reporté pour metrics. */
   costUsd: number;
 }
