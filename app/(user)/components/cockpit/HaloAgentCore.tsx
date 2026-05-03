@@ -4,14 +4,20 @@
 /**
  * HaloAgentCore — Constellation 3D des agents Hearst.
  *
+ * Orchestrateur cockpit : chaque agent est cliquable, route vers son Stage
+ * dédié ou la page métier. Clic → press (scale dip + flash cykan) puis
+ * dispatch.
+ *
  * Caméra et orbite recalculées selon la taille du canvas (responsive).
  * Couleurs lues depuis les tokens DS (--cykan, --gold, --text-l1, --text-muted).
  * Auto-rotation lente, pause au hover. Shadows allégées pour stabilité GPU.
  */
 
-import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useStageStore, type StagePayload } from "@/stores/stage";
 import {
   RoundedBox,
   Html,
@@ -221,13 +227,15 @@ type Materials = ReturnType<typeof useMaterials>;
 interface PedestalProps {
   agent: HaloAgentDef;
   isHovered: boolean;
+  isPressed: boolean;
   onHover: (id: HaloAgentId | null) => void;
+  onActivate: (id: HaloAgentId) => void;
   materials: Materials;
   colors: ThemeColors;
   orbitRadius: number;
 }
 
-function AgentPedestal({ agent, isHovered, onHover, materials, colors, orbitRadius }: PedestalProps) {
+function AgentPedestal({ agent, isHovered, isPressed, onHover, onActivate, materials, colors, orbitRadius }: PedestalProps) {
   const rad = (agent.angleDeg * Math.PI) / 180;
   const x = Math.cos(rad) * orbitRadius;
   const z = Math.sin(rad) * orbitRadius;
@@ -252,8 +260,13 @@ function AgentPedestal({ agent, isHovered, onHover, materials, colors, orbitRadi
   useFrame((_, delta) => {
     const d = Math.min(delta, 0.05);
     if (baseRef.current) {
-      const targetY = isHovered ? 0.45 : 0;
-      baseRef.current.position.y += (targetY - baseRef.current.position.y) * d * 8;
+      // Lift au hover, dip bref au press
+      const targetY = isPressed ? -0.12 : isHovered ? 0.45 : 0;
+      baseRef.current.position.y += (targetY - baseRef.current.position.y) * d * 14;
+      const targetScale = isPressed ? 0.94 : 1;
+      const cur = baseRef.current.scale.x;
+      const next = cur + (targetScale - cur) * d * 14;
+      baseRef.current.scale.setScalar(next);
     }
     if (iconRef.current) {
       iconRef.current.rotation.y += d * (isHovered ? 1.2 : 0.25);
@@ -265,8 +278,20 @@ function AgentPedestal({ agent, isHovered, onHover, materials, colors, orbitRadi
       <mesh
         position={[0, 1, 0]}
         visible={false}
-        onPointerOver={() => onHover(agent.id)}
-        onPointerOut={() => onHover(null)}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          onHover(agent.id);
+          if (typeof document !== "undefined") document.body.style.cursor = "pointer";
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          onHover(null);
+          if (typeof document !== "undefined") document.body.style.cursor = "";
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onActivate(agent.id);
+        }}
       >
         <boxGeometry args={[3.6, 4, 3.6]} />
         <meshBasicMaterial />
@@ -282,9 +307,9 @@ function AgentPedestal({ agent, isHovered, onHover, materials, colors, orbitRadi
           receiveShadow
         />
 
-        {isHovered && (
+        {(isHovered || isPressed) && (
           <mesh position={[0, -0.15, 0]} rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[1.4, 1.6, 48]} />
+            <ringGeometry args={[1.4, isPressed ? 1.85 : 1.6, 48]} />
             <primitive object={materials.cykanGlow} attach="material" />
           </mesh>
         )}
@@ -431,7 +456,13 @@ function AutoRotateGroup({ children, paused }: { children: ReactNode; paused: bo
 
 // --- Scene -------------------------------------------------------------------
 
-function Scene({ mode }: { mode: ThemeMode }) {
+interface SceneProps {
+  mode: ThemeMode;
+  pressedId: HaloAgentId | null;
+  onActivate: (id: HaloAgentId) => void;
+}
+
+function Scene({ mode, pressedId, onActivate }: SceneProps) {
   const colors = useThemeColors(mode);
   const materials = useMaterials(colors);
   const layout = useResponsiveLayout();
@@ -469,7 +500,7 @@ function Scene({ mode }: { mode: ThemeMode }) {
         color="#000000"
       />
 
-      <AutoRotateGroup paused={hoveredId !== null}>
+      <AutoRotateGroup paused={hoveredId !== null || pressedId !== null}>
         <CenterCore materials={materials} colors={colors} />
         <OrbitTrack orbitRadius={layout.orbitRadius} colors={colors} />
         {HALO_AGENTS_V1.map((agent) => (
@@ -477,7 +508,9 @@ function Scene({ mode }: { mode: ThemeMode }) {
             key={agent.id}
             agent={agent}
             isHovered={hoveredId === agent.id}
+            isPressed={pressedId === agent.id}
             onHover={setHoveredId}
+            onActivate={onActivate}
             materials={materials}
             colors={colors}
             orbitRadius={layout.orbitRadius}
@@ -488,6 +521,48 @@ function Scene({ mode }: { mode: ThemeMode }) {
   );
 }
 
+// --- Orchestration -----------------------------------------------------------
+
+/**
+ * Mapping agent → action. Stage natif quand le sub-Stage existe et a du sens
+ * pour la fonction de l'agent ; sinon route vers la page métier dédiée.
+ */
+function dispatchAgent(
+  id: HaloAgentId,
+  ctx: {
+    setMode: (p: StagePayload) => void;
+    push: (href: string) => void;
+    lastMissionId: string | null;
+  },
+) {
+  switch (id) {
+    case "mission-planner":
+      // Reprend la dernière mission ouverte ; sinon ouvre le builder.
+      if (ctx.lastMissionId) ctx.setMode({ mode: "mission", missionId: ctx.lastMissionId });
+      else ctx.push("/missions/builder");
+      return;
+    case "report-generator":
+      // Reports a un studio dédié hors Stage system.
+      ctx.push("/reports");
+      return;
+    case "data-miner":
+      // Exploration de données → KG avec query d'amorce.
+      ctx.setMode({ mode: "kg", query: "data exploration" });
+      return;
+    case "market-watch":
+      // Pas de browserStage sans sessionId valide ; marketplace est l'entrée.
+      ctx.push("/marketplace");
+      return;
+    case "asset-monitor":
+      // Liste des connexions / apps surveillées.
+      ctx.push("/apps");
+      return;
+    case "memory-knowledge":
+      ctx.setMode({ mode: "kg" });
+      return;
+  }
+}
+
 // --- Public component --------------------------------------------------------
 
 interface HaloAgentCoreProps {
@@ -495,6 +570,37 @@ interface HaloAgentCoreProps {
 }
 
 export function HaloAgentCore({ mode = "dark" }: HaloAgentCoreProps = {}) {
+  const router = useRouter();
+  const setMode = useStageStore((s) => s.setMode);
+  const lastMissionId = useStageStore((s) => s.lastMissionId);
+  const [pressedId, setPressedId] = useState<HaloAgentId | null>(null);
+  const pressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const onActivate = useCallback(
+    (id: HaloAgentId) => {
+      // Press visible 320ms (scale dip + halo flash) avant le dispatch ;
+      // donne du feedback même quand l'action est instantanée (Stage switch).
+      setPressedId(id);
+      if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
+      pressTimeoutRef.current = setTimeout(() => {
+        setPressedId(null);
+        dispatchAgent(id, {
+          setMode,
+          push: (href) => router.push(href),
+          lastMissionId,
+        });
+      }, 240);
+    },
+    [router, setMode, lastMissionId],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (pressTimeoutRef.current) clearTimeout(pressTimeoutRef.current);
+      if (typeof document !== "undefined") document.body.style.cursor = "";
+    };
+  }, []);
+
   return (
     <section
       className="halo-agent-core relative h-full w-full select-none"
@@ -518,7 +624,7 @@ export function HaloAgentCore({ mode = "dark" }: HaloAgentCoreProps = {}) {
         }}
       >
         <AdaptiveDpr pixelated={false} />
-        <Scene mode={mode} />
+        <Scene mode={mode} pressedId={pressedId} onActivate={onActivate} />
       </Canvas>
     </section>
   );
