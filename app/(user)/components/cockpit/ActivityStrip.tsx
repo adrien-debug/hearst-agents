@@ -13,10 +13,10 @@ const IDLE_HIDE_MS = 5 * 60_000;
 
 function relativeTime(ts: number, now: number): string {
   const diff = Math.max(0, now - ts);
-  if (diff < 1_000) return "à l'instant";
-  if (diff < 60_000) return `il y a ${Math.floor(diff / 1_000)}s`;
-  if (diff < 3_600_000) return `il y a ${Math.floor(diff / 60_000)}min`;
-  return `il y a ${Math.floor(diff / 3_600_000)}h`;
+  if (diff < 1_000) return "just now";
+  if (diff < 60_000) return `${Math.floor(diff / 1_000)}s ago`;
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  return `${Math.floor(diff / 3_600_000)}h ago`;
 }
 
 function formatTs(ts: number): string {
@@ -25,19 +25,19 @@ function formatTs(ts: number): string {
 }
 
 const SSE_TYPE_FR: Record<string, string> = {
-  step_started: "Étape démarrée",
-  step_completed: "Étape terminée",
-  run_started: "Run démarré",
-  run_completed: "Run terminé",
-  run_failed: "Run en échec",
-  text_delta: "Texte généré",
-  asset_generated: "Asset généré",
-  focal_object_ready: "Asset prêt",
-  approval_requested: "Approbation requise",
-  clarification_requested: "Précision requise",
-  plan_preview: "Plan prêt",
-  plan_step_started: "Étape de plan démarrée",
-  plan_step_completed: "Étape de plan terminée",
+  step_started: "Step started",
+  step_completed: "Step completed",
+  run_started: "Run started",
+  run_completed: "Run completed",
+  run_failed: "Run failed",
+  text_delta: "Text generated",
+  asset_generated: "Asset generated",
+  focal_object_ready: "Asset ready",
+  approval_requested: "Approval required",
+  clarification_requested: "Clarification required",
+  plan_preview: "Plan ready",
+  plan_step_started: "Plan step started",
+  plan_step_completed: "Plan step completed",
 };
 
 function prettifyType(type: string): string {
@@ -89,7 +89,7 @@ export function ActivityStrip({ data }: ActivityStripProps) {
           borderBottom: "1px solid var(--border-soft)",
         }}
       >
-        <span className="t-11 font-light text-[var(--text-faint)]">Système en veille</span>
+        <span className="t-11 font-light text-[var(--text-faint)]">System idle</span>
       </div>
     );
   }
@@ -108,16 +108,16 @@ export function ActivityStrip({ data }: ActivityStripProps) {
     if (lastMissionRun) {
       const verb =
         lastMissionRun.status === "success"
-          ? "Mission réussie"
+          ? "Mission succeeded"
           : lastMissionRun.status === "failed"
-            ? "Mission en échec"
-            : "Dernière mission";
-      return `${verb} : ${lastMissionRun.name}`;
+            ? "Mission failed"
+            : "Last mission";
+      return `${verb}: ${lastMissionRun.name}`;
     }
     if (data.briefing && !data.briefing.empty && data.briefing.generatedAt) {
-      return "Briefing du jour disponible";
+      return "Daily briefing available";
     }
-    return "Aucune activité récente";
+    return "No recent activity";
   })();
 
   return (
@@ -138,7 +138,7 @@ export function ActivityStrip({ data }: ActivityStripProps) {
           </span>
         )}
         <span className="t-11 font-medium text-[var(--text-l1)] tabular-nums">
-          {runningCount} en cours
+          {runningCount} running
         </span>
       </div>
 
@@ -160,7 +160,7 @@ export function ActivityStrip({ data }: ActivityStripProps) {
           href="/runs"
           className="t-11 font-medium text-[var(--cykan)] hover:opacity-80 transition-opacity"
         >
-          Voir le journal →
+          View logs →
         </Link>
       </div>
     </div>

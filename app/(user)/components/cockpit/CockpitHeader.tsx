@@ -34,7 +34,7 @@ export function CockpitHeader({ data }: CockpitHeaderProps) {
   }, []);
 
   const runningCount = data.missionsRunning.filter((m) => m.status === "running").length;
-  const greeting = firstName ? `Bonjour ${firstName}.` : "Bonjour.";
+  const greeting = firstName ? `Hello, ${firstName}.` : "Hello.";
 
   return (
     <header
@@ -50,7 +50,7 @@ export function CockpitHeader({ data }: CockpitHeaderProps) {
           <>
             <span className="t-11 text-[var(--text-faint)]">·</span>
             <span className="t-11 font-medium text-[var(--cykan)]">
-              {runningCount} mission{runningCount > 1 ? "s" : ""} live
+              {runningCount} mission{runningCount > 1 ? "s" : ""} running
             </span>
           </>
         )}

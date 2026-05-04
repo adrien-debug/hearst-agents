@@ -54,7 +54,7 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
     for (const s of data.suggestions.slice(0, 3)) {
       list.push({
         id: `sug-${s.id}`,
-        eyebrow: `Suggéré · ${s.requiredApps[0] ?? "système"}`,
+        eyebrow: `Suggested · ${s.requiredApps[0] ?? "system"}`,
         title: s.title,
         tone: "cykan",
         status: s.status,
@@ -67,7 +67,7 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
     for (const f of data.favoriteReports.slice(0, 3)) {
       list.push({
         id: `fav-${f.id}`,
-        eyebrow: `Favori · ${f.domain}`,
+        eyebrow: `Favorite · ${f.domain}`,
         title: f.title,
         tone: "gold",
         status: null,
@@ -80,8 +80,8 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
     const universals: Tile[] = [
       {
         id: "u-compose",
-        eyebrow: "Composer",
-        title: "Nouveau message",
+        eyebrow: "Compose",
+        title: "New message",
         tone: "neutral",
         status: null,
         loading: false,
@@ -93,7 +93,7 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
       {
         id: "u-voice",
         eyebrow: "Voice",
-        title: "Brief vocal",
+        title: "Voice brief",
         tone: "neutral",
         status: null,
         loading: false,
@@ -105,7 +105,7 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
       {
         id: "u-mission",
         eyebrow: "Mission",
-        title: "Planifier une mission",
+        title: "Schedule a mission",
         tone: "neutral",
         status: null,
         loading: false,
@@ -132,13 +132,11 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
   ]);
 
   return (
-    <section className="flex flex-col min-h-0 min-w-0" aria-label="Actions rapides">
-      <SectionHeader label="Actions rapides" />
+    <section className="flex flex-col min-h-0 min-w-0" aria-label="Quick actions">
+      <SectionHeader label="Quick actions" />
       <div
-        className="grid"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         style={{
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gridTemplateRows: "repeat(2, minmax(0, 1fr))",
           gap: "var(--space-2)",
           flex: 1,
           minHeight: 0,
@@ -150,7 +148,7 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
             type="button"
             onClick={t.onClick}
             disabled={t.loading}
-            className="group flex h-full min-h-0 flex-col gap-2 overflow-hidden text-left transition-colors duration-(--duration-base) ease-(--ease-standard) disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
+            className="group flex h-full min-h-0 flex-col gap-2 overflow-hidden text-left transition-colors duration-(--duration-base) ease-standard disabled:opacity-60 disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--cykan-border-hover)"
             style={{
               padding: "var(--space-3)",
               borderRadius: "var(--radius-sm)",
@@ -163,8 +161,8 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
               {t.eyebrow}
             </span>
             <div className="min-h-0 flex-1 overflow-hidden">
-              <p className="t-13 font-medium leading-snug text-[var(--text-l1)] transition-colors line-clamp-2 group-hover:text-[var(--cykan)]">
-                {t.loading ? "…" : t.title}
+              <p className={`t-13 font-medium leading-snug text-[var(--text-l1)] transition-colors line-clamp-2 group-hover:text-[var(--cykan)] ${t.loading ? "animate-pulse" : ""}`}>
+                {t.loading ? "Loading…" : t.title}
               </p>
             </div>
             <div
@@ -176,9 +174,9 @@ export function QuickActionsGrid({ data }: QuickActionsGridProps) {
             >
               <span className="t-9 font-light text-[var(--text-faint)]">
                 {t.status === "ready"
-                  ? "Prêt"
+                  ? "Ready"
                   : t.status === "partial"
-                    ? "Partiel"
+                    ? "Partial"
                     : "\u00a0"}
               </span>
               <span className="t-9 font-mono tabular-nums text-[var(--text-faint)]">{idx + 1}</span>

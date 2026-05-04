@@ -1,23 +1,5 @@
 "use client";
 
-/**
- * StageFooter — barre discrète sous ChatDock, état LLM live.
- *
- * Trois dots animés à gauche + label voix régulière FR au centre + meta
- * (events / coût) à droite. Reflète `useRuntimeStore.coreState` :
- *
- *   idle                    → heartbeat lent (1 dot cykan calme)
- *   connecting              → wave loading 3 dots cykan
- *   streaming               → wave rapide 3 dots cykan
- *   processing              → wave moyenne 3 dots cykan
- *   awaiting_approval       → 3 dots gold static
- *   awaiting_clarification  → 3 dots cykan static, dot médian pulse
- *   error                   → 3 dots danger static
- *
- * Hauteur fixe var(--height-stage-footer). Bordure top var(--border-subtle)
- * pour séparer visuellement de ChatDock sans coquille flottante.
- */
-
 import { useRuntimeStore, type CoreState } from "@/stores/runtime";
 import { useNavigationStore } from "@/stores/navigation";
 
@@ -28,13 +10,13 @@ interface StateConfig {
 }
 
 const STATE_MAP: Record<CoreState, StateConfig> = {
-  idle: { label: "Veille", tone: "muted", pattern: "heartbeat" },
-  connecting: { label: "Connexion", tone: "cykan", pattern: "wave-medium" },
-  streaming: { label: "En cours", tone: "cykan", pattern: "wave-fast" },
-  processing: { label: "Traitement", tone: "cykan", pattern: "wave-slow" },
-  awaiting_approval: { label: "Approbation requise", tone: "gold", pattern: "static" },
-  awaiting_clarification: { label: "Précision requise", tone: "cykan", pattern: "pulse-mid" },
-  error: { label: "Erreur", tone: "danger", pattern: "static" },
+  idle: { label: "Online", tone: "cykan", pattern: "heartbeat" },
+  connecting: { label: "Connecting", tone: "cykan", pattern: "wave-medium" },
+  streaming: { label: "Running", tone: "cykan", pattern: "wave-fast" },
+  processing: { label: "Processing", tone: "cykan", pattern: "wave-slow" },
+  awaiting_approval: { label: "Approval required", tone: "gold", pattern: "static" },
+  awaiting_clarification: { label: "Clarification required", tone: "cykan", pattern: "pulse-mid" },
+  error: { label: "Error", tone: "danger", pattern: "static" },
 };
 
 const TONE_VAR: Record<StateConfig["tone"], string> = {
@@ -51,9 +33,6 @@ export function StageFooter() {
   const color = TONE_VAR[config.tone];
   const leftCollapsed = useNavigationStore((s) => s.leftCollapsed);
 
-  // Spacers calés sur les widths réels des rails pour que les dots
-  // soient centrés sur l'axe horizontal du chat (centre du paper), et
-  // pas sur le centre du viewport — les rails ne sont pas symétriques.
   const leftSpacer = leftCollapsed
     ? "var(--width-threads-collapsed)"
     : "var(--width-threads)";
@@ -73,8 +52,11 @@ export function StageFooter() {
       aria-label={labelText}
     >
       <div className="shrink-0" style={{ width: leftSpacer }} aria-hidden />
-      <div className="flex-1 flex items-center justify-center min-w-0">
+      <div className="flex-1 flex items-center justify-center gap-2 min-w-0">
         <DotsCluster pattern={config.pattern} color={color} />
+        <span className="t-11 font-light" style={{ color: "var(--text-faint)" }}>
+          {labelText}
+        </span>
       </div>
       <div className="shrink-0" style={{ width: rightSpacer }} aria-hidden />
     </footer>
@@ -88,27 +70,15 @@ function DotsCluster({
   pattern: StateConfig["pattern"];
   color: string;
 }) {
-  // Trois dots, animation contrôlée par classes globales définies dans
-  // globals.css (sf-dot-* keyframes). Le delay décale chaque dot pour
-  // créer une vague visuelle.
   const delays = [0, 150, 300];
   return (
-    <span
-      className="inline-flex items-center"
-      style={{ gap: "var(--space-1)" }}
-      aria-hidden
-    >
+    <span className="inline-flex items-center" style={{ gap: "var(--space-1)" }} aria-hidden>
       {delays.map((delay, i) => (
         <span
           key={i}
           className={`sf-dot sf-dot-${pattern}`}
           data-index={i}
-          style={
-            {
-              background: color,
-              animationDelay: `${delay}ms`,
-            } as React.CSSProperties
-          }
+          style={{ background: color, animationDelay: `${delay}ms` } as React.CSSProperties}
         />
       ))}
     </span>

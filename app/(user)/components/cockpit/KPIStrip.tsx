@@ -43,9 +43,8 @@ export function KPIStrip({ data }: KPIStripProps) {
 
   return (
     <section
-      className="grid shrink-0"
+      className="grid grid-cols-1 sm:grid-cols-3 shrink-0"
       style={{
-        gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
         gap: "var(--space-5)",
         maxWidth: "min(820px, 100%)",
         marginInline: "auto",
@@ -66,7 +65,7 @@ export function KPIStrip({ data }: KPIStripProps) {
         value={`${runningCount.toString().padStart(2, "0")}/${missionsTotal.toString().padStart(2, "0")}`}
         delta={undefined}
         missionFillPct={missionFillPct}
-        sub={failedCount > 0 ? `${failedCount} en échec` : "Tout va bien"}
+        sub={failedCount > 0 ? `${failedCount} failed` : "All good"}
         tone={failedCount > 0 ? "warn" : "default"}
         statusDot={runningCount > 0 ? "running" : null}
         href="/missions"

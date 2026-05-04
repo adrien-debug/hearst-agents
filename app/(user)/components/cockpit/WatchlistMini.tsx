@@ -63,7 +63,7 @@ function WatchRow({ item }: { item: CockpitWatchlistItem }) {
       <div className="flex items-center gap-1 shrink-0">
         <MiniSparkline data={item.trend} color={sparklineColor} />
         {critical && (
-          <span className="t-9" style={{ color: "var(--danger)" }} aria-label="Critique">
+          <span className="t-9" style={{ color: "var(--danger)" }} aria-label="Critical">
             ⚠
           </span>
         )}
@@ -88,9 +88,9 @@ export function WatchlistMini({ data }: WatchlistMiniProps) {
       ) : (
         <EmptyState
           density="compact"
-          title="Aucun KPI surveillé"
-          description="Connecte Stripe ou Linear pour suivre tes métriques."
-          cta={{ label: "Voir les apps →", href: "/apps" }}
+          title="No KPIs tracked"
+          description="Connect Stripe or Linear to track your metrics."
+          cta={{ label: "View apps →", href: "/apps" }}
         />
       )}
     </section>

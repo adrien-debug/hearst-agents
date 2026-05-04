@@ -3,7 +3,6 @@
 import { CockpitHeader } from "./CockpitHeader";
 import { ActivityStrip } from "./ActivityStrip";
 import { KPIStrip } from "./KPIStrip";
-import { HaloAgentCore } from "./HaloAgentCore";
 import { CockpitAgenda } from "./CockpitAgenda";
 import { WatchlistMini } from "./WatchlistMini";
 import type { CockpitTodayPayload } from "@/lib/cockpit/today";
@@ -15,7 +14,7 @@ interface CockpitHomeProps {
 /**
  * CockpitHome — home Cockpit (mode="cockpit").
  *
- * Layout : Header → ActivityStrip → KPIStrip → HaloAgentCore → Agenda/Veille repliable.
+ * Layout : Header → ActivityStrip → KPIStrip → Agenda/Veille repliable.
  */
 export function CockpitHome({ data }: CockpitHomeProps) {
   return (
@@ -23,7 +22,7 @@ export function CockpitHome({ data }: CockpitHomeProps) {
       className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden"
       style={{
         padding: "var(--space-6)",
-        gap: "var(--space-3)",
+        gap: "var(--space-5)",
       }}
     >
       <CockpitHeader data={data} />
@@ -40,13 +39,6 @@ export function CockpitHome({ data }: CockpitHomeProps) {
         <KPIStrip data={data} />
       </div>
 
-      <div
-        className="relative flex-1 min-h-0 w-full"
-        style={{ minHeight: "min(42vh, 480px)" }}
-      >
-        <HaloAgentCore />
-      </div>
-
       <details
         className="shrink-0 border-t"
         style={{
@@ -55,10 +47,23 @@ export function CockpitHome({ data }: CockpitHomeProps) {
         }}
       >
         <summary
-          className="cursor-pointer t-11 font-light text-[var(--text-faint)] transition-opacity hover:opacity-80"
+          className="cursor-pointer flex items-center gap-2 t-13 font-medium text-text-soft transition-opacity hover:opacity-80 group"
           style={{ listStyle: "none" }}
         >
-          Agenda et veille
+          Agenda & watchlist
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="transition-transform duration-200 group-open:rotate-180"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
         </summary>
         <div
           className="grid min-h-0 shrink-0"

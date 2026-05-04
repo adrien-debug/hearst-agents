@@ -12,7 +12,7 @@
  * `{section.length > 0 && ...}` autour d'un bloc complet.
  */
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useStageStore } from "@/stores/stage";
 import { useStageData } from "@/stores/stage-data";
@@ -22,7 +22,6 @@ import { useNavigationStore } from "@/stores/navigation";
 import { voiceToolDefs, VOICE_TOOL_LABELS } from "@/lib/voice/tool-defs";
 import { ProviderChip } from "./ProviderChip";
 import { useRightPanelData } from "./right-panel/useRightPanelData";
-import { QuickActionsGrid } from "./cockpit/QuickActionsGrid";
 import { GeneralDashboard } from "./right-panel/GeneralDashboard";
 import { ContextRailForMission } from "./ContextRailForMission";
 import {
@@ -31,7 +30,6 @@ import {
   ContextRailForApps,
   ContextRailForReports,
 } from "./ContextRailForAdmin";
-import type { CockpitTodayPayload } from "@/lib/cockpit/today";
 
 interface ContextRailProps {
   onClose?: () => void;
@@ -243,8 +241,39 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
 
 // ── Sub-rails cockpit / chat ───────────────────────────────
 
+const QUICK_TILES = [
+  {
+    id: "chat", label: "Chat",
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
+  },
+  {
+    id: "voice", label: "Voice",
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8" /></svg>,
+  },
+  {
+    id: "mission", label: "Mission",
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
+  },
+  {
+    id: "assets", label: "Assets",
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>,
+  },
+  {
+    id: "reports", label: "Reports",
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" /></svg>,
+  },
+  {
+    id: "apps", label: "Apps",
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="8" height="8" rx="1" /><rect x="14" y="2" width="8" height="8" rx="1" /><rect x="2" y="14" width="8" height="8" rx="1" /><rect x="14" y="14" width="8" height="8" rx="1" /></svg>,
+  },
+] as const;
+
 function CockpitChatBody() {
   const router = useRouter();
+  const addThread = useNavigationStore((s) => s.addThread);
+  const surface = useNavigationStore((s) => s.surface);
+  const setMode = useStageStore((s) => s.setMode);
+  const setVoiceActive = useVoiceStore((s) => s.setVoiceActive);
   const {
     assets,
     missions,
@@ -252,29 +281,37 @@ function CockpitChatBody() {
     loading,
   } = useRightPanelData();
 
-  const [cockpitToday, setCockpitToday] = useState<CockpitTodayPayload | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/v2/cockpit/today", { credentials: "include" });
-        if (!res.ok || cancelled) return;
-        setCockpitToday((await res.json()) as CockpitTodayPayload);
-      } catch {
-        // fail-soft : actions rapides absentes si fetch échoue
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const handleViewChange = (view: "reports" | "missions" | "assets") => {
     if (view === "missions") router.push("/missions");
     else if (view === "assets") router.push("/assets");
     else if (view === "reports") router.push("/reports");
   };
+
+  function handleTile(id: string) {
+    switch (id) {
+      case "chat": {
+        const tid = addThread("New", surface);
+        setMode({ mode: "chat", threadId: tid });
+        break;
+      }
+      case "voice":
+        setVoiceActive(true);
+        setMode({ mode: "voice" });
+        break;
+      case "mission":
+        router.push("/missions");
+        break;
+      case "assets":
+        router.push("/assets");
+        break;
+      case "reports":
+        router.push("/reports");
+        break;
+      case "apps":
+        router.push("/apps");
+        break;
+    }
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -286,16 +323,34 @@ function CockpitChatBody() {
           activeThreadId={activeThreadId}
           loading={loading}
         />
-        {cockpitToday && (
-          <div
+      </div>
+
+      {/* 6 quick action tiles — 2 rangées de 3, collées en bas */}
+      <div
+        className="shrink-0 grid"
+        style={{
+          gridTemplateColumns: "repeat(3, 1fr)",
+          borderTop: "1px solid var(--border-subtle)",
+        }}
+      >
+        {QUICK_TILES.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => handleTile(t.id)}
+            title={t.label}
+            className="flex flex-col items-center justify-center gap-1 transition-colors group focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--cykan)]"
             style={{
-              borderTop: "1px solid var(--border-subtle)",
-              padding: "var(--space-4) var(--space-3) var(--space-5)",
+              height: "var(--space-12)",
+              color: "var(--text-faint)",
+              borderRight: "1px solid var(--border-subtle)",
+              borderBottom: "1px solid var(--border-subtle)",
             }}
           >
-            <QuickActionsGrid data={cockpitToday} />
-          </div>
-        )}
+            <span className="group-hover:text-[var(--cykan)] transition-colors">{t.icon}</span>
+            <span className="t-9 font-light group-hover:text-[var(--cykan)] transition-colors">{t.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

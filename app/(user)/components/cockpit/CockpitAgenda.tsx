@@ -20,8 +20,8 @@ export function CockpitAgenda({ data }: CockpitAgendaProps) {
   const hasItems = items.length > 0;
 
   return (
-    <section className="flex flex-col min-h-0 min-w-0" aria-label="Agenda du jour">
-      <SectionHeader label="Aujourd'hui" />
+    <section className="flex flex-col min-h-0 min-w-0" aria-label="Today's agenda">
+      <SectionHeader label="Today" />
       {hasItems ? (
         <ul className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ gap: "var(--space-1)" }}>
           {items.map((item) => (
@@ -51,9 +51,9 @@ export function CockpitAgenda({ data }: CockpitAgendaProps) {
       ) : (
         <EmptyState
           density="compact"
-          title="Aucun rendez-vous"
-          description="Connecte ton calendrier pour voir ta journée."
-          cta={{ label: "Connecter Calendar →", href: "/apps#calendar" }}
+          title="No events"
+          description="Connect your calendar to see your day."
+          cta={{ label: "Connect Calendar →", href: "/apps#calendar" }}
         />
       )}
     </section>

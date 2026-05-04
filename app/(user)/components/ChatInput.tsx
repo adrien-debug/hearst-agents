@@ -141,7 +141,7 @@ export function ChatInput({
   function handleSubmit() {
     if (!input.trim() || isRunning) return;
     const finalMessage = attachment
-      ? `Document analysé (${attachment.fileName}, ${attachment.pageCount} pages) :\n\n${attachment.text}\n\n---\n\n${input.trim()}`
+      ? `Parsed document (${attachment.fileName}, ${attachment.pageCount} pages):\n\n${attachment.text}\n\n---\n\n${input.trim()}`
       : input.trim();
     const attachedAssetIds = attachedAssets.map((a) => a.assetId);
     const opts: { attachedAssetIds?: string[]; personaId?: string | null } = {};
@@ -187,7 +187,7 @@ export function ChatInput({
     const prompt = input.trim();
     if (!prompt || imageGenStatus === "pending") return;
     setImageGenStatus("pending");
-    setImageGenMessage("Génération de l'image en cours…");
+    setImageGenMessage("Generating image…");
     try {
       const res = await fetch("/api/v2/jobs/image-gen", {
         method: "POST",
@@ -201,15 +201,15 @@ export function ChatInput({
         message?: string;
       };
       if (!res.ok) {
-        const reason = data.message ?? data.error ?? "Erreur génération image";
+        const reason = data.message ?? data.error ?? "Image generation error";
         throw new Error(reason);
       }
       setImageGenStatus("idle");
-      setImageGenMessage("Image en préparation — elle apparaîtra dans tes assets.");
+      setImageGenMessage("Image queued — it will appear in your assets.");
       setInput("");
       setTimeout(() => setImageGenMessage(null), 4000);
     } catch (err) {
-      const reason = err instanceof Error ? err.message : "Erreur génération image";
+      const reason = err instanceof Error ? err.message : "Image generation error";
       setImageGenStatus("error");
       setImageGenMessage(reason);
       setTimeout(() => {
@@ -223,7 +223,7 @@ export function ChatInput({
     const text = input.trim();
     if (!text || audioGenStatus === "pending") return;
     setAudioGenStatus("pending");
-    setAudioGenMessage("Synthèse audio en cours…");
+    setAudioGenMessage("Synthesizing audio…");
     try {
       const res = await fetch("/api/v2/jobs/audio-gen", {
         method: "POST",
@@ -237,15 +237,15 @@ export function ChatInput({
         message?: string;
       };
       if (!res.ok) {
-        const reason = data.message ?? data.error ?? "Erreur synthèse audio";
+        const reason = data.message ?? data.error ?? "Audio synthesis error";
         throw new Error(reason);
       }
       setAudioGenStatus("idle");
-      setAudioGenMessage("Audio en préparation — il apparaîtra dans tes assets.");
+      setAudioGenMessage("Audio queued — it will appear in your assets.");
       setInput("");
       setTimeout(() => setAudioGenMessage(null), 4000);
     } catch (err) {
-      const reason = err instanceof Error ? err.message : "Erreur synthèse audio";
+      const reason = err instanceof Error ? err.message : "Audio synthesis error";
       setAudioGenStatus("error");
       setAudioGenMessage(reason);
       setTimeout(() => {
@@ -278,7 +278,7 @@ export function ChatInput({
     const extracted = extractCodeBlock(input);
     if (!extracted || !extracted.code) return;
     setCodeExecStatus("pending");
-    setCodeExecMessage("Exécution sandbox en cours…");
+    setCodeExecMessage("Running sandbox…");
     try {
       const res = await fetch("/api/v2/jobs/code-exec", {
         method: "POST",
@@ -292,15 +292,15 @@ export function ChatInput({
         message?: string;
       };
       if (!res.ok) {
-        const reason = data.message ?? data.error ?? "Erreur exécution code";
+        const reason = data.message ?? data.error ?? "Code execution error";
         throw new Error(reason);
       }
       setCodeExecStatus("idle");
-      setCodeExecMessage("Exécution lancée — résultat dans tes assets.");
+      setCodeExecMessage("Execution started — result will appear in your assets.");
       setInput("");
       setTimeout(() => setCodeExecMessage(null), 4000);
     } catch (err) {
-      const reason = err instanceof Error ? err.message : "Erreur exécution code";
+      const reason = err instanceof Error ? err.message : "Code execution error";
       setCodeExecStatus("error");
       setCodeExecMessage(reason);
       setTimeout(() => {
@@ -311,12 +311,12 @@ export function ChatInput({
   }
 
   const surfacePlaceholders: Record<string, string> = {
-    home: "Pose une question",
-    inbox: "Cherche un message…",
-    calendar: "Demande des infos sur ton agenda",
-    files: "Trouve un document…",
-    tasks: "Crée une mission…",
-    apps: "Configure tes connecteurs…",
+    home: "Ask anything",
+    inbox: "Search a message…",
+    calendar: "Ask about your schedule",
+    files: "Find a document…",
+    tasks: "Create a mission…",
+    apps: "Configure your connectors…",
   };
 
   return (
@@ -335,7 +335,7 @@ export function ChatInput({
             {matchingServices.length === 0 ? (
               <div className="p-4 t-11 font-light text-[var(--text-ghost)]">
                 {typeaheadQuery ? (
-                  <>Aucune source trouvée&nbsp;: {typeaheadQuery}</>
+                  <>No source found&nbsp;: {typeaheadQuery}</>
                 ) : (
                   <>Tapez @ pour mentionner une source</>
                 )}
@@ -414,7 +414,7 @@ export function ChatInput({
                   <button
                     type="button"
                     onClick={() => removeAttachedAsset(a.assetId)}
-                    aria-label={`Retirer ${a.title}`}
+                    aria-label={`Remove ${a.title}`}
                     className="t-11 text-[var(--text-ghost)] hover:text-[var(--danger)]"
                     style={{ background: "transparent", border: "none", cursor: "pointer" }}
                   >
@@ -439,7 +439,7 @@ export function ChatInput({
                 type="button"
                 onClick={() => setAttachment(null)}
                 className="ml-auto t-13 text-[var(--text-ghost)] hover:text-[var(--danger)] transition-colors"
-                aria-label="Retirer le document"
+                aria-label="Remove document"
               >
                 ×
               </button>
@@ -515,7 +515,7 @@ export function ChatInput({
             placeholder={
               placeholder ||
               surfacePlaceholders[surface] ||
-              "Demande n'importe quoi…"
+              "Ask anything…"
             }
             rows={1}
             className="block w-full bg-transparent t-18 font-light text-[var(--text)] placeholder:text-[var(--text-muted)] border-0 focus:ring-0 focus:outline-none resize-none leading-relaxed py-1"
@@ -556,7 +556,7 @@ export function ChatInput({
                         pageCount?: number;
                         error?: string;
                       };
-                      if (!r.ok) throw new Error(data.error ?? "Erreur upload");
+                      if (!r.ok) throw new Error(data.error ?? "Upload error");
                       setAttachment({
                         fileName: data.fileName ?? file.name,
                         text: data.text ?? "",
@@ -564,7 +564,7 @@ export function ChatInput({
                       });
                     })
                     .catch(() => {
-                      setUploadError("Échec du parsing PDF");
+                      setUploadError("PDF parsing failed");
                       setTimeout(() => setUploadError(null), 4000);
                     })
                     .finally(() => setUploading(false));
@@ -576,10 +576,10 @@ export function ChatInput({
                 disabled={!input.trim() || audioGenStatus === "pending" || isRunning}
                 title={
                   audioGenStatus === "pending"
-                    ? "Synthèse en cours…"
-                    : "Synthétiser le texte en audio"
+                    ? "Synthesizing…"
+                    : "Synthesize text to audio"
                 }
-                aria-label="Synthétiser en audio"
+                aria-label="Synthesize to audio"
                 className={`transition-colors duration-base ${
                   audioGenStatus === "pending"
                     ? "text-[var(--warn)] animate-pulse"
@@ -601,10 +601,10 @@ export function ChatInput({
                 disabled={!input.trim() || codeExecStatus === "pending" || isRunning}
                 title={
                   codeExecStatus === "pending"
-                    ? "Exécution en cours…"
-                    : "Exécuter le code dans un sandbox"
+                    ? "Running…"
+                    : "Run code in sandbox"
                 }
-                aria-label="Exécuter du code"
+                aria-label="Run code"
                 className={`transition-colors duration-base ${
                   codeExecStatus === "pending"
                     ? "text-[var(--warn)] animate-pulse"
@@ -626,10 +626,10 @@ export function ChatInput({
                 disabled={!input.trim() || imageGenStatus === "pending" || isRunning}
                 title={
                   imageGenStatus === "pending"
-                    ? "Génération en cours…"
-                    : "Générer une image depuis le prompt"
+                    ? "Generating…"
+                    : "Generate an image from the prompt"
                 }
-                aria-label="Générer une image"
+                aria-label="Generate image"
                 className={`transition-colors duration-base ${
                   imageGenStatus === "pending"
                     ? "text-[var(--warn)] animate-pulse"
@@ -650,8 +650,8 @@ export function ChatInput({
                 type="button"
                 onClick={() => setDocParseOpen(true)}
                 disabled={isRunning}
-                title="Parser un document depuis une URL (LlamaParse)"
-                aria-label="Parser un document"
+                title="Parse a document from URL (LlamaParse)"
+                aria-label="Parse document"
                 data-testid="chat-input-document-parse"
                 className={`transition-colors duration-base ${
                   isRunning
@@ -670,8 +670,8 @@ export function ChatInput({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading || isRunning}
-                title={uploading ? "Analyse en cours…" : "Joindre un PDF"}
-                aria-label="Joindre un PDF"
+                title={uploading ? "Parsing…" : "Attach a PDF"}
+                aria-label="Attach a PDF"
                 className={`transition-colors duration-base ${
                   uploading
                     ? "text-[var(--warn)] animate-pulse"
@@ -755,8 +755,8 @@ export function ChatInput({
             <button
               type="button"
               onClick={() => router.push("/apps")}
-              title="Connecter une nouvelle app"
-              aria-label="Connecter une nouvelle app"
+              title="Connect a new app"
+              aria-label="Connect a new app"
               className="inline-flex items-center justify-center shrink-0 transition-colors text-[var(--text-faint)] hover:text-[var(--cykan)]"
               style={{
                 width: "var(--space-5)",

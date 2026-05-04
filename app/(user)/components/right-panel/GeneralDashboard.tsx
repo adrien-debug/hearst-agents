@@ -50,13 +50,13 @@ interface DashboardMission {
 // ── State labels ───────────────────────────────────────────
 
 const CORE_STATE_LABEL: Record<string, string> = {
-  idle: "En ligne",
-  connecting: "Connexion",
-  streaming: "En cours",
-  processing: "Traitement",
-  error: "Erreur",
-  awaiting_approval: "Approbation requise",
-  awaiting_clarification: "Précision requise",
+  idle: "Online",
+  connecting: "Connecting",
+  streaming: "Running",
+  processing: "Processing",
+  error: "Error",
+  awaiting_approval: "Approval required",
+  awaiting_clarification: "Clarification required",
 };
 
 export function GeneralDashboard({
@@ -80,7 +80,7 @@ export function GeneralDashboard({
 
   // ── Cockpit today (briefing + agenda + inbox) ─────────────
   // Fetch léger au mount, échec silencieux. Si non dispo, le module
-  // "Aujourd'hui" affiche un empty state honnête.
+  // "Today" affiche un empty state honnête.
   const [today, setToday] = useState<CockpitTodayPayload | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -105,17 +105,17 @@ export function GeneralDashboard({
     return () => clearInterval(id);
   }, []);
   const timeLabel = now
-    ? now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+    ? now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
     : "--:--";
 
   // ── Now session ───────────────────────────────────────────
   const activeSession =
     voiceActive
-      ? { kind: "voice" as const, label: "Session vocale" }
+      ? { kind: "voice" as const, label: "Voice session" }
       : stageMode === "browser"
         ? { kind: "browser" as const, label: "Browser session" }
         : stageMode === "meeting"
-          ? { kind: "meeting" as const, label: "Meeting en cours" }
+          ? { kind: "meeting" as const, label: "Meeting in progress" }
           : runningMissions[0]
             ? { kind: "mission" as const, label: runningMissions[0].name }
             : null;
@@ -124,14 +124,14 @@ export function GeneralDashboard({
   const briefing = today?.briefing;
   const briefStatus = briefing
     ? briefing.empty
-      ? "non-généré"
+      ? "not-generated"
       : briefing.body
-        ? "prêt"
-        : "vide"
+        ? "ready"
+        : "empty"
     : null;
   const briefTimeLabel =
     today && !briefing?.empty
-      ? new Date(today.generatedAt).toLocaleTimeString("fr-FR", {
+      ? new Date(today.generatedAt).toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
         })
@@ -170,7 +170,7 @@ export function GeneralDashboard({
       id: `m-${lastRunMission.id}`,
       icon: <BulletDot tone={lastRunMission.opsStatus === "failed" ? "danger" : "neutral"} />,
       label: lastRunMission.name,
-      meta: `${lastRunMission.opsStatus === "failed" ? "échec" : "réussi"} · ${formatRelative(lastRunMission.lastRunAt)}`,
+      meta: `${lastRunMission.opsStatus === "failed" ? "failed" : "succeeded"} · ${formatRelative(lastRunMission.lastRunAt)}`,
     });
   }
 
@@ -189,11 +189,11 @@ export function GeneralDashboard({
       style={{ padding: "var(--space-8) var(--space-5)", gap: "var(--space-6)" }}
     >
       {/* ① Maintenant */}
-      <DashboardSection label="Maintenant">
+      <DashboardSection label="Now">
         <div className="flex items-center" style={{ gap: "var(--space-3)" }}>
           <BulletDot tone="cykan" pulse={coreState !== "idle"} />
           <span className="t-13 font-light" style={{ color: "var(--text-soft)" }}>
-            {CORE_STATE_LABEL[coreState] ?? "En ligne"}
+            {CORE_STATE_LABEL[coreState] ?? "Online"}
           </span>
           <span className="t-11 font-mono tabular-nums ml-auto" style={{ color: "var(--text-faint)" }}>
             {timeLabel}
@@ -216,28 +216,28 @@ export function GeneralDashboard({
             className="t-11 font-light"
             style={{ color: "var(--text-faint)", marginTop: "var(--space-2)" }}
           >
-            Aucune session active
+            No active session
           </p>
         )}
       </DashboardSection>
 
       {/* ② Aujourd'hui */}
       {today && (
-        <DashboardSection label="Aujourd'hui">
+        <DashboardSection label="Today">
           <ul className="flex flex-col" style={{ gap: "var(--space-2)" }}>
             <DashboardRow
               label="Brief"
               value={
-                briefStatus === "prêt"
-                  ? `Lu · ${briefTimeLabel ?? ""}`
-                  : briefStatus === "non-généré"
-                    ? "Pas encore généré"
+                briefStatus === "ready"
+                  ? `Read · ${briefTimeLabel ?? ""}`
+                  : briefStatus === "not-generated"
+                    ? "Not generated yet"
                     : "—"
               }
             />
             {nextAgenda && (
               <DashboardRow
-                label="Prochain"
+                label="Next"
                 value={`${nextAgenda.title} · ${formatAgendaTime(nextAgenda.startsAt)}`}
               />
             )}
@@ -246,8 +246,8 @@ export function GeneralDashboard({
                 label="Inbox"
                 value={
                   inboxCount > 0
-                    ? `${inboxCount} signaux`
-                    : "Tout est calme"
+                    ? `${inboxCount} signal${inboxCount > 1 ? "s" : ""}`
+                    : "All quiet"
                 }
               />
             )}
@@ -256,10 +256,10 @@ export function GeneralDashboard({
       )}
 
       {/* ③ Activité récente */}
-      <DashboardSection label="Activité récente">
+      <DashboardSection label="Recent activity">
         {activityItems.length === 0 ? (
-          <p className="t-11 font-light" style={{ color: "var(--text-faint)" }}>
-            Rien encore — utilise le chat pour commencer
+          <p className="t-13 font-light" style={{ color: "var(--text-faint)" }}>
+            Nothing yet — start a chat to get going
           </p>
         ) : (
           <ul className="flex flex-col" style={{ gap: "var(--space-2)" }}>
@@ -373,12 +373,13 @@ function BulletDot({
         : "var(--text-faint)";
   return (
     <span
-      className={`rounded-pill shrink-0 ${pulse ? "animate-pulse" : ""}`}
+      className={`rounded-pill shrink-0`}
       style={{
         width: "var(--space-2)",
         height: "var(--space-2)",
         background: color,
         boxShadow: tone === "cykan" ? "var(--shadow-neon-cykan)" : "none",
+        animation: pulse ? (tone === "cykan" ? "pulse-status-cykan 2s ease-in-out infinite" : "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite") : "none",
       }}
       aria-hidden
     />
@@ -390,7 +391,7 @@ function BulletDot({
 function sessionKindLabel(kind: "voice" | "browser" | "meeting" | "mission"): string {
   switch (kind) {
     case "voice":
-      return "voix";
+      return "voice";
     case "browser":
       return "browser";
     case "meeting":
@@ -412,29 +413,29 @@ function parseAssetTs(a: DashboardAsset): number | undefined {
 function formatRelative(ts?: number): string {
   if (!ts) return "—";
   const diff = Date.now() - ts;
-  if (diff < 60_000) return "à l'instant";
+  if (diff < 60_000) return "just now";
   if (diff < 3_600_000) {
     const m = Math.round(diff / 60_000);
-    return `il y a ${m} min`;
+    return `${m}m ago`;
   }
   if (diff < 86_400_000) {
     const h = Math.round(diff / 3_600_000);
-    return `il y a ${h} h`;
+    return `${h}h ago`;
   }
   const d = Math.round(diff / 86_400_000);
-  if (d === 1) return "hier";
-  if (d < 7) return `il y a ${d} j`;
-  return new Date(ts).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  if (d === 1) return "yesterday";
+  if (d < 7) return `${d}d ago`;
+  return new Date(ts).toLocaleDateString("en-US", { day: "numeric", month: "short" });
 }
 
 function formatAgendaTime(ts: number): string {
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return "—";
   const diffH = (ts - Date.now()) / 3_600_000;
-  const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   if (diffH < 0) return time;
-  if (diffH < 1) return `dans ${Math.round(diffH * 60)} min`;
-  if (diffH < 6) return `dans ${Math.round(diffH)} h`;
+  if (diffH < 1) return `in ${Math.round(diffH * 60)}m`;
+  if (diffH < 6) return `in ${Math.round(diffH)}h`;
   return time;
 }
 
@@ -449,7 +450,7 @@ function computeSuggestion({
 }): { text: string; onClick: () => void } | null {
   if (failedCount > 0) {
     return {
-      text: `${failedCount} mission${failedCount > 1 ? "s" : ""} en échec — voir les détails`,
+      text: `${failedCount} mission${failedCount > 1 ? "s" : ""} failed — view details`,
       onClick: () => {
         if (typeof window !== "undefined") window.location.href = "/missions";
       },
@@ -457,7 +458,7 @@ function computeSuggestion({
   }
   if (briefStale) {
     return {
-      text: "Brief inbox plus vieux qu'1h — rafraîchir",
+      text: "Inbox brief older than 1h — refresh",
       onClick: () => {
         if (typeof window !== "undefined") window.location.href = "/briefing";
       },
@@ -465,7 +466,7 @@ function computeSuggestion({
   }
   if (inboxNeedsConnection) {
     return {
-      text: "Connecte Gmail ou Slack pour activer ton inbox",
+      text: "Connect Gmail or Slack to activate your inbox",
       onClick: () => {
         if (typeof window !== "undefined") window.location.href = "/apps";
       },

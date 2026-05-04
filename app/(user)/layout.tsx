@@ -118,8 +118,8 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
               style={{
                 background: "var(--surface)",
                 color: "var(--text)",
-                margin: "var(--space-4) 0",
-                borderRadius: "var(--radius-lg)",
+                margin: "0",
+                borderRadius: "0",
                 boxShadow: "var(--shadow-stage-card)",
               }}
             >
